@@ -1867,6 +1867,133 @@ COACH.forEach(c => COACH_MAP[c.id] = c);
 </script>
 <script>
 /* =========================================================
+   InvestifyMe — controle de cota das fontes gratuitas
+   Cada serviço tem o seu ritmo. Aqui as consultas entram numa fila
+   por fonte e só saem quando o limite do plano gratuito permite.
+   ========================================================= */
+const CHAVE_COTA = 'investifyme.cota.v1';
+
+const LIMITES = {
+  twelve:    {nome:'Twelve Data',   porMinuto:8,  porDia:800,  intervalo:200},
+  brapi:     {nome:'brapi',         porMinuto:20, porDia:450,  intervalo:250},
+  coingecko: {nome:'CoinGecko',     porMinuto:8,  porDia:2000, intervalo:1200},
+  awesome:   {nome:'AwesomeAPI',    porMinuto:30, porDia:4000, intervalo:300},
+  bcb:       {nome:'Banco Central', porMinuto:30, porDia:3000, intervalo:300},
+  rss2json:  {nome:'rss2json',      porMinuto:6,  porDia:9000, intervalo:1200, porFeedMin:60}
+};
+
+const Cota = {
+  estado: {},      /* fonte -> {min:[ts], dia:{d,n}, ultima, feeds:{url:ts}} */
+  filas: {},
+  aviso: null,     /* função opcional para avisar a espera na tela */
+
+  hoje(){ return new Date().toISOString().slice(0,10); },
+
+  carregar(){
+    try{
+      const o = JSON.parse(localStorage.getItem(CHAVE_COTA) || 'null');
+      if(o) this.estado = o;
+    }catch(e){}
+    /* zera o contador diário quando vira o dia */
+    Object.keys(this.estado).forEach(f => {
+      const e = this.estado[f];
+      if(e.dia && e.dia.d !== this.hoje()) e.dia = {d: this.hoje(), n: 0};
+    });
+  },
+  gravar(){
+    try{ localStorage.setItem(CHAVE_COTA, JSON.stringify(this.estado)); }catch(e){}
+  },
+
+  dados(fonte){
+    const e = this.estado[fonte] = this.estado[fonte] ||
+      {min: [], dia: {d: this.hoje(), n: 0}, ultima: 0, feeds: {}};
+    if(e.dia.d !== this.hoje()) e.dia = {d: this.hoje(), n: 0};
+    e.min = (e.min || []).filter(t => Date.now() - t < 60000);
+    return e;
+  },
+
+  /* quantos ms faltam para poder chamar; -1 = cota do dia acabou */
+  espera(fonte){
+    const cfg = LIMITES[fonte]; if(!cfg) return 0;
+    const e = this.dados(fonte);
+    if(cfg.porDia && e.dia.n >= cfg.porDia) return -1;
+    let falta = 0;
+    if(cfg.intervalo) falta = Math.max(falta, (e.ultima + cfg.intervalo) - Date.now());
+    if(cfg.porMinuto && e.min.length >= cfg.porMinuto){
+      const maisVelha = e.min[e.min.length - cfg.porMinuto];
+      falta = Math.max(falta, (maisVelha + 60500) - Date.now());
+    }
+    return Math.max(0, falta);
+  },
+
+  restam(fonte){
+    const cfg = LIMITES[fonte] || {};
+    const e = this.dados(fonte);
+    return {
+      minuto: Math.max(0, (cfg.porMinuto || 0) - e.min.length),
+      dia: Math.max(0, (cfg.porDia || 0) - e.dia.n),
+      diaUsado: e.dia.n
+    };
+  },
+
+  registrar(fonte){
+    const e = this.dados(fonte);
+    const agora = Date.now();
+    e.min.push(agora); e.ultima = agora; e.dia.n++;
+    this.gravar();
+  },
+
+  /* entra na fila da fonte e só volta quando puder chamar */
+  vez(fonte, aviso){
+    const anterior = this.filas[fonte] || Promise.resolve();
+    const minha = anterior.then(async () => {
+      let falta = this.espera(fonte);
+      if(falta < 0) return false;                    /* acabou a cota do dia */
+      while(falta > 0){
+        const seg = Math.ceil(falta / 1000);
+        if(aviso) aviso(seg, (LIMITES[fonte] || {}).nome || fonte);
+        else if(this.aviso) this.aviso(seg, (LIMITES[fonte] || {}).nome || fonte, fonte);
+        await new Promise(r => setTimeout(r, Math.min(falta, 1000)));
+        falta = this.espera(fonte);
+        if(falta < 0) return false;
+      }
+      this.registrar(fonte);
+      return true;
+    });
+    this.filas[fonte] = minha.catch(() => {});
+    return minha;
+  },
+
+  /* feeds de notícia: o plano gratuito do rss2json relê cada feed 1x por hora */
+  feedRecente(fonte, url, minutos){
+    const e = this.dados(fonte);
+    const t = (e.feeds || {})[url];
+    if(!t) return false;
+    const lim = (minutos == null ? (LIMITES[fonte] || {}).porFeedMin : minutos) || 0;
+    return (Date.now() - t) < lim * 60000;
+  },
+  marcarFeed(fonte, url){
+    const e = this.dados(fonte);
+    e.feeds = e.feeds || {};
+    e.feeds[url] = Date.now();
+    /* não deixa a lista crescer para sempre */
+    const chaves = Object.keys(e.feeds);
+    if(chaves.length > 40) delete e.feeds[chaves[0]];
+    this.gravar();
+  },
+
+  resumo(){
+    return Object.keys(LIMITES).map(f => {
+      const cfg = LIMITES[f], r = this.restam(f);
+      return {fonte: f, nome: cfg.nome, usadoHoje: r.diaUsado, porDia: cfg.porDia,
+              porMinuto: cfg.porMinuto, restamMinuto: r.minuto};
+    });
+  }
+};
+
+</script>
+<script>
+/* =========================================================
    InvestifyMe — armazenamento
    Camadas: localStorage (principal) → cookie (espelho) → arquivo (backup) → Google Drive (nuvem)
    ========================================================= */
@@ -1904,7 +2031,8 @@ function estadoPadrao(){
       fitaMercado: true,
       fontesNoticias: ['infomoney','moneytimes','exame','seudinheiro','g1'],
       noticiasMin: 20,
-      noticiasAutoMin: 5,
+      noticiasAutoMin: 15,
+      respeitarPlanoRss: true,
       chaves: { brapi:'', twelve:'', finnhub:'', alpha:'', rss2json:'' },
       driveClientId: '',
       usarCookie: true,
@@ -2405,6 +2533,7 @@ const Mercado = {
     const lista = (moedas && moedas.length ? moedas : ['USD','EUR']).filter(m => m !== 'BRL');
     if(!lista.length) return;
     const pares = lista.map(m => m + '-BRL').join(',');
+    if(!(await Cota.vez('awesome'))) return;
     try{
       const j = await this.pegarJson('https://economia.awesomeapi.com.br/last/' + pares);
       Object.keys(j).forEach(k => {
@@ -2425,15 +2554,16 @@ const Mercado = {
   /* ---------- INDICADORES (Banco Central) ---------- */
   async buscarIndicadores(){
     const series = {selic:432, cdi:4389, ipca12:13522, poupanca:195};
-    await Promise.all(Object.keys(series).map(async k => {
+    for(const k of Object.keys(series)){
       try{
+        if(!(await Cota.vez('bcb'))) break;
         const j = await this.pegarJson(
           'https://api.bcb.gov.br/dados/serie/bcdata.sgs.' + series[k] + '/dados/ultimos/1?formato=json');
         if(Array.isArray(j) && j.length){
           this.indicadores[k] = {valor: parseFloat(j[0].valor), data: j[0].data};
         }
       }catch(e){ /* indicador é acessório: não atrapalha o resto */ }
-    }));
+    }
   },
 
   /* ---------- B3 (brapi.dev) ---------- */
@@ -2446,6 +2576,10 @@ const Mercado = {
 
     let semToken = 0, planoLimite = 0;
     for(const lote of lotes){
+      if(!(await Cota.vez('brapi'))){
+        this.erros.push('brapi: cota diária do plano gratuito atingida. Volta amanhã.');
+        break;
+      }
       try{
         const j = await this.pegarJson(base + lote.map(encodeURIComponent).join(',') + auth);
         (j.results || []).forEach(r => {
@@ -2467,7 +2601,7 @@ const Mercado = {
         else if(e.status === 404) { /* ativo que a brapi não conhece: ignora em silêncio */ }
         else this.erros.push('B3 (' + lote.join(',') + '): ' + e.message);
       }
-      await new Promise(r => setTimeout(r, 220));
+
     }
     if(semToken){
       this.erros.push(semToken + ' ativo(s) da B3 precisam do token gratuito da brapi — veja em Configurações.');
@@ -2490,16 +2624,16 @@ const Mercado = {
       return;
     }
 
-    /* ainda dentro da janela de bloqueio, ou menos de um minuto desde a última consulta:
-       guarda tudo para a próxima rodada em vez de tomar 429 */
-    const agoraMs = Date.now();
-    if((this.usBloqueadoAte && agoraMs < this.usBloqueadoAte) ||
-       (this.usUltimaJanela && (agoraMs - this.usUltimaJanela) < 60000)){
+    /* se a cota por minuto está no limite, guarda tudo para a próxima rodada */
+    const faltaCota = Cota.espera('twelve');
+    if(faltaCota !== 0){
       this.usPendentes = tickers.slice();
-      if(!this.usBloqueadoAte || agoraMs >= this.usBloqueadoAte)
-        this.usBloqueadoAte = this.usUltimaJanela + 62000;
+      if(faltaCota < 0) this.erros.push('A cota diária gratuita dos EUA acabou. Os preços seguem com o último valor até amanhã.');
+      else this.usBloqueadoAte = Date.now() + faltaCota;
       return;
     }
+    /* quantos cabem na janela deste minuto */
+    const cabem = Math.max(1, Cota.restam('twelve').minuto);
 
     /* os mais desatualizados primeiro */
     const idade = t => {
@@ -2507,10 +2641,14 @@ const Mercado = {
       return (r && r.hora) ? new Date(r.hora).getTime() : 0;
     };
     const fila = tickers.slice().sort((a,b) => idade(a) - idade(b));
-    const limite = Math.max(1, this.usLimitePorVez);
+    const limite = Math.max(1, Math.min(this.usLimitePorVez, cabem));
     const agora = fila.slice(0, limite);
     this.usPendentes = fila.slice(limite);
 
+    if(!(await Cota.vez('twelve'))){
+      this.usPendentes = tickers.slice();
+      return;
+    }
     this.usUltimaJanela = Date.now();
     await this.usTwelve(agora, k.twelve);
   },
@@ -2548,16 +2686,9 @@ const Mercado = {
 
   /* espera a janela de cota dos EUA liberar, avisando quantos segundos faltam */
   async esperarJanelaUS(aviso){
-    const alvo = Math.max(this.usBloqueadoAte || 0, (this.usUltimaJanela || 0) + 61000);
-    let falta = alvo - Date.now();
-    if(falta <= 0) return 0;
-    const total = falta;
-    while(falta > 0){
-      if(aviso) aviso(Math.ceil(falta / 1000));
-      await new Promise(r => setTimeout(r, 1000));
-      falta = alvo - Date.now();
-    }
-    return total;
+    const ok = await Cota.vez('twelve', aviso);
+    if(!ok) throw new Error('A cota diária gratuita da Twelve Data acabou. Os preços e gráficos dos EUA voltam amanhã.');
+    return 0;
   },
 
   /* cota estourada: segura as próximas consultas por um minuto e devolve os ativos para a fila */
@@ -2573,6 +2704,7 @@ const Mercado = {
   async usFinnhub(tickers, chave){
     for(const t of tickers){
       try{
+        if(!(await Cota.vez('twelve'))) break;
         const j = await this.pegarJson('https://finnhub.io/api/v1/quote?symbol=' +
           encodeURIComponent(t) + '&token=' + encodeURIComponent(chave));
         if(j && j.c){
@@ -2617,6 +2749,7 @@ const Mercado = {
       this.erros.push('Cripto não reconhecida: ' + simbolos.join(', '));
       return;
     }
+    if(!(await Cota.vez('coingecko'))) return;
     try{
       const j = await this.pegarJson('https://api.coingecko.com/api/v3/simple/price?ids=' +
         ids.join(',') + '&vs_currencies=usd,brl&include_24hr_change=true');
@@ -2830,7 +2963,7 @@ const Noticias = {
     return (/^https?:\/\//i.test(u || '')) ? u : '';
   },
 
-  async atualizar(config, forcar){
+  async atualizar(config, forcar, forcarTudo){
     if(this.carregando) return [];
     const ativas = (config.fontesNoticias && config.fontesNoticias.length)
       ? FONTES_NOTICIAS.filter(f => config.fontesNoticias.indexOf(f.id) >= 0)
@@ -2842,7 +2975,15 @@ const Noticias = {
     const chave = (config.chaves || {}).rss2json || '';
     const novos = [];
 
+    let pulados = 0;
     for(const f of ativas){
+      /* o plano gratuito do rss2json relê cada feed 1x por hora: não adianta pedir antes */
+      const minFeed = config.respeitarPlanoRss === false ? 0 : 60;
+      if(!forcarTudo && Cota.feedRecente('rss2json', f.url, minFeed)){ pulados++; continue; }
+      if(!(await Cota.vez('rss2json'))){
+        this.erros.push('rss2json: cota diária atingida. As manchetes voltam amanhã.');
+        break;
+      }
       const url = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(f.url) +
                   (chave ? '&api_key=' + encodeURIComponent(chave) + '&count=20' : '');
       try{
@@ -2855,6 +2996,7 @@ const Noticias = {
           this.erros.push(f.nome + ': ' + (j.message || ('resposta ' + r.status)));
           continue;
         }
+        Cota.marcarFeed('rss2json', f.url);
         j.items.slice(0, 25).forEach(it => {
           const link = this.linkSeguro(it.link);
           if(!link) return;
@@ -2875,20 +3017,24 @@ const Noticias = {
       }catch(e){
         this.erros.push(f.nome + ': ' + (e.name === 'AbortError' ? 'demorou demais' : e.message));
       }
-      await new Promise(r => setTimeout(r, 450));
     }
 
     if(novos.length){
-      /* tira repetidos pelo link e ordena da mais nova para a mais velha */
+      /* junta com o que já tinha, tira repetidos e ordena da mais nova para a mais velha */
       const vistos = {};
-      this.itens = novos.filter(n => {
+      const fontesLidas = {};
+      novos.forEach(n => fontesLidas[n.fonte] = 1);
+      const antigos = this.itens.filter(n => !fontesLidas[n.fonte]);
+      this.itens = novos.concat(antigos).filter(n => {
         if(vistos[n.link]) return false;
         vistos[n.link] = 1; return true;
-      }).sort((a,b) => (b.data || '').localeCompare(a.data || ''));
+      }).sort((a,b) => (b.data || '').localeCompare(a.data || '')).slice(0, 150);
       this.ultima = new Date();
       this.gravarCache();
     }
     this.carregando = false;
+    if(pulados && !this.erros.length && !novos.length)
+      this.erros.push('As fontes já foram lidas há menos de 1 hora — no plano gratuito o conteúdo só muda de hora em hora.');
     return this.erros;
   }
 };
@@ -3190,10 +3336,14 @@ const CHAVE_HIST = 'investifyme.hist.v1';
 
 const PERIODOS = [
   {id:'1mo', nome:'1 mês',  dias:31,   brapi:'1mo'},
+  {id:'3mo', nome:'3 meses',dias:95,   brapi:'3mo'},
   {id:'6mo', nome:'6 meses',dias:190,  brapi:'6mo'},
   {id:'1a',  nome:'1 ano',  dias:370,  brapi:'1y'},
   {id:'5a',  nome:'5 anos', dias:1830, brapi:'5y'}
 ];
+
+/* o plano gratuito da brapi só entrega estes intervalos */
+const BRAPI_LIVRES = ['1d','5d','1mo','3mo'];
 
 const Hist = {
   series: {},          /* 'us:AAPL|1mo' -> {pontos, hora, moeda, fonte} */
@@ -3247,6 +3397,16 @@ const Hist = {
     const s = this.series[chave + '|1mo'] || this.series[chave + '|6mo'];
     if(s && s.pontos && s.pontos.length >= 3) return s.pontos.slice(-30);
     return meus;
+  },
+
+  /* junta a série da fonte com os pontos que o app anotou, sem repetir dias */
+  juntarComLocal(chaveBase, pontos){
+    const locais = this.pontosDiarios(chaveBase);
+    if(!locais.length) return pontos;
+    const dias = {};
+    pontos.forEach(p => dias[new Date(p.t).toISOString().slice(0,10)] = p);
+    locais.forEach(p => { const d = p.t.slice(0,10); if(!dias[d]) dias[d] = {t: d, v: p.v}; });
+    return Object.keys(dias).sort().map(d => dias[d]);
   },
 
   chaveDe(pos){
@@ -3313,22 +3473,29 @@ const Hist = {
             : 'A cota por minuto estourou. Espere um minutinho e abra de novo.');
         }
         if(j.status === 'error' || !Array.isArray(j.values)) throw new Error(j.message || 'sem dados');
-        out = {pontos: j.values.map(v => ({t: v.datetime, v: parseFloat(v.close)})).reverse(),
+        out = {pontos: this.juntarComLocal(base, j.values.map(v => ({t: v.datetime, v: parseFloat(v.close)})).reverse()),
                moeda: (j.meta && j.meta.currency) || 'USD', fonte: 'Twelve Data'};
 
       }else if(tp.fonte === 'brapi'){
         if(!k.brapi) throw new Error('Para o gráfico da B3, cole o token gratuito da brapi em Configurações.');
+        /* pede o maior intervalo que o plano gratuito permite */
+        const faixa = BRAPI_LIVRES.indexOf(per.brapi) >= 0 ? per.brapi : '3mo';
+        if(!(await Cota.vez('brapi', aviso))) throw new Error('A cota diária da brapi acabou. Tente amanhã.');
         const j = await this.pegar('https://brapi.dev/api/quote/' + encodeURIComponent(tk) +
-          '?range=' + per.brapi + '&interval=1d&token=' + encodeURIComponent(k.brapi));
+          '?range=' + faixa + '&interval=1d&token=' + encodeURIComponent(k.brapi));
         const r = (j.results || [])[0] || {};
         const h = r.historicalDataPrice || [];
         if(!h.length) throw new Error('sem histórico');
-        out = {pontos: h.filter(p => p.close != null).map(p => ({t: new Date(p.date * 1000).toISOString(), v: p.close})),
-               moeda: r.currency || 'BRL', fonte: 'brapi'};
+        let pts = h.filter(p => p.close != null).map(p => ({t: new Date(p.date * 1000).toISOString(), v: p.close}));
+        /* junta com o que o próprio app vem anotando, para passar dos 3 meses com o tempo */
+        pts = this.juntarComLocal(base, pts);
+        out = {pontos: pts, moeda: r.currency || 'BRL', fonte: 'brapi',
+               limitado: faixa !== per.brapi ? faixa : null};
 
       }else if(tp.fonte === 'cripto'){
         const id = CRIPTO_ID[tk];
         if(!id) throw new Error('cripto não reconhecida');
+        if(!(await Cota.vez('coingecko', aviso))) throw new Error('A cota da CoinGecko esgotou por hoje.');
         const j = await this.pegar('https://api.coingecko.com/api/v3/coins/' + id +
           '/market_chart?vs_currency=usd&days=' + per.dias + (per.dias > 90 ? '&interval=daily' : ''));
         out = {pontos: (j.prices || []).map(p => ({t: new Date(p[0]).toISOString(), v: p[1]})),
@@ -3337,6 +3504,7 @@ const Hist = {
       }else if(tp.fonte === 'moeda'){
         if(tk === 'BRL'){ out = {pontos: [], moeda:'BRL', fonte:'—'}; }
         else{
+          if(!(await Cota.vez('awesome', aviso))) throw new Error('A cota da AwesomeAPI esgotou por hoje.');
           const j = await this.pegar('https://economia.awesomeapi.com.br/json/daily/' + tk + '-BRL/' +
             Math.min(per.dias, 360));
           out = {pontos: (j || []).map(p => ({t: new Date(Number(p.timestamp) * 1000).toISOString(), v: parseFloat(p.bid)})).reverse(),
@@ -3383,6 +3551,7 @@ const Hist = {
     const ini = new Date(Date.now() - p.dias * 86400000);
     const fmtBr = d => String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
     try{
+      if(!(await Cota.vez('bcb', aviso))) return {erro:'Cota do Banco Central esgotada por hoje', pontos: []};
       const j = await this.pegar('https://api.bcb.gov.br/dados/serie/bcdata.sgs.' + id +
         '/dados?formato=json&dataInicial=' + fmtBr(ini) + '&dataFinal=' + fmtBr(new Date()));
       return {pontos: (j || []).map(x => {
@@ -3838,16 +4007,18 @@ function casasPreco(v){ return Math.abs(v) >= 100 ? 2 : (Math.abs(v) >= 1 ? 2 : 
 let mkSerie = 'USD', mkPer = '6mo', mkCarregando = false;
 const mkDados = {};
 
+let mkEspera = '';
 async function carregarSerieMercado(){
-  if(mkCarregando) return;
-  mkCarregando = true;
   const chave = mkSerie + '|' + mkPer;
-  const d = await Hist.serieMercado(mkSerie, mkPer, ST.config, seg => {
-    const a = document.querySelector('#view-mercado .card .muted');
-    if(a) a.textContent = 'Esperando a cota gratuita liberar… ' + seg + 's';
+  if(mkCarregando || mkDados[chave]) return;     /* já carregado: não busca de novo */
+  mkCarregando = chave;
+  const d = await Hist.serieMercado(mkSerie, mkPer, ST.config, (seg, nome) => {
+    mkEspera = 'Aguardando a vez na ' + nome + '… ' + seg + 's';
+    const a = document.getElementById('mkAviso');
+    if(a) a.textContent = mkEspera;
   });
   mkDados[chave] = d || {erro:'sem dados', pontos:[]};
-  mkCarregando = false;
+  mkCarregando = false; mkEspera = '';
   if(viewAtual === 'mercado') render();
 }
 
@@ -3867,7 +4038,8 @@ function cardGraficoMercado(){
   const d = mkDados[mkSerie + '|' + mkPer];
   if(!d){
     carregarSerieMercado();
-    h += '<p class="muted small" style="margin-top:14px">Carregando o histórico…</p>';
+    h += '<p class="muted small" id="mkAviso" style="margin-top:14px">' +
+         esc(mkEspera || 'Carregando o histórico…') + '</p>';
   }else if(d.erro || !d.pontos.length){
     h += '<p class="small down" style="margin-top:14px">' + esc(d.erro || 'Sem dados para este período.') + '</p>';
   }else{
@@ -3879,7 +4051,9 @@ function cardGraficoMercado(){
       '<div class="small ' + cls(varP) + '">' + (ehPct ? (fim - ini >= 0 ? '+' : '') + pnum(fim - ini, 2) + ' p.p.' : fmtPct(varP, true)) +
       ' no período</div></div><div class="small muted">Fonte: ' + esc(d.fonte || '—') + '</div></div>' +
       vizLinhaTempo(d.pontos, {moeda: d.moeda, altura: 230,
-        fmt: v => ehPct ? pnum(v,2) + '%' : fmt(v, d.moeda, v >= 1000 ? 0 : 2)});
+        fmt: v => ehPct ? pnum(v,2) + '%' : fmt(v, d.moeda, v >= 1000 ? 0 : 2)}) +
+      (d.limitado ? '<p class="tiny muted" style="margin-top:8px">O plano gratuito da brapi entrega no máximo 3 meses ' +
+        'de histórico para a B3 — períodos maiores mostram o que o app já anotou por conta própria.</p>' : '');
   }
   return h + '</div>';
 }
@@ -4453,6 +4627,25 @@ function viewConfig(){
         'por isso vale não deixar esse arquivo em computador compartilhado.</p>') +
   '</div>';
 
+  /* cotas das fontes */
+  h += '<div class="card"><div class="card-head"><h3>Cota das fontes gratuitas hoje</h3></div>' +
+    '<p class="small muted">Cada serviço tem um limite próprio. O app enfileira as consultas e respeita o ritmo de cada um — ' +
+    'quando o limite do minuto chega, ele espera em vez de tomar erro.</p>' +
+    '<div class="tbl-wrap"><table class="status-tbl"><tbody>';
+  Cota.resumo().forEach(r => {
+    const pct = r.porDia ? Math.min(100, r.usadoHoje / r.porDia * 100) : 0;
+    h += '<tr><td><b>' + esc(r.nome) + '</b></td>' +
+      '<td class="small muted wrap">' + r.usadoHoje + ' de ' + r.porDia + ' consultas hoje · ' +
+        r.porMinuto + ' por minuto' + '</td>' +
+      '<td style="min-width:110px"><div class="bar"><i style="width:' + pct.toFixed(0) +
+        '%;background:' + (pct > 85 ? 'var(--down)' : pct > 60 ? 'var(--warn)' : 'var(--accent)') + '"></i></div></td></tr>';
+  });
+  h += '</tbody></table></div>' +
+    '<label class="row small" style="gap:8px;margin-top:12px"><input type="checkbox" id="cPlanoRss" style="width:auto" ' +
+    (cfg.respeitarPlanoRss === false ? '' : 'checked') + '> ' +
+    'Não reler o mesmo feed de notícias antes de 1 hora (é o ritmo do plano gratuito do rss2json)</label>' +
+  '</div>';
+
   /* armazenamento */
   h += '<div class="card"><div class="card-head"><h3>Onde seus dados ficam salvos</h3></div>' +
     '<div class="tbl-wrap"><table class="status-tbl"><tbody>' +
@@ -4748,7 +4941,9 @@ async function abrirGrafico(id){
       vizLinhaTempo(s.pontos, {moeda: s.moeda, pm: c.pm || null, altura: 250,
         fmt: v => fmt(v, s.moeda, v >= 1000 ? 0 : 2)}) +
       '<p class="tiny muted" style="margin-top:8px">Fonte: ' + esc(s.fonte || '—') +
-      ' · preços de fechamento, com atraso. Passe o dedo ou o mouse sobre o gráfico para ver cada dia.</p>';
+      ' · preços de fechamento, com atraso. Passe o dedo ou o mouse sobre o gráfico para ver cada dia.' +
+      (s.limitado ? '<br><b>O plano gratuito da brapi entrega no máximo 3 meses de histórico</b> — o gráfico mostra esse período, ' +
+        'e vai esticando conforme o app anota os preços do dia a dia.' : '') + '</p>';
     ligarGraficos(area);
   };
   await desenhar();
@@ -5131,6 +5326,7 @@ function ligarCamposDaView(){
         render();
       }catch(e){ chk.checked = false; toast(e.message, 'err'); }
     });
+    liga('cPlanoRss', e => { ST.config.respeitarPlanoRss = e.checked; Store.salvar(); });
     liga('cTtlUs', e => { ST.config.ttlUsMin = Number(e.value); Store.salvar(); });
     liga('cFitaLigada', e => { ST.config.fitaLigada = (e.value === 'sim'); Store.salvar(); renderFita(); });
     liga('cFitaModo', e => { ST.config.fitaModo = e.value; Store.salvar(); renderFita();
@@ -5640,6 +5836,7 @@ async function iniciar(){
   Mercado.lerCache();
   Noticias.lerCache();
   Hist.lerCache();
+  Cota.carregar();
   aplicarTema();
   sincronizarNivel();
   ligarEventos();
