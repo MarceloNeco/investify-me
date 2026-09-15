@@ -451,6 +451,80 @@ html[data-theme="light"] mark{background:rgba(14,163,113,.22)}
 .res-t{font-weight:650; font-size:.93rem; display:flex; align-items:center; gap:7px; flex-wrap:wrap}
 .res-x{font-size:.84rem; color:var(--txt2); margin-top:3px}
 
+/* ---------- fundo decorativo ---------- */
+html{background:var(--bg)}
+body{background:transparent}
+body::before{
+  content:''; position:fixed; inset:0; z-index:-2; pointer-events:none;
+  background-image:url("data:image/webp;base64,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");
+  background-position:center top; background-size:cover; background-repeat:no-repeat;
+}
+body::after{
+  content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:linear-gradient(180deg, rgba(11,15,20,.42) 0%, rgba(11,15,20,.74) 38%, rgba(11,15,20,.90) 100%);
+}
+html[data-theme="light"] body::before{opacity:.14}
+html[data-theme="light"] body::after{
+  background:linear-gradient(180deg, rgba(242,245,249,.80) 0%, rgba(242,245,249,.92) 45%, rgba(242,245,249,.97) 100%);
+}
+html.sem-fundo body::before{display:none}
+html.sem-fundo body::after{display:none}
+
+/* cartões levemente translúcidos, para o fundo aparecer sem atrapalhar a leitura */
+:root{
+  --card:rgba(21,28,38,.90); --card2:rgba(27,36,48,.88);
+}
+html[data-theme="light"]{
+  --card:rgba(255,255,255,.93); --card2:rgba(246,249,252,.92);
+}
+.card, .kpi{backdrop-filter:blur(3px)}
+@media (max-width:760px){ .card, .kpi{backdrop-filter:none} }
+.lock-box{backdrop-filter:blur(8px)}
+
+/* ---------- fita rolante (painel de bolsa) ---------- */
+.fita{
+  flex:1; min-width:0; overflow:hidden; position:relative; height:26px; display:flex; align-items:center;
+  -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%);
+          mask-image:linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%);
+}
+.fita-trilho{
+  display:flex; width:max-content; animation-name:correFita; animation-timing-function:linear;
+  animation-iteration-count:infinite; will-change:transform;
+}
+.fita:hover .fita-trilho, .fita:active .fita-trilho{animation-play-state:paused}
+@keyframes correFita{ from{transform:translateX(0)} to{transform:translateX(-50%)} }
+@media (prefers-reduced-motion:reduce){ .fita-trilho{animation:none} .fita{overflow-x:auto} }
+.fita-bloco{display:flex; align-items:center; gap:22px; padding-right:22px}
+.fi{
+  display:inline-flex; align-items:center; gap:6px; white-space:nowrap; font-size:.8rem;
+  color:var(--txt2); text-decoration:none;
+}
+.fi b{color:var(--txt); font-weight:650; letter-spacing:.02em}
+.fi-v{font-variant-numeric:tabular-nums; color:var(--txt)}
+.fi-not{color:var(--txt2); max-width:none}
+.fi-not:hover{color:var(--accent)}
+.fi-tag{
+  font-size:.68rem; color:var(--accent2); border:1px solid var(--line2); border-radius:5px;
+  padding:1px 6px; margin-right:2px;
+}
+
+/* ---------- notícias ---------- */
+.not-item{
+  display:block; padding:13px 16px; border-bottom:1px solid var(--line); text-decoration:none; color:inherit;
+}
+.not-item:last-child{border-bottom:none}
+.not-item:hover{background:var(--card2)}
+.not-top{display:flex; align-items:center; gap:8px; margin-bottom:4px}
+.not-tit{font-weight:600; font-size:.95rem; line-height:1.35}
+.not-item:hover .not-tit{color:var(--accent)}
+.not-res{font-size:.83rem; color:var(--txt2); margin-top:3px}
+
+@media (max-width:760px){
+  .fita{order:5; flex:0 0 100%; width:100%; height:24px; margin-top:2px}
+  .fi{font-size:.76rem}
+  .not-tit{font-size:.9rem}
+}
+
 </style>
 </head>
 <body>
@@ -465,7 +539,7 @@ html[data-theme="light"] mark{background:rgba(14,163,113,.22)}
       <span class="brand-name">Investify<b>Me</b></span>
     </div>
 
-    <div class="topbar-quotes" id="topQuotes"></div>
+    <div class="fita" id="fita"><div class="fita-trilho" id="fitaTrilho"></div></div>
 
     <div class="topbar-actions">
       <div class="refresh-box">
@@ -485,6 +559,7 @@ html[data-theme="light"] mark{background:rgba(14,163,113,.22)}
       <button class="nav-item active" data-view="painel"><span>📊</span> Painel</button>
       <button class="nav-item" data-view="carteira"><span>💼</span> Carteira</button>
       <button class="nav-item" data-view="mercado"><span>🌎</span> Mercado</button>
+      <button class="nav-item" data-view="noticias"><span>📰</span> Notícias</button>
       <button class="nav-item" data-view="prognostico"><span>🔮</span> Prognóstico</button>
       <button class="nav-item" data-view="coach"><span>🎓</span> Coach</button>
       <button class="nav-item" data-view="glossario"><span>📖</span> Glossário</button>
@@ -514,6 +589,8 @@ html[data-theme="light"] mark{background:rgba(14,163,113,.22)}
       <section class="view hidden" id="view-carteira"></section>
       <!-- MERCADO -->
       <section class="view hidden" id="view-mercado"></section>
+      <!-- NOTÍCIAS -->
+      <section class="view hidden" id="view-noticias"></section>
       <!-- PROGNÓSTICO -->
       <section class="view hidden" id="view-prognostico"></section>
       <!-- COACH -->
@@ -1748,6 +1825,7 @@ function estadoPadrao(){
     moedaBase: 'BRL',
     nivel: 'iniciante',
     tema: 'dark',
+    fundo: true,
     posicoes: [],
     metas: [],
     config: {
@@ -1757,7 +1835,14 @@ function estadoPadrao(){
       retornoCustom: {},           // por tipo, sobrescreve RETORNO_SUGERIDO
       inflacaoEsperada: 4.5,
       autoRefreshMin: 10,
-      chaves: { brapi:'', twelve:'', finnhub:'', alpha:'' },
+      fitaLigada: true,
+      fitaModo: 'misto',
+      fitaDirecao: 'esquerda',
+      fitaVelocidade: 'medio',
+      fitaMercado: true,
+      fontesNoticias: ['infomoney','moneytimes','exame','seudinheiro','g1'],
+      noticiasMin: 20,
+      chaves: { brapi:'', twelve:'', finnhub:'', alpha:'', rss2json:'' },
       driveClientId: '',
       usarCookie: true,
       usarDrive: false
@@ -1842,7 +1927,7 @@ const Store = {
     const base = estadoPadrao();
     const st = Object.assign(base, o);
     st.config = Object.assign(base.config, o.config || {});
-    st.config.chaves = Object.assign({brapi:'',twelve:'',finnhub:'',alpha:''}, (o.config||{}).chaves || {});
+    st.config.chaves = Object.assign({brapi:'',twelve:'',finnhub:'',alpha:'',rss2json:''}, (o.config||{}).chaves || {});
     st.posicoes = Array.isArray(o.posicoes) ? o.posicoes : [];
     st.metas = Array.isArray(o.metas) ? o.metas : [];
     st.vistos = o.vistos || {};
@@ -2117,6 +2202,10 @@ const Drive = {
 
 const CHAVE_CACHE = 'investifyme.cache.v1';
 
+/* Cotações extras que alimentam a fita do topo */
+const FITA_B3_LIVRE = ['PETR4','VALE3','ITUB4','BBAS3','ABEV3','B3SA3','BBDC4','WEGE3'];
+const FITA_INDICES  = ['^BVSP','IFIX.SA'];   /* precisam do token gratuito da brapi */
+
 const Mercado = {
   precos: {},        // 'b3:PETR4' -> {p, moeda, var, hora, fonte}
   indicadores: {},   // selic, cdi, ipca12, poupanca
@@ -2216,7 +2305,7 @@ const Mercado = {
     let semToken = 0;
     for(const lote of lotes){
       try{
-        const j = await this.pegarJson(base + lote.join(',') + auth);
+        const j = await this.pegarJson(base + lote.map(encodeURIComponent).join(',') + auth);
         (j.results || []).forEach(r => {
           if(r.regularMarketPrice == null) return;
           this.precos['b3:' + r.symbol.toUpperCase()] = {
@@ -2363,7 +2452,15 @@ const Mercado = {
 
     /* o painel sempre mostra dólar, euro e bitcoin na régua do topo */
     ['USD','EUR'].forEach(m => moedas.add(m));
-    if(!this.fresco('cripto:BTC', ttl)) cripto.push('BTC');
+    ['BTC','ETH'].forEach(c => { if(!this.fresco('cripto:' + c, ttl)) cripto.push(c); });
+
+    /* cotações extras para a fita: blue chips da B3 (não exigem token) e índices (com token) */
+    if(config.fitaMercado !== false){
+      FITA_B3_LIVRE.forEach(t => { if(!this.fresco('b3:' + t, ttl)) b3.push(t); });
+      if((config.chaves || {}).brapi){
+        FITA_INDICES.forEach(t => { if(!this.fresco('b3:' + t, ttl)) b3.push(t); });
+      }
+    }
 
     await Promise.all([
       this.buscarCambio(Array.from(moedas)),
@@ -2435,6 +2532,136 @@ const Mercado = {
     return {valor: valor, estimado: true, taxaAno: taxaAno, anos: anos};
   }
 };
+
+</script>
+<script>
+/* =========================================================
+   InvestifyMe — notícias (RSS público via rss2json)
+   Sem chave funciona; com a chave gratuita do rss2json o limite é bem maior.
+   ========================================================= */
+const CHAVE_NOTICIAS = 'investifyme.noticias.v1';
+
+const FONTES_NOTICIAS = [
+  {id:'infomoney',  nome:'InfoMoney',     pais:'BR', url:'https://www.infomoney.com.br/feed/'},
+  {id:'moneytimes', nome:'Money Times',   pais:'BR', url:'https://www.moneytimes.com.br/feed/'},
+  {id:'exame',      nome:'Exame Invest',  pais:'BR', url:'https://exame.com/invest/feed/'},
+  {id:'seudinheiro',nome:'Seu Dinheiro',  pais:'BR', url:'https://www.seudinheiro.com/feed/'},
+  {id:'g1',         nome:'G1 Economia',   pais:'BR', url:'https://g1.globo.com/rss/g1/economia/'},
+  {id:'cnbc',       nome:'CNBC (EUA)',    pais:'US', url:'https://www.cnbc.com/id/100003114/device/rss/rss.html'}
+];
+
+const Noticias = {
+  itens: [],
+  ultima: null,
+  erros: [],
+  carregando: false,
+
+  lerCache(){
+    try{
+      const o = JSON.parse(localStorage.getItem(CHAVE_NOTICIAS) || 'null');
+      if(o && Array.isArray(o.itens)){
+        this.itens = o.itens;
+        this.ultima = o.ultima ? new Date(o.ultima) : null;
+      }
+    }catch(e){}
+  },
+  gravarCache(){
+    try{
+      localStorage.setItem(CHAVE_NOTICIAS, JSON.stringify({
+        itens: this.itens.slice(0, 120),
+        ultima: this.ultima ? this.ultima.toISOString() : null
+      }));
+    }catch(e){}
+  },
+  fresco(minutos){
+    if(!this.ultima || !this.itens.length) return false;
+    return (Date.now() - this.ultima.getTime()) < (minutos || 20) * 60000;
+  },
+
+  limpaTexto(t){
+    return (t || '').replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"')
+      .replace(/&#8217;|&#39;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+      .replace(/\s+/g,' ').trim();
+  },
+  linkSeguro(u){
+    return (/^https?:\/\//i.test(u || '')) ? u : '';
+  },
+
+  async atualizar(config, forcar){
+    if(this.carregando) return [];
+    const ativas = (config.fontesNoticias && config.fontesNoticias.length)
+      ? FONTES_NOTICIAS.filter(f => config.fontesNoticias.indexOf(f.id) >= 0)
+      : FONTES_NOTICIAS.filter(f => f.pais === 'BR');
+    if(!forcar && this.fresco(config.noticiasMin || 20)) return [];
+
+    this.carregando = true;
+    this.erros = [];
+    const chave = (config.chaves || {}).rss2json || '';
+    const novos = [];
+
+    for(const f of ativas){
+      const url = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(f.url) +
+                  (chave ? '&api_key=' + encodeURIComponent(chave) + '&count=20' : '');
+      try{
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 15000);
+        const r = await fetch(url, {signal: ctrl.signal});
+        clearTimeout(t);
+        const j = await r.json();
+        if(j.status !== 'ok' || !Array.isArray(j.items)){
+          this.erros.push(f.nome + ': ' + (j.message || ('resposta ' + r.status)));
+          continue;
+        }
+        j.items.slice(0, 20).forEach(it => {
+          const link = this.linkSeguro(it.link);
+          if(!link) return;
+          novos.push({
+            fonte: f.id,
+            fonteNome: f.nome,
+            pais: f.pais,
+            titulo: this.limpaTexto(it.title).slice(0, 220),
+            resumo: this.limpaTexto(it.description).slice(0, 300),
+            link: link,
+            data: it.pubDate ? new Date(it.pubDate.replace(' ', 'T')).toISOString() : null
+          });
+        });
+      }catch(e){
+        this.erros.push(f.nome + ': ' + (e.name === 'AbortError' ? 'demorou demais' : e.message));
+      }
+      await new Promise(r => setTimeout(r, 450));
+    }
+
+    if(novos.length){
+      /* tira repetidos pelo link e ordena da mais nova para a mais velha */
+      const vistos = {};
+      this.itens = novos.filter(n => {
+        if(vistos[n.link]) return false;
+        vistos[n.link] = 1; return true;
+      }).sort((a,b) => (b.data || '').localeCompare(a.data || ''));
+      this.ultima = new Date();
+      this.gravarCache();
+    }
+    this.carregando = false;
+    return this.erros;
+  }
+};
+
+/* "há 12 min", "há 3 h", "ontem" */
+function tempoRelativo(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  if(isNaN(d)) return '';
+  const min = Math.round((Date.now() - d.getTime()) / 60000);
+  if(min < 1) return 'agora';
+  if(min < 60) return 'há ' + min + ' min';
+  const h = Math.round(min / 60);
+  if(h < 24) return 'há ' + h + (h === 1 ? ' hora' : ' horas');
+  const dias = Math.round(h / 24);
+  if(dias === 1) return 'ontem';
+  if(dias < 7) return 'há ' + dias + ' dias';
+  return d.toLocaleDateString('pt-BR');
+}
 
 </script>
 <script>
@@ -2602,7 +2829,7 @@ function vizProgresso(atual, alvo, fmt){
 }
 
 </script>
-<script>window.CARTEIRA_EMBUTIDA = {"v": 1, "criadoEm": "2026-09-14T15:34:02.688675", "atualizadoEm": "2026-09-14T15:34:02.688675", "moedaBase": "BRL", "nivel": "iniciante", "tema": "dark", "posicoes": [{"id": "imp01", "ticker": "FISV", "nome": "Fiserv, Inc.", "tipo": "acao-us", "qtd": 5.0, "pm": 156.78, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 52.03, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp02", "ticker": "ORCL", "nome": "Oracle Corp.", "tipo": "acao-us", "qtd": 8.0, "pm": 160.29, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 143.94, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp03", "ticker": "TFLO", "nome": "iShares Treasury Floating Rate Bond ETF", "tipo": "etf-us", "qtd": 106.0001, "pm": 50.57, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 50.58, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp04", "ticker": "PLTR", "nome": "Palantir Technologies Inc - Class A", "tipo": "acao-us", "qtd": 4.0, "pm": 166.4, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 171.41, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp05", "ticker": "OWL", "nome": "Blue Owl Capital Inc - Class A", "tipo": "acao-us", "qtd": 1.0, "pm": 16.27, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 10.5, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp06", "ticker": "RRRPBZ", "nome": "Brava Energia 9,75% — venc. 05/02/2031", "tipo": "bond-us", "qtd": 1, "pm": 5347.4, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "Código na Avenue: 5CRLFV9 · 5 títulos a US$ 1034.00", "valorManual": 5356.67, "valorManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp07", "ticker": "MA", "nome": "Mastercard Incorporated - Class A", "tipo": "acao-us", "qtd": 0.8, "pm": 394.85, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 574.11, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp08", "ticker": "NVDA", "nome": "NVIDIA Corp", "tipo": "acao-us", "qtd": 3.04, "pm": 55.36, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 211.31, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp09", "ticker": "MFG", "nome": "Mizuho Financial Group, Inc. - ADR", "tipo": "acao-us", "qtd": 15.0, "pm": 6.38, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 11.3, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp10", "ticker": "WT", "nome": "WisdomTree Inc", "tipo": "acao-us", "qtd": 5.0, "pm": 13.45, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 23.33, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp11", "ticker": "AMZN", "nome": "Amazon.com Inc.", "tipo": "acao-us", "qtd": 30.26254, "pm": 226.9, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 252.76, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp12", "ticker": "SABR", "nome": "Sabre Corp", "tipo": "acao-us", "qtd": 10.0, "pm": 1.81, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 2.13, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp13", "ticker": "AMBIQ", "nome": "Ambipar Emergency Response - Ordinary Shares - Class A", "tipo": "acao-us", "qtd": 100.0, "pm": 1.17, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 0.0, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp14", "ticker": "ISRG", "nome": "Intuitive Surgical Inc", "tipo": "acao-us", "qtd": 1.0, "pm": 493.41, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 372.95, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp15", "ticker": "INTR", "nome": "Inter & Co Inc - Class A", "tipo": "acao-us", "qtd": 13.0, "pm": 4.08, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 5.5, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp16", "ticker": "ELAN", "nome": "Elanco Animal Health Inc", "tipo": "acao-us", "qtd": 10.0, "pm": 20.37, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 23.26, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp17", "ticker": "AVGO", "nome": "Broadcom Inc", "tipo": "acao-us", "qtd": 2.0, "pm": 303.38, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 344.79, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp18", "ticker": "ROKU", "nome": "Roku Inc - Class A", "tipo": "acao-us", "qtd": 5.0, "pm": 93.81, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 156.71, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp19", "ticker": "JPM", "nome": "JPMorgan Chase & Co.", "tipo": "acao-us", "qtd": 0.59, "pm": 308.18, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 351.61, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp20", "ticker": "TSM", "nome": "Taiwan Semiconductor Manufacturing - ADR", "tipo": "acao-us", "qtd": 5.0, "pm": 186.43, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 419.71, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp21", "ticker": "CROX", "nome": "Crocs Inc", "tipo": "acao-us", "qtd": 8.34, "pm": 135.95, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 111.18, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp22", "ticker": "BNY", "nome": "BANK NEW YORK MELLON CORP", "tipo": "acao-us", "qtd": 2.0, "pm": 130.68, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 160.0, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp23", "ticker": "FNB", "nome": "F.N.B. Corp.", "tipo": "acao-us", "qtd": 10.0, "pm": 16.01, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 18.25, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp24", "ticker": "CSNABZ", "nome": "CSN 6,75% — venc. 28/01/2028", "tipo": "bond-us", "qtd": 1, "pm": 5046.56, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "Código na Avenue: 5CRRZJ8 · 5 títulos a US$ 978.00", "valorManual": 4321.56, "valorManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp25", "ticker": "RGTI", "nome": "Rigetti Computing Inc", "tipo": "acao-us", "qtd": 10.0, "pm": 45.36, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 15.32, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp26", "ticker": "TSLA", "nome": "Tesla Inc", "tipo": "acao-us", "qtd": 2.2, "pm": 331.85, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 359.4, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp27", "ticker": "AMD", "nome": "Advanced Micro Devices Inc.", "tipo": "acao-us", "qtd": 6.5, "pm": 180.84, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 485.11, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp28", "ticker": "IRIX", "nome": "IRIDEX Corp.", "tipo": "acao-us", "qtd": 31.0, "pm": 2.11, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 0.62, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp29", "ticker": "MVST", "nome": "Microvast Holdings Inc", "tipo": "acao-us", "qtd": 200.0, "pm": 4.6, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 0.6, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp30", "ticker": "META", "nome": "Meta Platforms Inc - Class A", "tipo": "acao-us", "qtd": 2.5, "pm": 525.47, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 654.94, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp31", "ticker": "INSM", "nome": "Insmed Inc", "tipo": "acao-us", "qtd": 2.0, "pm": 163.51, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 124.97, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp32", "ticker": "KEEL", "nome": "Keel Infrastructure Corp.", "tipo": "acao-us", "qtd": 10.0, "pm": 1.98, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 3.47, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp33", "ticker": "PODD", "nome": "Insulet Corporation", "tipo": "acao-us", "qtd": 0.2, "pm": 323.43, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 135.84, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp34", "ticker": "GOOG", "nome": "Alphabet Inc - Class C", "tipo": "acao-us", "qtd": 27.4, "pm": 220.49, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 342.24, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp35", "ticker": "AAPL", "nome": "Apple Inc", "tipo": "acao-us", "qtd": 0.14, "pm": 197.41, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 332.8, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp36", "ticker": "RKLB", "nome": "Rocket Lab USA Inc", "tipo": "acao-us", "qtd": 1.0, "pm": 66.67, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 62.97, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp37", "ticker": "CRWD", "nome": "Crowdstrike Holdings Inc - Class A", "tipo": "acao-us", "qtd": 4.72, "pm": 114.5, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 238.39, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp38", "ticker": "V", "nome": "Visa Inc - Class A", "tipo": "acao-us", "qtd": 8.0, "pm": 351.71, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 374.68, "precoManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp39", "ticker": "USD", "nome": "Saldo na conta investimento", "tipo": "caixa", "qtd": 501.73, "pm": 0, "moeda": "USD", "inst": "Avenue", "data": "", "notas": ""}, {"id": "imp40", "ticker": "PGBL", "nome": "Plano 263800 — Absoluto Atenas Prev FIM (regressivo)", "tipo": "previdencia", "qtd": 1, "pm": 29575.11, "moeda": "BRL", "inst": "BTG Pactual", "data": "", "notas": "Tabela regressiva · início 14/02/2025", "valorManual": 35987.13, "valorManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp41", "ticker": "VGBL", "nome": "Plano 263802 — Absoluto Atenas Prev FIM (regressivo)", "tipo": "previdencia", "qtd": 1, "pm": 53901.32, "moeda": "BRL", "inst": "BTG Pactual", "data": "", "notas": "Tabela regressiva", "valorManual": 93388.2, "valorManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp42", "ticker": "PGBL", "nome": "Plano 263801 — Absoluto Atenas Prev FIM (regressivo)", "tipo": "previdencia", "qtd": 1, "pm": 24873.19, "moeda": "BRL", "inst": "BTG Pactual", "data": "", "notas": "Tabela regressiva", "valorManual": 30421.02, "valorManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp43", "ticker": "PRIVILEGE DI", "nome": "Privilege DI", "tipo": "fundo", "qtd": 1, "pm": 168161.6, "moeda": "BRL", "inst": "Itaú", "data": "", "notas": "Referência: saldo em 02/01/2026 (R$ 168.161,60). Rendimento no ano: R$ 12.024,28", "valorManual": 180185.88, "valorManualData": "2026-09-14T15:34:02.688675"}, {"id": "imp44", "ticker": "ITAÚ ACTIVE FIX ESG CRÉD", "nome": "Itaú Active Fix ESG Crédito Privado Multimercado", "tipo": "fundo", "qtd": 1, "pm": 57249.59, "moeda": "BRL", "inst": "Itaú", "data": "", "notas": "Referência: saldo em 02/01/2026 (R$ 57.249,59). Rendimento no ano: R$ 5.265,96", "valorManual": 62515.55, "valorManualData": "2026-09-14T15:34:02.688675"}], "metas": [], "config": {"aporteMensal": 0, "perfil": "moderado", "alvoAlocacao": null, "retornoCustom": {}, "inflacaoEsperada": 4.5, "autoRefreshMin": 10, "chaves": {"brapi": "", "twelve": "", "finnhub": "", "alpha": ""}, "driveClientId": "", "usarCookie": true, "usarDrive": false}, "vistos": {}, "coachFeitos": []};</script>
+<script>window.CARTEIRA_EMBUTIDA = {"v": 1, "criadoEm": "2026-09-15T01:41:12.131961", "atualizadoEm": "2026-09-15T01:41:12.131961", "moedaBase": "BRL", "nivel": "iniciante", "tema": "dark", "posicoes": [{"id": "imp01", "ticker": "FISV", "nome": "Fiserv, Inc.", "tipo": "acao-us", "qtd": 5.0, "pm": 156.78, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 52.03, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp02", "ticker": "ORCL", "nome": "Oracle Corp.", "tipo": "acao-us", "qtd": 8.0, "pm": 160.29, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 143.94, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp03", "ticker": "TFLO", "nome": "iShares Treasury Floating Rate Bond ETF", "tipo": "etf-us", "qtd": 106.0001, "pm": 50.57, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 50.58, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp04", "ticker": "PLTR", "nome": "Palantir Technologies Inc - Class A", "tipo": "acao-us", "qtd": 4.0, "pm": 166.4, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 171.41, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp05", "ticker": "OWL", "nome": "Blue Owl Capital Inc - Class A", "tipo": "acao-us", "qtd": 1.0, "pm": 16.27, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 10.5, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp06", "ticker": "RRRPBZ", "nome": "Brava Energia 9,75% — venc. 05/02/2031", "tipo": "bond-us", "qtd": 1, "pm": 5347.4, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "Código na Avenue: 5CRLFV9 · 5 títulos a US$ 1034.00", "valorManual": 5356.67, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp07", "ticker": "MA", "nome": "Mastercard Incorporated - Class A", "tipo": "acao-us", "qtd": 0.8, "pm": 394.85, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 574.11, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp08", "ticker": "NVDA", "nome": "NVIDIA Corp", "tipo": "acao-us", "qtd": 3.04, "pm": 55.36, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 211.31, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp09", "ticker": "MFG", "nome": "Mizuho Financial Group, Inc. - ADR", "tipo": "acao-us", "qtd": 15.0, "pm": 6.38, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 11.3, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp10", "ticker": "WT", "nome": "WisdomTree Inc", "tipo": "acao-us", "qtd": 5.0, "pm": 13.45, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 23.33, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp11", "ticker": "AMZN", "nome": "Amazon.com Inc.", "tipo": "acao-us", "qtd": 30.26254, "pm": 226.9, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 252.76, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp12", "ticker": "SABR", "nome": "Sabre Corp", "tipo": "acao-us", "qtd": 10.0, "pm": 1.81, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 2.13, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp13", "ticker": "AMBIQ", "nome": "Ambipar Emergency Response - Ordinary Shares - Class A", "tipo": "acao-us", "qtd": 100.0, "pm": 1.17, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 0.0, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp14", "ticker": "ISRG", "nome": "Intuitive Surgical Inc", "tipo": "acao-us", "qtd": 1.0, "pm": 493.41, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 372.95, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp15", "ticker": "INTR", "nome": "Inter & Co Inc - Class A", "tipo": "acao-us", "qtd": 13.0, "pm": 4.08, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 5.5, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp16", "ticker": "ELAN", "nome": "Elanco Animal Health Inc", "tipo": "acao-us", "qtd": 10.0, "pm": 20.37, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 23.26, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp17", "ticker": "AVGO", "nome": "Broadcom Inc", "tipo": "acao-us", "qtd": 2.0, "pm": 303.38, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 344.79, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp18", "ticker": "ROKU", "nome": "Roku Inc - Class A", "tipo": "acao-us", "qtd": 5.0, "pm": 93.81, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 156.71, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp19", "ticker": "JPM", "nome": "JPMorgan Chase & Co.", "tipo": "acao-us", "qtd": 0.59, "pm": 308.18, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 351.61, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp20", "ticker": "TSM", "nome": "Taiwan Semiconductor Manufacturing - ADR", "tipo": "acao-us", "qtd": 5.0, "pm": 186.43, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 419.71, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp21", "ticker": "CROX", "nome": "Crocs Inc", "tipo": "acao-us", "qtd": 8.34, "pm": 135.95, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 111.18, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp22", "ticker": "BNY", "nome": "BANK NEW YORK MELLON CORP", "tipo": "acao-us", "qtd": 2.0, "pm": 130.68, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 160.0, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp23", "ticker": "FNB", "nome": "F.N.B. Corp.", "tipo": "acao-us", "qtd": 10.0, "pm": 16.01, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 18.25, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp24", "ticker": "CSNABZ", "nome": "CSN 6,75% — venc. 28/01/2028", "tipo": "bond-us", "qtd": 1, "pm": 5046.56, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "Código na Avenue: 5CRRZJ8 · 5 títulos a US$ 978.00", "valorManual": 4321.56, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp25", "ticker": "RGTI", "nome": "Rigetti Computing Inc", "tipo": "acao-us", "qtd": 10.0, "pm": 45.36, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 15.32, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp26", "ticker": "TSLA", "nome": "Tesla Inc", "tipo": "acao-us", "qtd": 2.2, "pm": 331.85, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 359.4, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp27", "ticker": "AMD", "nome": "Advanced Micro Devices Inc.", "tipo": "acao-us", "qtd": 6.5, "pm": 180.84, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 485.11, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp28", "ticker": "IRIX", "nome": "IRIDEX Corp.", "tipo": "acao-us", "qtd": 31.0, "pm": 2.11, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 0.62, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp29", "ticker": "MVST", "nome": "Microvast Holdings Inc", "tipo": "acao-us", "qtd": 200.0, "pm": 4.6, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 0.6, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp30", "ticker": "META", "nome": "Meta Platforms Inc - Class A", "tipo": "acao-us", "qtd": 2.5, "pm": 525.47, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 654.94, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp31", "ticker": "INSM", "nome": "Insmed Inc", "tipo": "acao-us", "qtd": 2.0, "pm": 163.51, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 124.97, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp32", "ticker": "KEEL", "nome": "Keel Infrastructure Corp.", "tipo": "acao-us", "qtd": 10.0, "pm": 1.98, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 3.47, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp33", "ticker": "PODD", "nome": "Insulet Corporation", "tipo": "acao-us", "qtd": 0.2, "pm": 323.43, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 135.84, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp34", "ticker": "GOOG", "nome": "Alphabet Inc - Class C", "tipo": "acao-us", "qtd": 27.4, "pm": 220.49, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 342.24, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp35", "ticker": "AAPL", "nome": "Apple Inc", "tipo": "acao-us", "qtd": 0.14, "pm": 197.41, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 332.8, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp36", "ticker": "RKLB", "nome": "Rocket Lab USA Inc", "tipo": "acao-us", "qtd": 1.0, "pm": 66.67, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 62.97, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp37", "ticker": "CRWD", "nome": "Crowdstrike Holdings Inc - Class A", "tipo": "acao-us", "qtd": 4.72, "pm": 114.5, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 238.39, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp38", "ticker": "V", "nome": "Visa Inc - Class A", "tipo": "acao-us", "qtd": 8.0, "pm": 351.71, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 374.68, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp39", "ticker": "USD", "nome": "Saldo na conta investimento", "tipo": "caixa", "qtd": 501.73, "pm": 0, "moeda": "USD", "inst": "Avenue", "data": "", "notas": ""}, {"id": "imp40", "ticker": "PGBL", "nome": "Plano 263800 — Absoluto Atenas Prev FIM (regressivo)", "tipo": "previdencia", "qtd": 1, "pm": 29575.11, "moeda": "BRL", "inst": "BTG Pactual", "data": "", "notas": "Tabela regressiva · início 14/02/2025", "valorManual": 35987.13, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp41", "ticker": "VGBL", "nome": "Plano 263802 — Absoluto Atenas Prev FIM (regressivo)", "tipo": "previdencia", "qtd": 1, "pm": 53901.32, "moeda": "BRL", "inst": "BTG Pactual", "data": "", "notas": "Tabela regressiva", "valorManual": 93388.2, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp42", "ticker": "PGBL", "nome": "Plano 263801 — Absoluto Atenas Prev FIM (regressivo)", "tipo": "previdencia", "qtd": 1, "pm": 24873.19, "moeda": "BRL", "inst": "BTG Pactual", "data": "", "notas": "Tabela regressiva", "valorManual": 30421.02, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp43", "ticker": "USD", "nome": "Conta corrente *8625", "tipo": "caixa", "qtd": 103.0, "pm": 0, "moeda": "USD", "inst": "BB Americas", "data": "", "notas": "Checking-8625 · sem rendimento"}, {"id": "imp44", "ticker": "USD", "nome": "Money market *8034", "tipo": "caixa", "qtd": 1964.57, "pm": 0, "moeda": "USD", "inst": "BB Americas", "data": "", "notas": "E-Money Market-8034 · rende 1,341% a.a."}, {"id": "imp45", "ticker": "CD", "nome": "CD *4405 — 2,5181% a.a., venc. 18/03/2027", "tipo": "bond-us", "qtd": 1, "pm": 1056.04, "moeda": "USD", "inst": "BB Americas", "data": "", "notas": "Certificate of Deposit *4405 · taxa 2,5181% a.a. · vencimento 18/03/2027 · referência: saldo do início de 2026 (juros pagos no ano: US$ 18,54)", "valorManual": 1074.58, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp46", "ticker": "PRIVILEGE DI", "nome": "Privilege DI", "tipo": "fundo", "qtd": 1, "pm": 168161.6, "moeda": "BRL", "inst": "Itaú", "data": "", "notas": "Referência: saldo em 02/01/2026 (R$ 168.161,60). Rendimento no ano: R$ 12.024,28", "valorManual": 180185.88, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp47", "ticker": "ITAÚ ACTIVE FIX ESG CRÉD", "nome": "Itaú Active Fix ESG Crédito Privado Multimercado", "tipo": "fundo", "qtd": 1, "pm": 57249.59, "moeda": "BRL", "inst": "Itaú", "data": "", "notas": "Referência: saldo em 02/01/2026 (R$ 57.249,59). Rendimento no ano: R$ 5.265,96", "valorManual": 62515.55, "valorManualData": "2026-09-15T01:41:12.131961"}], "metas": [], "config": {"aporteMensal": 0, "perfil": "moderado", "alvoAlocacao": null, "retornoCustom": {}, "inflacaoEsperada": 4.5, "autoRefreshMin": 10, "chaves": {"brapi": "", "twelve": "", "finnhub": "", "alpha": ""}, "driveClientId": "", "usarCookie": true, "usarDrive": false}, "vistos": {}, "coachFeitos": []};</script>
 <script>
 /* =========================================================
    InvestifyMe — aplicação
@@ -3070,6 +3297,58 @@ function viewMercado(){
 }
 
 /* =========================================================
+   NOTÍCIAS
+   ========================================================= */
+let filtroFonte = 'todas', buscaNoticia = '';
+
+function viewNoticias(){
+  let h = '<div class="card-head"><h1>Notícias</h1><div class="spacer"></div>' +
+    '<span class="tiny muted">' + (Noticias.ultima ? 'atualizado ' + fmtHora(Noticias.ultima) : 'ainda não buscado') + '</span>' +
+    '<button class="btn sm" data-acao="atualizar-noticias">⟳ Buscar notícias</button></div>';
+
+  if(Noticias.carregando) h += '<p class="small muted">Buscando…</p>';
+
+  if(!Noticias.itens.length){
+    return h + '<div class="card"><div class="empty"><span class="ic">📰</span>' +
+      '<h2>Nenhuma notícia carregada</h2>' +
+      '<p>As manchetes vêm dos sites de economia por RSS público — InfoMoney, Money Times, Exame, Seu Dinheiro, G1 e CNBC.</p>' +
+      '<button class="btn primary" data-acao="atualizar-noticias" style="margin-top:12px">Buscar agora</button></div></div>';
+  }
+
+  /* filtros */
+  const fontes = {};
+  Noticias.itens.forEach(n => fontes[n.fonte] = n.fonteNome);
+  h += '<div class="card"><input id="buscaNoticia" placeholder="🔎 Filtrar manchetes: Petrobras, juros, dólar…" value="' +
+       esc(buscaNoticia) + '" autocomplete="off"><div class="row" style="margin-top:10px">' +
+       '<span class="chip click' + (filtroFonte === 'todas' ? ' on' : '') + '" data-fonte="todas">Todas</span>';
+  Object.keys(fontes).forEach(f => {
+    h += '<span class="chip click' + (filtroFonte === f ? ' on' : '') + '" data-fonte="' + esc(f) + '">' + esc(fontes[f]) + '</span>';
+  });
+  h += '</div></div>';
+
+  const q = semAcento(buscaNoticia);
+  const lista = Noticias.itens.filter(n =>
+    (filtroFonte === 'todas' || n.fonte === filtroFonte) &&
+    (!q || semAcento(n.titulo + ' ' + n.resumo).includes(q)));
+
+  if(!lista.length) return h + '<div class="card"><p class="muted">Nenhuma manchete com esse filtro.</p></div>';
+
+  h += '<div class="card pad0">';
+  lista.slice(0, 60).forEach(n => {
+    h += '<a class="not-item" href="' + esc(n.link) + '" target="_blank" rel="noopener noreferrer">' +
+      '<div class="not-top"><span class="badge">' + esc(n.fonteNome) + '</span>' +
+        '<span class="tiny muted">' + esc(tempoRelativo(n.data)) + '</span></div>' +
+      '<div class="not-tit">' + (q ? destacar(n.titulo, buscaNoticia) : esc(n.titulo)) + '</div>' +
+      (n.resumo ? '<div class="not-res">' + esc(n.resumo.slice(0, 180)) + '…</div>' : '') +
+    '</a>';
+  });
+  h += '</div>';
+  h += '<p class="tiny muted">As manchetes abrem no site de origem. O InvestifyMe não hospeda nem edita o conteúdo — ' +
+       'e a leitura das notícias passa pelo serviço gratuito rss2json, que converte o RSS dos sites.</p>';
+  return h;
+}
+
+/* =========================================================
    PROGNÓSTICO
    ========================================================= */
 function retornoPonderado(t){
@@ -3413,8 +3692,32 @@ function viewConfig(){
           'Em que moeda você quer ver os totais.') +
     campo('Nível das explicações', selectHTML('cNivel', [['iniciante','Iniciante'],['medio','Médio'],['expert','Expert']], ST.nivel), 'nivel-conhecimento') +
     campo('Tema', selectHTML('cTema', [['dark','Escuro'],['light','Claro']], ST.tema)) +
+    campo('Fundo decorativo', selectHTML('cFundo', [['sim','Ligado'],['nao','Desligado']], ST.fundo === false ? 'nao' : 'sim'),
+          null, 'A arte de gráficos atrás das telas.') +
     campo('Atualizar cotações a cada', selectHTML('cAuto', [[5,'5 minutos'],[10,'10 minutos'],[30,'30 minutos'],[0,'só quando eu clicar']], String(cfg.autoRefreshMin))) +
   '</div></div>';
+
+  /* fita e notícias */
+  h += '<div class="card"><div class="card-head"><h3>Fita de cotações e notícias (topo)</h3></div>' +
+    '<div class="fgrid">' +
+      campo('Mostrar a fita', selectHTML('cFitaLigada', [['sim','Sim'],['nao','Não']], cfg.fitaLigada === false ? 'nao' : 'sim')) +
+      campo('O que passa nela', selectHTML('cFitaModo', [['misto','Cotações + manchetes'],['cotacoes','Só cotações'],['noticias','Só manchetes']], cfg.fitaModo || 'misto')) +
+      campo('Sentido', selectHTML('cFitaDir', [['esquerda','Para a esquerda ←'],['direita','Para a direita →']], cfg.fitaDirecao || 'esquerda')) +
+      campo('Velocidade', selectHTML('cFitaVel', [['lento','Devagar'],['medio','Média'],['rapido','Rápida']], cfg.fitaVelocidade || 'medio')) +
+    '</div>' +
+    '<p class="hint" style="margin-top:-4px">Passe o mouse (ou segure o dedo) na fita para parar a rolagem e ler com calma.</p>' +
+    '<div class="sub-lbl" style="margin-top:14px">De onde vêm as manchetes</div><div class="row">';
+  FONTES_NOTICIAS.forEach(f => {
+    const ativas = cfg.fontesNoticias || FONTES_NOTICIAS.filter(x => x.pais === 'BR').map(x => x.id);
+    h += '<span class="chip click' + (ativas.indexOf(f.id) >= 0 ? ' on' : '') + '" data-fonte-toggle="' + f.id + '">' +
+         (f.pais === 'US' ? '🇺🇸 ' : '🇧🇷 ') + esc(f.nome) + '</span>';
+  });
+  h += '</div>' +
+    '<label class="f" style="margin-top:14px"><span class="lb">Chave do rss2json (opcional)</span>' +
+    '<input id="kRss" value="' + esc(cfg.chaves.rss2json || '') + '" placeholder="opcional — só se as notícias falharem" autocomplete="off">' +
+    '<span class="hint">Sem chave funciona, mas o serviço limita as consultas. A chave gratuita (rss2json.com) aumenta bastante esse limite. ' +
+    'Depois de colar, clique em Salvar chaves no bloco abaixo.</span></label>' +
+  '</div>';
 
   /* chaves */
   h += '<div class="card"><div class="card-head"><h3>Chaves gratuitas (opcional)</h3></div>' +
@@ -3792,7 +4095,7 @@ function irPara(v){
 }
 
 function render(){
-  const views = {painel:viewPainel, carteira:viewCarteira, mercado:viewMercado,
+  const views = {painel:viewPainel, carteira:viewCarteira, mercado:viewMercado, noticias:viewNoticias,
                  prognostico:viewPrognostico, coach:viewCoach, glossario:viewGlossario, config:viewConfig};
   $$('.view').forEach(s => s.classList.add('hidden'));
   const el = $('#view-' + viewAtual);
@@ -3802,22 +4105,107 @@ function render(){
   ligarCamposDaView();
 }
 
-function renderTopo(){
-  const c = Mercado.cambio, ind = Mercado.indicadores;
+/* ---------- fita rolante do topo (estilo painel de bolsa) ---------- */
+const NOMES_FITA = {'^BVSP':'IBOV', 'IFIX.SA':'IFIX'};
+
+function cotacoesDaFita(){
   const itens = [];
-  if(c.USD) itens.push(['USD', 'R$ ' + pnum(c.USD.p,3), c.USD.var]);
-  if(c.EUR) itens.push(['EUR', 'R$ ' + pnum(c.EUR.p,3), c.EUR.var]);
-  const btc = Mercado.precos['cripto:BTC'];
-  if(btc) itens.push(['BTC', 'US$ ' + btc.p.toLocaleString('pt-BR',{maximumFractionDigits:0}), btc.var]);
-  if(ind.cdi) itens.push(['CDI', pnum(ind.cdi.valor,2) + '%', null]);
-  $('#topQuotes').innerHTML = itens.map(([n,v,vr]) =>
-    '<span class="tq"><b>' + n + '</b><span class="v">' + v + '</span>' +
-    (vr != null ? '<span class="' + cls(vr) + '">' + seta(vr) + fmtPct(vr) + '</span>' : '') + '</span>').join('');
+  const add = (nome, valor, variacao) => itens.push({tipo:'cot', nome, valor, variacao});
+  const c = Mercado.cambio, ind = Mercado.indicadores;
+
+  ['^BVSP','IFIX.SA'].forEach(k => {
+    const o = Mercado.precos['b3:' + k.toUpperCase()];
+    if(o) add(NOMES_FITA[k] || k, o.p.toLocaleString('pt-BR',{maximumFractionDigits:0}) + ' pts', o.var);
+  });
+  if(c.USD) add('DÓLAR', 'R$ ' + pnum(c.USD.p,3), c.USD.var);
+  if(c.EUR) add('EURO',  'R$ ' + pnum(c.EUR.p,3), c.EUR.var);
+  ['BTC','ETH'].forEach(k => {
+    const o = Mercado.precos['cripto:' + k];
+    if(o) add(k, 'US$ ' + o.p.toLocaleString('pt-BR',{maximumFractionDigits: o.p < 100 ? 2 : 0}), o.var);
+  });
+  if(ind.selic) add('SELIC', pnum(ind.selic.valor,2) + '%', null);
+  if(ind.cdi)   add('CDI',   pnum(ind.cdi.valor,2) + '%', null);
+  if(ind.ipca12)add('IPCA 12M', pnum(ind.ipca12.valor,2) + '%', null);
+
+  FITA_B3_LIVRE.forEach(t => {
+    const o = Mercado.precos['b3:' + t];
+    if(o) add(t, 'R$ ' + pnum(o.p,2), o.var);
+  });
+
+  /* os ativos da própria carteira que tiverem cotação automática */
+  const jaTem = {};
+  itens.forEach(i => jaTem[i.nome] = 1);
+  ST.posicoes.forEach(p => {
+    const tp = TIPOS[p.tipo] || {};
+    if(tp.fonte !== 'us' && tp.fonte !== 'brapi' && tp.fonte !== 'cripto') return;
+    const q = Mercado.cotacao(p);
+    if(!q || q.p == null || jaTem[p.ticker]) return;
+    jaTem[p.ticker] = 1;
+    add(p.ticker, (q.moeda === 'USD' ? 'US$ ' : 'R$ ') + pnum(q.p,2), q.var);
+  });
+  return itens;
+}
+
+function renderFita(){
+  const trilho = $('#fitaTrilho'), caixa = $('#fita');
+  if(!trilho) return;
+  const cfg = ST.config;
+  if(cfg.fitaLigada === false){ caixa.classList.add('hidden'); return; }
+  caixa.classList.remove('hidden');
+
+  const modo = cfg.fitaModo || 'misto';
+  let itens = [];
+  if(modo !== 'noticias') itens = itens.concat(cotacoesDaFita());
+  if(modo !== 'cotacoes'){
+    const nots = Noticias.itens.slice(0, modo === 'noticias' ? 20 : 8)
+      .map(n => ({tipo:'not', titulo:n.titulo, fonte:n.fonteNome, link:n.link}));
+    if(modo === 'misto'){
+      /* intercala: a cada 3 cotações, uma manchete */
+      const cots = itens; itens = []; let iN = 0;
+      cots.forEach((c, i) => {
+        itens.push(c);
+        if((i + 1) % 3 === 0 && nots[iN]) itens.push(nots[iN++]);
+      });
+      while(nots[iN]) itens.push(nots[iN++]);
+    }else{
+      itens = nots;
+    }
+  }
+  if(!itens.length){ trilho.innerHTML = ''; return; }
+
+  const html = itens.map(i => {
+    if(i.tipo === 'not'){
+      return '<a class="fi fi-not" href="' + esc(i.link) + '" target="_blank" rel="noopener noreferrer">' +
+             '<span class="fi-tag">📰 ' + esc(i.fonte) + '</span>' + esc(i.titulo) + '</a>';
+    }
+    return '<span class="fi"><b>' + esc(i.nome) + '</b><span class="fi-v">' + esc(i.valor) + '</span>' +
+      (i.variacao != null ? '<span class="' + cls(i.variacao) + '">' + seta(i.variacao) + ' ' + fmtPct(i.variacao) + '</span>' : '') +
+      '</span>';
+  }).join('');
+
+  trilho.innerHTML = '<div class="fita-bloco">' + html + '</div>' +
+                     '<div class="fita-bloco" aria-hidden="true">' + html + '</div>';
+
+  const vel = {lento:28, medio:55, rapido:95}[cfg.fitaVelocidade || 'medio'];
+  const largura = trilho.scrollWidth / 2 || 1200;
+  trilho.style.animationDuration = Math.max(12, Math.round(largura / vel)) + 's';
+  trilho.style.animationDirection = (cfg.fitaDirecao === 'direita') ? 'reverse' : 'normal';
+}
+
+function renderTopo(){
+  renderFita();
   $('#refreshTime').textContent = Mercado.ultima ? fmtHora(Mercado.ultima) : 'nunca';
 }
 
 /* liga inputs que existem só depois do render */
 function ligarCamposDaView(){
+  if(viewAtual === 'noticias'){
+    const b = $('#buscaNoticia');
+    if(b) b.addEventListener('input', e => {
+      buscaNoticia = e.target.value; const pos = e.target.selectionStart;
+      render(); const n = $('#buscaNoticia'); if(n){ n.focus(); n.setSelectionRange(pos,pos); }
+    });
+  }
   if(viewAtual === 'coach'){
     const b = $('#coachBusca');
     if(b){
@@ -3870,6 +4258,12 @@ function ligarCamposDaView(){
     liga('cMoeda', e => { ST.moedaBase = e.value; Store.salvar(); atualizarCotacoes(true); render(); });
     liga('cNivel', e => { ST.nivel = e.value; sincronizarNivel(); Store.salvar(); render(); });
     liga('cTema',  e => { ST.tema = e.value; aplicarTema(); Store.salvar(); });
+    liga('cFundo', e => { ST.fundo = (e.value === 'sim'); aplicarTema(); Store.salvar(); });
+    liga('cFitaLigada', e => { ST.config.fitaLigada = (e.value === 'sim'); Store.salvar(); renderFita(); });
+    liga('cFitaModo', e => { ST.config.fitaModo = e.value; Store.salvar(); renderFita();
+      if(e.value !== 'cotacoes' && !Noticias.itens.length) Noticias.atualizar(ST.config, false).then(() => renderFita()); });
+    liga('cFitaDir', e => { ST.config.fitaDirecao = e.value; Store.salvar(); renderFita(); });
+    liga('cFitaVel', e => { ST.config.fitaVelocidade = e.value; Store.salvar(); renderFita(); });
     liga('cAuto',  e => { ST.config.autoRefreshMin = Number(e.value); Store.salvar(); ligarAuto(); });
     liga('cCookie',e => { ST.config.usarCookie = e.checked; Store.salvar(); render(); });
   }
@@ -3928,6 +4322,7 @@ function ligarAuto(){
    ========================================================= */
 function aplicarTema(){
   document.documentElement.setAttribute('data-theme', ST.tema === 'light' ? 'light' : 'dark');
+  document.documentElement.classList.toggle('sem-fundo', ST.fundo === false);
   $('#btnTheme').textContent = ST.tema === 'light' ? '☀️' : '🌙';
 }
 function sincronizarNivel(){
@@ -4014,7 +4409,7 @@ function ligarEventos(){
 
   /* cliques gerais (delegação) */
   document.addEventListener('click', async (e) => {
-    const el = e.target.closest('[data-info],[data-acao],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del]');
+    const el = e.target.closest('[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del]');
     if(!el) return;
     const d = el.dataset;
 
@@ -4050,10 +4445,28 @@ function ligarEventos(){
     if(d.filtroTipo){ filtroTipo = d.filtroTipo; render(); return; }
     if(d.filtroInst){ filtroInst = d.filtroInst; render(); return; }
     if(d.perfil){ ST.config.perfil = d.perfil; ST.config.alvoAlocacao = null; Store.salvar(); render(); return; }
+    if(d.fonteToggle){
+      const atuais = ST.config.fontesNoticias || FONTES_NOTICIAS.filter(x => x.pais === 'BR').map(x => x.id);
+      const i = atuais.indexOf(d.fonteToggle);
+      if(i >= 0) atuais.splice(i,1); else atuais.push(d.fonteToggle);
+      ST.config.fontesNoticias = atuais;
+      Store.salvar(); render();
+      Noticias.atualizar(ST.config, true).then(() => { render(); renderFita(); });
+      return;
+    }
+    if(d.fonte){ filtroFonte = d.fonte; render(); return; }
     if(d.cotar){ const b = $('#mkBusca'); if(b) b.value = d.cotar; cotarAvulso(d.cotar); return; }
 
     switch(d.acao){
       case 'limpar-busca': coachBusca = ''; render(); break;
+      case 'atualizar-noticias': {
+        Noticias.carregando = true; render();
+        const errs = await Noticias.atualizar(ST.config, true);
+        render(); renderFita();
+        if(errs && errs.length) toast(errs[0], 'warn');
+        else toast(Noticias.itens.length + ' manchetes carregadas.');
+        break;
+      }
       case 'nova': abrirModalAtivo(null); break;
       case 'salvar-ativo': salvarAtivo(); break;
       case 'excluir-modal':
@@ -4094,6 +4507,7 @@ function ligarEventos(){
       case 'tabela-proj': $('#tabelaProj').classList.toggle('hidden'); break;
       case 'salvar-chaves': {
         ST.config.chaves.brapi   = ($('#kBrapi').value || '').trim();
+        const rss = $('#kRss'); if(rss) ST.config.chaves.rss2json = (rss.value || '').trim();
         ST.config.chaves.twelve  = ($('#kTwelve').value || '').trim();
         const f = $('#kFinnhub'), a = $('#kAlpha');
         if(f) ST.config.chaves.finnhub = (f.value || '').trim();
@@ -4194,6 +4608,7 @@ function iniciar(){
   const r = Store.carregar();
   ST = Store.estado;
   Mercado.lerCache();
+  Noticias.lerCache();
   aplicarTema();
   sincronizarNivel();
   ligarEventos();
@@ -4219,6 +4634,9 @@ function comecarApp(r){
   render();
   ligarAuto();
   atualizarCotacoes(false);
+  if((ST.config.fitaModo || 'misto') !== 'cotacoes' || viewAtual === 'noticias'){
+    Noticias.atualizar(ST.config, false).then(() => { renderFita(); if(viewAtual === 'noticias') render(); });
+  }
   if(r && r.origem === 'cookie') toast('Recuperei ' + r.qtd + ' ativos do cookie de segurança.', 'warn');
   if(r && r.origem === 'novo' && !ST.posicoes.length) setTimeout(() => {
     if(viewAtual === 'painel') toast('Bem-vindo! Comece cadastrando o que você já tem. 👋');
