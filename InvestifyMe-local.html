@@ -1835,6 +1835,7 @@ function estadoPadrao(){
       retornoCustom: {},           // por tipo, sobrescreve RETORNO_SUGERIDO
       inflacaoEsperada: 4.5,
       autoRefreshMin: 10,
+      ttlUsMin: 60,
       fitaLigada: true,
       fitaModo: 'misto',
       fitaDirecao: 'esquerda',
@@ -2213,6 +2214,9 @@ const Mercado = {
   ultima: null,
   erros: [],
   carregando: false,
+  usPendentes: [],        /* ativos dos EUA esperando a próxima janela de cota */
+  usBloqueadoAte: 0,      /* timestamp até quando a cota está estourada */
+  usLimitePorVez: 8,      /* o plano grátis da Twelve Data libera 8 por minuto */
 
   /* ---------- cache ---------- */
   lerCache(){
@@ -2331,39 +2335,75 @@ const Mercado = {
 
   /* ---------- EUA (Twelve Data / Finnhub / Alpha Vantage) ---------- */
   async buscarUS(tickers, chaves){
+    this.usPendentes = [];
     if(!tickers.length) return;
     const k = chaves || {};
-    if(k.twelve){ await this.usTwelve(tickers, k.twelve); return; }
-    if(k.finnhub){ await this.usFinnhub(tickers, k.finnhub); return; }
-    if(k.alpha){ await this.usAlpha(tickers, k.alpha); return; }
-    this.erros.push('Ações e ETFs dos EUA precisam de uma chave gratuita — configure em Configurações (leva 2 minutos).');
+
+    if(k.finnhub && !k.twelve){ await this.usFinnhub(tickers, k.finnhub); return; }
+    if(k.alpha && !k.twelve && !k.finnhub){ await this.usAlpha(tickers, k.alpha); return; }
+    if(!k.twelve){
+      this.erros.push('Ações e ETFs dos EUA precisam de uma chave gratuita — configure em Configurações (leva 2 minutos).');
+      return;
+    }
+
+    /* ainda dentro da janela de bloqueio: guarda tudo para a próxima rodada */
+    if(this.usBloqueadoAte && Date.now() < this.usBloqueadoAte){
+      this.usPendentes = tickers.slice();
+      return;
+    }
+
+    /* os mais desatualizados primeiro */
+    const idade = t => {
+      const r = this.precos['us:' + t];
+      return (r && r.hora) ? new Date(r.hora).getTime() : 0;
+    };
+    const fila = tickers.slice().sort((a,b) => idade(a) - idade(b));
+    const limite = Math.max(1, this.usLimitePorVez);
+    const agora = fila.slice(0, limite);
+    this.usPendentes = fila.slice(limite);
+
+    await this.usTwelve(agora, k.twelve);
   },
 
-  async usTwelve(tickers, chave){
-    for(let i=0;i<tickers.length;i+=8){
-      const lote = tickers.slice(i,i+8);
-      try{
-        const j = await this.pegarJson('https://api.twelvedata.com/quote?symbol=' +
-          lote.join(',') + '&apikey=' + encodeURIComponent(chave));
-        const itens = (lote.length === 1) ? {[lote[0]]: j} : j;
-        Object.keys(itens).forEach(sym => {
-          const q = itens[sym];
-          if(!q || q.status === 'error' || q.close == null) return;
-          this.precos['us:' + sym.toUpperCase()] = {
-            p: parseFloat(q.close),
-            moeda: q.currency || 'USD',
-            var: q.percent_change != null ? parseFloat(q.percent_change) : null,
-            nome: q.name || sym,
-            hora: new Date().toISOString(),
-            fonte: 'Twelve Data'
-          };
-        });
-        if(j && j.status === 'error'){
-          this.erros.push('Twelve Data: ' + (j.message || 'erro na consulta'));
-        }
-      }catch(e){ this.erros.push('EUA (' + lote.join(',') + '): ' + e.message); }
-      await new Promise(r => setTimeout(r, 300));
+  async usTwelve(lote, chave){
+    if(!lote.length) return;
+    try{
+      const j = await this.pegarJson('https://api.twelvedata.com/quote?symbol=' +
+        lote.join(',') + '&apikey=' + encodeURIComponent(chave));
+
+      if(j && (j.code === 429 || j.status === 'error')){
+        this.tratarCota(j.code, j.message, lote);
+        return;
+      }
+      const itens = (lote.length === 1) ? {[lote[0]]: j} : j;
+      Object.keys(itens).forEach(sym => {
+        const q = itens[sym];
+        if(!q) return;
+        if(q.code === 429){ this.tratarCota(429, q.message, [sym]); return; }
+        if(q.status === 'error' || q.close == null) return;
+        this.precos['us:' + sym.toUpperCase()] = {
+          p: parseFloat(q.close),
+          moeda: q.currency || 'USD',
+          var: q.percent_change != null ? parseFloat(q.percent_change) : null,
+          nome: q.name || sym,
+          hora: new Date().toISOString(),
+          fonte: 'Twelve Data'
+        };
+      });
+    }catch(e){
+      if(e.status === 429) this.tratarCota(429, '', lote);
+      else this.erros.push('EUA (' + lote.slice(0,4).join(', ') + (lote.length > 4 ? '…' : '') + '): ' + e.message);
     }
+  },
+
+  /* cota estourada: segura as próximas consultas por um minuto e devolve os ativos para a fila */
+  tratarCota(codigo, msg, lote){
+    const diario = /day|daily|per day/i.test(msg || '');
+    this.usBloqueadoAte = Date.now() + (diario ? 30*60000 : 65000);
+    this.usPendentes = (this.usPendentes || []).concat(lote);
+    this.erros.push(diario
+      ? 'Twelve Data: a cota diária gratuita acabou. Os preços dos EUA seguem com o último valor buscado até amanhã.'
+      : 'A cota gratuita dos EUA é de 8 ativos por minuto — os preços vão sendo atualizados aos poucos, em blocos.');
   },
 
   async usFinnhub(tickers, chave){
@@ -2435,6 +2475,8 @@ const Mercado = {
     this.carregando = true;
     this.erros = [];
     const ttl = forcar ? 0 : (config.autoRefreshMin || 10);
+    /* os EUA têm cota apertada: só vale rebuscar de hora em hora */
+    const ttlUs = config.ttlUsMin == null ? 60 : config.ttlUsMin;
 
     const b3 = [], us = [], cripto = [], moedas = new Set(['USD']);
 
@@ -2444,7 +2486,7 @@ const Mercado = {
       if(p.moeda && p.moeda !== 'BRL') moedas.add(p.moeda);
       switch(tp.fonte){
         case 'brapi':  if(!this.fresco('b3:' + tk, ttl))     b3.push(tk); break;
-        case 'us':     if(!this.fresco('us:' + tk, ttl))     us.push(tk); break;
+        case 'us':     if(!this.fresco('us:' + tk, ttlUs))   us.push(tk); break;
         case 'cripto': if(!this.fresco('cripto:' + tk, ttl)) cripto.push(tk); break;
         case 'moeda':  moedas.add(tk); break;
       }
@@ -3741,6 +3783,17 @@ function viewConfig(){
     '<label class="f"><span class="lb">Chave da Finnhub</span><input id="kFinnhub" value="' + esc(cfg.chaves.finnhub) + '" autocomplete="off"></label>' +
     '<label class="f"><span class="lb">Chave da Alpha Vantage</span><input id="kAlpha" value="' + esc(cfg.chaves.alpha) + '" autocomplete="off"></label></details>' +
 
+    (function(){
+      const faltam = (Mercado.usPendentes || []).length;
+      if(!cfg.chaves.twelve) return '';
+      return '<p class="small muted">Cota do plano grátis: <b>8 ativos por minuto</b> e 800 por dia. ' +
+        'Como sua carteira tem ' + ST.posicoes.filter(p => (TIPOS[p.tipo]||{}).fonte === 'us').length +
+        ' papéis nos EUA, o app atualiza em blocos e guarda o último preço de cada um.' +
+        (faltam ? ' <b>' + faltam + ' na fila agora.</b>' : ' Nenhum na fila.') + '</p>';
+    })() +
+    campo('Rebuscar preços dos EUA a cada',
+      selectHTML('cTtlUs', [[30,'30 minutos'],[60,'1 hora'],[120,'2 horas'],[240,'4 horas']], String(cfg.ttlUsMin == null ? 60 : cfg.ttlUsMin)),
+      null, 'Intervalo maior gasta menos da cota diária.') +
     '<div class="f-actions"><button class="btn primary" data-acao="salvar-chaves">Salvar chaves</button></div>' +
     '<p class="tiny muted">As chaves ficam salvas só no seu navegador. Se você publicar este site, quem abrir com o próprio navegador precisa colar a chave dele.</p>' +
   '</div>';
@@ -4259,6 +4312,7 @@ function ligarCamposDaView(){
     liga('cNivel', e => { ST.nivel = e.value; sincronizarNivel(); Store.salvar(); render(); });
     liga('cTema',  e => { ST.tema = e.value; aplicarTema(); Store.salvar(); });
     liga('cFundo', e => { ST.fundo = (e.value === 'sim'); aplicarTema(); Store.salvar(); });
+    liga('cTtlUs', e => { ST.config.ttlUsMin = Number(e.value); Store.salvar(); });
     liga('cFitaLigada', e => { ST.config.fitaLigada = (e.value === 'sim'); Store.salvar(); renderFita(); });
     liga('cFitaModo', e => { ST.config.fitaModo = e.value; Store.salvar(); renderFita();
       if(e.value !== 'cotacoes' && !Noticias.itens.length) Noticias.atualizar(ST.config, false).then(() => renderFita()); });
@@ -4272,6 +4326,8 @@ function ligarCamposDaView(){
 /* =========================================================
    COTAÇÕES
    ========================================================= */
+let timerFila = null, avisouFila = false;
+
 async function atualizarCotacoes(forcar){
   const btn = $('#btnRefresh');
   btn.classList.add('spinning'); btn.disabled = true;
@@ -4279,8 +4335,22 @@ async function atualizarCotacoes(forcar){
     const erros = await Mercado.atualizar(ST.posicoes, ST.config, forcar);
     renderTopo();
     if(viewAtual !== 'coach' && viewAtual !== 'glossario' && viewAtual !== 'config') render();
-    if(erros && erros.length){
-      const unicos = Array.from(new Set(erros));
+
+    const faltam = (Mercado.usPendentes || []).length;
+    if(faltam){
+      agendarFilaEUA();
+      if(!avisouFila){
+        avisouFila = true;
+        toast('Cota gratuita dos EUA: 8 ativos por minuto. Faltam ' + faltam +
+              ' — atualizo em blocos, sem você precisar fazer nada.', 'warn');
+      }
+    }else{
+      clearTimeout(timerFila); timerFila = null; avisouFila = false;
+    }
+
+    /* mostra só avisos que não sejam o da cota (esse já virou mensagem amigável) */
+    const unicos = Array.from(new Set(erros || [])).filter(m => !/cota gratuita dos EUA|8 ativos por minuto/i.test(m));
+    if(unicos.length){
       toast(unicos[0], 'warn');
       if(unicos.length > 1) console.warn('Outros avisos:', unicos.slice(1));
     }
@@ -4289,6 +4359,23 @@ async function atualizarCotacoes(forcar){
   }finally{
     btn.classList.remove('spinning'); btn.disabled = false;
   }
+}
+
+/* continua buscando os ativos que ficaram na fila, um bloco por minuto */
+function agendarFilaEUA(){
+  if(timerFila) return;
+  const espera = Math.max(5000, (Mercado.usBloqueadoAte || 0) - Date.now() + 3000) || 65000;
+  timerFila = setTimeout(async () => {
+    timerFila = null;
+    const pend = (Mercado.usPendentes || []).slice();
+    if(!pend.length) return;
+    await Mercado.buscarUS(pend, ST.config.chaves || {});
+    Mercado.gravarCache();
+    renderTopo();
+    if(viewAtual === 'painel' || viewAtual === 'carteira' || viewAtual === 'mercado') render();
+    if((Mercado.usPendentes || []).length) agendarFilaEUA();
+    else toast('Pronto: todos os ativos dos EUA foram atualizados.');
+  }, Math.min(espera, 70000));
 }
 
 async function cotarAvulso(ticker){
