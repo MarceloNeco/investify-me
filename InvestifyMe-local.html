@@ -589,6 +589,14 @@ tr.linha-click:active{background:var(--line)}
 .ativo-card.linha-click:active{border-color:var(--accent)}
 .ac-toque{white-space:nowrap}
 
+/* cards da aba Mercado que abrem gráfico ao clique */
+.mk-card.click{cursor:pointer; transition:border-color .12s, background .12s, transform .12s}
+.mk-card.click:hover{border-color:var(--accent); background:var(--card)}
+.mk-card.click:active{transform:scale(.985); background:var(--line)}
+.mk-card .mk-dir{display:inline-flex; align-items:center; gap:5px}
+.mk-lupa{opacity:.35; font-size:.8rem; transition:opacity .12s}
+.mk-card.click:hover .mk-lupa{opacity:1}
+
 </style>
 </head>
 <body>
@@ -4107,7 +4115,8 @@ function viewMercado(){
   h += '<div class="card"><div class="card-head"><h3>Moedas</h3>' + info('cambio') + '</div><div class="mk-grid">';
   MOEDAS.forEach(m => {
     const o = c[m]; if(!o) return;
-    h += '<div class="mk-card"><div class="s"><span>' + m + '/BRL</span></div>' +
+    h += '<div class="mk-card click" data-mk-ativo="fx:' + m + '" title="Ver o gráfico de ' + m + '/BRL">' +
+      '<div class="s"><span>' + m + '/BRL</span><span class="mk-lupa">📈</span></div>' +
       '<div class="p">' + fmt(o.p, 'BRL', o.p < 1 ? 4 : (o.p > 1000 ? 0 : 4)) + '</div>' +
       '<div class="c ' + cls(o.var) + '">' + seta(o.var) + ' ' + fmtPct(o.var, true) + '</div></div>';
   });
@@ -4115,11 +4124,13 @@ function viewMercado(){
 
   h += '<div class="card"><div class="card-head"><h3>Indicadores do Brasil</h3><div class="spacer"></div>' +
        '<span class="tiny muted">Fonte: Banco Central</span></div><div class="mk-grid">';
-  const inds = [['Selic meta','selic','% a.a.','selic'],['CDI','cdi','% a.a.','cdi'],
-                ['IPCA (12 meses)','ipca12','%','ipca'],['Poupança (mês)','poupanca','%','renda-fixa']];
-  inds.forEach(([nome,k,suf,gl]) => {
+  const inds = [['Selic meta','selic','% a.a.','selic','SELIC'],['CDI','cdi','% a.a.','cdi','CDI'],
+                ['IPCA (12 meses)','ipca12','%','ipca','IPCA'],['Poupança (mês)','poupanca','%','renda-fixa','']];
+  inds.forEach(([nome,k,suf,gl,serie]) => {
     const o = ind[k]; if(!o) return;
-    h += '<div class="mk-card"><div class="s"><span>' + nome + '</span>' + info(gl) + '</div>' +
+    h += '<div class="mk-card' + (serie ? ' click" data-mk-serie="' + serie + '" title="Ver o gráfico do ' + nome + '"' : '"') +
+         '><div class="s"><span>' + nome + '</span><span class="mk-dir">' +
+         (serie ? '<span class="mk-lupa">📈</span>' : '') + info(gl) + '</span></div>' +
          '<div class="p">' + o.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}) + suf + '</div>' +
          '<div class="c muted tiny">' + esc(o.data) + '</div></div>';
   });
@@ -4130,7 +4141,8 @@ function viewMercado(){
     h += '<div class="card"><div class="card-head"><h3>Cripto</h3>' + info('cripto') + '</div><div class="mk-grid">';
     cri.forEach(k => {
       const o = Mercado.precos[k];
-      h += '<div class="mk-card"><div class="s"><span>' + k.split(':')[1] + '</span></div>' +
+      h += '<div class="mk-card click" data-mk-ativo="' + esc(k) + '" title="Ver o gráfico de ' + esc(k.split(':')[1]) + '">' +
+        '<div class="s"><span>' + k.split(':')[1] + '</span><span class="mk-lupa">📈</span></div>' +
         '<div class="p">' + fmt(o.p, 'USD', o.p < 1 ? 4 : 2) + '</div>' +
         '<div class="c ' + cls(o.var) + '">' + seta(o.var) + ' ' + fmtPct(o.var, true) + '</div>' +
         (o.pBRL ? '<div class="c muted tiny">' + fmt(o.pBRL,'BRL',0) + '</div>' : '') + '</div>';
@@ -4150,10 +4162,12 @@ function viewMercado(){
 
   const acoes = Object.keys(Mercado.precos).filter(k => k.startsWith('b3:') || k.startsWith('us:'));
   if(acoes.length){
-    h += '<div class="card"><div class="card-head"><h3>Preços já buscados nesta sessão</h3></div><div class="mk-grid">';
+    h += '<div class="card"><div class="card-head"><h3>Preços já buscados nesta sessão</h3><div class="spacer"></div>' +
+         '<span class="tiny muted">clique em um card para ver o gráfico</span></div><div class="mk-grid">';
     acoes.forEach(k => {
       const o = Mercado.precos[k], sym = k.split(':')[1];
-      h += '<div class="mk-card"><div class="s"><span>' + sym + '</span></div>' +
+      h += '<div class="mk-card click" data-mk-ativo="' + esc(k) + '" title="Ver o gráfico de ' + esc(sym) + '">' +
+        '<div class="s"><span>' + sym + '</span><span class="mk-lupa">📈</span></div>' +
         '<div class="p">' + fmt(o.p, o.moeda, 2) + '</div>' +
         '<div class="c ' + cls(o.var) + '">' + (o.var == null ? '—' : seta(o.var) + ' ' + fmtPct(o.var, true)) + '</div></div>';
     });
@@ -4931,8 +4945,34 @@ function salvarAtivo(){
 /* aporte rápido: recalcula o preço médio */
 let grafPeriodo = '6mo';
 
+/* papéis que não estão na carteira, abertos pelos cards da aba Mercado */
+const AVULSOS = {};
+
+/* qual prefixo de cotação corresponde a cada fonte de preço */
+const FONTE_DE_PREFIXO = {b3:'brapi', us:'us', cripto:'cripto', fx:'moeda'};
+
+/* abre o gráfico de um papel só consultado (não precisa estar na carteira) */
+function abrirGraficoAvulso(chave){
+  const corte = chave.indexOf(':');
+  const pre = chave.slice(0, corte), sym = chave.slice(corte + 1).toUpperCase();
+  /* se o papel já está na carteira, abre o gráfico dele mesmo, com preço médio e posição */
+  const meu = ST.posicoes.find(x => (x.ticker || '').toUpperCase() === sym &&
+    (TIPOS[x.tipo] || {}).fonte === FONTE_DE_PREFIXO[pre]);
+  if(meu) return abrirGrafico(meu.id);
+
+  const cat = doCatalogo(sym);
+  let tipo = pre === 'fx' ? 'caixa' : pre === 'cripto' ? 'cripto' : (cat ? cat.tipo : (pre === 'us' ? 'acao-us' : 'acao-br'));
+  if((TIPOS[tipo] || {}).fonte !== FONTE_DE_PREFIXO[pre]) tipo = pre === 'us' ? 'acao-us' : pre === 'b3' ? 'acao-br' : tipo;
+  const q = Mercado.precos[chave] || null;
+  const id = 'mk:' + pre + ':' + sym;
+  AVULSOS[id] = {id: id, ticker: sym, tipo: tipo, qtd: 0, pm: 0, avulso: true,
+    moeda: pre === 'fx' ? sym : ((q && q.moeda) || TIPOS[tipo].moeda),
+    nome: pre === 'fx' ? 'cotação em reais' : ((q && q.nome) || (cat && cat.n) || '')};
+  abrirGrafico(id);
+}
+
 async function abrirGrafico(id){
-  const p = ST.posicoes.find(x => x.id === id); if(!p) return;
+  const p = ST.posicoes.find(x => x.id === id) || AVULSOS[id]; if(!p) return;
   const c = calc(p);
   const desenhar = async () => {
     $('#assetModalTitle').textContent = p.ticker + ' — ' + (p.nome || '');
@@ -4973,12 +5013,15 @@ async function abrirGrafico(id){
       '<div class="graf-topo">' +
         '<div><div class="graf-preco">' + fmt(fimP, s.moeda, casasPreco(fimP)) + '</div>' +
         '<div class="small ' + cls(varPer) + '">' + fmtPct(varPer, true) + ' no período</div></div>' +
-        '<div class="graf-lados small muted">' +
-          '<div>Seu preço médio: <b>' + (c.pm ? fmt(c.pm, s.moeda, casasPreco(c.pm)) : '—') + '</b></div>' +
-          '<div>Sua posição: <b>' + fmt(c.valorBase) + '</b> · <span class="' + cls(c.pl) + '">' + fmtPct(c.plPct, true) + '</span></div>' +
-        '</div>' +
+        (p.avulso
+          ? '<div class="graf-lados small muted"><div>Papel fora da carteira</div>' +
+            '<div class="tiny">consulta apenas para acompanhar o preço</div></div>'
+          : '<div class="graf-lados small muted">' +
+            '<div>Seu preço médio: <b>' + (c.pm ? fmt(c.pm, s.moeda, casasPreco(c.pm)) : '—') + '</b></div>' +
+            '<div>Sua posição: <b>' + fmt(c.valorBase) + '</b> · <span class="' + cls(c.pl) + '">' + fmtPct(c.plPct, true) + '</span></div>' +
+          '</div>') +
       '</div>' +
-      vizLinhaTempo(s.pontos, {moeda: s.moeda, pm: c.pm || null, altura: 250,
+      vizLinhaTempo(s.pontos, {moeda: s.moeda, pm: (p.avulso ? null : c.pm) || null, altura: 250,
         fmt: v => fmt(v, s.moeda, v >= 1000 ? 0 : 2)}) +
       '<p class="tiny muted" style="margin-top:8px">Fonte: ' + esc(s.fonte || '—') +
       ' · preços de fechamento, com atraso. Passe o dedo ou o mouse sobre o gráfico para ver cada dia.' +
@@ -5444,7 +5487,11 @@ async function cotarAvulso(ticker){
   await Mercado.atualizar([fake], ST.config, true);
   const q = Mercado.cotacao(fake);
   if(q && q.p != null){
-    $('#mkResultado').innerHTML = '<div class="mk-card" style="max-width:280px"><div class="s"><span>' + esc(ticker) + '</span>' +
+    const pre = TIPOS[tipo].fonte === 'us' ? 'us' : TIPOS[tipo].fonte === 'cripto' ? 'cripto' :
+                TIPOS[tipo].fonte === 'moeda' ? 'fx' : 'b3';
+    $('#mkResultado').innerHTML = '<div class="mk-card click" style="max-width:280px" data-mk-ativo="' +
+      esc(pre + ':' + ticker.toUpperCase()) + '" title="Ver o gráfico de ' + esc(ticker) + '">' +
+      '<div class="s"><span>' + esc(ticker) + ' <span class="mk-lupa">📈</span></span>' +
       '<span class="tiny">' + esc(q.fonte || '') + '</span></div>' +
       '<div class="p">' + fmt(q.p, q.moeda, casasPreco(q.p)) + '</div>' +
       '<div class="c ' + cls(q.var) + '">' + (q.var == null ? '' : seta(q.var) + ' ' + fmtPct(q.var, true)) + '</div>' +
@@ -5599,7 +5646,7 @@ function ligarEventos(){
 
   /* cliques gerais (delegação) */
   document.addEventListener('click', async (e) => {
-    const el = e.target.closest('[data-olho],[data-assunto],[data-mk-serie],[data-mk-per],[data-graf-per],[data-grafico],[data-acoes-ativo],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del]');
+    const el = e.target.closest('[data-olho],[data-assunto],[data-mk-serie],[data-mk-per],[data-mk-ativo],[data-graf-per],[data-grafico],[data-acoes-ativo],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del]');
     if(!el) return;
     const d = el.dataset;
 
@@ -5617,7 +5664,8 @@ function ligarEventos(){
     if(d.info != null && (el.classList.contains('info-dot') || el.tagName === 'I' || el.classList.contains('res-item'))){ abrirInfo(d.info); return; }
     if(d.acoesAtivo){ abrirAcoesAtivo(d.acoesAtivo); return; }
     if(d.grafico){ fechar('genModal'); abrirGrafico(d.grafico); return; }
-    if(d.mkSerie){ mkSerie = d.mkSerie; render(); return; }
+    if(d.mkAtivo){ abrirGraficoAvulso(d.mkAtivo); return; }
+    if(d.mkSerie){ mkSerie = d.mkSerie; render(); window.scrollTo({top:0, behavior:'smooth'}); return; }
     if(d.mkPer){ mkPer = d.mkPer; render(); return; }
     if(d.grafPer){
       const [per, idg] = d.grafPer.split('|');
