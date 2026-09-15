@@ -4993,24 +4993,42 @@ const Importador = {
       r.dataSaldoFinal = r.dataCota || r.emitido;
 
       /* ----- lançamentos históricos ----- */
+      /* o texto pode vir com cada célula numa linha (PDF) ou a linha inteira de uma vez
+         (texto colado), então o jeito seguro é quebrar tudo em peças e remontar as linhas:
+         uma data começa a linha, as palavras formam o histórico e os números são as colunas */
       const bloco = /Lan[çc]amentos Hist[óo]ricos:?([\s\S]*?)(?:Lan[çc]amentos Pendentes|Lan[çc]amentos do Dia|Lan[çc]amentos Autom[áa]ticos|D[úu]vidas|$)/i.exec(txt);
       if(bloco){
-        /* o extrato vem em colunas; o texto sai linha a linha, então junta tudo e corta por data */
-        const cru = bloco[1].replace(/\n/g, ' ');
-        const re = /(\d{2}\/\d{2}\/\d{4})\s+([A-ZÀ-Ú][A-ZÀ-Ú.\s\d]*?)\s+([\d.,-]+)((?:\s+[\d.,-]+)*)/g;
-        let m;
-        while((m = re.exec(cru))){
-          const nums = (m[3] + ' ' + m[4]).trim().split(/\s+/).map(nBR).filter(x => x != null);
-          const desc = m[2].trim();
-          if(/SALDO ANTERIOR/i.test(desc)) continue;
-          /* colunas: cotas, valor da cota, saldo bruto, IR, IOF, saldo líquido, saldo em cotas */
-          r.movimentos.push({data: dataBR(m[1]), descricao: desc,
-                             cotas: nums[0] != null ? nums[0] : null,
-                             valorCota: nums[1] != null ? nums[1] : null,
-                             valor: nums[2] != null ? nums[2] : null,
-                             ir: nums[3] || 0, iof: nums[4] || 0,
-                             liquido: nums[5] != null ? nums[5] : null});
-        }
+        const pecas = bloco[1].split(/[\s\t]+/).map(x => x.trim()).filter(Boolean);
+        const ehData = x => /^\d{2}\/\d{2}\/\d{4}$/.test(x);
+        /* só conta como coluna o número com vírgula decimal; assim o "10892" de
+           "AG. RESG. I.R. LEI 10892" continua fazendo parte do histórico */
+        const ehNum  = x => /^-?[\d.]*\d,\d+$/.test(x);
+
+        let atual = null;
+        const fecha = () => {
+          if(!atual) return;
+          const d = atual.desc.join(' ').replace(/\s+/g,' ').trim();
+          if(d && !/SALDO ANTERIOR/i.test(d)){
+            const n = atual.nums;
+            atual.linha = {data: atual.data, descricao: d,
+                           cotas: n[0] != null ? n[0] : null,
+                           valorCota: n[1] != null ? n[1] : null,
+                           valor: n[2] != null ? n[2] : (n[0] != null ? n[0] : null),
+                           ir: n[3] || 0, iof: n[4] || 0,
+                           liquido: n[5] != null ? n[5] : null};
+            r.movimentos.push(atual.linha);
+          }
+          atual = null;
+        };
+
+        pecas.forEach(x => {
+          if(ehData(x)){ fecha(); atual = {data: dataBR(x), desc: [], nums: []}; return; }
+          if(!atual) return;                       /* o cabeçalho da tabela vem antes da primeira data */
+          if(ehNum(x)){ atual.nums.push(nBR(x)); return; }
+          if(x === '-') return;                    /* célula vazia */
+          if(!atual.nums.length) atual.desc.push(x);   /* tudo antes da primeira coluna é histórico */
+        });
+        fecha();
       }
 
       /* classifica cada lançamento */
@@ -5116,10 +5134,26 @@ const Importador = {
     return null;
   },
 
+  /* lê um texto colado ou um arquivo .txt, sem passar por PDF nenhum */
+  lerTexto(texto, nome){
+    const txt = String(texto || '').replace(/\r\n?/g, '\n').trim();
+    if(txt.length < 40) throw new Error('O texto colado está muito curto para ser um extrato.');
+    const leitor = this.reconhecer(txt);
+    if(!leitor)
+      throw new Error('Não reconheci o formato deste texto. Confira se copiou o extrato inteiro, ' +
+        'incluindo o cabeçalho com o nome do fundo ou do produto.');
+    const dados = leitor.ler(txt);
+    dados.arquivo = nome || 'texto colado';
+    dados.leitor = leitor.nome;
+    return dados;
+  },
+
   async lerArquivo(arquivo){
     const nome = (arquivo.name || '').toLowerCase();
+    if(/\.(txt|csv|tsv)$/.test(nome))
+      return this.lerTexto(await arquivo.text(), arquivo.name);
     if(!nome.endsWith('.pdf'))
-      throw new Error('Por enquanto sei ler extratos em PDF. A importação de planilhas entra na próxima etapa.');
+      throw new Error('Sei ler PDF e arquivos de texto (.txt). Para planilhas, salve como .csv ou cole o texto.');
     let txt;
     try{
       txt = await PdfTexto.extrair(arquivo);
@@ -5252,6 +5286,22 @@ const Importador = {
                   para: fmt(dados.saldoInicial) + ' em ' + fmtData(dados.periodo.de),
                   ganho:'mais um ponto na curva do plano'});
 
+    /* extrato de fundo do Itaú: o custo vem das aplicações menos os resgates */
+    if(dados.formato === 'itau-fundo'){
+      if(dados.custo && !(pos && perto((pos.pm || 0) * (pos.qtd || 1), dados.custo)))
+        lista.push({id:'custo-fundo', nome:'Total aplicado (aplicações menos resgates)',
+                    de: pos && pos.pm ? fmt(pos.pm * (pos.qtd || 1)) : 'em branco',
+                    para: fmt(dados.custo) + ' em ' + (dados.fluxos.length) + ' movimentações',
+                    ganho:'é o custo de verdade, base do lucro e do imposto'});
+      const cc = dados.movimentos.filter(m => m.classe === 'come-cotas');
+      const ccNovos = cc.filter(m => !(pos && Mov.jaExiste({data: m.data, tipo:'imposto', ticker: pos.ticker,
+                        inst: pos.inst || 'Itaú', qtd: 0, valor: m.valor})));
+      if(ccNovos.length)
+        lista.push({id:'come-cotas', nome:'Come-cotas (' + ccNovos.length + ' cobranças)', de:'—',
+                    para: fmt(ccNovos.reduce((s,m) => s + m.valor, 0)) + ' desde ' + fmtData(ccNovos[0].data),
+                    ganho:'entra como imposto pago, para aparecer no custo do fundo'});
+    }
+
     if(dados.ir && dados.ir.nominal && !(pos && perto((pos.pm || 0) * (pos.qtd || 1), dados.ir.nominal)))
       lista.push({id:'custo', nome:'Total aplicado (soma das faixas de IR)',
                   de: pos && pos.pm ? fmt(pos.pm * (pos.qtd || 1)) : 'em branco',
@@ -5367,6 +5417,26 @@ const Importador = {
     if(tem('saldo-ini') && dados.saldoInicial && dados.periodo.de){
       pontoHistorico(dados.periodo.de, dados.saldoInicial);
       feito.push('ponto de ' + fmtData(dados.periodo.de) + ' guardado no histórico');
+    }
+
+    if(tem('custo-fundo') && dados.custo){
+      pos.qtd = pos.qtd || 1;
+      pos.pm = dados.custo / pos.qtd;
+      Mov.todos().filter(m => m.ativoId === pos.id && m.origem === 'saldo-inicial').forEach(m => {
+        m.valor = dados.custo; m.preco = pos.pm; m.qtd = pos.qtd;
+      });
+      feito.push('total aplicado ajustado para ' + fmt(dados.custo));
+    }
+
+    if(tem('come-cotas')){
+      let n = 0;
+      dados.movimentos.filter(m => m.classe === 'come-cotas').forEach(m => {
+        const reg = {data: m.data, tipo:'imposto', ativoId: pos.id, ticker: pos.ticker,
+                     inst: pos.inst || 'Itaú', valor: m.valor, moeda: pos.moeda || 'BRL',
+                     obs: 'Come-cotas (' + m.descricao + ')', origem:'importado'};
+        if(!Mov.jaExiste(reg)){ Mov.add(reg); n++; }
+      });
+      if(n) feito.push(n + ' cobranças de come-cotas lançadas');
     }
 
     if(tem('custo') && dados.ir && dados.ir.nominal){
@@ -6712,6 +6782,15 @@ function abrirImportar(){
       '<p><b>Arraste os PDFs aqui</b><br>ou clique para escolher — pode selecionar vários de uma vez</p>' +
       '<input type="file" id="impArquivo" accept=".pdf,application/pdf" multiple hidden>' +
     '</div>' +
+    '<p class="tiny muted" style="margin:9px 0 0;text-align:center">' +
+      'Não consegue gerar um PDF com texto? ' +
+      '<button class="linkinho" data-acao="imp-colar">Cole o texto do extrato aqui</button>.</p>' +
+    '<div id="impColar" class="hidden">' +
+      campo('Texto do extrato',
+        '<textarea id="impTexto" rows="7" placeholder="Selecione a tabela do extrato (Ctrl+A), copie (Ctrl+C) e cole aqui (Ctrl+V)"></textarea>',
+        null, 'Funciona com o extrato de fundos do Itaú, o de conta corrente e o de previdência do BTG.') +
+      '<button class="btn primary sm" data-acao="imp-ler-texto">Ler o texto colado</button>' +
+    '</div>' +
     '<div id="impResultado"></div>' +
     '<div class="card2-box" style="margin-top:14px">' +
       '<b class="small">O que já sei ler</b>' +
@@ -6727,6 +6806,7 @@ function abrirImportar(){
   const area = $('#impSolta'), input = $('#impArquivo');
   area.addEventListener('click', () => { if(!impLendo) input.click(); });
   input.addEventListener('change', () => lerExtratos(input.files));
+  input.setAttribute('accept', '.pdf,.txt,.csv,application/pdf,text/plain');
   ['dragenter','dragover'].forEach(ev => area.addEventListener(ev, e => { e.preventDefault(); area.classList.add('sobre'); }));
   ['dragleave','drop'].forEach(ev => area.addEventListener(ev, e => { e.preventDefault(); area.classList.remove('sobre'); }));
   area.addEventListener('drop', e => lerExtratos(e.dataTransfer.files));
@@ -8590,6 +8670,29 @@ function ligarEventos(){
       }
       case 'importar-extrato': fechar('genModal'); abrirImportar(); break;
       case 'imp-aplicar': aplicarImportacao(); break;
+      case 'imp-colar': {
+        const cx = $('#impColar');
+        if(cx){ cx.classList.toggle('hidden'); const t = $('#impTexto'); if(t) t.focus(); }
+        break;
+      }
+      case 'imp-ler-texto': {
+        const t = $('#impTexto');
+        if(!t || !t.value.trim()){ toast('Cole o texto do extrato primeiro.', 'warn'); break; }
+        try{
+          const dados = Importador.lerTexto(t.value, 'texto colado');
+          const pos = Importador.casar(dados);
+          impLote.push({nome: dados.arquivo, dados: dados, posId: pos ? pos.id : '',
+                        repetido: Importador.jaImportado(dados),
+                        escolhidos: Importador.propostas(dados, pos).map(x => x.id)});
+          t.value = '';
+          $('#impColar').classList.add('hidden');
+          desenharPreviaImport();
+        }catch(err){
+          $('#impResultado').innerHTML = '<div class="aviso-box" style="margin-top:14px">' +
+            '<b>Não deu para ler o texto</b><p class="small">' + esc(err.message) + '</p></div>';
+        }
+        break;
+      }
       case 'agenda-confirmar': {
         const hoje = hojeISO();
         let n = 0;
