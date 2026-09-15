@@ -4849,7 +4849,7 @@ const PdfTexto = {
 
 const nBR = t => {
   if(t == null) return null;
-  const s = String(t).trim().replace(/\s/g,'').replace(/\./g,'').replace(',', '.');
+  const s = String(t).replace(/[\s\u00a0]/g,'').replace(/\./g,'').replace(',', '.');
   const v = parseFloat(s);
   return isNaN(v) ? null : v;
 };
@@ -5128,8 +5128,87 @@ const Importador = {
     }
   },
 
+  /* ---------- Avenue: histórico da conta investimento (CSV) ---------- */
+  avenueCsv: {
+    nome: 'Histórico da conta Avenue',
+    reconhece(txt){
+      const cab = (txt.split('\n')[0] || '');
+      return /Data\s*transa[çc][ãa]o/i.test(cab) && /Descri[çc][ãa]o/i.test(cab) && /Saldo/i.test(cab);
+    },
+    /* a coluna Valor usa ponto decimal; os números dentro da descrição usam vírgula */
+    ler(txt){
+      const r = {formato: 'avenue-csv', avisos: [], movimentos: [], fluxos: []};
+      const linhas = txt.split('\n').filter(x => x.trim());
+      const nUS = t => { const v = parseFloat(String(t).replace(/[^\d.\-]/g,'')); return isNaN(v) ? null : v; };
+
+      /* quebra a linha respeitando as aspas: a descrição pode ter vírgula dentro */
+      const campos = ln => {
+        const out = []; let atual = '', aspas = false;
+        for(let i = 0; i < ln.length; i++){
+          const c = ln[i];
+          if(c === '"'){ aspas = !aspas; continue; }
+          if(c === ',' && !aspas){ out.push(atual); atual = ''; continue; }
+          atual += c;
+        }
+        out.push(atual);
+        return out.map(x => x.trim());
+      };
+
+      const REGRAS = [
+        /* \s no lugar do espaço comum: a Avenue usa espaço fixo entre o $ e o número */
+        {re: /^Compra de ([\d.,]+)\s+([A-Z0-9.]{1,8})\s+a\s*\$?\s*([\d.,]+)/i, tipo:'compra', qtd:1, tick:2, preco:3},
+        {re: /^Venda de ([\d.,]+)\s+([A-Z0-9.]{1,8})\s+a\s*\$?\s*([\d.,]+)/i,  tipo:'venda',  qtd:1, tick:2, preco:3},
+        {re: /^Estorno de imposto sobre dividendo de ([A-Z0-9.]{1,8})/i, tipo:'imposto', tick:1, estorno:true},
+        {re: /^Imposto sobre dividendo de ([A-Z0-9.]{1,8})/i,          tipo:'imposto',  tick:1},
+        {re: /^Dividendos? de ([A-Z0-9.]{1,8})/i,                      tipo:'provento', tick:1},
+        {re: /^Cupom de ([A-Z0-9.]{2,10})/i,                           tipo:'juros',    tick:1},
+        {re: /^Taxa sobre ADR de ([A-Z0-9.]{1,8})/i,                   tipo:'taxa',     tick:1},
+        {re: /aluguel de ativo/i,                                      tipo:'auto'},
+        {re: /Cobran[çc]a de taxa|Wire Fee|Tarifa/i,                   tipo:'taxa'},
+        {re: /Transfer[êe]ncia de Wire|Dep[óo]sito|Aporte|Entrada de recursos/i, tipo:'aporte'},
+        {re: /Retirada|Saque|Withdrawal/i,                             tipo:'resgate'}
+      ];
+
+      for(let i = 1; i < linhas.length; i++){
+        const c = campos(linhas[i]);
+        if(c.length < 4) continue;
+        const data = dataBR(c[0]);
+        const desc = c[2] || '';
+        const valor = nUS(c[3]);
+        if(!data || valor == null || !desc) continue;
+
+        let achou = null;
+        for(const g of REGRAS){
+          const m = g.re.exec(desc);
+          if(!m) continue;
+          achou = {tipo: g.tipo, estorno: !!g.estorno,
+                   ticker: g.tick ? (m[g.tick] || '').toUpperCase() : '',
+                   qtd: g.qtd ? nBR(m[g.qtd]) : 0,
+                   preco: g.preco ? nBR(m[g.preco]) : 0};
+          break;
+        }
+        if(!achou){ r.avisos.push('não entendi: ' + desc.slice(0,40)); continue; }
+        /* aluguel de ações: crédito é rendimento, débito é imposto */
+        if(achou.tipo === 'auto') achou.tipo = valor >= 0 ? 'juros' : 'imposto';
+
+        r.movimentos.push({data: data, dataLiq: dataBR(c[1]), descricao: desc,
+                           tipo: achou.tipo, ticker: achou.ticker, estorno: achou.estorno,
+                           qtd: achou.qtd || 0, preco: achou.preco || 0,
+                           valor: Math.abs(valor), sinalBruto: valor});
+      }
+
+      const datas = r.movimentos.map(m => m.data).sort();
+      r.periodo = {de: datas[0] || null, ate: datas[datas.length-1] || null};
+      r.certificado = 'avenue';
+      r.titulo = 'Avenue · ' + r.movimentos.length + ' lançamentos';
+      if(!r.movimentos.length) r.avisos.push('nenhum lançamento reconhecido no arquivo');
+      return r;
+    }
+  },
+
   /* ---------- detecção ---------- */
   reconhecer(txt){
+    if(this.avenueCsv.reconhece(txt)) return this.avenueCsv;
     if(this.btgPrevidencia.reconhece(txt)) return this.btgPrevidencia;
     if(this.itauFundo.reconhece(txt)) return this.itauFundo;
     if(this.itauConta.reconhece(txt)) return this.itauConta;
@@ -5192,7 +5271,24 @@ const Importador = {
     return melhorN ? melhor : null;
   },
 
+  /* acha a posição pelo código do papel, aceitando apelidos (BK = BNY Mellon) */
+  porTicker(tk){
+    const alvo = this.semAc(tk);
+    if(!alvo) return null;
+    let p = ST.posicoes.find(x => this.semAc(x.ticker) === alvo);
+    if(p) return p;
+    /* tenta pelo nome, para casos como BK/BNY */
+    const APELIDOS = {BK:'BANK NEW YORK', WETF:'WISDOMTREE', GOOGL:'ALPHABET', BRK:'BERKSHIRE'};
+    const pista = APELIDOS[alvo];
+    if(pista) p = ST.posicoes.find(x => this.semAc(x.nome).indexOf(pista) >= 0);
+    return p || null;
+  },
+
   casar(dados){
+    if(dados.formato === 'avenue-csv'){
+      return ST.posicoes.find(x => x.inst === 'Avenue' && x.tipo === 'caixa') ||
+             ST.posicoes.find(x => x.inst === 'Avenue') || null;
+    }
     if(dados.formato === 'itau-conta'){
       const g = (dados.grupos || [])[0];
       return g ? this.porNome(g.nome) : null;
@@ -5235,7 +5331,64 @@ const Importador = {
     const lista = [];
     const perto = (a, b) => a != null && b != null && Math.abs(a - b) < 0.01;
 
+    /* ---- Avenue: agrupa por tipo de lançamento, já que são muitos ativos ---- */
+    if(dados.formato === 'avenue-csv'){
+      const GRUPOS = [
+        {id:'compra',   tipo:'compra',   nome:'Compras',                 ganho:'a data de cada compra é o que destrava a rentabilidade'},
+        {id:'venda',    tipo:'venda',    nome:'Vendas',                  ganho:'entram com data e preço, para o custo ficar certo'},
+        {id:'provento', tipo:'provento', nome:'Dividendos recebidos',    ganho:'renda que hoje não aparece em lugar nenhum'},
+        {id:'juros',    tipo:'juros',    nome:'Cupons e aluguel de ações', ganho:'juros de bond e aluguel de papel'},
+        {id:'imposto',  tipo:'imposto',  nome:'Impostos retidos',        ganho:'o que os EUA retiveram na fonte'},
+        {id:'taxa',     tipo:'taxa',     nome:'Taxas',                   ganho:'corretagem, ADR e tarifa de remessa'},
+        {id:'aporte',   tipo:'aporte',   nome:'Remessas recebidas',      ganho:'é o dinheiro que saiu do seu bolso — base do retorno'},
+        {id:'resgate',  tipo:'resgate',  nome:'Retiradas',               ganho:'dinheiro que voltou para o Brasil'}
+      ];
+      GRUPOS.forEach(g => {
+        const itens = dados.movimentos.filter(m => m.tipo === g.tipo);
+        if(!itens.length) return;
+        const novos = itens.filter(m => {
+          const alvo = m.ticker ? this.porTicker(m.ticker) : null;
+          return !Mov.jaExiste({data: m.data, tipo: m.tipo, ticker: alvo ? alvo.ticker : '',
+                                inst: 'Avenue', qtd: m.qtd || 0, valor: m.valor});
+        });
+        if(!novos.length) return;
+        const total = novos.reduce((s,m) => s + m.valor, 0);
+        const ds = novos.map(m => m.data).sort();
+        lista.push({id: 'av-' + g.id, nome: g.nome + ' (' + novos.length + ')', de:'—',
+                    para: fmt(total, 'USD') + ' entre ' + fmtData(ds[0]) + ' e ' + fmtData(ds[ds.length-1]),
+                    ganho: g.ganho});
+      });
+      return lista;
+    }
+
     /* ---- extrato de conta corrente: lançamentos agrupados por fundo ---- */
+    if(dados.formato === 'avenue-csv'){
+      const semAtivo = [];
+      let n = 0;
+      ['compra','venda','provento','juros','imposto','taxa','aporte','resgate'].forEach(tp => {
+        if(!tem('av-' + tp)) return;
+        dados.movimentos.filter(m => m.tipo === tp).forEach(m => {
+          const alvo = m.ticker ? this.porTicker(m.ticker) : null;
+          if(m.ticker && !alvo && semAtivo.indexOf(m.ticker) < 0) semAtivo.push(m.ticker);
+          const reg = {data: m.data, tipo: m.tipo, ativoId: alvo ? alvo.id : null,
+                       ticker: alvo ? alvo.ticker : (m.ticker || ''), inst: 'Avenue',
+                       qtd: m.qtd || 0, preco: m.preco || 0, valor: m.valor, moeda: 'USD',
+                       obs: m.descricao, origem: 'importado'};
+          if(!Mov.jaExiste(reg)){ Mov.add(reg); n++; }
+          if(alvo && (m.tipo === 'compra' || m.tipo === 'venda')){
+            if(!alvo.data || m.data < alvo.data) alvo.data = m.data;
+            alvo.extratoEm = new Date().toISOString();
+            alvo.semExtrato = false;
+            Mov.todos().filter(x => x.ativoId === alvo.id && x.origem === 'saldo-inicial')
+              .forEach(x => { if(m.data < x.data){ x.data = m.data; x.presumida = false; } });
+          }
+        });
+      });
+      if(n) feito.push(n + ' lançamentos da Avenue criados');
+      if(semAtivo.length) feito.push('sem ativo cadastrado para: ' + semAtivo.join(', '));
+      return feito;
+    }
+
     if(dados.formato === 'itau-conta'){
       (dados.grupos || []).forEach((g, i) => {
         const destino = this.porNome(g.nome) || pos;
@@ -5349,6 +5502,33 @@ const Importador = {
     const feito = [];
     const tem = id => escolhidos.indexOf(id) >= 0;
     if(!pos) return feito;
+
+    if(dados.formato === 'avenue-csv'){
+      const semAtivo = [];
+      let n = 0;
+      ['compra','venda','provento','juros','imposto','taxa','aporte','resgate'].forEach(tp => {
+        if(!tem('av-' + tp)) return;
+        dados.movimentos.filter(m => m.tipo === tp).forEach(m => {
+          const alvo = m.ticker ? this.porTicker(m.ticker) : null;
+          if(m.ticker && !alvo && semAtivo.indexOf(m.ticker) < 0) semAtivo.push(m.ticker);
+          const reg = {data: m.data, tipo: m.tipo, ativoId: alvo ? alvo.id : null,
+                       ticker: alvo ? alvo.ticker : (m.ticker || ''), inst: 'Avenue',
+                       qtd: m.qtd || 0, preco: m.preco || 0, valor: m.valor, moeda: 'USD',
+                       obs: m.descricao, origem: 'importado'};
+          if(!Mov.jaExiste(reg)){ Mov.add(reg); n++; }
+          if(alvo && (m.tipo === 'compra' || m.tipo === 'venda')){
+            if(!alvo.data || m.data < alvo.data) alvo.data = m.data;
+            alvo.extratoEm = new Date().toISOString();
+            alvo.semExtrato = false;
+            Mov.todos().filter(x => x.ativoId === alvo.id && x.origem === 'saldo-inicial')
+              .forEach(x => { if(m.data < x.data){ x.data = m.data; x.presumida = false; } });
+          }
+        });
+      });
+      if(n) feito.push(n + ' lançamentos da Avenue criados');
+      if(semAtivo.length) feito.push('sem ativo cadastrado para: ' + semAtivo.join(', '));
+      return feito;
+    }
 
     if(dados.formato === 'itau-conta'){
       (dados.grupos || []).forEach((g, i) => {
