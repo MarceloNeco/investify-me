@@ -787,6 +787,8 @@ details.imp-arq.repetido{border-color:var(--warn)}
 .ia-c.ok{background:color-mix(in srgb, var(--accent) 22%, var(--chip)); color:var(--txt)}
 .imp-rep{padding:8px 10px; border-radius:8px; margin-bottom:10px;
   background:color-mix(in srgb, var(--warn) 12%, var(--card)); color:var(--txt2)}
+.dobra-nota{margin-top:14px; padding:12px 14px; border:1px solid var(--line); border-radius:11px; background:var(--card2)}
+.dobra-nota p{margin:4px 0 9px}
 
 </style>
 </head>
@@ -7582,7 +7584,18 @@ function viewConfig(){
       '<button class="btn" data-acao="importar">⬆ Restaurar de arquivo</button>' +
       '<button class="btn danger" data-acao="limpar">Apagar tudo</button>' +
       '<input type="file" id="arqImport" accept="application/json,.json" class="hidden">' +
-    '</div></div>';
+    '</div>' +
+    (carimboDoArquivo()
+      ? '<div class="dobra-nota"><b class="small">Carteira que veio dentro deste arquivo</b>' +
+        '<p class="small muted">Publicada em ' + fmtData(carimboDoArquivo().carimbo.slice(0,10)) +
+        ' com ' + carimboDoArquivo().ativos + ' ativos' +
+        (ST.origemCarimbo === carimboDoArquivo().carimbo
+          ? ' — é exatamente a que está aqui agora.'
+          : ' — diferente da que está neste aparelho (' + ST.posicoes.length + ' ativos).') + '</p>' +
+        '<button class="btn sm' + (ST.origemCarimbo === carimboDoArquivo().carimbo ? '' : ' primary') +
+        '" data-acao="carregar-publicada">Carregar a carteira do arquivo</button></div>'
+      : '') +
+    '</div>';
 
   /* proteção por senha */
   h += '<div class="card"><div class="card-head"><h3>Levar a carteira para dentro do site (com senha)</h3></div>' +
@@ -8836,6 +8849,7 @@ function ligarEventos(){
           Store.importarTexto(txt, 'substituir');
           ST = Store.estado;
           ST.config.chaves = await Cofre.carregar();
+          marcarCarimboCarregado();
           aplicarTema(); sincronizarNivel();
           fechar('genModal'); render(); atualizarCotacoes(false);
           toast('Carteira atualizada: ' + ST.posicoes.length + ' ativos.');
@@ -8898,6 +8912,7 @@ function ligarEventos(){
         }
         break;
       case 'exportar': Store.exportar(); toast('Backup baixado.'); break;
+      case 'carregar-publicada': pedirCarteiraPublicada(); break;
       case 'importar': $('#arqImport').click(); break;
       case 'limpar':
         if(confirm('Isso apaga a carteira inteira deste navegador. Tem certeza?')){
@@ -8974,7 +8989,7 @@ async function iniciar(){
   if(!ST.posicoes.length && window.CARTEIRA_EMBUTIDA){
     try{
       Store.importarTexto(JSON.stringify(window.CARTEIRA_EMBUTIDA), 'substituir');
-      ST = Store.estado; aplicarTema(); sincronizarNivel();
+      ST = Store.estado; marcarCarimboCarregado(); aplicarTema(); sincronizarNivel();
     }catch(e){ console.warn('carteira embutida:', e); }
   }
 
@@ -9068,40 +9083,73 @@ function avisarCofreTravado(){
   });
 }
 
-/* ---------------- o site trouxe uma carteira mais nova? ---------------- */
-function conferirCarteiraMaisNova(){
+/* ---------------- o arquivo trouxe uma carteira mais nova? ----------------
+   Não dá para comparar pela data de atualização: a daqui é reescrita a cada
+   clique que salva, então seria sempre a mais nova. O que vale é o carimbo:
+   se o arquivo veio com um carimbo diferente do que foi carregado aqui, é
+   porque uma versão nova foi publicada. */
+function carimboDoArquivo(){
   const pac = window.CARTEIRA_CIFRADA;
-  if(!pac || !pac.carimbo) return;
-  const doSite = new Date(pac.carimbo).getTime();
-  const daqui  = new Date(ST.atualizadoEm || 0).getTime();
-  if(!doSite || doSite <= daqui + 60000) return;           /* a daqui é igual ou mais nova */
-  if(ST.ignorarCarimbo === pac.carimbo) return;            /* já disse que não queria */
+  const emb = (typeof window.CARTEIRA_EMBUTIDA !== 'undefined') ? window.CARTEIRA_EMBUTIDA : null;
+  if(pac && pac.carimbo) return {carimbo: pac.carimbo, ativos: pac.ativos || 0, cifrada: true};
+  if(emb && emb.atualizadoEm) return {carimbo: emb.atualizadoEm, ativos: (emb.posicoes || []).length, cifrada: false};
+  return null;
+}
 
+function marcarCarimboCarregado(){
+  const c = carimboDoArquivo();
+  if(c){ ST.origemCarimbo = c.carimbo; Store.salvar(); }
+}
+
+function carregarEmbutida(){
+  try{
+    Store.importarTexto(JSON.stringify(window.CARTEIRA_EMBUTIDA), 'substituir');
+    ST = Store.estado;
+    marcarCarimboCarregado();
+    aplicarTema(); sincronizarNivel(); render(); atualizarCotacoes(false);
+    toast('Carteira do arquivo carregada: ' + ST.posicoes.length + ' ativos.');
+    return true;
+  }catch(e){ toast('Não consegui ler a carteira do arquivo.', 'err'); return false; }
+}
+
+function pedirCarteiraPublicada(){
+  const c = carimboDoArquivo();
+  if(!c){ toast('Este arquivo não traz uma carteira embutida.', 'warn'); return; }
+  if(!c.cifrada){ carregarEmbutida(); return; }
+  $('#genTitle').textContent = 'Carregar a carteira publicada';
+  $('#genBody').innerHTML =
+    '<p class="small muted">Isso substitui a carteira deste aparelho pela que está dentro do site. ' +
+    'Se você cadastrou coisas só aqui, baixe antes um backup em Configurações.</p>' +
+    campoSenha('Senha do site', 'avSenha', '', 'current-password') +
+    '<div class="f-actions"><button class="btn" data-close="genModal">Cancelar</button>' +
+    '<button class="btn primary" data-acao="trocar-carteira">Carregar</button></div>';
+  abrir('genModal');
+  setTimeout(() => { const i = $('#avSenha'); if(i) i.focus(); }, 120);
+}
+
+function conferirCarteiraMaisNova(){
+  const c = carimboDoArquivo();
+  if(!c) return;
+  if(ST.origemCarimbo === c.carimbo) return;      /* esta já é a carteira que está aqui */
+  if(ST.ignorarCarimbo === c.carimbo) return;     /* já disse que não queria */
+  if(!ST.posicoes.length) return;                 /* carteira vazia: o fluxo normal já carrega */
+
+  const quando = new Date(c.carimbo);
   const barra = document.createElement('div');
   barra.className = 'aviso-versao';
-  barra.innerHTML = '<span>📦 Este site foi publicado com uma carteira mais nova' +
-    (pac.ativos ? ' (' + pac.ativos + ' ativos, de ' + new Date(pac.carimbo).toLocaleDateString('pt-BR') + ')' : '') +
+  barra.innerHTML = '<span>📦 Este arquivo foi publicado com uma carteira mais nova' +
+    (c.ativos ? ' (' + c.ativos + ' ativos, de ' + quando.toLocaleDateString('pt-BR') + ')' : '') +
     '. A que está neste aparelho tem ' + ST.posicoes.length + '.</span>' +
     '<button class="btn sm primary" id="avSim">Carregar a nova</button>' +
     '<button class="btn sm ghost" id="avNao">Manter a minha</button>';
   document.querySelector('.content').prepend(barra);
 
   $('#avNao').addEventListener('click', () => {
-    ST.ignorarCarimbo = pac.carimbo; Store.salvar(); barra.remove();
+    ST.ignorarCarimbo = c.carimbo; Store.salvar(); barra.remove();
   });
-  $('#avSim').addEventListener('click', () => {
-    barra.remove();
-    $('#genTitle').textContent = 'Carregar a carteira publicada';
-    $('#genBody').innerHTML =
-      '<p class="small muted">Isso substitui a carteira deste aparelho pela que está dentro do site. ' +
-      'Se você cadastrou coisas só aqui, baixe antes um backup em Configurações.</p>' +
-      campoSenha('Senha do site', 'avSenha', '', 'current-password') +
-      '<div class="f-actions"><button class="btn" data-close="genModal">Cancelar</button>' +
-      '<button class="btn primary" data-acao="trocar-carteira">Carregar</button></div>';
-    abrir('genModal');
-    setTimeout(() => { const i = $('#avSenha'); if(i) i.focus(); }, 120);
-  });
+  $('#avSim').addEventListener('click', () => { barra.remove(); pedirCarteiraPublicada(); });
 }
+
 function mostrarBloqueio(){
   const tela = $('#lockScreen');
   tela.classList.remove('hidden');
@@ -9120,6 +9168,7 @@ function mostrarBloqueio(){
       Store.semPersistir = !$('#lockLembrar').checked;
       Store.importarTexto(txt, 'substituir');
       ST = Store.estado;
+      marcarCarimboCarregado();
       ST.config.chaves = await Cofre.carregar();    /* abre o cofre, se estiver protegido */
       aplicarTema(); sincronizarNivel();
       tela.classList.add('hidden');
