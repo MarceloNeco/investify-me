@@ -525,6 +525,15 @@ html[data-theme="light"]{
   .not-tit{font-size:.9rem}
 }
 
+/* aviso de carteira publicada mais nova */
+.aviso-versao{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:var(--card2); border:1px solid var(--accent2); border-radius:12px;
+  padding:12px 14px; margin-bottom:14px; font-size:.88rem;
+}
+.aviso-versao span{flex:1; min-width:220px}
+.not-hora{color:var(--txt3)}
+
 </style>
 </head>
 <body>
@@ -1836,6 +1845,7 @@ function estadoPadrao(){
       inflacaoEsperada: 4.5,
       autoRefreshMin: 10,
       ttlUsMin: 60,
+      ttlFitaMin: 30,
       fitaLigada: true,
       fitaModo: 'misto',
       fitaDirecao: 'esquerda',
@@ -2056,6 +2066,8 @@ const Cripto = {
       throw new Error('Esta é a versão local (sem senha). Faça isso pelo site publicado.');
 
     const pacote = await this.cifrar(JSON.stringify(Store.estado), senha);
+    pacote.carimbo = Store.estado.atualizadoEm || new Date().toISOString();
+    pacote.ativos = (Store.estado.posicoes || []).length;
     const novo = 'window.CARTEIRA_CIFRADA = ' + JSON.stringify(pacote) + ';';
     if(/window\.CARTEIRA_CIFRADA\s*=\s*\{[\s\S]*?\};/.test(html)){
       html = html.replace(/window\.CARTEIRA_CIFRADA\s*=\s*\{[\s\S]*?\};/, novo);
@@ -2204,7 +2216,7 @@ const Drive = {
 const CHAVE_CACHE = 'investifyme.cache.v1';
 
 /* Cotações extras que alimentam a fita do topo */
-const FITA_B3_LIVRE = ['PETR4','VALE3','ITUB4','BBAS3','ABEV3','B3SA3','BBDC4','WEGE3'];
+const FITA_B3_LIVRE = ['PETR4','VALE3','ITUB4','BBAS3','ABEV3','WEGE3'];
 const FITA_INDICES  = ['^BVSP','IFIX.SA'];   /* precisam do token gratuito da brapi */
 
 const Mercado = {
@@ -2217,6 +2229,7 @@ const Mercado = {
   usPendentes: [],        /* ativos dos EUA esperando a próxima janela de cota */
   usBloqueadoAte: 0,      /* timestamp até quando a cota está estourada */
   usLimitePorVez: 8,      /* o plano grátis da Twelve Data libera 8 por minuto */
+  usUltimaJanela: 0,      /* quando foi a última consulta aos EUA */
 
   /* ---------- cache ---------- */
   lerCache(){
@@ -2226,6 +2239,7 @@ const Mercado = {
         this.precos = o.precos || {};
         this.indicadores = o.indicadores || {};
         this.cambio = o.cambio || {};
+        this.usUltimaJanela = o.usUltimaJanela || 0;
         this.ultima = o.ultima ? new Date(o.ultima) : null;
       }
     }catch(e){}
@@ -2234,6 +2248,7 @@ const Mercado = {
     try{
       localStorage.setItem(CHAVE_CACHE, JSON.stringify({
         precos:this.precos, indicadores:this.indicadores, cambio:this.cambio,
+        usUltimaJanela:this.usUltimaJanela,
         ultima:this.ultima ? this.ultima.toISOString() : null
       }));
     }catch(e){}
@@ -2302,11 +2317,10 @@ const Mercado = {
     if(!tickers.length) return;
     const base = 'https://brapi.dev/api/quote/';
     const auth = token ? ('?token=' + encodeURIComponent(token)) : '';
-    const lotes = [];
-    if(token){ for(let i=0;i<tickers.length;i+=10) lotes.push(tickers.slice(i,i+10)); }
-    else tickers.forEach(t => lotes.push([t]));
+    /* o plano gratuito da brapi aceita 1 ativo por requisição, com ou sem token */
+    const lotes = tickers.map(t => [t]);
 
-    let semToken = 0;
+    let semToken = 0, planoLimite = 0;
     for(const lote of lotes){
       try{
         const j = await this.pegarJson(base + lote.map(encodeURIComponent).join(',') + auth);
@@ -2322,14 +2336,20 @@ const Mercado = {
           };
         });
       }catch(e){
-        if(e.status === 401 || (e.corpo||'').indexOf('TOKEN') >= 0) semToken += lote.length;
-        else if(e.status === 429) this.erros.push('brapi: limite de consultas atingido, tente daqui a pouco.');
+        const corpo = e.corpo || '';
+        if(e.status === 401 || corpo.indexOf('TOKEN') >= 0) semToken += lote.length;
+        else if(e.status === 429) this.erros.push('brapi: muitas consultas seguidas. Vou tentar de novo na próxima atualização.');
+        else if(e.status === 400 && /por requisi/i.test(corpo)) planoLimite++;
+        else if(e.status === 404) { /* ativo que a brapi não conhece: ignora em silêncio */ }
         else this.erros.push('B3 (' + lote.join(',') + '): ' + e.message);
       }
-      await new Promise(r => setTimeout(r, token ? 120 : 260));
+      await new Promise(r => setTimeout(r, 220));
     }
     if(semToken){
       this.erros.push(semToken + ' ativo(s) da B3 precisam do token gratuito da brapi — veja em Configurações.');
+    }
+    if(planoLimite){
+      this.erros.push('brapi: o plano gratuito aceita um ativo por consulta; ajustei e vou buscar um a um.');
     }
   },
 
@@ -2346,9 +2366,14 @@ const Mercado = {
       return;
     }
 
-    /* ainda dentro da janela de bloqueio: guarda tudo para a próxima rodada */
-    if(this.usBloqueadoAte && Date.now() < this.usBloqueadoAte){
+    /* ainda dentro da janela de bloqueio, ou menos de um minuto desde a última consulta:
+       guarda tudo para a próxima rodada em vez de tomar 429 */
+    const agoraMs = Date.now();
+    if((this.usBloqueadoAte && agoraMs < this.usBloqueadoAte) ||
+       (this.usUltimaJanela && (agoraMs - this.usUltimaJanela) < 60000)){
       this.usPendentes = tickers.slice();
+      if(!this.usBloqueadoAte || agoraMs >= this.usBloqueadoAte)
+        this.usBloqueadoAte = this.usUltimaJanela + 62000;
       return;
     }
 
@@ -2362,6 +2387,7 @@ const Mercado = {
     const agora = fila.slice(0, limite);
     this.usPendentes = fila.slice(limite);
 
+    this.usUltimaJanela = Date.now();
     await this.usTwelve(agora, k.twelve);
   },
 
@@ -2496,11 +2522,12 @@ const Mercado = {
     ['USD','EUR'].forEach(m => moedas.add(m));
     ['BTC','ETH'].forEach(c => { if(!this.fresco('cripto:' + c, ttl)) cripto.push(c); });
 
-    /* cotações extras para a fita: blue chips da B3 (não exigem token) e índices (com token) */
+    /* cotações extras para a fita: cada uma é uma consulta na brapi, então valem por mais tempo */
+    const ttlFita = forcar ? 0 : (config.ttlFitaMin == null ? 30 : config.ttlFitaMin);
     if(config.fitaMercado !== false){
-      FITA_B3_LIVRE.forEach(t => { if(!this.fresco('b3:' + t, ttl)) b3.push(t); });
+      FITA_B3_LIVRE.forEach(t => { if(!this.fresco('b3:' + t, ttlFita)) b3.push(t); });
       if((config.chaves || {}).brapi){
-        FITA_INDICES.forEach(t => { if(!this.fresco('b3:' + t, ttl)) b3.push(t); });
+        FITA_INDICES.forEach(t => { if(!this.fresco('b3:' + t, ttlFita)) b3.push(t); });
       }
     }
 
@@ -2592,6 +2619,13 @@ const FONTES_NOTICIAS = [
   {id:'cnbc',       nome:'CNBC (EUA)',    pais:'US', url:'https://www.cnbc.com/id/100003114/device/rss/rss.html'}
 ];
 
+/* manchetes que não têm nada a ver com investimento e entopem o feed */
+const RUIDO_NOTICIAS = new RegExp([
+  'mega-?sena','quina','lotof[áa]cil','lotomania','dia de sorte','timemania','dupla sena',
+  'super sete','milion[áa]ria','loteria','concurso \\d+','resultado do concurso',
+  'hor[óo]scopo','signo','sorteio','bbb','big brother','novela'
+].join('|'), 'i');
+
 const Noticias = {
   itens: [],
   ultima: null,
@@ -2655,14 +2689,16 @@ const Noticias = {
           this.erros.push(f.nome + ': ' + (j.message || ('resposta ' + r.status)));
           continue;
         }
-        j.items.slice(0, 20).forEach(it => {
+        j.items.slice(0, 25).forEach(it => {
           const link = this.linkSeguro(it.link);
           if(!link) return;
+          const tit = this.limpaTexto(it.title);
+          if(RUIDO_NOTICIAS.test(tit)) return;   /* fora loteria, horóscopo e afins */
           novos.push({
             fonte: f.id,
             fonteNome: f.nome,
             pais: f.pais,
-            titulo: this.limpaTexto(it.title).slice(0, 220),
+            titulo: tit.slice(0, 220),
             resumo: this.limpaTexto(it.description).slice(0, 300),
             link: link,
             data: it.pubDate ? new Date(it.pubDate.replace(' ', 'T')).toISOString() : null
@@ -2688,6 +2724,18 @@ const Noticias = {
     return this.erros;
   }
 };
+
+/* "14/09 às 23:13" — data e hora curtinhas, no fuso do aparelho */
+function dataHoraCurta(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  if(isNaN(d)) return '';
+  const hoje = new Date();
+  const mesmoAno = d.getFullYear() === hoje.getFullYear();
+  const data = d.toLocaleDateString('pt-BR', mesmoAno ? {day:'2-digit', month:'2-digit'} : {day:'2-digit', month:'2-digit', year:'numeric'});
+  const hora = d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+  return data + ' às ' + hora;
+}
 
 /* "há 12 min", "há 3 h", "ontem" */
 function tempoRelativo(iso){
@@ -3379,7 +3427,12 @@ function viewNoticias(){
   lista.slice(0, 60).forEach(n => {
     h += '<a class="not-item" href="' + esc(n.link) + '" target="_blank" rel="noopener noreferrer">' +
       '<div class="not-top"><span class="badge">' + esc(n.fonteNome) + '</span>' +
-        '<span class="tiny muted">' + esc(tempoRelativo(n.data)) + '</span></div>' +
+        (function(){
+          const rel = tempoRelativo(n.data);
+          /* em notícia antiga o relativo já é a data; não repete */
+          const hora = (n.data && rel.indexOf('/') < 0) ? ' <span class="not-hora">(' + esc(dataHoraCurta(n.data)) + ')</span>' : '';
+          return '<span class="tiny muted">' + esc(rel) + hora + '</span>';
+        })() + '</div>' +
       '<div class="not-tit">' + (q ? destacar(n.titulo, buscaNoticia) : esc(n.titulo)) + '</div>' +
       (n.resumo ? '<div class="not-res">' + esc(n.resumo.slice(0, 180)) + '…</div>' : '') +
     '</a>';
@@ -4578,6 +4631,18 @@ function ligarEventos(){
         }
         break;
       }
+      case 'trocar-carteira': {
+        const senha = ($('#avSenha').value || '');
+        if(!senha){ toast('Digite a senha.', 'err'); return; }
+        try{
+          const txt = await Cripto.decifrar(window.CARTEIRA_CIFRADA, senha);
+          Store.importarTexto(txt, 'substituir');
+          ST = Store.estado; aplicarTema(); sincronizarNivel();
+          fechar('genModal'); render(); atualizarCotacoes(false);
+          toast('Carteira atualizada: ' + ST.posicoes.length + ' ativos.');
+        }catch(err){ toast('Senha incorreta.', 'err'); }
+        break;
+      }
       case 'nova-meta': abrirNovaMeta(); break;
       case 'confirmar-meta': {
         const nome = ($('#mNome').value || '').trim();
@@ -4715,6 +4780,7 @@ function iniciar(){
   }
 
   comecarApp(r);
+  conferirCarteiraMaisNova();
 }
 
 function comecarApp(r){
@@ -4730,7 +4796,40 @@ function comecarApp(r){
   }, 900);
 }
 
-/* ---------------- tela de senha ---------------- */
+/* ---------------- o site trouxe uma carteira mais nova? ---------------- */
+function conferirCarteiraMaisNova(){
+  const pac = window.CARTEIRA_CIFRADA;
+  if(!pac || !pac.carimbo) return;
+  const doSite = new Date(pac.carimbo).getTime();
+  const daqui  = new Date(ST.atualizadoEm || 0).getTime();
+  if(!doSite || doSite <= daqui + 60000) return;           /* a daqui é igual ou mais nova */
+  if(ST.ignorarCarimbo === pac.carimbo) return;            /* já disse que não queria */
+
+  const barra = document.createElement('div');
+  barra.className = 'aviso-versao';
+  barra.innerHTML = '<span>📦 Este site foi publicado com uma carteira mais nova' +
+    (pac.ativos ? ' (' + pac.ativos + ' ativos, de ' + new Date(pac.carimbo).toLocaleDateString('pt-BR') + ')' : '') +
+    '. A que está neste aparelho tem ' + ST.posicoes.length + '.</span>' +
+    '<button class="btn sm primary" id="avSim">Carregar a nova</button>' +
+    '<button class="btn sm ghost" id="avNao">Manter a minha</button>';
+  document.querySelector('.content').prepend(barra);
+
+  $('#avNao').addEventListener('click', () => {
+    ST.ignorarCarimbo = pac.carimbo; Store.salvar(); barra.remove();
+  });
+  $('#avSim').addEventListener('click', () => {
+    barra.remove();
+    $('#genTitle').textContent = 'Carregar a carteira publicada';
+    $('#genBody').innerHTML =
+      '<p class="small muted">Isso substitui a carteira deste aparelho pela que está dentro do site. ' +
+      'Se você cadastrou coisas só aqui, baixe antes um backup em Configurações.</p>' +
+      campo('Senha do site', '<input type="password" id="avSenha" autocomplete="current-password">') +
+      '<div class="f-actions"><button class="btn" data-close="genModal">Cancelar</button>' +
+      '<button class="btn primary" data-acao="trocar-carteira">Carregar</button></div>';
+    abrir('genModal');
+    setTimeout(() => { const i = $('#avSenha'); if(i) i.focus(); }, 120);
+  });
+}
 function mostrarBloqueio(){
   const tela = $('#lockScreen');
   tela.classList.remove('hidden');
