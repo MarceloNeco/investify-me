@@ -581,6 +581,14 @@ html[data-theme="light"]{
 }
 .chip .tiny{opacity:.7; font-weight:600}
 
+/* linha inteira clicável */
+tr.linha-click{cursor:pointer}
+tr.linha-click:hover{background:var(--card2)}
+tr.linha-click:active{background:var(--line)}
+.ativo-card.linha-click{cursor:pointer}
+.ativo-card.linha-click:active{border-color:var(--accent)}
+.ac-toque{white-space:nowrap}
+
 </style>
 </head>
 <body>
@@ -3912,7 +3920,7 @@ function viewCarteira(){
 
   h += '<div class="card pad0"><div class="tbl-wrap"><table class="tbl-carteira"><thead><tr>' +
     '<th>Ativo</th><th class="c-spark">30 dias</th><th>Qtd.</th><th>Preço médio</th><th>Preço atual</th>' +
-    '<th>Valor hoje</th><th>Lucro/prejuízo</th><th></th>' +
+    '<th>Valor hoje</th><th>Lucro/prejuízo</th>' +
     '</tr></thead><tbody>';
 
   let somaFiltro = 0;
@@ -3928,7 +3936,7 @@ function viewCarteira(){
                  : c.origem === 'estimado' ? '<span class="badge est">estimado</span>'
                  : c.origem === 'manual' ? '<span class="badge man">manual</span>'
                  : '<span class="badge">sem preço</span>';
-      h += '<tr>' +
+      h += '<tr class="linha-click" data-acoes-ativo="' + p.id + '" title="Clique para ver as opções deste ativo">' +
         '<td><button class="lnk-ativo" data-grafico="' + p.id + '" title="Ver gráfico">' +
             '<span class="t-main">' + esc(p.ticker) + '</span> 📈</button> ' + badge +
           '<div class="t-sub">' + esc(p.nome || '') + (p.inst ? ' · ' + esc(p.inst) : '') + '</div></td>' +
@@ -3939,14 +3947,14 @@ function viewCarteira(){
           (c.varDia == null ? '' : '<div class="t-sub ' + cls(c.varDia) + '">' + fmtPct(c.varDia, true) + ' hoje</div>') + '</td>' +
         '<td class="t-main">' + fmt(c.valorBase) + '</td>' +
         '<td class="' + cls(c.pl) + '">' + fmt(c.pl) + '<div class="t-sub ' + cls(c.pl) + '">' + fmtPct(c.plPct, true) + '</div></td>' +
-        '<td><button class="icon-btn" data-acoes-ativo="' + p.id + '" title="Ações">⋯</button></td>' +
       '</tr>';
     });
   });
   h += '<tr class="group-row"><td colspan="5"><b>Total</b></td><td><b>' + fmt(somaFiltro) + '</b></td><td colspan="2"></td></tr>';
   h += '</tbody></table></div></div>';
 
-  h += '<p class="tiny muted">Etiquetas: <span class="badge live">auto</span> preço buscado na fonte pública · ' +
+  h += '<p class="tiny muted">Clique em qualquer lugar da linha para abrir as opções do ativo (editar, aportar, atualizar valor, excluir) ' +
+       'ou no código do papel para ir direto ao gráfico. Etiquetas: <span class="badge live">auto</span> preço buscado na fonte pública · ' +
        '<span class="badge est">estimado</span> calculado pela taxa contratada ' + info('estimado') + ' · ' +
        '<span class="badge man">manual</span> valor informado por você.</p>';
   return h;
@@ -3974,7 +3982,7 @@ function carteiraCartoes(chaves, grupos){
                  : c.origem === 'estimado' ? '<span class="badge est">estimado</span>'
                  : c.origem === 'manual' ? '<span class="badge man">manual</span>'
                  : '<span class="badge">sem preço</span>';
-      h += '<div class="ativo-card">' +
+      h += '<div class="ativo-card linha-click" data-acoes-ativo="' + p.id + '">' +
         '<div class="ac-l1"><button class="lnk-ativo" data-grafico="' + p.id + '"><span class="ac-tk">' +
           esc(p.ticker) + '</span> 📈</button>' + badge +
           '<span class="ac-vl mono">' + fmt(c.valorBase) + '</span></div>' +
@@ -3987,12 +3995,7 @@ function carteiraCartoes(chaves, grupos){
         '</div>' +
         '<div class="ac-l4">' +
           '<span class="muted tiny">PM ' + precoCelula(c, 'pm') + (c.varDia != null ? ' · hoje <b class="' + cls(c.varDia) + '">' + fmtPct(c.varDia, true) + '</b>' : '') + '</span>' +
-          '<span class="ac-btns">' +
-            '<button class="icon-btn" data-editar="' + p.id + '">✏️</button>' +
-            '<button class="icon-btn" data-aporte="' + p.id + '">➕</button>' +
-            '<button class="icon-btn" data-valor="' + p.id + '">💰</button>' +
-            '<button class="icon-btn" data-excluir="' + p.id + '">🗑️</button>' +
-          '</span>' +
+          '<span class="ac-toque muted tiny">toque para as opções ›</span>' +
         '</div></div>';
     });
   });
