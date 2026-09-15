@@ -1853,6 +1853,7 @@ function estadoPadrao(){
       fitaMercado: true,
       fontesNoticias: ['infomoney','moneytimes','exame','seudinheiro','g1'],
       noticiasMin: 20,
+      noticiasAutoMin: 5,
       chaves: { brapi:'', twelve:'', finnhub:'', alpha:'', rss2json:'' },
       driveClientId: '',
       usarCookie: true,
@@ -1936,8 +1937,9 @@ const Store = {
 
   migrar(o){
     const base = estadoPadrao();
-    const st = Object.assign(base, o);
-    st.config = Object.assign(base.config, o.config || {});
+    const cfgPadrao = base.config;                    /* guarda os padrões antes da mistura */
+    const st = Object.assign({}, base, o);
+    st.config = Object.assign({}, cfgPadrao, o.config || {});
     st.config.chaves = Object.assign({brapi:'',twelve:'',finnhub:'',alpha:'',rss2json:''}, (o.config||{}).chaves || {});
     st.posicoes = Array.isArray(o.posicoes) ? o.posicoes : [];
     st.metas = Array.isArray(o.metas) ? o.metas : [];
@@ -3393,7 +3395,9 @@ let filtroFonte = 'todas', buscaNoticia = '';
 
 function viewNoticias(){
   let h = '<div class="card-head"><h1>Notícias</h1><div class="spacer"></div>' +
-    '<span class="tiny muted">' + (Noticias.ultima ? 'atualizado ' + fmtHora(Noticias.ultima) : 'ainda não buscado') + '</span>' +
+    '<span class="tiny muted">' + (Noticias.ultima ? 'atualizado ' + fmtHora(Noticias.ultima) : 'ainda não buscado') +
+      (Number(ST.config.noticiasAutoMin == null ? 5 : ST.config.noticiasAutoMin) > 0
+        ? ' · automático a cada ' + (ST.config.noticiasAutoMin == null ? 5 : ST.config.noticiasAutoMin) + ' min' : '') + '</span>' +
     '<button class="btn sm" data-acao="atualizar-noticias">⟳ Buscar notícias</button></div>';
 
   if(Noticias.carregando) h += '<p class="small muted">Buscando…</p>';
@@ -3799,6 +3803,10 @@ function viewConfig(){
       campo('O que passa nela', selectHTML('cFitaModo', [['misto','Cotações + manchetes'],['cotacoes','Só cotações'],['noticias','Só manchetes']], cfg.fitaModo || 'misto')) +
       campo('Sentido', selectHTML('cFitaDir', [['esquerda','Para a esquerda ←'],['direita','Para a direita →']], cfg.fitaDirecao || 'esquerda')) +
       campo('Velocidade', selectHTML('cFitaVel', [['lento','Devagar'],['medio','Média'],['rapido','Rápida']], cfg.fitaVelocidade || 'medio')) +
+      campo('Buscar notícias sozinho', selectHTML('cNotAuto',
+        [[5,'A cada 5 minutos'],[10,'A cada 10 minutos'],[15,'A cada 15 minutos'],[30,'A cada 30 minutos'],[0,'Só quando eu clicar']],
+        String(cfg.noticiasAutoMin == null ? 5 : cfg.noticiasAutoMin)), null,
+        'Só roda com a aba aberta. Se o serviço de RSS reclamar, o app espalha as tentativas sozinho.') +
     '</div>' +
     '<p class="hint" style="margin-top:-4px">Passe o mouse (ou segure o dedo) na fita para parar a rolagem e ler com calma.</p>' +
     '<div class="sub-lbl" style="margin-top:14px">De onde vêm as manchetes</div><div class="row">';
@@ -4371,6 +4379,8 @@ function ligarCamposDaView(){
       if(e.value !== 'cotacoes' && !Noticias.itens.length) Noticias.atualizar(ST.config, false).then(() => renderFita()); });
     liga('cFitaDir', e => { ST.config.fitaDirecao = e.value; Store.salvar(); renderFita(); });
     liga('cFitaVel', e => { ST.config.fitaVelocidade = e.value; Store.salvar(); renderFita(); });
+    liga('cNotAuto', e => { ST.config.noticiasAutoMin = Number(e.value); recuoNoticias = 1; Store.salvar(); ligarAutoNoticias();
+      if(Number(e.value) > 0) toast('Notícias serão buscadas a cada ' + e.value + ' minutos.'); });
     liga('cAuto',  e => { ST.config.autoRefreshMin = Number(e.value); Store.salvar(); ligarAuto(); });
     liga('cCookie',e => { ST.config.usarCookie = e.checked; Store.salvar(); render(); });
   }
@@ -4455,7 +4465,43 @@ function ligarAuto(){
   clearInterval(timerAuto);
   const min = Number(ST.config.autoRefreshMin) || 0;
   if(min > 0) timerAuto = setInterval(() => atualizarCotacoes(true), min*60000);
+  ligarAutoNoticias();
 }
+
+/* ---------- busca automática de notícias ---------- */
+let timerNoticias = null, recuoNoticias = 1;
+
+function ligarAutoNoticias(){
+  clearInterval(timerNoticias); timerNoticias = null;
+  const min = Number(ST.config.noticiasAutoMin == null ? 5 : ST.config.noticiasAutoMin);
+  if(!(min > 0)) return;
+  timerNoticias = setInterval(() => rodadaNoticias(min), min * 60000);
+}
+
+async function rodadaNoticias(minBase){
+  /* aba escondida: não gasta a cota do serviço à toa */
+  if(document.visibilityState === 'hidden') return;
+  /* se a fonte reclamou antes, espera mais tempo antes de tentar de novo */
+  if(recuoNoticias > 1){
+    const espera = minBase * recuoNoticias * 60000;
+    if(Noticias.ultima && (Date.now() - Noticias.ultima.getTime()) < espera) return;
+  }
+  const erros = await Noticias.atualizar(ST.config, true);
+  if(erros && erros.length){
+    recuoNoticias = Math.min(recuoNoticias * 2, 12);   /* no máximo 12x o intervalo */
+  }else{
+    recuoNoticias = 1;
+  }
+  renderFita();
+  if(viewAtual === 'noticias') render();
+}
+
+/* ao voltar para a aba, se as notícias estiverem velhas, busca na hora */
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState !== 'visible') return;
+  const min = Number(ST.config.noticiasAutoMin == null ? 5 : ST.config.noticiasAutoMin);
+  if(min > 0 && !Noticias.fresco(min * recuoNoticias)) rodadaNoticias(min);
+});
 
 /* =========================================================
    TEMA E NÍVEL
