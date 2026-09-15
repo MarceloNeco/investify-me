@@ -667,17 +667,17 @@ tr.linha-click:active{background:var(--line)}
       <footer class="footer">
         <p><b>InvestifyMe</b> — ferramenta de uso pessoal, criada também para fins de estudo e pesquisa.
         Os dados vêm de fontes públicas e podem ter atraso, erro ou ficar indisponíveis; valores de renda fixa,
-        fundos e previdência são estimativas ou informados por você. Confira sempre no seu banco ou corretora
-        antes de decidir qualquer coisa. Isto <b>não é recomendação de investimento</b>, nem consultoria
-        financeira, contábil ou tributária.</p>
-        <p><b>Uso por sua conta e risco.</b> Não nos responsabilizamos por decisões tomadas com base no que é
-        exibido aqui, por perdas financeiras de qualquer natureza, por erros de cálculo, de cotação ou de
-        conversão de moeda, nem pela indisponibilidade das fontes de dados.</p>
-        <p class="muted">Seus dados ficam no seu navegador e, se você ativar, na pasta privada do app no seu
-        Google Drive. Nada é enviado para nenhum servidor nosso e ninguém além de você tem acesso por aqui.
-        Ainda assim, nenhum sistema é totalmente seguro: manter o dispositivo, o navegador e a conta Google
-        protegidos é responsabilidade do usuário, e não nos responsabilizamos por acesso indevido, vazamento,
-        corrupção ou perda de dados. Faça backups pelo botão de exportar.</p>
+        fundos e previdência são estimativas ou informados manualmente pelo usuário. Convém sempre conferir no
+        banco ou na corretora antes de qualquer decisão. Isto <b>não é recomendação de investimento</b>, nem
+        consultoria financeira, contábil ou tributária.</p>
+        <p><b>O uso é por conta e risco de quem utiliza.</b> Não há qualquer responsabilidade por decisões
+        tomadas com base no que é exibido aqui, por perdas financeiras de qualquer natureza, por erros de
+        cálculo, de cotação ou de conversão de moeda, nem pela indisponibilidade das fontes de dados.</p>
+        <p class="muted">Os dados ficam no navegador do próprio usuário e, quando a opção é ativada, na pasta
+        privada do app dentro do Google Drive da conta conectada. Nada é enviado a servidores desta ferramenta
+        e ninguém mais tem acesso por aqui. Ainda assim, nenhum sistema é totalmente seguro: manter dispositivo,
+        navegador e conta Google protegidos é responsabilidade do usuário, e não há responsabilidade por acesso
+        indevido, vazamento, corrupção ou perda de dados. Recomenda-se fazer backups pelo botão de exportar.</p>
       </footer>
     </main>
   </div>
@@ -3352,6 +3352,22 @@ const PERIODOS = [
 
 /* o plano gratuito da brapi só entrega estes intervalos */
 const BRAPI_LIVRES = ['1d','5d','1mo','3mo'];
+/* a API pública da CoinGecko devolve no máximo 365 dias de histórico (acima disso responde 401) */
+const CG_DIAS_MAX = 365;
+/* a AwesomeAPI devolve no máximo 360 fechamentos por consulta */
+const AWESOME_DIAS_MAX = 360;
+
+/* traduz os códigos de erro mais comuns das APIs para algo legível */
+const RECADO_HTTP = {
+  400: 'A fonte recusou a consulta (período ou ativo fora do que o plano gratuito permite).',
+  401: 'A fonte recusou a consulta: esse período só existe nos planos pagos, ou a chave não foi aceita.',
+  403: 'A fonte bloqueou a consulta neste plano gratuito.',
+  404: 'A fonte não encontrou esse ativo.',
+  429: 'A fonte pediu uma pausa: limite de consultas atingido. Tente de novo em alguns minutos.',
+  500: 'A fonte de dados está com problema agora. Tente de novo mais tarde.',
+  502: 'A fonte de dados está fora do ar agora. Tente de novo mais tarde.',
+  503: 'A fonte de dados está fora do ar agora. Tente de novo mais tarde.'
+};
 
 const Hist = {
   series: {},          /* 'us:AAPL|1mo' -> {pontos, hora, moeda, fonte} */
@@ -3438,7 +3454,10 @@ const Hist = {
     const t = setTimeout(() => ctrl.abort(), 20000);
     try{
       const r = await fetch(url, {signal: ctrl.signal});
-      if(!r.ok){ const e = new Error('HTTP ' + r.status); e.status = r.status; throw e; }
+      if(!r.ok){
+        const e = new Error(RECADO_HTTP[r.status] || ('A fonte de dados respondeu HTTP ' + r.status + '.'));
+        e.status = r.status; throw e;
+      }
       return await r.json();
     } finally { clearTimeout(t); }
   },
@@ -3498,25 +3517,44 @@ const Hist = {
         /* junta com o que o próprio app vem anotando, para passar dos 3 meses com o tempo */
         pts = this.juntarComLocal(base, pts);
         out = {pontos: pts, moeda: r.currency || 'BRL', fonte: 'brapi',
-               limitado: faixa !== per.brapi ? faixa : null};
+               notaLimite: faixa !== per.brapi
+                 ? 'O plano gratuito da brapi entrega no máximo 3 meses de histórico para a B3 — o gráfico mostra esse período, e vai esticando conforme o app anota os preços do dia a dia.'
+                 : null};
 
       }else if(tp.fonte === 'cripto'){
         const id = CRIPTO_ID[tk];
         if(!id) throw new Error('cripto não reconhecida');
         if(!(await Cota.vez('coingecko', aviso))) throw new Error('A cota da CoinGecko esgotou por hoje.');
-        const j = await this.pegar('https://api.coingecko.com/api/v3/coins/' + id +
-          '/market_chart?vs_currency=usd&days=' + per.dias + (per.dias > 90 ? '&interval=daily' : ''));
-        out = {pontos: (j.prices || []).map(p => ({t: new Date(p[0]).toISOString(), v: p[1]})),
-               moeda: 'USD', fonte: 'CoinGecko'};
+        /* acima de 365 dias a API pública responde 401: pede o máximo gratuito e completa com o histórico local */
+        const dias = Math.min(per.dias, CG_DIAS_MAX);
+        let j;
+        try{
+          j = await this.pegar('https://api.coingecko.com/api/v3/coins/' + id +
+            '/market_chart?vs_currency=usd&days=' + dias + (dias > 90 ? '&interval=daily' : ''));
+        }catch(err){
+          if(err.status === 401 || err.status === 403)
+            throw new Error('A API pública da CoinGecko entrega no máximo 1 ano de histórico de cripto. Escolha um período de até 1 ano.');
+          if(err.status === 429)
+            throw new Error('A CoinGecko pediu uma pausa (limite de consultas por minuto). Tente de novo em um minutinho.');
+          throw err;
+        }
+        out = {pontos: this.juntarComLocal(base, (j.prices || []).map(p => ({t: new Date(p[0]).toISOString(), v: p[1]}))),
+               moeda: 'USD', fonte: 'CoinGecko',
+               notaLimite: per.dias > CG_DIAS_MAX + 30
+                 ? 'A API pública da CoinGecko entrega no máximo 1 ano de histórico — o gráfico mostra esse período, e vai esticando conforme o app anota os preços do dia a dia.'
+                 : null};
 
       }else if(tp.fonte === 'moeda'){
         if(tk === 'BRL'){ out = {pontos: [], moeda:'BRL', fonte:'—'}; }
         else{
           if(!(await Cota.vez('awesome', aviso))) throw new Error('A cota da AwesomeAPI esgotou por hoje.');
           const j = await this.pegar('https://economia.awesomeapi.com.br/json/daily/' + tk + '-BRL/' +
-            Math.min(per.dias, 360));
-          out = {pontos: (j || []).map(p => ({t: new Date(Number(p.timestamp) * 1000).toISOString(), v: parseFloat(p.bid)})).reverse(),
-                 moeda: 'BRL', fonte: 'AwesomeAPI'};
+            Math.min(per.dias, AWESOME_DIAS_MAX));
+          out = {pontos: this.juntarComLocal(base, (j || []).map(p => ({t: new Date(Number(p.timestamp) * 1000).toISOString(), v: parseFloat(p.bid)})).reverse()),
+                 moeda: 'BRL', fonte: 'AwesomeAPI',
+                 notaLimite: per.dias > AWESOME_DIAS_MAX + 30
+                   ? 'A AwesomeAPI entrega no máximo 360 fechamentos por consulta — o gráfico mostra esse período, e vai esticando conforme o app anota as cotações do dia a dia.'
+                   : null};
         }
 
       }else{
@@ -4055,8 +4093,7 @@ function cardGraficoMercado(){
       ' no período</div></div><div class="small muted">Fonte: ' + esc(d.fonte || '—') + '</div></div>' +
       vizLinhaTempo(d.pontos, {moeda: d.moeda, altura: 230,
         fmt: v => ehPct ? pnum(v,2) + '%' : fmt(v, d.moeda, v >= 1000 ? 0 : 2)}) +
-      (d.limitado ? '<p class="tiny muted" style="margin-top:8px">O plano gratuito da brapi entrega no máximo 3 meses ' +
-        'de histórico para a B3 — períodos maiores mostram o que o app já anotou por conta própria.</p>' : '');
+      (d.notaLimite ? '<p class="tiny muted" style="margin-top:8px">ℹ️ ' + esc(d.notaLimite) + '</p>' : '');
   }
   return h + '</div>';
 }
@@ -4945,8 +4982,7 @@ async function abrirGrafico(id){
         fmt: v => fmt(v, s.moeda, v >= 1000 ? 0 : 2)}) +
       '<p class="tiny muted" style="margin-top:8px">Fonte: ' + esc(s.fonte || '—') +
       ' · preços de fechamento, com atraso. Passe o dedo ou o mouse sobre o gráfico para ver cada dia.' +
-      (s.limitado ? '<br><b>O plano gratuito da brapi entrega no máximo 3 meses de histórico</b> — o gráfico mostra esse período, ' +
-        'e vai esticando conforme o app anota os preços do dia a dia.' : '') + '</p>';
+      (s.notaLimite ? '<br>ℹ️ ' + esc(s.notaLimite) : '') + '</p>';
     ligarGraficos(area);
   };
   await desenhar();
