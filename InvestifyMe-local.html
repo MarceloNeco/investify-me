@@ -534,6 +534,17 @@ html[data-theme="light"]{
 .aviso-versao span{flex:1; min-width:220px}
 .not-hora{color:var(--txt3)}
 
+/* olhinho para revelar a senha */
+.senha-wrap{position:relative; display:block}
+.senha-wrap input{padding-right:42px}
+.olho{
+  position:absolute; right:4px; top:50%; transform:translateY(-50%);
+  background:none; border:none; cursor:pointer; font-size:1rem; line-height:1;
+  padding:6px 8px; border-radius:8px; opacity:.75;
+}
+.olho:hover{opacity:1; background:var(--card2)}
+.lock-box .senha-wrap input{text-align:center; padding-right:42px; padding-left:42px}
+
 </style>
 </head>
 <body>
@@ -643,7 +654,10 @@ html[data-theme="light"]{
     <div class="lock-mark">🔒</div>
     <h2>Investify<b>Me</b></h2>
     <p class="muted small">Sua carteira está guardada aqui de forma criptografada.<br>Digite a senha para abrir.</p>
-    <input type="password" id="lockSenha" placeholder="senha" autocomplete="current-password">
+    <div class="senha-wrap">
+      <input type="password" id="lockSenha" placeholder="senha" autocomplete="current-password">
+      <button type="button" class="olho" data-olho="lockSenha" aria-label="Mostrar senha">👁</button>
+    </div>
     <label class="row small" style="gap:8px;justify-content:center;margin:10px 0 14px">
       <input type="checkbox" id="lockLembrar" checked style="width:auto"> Manter aberta neste aparelho
     </label>
@@ -3881,8 +3895,8 @@ function viewConfig(){
     '<p class="small muted">Escolha a sua senha e o app monta um <b>index.html</b> novo, com a carteira criptografada dentro. ' +
     'Você sobe esse arquivo no GitHub por cima do atual e pronto — quem abrir o endereço sem a senha não vê nada.</p>' +
     '<div class="fgrid">' +
-      campo('Senha', '<input type="password" id="pSenha1" placeholder="escolha uma senha" autocomplete="new-password">') +
-      campo('Repita a senha', '<input type="password" id="pSenha2" placeholder="de novo" autocomplete="new-password">') +
+      campoSenha('Senha', 'pSenha1', 'escolha uma senha', 'new-password') +
+      campoSenha('Repita a senha', 'pSenha2', 'de novo', 'new-password') +
     '</div>' +
     '<div class="f-actions" style="justify-content:flex-start">' +
       '<button class="btn primary" data-acao="gerar-site">🔒 Gerar index.html com a minha senha</button>' +
@@ -3940,6 +3954,15 @@ function linhaStatus(nome, txt, estado){
              : '<span class="badge">desligado</span>';
   return '<tr><td><b>' + nome + '</b></td><td style="text-align:left" class="small muted wrap">' + esc(txt) + '</td><td style="text-align:left">' + badge + '</td></tr>';
 }
+/* campo de senha com o olhinho para revelar */
+function campoSenha(rotulo, id, placeholder, autocompletar, dica){
+  return '<label class="f"><span class="lb">' + rotulo + '</span>' +
+    '<div class="senha-wrap">' +
+      '<input type="password" id="' + id + '" placeholder="' + esc(placeholder || '') + '" autocomplete="' + (autocompletar || 'off') + '">' +
+      '<button type="button" class="olho" data-olho="' + id + '" aria-label="Mostrar senha">👁</button>' +
+    '</div>' + (dica ? '<span class="hint">' + dica + '</span>' : '') + '</label>';
+}
+
 function campo(rotulo, inputHTML, chaveInfo, dica){
   return '<label class="f"><span class="lb">' + rotulo + (chaveInfo ? info(chaveInfo) : '') + '</span>' +
          inputHTML + (dica ? '<span class="hint">' + dica + '</span>' : '') + '</label>';
@@ -4605,10 +4628,21 @@ function ligarEventos(){
 
   /* cliques gerais (delegação) */
   document.addEventListener('click', async (e) => {
-    const el = e.target.closest('[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del]');
+    const el = e.target.closest('[data-olho],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del]');
     if(!el) return;
     const d = el.dataset;
 
+    if(d.olho){
+      const campoSen = document.getElementById(d.olho);
+      if(campoSen){
+        const mostrando = campoSen.type === 'text';
+        campoSen.type = mostrando ? 'password' : 'text';
+        el.textContent = mostrando ? '👁' : '🙈';
+        el.setAttribute('aria-label', mostrando ? 'Mostrar senha' : 'Esconder senha');
+        campoSen.focus();
+      }
+      return;
+    }
     if(d.info != null && (el.classList.contains('info-dot') || el.tagName === 'I' || el.classList.contains('res-item'))){ abrirInfo(d.info); return; }
     if(d.editar){ abrirModalAtivo(d.editar); return; }
     if(d.aporte){ abrirAporte(d.aporte); return; }
@@ -4879,7 +4913,7 @@ function conferirCarteiraMaisNova(){
     $('#genBody').innerHTML =
       '<p class="small muted">Isso substitui a carteira deste aparelho pela que está dentro do site. ' +
       'Se você cadastrou coisas só aqui, baixe antes um backup em Configurações.</p>' +
-      campo('Senha do site', '<input type="password" id="avSenha" autocomplete="current-password">') +
+      campoSenha('Senha do site', 'avSenha', '', 'current-password') +
       '<div class="f-actions"><button class="btn" data-close="genModal">Cancelar</button>' +
       '<button class="btn primary" data-acao="trocar-carteira">Carregar</button></div>';
     abrir('genModal');
