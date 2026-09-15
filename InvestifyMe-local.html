@@ -783,6 +783,10 @@ details.imp-arq[open] > summary::before{content:'▾'}
 .di-n{flex:1; min-width:0}
 .di-b{display:flex; gap:6px; flex-shrink:0}
 @media (max-width:560px){ .doc-item{flex-wrap:wrap} .di-b{width:100%} .di-b .btn{flex:1; justify-content:center} }
+details.imp-arq.repetido{border-color:var(--warn)}
+.ia-c.ok{background:color-mix(in srgb, var(--accent) 22%, var(--chip)); color:var(--txt)}
+.imp-rep{padding:8px 10px; border-radius:8px; margin-bottom:10px;
+  background:color-mix(in srgb, var(--warn) 12%, var(--card)); color:var(--txt2)}
 
 </style>
 </head>
@@ -2400,6 +2404,8 @@ function estadoPadrao(){
     fundo: true,
     posicoes: [],
     movimentos: [],                // livro de aportes, compras, vendas, proventos e custos
+    extratos: [],                  // extratos já importados, para não repetir trabalho
+    agenda: [],                    // resgates e aplicações já programados no banco
     metas: [],
     config: {
       aporteMensal: 0,
@@ -2568,6 +2574,8 @@ const Store = {
     st.config.chaves = Object.assign({brapi:'',twelve:'',finnhub:'',alpha:'',rss2json:''}, (o.config||{}).chaves || {});
     st.posicoes = Array.isArray(o.posicoes) ? o.posicoes : [];
     st.movimentos = Array.isArray(o.movimentos) ? o.movimentos : [];
+    st.extratos = Array.isArray(o.extratos) ? o.extratos : [];
+    st.agenda = Array.isArray(o.agenda) ? o.agenda : [];
     st.config.perfilRespostas = (o.config || {}).perfilRespostas || {};
     st.metas = Array.isArray(o.metas) ? o.metas : [];
     st.vistos = o.vistos || {};
@@ -4766,18 +4774,30 @@ const PdfTexto = {
   /* transforma um fluxo de conteúdo em texto, uma linha por posicionamento */
   textoDoConteudo(s, mapa){
     let out = '';
-    const re = /\((?:\\.|[^\\()])*\)|\[[^\]]*\]\s*TJ|T\*|Td|TD|Tm|ET/g;
+    /* textos aparecem como (literal) ou <hexadecimal>, soltos ou dentro de [ ... ] TJ */
+    const re = /\((?:\\.|[^\\()])*\)|<[0-9a-fA-F\s]*>|\[[^\]]*\]\s*TJ|T\*|Td|TD|Tm|ET/g;
     let m;
     while((m = re.exec(s))){
       const t = m[0];
       if(t === 'T*' || t === 'Td' || t === 'TD' || t === 'Tm' || t === 'ET'){ out += '\n'; continue; }
       let pedacos = [];
-      if(t[0] === '['){ const r2 = /\((?:\\.|[^\\()])*\)/g; let q; while((q = r2.exec(t))) pedacos.push(q[0]); }
+      if(t[0] === '['){
+        const r2 = /\((?:\\.|[^\\()])*\)|<[0-9a-fA-F\s]*>/g; let q;
+        while((q = r2.exec(t))) pedacos.push(q[0]);
+      }
       else pedacos = [t];
       pedacos.forEach(st => {
-        const cru = st.slice(1, -1)
-          .replace(/\\([nrtbf()\\])/g, (x,c) => ({n:'\n', r:'\r', t:'\t', b:'\b', f:'\f'}[c] || c))
-          .replace(/\\([0-7]{1,3})/g, (x,o) => String.fromCharCode(parseInt(o, 8)));
+        let cru;
+        if(st[0] === '<'){
+          /* string hexadecimal: cada par de dígitos é um byte */
+          const hex = st.slice(1, -1).replace(/\s+/g, '');
+          cru = '';
+          for(let i = 0; i + 1 < hex.length; i += 2) cru += String.fromCharCode(parseInt(hex.substr(i,2), 16));
+        }else{
+          cru = st.slice(1, -1)
+            .replace(/\\([nrtbf()\\])/g, (x,c) => ({n:'\n', r:'\r', t:'\t', b:'\b', f:'\f'}[c] || c))
+            .replace(/\\([0-7]{1,3})/g, (x,o) => String.fromCharCode(parseInt(o, 8)));
+        }
         /* fontes Identity-H usam 2 bytes por letra */
         let dec = '';
         for(let i = 0; i + 1 < cru.length; i += 2){
@@ -4946,9 +4966,153 @@ const Importador = {
     }
   },
 
+  /* ---------- Itaú: extrato de fundos (PDF com texto) ---------- */
+  itauFundo: {
+    nome: 'Extrato de fundos do Itaú',
+    reconhece(txt){
+      return /Extrato de fundos/i.test(txt) && /Nome do fundo/i.test(txt);
+    },
+    ler(txt){
+      const achar = (re, g) => { const m = re.exec(txt); return m ? m[g || 1] : null; };
+      const r = {formato: 'itau-fundo', avisos: [], movimentos: [], fluxos: []};
+
+      r.fundo = (achar(/Nome do fundo:?\s*\n?\s*([^\n]+)/) || '').trim();
+      r.conta = achar(/Fundo-subconta:?\s*\n?\s*([\d\s-]+)/);
+      r.certificado = (r.conta || '').replace(/\s/g,'');
+      r.emitido = dataBR(achar(/(\d{2}\/\d{2}\/\d{4})\s*[àa]s\s*\d{2}:\d{2}/));
+
+      r.cotas      = nBR(achar(/Saldo total em cotas\s*\n?\s*([\d.,]+)/));
+      r.valorCota  = nBR(achar(/Cota[çc][ãa]o em \d{2}\/\d{2}\/\d{4}\s*\n?\s*([\d.,]+)/));
+      r.dataCota   = dataBR(achar(/Cota[çc][ãa]o em (\d{2}\/\d{2}\/\d{4})/));
+      r.saldoFinal = nBR(achar(/Saldo Bruto \(R\$\)\s*\n?\s*([\d.,]+)/));
+      r.ir         = {imposto: nBR(achar(/IR \(R\$\)\s*\n?\s*([\d.,]+)/)) || 0,
+                      iof: nBR(achar(/IOF \(R\$\)\s*\n?\s*([\d.,]+)/)) || 0,
+                      liquido: nBR(achar(/Saldo l[íi]quido \(R\$\)\s*\n?\s*([\d.,]+)/)) || 0,
+                      faixas: [], nominal: 0, rentabilidade: 0};
+      r.liquidoResgate = nBR(achar(/Saldo l[íi]quido p\/ resgate[^\d]*([\d.,]+)/));
+      r.dataSaldoFinal = r.dataCota || r.emitido;
+
+      /* ----- lançamentos históricos ----- */
+      const bloco = /Lan[çc]amentos Hist[óo]ricos:?([\s\S]*?)(?:Lan[çc]amentos Pendentes|Lan[çc]amentos do Dia|Lan[çc]amentos Autom[áa]ticos|D[úu]vidas|$)/i.exec(txt);
+      if(bloco){
+        /* o extrato vem em colunas; o texto sai linha a linha, então junta tudo e corta por data */
+        const cru = bloco[1].replace(/\n/g, ' ');
+        const re = /(\d{2}\/\d{2}\/\d{4})\s+([A-ZÀ-Ú][A-ZÀ-Ú.\s\d]*?)\s+([\d.,-]+)((?:\s+[\d.,-]+)*)/g;
+        let m;
+        while((m = re.exec(cru))){
+          const nums = (m[3] + ' ' + m[4]).trim().split(/\s+/).map(nBR).filter(x => x != null);
+          const desc = m[2].trim();
+          if(/SALDO ANTERIOR/i.test(desc)) continue;
+          /* colunas: cotas, valor da cota, saldo bruto, IR, IOF, saldo líquido, saldo em cotas */
+          r.movimentos.push({data: dataBR(m[1]), descricao: desc,
+                             cotas: nums[0] != null ? nums[0] : null,
+                             valorCota: nums[1] != null ? nums[1] : null,
+                             valor: nums[2] != null ? nums[2] : null,
+                             ir: nums[3] || 0, iof: nums[4] || 0,
+                             liquido: nums[5] != null ? nums[5] : null});
+        }
+      }
+
+      /* classifica cada lançamento */
+      r.movimentos.forEach(m => {
+        if(/APLICACAO|APLICA[ÇC][ÃA]O/i.test(m.descricao)) m.classe = 'aplicacao';
+        else if(/RESG\.?\s*I\.?R\.?|COME.?COTAS|LEI 10892/i.test(m.descricao)) m.classe = 'come-cotas';
+        else if(/RESGATE/i.test(m.descricao)) m.classe = 'resgate';
+        else m.classe = 'outro';
+      });
+
+      const soma = c => r.movimentos.filter(m => m.classe === c).reduce((s,m) => s + (m.valor || 0), 0);
+      r.totalAplicado = soma('aplicacao');
+      r.totalResgatado = soma('resgate');
+      r.comeCotas = soma('come-cotas');
+      r.custo = r.totalAplicado - r.totalResgatado;      /* aproximação: entradas menos saídas */
+      r.primeira = r.movimentos.length ? r.movimentos[0].data : null;
+      r.inicio = r.primeira;
+      r.fluxos = r.movimentos.filter(m => m.classe === 'aplicacao' || m.classe === 'resgate');
+      r.periodo = {de: r.primeira, ate: r.dataSaldoFinal};
+      r.titulo = r.fundo || 'Fundo Itaú';
+      if(!r.movimentos.length) r.avisos.push('não encontrei a tabela de lançamentos');
+      return r;
+    }
+  },
+
+  /* ---------- Itaú: extrato de conta corrente (traz as aplicações e resgates dos fundos) ---------- */
+  itauConta: {
+    nome: 'Extrato de conta corrente do Itaú',
+    reconhece(txt){
+      return /extrato conta corrente/i.test(txt) ||
+             (/lan[çc]amentos futuros/i.test(txt) && /ag[êe]ncia/i.test(txt));
+    },
+    ler(txt){
+      const achar = (re, g) => { const m = re.exec(txt); return m ? m[g || 1] : null; };
+      const r = {formato: 'itau-conta', avisos: [], movimentos: [], fluxos: []};
+
+      r.conta = achar(/conta:?\s*([\d-]{5,})/i);
+      r.agencia = achar(/ag[êe]ncia:?\s*(\d{3,5})/i);
+      r.certificado = (r.agencia || '') + '-' + (r.conta || '');
+      r.saldoConta = nBR(achar(/saldo total dispon[íi]vel\s*\n?\s*R?\$?\s*([\d.,]+)/i)) ||
+                     nBR(achar(/saldo dispon[íi]vel sem investimentos autom[áa]ticos\s*\n?\s*R?\$?\s*([\d.,]+)/i)) ||
+                     nBR(achar(/saldo em conta\s*(?:\n[^\n]*){0,4}\n\s*R\$\s*([\d.,]+)/i));
+      r.periodo = {
+        de: dataBR(achar(/de (\d{2}\/\d{2}\/\d{4}) a \d{2}\/\d{2}\/\d{4}/)),
+        ate: dataBR(achar(/de \d{2}\/\d{2}\/\d{4} a (\d{2}\/\d{2}\/\d{4})/))
+      };
+      r.emitido = dataBR(achar(/emitido em:?\s*(\d{2}\/\d{2}\/\d{4})/i));
+
+      /* onde começam os lançamentos futuros */
+      const iFuturo = txt.search(/lan[çc]amentos futuros/i);
+
+      const re = /(\d{2}\/\d{2}\/\d{4})\s*\n?\s*([A-ZÀ-Ú][A-ZÀ-Ú .\/\d-]{3,60}?)\s*\n?\s*(-?[\d.]+,\d{2})/g;
+      let m;
+      while((m = re.exec(txt))){
+        const desc = m[2].replace(/\s+/g,' ').trim();
+        const valor = nBR(m[3]);
+        if(valor == null) continue;
+        r.movimentos.push({data: dataBR(m[1]), descricao: desc, valor: valor,
+                           futuro: iFuturo >= 0 && m.index > iFuturo});
+      }
+
+      /* só interessam os que mexem com fundo de investimento */
+      const ehFundo = d => /APLICACAO|APLICA[ÇC][ÃA]O|RESGATE|RESG /i.test(d);
+      r.fluxos = r.movimentos.filter(x => ehFundo(x.descricao));
+
+      /* nome do fundo dentro da descrição: PRIVILEGE, ACTIVE FIX, etc. */
+      const apelido = d => {
+        const limpo = d.replace(/\b(INT|AUT|APLICACAO|APLICA[ÇC][ÃA]O|RESGATE|RESG|DE|DO|DA)\b/gi, ' ')
+                       .replace(/\s+/g,' ').trim();
+        return limpo || 'fundo';
+      };
+      const grupos = {};
+      r.fluxos.forEach(f => {
+        /* na conta corrente o sinal é o do bolso: entrada positiva = resgate do fundo */
+        f.classe = /APLICACAO|APLICA[ÇC][ÃA]O/i.test(f.descricao) ? 'aplicacao' : 'resgate';
+        f.fundo = apelido(f.descricao);
+        const k = f.fundo.toUpperCase();
+        (grupos[k] = grupos[k] || {nome: f.fundo, itens: []}).itens.push(f);
+      });
+      r.grupos = Object.keys(grupos).map(k => {
+        const g = grupos[k];
+        const ap = g.itens.filter(x => x.classe === 'aplicacao' && !x.futuro);
+        const rg = g.itens.filter(x => x.classe === 'resgate' && !x.futuro);
+        const fu = g.itens.filter(x => x.futuro);
+        return {chave: k, nome: g.nome, itens: g.itens,
+                aplicacoes: ap, resgates: rg, futuros: fu,
+                totalAp: ap.reduce((s,x) => s + Math.abs(x.valor), 0),
+                totalRg: rg.reduce((s,x) => s + Math.abs(x.valor), 0),
+                totalFu: fu.reduce((s,x) => s + Math.abs(x.valor), 0)};
+      }).sort((a,b) => b.itens.length - a.itens.length);
+
+      r.titulo = 'Conta corrente ' + (r.agencia || '') + '/' + (r.conta || '');
+      if(!r.fluxos.length) r.avisos.push('não encontrei aplicações ou resgates de fundo neste extrato');
+      return r;
+    }
+  },
+
   /* ---------- detecção ---------- */
   reconhecer(txt){
     if(this.btgPrevidencia.reconhece(txt)) return this.btgPrevidencia;
+    if(this.itauFundo.reconhece(txt)) return this.itauFundo;
+    if(this.itauConta.reconhece(txt)) return this.itauConta;
     return null;
   },
 
@@ -4956,10 +5120,20 @@ const Importador = {
     const nome = (arquivo.name || '').toLowerCase();
     if(!nome.endsWith('.pdf'))
       throw new Error('Por enquanto sei ler extratos em PDF. A importação de planilhas entra na próxima etapa.');
-    const txt = await PdfTexto.extrair(arquivo);
+    let txt;
+    try{
+      txt = await PdfTexto.extrair(arquivo);
+    }catch(e){
+      if(/não consegui ler texto/i.test(e.message || ''))
+        throw new Error('Este PDF não tem texto dentro: ele foi gerado por "Microsoft Print to PDF", que transforma as letras em desenho. ' +
+          'Baixe o extrato de novo usando o botão de download do próprio site do banco, ou, ao imprimir, escolha ' +
+          '"Salvar como PDF" no Chrome ou no Edge em vez de "Microsoft Print to PDF".');
+      throw e;
+    }
     const leitor = this.reconhecer(txt);
     if(!leitor)
-      throw new Error('Não reconheci o formato deste PDF. Hoje sei ler o extrato de previdência do BTG Pactual.');
+      throw new Error('Não reconheci o formato deste PDF. Hoje sei ler: extrato de previdência do BTG, ' +
+        'extrato de fundos do Itaú e extrato de conta corrente do Itaú.');
     const dados = leitor.ler(txt);
     dados.arquivo = arquivo.name;
     dados.leitor = leitor.nome;
@@ -4967,7 +5141,27 @@ const Importador = {
   },
 
   /* ---------- casar com um ativo já cadastrado ---------- */
+  semAc(t){ return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase(); },
+
+  /* acha a posição cujo nome combina com o texto dado (PRIVILEGE, ACTIVE FIX...) */
+  porNome(texto){
+    const alvo = this.semAc(texto).replace(/[^A-Z0-9 ]/g,' ').split(/\s+/).filter(x => x.length >= 4);
+    if(!alvo.length) return null;
+    let melhor = null, melhorN = 0;
+    ST.posicoes.forEach(p => {
+      const campo = this.semAc((p.ticker || '') + ' ' + (p.nome || '') + ' ' + (p.notas || ''));
+      const n = alvo.filter(w => campo.indexOf(w) >= 0).length;
+      if(n > melhorN){ melhorN = n; melhor = p; }
+    });
+    return melhorN ? melhor : null;
+  },
+
   casar(dados){
+    if(dados.formato === 'itau-conta'){
+      const g = (dados.grupos || [])[0];
+      return g ? this.porNome(g.nome) : null;
+    }
+    if(dados.formato === 'itau-fundo') return this.porNome(dados.fundo);
     if(!dados.certificado) return null;
     const alvo = String(dados.certificado);
     return ST.posicoes.find(p =>
@@ -4976,14 +5170,76 @@ const Importador = {
       (p.ticker && p.ticker.indexOf(alvo) >= 0)) || null;
   },
 
+  /* ---------- controle do que já foi importado ---------- */
+  chaveExtrato(dados){
+    return [dados.formato, dados.certificado || '', (dados.periodo && dados.periodo.de) || '',
+            (dados.periodo && dados.periodo.ate) || ''].join('|');
+  },
+
+  jaImportado(dados){
+    return (ST.extratos || []).find(x => x.chave === this.chaveExtrato(dados)) || null;
+  },
+
+  registrar(dados, posId){
+    ST.extratos = ST.extratos || [];
+    const chave = this.chaveExtrato(dados);
+    const antigo = ST.extratos.find(x => x.chave === chave);
+    const reg = {chave: chave, arquivo: dados.arquivo, formato: dados.formato,
+                 certificado: dados.certificado || '', de: (dados.periodo||{}).de || '',
+                 ate: (dados.periodo||{}).ate || '', posId: posId, em: new Date().toISOString(),
+                 vezes: antigo ? (antigo.vezes || 1) + 1 : 1};
+    if(antigo) Object.assign(antigo, reg); else ST.extratos.push(reg);
+    if(ST.extratos.length > 400) ST.extratos.splice(0, ST.extratos.length - 400);
+  },
+
   /* ---------- o que este extrato tem a oferecer ---------- */
+  /* só entra na lista o que de fato muda alguma coisa — reimportar o mesmo
+     arquivo tem que resultar em "nada de novo", e não em trabalho repetido */
   propostas(dados, pos){
     const lista = [];
+    const perto = (a, b) => a != null && b != null && Math.abs(a - b) < 0.01;
+
+    /* ---- extrato de conta corrente: lançamentos agrupados por fundo ---- */
+    if(dados.formato === 'itau-conta'){
+      (dados.grupos || []).forEach((g, i) => {
+        const destino = this.porNome(g.nome) || pos;
+        const novos = arr => arr.filter(x => !(destino && Mov.jaExiste({
+          data: x.data, tipo: x.classe === 'aplicacao' ? 'aplicacao' : 'resgparc',
+          ticker: destino.ticker, inst: destino.inst || 'Itaú', qtd: 0, valor: Math.abs(x.valor)})));
+
+        const ap = novos(g.aplicacoes), rg = novos(g.resgates);
+        if(ap.length)
+          lista.push({id:'g' + i + '-ap', nome:'Aplicações em ' + g.nome + ' (' + ap.length + ')', de:'—',
+                      para: fmt(ap.reduce((s,x) => s + Math.abs(x.valor), 0)) + ' entre ' +
+                            fmtData(ap[0].data) + ' e ' + fmtData(ap[ap.length-1].data),
+                      ganho: destino ? 'entram como aplicação em ' + destino.ticker : 'escolha o fundo abaixo'});
+        if(rg.length)
+          lista.push({id:'g' + i + '-rg', nome:'Resgates de ' + g.nome + ' (' + rg.length + ')', de:'—',
+                      para: fmt(rg.reduce((s,x) => s + Math.abs(x.valor), 0)) + ' entre ' +
+                            fmtData(rg[0].data) + ' e ' + fmtData(rg[rg.length-1].data),
+                      ganho:'entram como resgate, com a data de cada um'});
+        if(g.futuros.length)
+          lista.push({id:'g' + i + '-fu', nome:'Resgates já programados (' + g.futuros.length + ')', de:'—',
+                      para: fmt(g.totalFu) + ' até ' + fmtData(g.futuros[g.futuros.length-1].data),
+                      ganho:'viram uma agenda de saídas futuras, sem mexer no saldo de hoje'});
+      });
+      if(dados.saldoConta)
+        lista.push({id:'saldo-conta', nome:'Saldo na conta corrente', de:'—',
+                    para: fmt(dados.saldoConta) + ' em ' + fmtData(dados.emitido || dados.periodo.ate),
+                    ganho:'fica anotado como referência; não cria investimento'});
+      return lista;
+    }
+
     if(dados.inicio && (!pos || pos.data !== dados.inicio))
       lista.push({id:'inicio', nome:'Data de início do plano', de: pos && pos.data ? fmtData(pos.data) : 'em branco',
                   para: fmtData(dados.inicio), ganho:'destrava o cálculo de rentabilidade'});
 
-    if(dados.saldoFinal){
+    const noHistorico = (data, valor) => pos && (pos.historicoManual || [])
+      .some(x => x[0] === data && Math.abs(x[1] - valor) < 0.01);
+
+    if(dados.saldoFinal && !(noHistorico(dados.dataSaldoFinal, dados.saldoFinal) &&
+        (!pos || perto(pos.valorManual, dados.saldoFinal) ||
+         (pos.valorManualData || '').slice(0,10) > dados.dataSaldoFinal))){
       const atualEm = pos && pos.valorManualData ? pos.valorManualData.slice(0,10) : null;
       const maisNovo = !atualEm || dados.dataSaldoFinal > atualEm;
       lista.push({id:'saldo', nome: maisNovo ? 'Valor atual do plano' : 'Ponto de histórico (valor antigo)',
@@ -4991,18 +5247,18 @@ const Importador = {
                   para: fmt(dados.saldoFinal) + ' em ' + fmtData(dados.dataSaldoFinal),
                   ganho: maisNovo ? 'atualiza o saldo' : 'entra no gráfico sem apagar o valor de hoje'});
     }
-    if(dados.saldoInicial && dados.periodo.de)
+    if(dados.saldoInicial && dados.periodo.de && !noHistorico(dados.periodo.de, dados.saldoInicial))
       lista.push({id:'saldo-ini', nome:'Ponto de histórico (início do período)', de:'—',
                   para: fmt(dados.saldoInicial) + ' em ' + fmtData(dados.periodo.de),
                   ganho:'mais um ponto na curva do plano'});
 
-    if(dados.ir && dados.ir.nominal)
+    if(dados.ir && dados.ir.nominal && !(pos && perto((pos.pm || 0) * (pos.qtd || 1), dados.ir.nominal)))
       lista.push({id:'custo', nome:'Total aplicado (soma das faixas de IR)',
                   de: pos && pos.pm ? fmt(pos.pm * (pos.qtd || 1)) : 'em branco',
                   para: fmt(dados.ir.nominal),
                   ganho:'é o custo de verdade, usado no lucro e no imposto'});
 
-    if(dados.ir && dados.ir.liquido)
+    if(dados.ir && dados.ir.liquido && !(pos && perto(pos.liquido, dados.ir.liquido)))
       lista.push({id:'liquido', nome:'Valor líquido depois do IR', de: pos && pos.liquido ? fmt(pos.liquido) : 'em branco',
                   para: fmt(dados.ir.liquido) + ' (IR de ' + fmt(dados.ir.imposto) + ')',
                   ganho:'é o que sobraria se você resgatasse hoje'});
@@ -5013,16 +5269,22 @@ const Importador = {
                   para: dados.tipo + (dados.regime ? ' · ' + dados.regime : ''),
                   ganho:'PGBL e VGBL pagam imposto de formas diferentes'});
 
-    if(dados.taxaAdm != null)
+    if(dados.taxaAdm != null && !(pos && perto(pos.taxaAdm, dados.taxaAdm)))
       lista.push({id:'taxa', nome:'Taxa de administração', de: pos && pos.taxaAdm != null ? pnum(pos.taxaAdm,2) + '% a.a.' : 'em branco',
                   para: pnum(dados.taxaAdm, 2) + '% a.a.', ganho:'entra na conta de quanto as taxas custam por ano'});
 
-    if(dados.rendimento)
+    const lancamentoExiste = (data, tipo, valor) => pos && Mov.jaExiste({
+      data: data, tipo: tipo, ticker: pos.ticker, inst: pos.inst || 'BTG Pactual',
+      qtd: 0, valor: Math.abs(valor)});
+
+    if(dados.rendimento && !lancamentoExiste(dados.periodo.ate, 'juros', dados.rendimento))
       lista.push({id:'rendimento', nome:'Rendimento do período', de:'—',
                   para: fmt(dados.rendimento) + ' entre ' + fmtData(dados.periodo.de) + ' e ' + fmtData(dados.periodo.ate),
                   ganho:'vira um lançamento de juros em Movimentações'});
 
     (dados.fluxos || []).forEach((f, i) => {
+      const eSaida = /Resgate|Saque|Portabilidade de Sa[íi]da|Taxa|Carregamento|IR\b/i.test(f.descricao);
+      if(lancamentoExiste(f.data, eSaida ? 'resgparc' : 'aplicacao', f.valor)) return;
       lista.push({id:'fluxo' + i, nome: f.descricao, de:'—',
                   para: fmt(f.valor) + ' em ' + fmtData(f.data), ganho:'vira um lançamento em Movimentações'});
     });
@@ -5035,6 +5297,44 @@ const Importador = {
     const feito = [];
     const tem = id => escolhidos.indexOf(id) >= 0;
     if(!pos) return feito;
+
+    if(dados.formato === 'itau-conta'){
+      (dados.grupos || []).forEach((g, i) => {
+        const destino = this.porNome(g.nome) || pos;
+        const lancar = (arr, tipo, rotulo) => {
+          let n = 0;
+          arr.forEach(x => {
+            const reg = {data: x.data, tipo: tipo, ativoId: destino.id, ticker: destino.ticker,
+                         inst: destino.inst || 'Itaú', valor: Math.abs(x.valor), moeda: 'BRL',
+                         obs: x.descricao + ' (extrato de conta corrente)', origem: 'importado'};
+            if(!Mov.jaExiste(reg)){ Mov.add(reg); n++; }
+          });
+          if(n) feito.push(n + ' ' + rotulo + ' em ' + destino.ticker);
+        };
+        if(tem('g' + i + '-ap')) lancar(g.aplicacoes, 'aplicacao', 'aplicações');
+        if(tem('g' + i + '-rg')) lancar(g.resgates, 'resgparc', 'resgates');
+        if(tem('g' + i + '-fu')){
+          ST.agenda = ST.agenda || [];
+          let n = 0;
+          g.futuros.forEach(x => {
+            const chave = x.data + '|' + destino.id + '|' + Math.abs(x.valor).toFixed(2);
+            if(ST.agenda.some(a => a.chave === chave)) return;
+            ST.agenda.push({chave: chave, data: x.data, ativoId: destino.id, ticker: destino.ticker,
+                            valor: Math.abs(x.valor), tipo: x.classe === 'aplicacao' ? 'aplicacao' : 'resgate',
+                            descricao: x.descricao, origem: 'importado'});
+            n++;
+          });
+          if(n) feito.push(n + ' lançamentos programados guardados na agenda');
+        }
+        if(destino){ destino.extratoEm = new Date().toISOString(); destino.semExtrato = false; }
+      });
+      if(tem('saldo-conta') && dados.saldoConta){
+        ST.contaCorrente = {saldo: dados.saldoConta, em: dados.emitido || dados.periodo.ate,
+                            banco: 'Itaú', conta: dados.certificado};
+        feito.push('saldo da conta corrente anotado: ' + fmt(dados.saldoConta));
+      }
+      return feito;
+    }
 
     const pontoHistorico = (data, valor) => {
       pos.historicoManual = pos.historicoManual || [];
@@ -6443,7 +6743,8 @@ async function lerExtratos(lista){
     try{
       const dados = await Importador.lerArquivo(arquivos[i]);
       const pos = Importador.casar(dados);
-      impLote.push({nome: arquivos[i].name, dados: dados, posId: pos ? pos.id : '',
+      const antes = Importador.jaImportado(dados);
+      impLote.push({nome: arquivos[i].name, dados: dados, posId: pos ? pos.id : '', repetido: antes,
                     escolhidos: Importador.propostas(dados, pos).map(x => x.id)});
     }catch(e){
       impLote.push({nome: arquivos[i].name, erro: e.message || 'não consegui ler'});
@@ -6479,10 +6780,19 @@ function desenharPreviaImport(){
     const props = Importador.propostas(d, pos);
     const marcados = props.filter(p => item.escolhidos.indexOf(p.id) >= 0).length;
 
-    h += '<details class="imp-arq"' + (bons.length === 1 ? ' open' : '') + '>' +
+    const nada = !props.length;
+    h += '<details class="imp-arq' + (item.repetido ? ' repetido' : '') + '"' + (bons.length === 1 && !nada ? ' open' : '') + '>' +
       '<summary><span class="ia-t">' + esc(d.titulo || d.arquivo) + '</span>' +
       '<span class="ia-p tiny muted">' + (d.periodo && d.periodo.de ? fmtData(d.periodo.de) + ' a ' + fmtData(d.periodo.ate) : esc(d.arquivo)) + '</span>' +
-      '<span class="ia-c tiny">' + marcados + ' de ' + props.length + '</span></summary><div class="ia-corpo">';
+      '<span class="ia-c tiny' + (nada ? ' ok' : '') + '">' + (nada ? '✓ nada de novo' : marcados + ' de ' + props.length) +
+      '</span></summary><div class="ia-corpo">';
+
+    if(item.repetido){
+      h += '<div class="imp-rep tiny">↻ Este mesmo extrato já foi importado em ' +
+        fmtData((item.repetido.em || '').slice(0,10)) +
+        (item.repetido.vezes > 1 ? ' · ' + item.repetido.vezes + ' vezes' : '') +
+        '. Importar de novo não duplica nada: só aparece aqui o que ainda faltava.</div>';
+    }
 
     h += '<div class="imp-fatos">';
     const fato = (r,v) => v ? '<div><span>' + r + '</span><b>' + v + '</b></div>' : '';
@@ -6498,7 +6808,7 @@ function desenharPreviaImport(){
       selectHTML('impAtivo' + idx, ops, item.posId).replace('<select ', '<select data-imp-ativo="' + idx + '" '),
       null, pos ? 'Encontrei sozinho pelo número do certificado.' : 'Escolha o ativo ou deixe criar um novo.');
 
-    if(!props.length) h += '<p class="small muted">Nada de novo neste arquivo.</p>';
+    if(!props.length) h += '<p class="small up">✓ Tudo deste extrato já está na carteira. Nada a fazer.</p>';
     else{
       h += '<div class="imp-lista">';
       props.forEach(p => {
@@ -6559,7 +6869,8 @@ function aplicarImportacao(){
     const feito = Importador.aplicar(d, pos, item.escolhidos);
     pos.extratoEm = new Date().toISOString();
     pos.semExtrato = false;
-    relatorio.push({ticker: pos.ticker, arquivo: item.nome, feito: feito});
+    Importador.registrar(d, pos.id);
+    relatorio.push({ticker: pos.ticker, arquivo: item.nome, feito: feito, repetido: !!item.repetido});
   });
 
   Store.salvar();
@@ -6571,13 +6882,55 @@ function aplicarImportacao(){
   $('#genBody').innerHTML = relatorio.map(r =>
       '<p class="small" style="margin-bottom:2px"><b>' + esc(r.ticker) + '</b> <span class="tiny muted">' + esc(r.arquivo) + '</span></p>' +
       '<ul class="small" style="margin:0 0 12px 18px;padding:0">' +
-      (r.feito.length ? r.feito.map(f => '<li>' + esc(f) + '</li>').join('') : '<li class="muted">nada mudou</li>') + '</ul>'
+      (r.feito.length ? r.feito.map(f => '<li>' + esc(f) + '</li>').join('')
+                      : '<li class="muted">nada mudou' + (r.repetido ? ' — este extrato já estava aplicado' : '') + '</li>') + '</ul>'
     ).join('') +
     '<p class="small muted">Extratos de outros períodos podem ser importados depois: cada um vira mais pontos no histórico.</p>' +
     '<div class="f-actions"><button class="btn" data-acao="importar-extrato">Importar mais</button>' +
     '<button class="btn primary" data-close="genModal">Pronto</button></div>';
   abrir('genModal');
   impLote = [];
+}
+
+/* =========================================================
+   AGENDA — aplicações e resgates já programados no banco
+   ========================================================= */
+function cardAgenda(){
+  const itens = (ST.agenda || []).slice().sort((a,b) => (a.data||'').localeCompare(b.data||''));
+  if(!itens.length) return '';
+  const hoje = hojeISO();
+  const vencidos = itens.filter(x => x.data < hoje);
+  const futuros  = itens.filter(x => x.data >= hoje);
+  const soma = arr => arr.reduce((s,x) => s + (x.tipo === 'resgate' ? x.valor : -x.valor), 0);
+
+  let h = '<p class="small muted">Lançamentos que o banco já tem agendados. Eles ainda não mexeram no saldo — ' +
+    'ficam aqui só para você enxergar o que está por vir.</p>';
+
+  if(futuros.length){
+    h += '<div class="grid g2" style="margin:10px 0">' +
+      kpi('Entra nos próximos dias', fmt(Math.max(0, soma(futuros))), null,
+          futuros.length + ' lançamento' + (futuros.length > 1 ? 's' : '') + ' até ' + fmtData(futuros[futuros.length-1].data)) +
+      kpi('Próximo', fmtData(futuros[0].data), null, esc(futuros[0].ticker) + ' · ' + fmt(futuros[0].valor)) +
+    '</div>';
+    h += '<div class="doc-lista">';
+    futuros.slice(0, 20).forEach(x => {
+      h += '<div class="doc-item"><div class="di-n"><b>' + fmtData(x.data) + '</b> · ' + esc(x.ticker) +
+        '<div class="tiny muted">' + esc(x.descricao || '') + '</div></div>' +
+        '<div class="di-b mono ' + (x.tipo === 'resgate' ? 'up' : 'down') + '">' +
+        (x.tipo === 'resgate' ? '+' : '−') + fmt(x.valor) + '</div></div>';
+    });
+    h += '</div>';
+  }
+
+  if(vencidos.length){
+    h += '<div class="aviso-box" style="margin-top:12px"><b>' + vencidos.length + ' já passou da data</b>' +
+      '<p class="small">Se esses lançamentos aconteceram mesmo, dá para transformá-los em movimentações de verdade. ' +
+      'Se foram cancelados, é só descartar.</p>' +
+      '<div class="row" style="margin-top:9px">' +
+      '<button class="btn sm primary" data-acao="agenda-confirmar">Aconteceram: lançar</button>' +
+      '<button class="btn sm ghost" data-acao="agenda-descartar">Foram cancelados: descartar</button></div></div>';
+  }
+  return bloco('Programado no banco', h, 'movimentacao', true);
 }
 
 /* =========================================================
@@ -6601,6 +6954,7 @@ function cardDocumentacao(){
   const dispensados = lista.filter(x => x.e.id === 'dispensado');
   const pct = Math.round((prontos.length + dispensados.length) / lista.length * 100);
 
+  const jaLidos = (ST.extratos || []).length;
   let h = '<div class="doc-topo"><div class="doc-barra">' +
     '<i class="db-ok" style="width:' + (prontos.length/lista.length*100) + '%"></i>' +
     '<i class="db-neu" style="width:' + (dispensados.length/lista.length*100) + '%"></i>' +
@@ -6610,6 +6964,10 @@ function cardDocumentacao(){
     faltando.length + ' sem nada' + (dispensados.length ? ' · ' + dispensados.length + ' sem extrato por opção' : '') + '.</p>';
 
   const pendentes = faltando.concat(parciais);
+  if(jaLidos)
+    h += '<p class="tiny muted">' + jaLidos + ' extrato' + (jaLidos > 1 ? 's já lidos' : ' já lido') +
+      '. <button class="linkinho" data-acao="ver-extratos">Ver a lista</button> — reimportar o mesmo arquivo não duplica nada.</p>';
+
   if(!pendentes.length){
     h += '<p class="small up">✓ Todos os investimentos estão documentados.</p>';
     return bloco('Documentação da carteira', h, 'movimentacao', true);
@@ -6663,6 +7021,7 @@ function viewMovimentos(){
       '<button class="btn" data-acao="semear-mov">Criar a partir da carteira</button></div></div></div>';
   }
 
+  h += cardAgenda();
   h += cardDocumentacao();
 
   const presumidas = Mov.semDataReal().length;
@@ -8231,6 +8590,50 @@ function ligarEventos(){
       }
       case 'importar-extrato': fechar('genModal'); abrirImportar(); break;
       case 'imp-aplicar': aplicarImportacao(); break;
+      case 'agenda-confirmar': {
+        const hoje = hojeISO();
+        let n = 0;
+        (ST.agenda || []).filter(x => x.data < hoje).forEach(x => {
+          const p = ST.posicoes.find(y => y.id === x.ativoId);
+          const reg = {data: x.data, tipo: x.tipo === 'resgate' ? 'resgparc' : 'aplicacao',
+                       ativoId: x.ativoId, ticker: x.ticker, inst: p ? p.inst : '',
+                       valor: x.valor, moeda: 'BRL', obs: (x.descricao || '') + ' (era programado)', origem:'importado'};
+          if(!Mov.jaExiste(reg)){ Mov.add(reg); n++; }
+        });
+        ST.agenda = (ST.agenda || []).filter(x => x.data >= hoje);
+        Store.salvar(); render();
+        toast(n ? n + ' lançamentos confirmados.' : 'Nada novo a lançar.');
+        break;
+      }
+      case 'agenda-descartar': {
+        const hoje = hojeISO();
+        const antes = (ST.agenda || []).length;
+        ST.agenda = (ST.agenda || []).filter(x => x.data >= hoje);
+        Store.salvar(); render();
+        toast((antes - ST.agenda.length) + ' lançamentos programados descartados.');
+        break;
+      }
+      case 'ver-extratos': {
+        const lista = (ST.extratos || []).slice().sort((a,b) => (b.ate||'').localeCompare(a.ate||''));
+        $('#genTitle').textContent = 'Extratos já importados';
+        $('#genBody').innerHTML = (lista.length
+          ? '<div class="tbl-wrap"><table><thead><tr><th>Extrato</th><th>Período</th><th>Importado</th></tr></thead><tbody>' +
+            lista.map(x => {
+              const p = ST.posicoes.find(y => y.id === x.posId);
+              return '<tr><td><b>' + esc(p ? p.ticker : (x.certificado || '—')) + '</b>' +
+                '<div class="t-sub">' + esc(x.arquivo || '') + '</div></td>' +
+                '<td class="mono">' + (x.de ? fmtData(x.de) + ' a ' + fmtData(x.ate) : '—') + '</td>' +
+                '<td class="mono">' + fmtData((x.em||'').slice(0,10)) +
+                (x.vezes > 1 ? ' <span class="tiny muted">(' + x.vezes + 'x)</span>' : '') + '</td></tr>';
+            }).join('') + '</tbody></table></div>'
+          : '<p class="small muted">Nenhum extrato importado ainda.</p>') +
+          '<p class="small muted" style="margin-top:10px">O app guarda período e certificado de cada extrato lido. ' +
+          'Se você importar o mesmo arquivo de novo, ele avisa e mostra só o que ainda faltava aplicar.</p>' +
+          '<div class="f-actions"><button class="btn" data-acao="importar-extrato">Importar outro</button>' +
+          '<button class="btn primary" data-close="genModal">Fechar</button></div>';
+        abrir('genModal');
+        break;
+      }
       case 'sem-extrato': {
         const p = ST.posicoes.find(x => x.id === d.id);
         if(p){ p.semExtrato = true; Store.salvar(); render(); toast(p.ticker + ' marcado como sem extrato.'); }
