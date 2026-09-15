@@ -21,6 +21,9 @@
   /* paleta categórica validada (modo escuro) */
   --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
   --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  /* escala ordinal de risco: um matiz só, do mais calmo ao mais agitado
+     (nenhum passo mais escuro que o degrau 600, para não sumir no fundo escuro) */
+  --r1:#86b6ef; --r2:#5598e7; --r3:#3987e5; --r4:#256abf; --r5:#184f95;
   --grid:#26313f;
 }
 html[data-theme="light"]{
@@ -33,6 +36,8 @@ html[data-theme="light"]{
   /* paleta categórica validada (modo claro) */
   --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
   --s5:#e87ba4; --s6:#008300; --s7:#4a3aa7; --s8:#e34948;
+  /* escala ordinal de risco no modo claro: nenhum passo mais claro que o degrau 250 */
+  --r1:#86b6ef; --r2:#5598e7; --r3:#2a78d6; --r4:#1c5cab; --r5:#104281;
   --grid:#e6ebf2;
 }
 *{box-sizing:border-box}
@@ -597,6 +602,127 @@ tr.linha-click:active{background:var(--line)}
 .mk-lupa{opacity:.35; font-size:.8rem; transition:opacity .12s}
 .mk-card.click:hover .mk-lupa{opacity:1}
 
+/* ---------- rosca de risco (painel) ---------- */
+.rosca-wrap{display:flex; gap:22px; align-items:center; flex-wrap:wrap}
+.rosca-graf{position:relative; width:170px; height:170px; flex:0 0 auto}
+.viz-rosca{width:100%; height:100%; display:block}
+.viz-rosca circle{transition:stroke-dashoffset .5s ease}
+.rosca-centro{position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center; pointer-events:none; padding:0 34px}
+.rosca-centro .rc-t{font-size:.98rem; font-weight:700; line-height:1.1}
+.rosca-centro .rc-s{font-size:.62rem; color:var(--txt3); margin-top:2px; line-height:1.2; letter-spacing:.01em}
+.rosca-legenda{flex:0 1 330px; min-width:240px; display:flex; flex-direction:column; gap:9px}
+.rl-item{display:grid; grid-template-columns:11px 1fr auto; gap:0 9px; align-items:baseline}
+.rl-item i{width:11px; height:11px; border-radius:3px; display:block; align-self:center}
+.rl-n{font-size:.84rem}
+.rl-v{font-size:.84rem; font-variant-numeric:tabular-nums; font-weight:660}
+.rl-x{grid-column:3; text-align:right; line-height:1.2}
+.rl-d{grid-column:2; line-height:1.2}
+
+/* ---------- medidor linear de risco ---------- */
+.escala{margin:14px 0 4px}
+.esc-trilho{position:relative; display:flex; height:11px; border-radius:6px; overflow:visible}
+.esc-trilho i{display:block; height:11px}
+.esc-trilho i:first-child{border-radius:6px 0 0 6px}
+.esc-trilho i:last-child{border-radius:0 6px 6px 0}
+.esc-marca{position:absolute; top:-7px; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center}
+.esc-marca b{background:var(--txt); color:var(--bg); font-size:.68rem; padding:2px 6px; border-radius:5px;
+  font-variant-numeric:tabular-nums; box-shadow:var(--shadow)}
+.esc-marca::after{content:''; width:2px; height:13px; background:var(--txt); margin-top:1px; border-radius:1px}
+.esc-rot{display:flex; justify-content:space-between; margin-top:16px; font-size:.68rem; color:var(--txt3); gap:4px}
+.esc-rot span{flex:1; text-align:center}
+.esc-rot span:first-child{text-align:left}
+.esc-rot span:last-child{text-align:right}
+
+@media (max-width:560px){
+  .rosca-wrap{gap:16px; justify-content:center}
+  .rosca-graf{width:150px; height:150px}
+  .rosca-legenda{flex-basis:100%}
+}
+
+/* ---------- perfil de investidor ---------- */
+.perfil-comp{margin-top:14px; padding:12px 14px; border-radius:11px; border:1px solid var(--line); background:var(--card2)}
+.perfil-comp b{display:block; margin-bottom:3px}
+.perfil-comp p{margin:0; color:var(--txt2)}
+.perfil-comp.acima{border-color:var(--warn); background:color-mix(in srgb, var(--warn) 9%, var(--card2))}
+.perfil-comp.alinhado{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 9%, var(--card2))}
+.perfil-comp.abaixo{border-color:var(--accent2); background:color-mix(in srgb, var(--accent2) 9%, var(--card2))}
+.perfil-comp.neutro .btn{margin-top:9px}
+
+.perfil-cab{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 14px;
+  border:1px solid var(--line); border-radius:11px; background:var(--card2)}
+.pc-lbl{display:block; font-size:.72rem; color:var(--txt3); text-transform:uppercase; letter-spacing:.04em}
+.pc-nome{display:block; font-size:1.18rem; font-weight:700; line-height:1.2}
+.pc-org{display:block; margin-top:2px}
+
+.perfil-frase{font-size:1.02rem; font-weight:600; margin:0 0 12px; line-height:1.35}
+.perfil-linhas{display:flex; flex-direction:column; gap:9px}
+.perfil-linhas > div{display:grid; grid-template-columns:132px 1fr; gap:10px; font-size:.88rem; align-items:baseline}
+.pl-t{color:var(--txt3); font-size:.78rem; text-transform:uppercase; letter-spacing:.03em}
+.card2-box{margin-top:14px; padding:14px; border:1px solid var(--line); border-radius:11px; background:var(--card2)}
+.aviso-box{margin-top:14px; padding:12px 14px; border-radius:11px;
+  border:1px solid var(--warn); background:color-mix(in srgb, var(--warn) 10%, var(--card2))}
+.aviso-box p{margin:4px 0 0; color:var(--txt2)}
+
+.perfil-resultado{text-align:center; padding:18px 10px 6px}
+.pr-nome{font-size:1.9rem; font-weight:760; letter-spacing:-.01em}
+.pr-frase{color:var(--txt2); margin-top:4px}
+.pr-eixo{padding:12px 14px; border:1px solid var(--line); border-radius:11px; background:var(--card2)}
+.pr-eixo .lbl{font-size:.78rem; color:var(--txt3); text-transform:uppercase; letter-spacing:.04em}
+.pr-eixo p{margin:6px 0 0}
+
+/* ---------- questionário ---------- */
+.q-progresso{display:flex; align-items:center; gap:10px; margin:12px 0 18px}
+.qp-trilho{flex:1; height:6px; border-radius:4px; background:var(--line); overflow:hidden}
+.qp-trilho i{display:block; height:6px; background:var(--accent); transition:width .25s}
+.q-grupo{margin:20px 0 4px; font-size:.96rem}
+.q-bloco{padding:13px 14px; border:1px solid var(--line); border-radius:11px; background:var(--card2); margin-bottom:11px}
+.q-bloco.pendente{border-left:3px solid var(--warn)}
+.q-p{font-weight:620; margin-bottom:3px}
+.q-ajuda{margin-bottom:9px}
+.q-ops{display:flex; flex-direction:column; gap:6px}
+.q-op{text-align:left; padding:9px 12px; border-radius:9px; border:1px solid var(--line2);
+  background:var(--card); color:var(--txt); font:inherit; font-size:.86rem; cursor:pointer; transition:.12s}
+.q-op:hover{border-color:var(--accent)}
+.q-op.on{background:var(--accent); border-color:var(--accent); color:#04150e; font-weight:620}
+
+/* ---------- movimentações ---------- */
+.mov-tag{display:inline-flex; align-items:center; gap:5px; font-size:.8rem; font-weight:600; white-space:nowrap}
+.mov-tag.g-dinheiro{color:var(--accent2)}
+.mov-tag.g-ativo{color:var(--txt)}
+.mov-tag.g-renda{color:var(--accent)}
+.mov-tag.g-custo{color:var(--warn)}
+.mov-tag.g-ajuste{color:var(--txt3)}
+td.num, th.num{text-align:right}
+.mov-lista{display:flex; flex-direction:column}
+.mov-card{display:grid; grid-template-columns:32px 1fr auto; gap:10px; align-items:center;
+  padding:12px 14px; border-top:1px solid var(--line)}
+.mov-card:first-child{border-top:0}
+.mc-ico{font-size:1.15rem; text-align:center}
+.mc-t{font-size:.9rem}
+.mc-v{font-weight:660; font-variant-numeric:tabular-nums; white-space:nowrap}
+.mc-o{margin-top:2px}
+
+@media (max-width:560px){
+  .perfil-linhas > div{grid-template-columns:1fr; gap:1px}
+  .pr-nome{font-size:1.5rem}
+}
+
+/* ---------- rentabilidade ---------- */
+.kpi .val .un{font-size:.6em; font-weight:600; color:var(--txt3); letter-spacing:.02em}
+details.explica{margin-top:14px; border-top:1px solid var(--line); padding-top:10px}
+details.explica > summary{cursor:pointer; font-size:.82rem; color:var(--txt2); list-style:none}
+details.explica > summary::-webkit-details-marker{display:none}
+details.explica > summary::before{content:'▸ '; color:var(--txt3)}
+details.explica[open] > summary::before{content:'▾ '}
+details.explica p{margin:9px 0 0}
+.viz-tempo .rot-dir{font-size:10.5px; font-weight:600}
+.taxas{display:flex; flex-direction:column; gap:11px; margin-bottom:4px}
+.tx-cab{display:flex; justify-content:space-between; align-items:baseline; font-size:.86rem; margin-bottom:5px}
+.tx-cab b{font-variant-numeric:tabular-nums}
+.tx-trilho{height:10px; border-radius:5px; background:var(--line); overflow:hidden}
+.tx-trilho i{display:block; height:10px; border-radius:5px}
+
 </style>
 </head>
 <body>
@@ -630,6 +756,7 @@ tr.linha-click:active{background:var(--line)}
     <nav class="sidenav" id="sidenav">
       <button class="nav-item active" data-view="painel"><span>📊</span> Painel</button>
       <button class="nav-item" data-view="carteira"><span>💼</span> Carteira</button>
+      <button class="nav-item" data-view="movimentos"><span>🧾</span> Movimentações</button>
       <button class="nav-item" data-view="mercado"><span>🌎</span> Mercado</button>
       <button class="nav-item" data-view="noticias"><span>📰</span> Notícias</button>
       <button class="nav-item" data-view="prognostico"><span>🔮</span> Prognóstico</button>
@@ -659,6 +786,8 @@ tr.linha-click:active{background:var(--line)}
       <section class="view" id="view-painel"></section>
       <!-- CARTEIRA -->
       <section class="view hidden" id="view-carteira"></section>
+      <!-- MOVIMENTAÇÕES -->
+      <section class="view hidden" id="view-movimentos"></section>
       <!-- MERCADO -->
       <section class="view hidden" id="view-mercado"></section>
       <!-- NOTÍCIAS -->
@@ -1009,10 +1138,33 @@ const INSTITUICOES = [
 
 /* Alocação-alvo sugerida por perfil (usada no simulador) */
 const PERFIS = {
-  conservador: {nome:'Conservador', alvo:{'renda-fixa':60,'caixa':10,'fii':10,'acao-br':5,'etf-us':10,'cripto':0,'previdencia':5}},
-  moderado:    {nome:'Moderado',    alvo:{'renda-fixa':35,'caixa':5,'fii':15,'acao-br':15,'etf-us':22,'cripto':3,'previdencia':5}},
-  arrojado:    {nome:'Arrojado',    alvo:{'renda-fixa':15,'caixa':5,'fii':10,'acao-br':22,'etf-us':35,'cripto':8,'previdencia':5}}
+  conservador: {nome:'Conservador', ordem:0,
+    alvo:{'renda-fixa':55,'caixa':10,'previdencia':5,'fii':10,'acao-br':5,'etf-us':15}},
+  moderado:    {nome:'Moderado',    ordem:1,
+    alvo:{'renda-fixa':32,'caixa':5,'previdencia':5,'fii':13,'acao-br':13,'etf-us':22,'acao-us':8,'cripto':2}},
+  arrojado:    {nome:'Arrojado',    ordem:2,
+    alvo:{'renda-fixa':14,'caixa':4,'previdencia':4,'fii':8,'acao-br':18,'etf-us':27,'acao-us':18,'cripto':7}},
+  agressivo:   {nome:'Agressivo',   ordem:3,
+    alvo:{'renda-fixa':5,'caixa':3,'fii':5,'acao-br':20,'etf-us':27,'acao-us':25,'cripto':15}}
 };
+const ORDEM_PERFIS = ['conservador','moderado','arrojado','agressivo'];
+
+/* Risco de cada tipo numa escala de 0 a 100. Base: volatilidade histórica típica
+   da classe e chance de perda permanente. Serve para medir o risco real da carteira. */
+const RISCO_TIPO = {
+  'caixa':5, 'renda-fixa':15, 'bond-us':25, 'previdencia':32, 'fundo':42,
+  'fii':55, 'etf-br':60, 'etf-us':60, 'reit':65, 'bdr':70,
+  'acao-br':75, 'acao-us':75, 'cripto':100, 'outro':50
+};
+
+/* Faixas de risco usadas na rosquinha do painel (ordinais, do mais calmo ao mais agitado) */
+const FAIXAS_RISCO = [
+  {id:'muito-baixo', nome:'Muito baixo', desc:'dinheiro à vista e equivalentes', ate:10,  tom:1},
+  {id:'baixo',       nome:'Baixo',       desc:'renda fixa e títulos',            ate:30,  tom:2},
+  {id:'medio',       nome:'Médio',       desc:'fundos e previdência',            ate:50,  tom:3},
+  {id:'alto',        nome:'Alto',        desc:'ações, ETFs e imobiliários',      ate:85,  tom:4},
+  {id:'muito-alto',  nome:'Muito alto',  desc:'cripto e apostas concentradas',   ate:101, tom:5}
+];
 
 function buscarCatalogo(q, limite){
   q = (q||'').trim().toUpperCase();
@@ -1294,9 +1446,24 @@ const GLOSSARIO = [
  e:'A relação prazo/risco depende da autocorrelação dos retornos. A "diversificação temporal" é debatida: o desvio-padrão do retorno anualizado cai com o tempo, mas a dispersão do valor final aumenta.'},
 
 {k:'perfil-investidor', t:'Perfil de investidor', c:'Estratégia',
- d:'É a classificação (conservador, moderado ou arrojado) que mede o quanto de risco você aguenta — na carteira e no estômago.',
- m:'Ela vem do questionário de suitability que a corretora aplica. Mas o teste de verdade é outro: se sua carteira cair 30%, você vende em pânico ou aporta mais?',
- e:'Separe capacidade de risco (objetiva: horizonte, renda, patrimônio) de tolerância a risco (subjetiva, comportamental). O portfólio precisa respeitar a menor das duas.'},
+ d:'É a classificação — conservador, moderado, arrojado ou agressivo — que mede quanto de risco combina com você. O InvestifyMe calcula o seu por um questionário e compara com o risco real da sua carteira.',
+ m:'Ela vem do questionário de suitability que banco e corretora são obrigados a aplicar. Mas o teste de verdade é outro: se a carteira cair 30%, você vende em pânico ou aporta mais? O perfil não é um rótulo permanente: muda quando muda o prazo, a renda ou a reserva.',
+ e:'Separe capacidade de risco (objetiva: horizonte, renda, patrimônio, liquidez) de tolerância a risco (subjetiva, comportamental). A carteira precisa respeitar a MENOR das duas — e é assim que o app calcula. Vale também checar o terceiro eixo, a necessidade de risco: se a meta já é alcançável com renda fixa, correr risco extra é assimetria negativa.'},
+
+{k:'suitability', t:'Suitability', c:'Estratégia',
+ d:'É o nome técnico do questionário de perfil. Serve para a instituição não vender um produto arriscado demais para quem não aguenta.',
+ m:'No Brasil é obrigatório por norma da CVM e precisa ser refeito periodicamente, normalmente a cada 24 meses. Se você responder para agradar — dizendo que aguenta mais risco do que aguenta — o resultado é inútil.',
+ e:'CVM Resolução 30 exige avaliar objetivos, situação financeira e conhecimento, e proíbe recomendar produto inadequado sem alerta formal. Na prática, muitas instituições usam o questionário como formalidade; use-o como diagnóstico próprio, não como carimbo.'},
+
+{k:'capacidade-risco', t:'Capacidade de correr risco', c:'Estratégia',
+ d:'É quanto risco a sua vida financeira suporta: prazo até usar o dinheiro, reserva de emergência, estabilidade da renda e chance de precisar sacar de repente.',
+ m:'É a metade objetiva do perfil, e a que manda. Coragem não paga conta: quem precisa do dinheiro em um ano não deveria estar em bolsa, por mais tranquilo que seja.',
+ e:'Capacidade é função do horizonte, do capital humano (estabilidade e correlação da renda com o mercado), da razão entre passivo e patrimônio e da necessidade de liquidez. Renda estável funciona como uma posição em renda fixa implícita e aumenta a capacidade de risco do portfólio financeiro.'},
+
+{k:'tolerancia-risco', t:'Tolerância a risco', c:'Estratégia',
+ d:'É quanto de oscilação você aguenta ver sem perder o sono nem vender no pior momento.',
+ m:'É a metade subjetiva do perfil. Quase todo mundo superestima a própria tolerância em mercado de alta e descobre a verdade na primeira queda de 20%.',
+ e:'Medida por escalas psicométricas e por experiência revelada — o que a pessoa efetivamente fez em drawdowns anteriores vale mais que o que ela diz que faria. Aversão a perda (Kahneman e Tversky) faz a dor de perder pesar cerca de duas vezes o prazer de ganhar o mesmo valor.'},
 
 {k:'benchmark', t:'Benchmark', c:'Estratégia',
  d:'É a referência usada para comparar seu resultado — CDI para renda fixa, Ibovespa para ações brasileiras, S&P 500 para americanas.',
@@ -1409,14 +1576,64 @@ const GLOSSARIO_EXTRA2 = [
 {k:'circuit-breaker', t:'Circuit breaker', c:'Risco', d:'É a pausa automática da bolsa quando o índice cai demais — na B3, 10% de queda para o pregão por 30 minutos.', m:'Serve para esfriar o pânico. Acionou poucas vezes na história, quase sempre em crises globais; em março de 2020 foi acionado várias vezes no mesmo mês.'},
 {k:'commodity', t:'Commodities', c:'Economia', d:'São produtos básicos negociados no mundo inteiro pelo mesmo preço de referência: petróleo, minério de ferro, soja, ouro, café.', m:'Boa parte do Ibovespa depende delas (Vale, Petrobras, JBS, Suzano). Por isso a bolsa brasileira sobe e cai junto com o preço do minério e do petróleo, e junto com a economia chinesa.'},
 {k:'ouro', t:'Ouro', c:'Economia', d:'É o ativo que as pessoas procuram quando têm medo. Não paga juros nem dividendos: você ganha se o preço subir.', m:'No Brasil dá para investir por ETF (GOLD11) ou por contratos na B3. Como é cotado em dólar, o ouro para o brasileiro embute duas apostas: o metal e a moeda.'},
-{k:'etf-nome', t:'Como ler o nome de um ETF', c:'Renda variável', d:'O nome costuma dizer quem administra e o que o fundo segue: "iShares Core S&P 500" é da BlackRock e acompanha o S&P 500.', m:'Palavras que importam: Core (versão principal e barata), Total (mercado inteiro), High Dividend (dividendos), Growth/Value (crescimento ou valor), Hedged (protegido do câmbio), UCITS (fundo europeu, com vantagem tributária para estrangeiros).'}
+{k:'etf-nome', t:'Como ler o nome de um ETF', c:'Renda variável', d:'O nome costuma dizer quem administra e o que o fundo segue: "iShares Core S&P 500" é da BlackRock e acompanha o S&P 500.', m:'Palavras que importam: Core (versão principal e barata), Total (mercado inteiro), High Dividend (dividendos), Growth/Value (crescimento ou valor), Hedged (protegido do câmbio), UCITS (fundo europeu, com vantagem tributária para estrangeiros).'},
+
+/* ---------- Movimentações e custos ---------- */
+{k:'movimentacao', t:'Movimentação', c:'Básico',
+ d:'É cada evento que mexeu no seu dinheiro: um aporte, uma compra, uma venda, um dividendo recebido, uma taxa cobrada. Juntas, elas contam a história da carteira.',
+ m:'Sem esse histórico só dá para calcular lucro sobre preço médio. Com ele dá para calcular rentabilidade de verdade, separar o que rendeu do que foi aporte novo, e saber quanto você pagou de taxa no ano.',
+ e:'O livro de movimentações é o que permite TWR (retorno da estratégia, imune a aportes) e MWR/XIRR (retorno do seu bolso, sensível ao timing). Sem datas e valores de fluxo, nenhum dos dois é calculável.'},
+
+{k:'resgate', t:'Resgate', c:'Básico',
+ d:'É tirar dinheiro do investimento de volta para a conta. Pode ser total ou de uma parte só.',
+ m:'Resgatar não é o mesmo que perder: o efeito na rentabilidade depende de quando você tirou. Resgatar no fundo de uma queda transforma prejuízo no papel em prejuízo real.',
+ e:'Em fundos, atenção à cotização (D+0 a D+30) e à liquidação: o valor da cota é o do dia da cotização, não o do pedido. Em renda fixa antes do vencimento vale a marcação a mercado, que pode ser desfavorável.'},
+
+{k:'provento', t:'Provento', c:'Renda variável',
+ d:'É o dinheiro que o investimento paga para você sem precisar vender nada: dividendo de ação, rendimento de fundo imobiliário, juros de um título.',
+ m:'Proventos entram como dinheiro novo na conta e precisam ser reinvestidos para o juro composto funcionar. Dinheiro parado de dividendo é rendimento perdido.',
+ e:'Cuidado com yield traps: dividend yield alto costuma refletir preço em queda ou distribuição não recorrente. Avalie payout, geração de caixa livre e recorrência antes de tratar o yield como renda.'},
+
+{k:'custo-taxas', t:'Custos e taxas', c:'Custos',
+ d:'É tudo que sai da sua rentabilidade sem aparecer no extrato como perda: taxa de administração, corretagem, custódia, spread de câmbio, IOF e imposto.',
+ m:'Custo é a única variável do investimento que você controla com certeza. Ninguém sabe quanto a bolsa vai render, mas todo mundo sabe quanto paga de taxa.',
+ e:'Compare sempre pelo custo total (TER), não só pela taxa de administração: inclua performance, corretagem implícita, spread de câmbio e tracking difference. Um TER de 2% contra 0,3% em 20 anos consome cerca de um terço do patrimônio final.'},
+
+{k:'reserva-emergencia', t:'Reserva de emergência', c:'Estratégia',
+ d:'É o dinheiro guardado para imprevistos — de 6 a 12 meses das suas despesas — em algo que você resgata no mesmo dia sem perder valor.',
+ m:'Ela não é um investimento: é o que impede você de ter que vender seus investimentos no pior momento. Enquanto ela não estiver pronta, correr risco na carteira é apostar contra si mesmo.',
+ e:'Tesouro Selic ou fundo DI com taxa zero e liquidez D+0 são o padrão. Evite CDB com carência, LCI/LCA com prazo mínimo e qualquer coisa marcada a mercado. O tamanho ideal cresce com a volatilidade da renda: autônomo precisa de mais meses que servidor público.'},
+
+{k:'rebalanceamento-quando', t:'Quando rebalancear', c:'Estratégia',
+ d:'É a regra que diz quando ajustar a carteira de volta para a alocação-alvo: por calendário (uma vez por ano) ou por desvio (quando algo passa de X pontos do alvo).',
+ m:'Rebalancear demais gera custo e imposto; de menos deixa a carteira virar outra coisa sem você perceber. A forma mais barata é direcionar os aportes novos para o que está abaixo do alvo, sem vender nada.',
+ e:'A literatura aponta bandas de 20% relativas (ou 5 pontos absolutos) com checagem anual como bom equilíbrio entre aderência e custo. O ganho do rebalanceamento vem mais do controle de risco do que de um prêmio de retorno.'},
+
 ];
 GLOSSARIO_EXTRA2.forEach(g => { GLOSSARIO.push(g); GLOS_MAP[g.k] = g; });
 GLOSSARIO.sort((a,b) => a.t.localeCompare(b.t, 'pt-BR'));
 
 /* Devolve o texto do termo conforme o nível escolhido */
 function textoGlossario(chave, nivel){
-  const g = GLOS_MAP[chave];
+  const g = GLOS_MAP[chave,
+
+/* ---------- Medidas de retorno ---------- */
+{k:'xirr', t:'XIRR (retorno do seu bolso)', c:'Estratégia',
+ d:'É a taxa anual que leva em conta quanto você aportou e em que data. Responde à pergunta "quanto eu realmente ganhei por ano".',
+ m:'É diferente de dividir o lucro pelo total aportado. Se você colocou R$ 10 mil em janeiro e mais R$ 10 mil em novembro, o segundo aporte quase não teve tempo de render — o XIRR sabe disso, a conta simples não.',
+ e:'Matematicamente é a taxa r que zera o valor presente líquido dos fluxos: Σ CF_i / (1+r)^(d_i/365) = 0. É o MWR (money-weighted return) em tempo irregular. Pode ter múltiplas raízes quando há alternância de sinal repetida; por isso o app usa Newton-Raphson com bissecção de segurança.'},
+
+{k:'twr', t:'TWR (retorno da estratégia)', c:'Estratégia',
+ d:'É o retorno da carteira ignorando quando você colocou dinheiro. Mede a qualidade das escolhas, não o timing dos aportes.',
+ m:'É o número que fundos e gestores divulgam, e o único justo para comparar com CDI, Ibovespa ou S&P 500 — porque o índice não recebe aportes. Se o seu TWR é bom mas o XIRR é fraco, as escolhas foram boas e o momento dos aportes, ruim.',
+ e:'Encadeia os sub-períodos delimitados por cada fluxo: Π(1 + (V_fim − F) / V_ini) − 1. Quanto mais frequente a marcação (diária, no caso do app), menor a distorção causada pela premissa de que o fluxo ocorre no fim do período.'},
+
+{k:'retorno-anualizado', t:'Retorno anualizado', c:'Estratégia',
+ d:'É transformar o ganho de qualquer período em "quanto seria por ano", para dar para comparar coisas de prazos diferentes.',
+ m:'Cuidado com anualizar períodos curtos: render 3% em um mês não é render 36% no ano, é 42,6% — e provavelmente não vai se repetir. Anualizar menos de um ano infla a impressão.',
+ e:'Taxa equivalente composta: (1+r)^(365/dias) − 1. Não confunda com CAGR sobre valores de ponta a ponta, que ignora fluxos intermediários, nem com média aritmética de retornos, sempre maior que a geométrica quando há volatilidade.'}
+
+];
   if(!g) return null;
   let html = '<p>' + g.d + '</p>';
   if((nivel === 'medio' || nivel === 'expert') && g.m) html += '<p>' + g.m + '</p>';
@@ -1845,6 +2062,74 @@ const COACH = [
  <p>Prospect theory explica a assimetria: função de valor côncava em ganhos, convexa em perdas, com ponto de referência móvel. O efeito disposição decorre diretamente disso.</p>
  <p>Mitigação estrutural funciona melhor que força de vontade: automatizar aportes, definir política de investimento por escrito (IPS) com bandas de rebalanceamento, e reduzir a frequência de checagem — a utilidade percebida cai com o monitoramento frequente de ativos voláteis (myopic loss aversion).</p>`}},
 
+{id:'perfil', ic:'🧭', t:'Seu perfil de investidor', lead:'Quanto risco combina com você — e por que a resposta tem duas metades.',
+ n:{
+ iniciante:`
+ <p>Toda corretora pergunta, antes de você investir, se o seu perfil é <b>conservador</b>, <b>moderado</b>, <b>arrojado</b> ou <b>agressivo</b>. Parece burocracia, e na maioria das vezes é tratada como tal. Mas a pergunta por trás é a mais importante de todas: <i>quanto de risco cabe na sua vida?</i></p>
+ <h4>Os quatro perfis, em uma frase cada</h4>
+ <ul>
+   <li><b>Conservador</b> — preservar o que já tem vale mais do que crescer rápido. Quedas de até 5% nos piores momentos.</li>
+   <li><b>Moderado</b> — aceita balanço em troca de render acima da renda fixa. Quedas de 10% a 15% em crises.</li>
+   <li><b>Arrojado</b> — prioriza crescimento e aguenta anos ruins pelo caminho. Quedas de 20% a 30%.</li>
+   <li><b>Agressivo</b> — busca o retorno máximo e convive com perdas grandes. Quedas de 40% ou mais fazem parte.</li>
+ </ul>
+ <h4>O detalhe que quase ninguém conta</h4>
+ <p>O perfil tem duas metades, e elas podem discordar:</p>
+ <ul>
+   <li>A <i data-info="capacidade-risco">capacidade</i> é o que a sua situação permite: prazo, reserva de emergência, estabilidade da renda, chance de precisar sacar.</li>
+   <li>A <i data-info="tolerancia-risco">tolerância</i> é o que você aguenta ver: se a carteira cair 20% em um mês, você vende ou dorme tranquilo?</li>
+ </ul>
+ <p>Quando as duas discordam, <b>vale a menor</b>. Coragem não paga conta no mês seguinte, e uma carteira que faz você vender no pior dia não serve por mais bem montada que esteja.</p>
+ <div class="callout"><b>Faça o teste no app:</b> abra o <b>Painel</b> e clique em <i>Descobrir meu perfil</i>. São dez perguntas e leva dois minutos. Nada sai do seu aparelho.</div>`,
+ medio:`
+ <p>O questionário oficial se chama <i data-info="suitability">suitability</i> e é exigido pela CVM. Ele existe para impedir que te vendam um produto arriscado demais — não para te dizer o que fazer. Use-o como diagnóstico próprio.</p>
+ <h4>Por que responder honestamente é difícil</h4>
+ <p>Em mercado de alta, quase todo mundo se declara arrojado. A tolerância declarada é sempre maior que a revelada: o que importa não é o que você diz que faria numa queda de 30%, é o que você <b>já fez</b> numa. Se nunca passou por uma, considere um perfil mais conservador que o resultado — você ainda não tem dado sobre si mesmo.</p>
+ <h4>O perfil não é permanente</h4>
+ <p>Ele muda quando muda a vida: a reserva ficou pronta, o emprego ficou estável, o prazo encurtou porque a meta chegou perto. Refaça o teste a cada um ou dois anos, e sempre depois de uma mudança grande — casamento, filho, troca de emprego, herança, aposentadoria à vista.</p>
+ <h4>Perfil x carteira: o que o app compara</h4>
+ <p>O InvestifyMe dá uma nota de risco de 0 a 100 para cada tipo de ativo (caixa 5, renda fixa 15, previdência 32, FII 55, ETF 60, ação 75, cripto 100) e faz a média ponderada pelo valor que você tem em cada um. Essa nota vira um perfil — e ele compara com o seu. Quando a carteira está mais arriscada que o perfil, aparece um aviso no painel. Não é erro automático: é um convite a decidir de propósito, em vez de por acidente.</p>`,
+ expert:`
+ <h4>Os três eixos (e o que o app usa)</h4>
+ <p>A literatura de planejamento financeiro separa <b>capacidade</b> (objetiva), <b>tolerância</b> (comportamental) e <b>necessidade</b> de risco — esta última quase sempre ignorada. Se a meta já é atingível com juro real de renda fixa, correr risco adicional é assimetria negativa: você arrisca não bater uma meta que já estava garantida. O app modela capacidade e tolerância e toma o mínimo; a necessidade fica na aba Prognóstico, comparando a projeção com as metas.</p>
+ <h4>Capital humano</h4>
+ <p>Renda estável e pouco correlacionada com o mercado funciona como uma posição implícita em renda fixa, e aumenta a capacidade de risco do portfólio financeiro. Quem trabalha em setor cíclico, tem renda variável ou concentra patrimônio em ações da própria empresa está duplamente exposto — a carteira precisa compensar isso, não repetir.</p>
+ <h4>Limites do modelo de pontos</h4>
+ <p>Questionários somam pontos e assumem independência entre respostas, o que não se sustenta: prazo e liquidez são correlacionados, e experiência declarada é proxy fraca de comportamento. Métricas melhores existem — aversão relativa implícita, bandas de certainty equivalent, análise do drawdown efetivamente suportado no histórico — mas exigem dados que o app não tem. O uso correto do resultado é como piso de sanidade, não como otimizador.</p>`}},
+
+{id:'movimentacoes', ic:'🧾', t:'Movimentações e rentabilidade de verdade', lead:'Por que registrar aportes, vendas e dividendos muda tudo no cálculo.',
+ n:{
+ iniciante:`
+ <p>Enquanto o app só sabe <i>quanto</i> você tem de cada ativo e por <i data-info="preco-medio">quanto pagou em média</i>, ele consegue mostrar lucro — mas não consegue mostrar <b>rentabilidade de verdade</b>. A diferença importa mais do que parece.</p>
+ <h4>Um exemplo</h4>
+ <p>Você tinha R$ 10.000 e no fim do ano tem R$ 15.000. Rendeu 50%? Só se você não colocou mais nada. Se aportou R$ 4.000 em julho, o rendimento foi de cerca de R$ 1.000 sobre um capital que variou no tempo — coisa de 8%, não 50%.</p>
+ <p>A aba <b>Movimentações</b> guarda cada evento com data e valor: aporte, compra, venda, resgate, dividendo, juro, taxa e imposto. Com essas datas o app consegue calcular quanto o seu dinheiro realmente rendeu.</p>
+ <h4>Os tipos de lançamento</h4>
+ <ul>
+   <li><b>Aporte e resgate</b> — dinheiro entrando ou saindo da instituição.</li>
+   <li><b>Compra e venda</b> — troca de dinheiro por ativo dentro da mesma conta.</li>
+   <li><b>Aplicação e resgate de fundo</b> — para fundos e previdência, onde se lança valor, não cotas.</li>
+   <li><b>Provento e juros</b> — dividendos, rendimentos de FII, juros de conta remunerada.</li>
+   <li><b>Taxa e imposto</b> — tudo que sai da sua rentabilidade sem ser perda de mercado.</li>
+ </ul>
+ <div class="callout"><b>Não precisa reconstruir o passado inteiro.</b> O app já criou um lançamento de saldo inicial para cada ativo que você cadastrou. A partir de hoje, registre o que acontecer — em alguns meses o histórico fica útil sozinho.</div>`,
+ medio:`
+ <h4>Duas formas de medir retorno</h4>
+ <ul>
+   <li><b>TWR</b> (retorno ponderado pelo tempo): mede a qualidade da estratégia, ignorando quando você aportou. É o número que fundos divulgam, e o único justo para comparar com CDI, Ibovespa ou S&amp;P 500.</li>
+   <li><b>XIRR</b> ou MWR (ponderado pelo dinheiro): mede o retorno do <i>seu bolso</i>, levando em conta o tamanho e a data de cada aporte. É o número que responde "quanto eu realmente ganhei".</li>
+ </ul>
+ <p>Os dois são úteis e quase nunca são iguais. Quando o XIRR fica bem abaixo do TWR, é sinal de que você aportou nos momentos errados — comprando depois da alta, parando de aportar nas quedas.</p>
+ <h4>Custos aparecem aqui</h4>
+ <p>Taxa de administração de fundo e previdência não vem em extrato como "taxa": ela já está descontada da cota. Por isso, o valor que você vê é líquido dela. Já corretagem, custódia, spread de câmbio, IOF e IR aparecem — e valem ser lançados. Somar os custos do ano costuma ser o exercício mais revelador da carteira inteira.</p>`,
+ expert:`
+ <h4>Mecânica do cálculo</h4>
+ <p>TWR encadeia sub-períodos delimitados por cada fluxo: <code>Π(1 + (V_fim − F) / V_ini) − 1</code>. Com preços diários registrados, o encadeamento é diário e a distorção some. MWR resolve <code>Σ CF_i / (1+r)^(d_i/365) = 0</code> por Newton-Raphson, com bisseção de fallback quando há troca de sinal múltipla — carteiras com resgates grandes podem ter mais de uma raiz.</p>
+ <h4>Preço médio e apuração</h4>
+ <p>O app reconstrói quantidade e custo por média ponderada móvel, que é o critério aceito pela Receita para ações. Atenção: para ativos no exterior, o custo de aquisição é convertido pela cotação do dia da compra e o ganho apurado em reais, então o mesmo lote tem preço médio diferente em dólar e em reais. Os dois números são necessários: um para decisão, outro para o IR.</p>
+ <h4>Deduplicação na importação</h4>
+ <p>A chave usada é data + tipo + ticker + instituição + quantidade + valor. Ela evita reimportar o mesmo extrato, mas não distingue duas operações idênticas no mesmo dia — caso real em execuções parciais. Nesses casos o app importa uma e avisa; conferir pela quantidade total é mais seguro que pelo número de linhas.</p>`}},
+
 {id:'usar-app', ic:'🧭', t:'Como usar o InvestifyMe', lead:'Tour rápido pelas abas e pelo que cada número significa.',
  n:{
  iniciante:`
@@ -2030,10 +2315,16 @@ function estadoPadrao(){
     tema: 'dark',
     fundo: true,
     posicoes: [],
+    movimentos: [],                // livro de aportes, compras, vendas, proventos e custos
     metas: [],
     config: {
       aporteMensal: 0,
       perfil: 'moderado',
+      perfilRespostas: {},         // respostas do questionário de suitability
+      perfilResultado: null,       // {perfil, capacidade, tolerancia, pctCap, pctTol}
+      perfilData: '',              // quando o questionário foi respondido
+      perfilManual: false,         // true quando o usuário escolheu o perfil na mão
+      semeouMov: false,            // saldos iniciais já gerados no livro de movimentações
       alvoAlocacao: null,          // null = usa o perfil
       retornoCustom: {},           // por tipo, sobrescreve RETORNO_SUGERIDO
       inflacaoEsperada: 4.5,
@@ -2192,6 +2483,8 @@ const Store = {
     st.config = Object.assign({}, cfgPadrao, o.config || {});
     st.config.chaves = Object.assign({brapi:'',twelve:'',finnhub:'',alpha:'',rss2json:''}, (o.config||{}).chaves || {});
     st.posicoes = Array.isArray(o.posicoes) ? o.posicoes : [];
+    st.movimentos = Array.isArray(o.movimentos) ? o.movimentos : [];
+    st.config.perfilRespostas = (o.config || {}).perfilRespostas || {};
     st.metas = Array.isArray(o.metas) ? o.metas : [];
     st.vistos = o.vistos || {};
     st.coachFeitos = Array.isArray(o.coachFeitos) ? o.coachFeitos : [];
@@ -3342,6 +3635,138 @@ function vizSparkline(pontos, largura, altura){
          '<path d="' + linha + '" fill="none" stroke="' + cor + '" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 }
 
+/* ---------------------------------------------------------
+   9) Rosca (donut só com a borda) — escala ordinal de um tom só
+   segmentos: [{nome, valor, tom}] com tom de 1 a 5 (do mais calmo ao mais agitado)
+   op: {centro, sub, rodape, fmt}
+   Ordinal, não categórica: a ordem dos segmentos carrega significado,
+   por isso um único matiz em degradê em vez de cores diferentes.
+   --------------------------------------------------------- */
+function vizRosca(segmentos, op){
+  op = op || {};
+  const vis = (segmentos || []).filter(s => (s.valor || 0) > 0);
+  const total = vis.reduce((s,i) => s + i.valor, 0);
+  if(!total) return '<p class="muted small">Sem dados para mostrar ainda.</p>';
+
+  const R = 54, ESP = 15, C = 2 * Math.PI * R, VAZIO = 1.6;   /* VAZIO = respiro entre fatias */
+  let ang = 0, h = '';
+  h += '<div class="rosca-wrap"><div class="rosca-graf">';
+  h += '<svg viewBox="0 0 140 140" class="viz-rosca" role="img" aria-label="Composição de risco da carteira">';
+  h += '<circle cx="70" cy="70" r="' + R + '" fill="none" stroke="var(--line)" stroke-width="' + ESP + '" opacity=".45"></circle>';
+  vis.forEach(s => {
+    const frac = s.valor / total;
+    const traco = Math.max(frac * C - VAZIO, 0.6);
+    h += '<circle cx="70" cy="70" r="' + R + '" fill="none" stroke="var(--r' + (s.tom || 3) + ')" ' +
+         'stroke-width="' + ESP + '" stroke-linecap="butt" ' +
+         'stroke-dasharray="' + traco.toFixed(2) + ' ' + (C - traco).toFixed(2) + '" ' +
+         'stroke-dashoffset="' + (-ang * C).toFixed(2) + '" ' +
+         'transform="rotate(-90 70 70)"><title>' + esc(s.nome) + ': ' + pnum(frac*100) + '%</title></circle>';
+    ang += frac;
+  });
+  h += '</svg>';
+  if(op.centro){
+    h += '<div class="rosca-centro"><div class="rc-t">' + esc(op.centro) + '</div>' +
+         (op.sub ? '<div class="rc-s">' + esc(op.sub) + '</div>' : '') + '</div>';
+  }
+  h += '</div><div class="rosca-legenda">';
+  vis.forEach(s => {
+    const pct = s.valor / total * 100;
+    h += '<div class="rl-item"><i style="background:var(--r' + (s.tom || 3) + ')"></i>' +
+         '<span class="rl-n">' + esc(s.nome) + '</span>' +
+         '<b class="rl-v">' + pnum(pct) + '%</b>' +
+         (op.fmt ? '<span class="rl-x muted tiny">' + op.fmt(s.valor) + '</span>' : '') +
+         (s.desc ? '<span class="rl-d muted tiny">' + esc(s.desc) + '</span>' : '') + '</div>';
+  });
+  h += '</div></div>';
+  if(op.rodape) h += '<p class="tiny muted" style="margin-top:10px">' + op.rodape + '</p>';
+  return h;
+}
+
+/* ---------------------------------------------------------
+   10) Medidor linear: onde um número cai numa escala de 0 a 100
+   faixas: [{nome, ate}] · marca: valor a destacar
+   --------------------------------------------------------- */
+function vizEscala(valor, faixas, op){
+  op = op || {};
+  const v = Math.max(0, Math.min(100, Number(valor) || 0));
+  let h = '<div class="escala"><div class="esc-trilho">';
+  let ini = 0;
+  faixas.forEach((f, i) => {
+    const largura = Math.min(f.ate, 100) - ini;
+    h += '<i style="width:' + largura + '%;background:var(--r' + (i+1) + ')" title="' + esc(f.nome) + '"></i>';
+    ini = Math.min(f.ate, 100);
+  });
+  h += '<span class="esc-marca" style="left:' + v.toFixed(1) + '%"><b>' + Math.round(v) + '</b></span>';
+  h += '</div><div class="esc-rot">';
+  faixas.forEach(f => h += '<span>' + esc(f.curto || f.nome) + '</span>');
+  h += '</div></div>';
+  return h;
+}
+
+/* ---------------------------------------------------------
+   11) Várias linhas no mesmo eixo, tudo normalizado em 100
+   series: [{nome, cor, pontos:[{t,v}]}] · op: {altura, sufixo}
+   Serve para comparar a carteira com CDI, Ibovespa, S&P 500 e dólar.
+   --------------------------------------------------------- */
+function vizLinhasComparadas(series, op){
+  op = op || {};
+  const vivas = (series || []).filter(s => s.pontos && s.pontos.length >= 2);
+  if(!vivas.length) return '<p class="muted small">Ainda não há histórico suficiente para comparar.</p>';
+
+  /* eixo do tempo: da data mais tardia entre os inícios até a mais recente */
+  const t0 = Math.max.apply(null, vivas.map(s => new Date(s.pontos[0].t + 'T12:00:00').getTime()));
+  const t1 = Math.max.apply(null, vivas.map(s => new Date(s.pontos[s.pontos.length-1].t + 'T12:00:00').getTime()));
+  if(!(t1 > t0)) return '<p class="muted small">O período em comum entre as séries é curto demais.</p>';
+
+  /* recorta e renormaliza cada série no início comum */
+  const prep = vivas.map(s => {
+    const ps = s.pontos.filter(p => new Date(p.t + 'T12:00:00').getTime() >= t0);
+    if(ps.length < 2) return null;
+    const base = ps[0].v || 1;
+    return {nome: s.nome, cor: s.cor, traco: s.traco,
+            pontos: ps.map(p => ({x: new Date(p.t + 'T12:00:00').getTime(), v: p.v / base * 100}))};
+  }).filter(Boolean);
+  if(!prep.length) return '<p class="muted small">O período em comum entre as séries é curto demais.</p>';
+
+  const W = 720, H = op.altura || 250, mL = 46, mR = 92, mT = 12, mB = 26;
+  let min = Infinity, max = -Infinity;
+  prep.forEach(s => s.pontos.forEach(p => { if(p.v < min) min = p.v; if(p.v > max) max = p.v; }));
+  const folga = (max - min) * 0.1 || 4;
+  min -= folga; max += folga;
+  const px = x => mL + ((x - t0) / (t1 - t0 || 1)) * (W - mL - mR);
+  const py = v => H - mB - ((v - min) / (max - min || 1)) * (H - mT - mB);
+
+  let g = '';
+  for(let i = 0; i <= 3; i++){
+    const v = min + (max - min) * i / 3, y = py(v);
+    g += '<line class="gl" x1="' + mL + '" y1="' + y.toFixed(1) + '" x2="' + (W - mR) + '" y2="' + y.toFixed(1) + '"/>' +
+         '<text class="ax" x="' + (mL - 7) + '" y="' + (y + 3.5).toFixed(1) + '" text-anchor="end">' + pnum(v, 0) + '</text>';
+  }
+  /* linha de partida: 100 */
+  const y100 = py(100);
+  if(y100 > mT && y100 < H - mB)
+    g += '<line x1="' + mL + '" y1="' + y100.toFixed(1) + '" x2="' + (W - mR) + '" y2="' + y100.toFixed(1) +
+         '" stroke="var(--line2)" stroke-width="1" stroke-dasharray="4 4"/>';
+
+  prep.forEach(s => {
+    const d = s.pontos.map((p,i) => (i ? 'L' : 'M') + px(p.x).toFixed(1) + ' ' + py(p.v).toFixed(1)).join(' ');
+    g += '<path d="' + d + '" fill="none" stroke="' + s.cor + '" stroke-width="2.1" ' +
+         (s.traco ? 'stroke-dasharray="' + s.traco + '" ' : '') + 'stroke-linejoin="round" stroke-linecap="round"/>';
+    /* rótulo direto na ponta, em vez de legenda solta */
+    const ult = s.pontos[s.pontos.length - 1];
+    g += '<text class="ax rot-dir" style="fill:' + s.cor + '" x="' + (px(ult.x) + 6).toFixed(1) + '" y="' + (py(ult.v) + 3.5).toFixed(1) + '">' +
+         esc(s.nome) + ' ' + pnum(ult.v - 100, 1) + '%</text>';
+  });
+
+  const dt = ms => new Date(ms).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'2-digit'});
+  [[t0,'start'], [(t0+t1)/2,'middle'], [t1,'end']].forEach(([x,anc]) => {
+    g += '<text class="ax" x="' + px(x).toFixed(1) + '" y="' + (H - 7) + '" text-anchor="' + anc + '">' + esc(dt(x)) + '</text>';
+  });
+
+  return '<div class="viz-tempo"><svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" ' +
+         'role="img" aria-label="Comparação da carteira com os índices">' + g + '</svg></div>';
+}
+
 </script>
 <script>
 /* =========================================================
@@ -3617,7 +4042,550 @@ const Hist = {
 };
 
 </script>
-<script>window.CARTEIRA_CIFRADA = {"v": 1, "voltas": 210000, "carimbo": "2026-09-15T01:41:12.131961", "ativos": 47, "salt": "0y6MQi8GiTZDvH9JIb87Ww==", "iv": "TsAl1sxEHc0/TG3t", "dados": "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"};</script>
+<script>
+/* =========================================================
+   InvestifyMe — perfil de investidor (suitability)
+   Segue a lógica que bancos e corretoras usam por exigência da CVM:
+   mede separadamente a CAPACIDADE de correr risco (situação financeira,
+   prazo, liquidez) e a TOLERÂNCIA a risco (o que a pessoa aguenta ver).
+   O perfil final é o MENOR dos dois — coragem não paga conta.
+   ========================================================= */
+
+/* ---------- o questionário ---------- */
+const QUESTIONARIO = [
+  /* ----- capacidade: o que a situação financeira permite ----- */
+  {id:'prazo', eixo:'capacidade', p:'Em quanto tempo você pretende usar esse dinheiro?',
+   ajuda:'Prazo é o que mais define risco. Quem tem 10 anos pela frente atravessa qualquer crise; quem precisa em 6 meses, não.',
+   ops:[['Em menos de 1 ano',0],['Entre 1 e 3 anos',1],['Entre 3 e 5 anos',2],['Entre 5 e 10 anos',3],['Mais de 10 anos, ou é para a aposentadoria',4]]},
+
+  {id:'reserva', eixo:'capacidade', p:'Você tem uma reserva de emergência separada, fora desses investimentos?',
+   ajuda:'O padrão de mercado é de 6 a 12 meses das suas despesas, em algo que resgata no mesmo dia sem perder valor.',
+   ops:[['Não tenho reserva',0],['Tenho algo, mas menos de 3 meses',1],['Tenho de 3 a 6 meses',3],['Tenho mais de 6 meses',4]]},
+
+  {id:'fatia', eixo:'capacidade', p:'Quanto do seu patrimônio total está nesses investimentos?',
+   ajuda:'Contando imóveis, carro, conta corrente e tudo mais que você tem.',
+   ops:[['Praticamente tudo',0],['Mais da metade',1],['Cerca da metade',2],['Menos da metade',3],['Uma parte pequena',4]]},
+
+  {id:'renda', eixo:'capacidade', p:'Como está sua renda hoje?',
+   ajuda:'Renda estável é uma rede de proteção: permite esperar o mercado se recuperar sem precisar vender no pior momento.',
+   ops:[['Instável ou comprometida',0],['Estável, mas cobre as despesas justo',2],['Estável e sobra todo mês',3],['Sobra bastante e com folga',4]]},
+
+  {id:'liquidez', eixo:'capacidade', p:'Qual a chance de você precisar sacar uma parte de repente?',
+   ajuda:'Pense em despesas previsíveis (faculdade, reforma, troca de carro) e imprevisíveis (saúde, desemprego).',
+   ops:[['Alta, pode acontecer a qualquer momento',0],['Média, talvez no próximo ano',2],['Baixa, tenho outras fontes',3],['Muito baixa, esse dinheiro está reservado',4]]},
+
+  /* ----- tolerância: o que a cabeça aguenta ----- */
+  {id:'queda', eixo:'tolerancia', p:'Se a carteira caísse 20% em um único mês, o que você faria?',
+   ajuda:'Não é hipótese: quedas de 20% a 30% acontecem a cada poucos anos em carteiras com ações.',
+   ops:[['Venderia tudo para parar a perda',0],['Venderia uma parte para dormir melhor',1],['Não faria nada e esperaria',3],['Aproveitaria para comprar mais barato',4]]},
+
+  {id:'objetivo', eixo:'tolerancia', p:'O que é mais importante para você?',
+   ajuda:'Não existe resposta certa. Existe a resposta honesta.',
+   ops:[['Não perder dinheiro nunca, mesmo rendendo pouco',0],['Crescer devagar, com pouca oscilação',2],['Crescer bem, aceitando sustos pelo caminho',3],['O maior retorno possível, custe o que custar',4]]},
+
+  {id:'experiencia', eixo:'tolerancia', p:'Qual sua experiência com investimentos?',
+   ajuda:'Conhecer o produto muda tudo: quem entende por que caiu costuma não vender no fundo.',
+   ops:[['Só poupança ou CDB do banco',0],['Já tive fundos e Tesouro Direto',2],['Já comprei ações ou fundos imobiliários',3],['Invisto no exterior, em cripto ou em derivativos',4]]},
+
+  {id:'retorno', eixo:'tolerancia', p:'Que retorno você busca por ano, sabendo que mais retorno sempre significa mais risco?',
+   ajuda:'Quem promete retorno alto sem risco está mentindo ou não sabe o que está vendendo.',
+   ops:[['Acompanhar o CDI já está ótimo',0],['Um pouco acima do CDI',2],['Bem acima do CDI, aceitando anos negativos',3],['O máximo possível, mesmo com risco de perder muito',4]]},
+
+  {id:'historico', eixo:'tolerancia', p:'Você já passou por uma queda forte do mercado com dinheiro investido?',
+   ajuda:'Crise de 2008, pandemia em 2020, 2022 nas bolsas. Quem viveu sabe como reage de verdade.',
+   ops:[['Sim, e me assustei muito',0],['Nunca passei por uma',1],['Sim, e consegui manter a posição',3],['Sim, e aproveitei para comprar',4]]}
+];
+
+/* ---------- descrição de cada perfil ---------- */
+const PERFIS_INFO = {
+  conservador: {
+    frase: 'Preservar o que já tem vale mais do que crescer rápido.',
+    quem: 'Quem vai usar o dinheiro em pouco tempo, ainda está montando a reserva de emergência, ou simplesmente não dorme bem vendo o saldo oscilar.',
+    espera: 'Retorno próximo ao CDI, com oscilação pequena. Em um ano ruim a carteira pode ficar de lado, mas raramente fecha bem negativa.',
+    oscilacao: 'Quedas típicas de até 5% nos piores momentos.',
+    combina: 'Tesouro Selic, CDBs de liquidez diária, fundos DI, um pouco de renda fixa mais longa e uma fatia pequena em bolsa para não ficar de fora.',
+    evitar: 'Cripto, ações concentradas em poucos nomes, produtos com carência longa e qualquer coisa que você não saiba explicar.',
+    armadilha: 'A armadilha do conservador é achar que não tem risco nenhum. Tem: a inflação. Dinheiro rendendo 100% do CDI com inflação alta pode perder poder de compra depois do imposto.'
+  },
+  moderado: {
+    frase: 'Aceita balanço em troca de crescer acima da renda fixa.',
+    quem: 'Quem já tem reserva formada, prazo de alguns anos e entende que oscilação faz parte — mas não quer sustos grandes.',
+    espera: 'Retorno acima do CDI no longo prazo, com anos negativos acontecendo de vez em quando.',
+    oscilacao: 'Quedas típicas de 10% a 15% em crises.',
+    combina: 'Boa base de renda fixa, ETFs de bolsa brasileira e americana, fundos imobiliários e uma pitada de cripto se você fizer questão.',
+    evitar: 'Concentrar mais de 10% em um único ativo e trocar de estratégia toda vez que o mercado balança.',
+    armadilha: 'A armadilha do moderado é virar conservador na queda e arrojado na alta. Trocar de perfil conforme o humor do mercado é a forma mais cara de investir.'
+  },
+  arrojado: {
+    frase: 'Prioriza crescimento e aguenta anos ruins pelo caminho.',
+    quem: 'Quem tem prazo longo, renda estável, reserva formada e já viveu pelo menos uma crise sem vender.',
+    espera: 'Retorno bem acima do CDI no longo prazo, com anos claramente negativos no meio do caminho.',
+    oscilacao: 'Quedas típicas de 20% a 30% em crises, e podem durar meses.',
+    combina: 'Maioria em ações e ETFs, Brasil e exterior, com renda fixa cumprindo papel de amortecedor e caixa para aproveitar oportunidades.',
+    evitar: 'Usar dinheiro de curto prazo aqui, e confundir risco com aposta: diversificar continua valendo.',
+    armadilha: 'A armadilha do arrojado é confundir mercado em alta com talento próprio. Todo mundo é gênio em ano de bolsa subindo.'
+  },
+  agressivo: {
+    frase: 'Busca o retorno máximo e convive com perdas grandes.',
+    quem: 'Quem tem patrimônio suficiente para que essa carteira não mude sua vida se sumir, prazo muito longo e experiência real.',
+    espera: 'Retorno potencialmente muito alto, e também a possibilidade concreta de perder metade em um ciclo ruim.',
+    oscilacao: 'Quedas de 40% ou mais são parte do jogo.',
+    combina: 'Ações de crescimento, mercados emergentes, setores específicos, cripto e apostas de convicção — sempre com tamanho definido antes de entrar.',
+    evitar: 'Alavancagem sem entender a chamada de margem, e colocar aqui dinheiro que tem dono e data.',
+    armadilha: 'A armadilha do agressivo é não ter plano de saída. Perfil agressivo não é ausência de regra: é regra apertada com risco alto.'
+  }
+};
+
+const Perfil = {
+  /* pontuação máxima de cada eixo */
+  maximo(eixo){
+    return QUESTIONARIO.filter(q => q.eixo === eixo)
+      .reduce((s,q) => s + Math.max.apply(null, q.ops.map(o => o[1])), 0);
+  },
+
+  /* transforma 0..100 em um dos quatro perfis */
+  faixa(pct){
+    if(pct < 30) return 'conservador';
+    if(pct < 55) return 'moderado';
+    if(pct < 80) return 'arrojado';
+    return 'agressivo';
+  },
+
+  /* resultado do questionário: {capacidade, tolerancia, perfil, pctCap, pctTol, completo} */
+  calcular(respostas){
+    respostas = respostas || {};
+    const soma = eixo => QUESTIONARIO.filter(q => q.eixo === eixo)
+      .reduce((s,q) => s + (respostas[q.id] != null ? Number(respostas[q.id]) : 0), 0);
+    const faltam = QUESTIONARIO.filter(q => respostas[q.id] == null).map(q => q.id);
+    const pctCap = Math.round(soma('capacidade') / this.maximo('capacidade') * 100);
+    const pctTol = Math.round(soma('tolerancia') / this.maximo('tolerancia') * 100);
+    const cap = this.faixa(pctCap), tol = this.faixa(pctTol);
+    const perfil = PERFIS[cap].ordem <= PERFIS[tol].ordem ? cap : tol;
+    return {pctCap, pctTol, capacidade: cap, tolerancia: tol, perfil,
+            limitadoPor: cap === tol ? null : (PERFIS[cap].ordem < PERFIS[tol].ordem ? 'capacidade' : 'tolerancia'),
+            faltam, completo: !faltam.length};
+  },
+
+  /* ---------- risco real da carteira ---------- */
+  /* devolve {score, perfil, faixas:[{...faixa, valor, pct}], total, maiores:[]} */
+  daCarteira(itens, total){
+    const faixas = FAIXAS_RISCO.map(f => Object.assign({}, f, {valor: 0}));
+    let somaPeso = 0;
+    (itens || []).forEach(it => {
+      const risco = RISCO_TIPO[it.tipo] != null ? RISCO_TIPO[it.tipo] : 50;
+      const v = Number(it.valor) || 0;
+      if(v <= 0) return;
+      somaPeso += risco * v;
+      const f = faixas.find(x => risco < x.ate) || faixas[faixas.length - 1];
+      f.valor += v;
+    });
+    const tot = Number(total) || faixas.reduce((s,f) => s + f.valor, 0);
+    const score = tot ? Math.round(somaPeso / tot) : 0;
+    faixas.forEach(f => f.pct = tot ? f.valor / tot * 100 : 0);
+    return {score, perfil: this.faixa(score), total: tot, faixas: faixas.filter(f => f.valor > 0)};
+  },
+
+  /* compara o perfil declarado com o que a carteira realmente é */
+  comparar(perfilDeclarado, riscoCarteira){
+    const a = PERFIS[perfilDeclarado], b = PERFIS[riscoCarteira.perfil];
+    if(!a || !b) return null;
+    const dif = b.ordem - a.ordem;
+    if(dif === 0) return {estado:'alinhado', dif: 0,
+      texto:'A carteira está no mesmo nível de risco do seu perfil. É exatamente onde ela deveria estar.'};
+    if(dif > 0) return {estado:'acima', dif: dif,
+      texto:'A carteira está ' + (dif > 1 ? 'bem ' : '') + 'mais arriscada que o seu perfil ' + a.nome.toLowerCase() +
+            '. Hoje ela se comporta como uma carteira ' + b.nome.toLowerCase() + ' — ou seja, pode cair mais do que você disse aguentar.'};
+    return {estado:'abaixo', dif: dif,
+      texto:'A carteira está mais conservadora que o seu perfil ' + a.nome.toLowerCase() +
+            '. Não é um erro, mas no longo prazo você tende a render menos do que poderia.'};
+  }
+};
+
+</script>
+<script>
+/* =========================================================
+   InvestifyMe — livro de movimentações
+   Tudo que entra e sai: aportes, compras, vendas, resgates,
+   proventos, juros, taxas e impostos. É a base do cálculo de
+   rentabilidade de verdade (XIRR/TWR) e do histórico de patrimônio.
+   ========================================================= */
+
+const TIPOS_MOV = {
+  aporte:   {nome:'Aporte',            ico:'⬇️', sinal:+1, caixa:+1, grupo:'dinheiro',
+             desc:'Dinheiro novo entrando na instituição (transferência, depósito, remessa).'},
+  resgate:  {nome:'Resgate / retirada', ico:'⬆️', sinal:-1, caixa:-1, grupo:'dinheiro',
+             desc:'Dinheiro saindo da instituição para a sua conta pessoal.'},
+  compra:   {nome:'Compra',            ico:'🛒', sinal:+1, caixa:0,  grupo:'ativo', temQtd:true,
+             desc:'Compra de um ativo com dinheiro que já estava na instituição.'},
+  venda:    {nome:'Venda',             ico:'💱', sinal:-1, caixa:0,  grupo:'ativo', temQtd:true,
+             desc:'Venda de um ativo; o dinheiro fica na instituição.'},
+  aplicacao:{nome:'Aplicação em fundo', ico:'📥', sinal:+1, caixa:0, grupo:'ativo',
+             desc:'Aplicação em fundo, previdência ou renda fixa, em valor (sem cotas).'},
+  resgparc: {nome:'Resgate de fundo',   ico:'📤', sinal:-1, caixa:0, grupo:'ativo',
+             desc:'Resgate parcial ou total de fundo, previdência ou renda fixa.'},
+  provento: {nome:'Provento',          ico:'💵', sinal:+1, caixa:+1, grupo:'renda',
+             desc:'Dividendo, JCP, rendimento de FII ou distribuição de ETF.'},
+  juros:    {nome:'Juros / rendimento', ico:'📈', sinal:+1, caixa:+1, grupo:'renda',
+             desc:'Juros de conta remunerada, CD, money market ou título de renda fixa.'},
+  taxa:     {nome:'Taxa',              ico:'✂️', sinal:-1, caixa:-1, grupo:'custo',
+             desc:'Corretagem, custódia, taxa de administração, spread de câmbio, IOF.'},
+  imposto:  {nome:'Imposto',           ico:'🧾', sinal:-1, caixa:-1, grupo:'custo',
+             desc:'IR retido na fonte, come-cotas, imposto pago via DARF.'},
+  cambio:   {nome:'Câmbio',            ico:'🔁', sinal:0,  caixa:0,  grupo:'dinheiro',
+             desc:'Conversão entre moedas dentro da mesma instituição.'},
+  ajuste:   {nome:'Ajuste de saldo',   ico:'🔧', sinal:0,  caixa:0,  grupo:'ajuste',
+             desc:'Correção manual para o saldo bater com o extrato oficial.'}
+};
+
+const ORDEM_MOV = ['aporte','compra','aplicacao','provento','juros','venda','resgparc','resgate','taxa','imposto','cambio','ajuste'];
+
+const Mov = {
+  /* ---------- leitura ---------- */
+  todos(){ return (ST.movimentos || []); },
+
+  ordenados(desc){
+    const a = this.todos().slice().sort((x,y) => (x.data || '').localeCompare(y.data || '') ||
+      (x.criadoEm || '').localeCompare(y.criadoEm || ''));
+    return desc === false ? a : a.reverse();
+  },
+
+  doAtivo(id){ return this.todos().filter(m => m.ativoId === id); },
+
+  /* ---------- escrita ---------- */
+  novoId(){ return 'mv' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); },
+
+  add(m){
+    ST.movimentos = ST.movimentos || [];
+    const reg = Object.assign({id: this.novoId(), criadoEm: new Date().toISOString(), origem: 'manual'}, m);
+    reg.valor = Number(reg.valor) || 0;
+    reg.qtd = Number(reg.qtd) || 0;
+    reg.preco = Number(reg.preco) || 0;
+    if(!reg.valor && reg.qtd && reg.preco) reg.valor = reg.qtd * reg.preco;
+    if(!reg.preco && reg.qtd && reg.valor) reg.preco = reg.valor / reg.qtd;
+    ST.movimentos.push(reg);
+    return reg;
+  },
+
+  atualizar(id, dados){
+    const m = this.todos().find(x => x.id === id);
+    if(!m) return null;
+    Object.assign(m, dados);
+    m.valor = Number(m.valor) || 0;
+    m.qtd = Number(m.qtd) || 0;
+    m.preco = Number(m.preco) || 0;
+    if(!m.preco && m.qtd && m.valor) m.preco = m.valor / m.qtd;
+    return m;
+  },
+
+  excluir(id){ ST.movimentos = this.todos().filter(m => m.id !== id); },
+
+  /* chave para não importar o mesmo lançamento duas vezes */
+  chave(m){
+    return [m.data || '', m.tipo || '', (m.ticker || '').toUpperCase(), (m.inst || '').toLowerCase(),
+            (Number(m.qtd) || 0).toFixed(6), (Number(m.valor) || 0).toFixed(2)].join('|');
+  },
+
+  jaExiste(m){
+    const k = this.chave(m);
+    return this.todos().some(x => this.chave(x) === k);
+  },
+
+  /* ---------- números derivados ---------- */
+  /* posição reconstruída pelo livro: quantidade e preço médio de um ativo */
+  reconstruir(ativoId){
+    const movs = this.doAtivo(ativoId).slice()
+      .sort((a,b) => (a.data || '').localeCompare(b.data || ''));
+    let qtd = 0, custo = 0, realizado = 0, proventos = 0, custos = 0;
+    movs.forEach(m => {
+      const v = Number(m.valor) || 0, q = Number(m.qtd) || 0;
+      if(m.tipo === 'compra' || m.tipo === 'aplicacao'){
+        qtd += q; custo += v;
+      }else if(m.tipo === 'venda' || m.tipo === 'resgparc'){
+        const pmAtual = qtd ? custo / qtd : 0;
+        const qv = q || (pmAtual ? v / pmAtual : 0);
+        realizado += v - qv * pmAtual;
+        qtd -= qv; custo -= qv * pmAtual;
+        if(qtd < 1e-9){ qtd = 0; custo = 0; }
+      }else if(m.tipo === 'provento' || m.tipo === 'juros'){
+        proventos += v;
+      }else if(m.tipo === 'taxa' || m.tipo === 'imposto'){
+        custos += v;
+      }
+    });
+    return {qtd: qtd, pm: qtd ? custo / qtd : 0, custo: custo,
+            realizado: realizado, proventos: proventos, custos: custos, lancamentos: movs.length};
+  },
+
+  /* totais de um período, por grupo — alimenta o resumo da tela */
+  resumo(de, ate){
+    const r = {aportes:0, resgates:0, proventos:0, juros:0, taxas:0, impostos:0, compras:0, vendas:0, n:0};
+    this.todos().forEach(m => {
+      if(de && (m.data || '') < de) return;
+      if(ate && (m.data || '') > ate) return;
+      const v = Number(m.valor) || 0;
+      r.n++;
+      if(m.tipo === 'aporte') r.aportes += v;
+      else if(m.tipo === 'resgate') r.resgates += v;
+      else if(m.tipo === 'provento') r.proventos += v;
+      else if(m.tipo === 'juros') r.juros += v;
+      else if(m.tipo === 'taxa') r.taxas += v;
+      else if(m.tipo === 'imposto') r.impostos += v;
+      else if(m.tipo === 'compra' || m.tipo === 'aplicacao') r.compras += v;
+      else if(m.tipo === 'venda' || m.tipo === 'resgparc') r.vendas += v;
+    });
+    return r;
+  },
+
+  /* fluxos de caixa na moeda base, prontos para o cálculo de XIRR (fase 2) */
+  fluxos(taxaMoeda){
+    const conv = (v, moeda) => taxaMoeda ? taxaMoeda(v, moeda) : v;
+    return this.ordenados(false)
+      .filter(m => TIPOS_MOV[m.tipo] && TIPOS_MOV[m.tipo].caixa !== 0)
+      .map(m => ({data: m.data, valor: conv((Number(m.valor) || 0) * TIPOS_MOV[m.tipo].caixa, m.moeda)}));
+  },
+
+  /* ---------- migração: transforma a carteira atual em lançamentos iniciais ---------- */
+  semear(posicoes){
+    ST.movimentos = ST.movimentos || [];
+    let n = 0;
+    (posicoes || []).forEach(p => {
+      if(this.todos().some(m => m.ativoId === p.id)) return;     /* já tem histórico */
+      const qtd = Number(p.qtd) || 0, pm = Number(p.pm) || 0;
+      const valor = qtd * pm;
+      if(valor <= 0) return;
+      const tp = TIPOS[p.tipo] || {};
+      this.add({
+        data: p.data || (ST.criadoEm || new Date().toISOString()).slice(0,10),
+        tipo: (tp.fonte === 'manual' || tp.fonte === 'taxa') ? 'aplicacao' : 'compra',
+        ativoId: p.id, ticker: p.ticker, inst: p.inst || '',
+        qtd: qtd, preco: pm, valor: valor, moeda: p.moeda || tp.moeda || 'BRL',
+        obs: 'Saldo inicial, criado a partir do cadastro do ativo',
+        origem: 'saldo-inicial'
+      });
+      n++;
+    });
+    return n;
+  }
+};
+
+</script>
+<script>
+/* =========================================================
+   InvestifyMe — rentabilidade de verdade
+   XIRR (retorno do seu bolso) · TWR (retorno da estratégia)
+   e comparação com CDI, Ibovespa, S&P 500 e dólar.
+   ========================================================= */
+
+const DIA = 86400000;
+const emDias = (a, b) => (new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / DIA;
+const hojeISO = () => new Date().toISOString().slice(0,10);
+
+/* ---------- XIRR: taxa anual que zera o valor presente dos fluxos ---------- */
+function xirr(fluxos){
+  const f = (fluxos || []).filter(x => x.data && x.valor).slice()
+    .sort((a,b) => a.data.localeCompare(b.data));
+  if(f.length < 2) return null;
+  const temPos = f.some(x => x.valor > 0), temNeg = f.some(x => x.valor < 0);
+  if(!temPos || !temNeg) return null;                 /* sem troca de sinal não há taxa */
+
+  const base = f[0].data;
+  const anos = x => emDias(base, x.data) / 365;
+  const vpl = r => f.reduce((s,x) => s + x.valor / Math.pow(1 + r, anos(x)), 0);
+  const dvpl = r => f.reduce((s,x) => s - anos(x) * x.valor / Math.pow(1 + r, anos(x) + 1), 0);
+
+  /* Newton-Raphson a partir de 10% */
+  let r = 0.1;
+  for(let i = 0; i < 60; i++){
+    const v = vpl(r), d = dvpl(r);
+    if(!isFinite(v) || !isFinite(d) || Math.abs(d) < 1e-12) break;
+    const novo = r - v / d;
+    if(!isFinite(novo) || novo <= -0.999) break;
+    if(Math.abs(novo - r) < 1e-9){ r = novo; if(Math.abs(vpl(r)) < 1e-6) return r; break; }
+    r = novo;
+  }
+  /* bissecção como rede de segurança (funciona mesmo com fluxos estranhos) */
+  let lo = -0.95, hi = 10, vlo = vpl(lo);
+  if(!isFinite(vlo)) return null;
+  for(let i = 0; i < 200; i++){
+    const meio = (lo + hi) / 2, v = vpl(meio);
+    if(!isFinite(v)) return null;
+    if((v > 0) === (vlo > 0)){ lo = meio; vlo = v; } else hi = meio;
+    if(hi - lo < 1e-9) break;
+  }
+  const res = (lo + hi) / 2;
+  return Math.abs(vpl(res)) < 1 ? res : null;
+}
+
+/* ---------- TWR: encadeia os sub-períodos entre aportes ---------- */
+/* fotos: [{t, v}] em ordem crescente · fluxos: [{data, valor}] com o sinal do investidor
+   (negativo = dinheiro entrando na carteira) */
+function twr(fotos, fluxos){
+  if(!fotos || fotos.length < 2) return null;
+  let acum = 1, usados = 0;
+  for(let i = 1; i < fotos.length; i++){
+    const d0 = fotos[i-1].t, d1 = fotos[i].t;
+    const v0 = fotos[i-1].v, v1 = fotos[i].v;
+    if(!v0) continue;
+    /* fluxo externo do período, no sinal da carteira: aporte soma, resgate subtrai */
+    const F = (fluxos || []).filter(f => f.data > d0 && f.data <= d1)
+      .reduce((s,f) => s - f.valor, 0);
+    const r = (v1 - F) / v0 - 1;
+    if(!isFinite(r) || r <= -1) continue;
+    acum *= (1 + r); usados++;
+  }
+  return usados ? acum - 1 : null;
+}
+
+/* transforma um retorno de período em taxa anual equivalente */
+function anualizar(retorno, dias){
+  if(retorno == null || !dias || dias < 1) return null;
+  return Math.pow(1 + retorno, 365 / dias) - 1;
+}
+
+const Rent = {
+  /* taxa de câmbio aproximada numa data: usa o histórico já baixado, senão a de hoje */
+  taxaEm(moeda, data){
+    if(!moeda || moeda === 'BRL') return 1;
+    const serie = (Hist.diario || {})['fx:' + moeda] || [];
+    if(serie.length && data){
+      let melhor = null;
+      for(const [d,v] of serie){ if(d <= data) melhor = v; else break; }
+      if(melhor) return melhor;
+      if(serie[0]) return serie[0][1];
+    }
+    const c = (Mercado.cambio || {})[moeda];
+    return c ? c.p : 1;
+  },
+
+  /* fluxos externos na moeda base, prontos para o XIRR */
+  fluxosExternos(){
+    const movs = Mov.ordenados(false);
+    const temAporte = movs.some(m => m.tipo === 'aporte' && m.origem !== 'saldo-inicial');
+    const out = [];
+    movs.forEach(m => {
+      const bruto = Number(m.valor) || 0;
+      if(!bruto || !m.data) return;
+      const v = bruto * this.taxaEm(m.moeda, m.data);
+      if(m.origem === 'saldo-inicial'){ out.push({data: m.data, valor: -v, rot:'saldo inicial'}); return; }
+      if(temAporte){
+        if(m.tipo === 'aporte')  out.push({data: m.data, valor: -v, rot:'aporte'});
+        if(m.tipo === 'resgate') out.push({data: m.data, valor:  v, rot:'resgate'});
+      }else{
+        if(m.tipo === 'aporte' || m.tipo === 'compra' || m.tipo === 'aplicacao')
+          out.push({data: m.data, valor: -v, rot:'entrada'});
+        if(m.tipo === 'resgate' || m.tipo === 'venda' || m.tipo === 'resgparc')
+          out.push({data: m.data, valor: v, rot:'saída'});
+      }
+    });
+    return {fluxos: out, modo: temAporte ? 'aportes' : 'operacoes'};
+  },
+
+  /* o retrato completo: XIRR, TWR, capital investido, lucro */
+  resumo(t){
+    t = t || totais();
+    const {fluxos, modo} = this.fluxosExternos();
+    const hoje = hojeISO();
+    const comFinal = fluxos.concat([{data: hoje, valor: t.valor, rot:'valor de hoje'}]);
+    const taxa = xirr(comFinal);
+
+    const entrou = fluxos.filter(f => f.valor < 0).reduce((s,f) => s - f.valor, 0);
+    const saiu   = fluxos.filter(f => f.valor > 0).reduce((s,f) => s + f.valor, 0);
+    const liquido = entrou - saiu;
+    const lucro = t.valor - liquido;
+
+    const primeira = fluxos.length ? fluxos[0].data : null;
+    const dias = primeira ? Math.max(1, emDias(primeira, hoje)) : 0;
+
+    const fotos = (ST.fotos || []).map(f => ({t: f[0], v: f[1]}));
+    const rTwr = twr(fotos, fluxos);
+    const diasTwr = fotos.length >= 2 ? Math.max(1, emDias(fotos[0].t, fotos[fotos.length-1].t)) : 0;
+
+    return {
+      xirr: taxa, modo: modo, desde: primeira, dias: dias,
+      entrou: entrou, saiu: saiu, liquido: liquido, lucro: lucro,
+      lucroPct: liquido ? lucro / liquido * 100 : 0,
+      twr: rTwr, twrAno: anualizar(rTwr, diasTwr), diasTwr: diasTwr,
+      fotos: fotos, fluxos: fluxos,
+      confiavel: fluxos.length >= 1 && dias >= 20
+    };
+  },
+
+  /* ---------- benchmarks ---------- */
+  /* CDI acumulado no período, a partir da série diária do Banco Central */
+  async cdiAcumulado(de, ate, aviso){
+    const fmtBr = d => { const [a,m,g] = d.split('-'); return g + '/' + m + '/' + a; };
+    const buscar = async (serie) => {
+      if(!(await Cota.vez('bcb', aviso))) throw new Error('cota do Banco Central esgotada');
+      const r = await fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.' + serie +
+        '/dados?formato=json&dataInicial=' + fmtBr(de) + '&dataFinal=' + fmtBr(ate));
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      return await r.json();
+    };
+    let dados = null, anualizada = false;
+    try{ dados = await buscar(12); }                         /* 12 = CDI diário, em % ao dia */
+    catch(e){ try{ dados = await buscar(4389); anualizada = true; }catch(e2){ return null; } }
+    if(!Array.isArray(dados) || !dados.length) return null;
+
+    const pontos = []; let acum = 1;
+    dados.forEach(x => {
+      const v = parseFloat(String(x.valor).replace(',','.'));
+      if(isNaN(v)) return;
+      /* 4389 vem ao ano base 252; converte para o fator do dia */
+      const fator = anualizada ? Math.pow(1 + v/100, 1/252) : (1 + v/100);
+      acum *= fator;
+      const [d,m,a] = x.data.split('/');
+      pontos.push({t: a + '-' + m + '-' + d, v: (acum - 1) * 100});
+    });
+    return {pontos: pontos, total: acum - 1, fonte: 'Banco Central'};
+  },
+
+  /* série de um índice normalizada em 100 na data inicial */
+  normalizar(pontos){
+    if(!pontos || !pontos.length) return [];
+    const base = pontos[0].v;
+    if(!base) return [];
+    return pontos.map(p => ({t: p.t, v: p.v / base * 100}));
+  },
+
+  /* a carteira normalizada em 100, a partir das fotos diárias */
+  serieCarteira(de){
+    const fotos = (ST.fotos || []).filter(f => !de || f[0] >= de).map(f => ({t: f[0], v: f[1]}));
+    return this.normalizar(fotos);
+  },
+
+  /* ---------- efeito do câmbio ---------- */
+  cambio(t){
+    t = t || totais();
+    const exposto = {};
+    let totalFora = 0;
+    t.itens.forEach(({p,c}) => {
+      const m = c.moeda || 'BRL';
+      if(m === 'BRL') return;
+      exposto[m] = (exposto[m] || 0) + c.valorBase;
+      totalFora += c.valorBase;
+    });
+    const pct = t.valor ? totalFora / t.valor * 100 : 0;
+
+    /* variação das moedas no período coberto pelo histórico local */
+    const efeitos = Object.keys(exposto).map(m => {
+      const serie = (Hist.diario || {})['fx:' + m] || [];
+      const ini = serie.length ? serie[0][1] : null;
+      const fim = serie.length ? serie[serie.length-1][1] : ((Mercado.cambio[m] || {}).p || null);
+      const varPct = (ini && fim) ? (fim/ini - 1) * 100 : null;
+      /* quanto do valor de hoje veio do câmbio: V * (1 − ini/fim) */
+      const efeito = (ini && fim) ? exposto[m] * (1 - ini/fim) : null;
+      return {moeda: m, valor: exposto[m], desde: serie.length ? serie[0][0] : null,
+              varPct: varPct, efeito: efeito, dias: serie.length};
+    });
+
+    return {exposto: exposto, totalFora: totalFora, pct: pct, efeitos: efeitos,
+            /* sensibilidade: quanto muda o patrimônio se a moeda variar 10% */
+            sensib10: totalFora * 0.10};
+  }
+};
+
+</script>
+<script>window.CARTEIRA_CIFRADA = {"v": 1, "voltas": 210000, "carimbo": "2026-09-15T01:41:12.131961", "ativos": 47, "salt": "yyP5Cbc3JNaIr6V/L56b2Q==", "iv": "XJRjXvNrKdKdUS+p", "dados": "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"};</script>
 <script>
 /* =========================================================
    InvestifyMe — aplicação
@@ -3821,10 +4789,16 @@ function viewPainel(){
       'Hoje é o primeiro ponto — em alguns dias o gráfico começa a aparecer aqui.</p></div>';
   }
 
+  h += cardRentabilidade(t);
+  h += cardComparacao();
+
   /* alocação */
   const itensClasse = CLASSES.map(c => ({nome:c.nome, valor:t.porClasse[c.id] || 0, cor:c.cor})).filter(i => i.valor > 0);
   h += '<div class="card"><div class="card-head"><h2>Como seu dinheiro está dividido</h2>' + info('alocacao') + '</div>' +
        vizEmpilhada(itensClasse, v => fmt(v)) + '</div>';
+
+  h += cardPerfilRisco(t);
+  h += cardCambio(t);
 
   h += '<div class="grid g2">';
   h += bloco('Por tipo de investimento',
@@ -4388,7 +5362,7 @@ function tabelaProjecao(series, rotulos){
 }
 
 function cardAlocacaoAlvo(t){
-  const perfilId = ST.config.perfil || 'moderado';
+  const perfilId = perfilAtual();
   const alvoTipos = ST.config.alvoAlocacao || PERFIS[perfilId].alvo;
   /* converte alvo por tipo em alvo por classe */
   const alvoClasse = {};
@@ -4396,9 +5370,23 @@ function cardAlocacaoAlvo(t){
     const c = classeDoTipo(tp);
     alvoClasse[c.id] = (alvoClasse[c.id] || 0) + alvoTipos[tp];
   });
-  let h = '<div class="card"><div class="card-head"><h2>Alocação: onde você está x onde quer estar</h2>' + info('rebalanceamento') + '</div>' +
+  const res = ST.config.perfilResultado;
+  let h = '<div class="card"><div class="card-head"><h2>Alocação: onde você está x onde quer estar</h2>' + info('rebalanceamento') + '</div>';
+
+  h += '<div class="perfil-cab"><div><span class="pc-lbl">Seu perfil</span>' +
+    '<span class="pc-nome">' + PERFIS[perfilId].nome + '</span>' +
+    '<span class="pc-org tiny muted">' +
+      (res && !ST.config.perfilManual
+        ? 'pelo questionário de ' + fmtData((ST.config.perfilData || '').slice(0,10))
+        : 'escolhido por você — o questionário dá um resultado mais fiel') +
+    '</span></div><div class="spacer"></div>' +
+    '<button class="btn sm ghost" data-acao="explicar-perfil" data-id="' + perfilId + '">O que isso significa</button>' +
+    '<button class="btn sm' + (res ? '' : ' primary') + '" data-acao="questionario">' + (res ? 'Refazer o teste' : 'Fazer o teste') + '</button>' +
+    '</div>';
+
+  h += '<p class="tiny muted" style="margin:10px 0 6px">Ou escolha um perfil na mão para ver a carteira-alvo dele:</p>' +
     '<div class="row" style="margin-bottom:12px">';
-  Object.keys(PERFIS).forEach(k => {
+  ORDEM_PERFIS.forEach(k => {
     h += '<span class="chip click' + (perfilId === k && !ST.config.alvoAlocacao ? ' on' : '') + '" data-perfil="' + k + '">' + PERFIS[k].nome + '</span>';
   });
   h += '</div><div class="tbl-wrap"><table><thead><tr><th>Classe</th><th>Hoje</th><th>Alvo</th><th>Diferença</th><th>O que fazer</th></tr></thead><tbody>';
@@ -4420,6 +5408,528 @@ function cardAlocacaoAlvo(t){
     '<p class="tiny muted" style="margin-top:10px">Diferenças abaixo de 5 pontos percentuais normalmente não valem uma operação. ' +
     'A forma mais barata de rebalancear é direcionar os próximos aportes para o que está abaixo do alvo.</p></div>';
   return h;
+}
+
+
+
+/* =========================================================
+   RENTABILIDADE DE VERDADE
+   ========================================================= */
+let compPer = '6mo';
+let compDados = {};       /* '6mo' -> {series:[], erro} */
+let compCarregando = false, compAviso = '';
+let cdiInicio = null;     /* CDI acumulado desde o primeiro aporte */
+
+const COR_BENCH = {carteira:'var(--accent)', cdi:'var(--s1)', ibov:'var(--s4)', sp500:'var(--s7)', dolar:'var(--s2)'};
+
+async function carregarComparacao(){
+  if(compCarregando) return;
+  compCarregando = true;
+  const per = compPer;
+  const dias = (PERIODOS.find(p => p.id === per) || {}).dias || 190;
+  const de = new Date(Date.now() - dias * 86400000).toISOString().slice(0,10);
+  const aviso = seg => { compAviso = 'Esperando a cota gratuita liberar… ' + seg + 's';
+                         if(viewAtual === 'painel') render(); };
+  const series = [], falhas = [];
+
+  const carteira = Rent.serieCarteira(de);
+  if(carteira.length >= 2) series.push({nome:'Carteira', cor: COR_BENCH.carteira, pontos: carteira});
+  else falhas.push('a curva da carteira aparece depois de alguns dias de uso');
+
+  try{
+    const cdi = await Rent.cdiAcumulado(de, hojeISO(), aviso);
+    if(cdi && cdi.pontos.length >= 2)
+      series.push({nome:'CDI', cor: COR_BENCH.cdi, traco:'5 4', pontos: cdi.pontos.map(p => ({t:p.t, v: 100 + p.v}))});
+    else falhas.push('CDI indisponível agora');
+  }catch(e){ falhas.push('CDI indisponível agora'); }
+
+  const chaves = ST.config.chaves || {};
+  if(chaves.brapi){
+    try{
+      const ib = await Hist.serieMercado('^BVSP', per, ST.config, aviso);
+      if(ib && ib.pontos && ib.pontos.length >= 2) series.push({nome:'Ibovespa', cor: COR_BENCH.ibov, pontos: ib.pontos});
+      else falhas.push('Ibovespa indisponível');
+    }catch(e){ falhas.push('Ibovespa indisponível'); }
+  }else falhas.push('Ibovespa precisa do token gratuito da brapi');
+
+  if(chaves.twelve){
+    try{
+      const sp = await Hist.serie({ticker:'SPY', tipo:'etf-us', moeda:'USD'}, per, ST.config, aviso);
+      if(sp && sp.pontos && sp.pontos.length >= 2) series.push({nome:'S&P 500', cor: COR_BENCH.sp500, pontos: sp.pontos});
+      else falhas.push('S&P 500 indisponível');
+    }catch(e){ falhas.push('S&P 500 indisponível'); }
+  }else falhas.push('S&P 500 precisa da chave gratuita da Twelve Data');
+
+  try{
+    const usd = await Hist.serieMercado('USD', per, ST.config, aviso);
+    if(usd && usd.pontos && usd.pontos.length >= 2) series.push({nome:'Dólar', cor: COR_BENCH.dolar, pontos: usd.pontos});
+  }catch(e){}
+
+  compDados[per] = {series: series, falhas: falhas};
+  compCarregando = false; compAviso = '';
+  if(viewAtual === 'painel') render();
+}
+
+/* CDI acumulado desde o primeiro aporte, para comparar com o XIRR */
+async function carregarCdiInicio(desde){
+  if(cdiInicio || !desde) return;
+  cdiInicio = {carregando: true};
+  try{
+    const r = await Rent.cdiAcumulado(desde, hojeISO());
+    const dias = Math.max(1, emDias(desde, hojeISO()));
+    cdiInicio = r ? {total: r.total, ano: anualizar(r.total, dias), desde: desde} : {erro: true};
+  }catch(e){ cdiInicio = {erro: true}; }
+  if(viewAtual === 'painel') render();
+}
+
+function cardRentabilidade(t){
+  const r = Rent.resumo(t);
+  if(!r.fluxos.length){
+    return bloco('Rentabilidade de verdade',
+      '<p class="small">Assim que houver lançamentos em <b>Movimentações</b>, o app calcula aqui o retorno real da carteira — ' +
+      'aquele que leva em conta quanto você aportou e quando.</p>' +
+      '<button class="btn sm primary" data-acao="semear-mov">Gerar saldos iniciais</button>', 'movimentacao', true);
+  }
+
+  if(!cdiInicio && r.desde) carregarCdiInicio(r.desde);
+  const venceuCdi = (cdiInicio && cdiInicio.ano != null && r.xirr != null) ? r.xirr - cdiInicio.ano : null;
+
+  let h = '<div class="grid g4" style="margin-bottom:12px">' +
+    kpi('Retorno do seu bolso', r.xirr != null ? fmtPct(r.xirr * 100, true) + ' <span class="un">a.a.</span>' : '—', 'xirr',
+        r.desde ? 'desde ' + fmtData(r.desde) + ' · ' + Math.round(r.dias) + ' dias' : '') +
+    kpi('Retorno da estratégia', r.twr != null ? fmtPct(r.twr * 100, true) : '—', 'twr',
+        r.twr != null ? 'nos ' + Math.round(r.diasTwr) + ' dias registrados' : 'aparece com alguns dias de uso') +
+    kpi('Lucro financeiro', fmt(r.lucro), 'lucro-prejuizo',
+        '<span class="' + cls(r.lucro) + '">' + fmtPct(r.lucroPct, true) + ' sobre o aportado</span>') +
+    kpi('Capital aportado', fmt(r.liquido), 'aporte',
+        r.saiu ? fmt(r.entrou) + ' entraram · ' + fmt(r.saiu) + ' saíram' : 'nada resgatado até aqui') +
+  '</div>';
+
+  /* carteira x CDI no mesmo período */
+  if(r.xirr != null){
+    if(cdiInicio && cdiInicio.ano != null){
+      const barras = [{nome:'Sua carteira', valor: r.xirr * 100, cor: COR_BENCH.carteira},
+                      {nome:'CDI no mesmo período', valor: cdiInicio.ano * 100, cor: COR_BENCH.cdi}];
+      h += '<div class="sub-lbl">Retorno anual: você contra o CDI</div>' +
+        barrasTaxa(barras) +
+        '<p class="small ' + (venceuCdi >= 0 ? 'up' : 'down') + '" style="margin-top:8px">' +
+        (venceuCdi >= 0
+          ? '✓ Você está ' + pnum(venceuCdi * 100, 1) + ' ponto' + (Math.abs(venceuCdi*100) >= 2 ? 's' : '') + ' por ano acima do CDI.'
+          : '✗ Você está ' + pnum(-venceuCdi * 100, 1) + ' ponto' + (Math.abs(venceuCdi*100) >= 2 ? 's' : '') + ' por ano abaixo do CDI — ' +
+            'ou seja, dinheiro parado no Tesouro Selic teria rendido mais até aqui.') + '</p>';
+    }else if(cdiInicio && cdiInicio.carregando){
+      h += '<p class="small muted">Buscando o CDI do período no Banco Central…</p>';
+    }
+  }
+
+  h += '<details class="explica"><summary>Como esses números são calculados</summary>' +
+    '<p class="small"><b>Retorno do seu bolso (XIRR)</b> considera o tamanho e a data de cada entrada de dinheiro. ' +
+    'É a taxa anual que, aplicada a cada aporte desde o dia em que ele entrou, chega exatamente no valor de hoje.</p>' +
+    '<p class="small"><b>Retorno da estratégia (TWR)</b> ignora quando você aportou e mede só a qualidade das escolhas. ' +
+    'É o número que os fundos divulgam, e o único justo para comparar com um índice.</p>' +
+    '<p class="small muted">Base do cálculo: ' +
+    (r.modo === 'aportes'
+      ? 'os lançamentos de <b>aporte</b> e <b>resgate</b> registrados em Movimentações.'
+      : 'como ainda não há lançamentos de aporte, o app está usando <b>compras e vendas</b> como entradas e saídas de dinheiro.') +
+    (r.confiavel ? '' : ' Com menos de 20 dias de histórico o número ainda oscila muito.') + '</p></details>';
+
+  return bloco('Rentabilidade de verdade', h, 'xirr', true);
+}
+
+/* duas taxas lado a lado: barra proporcional, sem porcentagem do total (que aqui não faz sentido) */
+function barrasTaxa(itens){
+  const maior = Math.max.apply(null, itens.map(i => Math.abs(i.valor))) || 1;
+  let h = '<div class="taxas">';
+  itens.forEach(i => {
+    h += '<div class="tx-item"><div class="tx-cab"><span>' + esc(i.nome) + '</span>' +
+      '<b class="' + cls(i.valor) + '">' + (i.valor >= 0 ? '+' : '') + pnum(i.valor, 1) + '% a.a.</b></div>' +
+      '<div class="tx-trilho"><i style="width:' + (Math.abs(i.valor)/maior*100).toFixed(1) + '%;background:' + i.cor + '"></i></div></div>';
+  });
+  return h + '</div>';
+}
+
+function cardComparacao(){
+  let h = '<div class="row" style="margin-bottom:10px">';
+  ['3mo','6mo','1a'].forEach(id => {
+    const p = PERIODOS.find(x => x.id === id);
+    h += '<span class="chip click' + (compPer === id ? ' on' : '') + '" data-comp-per="' + id + '">' + p.nome + '</span>';
+  });
+  h += '</div>';
+
+  const d = compDados[compPer];
+  if(!d){
+    carregarComparacao();
+    h += '<p class="muted small">' + esc(compAviso || 'Buscando os índices…') + '</p>';
+  }else if(!d.series.length){
+    h += '<p class="small muted">Nenhuma série disponível agora. ' + esc((d.falhas || []).join(' · ')) + '</p>';
+  }else{
+    h += vizLinhasComparadas(d.series, {altura: 250});
+    h += '<p class="tiny muted" style="margin-top:8px">Todas as linhas começam em 100 na mesma data, então a distância entre elas ' +
+      'é a diferença de rentabilidade no período. O número na ponta é o ganho acumulado.' +
+      (d.falhas && d.falhas.length ? '<br>Fora da comparação: ' + esc(d.falhas.join(' · ')) + '.' : '') + '</p>';
+    if(d.falhas && d.falhas.length)
+      h += '<button class="btn sm ghost" data-acao="recarregar-comp">Tentar buscar de novo</button>';
+  }
+  return bloco('Sua carteira contra os índices', h, 'benchmark', true);
+}
+
+function cardCambio(t){
+  const c = Rent.cambio(t);
+  if(!c.totalFora) return '';
+  let h = '<div class="grid g3" style="margin-bottom:10px">' +
+    kpi('Exposto a moeda estrangeira', fmt(c.totalFora), 'swing-cambial', pnum(c.pct, 1) + '% do patrimônio') +
+    kpi('Se a moeda subir 10%', '+' + fmt(c.sensib10), null, 'sem você fazer nada') +
+    kpi('Se a moeda cair 10%', '−' + fmt(c.sensib10), null, 'o mesmo, ao contrário') +
+  '</div>';
+
+  const comDados = c.efeitos.filter(e => e.efeito != null && e.dias >= 3);
+  if(comDados.length){
+    h += '<div class="tbl-wrap"><table><thead><tr><th>Moeda</th><th class="num">Valor exposto</th>' +
+      '<th class="num">Variação no período</th><th class="num">Quanto veio do câmbio</th></tr></thead><tbody>';
+    comDados.forEach(e => {
+      h += '<tr><td><b>' + esc(e.moeda) + '</b><div class="t-sub">desde ' + fmtData(e.desde) + '</div></td>' +
+        '<td class="num mono">' + fmt(e.valor) + '</td>' +
+        '<td class="num mono ' + cls(e.varPct) + '">' + fmtPct(e.varPct, true) + '</td>' +
+        '<td class="num mono ' + cls(e.efeito) + '">' + (e.efeito >= 0 ? '+' : '−') + fmt(Math.abs(e.efeito)) + '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+    h += '<p class="tiny muted" style="margin-top:8px">A última coluna separa o que foi o ativo do que foi a moeda: ' +
+      'é a parte do valor de hoje que existe só porque o câmbio mudou desde que o app começou a anotar as cotações.</p>';
+  }else{
+    h += '<p class="small muted">O app está anotando a cotação das moedas todo dia. Em alguns dias aparece aqui quanto do ' +
+      'seu resultado veio do ativo e quanto veio do câmbio.</p>';
+  }
+  return bloco('Efeito do câmbio', h, 'swing-cambial', false);
+}
+
+/* =========================================================
+   PERFIL DE INVESTIDOR
+   ========================================================= */
+
+/* risco medido a partir dos ativos que estão na carteira hoje */
+function riscoDaCarteira(t){
+  t = t || totais();
+  return Perfil.daCarteira(t.itens.map(({p,c}) => ({tipo: p.tipo, valor: c.valorBase})), t.valor);
+}
+
+/* qual perfil vale hoje: o do questionário, ou o escolhido na mão */
+function perfilAtual(){
+  const cfg = ST.config || {};
+  if(cfg.perfilManual || !cfg.perfilResultado) return cfg.perfil || 'moderado';
+  return cfg.perfilResultado.perfil;
+}
+
+/* rosca do painel: a carteira dividida por faixa de risco */
+function cardPerfilRisco(t){
+  const risco = riscoDaCarteira(t);
+  if(!risco.total) return '';
+  const meu = perfilAtual();
+  const temTeste = !!(ST.config.perfilResultado);
+  const comp = temTeste || ST.config.perfilManual ? Perfil.comparar(meu, risco) : null;
+
+  const segmentos = risco.faixas.map(f => ({nome: f.nome + ' risco', desc: f.desc, valor: f.valor, tom: f.tom}));
+  const corpo =
+    vizRosca(segmentos, {
+      centro: PERFIS[risco.perfil].nome,
+      sub: 'risco da carteira hoje',
+      fmt: v => fmtCurto(v)
+    }) +
+    (comp
+      ? '<div class="perfil-comp ' + comp.estado + '"><b>' +
+        (comp.estado === 'alinhado' ? '✓ Carteira alinhada' : comp.estado === 'acima' ? '⚠ Carteira mais arriscada que o seu perfil' : 'ℹ Carteira mais calma que o seu perfil') +
+        '</b><p class="small">' + esc(comp.texto) + '</p></div>'
+      : '<div class="perfil-comp neutro"><b>Você ainda não descobriu seu perfil</b>' +
+        '<p class="small">O teste leva dois minutos e diz quanto risco combina com a sua situação — não só com a sua coragem.</p>' +
+        '<button class="btn sm primary" data-acao="questionario">Descobrir meu perfil</button></div>');
+
+  return bloco('Perfil de risco da carteira', corpo, 'perfil-investidor', true);
+}
+
+/* explicação completa de um perfil */
+function textoPerfil(id){
+  const P = PERFIS[id], I = PERFIS_INFO[id];
+  if(!P || !I) return '';
+  return '<p class="perfil-frase">' + esc(I.frase) + '</p>' +
+    '<div class="perfil-linhas">' +
+    '<div><span class="pl-t">Para quem é</span><span>' + esc(I.quem) + '</span></div>' +
+    '<div><span class="pl-t">O que esperar</span><span>' + esc(I.espera) + '</span></div>' +
+    '<div><span class="pl-t">Oscilação típica</span><span>' + esc(I.oscilacao) + '</span></div>' +
+    '<div><span class="pl-t">Combina com</span><span>' + esc(I.combina) + '</span></div>' +
+    '<div><span class="pl-t">Melhor evitar</span><span>' + esc(I.evitar) + '</span></div>' +
+    '</div><p class="small muted" style="margin-top:10px">' + esc(I.armadilha) + '</p>';
+}
+
+/* ---------- questionário ---------- */
+let rascunhoPerfil = null;
+
+function abrirQuestionario(){
+  rascunhoPerfil = Object.assign({}, ST.config.perfilRespostas || {});
+  desenharQuestionario();
+  abrir('assetModal');
+}
+
+function desenharQuestionario(){
+  const r = rascunhoPerfil || {};
+  const respondidas = QUESTIONARIO.filter(q => r[q.id] != null).length;
+  $('#assetModalTitle').textContent = 'Descobrir meu perfil de investidor';
+
+  let h = '<p class="small muted">São ' + QUESTIONARIO.length + ' perguntas, no mesmo estilo do questionário que banco e corretora ' +
+    'são obrigados a aplicar. Nada sai do seu aparelho. Responda pensando na sua situação real, não na que você gostaria de ter.</p>' +
+    '<div class="q-progresso"><div class="qp-trilho"><i style="width:' + (respondidas / QUESTIONARIO.length * 100) + '%"></i></div>' +
+    '<span class="tiny muted">' + respondidas + ' de ' + QUESTIONARIO.length + '</span></div>';
+
+  const grupos = [['capacidade','O que a sua situação permite','Prazo, reserva e estabilidade definem o quanto de risco cabe no seu bolso.'],
+                  ['tolerancia','O que você aguenta ver','Duas pessoas na mesma situação reagem de formas diferentes a uma queda.']];
+  grupos.forEach(([eixo, titulo, sub]) => {
+    h += '<h4 class="q-grupo">' + titulo + '</h4><p class="tiny muted" style="margin:-6px 0 12px">' + sub + '</p>';
+    QUESTIONARIO.filter(q => q.eixo === eixo).forEach((q, i) => {
+      h += '<div class="q-bloco' + (r[q.id] == null ? ' pendente' : '') + '">' +
+           '<div class="q-p">' + esc(q.p) + '</div>' +
+           '<div class="q-ajuda tiny muted">' + esc(q.ajuda) + '</div><div class="q-ops">';
+      q.ops.forEach(([texto, pts]) => {
+        const on = String(r[q.id]) === String(pts);
+        h += '<button type="button" class="q-op' + (on ? ' on' : '') + '" data-resp="' + q.id + '|' + pts + '">' +
+             esc(texto) + '</button>';
+      });
+      h += '</div></div>';
+    });
+  });
+
+  h += '<div class="f-actions"><button class="btn" data-close="assetModal">Fechar</button>' +
+       '<button class="btn primary" data-acao="ver-perfil"' + (respondidas < QUESTIONARIO.length ? ' disabled title="Responda todas as perguntas"' : '') +
+       '>Ver meu perfil</button></div>';
+  $('#assetModalBody').innerHTML = h;
+}
+
+function mostrarResultadoPerfil(res){
+  const P = PERFIS[res.perfil];
+  $('#assetModalTitle').textContent = 'Seu perfil: ' + P.nome;
+  const faixas = [{nome:'Conservador', curto:'Conserv.', ate:30},{nome:'Moderado', curto:'Moderado', ate:55},
+                  {nome:'Arrojado', curto:'Arrojado', ate:80},{nome:'Agressivo', curto:'Agressivo', ate:100}];
+  const t = totais();
+  const risco = riscoDaCarteira(t);
+  const comp = Perfil.comparar(res.perfil, risco);
+
+  let h = '<div class="perfil-resultado"><div class="pr-nome">' + P.nome + '</div>' +
+    '<div class="pr-frase">' + esc(PERFIS_INFO[res.perfil].frase) + '</div></div>';
+
+  h += '<div class="grid g2" style="margin-top:14px">' +
+    '<div class="pr-eixo"><div class="lbl">Capacidade de correr risco</div>' +
+      vizEscala(res.pctCap, faixas) +
+      '<p class="tiny muted">O que prazo, reserva, renda e liquidez permitem: <b>' + PERFIS[res.capacidade].nome + '</b>.</p></div>' +
+    '<div class="pr-eixo"><div class="lbl">Tolerância a risco</div>' +
+      vizEscala(res.pctTol, faixas) +
+      '<p class="tiny muted">O que você diz que aguenta ver acontecer: <b>' + PERFIS[res.tolerancia].nome + '</b>.</p></div>' +
+    '</div>';
+
+  if(res.limitadoPor){
+    h += '<div class="aviso-box">' +
+      (res.limitadoPor === 'capacidade'
+        ? '<b>Seu bolso é mais conservador que a sua cabeça.</b><p class="small">Você aguentaria mais risco emocionalmente, mas prazo, reserva ou liquidez ainda não permitem. Vale o perfil menor — coragem não paga conta no mês seguinte.</p>'
+        : '<b>Sua situação permitiria mais risco do que você aguenta ver.</b><p class="small">Financeiramente daria para arriscar mais, mas de nada adianta uma carteira que faz você vender no pior dia. Vale o perfil menor.</p>') +
+      '</div>';
+  }
+
+  h += '<div class="card2-box">' + textoPerfil(res.perfil) + '</div>';
+
+  if(risco.total && comp){
+    h += '<div class="perfil-comp ' + comp.estado + '" style="margin-top:14px"><b>Sua carteira hoje: ' +
+      PERFIS[risco.perfil].nome + ' (nota de risco ' + risco.score + ')</b><p class="small">' + esc(comp.texto) + '</p></div>';
+  }
+
+  h += '<div class="f-actions"><button class="btn" data-acao="questionario">Refazer o teste</button>' +
+       '<button class="btn" data-acao="ir-prognostico">Ver a carteira-alvo</button>' +
+       '<button class="btn primary" data-close="assetModal">Entendi</button></div>';
+  $('#assetModalBody').innerHTML = h;
+}
+
+/* =========================================================
+   MOVIMENTAÇÕES
+   ========================================================= */
+let movFiltroTipo = [], movFiltroAtivo = '', movBusca = '', movLimite = 40;
+
+function nomeDoAtivo(id){
+  const p = ST.posicoes.find(x => x.id === id);
+  return p ? p.ticker : '';
+}
+
+function viewMovimentos(){
+  const movs = Mov.ordenados();
+  let h = '<div class="card-head"><h1>Movimentações</h1><div class="spacer"></div>' +
+    '<button class="btn sm" data-acao="importar-extrato">📄 Importar extrato</button>' +
+    '<button class="btn primary sm" data-acao="novo-mov">+ Novo lançamento</button></div>';
+
+  if(!movs.length){
+    return h + '<div class="card"><div class="empty"><span class="ic">🧾</span>' +
+      '<h2>Nenhum lançamento ainda</h2>' +
+      '<p>Aqui fica o histórico do que entrou e do que saiu: aportes, compras, vendas, dividendos, juros e taxas. ' +
+      'É o que permite calcular a rentabilidade de verdade, separando o que foi mérito do investimento do que foi o momento do aporte.</p>' +
+      '<div class="row" style="justify-content:center;margin-top:14px">' +
+      '<button class="btn primary" data-acao="novo-mov">+ Lançar o primeiro</button>' +
+      '<button class="btn" data-acao="semear-mov">Criar a partir da carteira</button></div></div></div>';
+  }
+
+  /* resumo dos últimos 12 meses */
+  const de = new Date(Date.now() - 365*86400000).toISOString().slice(0,10);
+  const r = Mov.resumo(de, null);
+  h += '<div class="grid g4" style="margin-bottom:14px">' +
+    kpi('Aportes (12 meses)', fmt(r.aportes), 'aporte', r.n + ' lançamentos no período') +
+    kpi('Resgates (12 meses)', fmt(r.resgates), 'resgate') +
+    kpi('Proventos e juros', fmt(r.proventos + r.juros), 'provento',
+        '<span class="up">' + fmt(r.proventos) + ' proventos</span>') +
+    kpi('Taxas e impostos', fmt(r.taxas + r.impostos), 'custo-taxas',
+        (r.taxas + r.impostos) > 0 ? '<span class="down">sai da sua rentabilidade</span>' : '') +
+  '</div>';
+
+  /* filtros */
+  h += '<div class="card"><div class="row">';
+  h += '<span class="chip click' + (!movFiltroTipo.length ? ' on' : '') + '" data-fmov="todos">Todos</span>';
+  ORDEM_MOV.forEach(k => {
+    if(!movs.some(m => m.tipo === k)) return;
+    h += '<span class="chip click' + (movFiltroTipo.indexOf(k) >= 0 ? ' on' : '') + '" data-fmov="' + k + '">' +
+      TIPOS_MOV[k].ico + ' ' + TIPOS_MOV[k].nome + '</span>';
+  });
+  h += '</div><div class="busca-coach" style="margin-bottom:0">' +
+    '<input id="movBusca" placeholder="Buscar por código, instituição ou observação" value="' + esc(movBusca) + '">' +
+    '</div></div>';
+
+  /* lista */
+  let lista = movs.filter(m => {
+    if(movFiltroTipo.length && movFiltroTipo.indexOf(m.tipo) < 0) return false;
+    if(movFiltroAtivo && m.ativoId !== movFiltroAtivo) return false;
+    if(movBusca){
+      const alvo = semAcento([m.ticker, m.inst, m.obs, (TIPOS_MOV[m.tipo]||{}).nome].join(' '));
+      if(alvo.indexOf(semAcento(movBusca)) < 0) return false;
+    }
+    return true;
+  });
+  const total = lista.length;
+  lista = lista.slice(0, movLimite);
+
+  h += '<div class="card pad0"><div class="card-head" style="padding:16px 16px 0"><h3>Histórico</h3>' +
+    '<div class="spacer"></div><span class="tiny muted">' + total + ' lançamento' + (total === 1 ? '' : 's') + '</span></div>';
+
+  if(ehMobile()){
+    h += '<div class="mov-lista">';
+    lista.forEach(m => h += cartaoMov(m));
+    h += '</div>';
+  }else{
+    h += '<div class="tbl-wrap"><table><thead><tr><th>Data</th><th>Lançamento</th><th>Ativo</th>' +
+      '<th>Onde</th><th class="num">Qtd.</th><th class="num">Valor</th></tr></thead><tbody>';
+    lista.forEach(m => {
+      const T = TIPOS_MOV[m.tipo] || {nome: m.tipo, ico:'•', sinal:0};
+      h += '<tr class="linha-click" data-mov="' + m.id + '" title="Clique para editar este lançamento">' +
+        '<td class="mono">' + fmtData(m.data) + '</td>' +
+        '<td><span class="mov-tag g-' + (T.grupo||'') + '">' + T.ico + ' ' + esc(T.nome) + '</span>' +
+        (m.obs ? '<div class="t-sub">' + esc(m.obs) + '</div>' : '') + '</td>' +
+        '<td>' + (m.ticker ? '<span class="t-main">' + esc(m.ticker) + '</span>' : '<span class="muted">—</span>') + '</td>' +
+        '<td class="t-sub">' + esc(m.inst || '—') + '</td>' +
+        '<td class="num mono">' + (m.qtd ? pnum(m.qtd, m.qtd < 1 ? 6 : 2) : '—') + '</td>' +
+        '<td class="num mono ' + (T.sinal > 0 ? 'up' : T.sinal < 0 ? 'down' : '') + '">' +
+          (T.sinal > 0 ? '+' : T.sinal < 0 ? '−' : '') + fmt(Math.abs(m.valor), m.moeda) + '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+  }
+  if(total > movLimite){
+    h += '<div style="padding:12px 16px"><button class="btn sm ghost" data-acao="mais-mov">Mostrar mais ' +
+      Math.min(40, total - movLimite) + ' de ' + total + '</button></div>';
+  }
+  h += '<p class="tiny muted" style="padding:0 16px 14px">Clique em qualquer linha para editar ou excluir o lançamento. ' +
+    'O sinal segue o seu bolso: verde é dinheiro entrando na carteira, vermelho é saindo.</p></div>';
+  return h;
+}
+
+function cartaoMov(m){
+  const T = TIPOS_MOV[m.tipo] || {nome:m.tipo, ico:'•', sinal:0};
+  return '<div class="mov-card linha-click" data-mov="' + m.id + '">' +
+    '<div class="mc-ico">' + T.ico + '</div>' +
+    '<div class="mc-meio"><div class="mc-t">' + esc(T.nome) + (m.ticker ? ' · <b>' + esc(m.ticker) + '</b>' : '') + '</div>' +
+    '<div class="mc-s tiny muted">' + fmtData(m.data) + (m.inst ? ' · ' + esc(m.inst) : '') +
+      (m.qtd ? ' · ' + pnum(m.qtd, m.qtd < 1 ? 6 : 2) + ' un.' : '') + '</div>' +
+    (m.obs ? '<div class="mc-o tiny muted">' + esc(m.obs) + '</div>' : '') + '</div>' +
+    '<div class="mc-v mono ' + (T.sinal > 0 ? 'up' : T.sinal < 0 ? 'down' : '') + '">' +
+      (T.sinal > 0 ? '+' : T.sinal < 0 ? '−' : '') + fmt(Math.abs(m.valor), m.moeda) + '</div></div>';
+}
+
+/* ---------- modal de lançamento ---------- */
+let editandoMov = null;
+
+function abrirMovimento(id){
+  editandoMov = id || null;
+  const m = id ? Mov.todos().find(x => x.id === id) : null;
+  const hoje = new Date().toISOString().slice(0,10);
+  $('#genTitle').textContent = m ? 'Editar lançamento' : 'Novo lançamento';
+
+  const ativos = [['', '— nenhum (só dinheiro) —']].concat(
+    ST.posicoes.slice().sort((a,b) => (a.ticker||'').localeCompare(b.ticker||''))
+      .map(p => [p.id, p.ticker + (p.nome ? ' · ' + p.nome.slice(0,28) : '')]));
+
+  let h = campo('Tipo de lançamento',
+      selectHTML('mvTipo', ORDEM_MOV.map(k => [k, TIPOS_MOV[k].ico + '  ' + TIPOS_MOV[k].nome]), m ? m.tipo : 'aporte'),
+      null, '<span id="mvAjudaTipo">' + esc(TIPOS_MOV[m ? m.tipo : 'aporte'].desc) + '</span>') +
+    '<div class="grid g2">' +
+      campo('Data', '<input type="date" id="mvData" value="' + esc(m ? m.data : hoje) + '">') +
+      campo('Moeda', selectHTML('mvMoeda', ['BRL','USD','EUR'], m ? m.moeda : 'BRL')) +
+    '</div>' +
+    campo('Ativo relacionado', selectHTML('mvAtivo', ativos, m ? (m.ativoId || '') : ''), null,
+      'Deixe em branco para aportes e resgates que só movimentam dinheiro.') +
+    '<div class="grid g2">' +
+      campo('Quantidade', '<input type="number" step="any" id="mvQtd" value="' + (m && m.qtd ? m.qtd : '') + '" placeholder="opcional">') +
+      campo('Preço unitário', '<input type="number" step="any" id="mvPreco" value="' + (m && m.preco ? m.preco : '') + '" placeholder="opcional">') +
+    '</div>' +
+    campo('Valor total', '<input type="number" step="any" id="mvValor" value="' + (m && m.valor ? m.valor : '') + '" placeholder="0,00">',
+      null, 'Se você preencher quantidade e preço, o valor é calculado sozinho.') +
+    campo('Instituição', '<input id="mvInst" list="listaInstMov" value="' + esc(m ? (m.inst||'') : '') + '" placeholder="Avenue, BTG, Itaú…">' +
+      '<datalist id="listaInstMov">' + INSTITUICOES.map(i => '<option value="' + esc(i) + '">').join('') + '</datalist>') +
+    campo('Observação', '<input id="mvObs" value="' + esc(m ? (m.obs||'') : '') + '" placeholder="opcional">');
+
+  h += '<div class="f-actions">' +
+    (m ? '<button class="btn danger" data-acao="excluir-mov">Excluir</button>' : '') +
+    '<div class="spacer"></div><button class="btn" data-close="genModal">Cancelar</button>' +
+    '<button class="btn primary" data-acao="salvar-mov">Salvar</button></div>';
+
+  $('#genBody').innerHTML = h;
+  abrir('genModal');
+
+  const calcular = () => {
+    const q = Number($('#mvQtd').value) || 0, p = Number($('#mvPreco').value) || 0;
+    if(q && p) $('#mvValor').value = (q * p).toFixed(2);
+  };
+  $('#mvQtd').addEventListener('input', calcular);
+  $('#mvPreco').addEventListener('input', calcular);
+  $('#mvTipo').addEventListener('change', () => {
+    const a = $('#mvAjudaTipo');
+    if(a) a.textContent = TIPOS_MOV[$('#mvTipo').value].desc;
+  });
+  $('#mvAtivo').addEventListener('change', () => {
+    const p = ST.posicoes.find(x => x.id === $('#mvAtivo').value);
+    if(p && !$('#mvInst').value) $('#mvInst').value = p.inst || '';
+    if(p) $('#mvMoeda').value = p.moeda || (TIPOS[p.tipo]||{}).moeda || 'BRL';
+  });
+}
+
+function salvarMovimento(){
+  const id = $('#mvAtivo').value;
+  const pos = ST.posicoes.find(x => x.id === id);
+  const dados = {
+    data: $('#mvData').value || new Date().toISOString().slice(0,10),
+    tipo: $('#mvTipo').value,
+    ativoId: id || null,
+    ticker: pos ? pos.ticker : '',
+    inst: $('#mvInst').value.trim(),
+    qtd: Number($('#mvQtd').value) || 0,
+    preco: Number($('#mvPreco').value) || 0,
+    valor: Number($('#mvValor').value) || 0,
+    moeda: $('#mvMoeda').value,
+    obs: $('#mvObs').value.trim()
+  };
+  if(!dados.valor && !dados.qtd){ toast('Informe pelo menos o valor do lançamento.', 'warn'); return; }
+  if(editandoMov) Mov.atualizar(editandoMov, dados); else Mov.add(dados);
+  Store.salvar();
+  fechar('genModal');
+  render();
+  toast(editandoMov ? 'Lançamento atualizado.' : 'Lançamento registrado.');
+  editandoMov = null;
 }
 
 /* =========================================================
@@ -5226,8 +6736,9 @@ function irPara(v){
 }
 
 function render(){
-  const views = {painel:viewPainel, carteira:viewCarteira, mercado:viewMercado, noticias:viewNoticias,
-                 prognostico:viewPrognostico, coach:viewCoach, glossario:viewGlossario, config:viewConfig};
+  const views = {painel:viewPainel, carteira:viewCarteira, movimentos:viewMovimentos, mercado:viewMercado,
+                 noticias:viewNoticias, prognostico:viewPrognostico, coach:viewCoach,
+                 glossario:viewGlossario, config:viewConfig};
   $$('.view').forEach(s => s.classList.add('hidden'));
   const el = $('#view-' + viewAtual);
   el.innerHTML = views[viewAtual]();
@@ -5334,6 +6845,14 @@ function renderTopo(){
 
 /* liga inputs que existem só depois do render */
 function ligarCamposDaView(){
+  if(viewAtual === 'movimentos'){
+    const b = $('#movBusca');
+    if(b) b.addEventListener('input', e => {
+      movBusca = e.target.value; movLimite = 40;
+      const pos = e.target.selectionStart;
+      render(); const n = $('#movBusca'); if(n){ n.focus(); n.setSelectionRange(pos,pos); }
+    });
+  }
   if(viewAtual === 'noticias'){
     const b = $('#buscaNoticia');
     if(b) b.addEventListener('input', e => {
@@ -5646,7 +7165,7 @@ function ligarEventos(){
 
   /* cliques gerais (delegação) */
   document.addEventListener('click', async (e) => {
-    const el = e.target.closest('[data-olho],[data-assunto],[data-mk-serie],[data-mk-per],[data-mk-ativo],[data-graf-per],[data-grafico],[data-acoes-ativo],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del]');
+    const el = e.target.closest('[data-olho],[data-assunto],[data-mk-serie],[data-mk-per],[data-mk-ativo],[data-comp-per],[data-mov],[data-fmov],[data-resp],[data-graf-per],[data-grafico],[data-acoes-ativo],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del]');
     if(!el) return;
     const d = el.dataset;
 
@@ -5665,6 +7184,23 @@ function ligarEventos(){
     if(d.acoesAtivo){ abrirAcoesAtivo(d.acoesAtivo); return; }
     if(d.grafico){ fechar('genModal'); abrirGrafico(d.grafico); return; }
     if(d.mkAtivo){ abrirGraficoAvulso(d.mkAtivo); return; }
+    if(d.compPer){ compPer = d.compPer; render(); return; }
+    if(d.mov){ abrirMovimento(d.mov); return; }
+    if(d.fmov){
+      if(d.fmov === 'todos'){ movFiltroTipo = []; }
+      else{
+        const i = movFiltroTipo.indexOf(d.fmov);
+        if(i >= 0) movFiltroTipo.splice(i,1); else movFiltroTipo.push(d.fmov);
+      }
+      movLimite = 40; render(); return;
+    }
+    if(d.resp){
+      const [q, pts] = d.resp.split('|');
+      rascunhoPerfil = rascunhoPerfil || {};
+      rascunhoPerfil[q] = Number(pts);
+      desenharQuestionario();
+      return;
+    }
     if(d.mkSerie){ mkSerie = d.mkSerie; render(); window.scrollTo({top:0, behavior:'smooth'}); return; }
     if(d.mkPer){ mkPer = d.mkPer; render(); return; }
     if(d.grafPer){
@@ -5715,7 +7251,10 @@ function ligarEventos(){
       }
       render(); return;
     }
-    if(d.perfil){ ST.config.perfil = d.perfil; ST.config.alvoAlocacao = null; Store.salvar(); render(); return; }
+    if(d.perfil){
+      ST.config.perfil = d.perfil; ST.config.alvoAlocacao = null; ST.config.perfilManual = true;
+      Store.salvar(); render(); return;
+    }
     if(d.fonteToggle){
       const atuais = ST.config.fontesNoticias || FONTES_NOTICIAS.filter(x => x.pais === 'BR').map(x => x.id);
       const i = atuais.indexOf(d.fonteToggle);
@@ -5756,6 +7295,64 @@ function ligarEventos(){
         break;
       }
       case 'nova': abrirModalAtivo(null); break;
+
+      /* ---- movimentações ---- */
+      case 'novo-mov': abrirMovimento(null); break;
+      case 'salvar-mov': salvarMovimento(); break;
+      case 'excluir-mov':
+        if(editandoMov && confirm('Excluir este lançamento?')){
+          Mov.excluir(editandoMov); editandoMov = null;
+          Store.salvar(); fechar('genModal'); render(); toast('Lançamento excluído.');
+        }
+        break;
+      case 'mais-mov': movLimite += 40; render(); break;
+      case 'recarregar-comp': delete compDados[compPer]; cdiInicio = null; render(); break;
+      case 'semear-mov': {
+        const n = Mov.semear(ST.posicoes);
+        Store.salvar(); render();
+        toast(n ? n + ' lançamentos criados a partir da carteira.' : 'Todos os ativos já têm histórico.');
+        break;
+      }
+      case 'importar-extrato':
+        $('#genTitle').textContent = 'Importar extrato';
+        $('#genBody').innerHTML =
+          '<p class="small">A leitura automática de extratos da Avenue, do Itaú, do BB Americas e do BTG, ' +
+          'mais um assistente para qualquer planilha, entra na próxima etapa.</p>' +
+          '<p class="small muted">Enquanto isso, dá para lançar à mão pelo botão <b>+ Novo lançamento</b>, ' +
+          'ou gerar os saldos iniciais a partir dos ativos já cadastrados.</p>' +
+          '<div class="f-actions"><button class="btn" data-close="genModal">Fechar</button>' +
+          '<button class="btn primary" data-acao="semear-mov" data-close="genModal">Gerar saldos iniciais</button></div>';
+        abrir('genModal');
+        break;
+
+      /* ---- perfil de investidor ---- */
+      case 'questionario': fechar('genModal'); abrirQuestionario(); break;
+      case 'ver-perfil': {
+        const res = Perfil.calcular(rascunhoPerfil);
+        if(!res.completo){ toast('Ainda faltam ' + res.faltam.length + ' perguntas.', 'warn'); break; }
+        ST.config.perfilRespostas = Object.assign({}, rascunhoPerfil);
+        ST.config.perfilResultado = res;
+        ST.config.perfilData = new Date().toISOString();
+        ST.config.perfil = res.perfil;
+        ST.config.perfilManual = false;
+        Store.salvar();
+        mostrarResultadoPerfil(res);
+        render();
+        break;
+      }
+      case 'ver-resultado-perfil':
+        if(ST.config.perfilResultado){ abrir('assetModal'); mostrarResultadoPerfil(ST.config.perfilResultado); }
+        else abrirQuestionario();
+        break;
+      case 'ir-prognostico': fechar('assetModal'); irPara('prognostico'); break;
+      case 'explicar-perfil': {
+        const idp = d.id || perfilAtual();
+        $('#genTitle').textContent = 'Perfil ' + PERFIS[idp].nome;
+        $('#genBody').innerHTML = textoPerfil(idp) +
+          '<div class="f-actions"><button class="btn primary" data-close="genModal">Entendi</button></div>';
+        abrir('genModal');
+        break;
+      }
       case 'salvar-ativo': salvarAtivo(); break;
       case 'excluir-modal':
         if(editandoId && confirm('Excluir este investimento?')){
@@ -5948,6 +7545,13 @@ async function iniciar(){
 }
 
 function comecarApp(r){
+  /* primeira vez com o livro de movimentações: cria os saldos iniciais a partir do que já está cadastrado */
+  if(!ST.config.semeouMov && !(ST.movimentos || []).length && ST.posicoes.length){
+    const n = Mov.semear(ST.posicoes);
+    ST.config.semeouMov = true;
+    Store.salvar();
+    if(n) setTimeout(() => toast('Criei ' + n + ' lançamentos de saldo inicial em Movimentações.'), 1400);
+  }
   render();
   ligarAuto();
   atualizarCotacoes(false);
