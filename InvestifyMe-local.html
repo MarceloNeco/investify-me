@@ -735,6 +735,31 @@ details.explica p{margin:9px 0 0}
 .di-data{width:100%; min-width:140px}
 .di-data.presumida{border-color:var(--warn)}
 
+/* ---------- importar extrato ---------- */
+.solta{border:2px dashed var(--line2); border-radius:13px; padding:26px 18px; text-align:center;
+  cursor:pointer; transition:.14s; background:var(--card2)}
+.solta:hover, .solta.sobre{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 7%, var(--card2))}
+.solta.feito{padding:12px; opacity:.6}
+.solta.feito .solta-ico{font-size:1.4rem; margin-bottom:0}
+.solta-ico{font-size:2.2rem; margin-bottom:8px}
+.solta p{margin:0; font-size:.88rem; color:var(--txt2)}
+.imp-cab{margin:16px 0 12px; padding:11px 13px; border:1px solid var(--line); border-radius:11px; background:var(--card2)}
+.imp-fatos{display:grid; grid-template-columns:repeat(2,1fr); gap:7px 16px; margin-bottom:14px}
+.imp-fatos > div{display:flex; justify-content:space-between; gap:10px; font-size:.84rem;
+  border-bottom:1px solid var(--line); padding-bottom:5px}
+.imp-fatos span{color:var(--txt3)}
+.imp-fatos b{text-align:right}
+.imp-lista{display:flex; flex-direction:column; gap:8px}
+.imp-item{display:grid; grid-template-columns:20px 1fr; gap:10px; align-items:start; cursor:pointer;
+  padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--card2)}
+.imp-item:hover{border-color:var(--accent)}
+.imp-item input{width:auto; margin-top:2px}
+.ii-n{font-size:.87rem; font-weight:620}
+.ii-v{margin-top:2px}
+.ii-v b{color:var(--accent)}
+.ii-g{margin-top:2px}
+@media (max-width:560px){ .imp-fatos{grid-template-columns:1fr} }
+
 </style>
 </head>
 <body>
@@ -1639,20 +1664,30 @@ const GLOSSARIO_EXTRA3 = [
  e:'Meça pelo índice de Herfindahl (soma dos quadrados dos pesos) ou pelo número efetivo de posições (1/HHI). Vinte ativos com um deles em 40% têm número efetivo perto de 5. Concentração setorial e de fator costuma ser maior que a aparente: cinco bancos diferentes são quase uma posição só.'},
 
 /* ---------- Medidas de retorno ---------- */
-{k:'xirr', t:'XIRR (retorno do seu bolso)', c:'Estratégia',
- d:'É a taxa anual que leva em conta quanto você aportou e em que data. Responde à pergunta "quanto eu realmente ganhei por ano".',
+{k:'xirr', t:'XIRR — Extended Internal Rate of Return', c:'Estratégia',
+ d:'Em português: taxa interna de retorno com datas irregulares, ou "retorno do seu bolso". É a taxa anual que leva em conta quanto você aportou e em que data. Responde à pergunta "quanto eu realmente ganhei por ano". Também aparece como MWR (money-weighted return) ou TIR.',
  m:'É diferente de dividir o lucro pelo total aportado. Se você colocou R$ 10 mil em janeiro e mais R$ 10 mil em novembro, o segundo aporte quase não teve tempo de render — o XIRR sabe disso, a conta simples não.',
  e:'Matematicamente é a taxa r que zera o valor presente líquido dos fluxos: Σ CF_i / (1+r)^(d_i/365) = 0. É o MWR (money-weighted return) em tempo irregular. Pode ter múltiplas raízes quando há alternância de sinal repetida; por isso o app usa Newton-Raphson com bissecção de segurança.'},
 
-{k:'twr', t:'TWR (retorno da estratégia)', c:'Estratégia',
- d:'É o retorno da carteira ignorando quando você colocou dinheiro. Mede a qualidade das escolhas, não o timing dos aportes.',
+{k:'twr', t:'TWR — Time-Weighted Return', c:'Estratégia',
+ d:'Em português: retorno ponderado pelo tempo, ou "retorno da estratégia". É o retorno da carteira ignorando quando você colocou dinheiro. Mede a qualidade das escolhas, não o timing dos aportes.',
  m:'É o número que fundos e gestores divulgam, e o único justo para comparar com CDI, Ibovespa ou S&P 500 — porque o índice não recebe aportes. Se o seu TWR é bom mas o XIRR é fraco, as escolhas foram boas e o momento dos aportes, ruim.',
  e:'Encadeia os sub-períodos delimitados por cada fluxo: Π(1 + (V_fim − F) / V_ini) − 1. Quanto mais frequente a marcação (diária, no caso do app), menor a distorção causada pela premissa de que o fluxo ocorre no fim do período.'},
 
 {k:'retorno-anualizado', t:'Retorno anualizado', c:'Estratégia',
  d:'É transformar o ganho de qualquer período em "quanto seria por ano", para dar para comparar coisas de prazos diferentes.',
  m:'Cuidado com anualizar períodos curtos: render 3% em um mês não é render 36% no ano, é 42,6% — e provavelmente não vai se repetir. Anualizar menos de um ano infla a impressão.',
- e:'Taxa equivalente composta: (1+r)^(365/dias) − 1. Não confunda com CAGR sobre valores de ponta a ponta, que ignora fluxos intermediários, nem com média aritmética de retornos, sempre maior que a geométrica quando há volatilidade.'}
+ e:'Taxa equivalente composta: (1+r)^(365/dias) − 1. Não confunda com CAGR sobre valores de ponta a ponta, que ignora fluxos intermediários, nem com média aritmética de retornos, sempre maior que a geométrica quando há volatilidade.'},
+
+{k:'on-pn', t:'ON, PN e as letras do código', c:'Renda variável',
+ d:'ON é ação ordinária: dá direito a voto na assembleia. PN é preferencial: não vota, mas costuma receber dividendo antes e um pouco maior. Na B3 o código mostra qual é: final 3 é ON (PETR3), final 4 é PN (PETR4).',
+ m:'A mesma empresa pode ter as duas, com preços diferentes. Quem investe pequeno raramente se importa com voto, então a escolha costuma ser por liquidez e por dividendo. Outros finais: 5 e 6 são classes especiais de PN, 11 é unit (pacote de ON + PN), 31 a 35 são BDR e 34 é o mais comum deles.',
+ e:'A diferença de preço entre ON e PN embute o prêmio de controle e o tag along. Desde a Lei 10.303 o tag along mínimo da ON é 80% do valor pago ao controlador; a PN só tem tag along se o estatuto conceder. No Novo Mercado só existe ON, com tag along de 100% — por isso empresas que migram costumam converter PN em ON.'},
+
+{k:'tag-along', t:'Tag along', c:'Renda variável',
+ d:'É o direito de vender sua ação junto quando alguém compra o controle da empresa, recebendo pelo menos parte do preço que o comprador pagou ao dono anterior.',
+ m:'Por lei, ações ON têm no mínimo 80% desse valor. Ações PN só têm se o estatuto der. No Novo Mercado é 100%. É uma proteção que só aparece quando a empresa é vendida — mas aí faz muita diferença.',
+ e:'Previsto no art. 254-A da Lei 6.404. Cuidado com a base de cálculo: incide sobre o preço pago pelas ações com direito a voto que integram o bloco de controle, não sobre a cotação em bolsa; aquisições feitas por etapas ou via holding já foram usadas para reduzir o valor efetivo.'}
 ];
 GLOSSARIO_EXTRA3.forEach(g => { GLOSSARIO.push(g); GLOS_MAP[g.k] = g; });
 GLOSSARIO.sort((a,b) => a.t.localeCompare(b.t, 'pt-BR'));
@@ -4616,6 +4651,441 @@ const Rent = {
 };
 
 </script>
+<script>
+/* =========================================================
+   InvestifyMe — leitor de PDF (só o texto, sem biblioteca externa)
+   Usa o DecompressionStream do próprio navegador para descompactar
+   os fluxos do PDF, e o mapa ToUnicode embutido no arquivo para
+   converter os códigos das fontes em letras de verdade.
+   ========================================================= */
+
+const PdfTexto = {
+  disponivel(){ return typeof DecompressionStream !== 'undefined'; },
+
+  /* bytes -> texto latin1, sem estourar a pilha em arquivos grandes */
+  bytesParaTexto(bytes){
+    let s = '';
+    const passo = 0x8000;
+    for(let i = 0; i < bytes.length; i += passo)
+      s += String.fromCharCode.apply(null, bytes.subarray(i, i + passo));
+    return s;
+  },
+
+  async inflar(bytes){
+    /* o DecompressionStream do navegador não tolera lixo depois do fim do fluxo,
+       então tenta também sem os bytes finais de quebra de linha */
+    const tentativas = [bytes];
+    let fim = bytes.length;
+    while(fim > 0 && (bytes[fim-1] === 10 || bytes[fim-1] === 13 || bytes[fim-1] === 32)) fim--;
+    if(fim !== bytes.length) tentativas.push(bytes.subarray(0, fim));
+    for(const dados of tentativas){
+      for(const formato of ['deflate', 'deflate-raw']){
+        try{
+          const fluxo = new Blob([dados]).stream().pipeThrough(new DecompressionStream(formato));
+          const buf = await new Response(fluxo).arrayBuffer();
+          if(buf.byteLength) return new Uint8Array(buf);
+        }catch(e){ /* tenta o próximo formato */ }
+      }
+    }
+    return null;
+  },
+
+  /* devolve o conteúdo já descompactado de todos os fluxos do arquivo */
+  async fluxos(bruto){
+    const out = [];
+    const re = /stream\r?\n/g;
+    let m;
+    while((m = re.exec(bruto))){
+      const ini = m.index + m[0].length;
+      const fim = bruto.indexOf('endstream', ini);
+      if(fim < 0) continue;
+      const pedaco = bruto.slice(ini, fim);
+      const bytes = new Uint8Array(pedaco.length);
+      for(let i = 0; i < pedaco.length; i++) bytes[i] = pedaco.charCodeAt(i) & 0xff;
+      const d = await this.inflar(bytes);
+      if(d) out.push(this.bytesParaTexto(d));
+      else if(this.pareceTexto(pedaco)) out.push(pedaco);   /* fluxo já sem compressão */
+    }
+    return out;
+  },
+
+  /* evita tratar dados binários como se fossem conteúdo de página */
+  pareceTexto(s){
+    if(!/\bTj\b|\bTJ\b/.test(s)) return false;
+    const amostra = s.slice(0, 2000);
+    let imprimiveis = 0;
+    for(let i = 0; i < amostra.length; i++){
+      const c = amostra.charCodeAt(i);
+      if(c === 9 || c === 10 || c === 13 || (c >= 32 && c < 127)) imprimiveis++;
+    }
+    return imprimiveis / (amostra.length || 1) > 0.85;
+  },
+
+  /* lê os mapas ToUnicode: código da fonte -> caractere */
+  lerCMap(txt, mapa){
+    let m;
+    const rc = /beginbfchar([\s\S]*?)endbfchar/g;
+    while((m = rc.exec(txt))){
+      const re2 = /<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>/g; let p;
+      while((p = re2.exec(m[1]))) mapa[parseInt(p[1], 16)] = String.fromCharCode(parseInt(p[2].slice(0,4), 16));
+    }
+    const rr = /beginbfrange([\s\S]*?)endbfrange/g;
+    while((m = rr.exec(txt))){
+      const re2 = /<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>/g; let p;
+      while((p = re2.exec(m[1]))){
+        const a = parseInt(p[1],16), b = parseInt(p[2],16), u = parseInt(p[3].slice(0,4),16);
+        for(let i = a; i <= b && i - a < 1024; i++) mapa[i] = String.fromCharCode(u + (i - a));
+      }
+    }
+  },
+
+  /* transforma um fluxo de conteúdo em texto, uma linha por posicionamento */
+  textoDoConteudo(s, mapa){
+    let out = '';
+    const re = /\((?:\\.|[^\\()])*\)|\[[^\]]*\]\s*TJ|T\*|Td|TD|Tm|ET/g;
+    let m;
+    while((m = re.exec(s))){
+      const t = m[0];
+      if(t === 'T*' || t === 'Td' || t === 'TD' || t === 'Tm' || t === 'ET'){ out += '\n'; continue; }
+      let pedacos = [];
+      if(t[0] === '['){ const r2 = /\((?:\\.|[^\\()])*\)/g; let q; while((q = r2.exec(t))) pedacos.push(q[0]); }
+      else pedacos = [t];
+      pedacos.forEach(st => {
+        const cru = st.slice(1, -1)
+          .replace(/\\([nrtbf()\\])/g, (x,c) => ({n:'\n', r:'\r', t:'\t', b:'\b', f:'\f'}[c] || c))
+          .replace(/\\([0-7]{1,3})/g, (x,o) => String.fromCharCode(parseInt(o, 8)));
+        /* fontes Identity-H usam 2 bytes por letra */
+        let dec = '';
+        for(let i = 0; i + 1 < cru.length; i += 2){
+          const cod = (cru.charCodeAt(i) << 8) | cru.charCodeAt(i+1);
+          dec += (mapa[cod] !== undefined) ? mapa[cod] : '�';
+        }
+        const ruins = (dec.match(/�/g) || []).length;
+        out += (dec && ruins <= dec.length * 0.2) ? dec : cru;
+      });
+    }
+    return out;
+  },
+
+  /* ---------- o que o resto do app chama ---------- */
+  async extrair(arquivo){
+    if(!this.disponivel())
+      throw new Error('Este navegador não consegue abrir PDF aqui. Use o Chrome, o Edge ou o Safari atualizados.');
+    const buf = await arquivo.arrayBuffer();
+    const bruto = this.bytesParaTexto(new Uint8Array(buf));
+    if(bruto.slice(0, 1024).indexOf('%PDF') < 0) throw new Error('Isto não parece um arquivo PDF.');
+
+    const partes = await this.fluxos(bruto);
+    const mapa = {};
+    partes.forEach(p => { if(/beginbfchar|beginbfrange/.test(p)) this.lerCMap(p, mapa); });
+
+    let texto = '';
+    partes.forEach(p => {
+      if(/beginbfchar|beginbfrange/.test(p)) return;
+      if(!/\bTj\b|\bTJ\b/.test(p)) return;
+      texto += this.textoDoConteudo(p, mapa) + '\n';
+    });
+
+    texto = texto.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{2,}/g, '\n').trim();
+    if(texto.length < 40)
+      throw new Error('Não consegui ler texto neste PDF. Se ele for uma imagem escaneada, não dá para importar.');
+    return texto;
+  }
+};
+
+</script>
+<script>
+/* =========================================================
+   InvestifyMe — importação de extratos
+   Cada formato conhecido tem um "leitor" que devolve sempre a
+   mesma estrutura, para a tela de conferência ser uma só.
+   ========================================================= */
+
+const nBR = t => {
+  if(t == null) return null;
+  const s = String(t).trim().replace(/\s/g,'').replace(/\./g,'').replace(',', '.');
+  const v = parseFloat(s);
+  return isNaN(v) ? null : v;
+};
+const dataBR = d => {
+  const m = /(\d{2})\/(\d{2})\/(\d{4})/.exec(String(d || ''));
+  return m ? m[3] + '-' + m[2] + '-' + m[1] : null;
+};
+
+const Importador = {
+
+  /* ---------- BTG: extrato de previdência (PDF) ---------- */
+  btgPrevidencia: {
+    nome: 'Extrato de previdência do BTG',
+    reconhece(txt){
+      return /Extrato de Previd[êe]ncia/i.test(txt) &&
+             /BTG Pactual/i.test(txt) &&
+             /Certificado/i.test(txt);
+    },
+    ler(txt){
+      const L = txt.split('\n').map(s => s.trim());
+      const achar = (re, grupo) => { const m = re.exec(txt); return m ? m[grupo || 1] : null; };
+
+      const r = {formato: 'btg-previdencia', avisos: []};
+
+      r.periodo = {
+        de: dataBR(achar(/Per[íi]odo:\s*(\d{2}\/\d{2}\/\d{4})/)),
+        ate: dataBR(achar(/Per[íi]odo:\s*\d{2}\/\d{2}\/\d{4}\s*At[ée]\s*(\d{2}\/\d{2}\/\d{4})/i))
+      };
+      r.certificado = achar(/Status do Certificado\s*\n\s*(\d{4,10})/);
+      r.inicio = dataBR(achar(/Status do Certificado\s*\n\s*\d{4,10}\s*\n\s*(\d{2}\/\d{2}\/\d{4})/));
+      if(!r.certificado){
+        /* alguns extratos trocam a ordem dos blocos */
+        r.certificado = achar(/N[ºo°]\s*Certificado[\s\S]{0,120}?\n(\d{4,10})\n/);
+        r.inicio = r.inicio || dataBR(achar(/In[íi]cio de Vig[êe]ncia[\s\S]{0,120}?(\d{2}\/\d{2}\/\d{4})/));
+      }
+      r.tipo = achar(/\n(PGBL|VGBL)\n/) || achar(/\b(PGBL|VGBL)\b/);
+      r.regime = achar(/\n(Regressivo[^\n]*|Progressivo[^\n]*)\n/);
+      r.fundo = achar(/Distribui[çc][ãa]o\s*\n([^\n]+)\n\s*\d{2}\.\d{3}\.\d{3}\//) ||
+                achar(/Fundo de Investimento\s*\n([A-Z][^\n]{6,})\n/);
+      r.cnpjFundo = achar(/(\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2})/);
+      r.taxaAdm = nBR(achar(/[ÚU]ltima Taxa Efetiva\s*\n\s*([\d.,]+)\s*%/)) ;
+      if(r.taxaAdm == null) r.taxaAdm = nBR(achar(/Taxa Adm[^\n]*\n(?:[^\n]*\n){0,3}?\s*([\d.,]+)\s*%/));
+
+      /* ----- movimentações ----- */
+      r.movimentos = [];
+      const bloco = /MOVIMENTA[ÇC][ÕO]ES NO PER[ÍI]ODO([\s\S]*?)(?:RENTABILIDADE DOS FUNDOS|VALORES E AL[ÍI]QUOTAS|INFORMA[ÇC][ÕO]ES ADICIONAIS|$)/i.exec(txt);
+      if(bloco){
+        const linhas = bloco[1].split('\n').map(s => s.trim()).filter(Boolean);
+        for(let i = 0; i < linhas.length; i++){
+          const ln = linhas[i];
+          const ehData = /^\d{2}\/\d{2}\/\d{4}$/.test(ln);
+          const desc = ehData ? (linhas[i+1] || '') : ln;
+          if(!/Saldo Bruto|Rendimento|Aplica|Resgate|Contribui|Portabilidade|Taxa|Carregamento|IR\b/i.test(desc)) continue;
+
+          /* números que vêm depois da descrição, até a próxima data ou descrição */
+          const nums = [];
+          for(let j = (ehData ? i + 2 : i + 1); j < linhas.length; j++){
+            const x = linhas[j];
+            if(/^\d{2}\/\d{2}\/\d{4}$/.test(x)){ if(nums.length) break; continue; }
+            const v = nBR(x);
+            if(v == null) break;
+            nums.push(v);
+            if(nums.length >= 3) break;
+          }
+          const valor = nums.length ? nums[nums.length - 1] : null;
+          r.movimentos.push({
+            data: ehData ? dataBR(ln) : null,
+            descricao: desc,
+            valorCota: nums.length >= 3 ? nums[0] : null,
+            cotas: nums.length >= 3 ? nums[1] : null,
+            valor: valor
+          });
+        }
+      }
+
+      const achaMov = re => r.movimentos.find(m => re.test(m.descricao));
+      const inicial = achaMov(/Saldo Bruto Inicial/i);
+      const final   = achaMov(/Saldo Bruto Final do Fundo/i) || achaMov(/Saldo Bruto Final/i);
+      const rend    = achaMov(/Rendimento no Per[íi]odo/i);
+      r.saldoInicial = inicial ? inicial.valor : null;
+      r.saldoFinal   = nBR(achar(/Saldo Bruto Final do Certificado\s*\n\s*([\d.,]+)/)) || (final ? final.valor : null);
+      r.dataSaldoFinal = (final && final.data) || r.periodo.ate;
+      r.rendimento   = rend ? rend.valor : null;
+      r.cotas        = final ? final.cotas : (inicial ? inicial.cotas : null);
+      r.valorCota    = final ? final.valorCota : null;
+
+      /* movimentações de dinheiro de verdade (fora saldo e rendimento) */
+      r.fluxos = r.movimentos.filter(m => m.data && m.valor &&
+        !/Saldo Bruto|Rendimento no Per/i.test(m.descricao));
+
+      /* ----- tabela do IR (dá o custo e o valor líquido) ----- */
+      const tab = /VALORES E AL[ÍI]QUOTAS DO IR([\s\S]*?)(?:INFORMA[ÇC][ÕO]ES ADICIONAIS|$)/i.exec(txt);
+      r.ir = {faixas: [], nominal: 0, rentabilidade: 0, imposto: 0, liquido: 0};
+      if(tab){
+        const nums = (tab[1].match(/[\d.]+,\d{2}/g) || []).map(nBR);
+        /* cada faixa tem 7 números: alíquota, nominal, rentabilidade, saldo, base, IR, líquido */
+        for(let i = 0; i + 6 < nums.length; i += 7){
+          const f = {aliquota: nums[i], nominal: nums[i+1], rentabilidade: nums[i+2],
+                     saldo: nums[i+3], base: nums[i+4], imposto: nums[i+5], liquido: nums[i+6]};
+          r.ir.faixas.push(f);
+          r.ir.nominal += f.nominal; r.ir.rentabilidade += f.rentabilidade;
+          r.ir.imposto += f.imposto; r.ir.liquido += f.liquido;
+        }
+      }
+      if(!r.ir.faixas.length) r.avisos.push('não encontrei a tabela de IR neste extrato');
+
+      /* ----- rentabilidade divulgada do fundo ----- */
+      const rb = /RENTABILIDADE DOS FUNDOS[\s\S]*?meses\(%\)([\s\S]*?)(?:VALORES E AL[ÍI]QUOTAS|INFORMA[ÇC][ÕO]ES|$)/i.exec(txt);
+      if(rb){
+        const ns = (rb[1].match(/-?[\d.]+,\d{2}/g) || []).map(nBR);
+        if(ns.length >= 5) r.rentab = {periodo: ns[0], ano: ns[1], m12: ns[2], m24: ns[3], m36: ns[4]};
+      }
+
+      r.titulo = (r.tipo || 'Previdência') + ' ' + (r.certificado || '');
+      return r;
+    }
+  },
+
+  /* ---------- detecção ---------- */
+  reconhecer(txt){
+    if(this.btgPrevidencia.reconhece(txt)) return this.btgPrevidencia;
+    return null;
+  },
+
+  async lerArquivo(arquivo){
+    const nome = (arquivo.name || '').toLowerCase();
+    if(!nome.endsWith('.pdf'))
+      throw new Error('Por enquanto sei ler extratos em PDF. A importação de planilhas entra na próxima etapa.');
+    const txt = await PdfTexto.extrair(arquivo);
+    const leitor = this.reconhecer(txt);
+    if(!leitor)
+      throw new Error('Não reconheci o formato deste PDF. Hoje sei ler o extrato de previdência do BTG Pactual.');
+    const dados = leitor.ler(txt);
+    dados.arquivo = arquivo.name;
+    dados.leitor = leitor.nome;
+    return dados;
+  },
+
+  /* ---------- casar com um ativo já cadastrado ---------- */
+  casar(dados){
+    if(!dados.certificado) return null;
+    const alvo = String(dados.certificado);
+    return ST.posicoes.find(p =>
+      (p.nome && p.nome.indexOf(alvo) >= 0) ||
+      (p.notas && p.notas.indexOf(alvo) >= 0) ||
+      (p.ticker && p.ticker.indexOf(alvo) >= 0)) || null;
+  },
+
+  /* ---------- o que este extrato tem a oferecer ---------- */
+  propostas(dados, pos){
+    const lista = [];
+    if(dados.inicio && (!pos || pos.data !== dados.inicio))
+      lista.push({id:'inicio', nome:'Data de início do plano', de: pos && pos.data ? fmtData(pos.data) : 'em branco',
+                  para: fmtData(dados.inicio), ganho:'destrava o cálculo de rentabilidade'});
+
+    if(dados.saldoFinal){
+      const atualEm = pos && pos.valorManualData ? pos.valorManualData.slice(0,10) : null;
+      const maisNovo = !atualEm || dados.dataSaldoFinal > atualEm;
+      lista.push({id:'saldo', nome: maisNovo ? 'Valor atual do plano' : 'Ponto de histórico (valor antigo)',
+                  de: pos && pos.valorManual ? fmt(pos.valorManual) + (atualEm ? ' de ' + fmtData(atualEm) : '') : 'em branco',
+                  para: fmt(dados.saldoFinal) + ' em ' + fmtData(dados.dataSaldoFinal),
+                  ganho: maisNovo ? 'atualiza o saldo' : 'entra no gráfico sem apagar o valor de hoje'});
+    }
+    if(dados.saldoInicial && dados.periodo.de)
+      lista.push({id:'saldo-ini', nome:'Ponto de histórico (início do período)', de:'—',
+                  para: fmt(dados.saldoInicial) + ' em ' + fmtData(dados.periodo.de),
+                  ganho:'mais um ponto na curva do plano'});
+
+    if(dados.ir && dados.ir.nominal)
+      lista.push({id:'custo', nome:'Total aplicado (soma das faixas de IR)',
+                  de: pos && pos.pm ? fmt(pos.pm * (pos.qtd || 1)) : 'em branco',
+                  para: fmt(dados.ir.nominal),
+                  ganho:'é o custo de verdade, usado no lucro e no imposto'});
+
+    if(dados.ir && dados.ir.liquido)
+      lista.push({id:'liquido', nome:'Valor líquido depois do IR', de: pos && pos.liquido ? fmt(pos.liquido) : 'em branco',
+                  para: fmt(dados.ir.liquido) + ' (IR de ' + fmt(dados.ir.imposto) + ')',
+                  ganho:'é o que sobraria se você resgatasse hoje'});
+
+    if(dados.taxaAdm != null)
+      lista.push({id:'taxa', nome:'Taxa de administração', de: pos && pos.taxaAdm != null ? pnum(pos.taxaAdm,2) + '% a.a.' : 'em branco',
+                  para: pnum(dados.taxaAdm, 2) + '% a.a.', ganho:'entra na conta de quanto as taxas custam por ano'});
+
+    if(dados.rendimento)
+      lista.push({id:'rendimento', nome:'Rendimento do período', de:'—',
+                  para: fmt(dados.rendimento) + ' entre ' + fmtData(dados.periodo.de) + ' e ' + fmtData(dados.periodo.ate),
+                  ganho:'vira um lançamento de juros em Movimentações'});
+
+    (dados.fluxos || []).forEach((f, i) => {
+      lista.push({id:'fluxo' + i, nome: f.descricao, de:'—',
+                  para: fmt(f.valor) + ' em ' + fmtData(f.data), ganho:'vira um lançamento em Movimentações'});
+    });
+
+    return lista;
+  },
+
+  /* ---------- aplicar o que foi marcado ---------- */
+  aplicar(dados, pos, escolhidos){
+    const feito = [];
+    const tem = id => escolhidos.indexOf(id) >= 0;
+    if(!pos) return feito;
+
+    const pontoHistorico = (data, valor) => {
+      pos.historicoManual = pos.historicoManual || [];
+      const i = pos.historicoManual.findIndex(p => p[0] === data);
+      if(i >= 0) pos.historicoManual[i][1] = valor;
+      else pos.historicoManual.push([data, valor]);
+      pos.historicoManual.sort((a,b) => a[0].localeCompare(b[0]));
+    };
+
+    if(tem('inicio') && dados.inicio){
+      pos.data = dados.inicio;
+      Mov.todos().filter(m => m.ativoId === pos.id && m.origem === 'saldo-inicial').forEach(m => {
+        m.data = dados.inicio; m.presumida = false;
+      });
+      feito.push('data de início ajustada para ' + fmtData(dados.inicio));
+    }
+
+    if(tem('saldo') && dados.saldoFinal){
+      const atualEm = pos.valorManualData ? pos.valorManualData.slice(0,10) : null;
+      pontoHistorico(dados.dataSaldoFinal, dados.saldoFinal);
+      if(!atualEm || dados.dataSaldoFinal > atualEm){
+        pos.valorManual = dados.saldoFinal;
+        pos.valorManualData = dados.dataSaldoFinal + 'T12:00:00';
+        feito.push('valor atualizado para ' + fmt(dados.saldoFinal));
+      }else{
+        feito.push('valor de ' + fmtData(dados.dataSaldoFinal) + ' guardado no histórico (o de hoje foi mantido)');
+      }
+    }
+
+    if(tem('saldo-ini') && dados.saldoInicial && dados.periodo.de){
+      pontoHistorico(dados.periodo.de, dados.saldoInicial);
+      feito.push('ponto de ' + fmtData(dados.periodo.de) + ' guardado no histórico');
+    }
+
+    if(tem('custo') && dados.ir && dados.ir.nominal){
+      pos.qtd = pos.qtd || 1;
+      pos.pm = dados.ir.nominal / pos.qtd;
+      Mov.todos().filter(m => m.ativoId === pos.id && m.origem === 'saldo-inicial').forEach(m => {
+        m.valor = dados.ir.nominal; m.preco = pos.pm; m.qtd = pos.qtd;
+      });
+      feito.push('total aplicado ajustado para ' + fmt(dados.ir.nominal));
+    }
+
+    if(tem('liquido') && dados.ir){
+      pos.liquido = dados.ir.liquido;
+      pos.irEstimado = dados.ir.imposto;
+      pos.irFaixas = dados.ir.faixas;
+      feito.push('valor líquido depois do IR guardado');
+    }
+
+    if(tem('taxa') && dados.taxaAdm != null){
+      pos.taxaAdm = dados.taxaAdm;
+      feito.push('taxa de administração de ' + pnum(dados.taxaAdm,2) + '% guardada');
+    }
+
+    if(tem('rendimento') && dados.rendimento){
+      const novo = {data: dados.periodo.ate, tipo:'juros', ativoId: pos.id, ticker: pos.ticker,
+                    inst: pos.inst || 'BTG Pactual', valor: dados.rendimento, moeda: pos.moeda || 'BRL',
+                    obs: 'Rendimento de ' + fmtData(dados.periodo.de) + ' a ' + fmtData(dados.periodo.ate) +
+                         ' (extrato ' + (dados.certificado || '') + ')', origem: 'importado'};
+      if(!Mov.jaExiste(novo)){ Mov.add(novo); feito.push('lançamento de rendimento criado'); }
+      else feito.push('rendimento já estava lançado');
+    }
+
+    (dados.fluxos || []).forEach((f, i) => {
+      if(!tem('fluxo' + i)) return;
+      const eSaida = /Resgate|Saque|Portabilidade de Sa[íi]da|Taxa|Carregamento|IR\b/i.test(f.descricao);
+      const novo = {data: f.data, tipo: eSaida ? 'resgparc' : 'aplicacao', ativoId: pos.id, ticker: pos.ticker,
+                    inst: pos.inst || 'BTG Pactual', valor: Math.abs(f.valor), moeda: pos.moeda || 'BRL',
+                    obs: f.descricao + ' (extrato ' + (dados.certificado || '') + ')', origem: 'importado'};
+      if(!Mov.jaExiste(novo)){ Mov.add(novo); feito.push(f.descricao + ' lançado'); }
+    });
+
+    if(dados.rentab) pos.rentabFundo = dados.rentab;
+    if(dados.fundo && !pos.nomeFundo) pos.nomeFundo = dados.fundo;
+
+    return feito;
+  }
+};
+
+</script>
 <script>window.CARTEIRA_EMBUTIDA = {"v": 1, "criadoEm": "2026-09-15T01:41:12.131961", "atualizadoEm": "2026-09-15T01:41:12.131961", "moedaBase": "BRL", "nivel": "iniciante", "tema": "dark", "posicoes": [{"id": "imp01", "ticker": "FISV", "nome": "Fiserv, Inc.", "tipo": "acao-us", "qtd": 5.0, "pm": 156.78, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 52.03, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp02", "ticker": "ORCL", "nome": "Oracle Corp.", "tipo": "acao-us", "qtd": 8.0, "pm": 160.29, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 143.94, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp03", "ticker": "TFLO", "nome": "iShares Treasury Floating Rate Bond ETF", "tipo": "etf-us", "qtd": 106.0001, "pm": 50.57, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 50.58, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp04", "ticker": "PLTR", "nome": "Palantir Technologies Inc - Class A", "tipo": "acao-us", "qtd": 4.0, "pm": 166.4, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 171.41, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp05", "ticker": "OWL", "nome": "Blue Owl Capital Inc - Class A", "tipo": "acao-us", "qtd": 1.0, "pm": 16.27, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 10.5, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp06", "ticker": "RRRPBZ", "nome": "Brava Energia 9,75% — venc. 05/02/2031", "tipo": "bond-us", "qtd": 1, "pm": 5347.4, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "Código na Avenue: 5CRLFV9 · 5 títulos a US$ 1034.00", "valorManual": 5356.67, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp07", "ticker": "MA", "nome": "Mastercard Incorporated - Class A", "tipo": "acao-us", "qtd": 0.8, "pm": 394.85, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 574.11, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp08", "ticker": "NVDA", "nome": "NVIDIA Corp", "tipo": "acao-us", "qtd": 3.04, "pm": 55.36, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 211.31, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp09", "ticker": "MFG", "nome": "Mizuho Financial Group, Inc. - ADR", "tipo": "acao-us", "qtd": 15.0, "pm": 6.38, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 11.3, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp10", "ticker": "WT", "nome": "WisdomTree Inc", "tipo": "acao-us", "qtd": 5.0, "pm": 13.45, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 23.33, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp11", "ticker": "AMZN", "nome": "Amazon.com Inc.", "tipo": "acao-us", "qtd": 30.26254, "pm": 226.9, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 252.76, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp12", "ticker": "SABR", "nome": "Sabre Corp", "tipo": "acao-us", "qtd": 10.0, "pm": 1.81, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 2.13, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp13", "ticker": "AMBIQ", "nome": "Ambipar Emergency Response - Ordinary Shares - Class A", "tipo": "acao-us", "qtd": 100.0, "pm": 1.17, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 0.0, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp14", "ticker": "ISRG", "nome": "Intuitive Surgical Inc", "tipo": "acao-us", "qtd": 1.0, "pm": 493.41, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 372.95, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp15", "ticker": "INTR", "nome": "Inter & Co Inc - Class A", "tipo": "acao-us", "qtd": 13.0, "pm": 4.08, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 5.5, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp16", "ticker": "ELAN", "nome": "Elanco Animal Health Inc", "tipo": "acao-us", "qtd": 10.0, "pm": 20.37, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 23.26, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp17", "ticker": "AVGO", "nome": "Broadcom Inc", "tipo": "acao-us", "qtd": 2.0, "pm": 303.38, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 344.79, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp18", "ticker": "ROKU", "nome": "Roku Inc - Class A", "tipo": "acao-us", "qtd": 5.0, "pm": 93.81, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 156.71, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp19", "ticker": "JPM", "nome": "JPMorgan Chase & Co.", "tipo": "acao-us", "qtd": 0.59, "pm": 308.18, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 351.61, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp20", "ticker": "TSM", "nome": "Taiwan Semiconductor Manufacturing - ADR", "tipo": "acao-us", "qtd": 5.0, "pm": 186.43, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 419.71, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp21", "ticker": "CROX", "nome": "Crocs Inc", "tipo": "acao-us", "qtd": 8.34, "pm": 135.95, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 111.18, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp22", "ticker": "BNY", "nome": "BANK NEW YORK MELLON CORP", "tipo": "acao-us", "qtd": 2.0, "pm": 130.68, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 160.0, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp23", "ticker": "FNB", "nome": "F.N.B. Corp.", "tipo": "acao-us", "qtd": 10.0, "pm": 16.01, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 18.25, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp24", "ticker": "CSNABZ", "nome": "CSN 6,75% — venc. 28/01/2028", "tipo": "bond-us", "qtd": 1, "pm": 5046.56, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "Código na Avenue: 5CRRZJ8 · 5 títulos a US$ 978.00", "valorManual": 4321.56, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp25", "ticker": "RGTI", "nome": "Rigetti Computing Inc", "tipo": "acao-us", "qtd": 10.0, "pm": 45.36, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 15.32, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp26", "ticker": "TSLA", "nome": "Tesla Inc", "tipo": "acao-us", "qtd": 2.2, "pm": 331.85, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 359.4, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp27", "ticker": "AMD", "nome": "Advanced Micro Devices Inc.", "tipo": "acao-us", "qtd": 6.5, "pm": 180.84, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 485.11, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp28", "ticker": "IRIX", "nome": "IRIDEX Corp.", "tipo": "acao-us", "qtd": 31.0, "pm": 2.11, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 0.62, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp29", "ticker": "MVST", "nome": "Microvast Holdings Inc", "tipo": "acao-us", "qtd": 200.0, "pm": 4.6, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 0.6, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp30", "ticker": "META", "nome": "Meta Platforms Inc - Class A", "tipo": "acao-us", "qtd": 2.5, "pm": 525.47, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 654.94, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp31", "ticker": "INSM", "nome": "Insmed Inc", "tipo": "acao-us", "qtd": 2.0, "pm": 163.51, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 124.97, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp32", "ticker": "KEEL", "nome": "Keel Infrastructure Corp.", "tipo": "acao-us", "qtd": 10.0, "pm": 1.98, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 3.47, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp33", "ticker": "PODD", "nome": "Insulet Corporation", "tipo": "acao-us", "qtd": 0.2, "pm": 323.43, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 135.84, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp34", "ticker": "GOOG", "nome": "Alphabet Inc - Class C", "tipo": "acao-us", "qtd": 27.4, "pm": 220.49, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 342.24, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp35", "ticker": "AAPL", "nome": "Apple Inc", "tipo": "acao-us", "qtd": 0.14, "pm": 197.41, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 332.8, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp36", "ticker": "RKLB", "nome": "Rocket Lab USA Inc", "tipo": "acao-us", "qtd": 1.0, "pm": 66.67, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 62.97, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp37", "ticker": "CRWD", "nome": "Crowdstrike Holdings Inc - Class A", "tipo": "acao-us", "qtd": 4.72, "pm": 114.5, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 238.39, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp38", "ticker": "V", "nome": "Visa Inc - Class A", "tipo": "acao-us", "qtd": 8.0, "pm": 351.71, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 374.68, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp39", "ticker": "USD", "nome": "Saldo na conta investimento", "tipo": "caixa", "qtd": 501.73, "pm": 0, "moeda": "USD", "inst": "Avenue", "data": "", "notas": ""}, {"id": "imp40", "ticker": "PGBL", "nome": "Plano 263800 — Absoluto Atenas Prev FIM (regressivo)", "tipo": "previdencia", "qtd": 1, "pm": 29575.11, "moeda": "BRL", "inst": "BTG Pactual", "data": "", "notas": "Tabela regressiva · início 14/02/2025", "valorManual": 35987.13, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp41", "ticker": "VGBL", "nome": "Plano 263802 — Absoluto Atenas Prev FIM (regressivo)", "tipo": "previdencia", "qtd": 1, "pm": 53901.32, "moeda": "BRL", "inst": "BTG Pactual", "data": "", "notas": "Tabela regressiva", "valorManual": 93388.2, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp42", "ticker": "PGBL", "nome": "Plano 263801 — Absoluto Atenas Prev FIM (regressivo)", "tipo": "previdencia", "qtd": 1, "pm": 24873.19, "moeda": "BRL", "inst": "BTG Pactual", "data": "", "notas": "Tabela regressiva", "valorManual": 30421.02, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp43", "ticker": "USD", "nome": "Conta corrente *8625", "tipo": "caixa", "qtd": 103.0, "pm": 0, "moeda": "USD", "inst": "BB Americas", "data": "", "notas": "Checking-8625 · sem rendimento"}, {"id": "imp44", "ticker": "USD", "nome": "Money market *8034", "tipo": "caixa", "qtd": 1964.57, "pm": 0, "moeda": "USD", "inst": "BB Americas", "data": "", "notas": "E-Money Market-8034 · rende 1,341% a.a."}, {"id": "imp45", "ticker": "CD", "nome": "CD *4405 — 2,5181% a.a., venc. 18/03/2027", "tipo": "bond-us", "qtd": 1, "pm": 1056.04, "moeda": "USD", "inst": "BB Americas", "data": "", "notas": "Certificate of Deposit *4405 · taxa 2,5181% a.a. · vencimento 18/03/2027 · referência: saldo do início de 2026 (juros pagos no ano: US$ 18,54)", "valorManual": 1074.58, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp46", "ticker": "PRIVILEGE DI", "nome": "Privilege DI", "tipo": "fundo", "qtd": 1, "pm": 168161.6, "moeda": "BRL", "inst": "Itaú", "data": "", "notas": "Referência: saldo em 02/01/2026 (R$ 168.161,60). Rendimento no ano: R$ 12.024,28", "valorManual": 180185.88, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp47", "ticker": "ITAÚ ACTIVE FIX ESG CRÉD", "nome": "Itaú Active Fix ESG Crédito Privado Multimercado", "tipo": "fundo", "qtd": 1, "pm": 57249.59, "moeda": "BRL", "inst": "Itaú", "data": "", "notas": "Referência: saldo em 02/01/2026 (R$ 57.249,59). Rendimento no ano: R$ 5.265,96", "valorManual": 62515.55, "valorManualData": "2026-09-15T01:41:12.131961"}], "metas": [], "config": {"aporteMensal": 0, "perfil": "moderado", "alvoAlocacao": null, "retornoCustom": {}, "inflacaoEsperada": 4.5, "autoRefreshMin": 10, "chaves": {"brapi": "", "twelve": "", "finnhub": "", "alpha": ""}, "driveClientId": "", "usarCookie": true, "usarDrive": false}, "vistos": {}, "coachFeitos": []};</script>
 <script>
 /* =========================================================
@@ -5882,6 +6352,157 @@ function salvarDatasIniciais(){
   cdiInicio = null;
   render();
   toast(n ? n + ' datas atualizadas. O retorno já está recalculado.' : 'Nenhuma data mudou.');
+}
+
+
+/* =========================================================
+   IMPORTAR EXTRATO
+   ========================================================= */
+let impDados = null, impPos = null, impEscolhidos = [];
+
+function abrirImportar(){
+  impDados = null; impPos = null; impEscolhidos = [];
+  $('#assetModalTitle').textContent = 'Importar extrato';
+  $('#assetModalBody').innerHTML =
+    '<div class="solta" id="impSolta">' +
+      '<div class="solta-ico">📄</div>' +
+      '<p><b>Arraste o PDF do extrato aqui</b><br>ou clique para escolher o arquivo</p>' +
+      '<input type="file" id="impArquivo" accept=".pdf,application/pdf" hidden>' +
+    '</div>' +
+    '<div id="impResultado"></div>' +
+    '<div class="card2-box" style="margin-top:14px">' +
+      '<b class="small">O que já sei ler</b>' +
+      '<ul class="small muted" style="margin:7px 0 0 18px;padding:0">' +
+        '<li><b>Extrato de previdência do BTG Pactual</b> (PDF) — data de início, saldos, rendimento do período, ' +
+        'taxa de administração, total aplicado e o valor líquido depois do IR.</li>' +
+        '<li>Avenue, Itaú, BB Americas e planilhas em geral entram na próxima etapa.</li>' +
+      '</ul>' +
+      '<p class="tiny muted" style="margin-top:9px">O arquivo é lido dentro do seu navegador. Nada é enviado para lugar nenhum.</p>' +
+    '</div>';
+  abrir('assetModal');
+
+  const area = $('#impSolta'), input = $('#impArquivo');
+  area.addEventListener('click', () => input.click());
+  input.addEventListener('change', () => { if(input.files[0]) lerExtrato(input.files[0]); });
+  ['dragenter','dragover'].forEach(ev => area.addEventListener(ev, e => {
+    e.preventDefault(); area.classList.add('sobre');
+  }));
+  ['dragleave','drop'].forEach(ev => area.addEventListener(ev, e => {
+    e.preventDefault(); area.classList.remove('sobre');
+  }));
+  area.addEventListener('drop', e => {
+    const f = e.dataTransfer.files[0];
+    if(f) lerExtrato(f);
+  });
+}
+
+async function lerExtrato(arquivo){
+  const alvo = $('#impResultado');
+  alvo.innerHTML = '<p class="small muted" style="margin-top:14px">Lendo <b>' + esc(arquivo.name) + '</b>…</p>';
+  try{
+    impDados = await Importador.lerArquivo(arquivo);
+    impPos = Importador.casar(impDados);
+    impEscolhidos = Importador.propostas(impDados, impPos).map(p => p.id);
+    desenharPreviaImport();
+  }catch(e){
+    impDados = null;
+    alvo.innerHTML = '<div class="aviso-box" style="margin-top:14px"><b>Não deu para ler este arquivo</b>' +
+      '<p class="small">' + esc(e.message || 'erro desconhecido') + '</p></div>';
+  }
+}
+
+function desenharPreviaImport(){
+  const d = impDados;
+  const props = Importador.propostas(d, impPos);
+  let h = '<div class="imp-cab"><div><span class="pc-lbl">Reconhecido</span>' +
+    '<span class="pc-nome">' + esc(d.leitor) + '</span>' +
+    '<span class="tiny muted">' + esc(d.arquivo) + '</span></div></div>';
+
+  h += '<div class="imp-fatos">';
+  const fato = (r,v) => v ? '<div><span>' + r + '</span><b>' + v + '</b></div>' : '';
+  h += fato('Certificado', d.certificado ? esc(d.certificado) : null);
+  h += fato('Produto', [d.tipo, d.regime].filter(Boolean).map(esc).join(' · '));
+  h += fato('Início do plano', d.inicio ? fmtData(d.inicio) : null);
+  h += fato('Período do extrato', d.periodo.de ? fmtData(d.periodo.de) + ' a ' + fmtData(d.periodo.ate) : null);
+  h += fato('Fundo', d.fundo ? esc(d.fundo) : null);
+  h += fato('Saldo no fim do período', d.saldoFinal ? fmt(d.saldoFinal) : null);
+  h += fato('Rendimento no período', d.rendimento ? fmt(d.rendimento) : null);
+  h += fato('Rentabilidade em 12 meses', d.rentab ? pnum(d.rentab.m12,2) + '%' : null);
+  h += '</div>';
+
+  /* a qual ativo isso pertence */
+  const ops = [['', '— criar um ativo novo —']].concat(
+    ST.posicoes.slice().sort((a,b) => (a.ticker||'').localeCompare(b.ticker||''))
+      .map(p => [p.id, p.ticker + (p.nome ? ' · ' + p.nome.slice(0,40) : '')]));
+  h += campo('Este extrato é de qual investimento?', selectHTML('impAtivo', ops, impPos ? impPos.id : ''),
+    null, impPos ? 'Encontrei sozinho pelo número do certificado.' : 'Não achei um ativo com este certificado — escolha ou crie.');
+
+  if(!props.length){
+    h += '<p class="small muted">Não encontrei nada de novo neste extrato.</p>';
+  }else{
+    h += '<div class="sub-lbl" style="margin-top:14px">O que vou fazer</div>' +
+         '<div class="imp-lista">';
+    props.forEach(p => {
+      h += '<label class="imp-item"><input type="checkbox" class="imp-ck" value="' + p.id + '"' +
+        (impEscolhidos.indexOf(p.id) >= 0 ? ' checked' : '') + '>' +
+        '<div><div class="ii-n">' + esc(p.nome) + '</div>' +
+        '<div class="ii-v tiny"><span class="muted">' + p.de + '</span> → <b>' + p.para + '</b></div>' +
+        '<div class="ii-g tiny muted">' + esc(p.ganho) + '</div></div></label>';
+    });
+    h += '</div>';
+  }
+
+  if(d.avisos && d.avisos.length)
+    h += '<p class="tiny muted" style="margin-top:8px">Observações da leitura: ' + esc(d.avisos.join(' · ')) + '.</p>';
+
+  h += '<div class="f-actions"><button class="btn" data-close="assetModal">Cancelar</button>' +
+       '<button class="btn primary" data-acao="imp-aplicar">Aplicar ao meu investimento</button></div>';
+
+  $('#impResultado').innerHTML = h;
+  $('#impSolta').classList.add('feito');
+  $('#impAtivo').addEventListener('change', e => {
+    impPos = ST.posicoes.find(p => p.id === e.target.value) || null;
+    impEscolhidos = Importador.propostas(impDados, impPos).map(p => p.id);
+    desenharPreviaImport();
+  });
+}
+
+function aplicarImportacao(){
+  if(!impDados) return;
+  const escolhidos = $$('.imp-ck').filter(c => c.checked).map(c => c.value);
+  let pos = ST.posicoes.find(p => p.id === $('#impAtivo').value) || null;
+
+  if(!pos){
+    /* cria o ativo a partir do extrato */
+    pos = {
+      id: 'p' + Date.now().toString(36),
+      ticker: (impDados.tipo || 'PREV') + (impDados.certificado ? '-' + impDados.certificado : ''),
+      nome: 'Plano ' + (impDados.certificado || '') + (impDados.fundo ? ' — ' + impDados.fundo : ''),
+      tipo: 'previdencia', qtd: 1, pm: impDados.ir && impDados.ir.nominal ? impDados.ir.nominal : (impDados.saldoFinal || 0),
+      moeda: 'BRL', inst: 'BTG Pactual', data: impDados.inicio || '',
+      notas: [impDados.tipo, impDados.regime].filter(Boolean).join(' · ')
+    };
+    ST.posicoes.push(pos);
+  }
+
+  const feito = Importador.aplicar(impDados, pos, escolhidos);
+  Store.salvar();
+  cdiInicio = null; compDados = {};
+  fechar('assetModal');
+  render();
+
+  $('#genTitle').textContent = 'Extrato importado';
+  $('#genBody').innerHTML =
+    '<p class="small">Apliquei em <b>' + esc(pos.ticker) + '</b>:</p>' +
+    '<ul class="small" style="margin:8px 0 0 18px;padding:0">' +
+      (feito.length ? feito.map(f => '<li>' + esc(f) + '</li>').join('') : '<li>nada mudou</li>') +
+    '</ul>' +
+    '<p class="small muted" style="margin-top:12px">Se você tiver extratos de outros períodos, importe todos: ' +
+    'cada um vira mais pontos no histórico e deixa a rentabilidade mais precisa.</p>' +
+    '<div class="f-actions"><button class="btn" data-acao="importar-extrato">Importar outro</button>' +
+    '<button class="btn primary" data-close="genModal">Pronto</button></div>';
+  abrir('genModal');
+  impDados = null; impPos = null;
 }
 
 /* =========================================================
@@ -7474,17 +8095,8 @@ function ligarEventos(){
         toast(n ? n + ' lançamentos criados a partir da carteira.' : 'Todos os ativos já têm histórico.');
         break;
       }
-      case 'importar-extrato':
-        $('#genTitle').textContent = 'Importar extrato';
-        $('#genBody').innerHTML =
-          '<p class="small">A leitura automática de extratos da Avenue, do Itaú, do BB Americas e do BTG, ' +
-          'mais um assistente para qualquer planilha, entra na próxima etapa.</p>' +
-          '<p class="small muted">Enquanto isso, dá para lançar à mão pelo botão <b>+ Novo lançamento</b>, ' +
-          'ou gerar os saldos iniciais a partir dos ativos já cadastrados.</p>' +
-          '<div class="f-actions"><button class="btn" data-close="genModal">Fechar</button>' +
-          '<button class="btn primary" data-acao="semear-mov" data-close="genModal">Gerar saldos iniciais</button></div>';
-        abrir('genModal');
-        break;
+      case 'importar-extrato': fechar('genModal'); abrirImportar(); break;
+      case 'imp-aplicar': aplicarImportacao(); break;
 
       /* ---- perfil de investidor ---- */
       case 'questionario': fechar('genModal'); abrirQuestionario(); break;
