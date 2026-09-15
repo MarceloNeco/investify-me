@@ -545,6 +545,37 @@ html[data-theme="light"]{
 .olho:hover{opacity:1; background:var(--card2)}
 .lock-box .senha-wrap input{text-align:center; padding-right:42px; padding-left:42px}
 
+/* ---------- gráficos de linha ---------- */
+.viz-tempo{position:relative}
+.viz-tempo .viz-svg{width:100%; height:auto; display:block}
+.viz-balao{
+  position:absolute; top:2px; transform:translateX(-50%); pointer-events:none; z-index:3;
+  background:var(--card2); border:1px solid var(--line2); border-radius:8px; padding:4px 9px;
+  font-size:.78rem; white-space:nowrap; box-shadow:var(--shadow);
+}
+.viz-balao b{font-variant-numeric:tabular-nums}
+.viz-balao span{color:var(--txt3); margin-left:5px}
+.graf-topo{display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-bottom:10px}
+.graf-preco{font-size:1.5rem; font-weight:680; font-variant-numeric:tabular-nums; line-height:1.1}
+.graf-lados{text-align:right; line-height:1.6}
+.spark{display:block}
+.spark-vazio{color:var(--txt3)}
+.c-spark{width:86px}
+.ac-spark{margin:6px 0 2px}
+.lnk-ativo{
+  background:none; border:none; padding:0; cursor:pointer; color:inherit; font:inherit;
+  display:inline-flex; align-items:center; gap:5px;
+}
+.lnk-ativo:hover .t-main, .lnk-ativo:hover .ac-tk{color:var(--accent); text-decoration:underline}
+.menu-acoes{display:flex; flex-direction:column; gap:8px; margin-top:6px}
+.menu-acoes .btn{justify-content:flex-start}
+
+/* tabela da carteira mais compacta, para caber sem rolagem */
+.tbl-carteira th, .tbl-carteira td{padding:9px 9px}
+.tbl-carteira td:first-child{max-width:230px}
+.tbl-carteira .t-sub{font-size:.72rem}
+@media (max-width:1100px){ .c-spark{display:none} }
+
 </style>
 </head>
 <body>
@@ -2934,6 +2965,295 @@ function vizProgresso(atual, alvo, fmt){
          '<span>' + fmt(atual) + '</span><span><b>' + pnum(pct) + '%</b> de ' + fmt(alvo) + '</span></div>';
 }
 
+
+/* =========================================================
+   Gráfico de linha no tempo (histórico de preço / patrimônio)
+   pontos: [{t: Date|ms|ISO, v: número}]
+   op: {altura, cor, moeda, pm, fmt, fmtEixo, id}
+   ========================================================= */
+function amostrar(pontos, maximo){
+  if(pontos.length <= maximo) return pontos;
+  const passo = pontos.length / maximo, saida = [];
+  for(let i = 0; i < maximo; i++) saida.push(pontos[Math.floor(i * passo)]);
+  saida[saida.length - 1] = pontos[pontos.length - 1];
+  return saida;
+}
+
+function vizLinhaTempo(pontos, op){
+  op = op || {};
+  if(!pontos || pontos.length < 2) return '<p class="muted small">Ainda não há histórico suficiente para desenhar.</p>';
+
+  const dados = amostrar(pontos.slice().sort((a,b) => new Date(a.t) - new Date(b.t)), 320);
+  const W = 720, H = op.altura || 240;
+  const mL = 58, mR = 14, mT = 12, mB = 26;
+  const vals = dados.map(p => p.v);
+  let min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+  if(op.pm){ min = Math.min(min, op.pm); max = Math.max(max, op.pm); }
+  const folga = (max - min) * 0.08 || Math.abs(max * 0.02) || 1;
+  min -= folga; max += folga;
+
+  const n = dados.length;
+  const px = i => mL + (i / (n - 1)) * (W - mL - mR);
+  const py = v => H - mB - ((v - min) / (max - min || 1)) * (H - mT - mB);
+  const fmt = op.fmt || (v => v.toLocaleString('pt-BR', {maximumFractionDigits:2}));
+
+  let g = '';
+  for(let i = 0; i <= 3; i++){
+    const v = min + (max - min) * i / 3, y = py(v);
+    g += '<line class="gl" x1="' + mL + '" y1="' + y.toFixed(1) + '" x2="' + (W - mR) + '" y2="' + y.toFixed(1) + '"/>' +
+         '<text class="ax" x="' + (mL - 7) + '" y="' + (y + 3.5).toFixed(1) + '" text-anchor="end">' + esc(fmt(v)) + '</text>';
+  }
+
+  const alta = dados[n-1].v >= dados[0].v;
+  const cor = op.cor || (alta ? 'var(--up)' : 'var(--down)');
+  const linha = dados.map((p,i) => (i ? 'L' : 'M') + px(i).toFixed(1) + ' ' + py(p.v).toFixed(1)).join(' ');
+  const area = linha + ' L' + px(n-1).toFixed(1) + ' ' + (H - mB) + ' L' + px(0).toFixed(1) + ' ' + (H - mB) + ' Z';
+  const idg = 'g' + Math.random().toString(36).slice(2,7);
+
+  g += '<defs><linearGradient id="' + idg + '" x1="0" x2="0" y1="0" y2="1">' +
+       '<stop offset="0%" stop-color="' + cor + '" stop-opacity=".28"/>' +
+       '<stop offset="100%" stop-color="' + cor + '" stop-opacity="0"/></linearGradient></defs>';
+  g += '<path d="' + area + '" fill="url(#' + idg + ')"/>';
+  g += '<path d="' + linha + '" fill="none" stroke="' + cor + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+
+  if(op.pm && op.pm > min && op.pm < max){
+    const y = py(op.pm);
+    g += '<line x1="' + mL + '" y1="' + y.toFixed(1) + '" x2="' + (W - mR) + '" y2="' + y.toFixed(1) +
+         '" stroke="var(--accent2)" stroke-width="1.2" stroke-dasharray="5 4"/>' +
+         '<text class="ax" style="fill:var(--accent2)" x="' + (W - mR) + '" y="' + (y - 5).toFixed(1) +
+         '" text-anchor="end">seu preço médio</text>';
+  }
+
+  /* datas nas pontas e no meio */
+  const dt = i => new Date(dados[i].t).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'2-digit'});
+  [[0,'start'], [Math.floor((n-1)/2),'middle'], [n-1,'end']].forEach(([i,anc]) => {
+    g += '<text class="ax" x="' + px(i).toFixed(1) + '" y="' + (H - 7) + '" text-anchor="' + anc + '">' + esc(dt(i)) + '</text>';
+  });
+
+  /* camada de leitura: linha vertical + balão */
+  const dadosJson = JSON.stringify(dados.map(p => [new Date(p.t).getTime(), p.v]));
+  g += '<g class="cursor" style="display:none">' +
+       '<line class="cursor-l" y1="' + mT + '" y2="' + (H - mB) + '" stroke="var(--line2)" stroke-width="1"/>' +
+       '<circle class="cursor-p" r="4.5" fill="' + cor + '" stroke="var(--card)" stroke-width="2"/></g>';
+  g += '<rect class="captura" x="' + mL + '" y="' + mT + '" width="' + (W - mL - mR) + '" height="' + (H - mT - mB) +
+       '" fill="transparent" style="cursor:crosshair"/>';
+
+  return '<div class="viz-tempo" data-pontos=\'' + dadosJson.replace(/'/g, '&#39;') +
+         '\' data-geo="' + [W,H,mL,mR,mT,mB,min,max].join(',') + '" data-moeda="' + esc(op.moeda || '') + '">' +
+    '<div class="viz-balao" hidden></div>' +
+    '<svg class="viz viz-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" ' +
+    'aria-label="Gráfico de linha do período">' + g + '</svg></div>';
+}
+
+/* linha miúda para a lista da carteira */
+function vizSparkline(pontos, largura, altura){
+  if(!pontos || pontos.length < 3) return '<span class="spark-vazio">—</span>';
+  const d = amostrar(pontos.slice().sort((a,b) => new Date(a.t) - new Date(b.t)), 40);
+  const W = largura || 76, H = altura || 22, vals = d.map(p => p.v);
+  const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+  const px = i => (i / (d.length - 1)) * W;
+  const py = v => H - 2 - ((v - min) / ((max - min) || 1)) * (H - 4);
+  const cor = d[d.length-1].v >= d[0].v ? 'var(--up)' : 'var(--down)';
+  const linha = d.map((p,i) => (i ? 'L' : 'M') + px(i).toFixed(1) + ' ' + py(p.v).toFixed(1)).join(' ');
+  return '<svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" aria-hidden="true">' +
+         '<path d="' + linha + '" fill="none" stroke="' + cor + '" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+}
+
+</script>
+<script>
+/* =========================================================
+   InvestifyMe — histórico de preços (para os gráficos)
+   EUA: Twelve Data · B3: brapi · Cripto: CoinGecko · Câmbio: AwesomeAPI · Indicadores: BCB
+   ========================================================= */
+const CHAVE_HIST = 'investifyme.hist.v1';
+
+const PERIODOS = [
+  {id:'1mo', nome:'1 mês',  dias:31,   brapi:'1mo'},
+  {id:'6mo', nome:'6 meses',dias:190,  brapi:'6mo'},
+  {id:'1a',  nome:'1 ano',  dias:370,  brapi:'1y'},
+  {id:'5a',  nome:'5 anos', dias:1830, brapi:'5y'}
+];
+
+const Hist = {
+  series: {},          /* 'us:AAPL|1mo' -> {pontos, hora, moeda, fonte} */
+  diario: {},          /* 'us:AAPL' -> [[data, valor]] anotado pelo próprio app */
+  carregando: {},
+
+  lerCache(){
+    try{
+      const o = JSON.parse(localStorage.getItem(CHAVE_HIST) || 'null');
+      if(o){ this.series = o.series || {}; this.diario = o.diario || {}; }
+    }catch(e){}
+  },
+  gravar(){
+    try{
+      /* guarda no máximo 40 séries, as mais recentes */
+      const chaves = Object.keys(this.series)
+        .sort((a,b) => new Date(this.series[b].hora) - new Date(this.series[a].hora)).slice(0, 40);
+      const enxuto = {};
+      chaves.forEach(k => enxuto[k] = this.series[k]);
+      localStorage.setItem(CHAVE_HIST, JSON.stringify({series: enxuto, diario: this.diario}));
+    }catch(e){ /* cheio: descarta as séries e mantém só o diário */
+      try{ localStorage.setItem(CHAVE_HIST, JSON.stringify({series:{}, diario:this.diario})); }catch(e2){}
+    }
+  },
+
+  /* anota o preço de hoje de cada ativo, para os minigráficos nascerem sozinhos */
+  anotarDoMercado(){
+    const hoje = new Date().toISOString().slice(0,10);
+    const guarda = (chave, valor) => {
+      if(valor == null || isNaN(valor)) return;
+      const arr = this.diario[chave] = this.diario[chave] || [];
+      const ult = arr[arr.length - 1];
+      if(ult && ult[0] === hoje) ult[1] = valor;
+      else arr.push([hoje, valor]);
+      if(arr.length > 400) arr.splice(0, arr.length - 400);
+    };
+    Object.keys(Mercado.precos).forEach(k => guarda(k, Mercado.precos[k].p));
+    Object.keys(Mercado.cambio).forEach(m => guarda('fx:' + m, Mercado.cambio[m].p));
+    this.gravar();
+  },
+
+  pontosDiarios(chave){
+    const a = this.diario[chave];
+    return a ? a.map(p => ({t: p[0], v: p[1]})) : [];
+  },
+
+  /* para o minigráfico: usa o que o app anotou; se já buscou o histórico do ativo, usa os últimos 30 dias dele */
+  pontosCurtos(chave){
+    const meus = this.pontosDiarios(chave);
+    if(meus.length >= 3) return meus;
+    const s = this.series[chave + '|1mo'] || this.series[chave + '|6mo'];
+    if(s && s.pontos && s.pontos.length >= 3) return s.pontos.slice(-30);
+    return meus;
+  },
+
+  chaveDe(pos){
+    const tp = TIPOS[pos.tipo] || {};
+    const tk = (pos.ticker || '').toUpperCase();
+    if(tp.fonte === 'us') return 'us:' + tk;
+    if(tp.fonte === 'brapi') return 'b3:' + tk;
+    if(tp.fonte === 'cripto') return 'cripto:' + tk;
+    if(tp.fonte === 'moeda') return 'fx:' + tk;
+    return 'man:' + (pos.id || tk);
+  },
+
+  fresco(chave, horas){
+    const s = this.series[chave];
+    if(!s) return false;
+    return (Date.now() - new Date(s.hora).getTime()) < (horas || 6) * 3600000;
+  },
+
+  async pegar(url){
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 20000);
+    try{
+      const r = await fetch(url, {signal: ctrl.signal});
+      if(!r.ok){ const e = new Error('HTTP ' + r.status); e.status = r.status; throw e; }
+      return await r.json();
+    } finally { clearTimeout(t); }
+  },
+
+  /* ---------- o coração: devolve {pontos, moeda, fonte} ---------- */
+  async serie(pos, periodo, config){
+    const per = PERIODOS.find(p => p.id === periodo) || PERIODOS[0];
+    const base = this.chaveDe(pos);
+    const chave = base + '|' + per.id;
+    if(this.fresco(chave, 6)) return this.series[chave];
+    if(this.carregando[chave]) return this.series[chave] || null;
+
+    this.carregando[chave] = true;
+    let out = null;
+    try{
+      const tp = TIPOS[pos.tipo] || {};
+      const tk = (pos.ticker || '').toUpperCase();
+      const k = (config.chaves || {});
+
+      if(tp.fonte === 'us'){
+        if(!k.twelve) throw new Error('Para o gráfico dos EUA, cole a chave gratuita da Twelve Data em Configurações.');
+        const j = await this.pegar('https://api.twelvedata.com/time_series?symbol=' + encodeURIComponent(tk) +
+          '&interval=1day&outputsize=' + Math.min(per.dias, 1500) + '&apikey=' + encodeURIComponent(k.twelve));
+        if(j.status === 'error' || !Array.isArray(j.values)) throw new Error(j.message || 'sem dados');
+        out = {pontos: j.values.map(v => ({t: v.datetime, v: parseFloat(v.close)})).reverse(),
+               moeda: (j.meta && j.meta.currency) || 'USD', fonte: 'Twelve Data'};
+
+      }else if(tp.fonte === 'brapi'){
+        if(!k.brapi) throw new Error('Para o gráfico da B3, cole o token gratuito da brapi em Configurações.');
+        const j = await this.pegar('https://brapi.dev/api/quote/' + encodeURIComponent(tk) +
+          '?range=' + per.brapi + '&interval=1d&token=' + encodeURIComponent(k.brapi));
+        const r = (j.results || [])[0] || {};
+        const h = r.historicalDataPrice || [];
+        if(!h.length) throw new Error('sem histórico');
+        out = {pontos: h.filter(p => p.close != null).map(p => ({t: new Date(p.date * 1000).toISOString(), v: p.close})),
+               moeda: r.currency || 'BRL', fonte: 'brapi'};
+
+      }else if(tp.fonte === 'cripto'){
+        const id = CRIPTO_ID[tk];
+        if(!id) throw new Error('cripto não reconhecida');
+        const j = await this.pegar('https://api.coingecko.com/api/v3/coins/' + id +
+          '/market_chart?vs_currency=usd&days=' + per.dias + (per.dias > 90 ? '&interval=daily' : ''));
+        out = {pontos: (j.prices || []).map(p => ({t: new Date(p[0]).toISOString(), v: p[1]})),
+               moeda: 'USD', fonte: 'CoinGecko'};
+
+      }else if(tp.fonte === 'moeda'){
+        if(tk === 'BRL'){ out = {pontos: [], moeda:'BRL', fonte:'—'}; }
+        else{
+          const j = await this.pegar('https://economia.awesomeapi.com.br/json/daily/' + tk + '-BRL/' +
+            Math.min(per.dias, 360));
+          out = {pontos: (j || []).map(p => ({t: new Date(Number(p.timestamp) * 1000).toISOString(), v: parseFloat(p.bid)})).reverse(),
+                 moeda: 'BRL', fonte: 'AwesomeAPI'};
+        }
+
+      }else{
+        /* fundos, previdência, bonds e renda fixa: o histórico é o que você registrou */
+        const anot = (pos.historicoManual || []).map(p => ({t: p[0], v: p[1]}));
+        const diar = this.pontosDiarios(base);
+        out = {pontos: anot.length >= diar.length ? anot : diar, moeda: pos.moeda || 'BRL', fonte: 'valores informados por você'};
+      }
+
+      if(out){
+        out.hora = new Date().toISOString();
+        this.series[chave] = out;
+        this.gravar();
+      }
+    }catch(e){
+      out = {erro: e.message || 'não consegui buscar o histórico', pontos: [], hora: new Date().toISOString()};
+    }finally{
+      delete this.carregando[chave];
+    }
+    return out;
+  },
+
+  /* série de um índice/indicador para a aba Mercado */
+  async serieMercado(tipo, per, config){
+    const fake = {
+      'USD':   {ticker:'USD', tipo:'caixa', moeda:'USD'},
+      'EUR':   {ticker:'EUR', tipo:'caixa', moeda:'EUR'},
+      'BTC':   {ticker:'BTC', tipo:'cripto'},
+      'ETH':   {ticker:'ETH', tipo:'cripto'},
+      '^BVSP': {ticker:'^BVSP', tipo:'acao-br'},
+      'IFIX.SA':{ticker:'IFIX.SA', tipo:'acao-br'}
+    }[tipo];
+    if(fake) return this.serie(fake, per, config);
+
+    /* indicadores do Banco Central */
+    const series = {SELIC:432, CDI:4389, IPCA:13522};
+    const id = series[tipo];
+    if(!id) return null;
+    const p = PERIODOS.find(x => x.id === per) || PERIODOS[1];
+    const ini = new Date(Date.now() - p.dias * 86400000);
+    const fmtBr = d => String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+    try{
+      const j = await this.pegar('https://api.bcb.gov.br/dados/serie/bcdata.sgs.' + id +
+        '/dados?formato=json&dataInicial=' + fmtBr(ini) + '&dataFinal=' + fmtBr(new Date()));
+      return {pontos: (j || []).map(x => {
+        const [d,m,a] = x.data.split('/');
+        return {t: a + '-' + m + '-' + d, v: parseFloat(x.valor)};
+      }), moeda: '%', fonte: 'Banco Central'};
+    }catch(e){ return {erro:'Banco Central indisponível agora', pontos: []}; }
+  }
+};
+
 </script>
 <script>window.CARTEIRA_EMBUTIDA = {"v": 1, "criadoEm": "2026-09-15T01:41:12.131961", "atualizadoEm": "2026-09-15T01:41:12.131961", "moedaBase": "BRL", "nivel": "iniciante", "tema": "dark", "posicoes": [{"id": "imp01", "ticker": "FISV", "nome": "Fiserv, Inc.", "tipo": "acao-us", "qtd": 5.0, "pm": 156.78, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 52.03, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp02", "ticker": "ORCL", "nome": "Oracle Corp.", "tipo": "acao-us", "qtd": 8.0, "pm": 160.29, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 143.94, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp03", "ticker": "TFLO", "nome": "iShares Treasury Floating Rate Bond ETF", "tipo": "etf-us", "qtd": 106.0001, "pm": 50.57, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 50.58, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp04", "ticker": "PLTR", "nome": "Palantir Technologies Inc - Class A", "tipo": "acao-us", "qtd": 4.0, "pm": 166.4, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 171.41, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp05", "ticker": "OWL", "nome": "Blue Owl Capital Inc - Class A", "tipo": "acao-us", "qtd": 1.0, "pm": 16.27, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 10.5, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp06", "ticker": "RRRPBZ", "nome": "Brava Energia 9,75% — venc. 05/02/2031", "tipo": "bond-us", "qtd": 1, "pm": 5347.4, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "Código na Avenue: 5CRLFV9 · 5 títulos a US$ 1034.00", "valorManual": 5356.67, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp07", "ticker": "MA", "nome": "Mastercard Incorporated - Class A", "tipo": "acao-us", "qtd": 0.8, "pm": 394.85, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 574.11, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp08", "ticker": "NVDA", "nome": "NVIDIA Corp", "tipo": "acao-us", "qtd": 3.04, "pm": 55.36, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 211.31, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp09", "ticker": "MFG", "nome": "Mizuho Financial Group, Inc. - ADR", "tipo": "acao-us", "qtd": 15.0, "pm": 6.38, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 11.3, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp10", "ticker": "WT", "nome": "WisdomTree Inc", "tipo": "acao-us", "qtd": 5.0, "pm": 13.45, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 23.33, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp11", "ticker": "AMZN", "nome": "Amazon.com Inc.", "tipo": "acao-us", "qtd": 30.26254, "pm": 226.9, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 252.76, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp12", "ticker": "SABR", "nome": "Sabre Corp", "tipo": "acao-us", "qtd": 10.0, "pm": 1.81, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 2.13, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp13", "ticker": "AMBIQ", "nome": "Ambipar Emergency Response - Ordinary Shares - Class A", "tipo": "acao-us", "qtd": 100.0, "pm": 1.17, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 0.0, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp14", "ticker": "ISRG", "nome": "Intuitive Surgical Inc", "tipo": "acao-us", "qtd": 1.0, "pm": 493.41, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 372.95, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp15", "ticker": "INTR", "nome": "Inter & Co Inc - Class A", "tipo": "acao-us", "qtd": 13.0, "pm": 4.08, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 5.5, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp16", "ticker": "ELAN", "nome": "Elanco Animal Health Inc", "tipo": "acao-us", "qtd": 10.0, "pm": 20.37, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 23.26, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp17", "ticker": "AVGO", "nome": "Broadcom Inc", "tipo": "acao-us", "qtd": 2.0, "pm": 303.38, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 344.79, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp18", "ticker": "ROKU", "nome": "Roku Inc - Class A", "tipo": "acao-us", "qtd": 5.0, "pm": 93.81, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 156.71, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp19", "ticker": "JPM", "nome": "JPMorgan Chase & Co.", "tipo": "acao-us", "qtd": 0.59, "pm": 308.18, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 351.61, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp20", "ticker": "TSM", "nome": "Taiwan Semiconductor Manufacturing - ADR", "tipo": "acao-us", "qtd": 5.0, "pm": 186.43, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 419.71, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp21", "ticker": "CROX", "nome": "Crocs Inc", "tipo": "acao-us", "qtd": 8.34, "pm": 135.95, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 111.18, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp22", "ticker": "BNY", "nome": "BANK NEW YORK MELLON CORP", "tipo": "acao-us", "qtd": 2.0, "pm": 130.68, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 160.0, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp23", "ticker": "FNB", "nome": "F.N.B. Corp.", "tipo": "acao-us", "qtd": 10.0, "pm": 16.01, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 18.25, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp24", "ticker": "CSNABZ", "nome": "CSN 6,75% — venc. 28/01/2028", "tipo": "bond-us", "qtd": 1, "pm": 5046.56, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "Código na Avenue: 5CRRZJ8 · 5 títulos a US$ 978.00", "valorManual": 4321.56, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp25", "ticker": "RGTI", "nome": "Rigetti Computing Inc", "tipo": "acao-us", "qtd": 10.0, "pm": 45.36, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 15.32, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp26", "ticker": "TSLA", "nome": "Tesla Inc", "tipo": "acao-us", "qtd": 2.2, "pm": 331.85, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 359.4, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp27", "ticker": "AMD", "nome": "Advanced Micro Devices Inc.", "tipo": "acao-us", "qtd": 6.5, "pm": 180.84, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 485.11, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp28", "ticker": "IRIX", "nome": "IRIDEX Corp.", "tipo": "acao-us", "qtd": 31.0, "pm": 2.11, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 0.62, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp29", "ticker": "MVST", "nome": "Microvast Holdings Inc", "tipo": "acao-us", "qtd": 200.0, "pm": 4.6, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 0.6, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp30", "ticker": "META", "nome": "Meta Platforms Inc - Class A", "tipo": "acao-us", "qtd": 2.5, "pm": 525.47, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 654.94, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp31", "ticker": "INSM", "nome": "Insmed Inc", "tipo": "acao-us", "qtd": 2.0, "pm": 163.51, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 124.97, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp32", "ticker": "KEEL", "nome": "Keel Infrastructure Corp.", "tipo": "acao-us", "qtd": 10.0, "pm": 1.98, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 3.47, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp33", "ticker": "PODD", "nome": "Insulet Corporation", "tipo": "acao-us", "qtd": 0.2, "pm": 323.43, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 135.84, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp34", "ticker": "GOOG", "nome": "Alphabet Inc - Class C", "tipo": "acao-us", "qtd": 27.4, "pm": 220.49, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 342.24, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp35", "ticker": "AAPL", "nome": "Apple Inc", "tipo": "acao-us", "qtd": 0.14, "pm": 197.41, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 332.8, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp36", "ticker": "RKLB", "nome": "Rocket Lab USA Inc", "tipo": "acao-us", "qtd": 1.0, "pm": 66.67, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 62.97, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp37", "ticker": "CRWD", "nome": "Crowdstrike Holdings Inc - Class A", "tipo": "acao-us", "qtd": 4.72, "pm": 114.5, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 238.39, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp38", "ticker": "V", "nome": "Visa Inc - Class A", "tipo": "acao-us", "qtd": 8.0, "pm": 351.71, "moeda": "USD", "inst": "Avenue", "data": "", "notas": "", "precoManual": 374.68, "precoManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp39", "ticker": "USD", "nome": "Saldo na conta investimento", "tipo": "caixa", "qtd": 501.73, "pm": 0, "moeda": "USD", "inst": "Avenue", "data": "", "notas": ""}, {"id": "imp40", "ticker": "PGBL", "nome": "Plano 263800 — Absoluto Atenas Prev FIM (regressivo)", "tipo": "previdencia", "qtd": 1, "pm": 29575.11, "moeda": "BRL", "inst": "BTG Pactual", "data": "", "notas": "Tabela regressiva · início 14/02/2025", "valorManual": 35987.13, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp41", "ticker": "VGBL", "nome": "Plano 263802 — Absoluto Atenas Prev FIM (regressivo)", "tipo": "previdencia", "qtd": 1, "pm": 53901.32, "moeda": "BRL", "inst": "BTG Pactual", "data": "", "notas": "Tabela regressiva", "valorManual": 93388.2, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp42", "ticker": "PGBL", "nome": "Plano 263801 — Absoluto Atenas Prev FIM (regressivo)", "tipo": "previdencia", "qtd": 1, "pm": 24873.19, "moeda": "BRL", "inst": "BTG Pactual", "data": "", "notas": "Tabela regressiva", "valorManual": 30421.02, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp43", "ticker": "USD", "nome": "Conta corrente *8625", "tipo": "caixa", "qtd": 103.0, "pm": 0, "moeda": "USD", "inst": "BB Americas", "data": "", "notas": "Checking-8625 · sem rendimento"}, {"id": "imp44", "ticker": "USD", "nome": "Money market *8034", "tipo": "caixa", "qtd": 1964.57, "pm": 0, "moeda": "USD", "inst": "BB Americas", "data": "", "notas": "E-Money Market-8034 · rende 1,341% a.a."}, {"id": "imp45", "ticker": "CD", "nome": "CD *4405 — 2,5181% a.a., venc. 18/03/2027", "tipo": "bond-us", "qtd": 1, "pm": 1056.04, "moeda": "USD", "inst": "BB Americas", "data": "", "notas": "Certificate of Deposit *4405 · taxa 2,5181% a.a. · vencimento 18/03/2027 · referência: saldo do início de 2026 (juros pagos no ano: US$ 18,54)", "valorManual": 1074.58, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp46", "ticker": "PRIVILEGE DI", "nome": "Privilege DI", "tipo": "fundo", "qtd": 1, "pm": 168161.6, "moeda": "BRL", "inst": "Itaú", "data": "", "notas": "Referência: saldo em 02/01/2026 (R$ 168.161,60). Rendimento no ano: R$ 12.024,28", "valorManual": 180185.88, "valorManualData": "2026-09-15T01:41:12.131961"}, {"id": "imp47", "ticker": "ITAÚ ACTIVE FIX ESG CRÉD", "nome": "Itaú Active Fix ESG Crédito Privado Multimercado", "tipo": "fundo", "qtd": 1, "pm": 57249.59, "moeda": "BRL", "inst": "Itaú", "data": "", "notas": "Referência: saldo em 02/01/2026 (R$ 57.249,59). Rendimento no ano: R$ 5.265,96", "valorManual": 62515.55, "valorManualData": "2026-09-15T01:41:12.131961"}], "metas": [], "config": {"aporteMensal": 0, "perfil": "moderado", "alvoAlocacao": null, "retornoCustom": {}, "inflacaoEsperada": 4.5, "autoRefreshMin": 10, "chaves": {"brapi": "", "twelve": "", "finnhub": "", "alpha": ""}, "driveClientId": "", "usarCookie": true, "usarDrive": false}, "vistos": {}, "coachFeitos": []};</script>
 <script>
@@ -3042,6 +3362,19 @@ function calc(p){
           pl, plPct, varDia, varDiaValor, origem, hora, fonte};
 }
 
+/* guarda uma foto do patrimônio por dia, para o gráfico de evolução */
+function registrarFoto(){
+  const t = totais();
+  if(!t.valor) return;
+  const hoje = new Date().toISOString().slice(0,10);
+  ST.fotos = ST.fotos || [];
+  const ult = ST.fotos[ST.fotos.length - 1];
+  if(ult && ult[0] === hoje){ ult[1] = Math.round(t.valor); ult[2] = Math.round(t.custo); }
+  else ST.fotos.push([hoje, Math.round(t.valor), Math.round(t.custo)]);
+  if(ST.fotos.length > 1200) ST.fotos.splice(0, ST.fotos.length - 1200);
+  Store.salvar();
+}
+
 function paisDaPosicao(p, c){
   if(p.tipo === 'cripto') return 'Global';
   if(p.tipo === 'caixa'){
@@ -3108,6 +3441,23 @@ function viewPainel(){
     kpi('Ativos', String(ST.posicoes.length), null,
         Object.keys(t.porTipo).length + ' tipos · ' + Object.keys(t.porInst).length + ' instituições') +
   '</div>';
+
+  /* evolução do patrimônio */
+  const fotos = (ST.fotos || []).map(f => ({t: f[0], v: f[1]}));
+  if(fotos.length >= 2){
+    const ini = fotos[0].v, fimF = fotos[fotos.length-1].v;
+    const dif = fimF - ini, difPct = ini ? dif/ini*100 : 0;
+    h += bloco('Evolução do patrimônio',
+      '<div class="graf-topo"><div><div class="graf-preco">' + fmt(fimF) + '</div>' +
+      '<div class="small ' + cls(dif) + '">' + (dif >= 0 ? '+' : '') + fmt(dif) + ' (' + fmtPct(difPct, true) + ') desde ' +
+      fmtData(fotos[0].t) + '</div></div><div class="small muted">' + fotos.length + ' dias registrados</div></div>' +
+      vizLinhaTempo(fotos, {moeda: ST.moedaBase, altura: 200, cor: 'var(--accent)', fmt: v => fmtCurto(v)}),
+      null, true);
+  }else{
+    h += '<div class="card"><div class="card-head"><h3>Evolução do patrimônio</h3></div>' +
+      '<p class="small muted">O app tira uma foto do seu total a cada dia em que você abre o InvestifyMe. ' +
+      'Hoje é o primeiro ponto — em alguns dias o gráfico começa a aparecer aqui.</p></div>';
+  }
 
   /* alocação */
   const itensClasse = CLASSES.map(c => ({nome:c.nome, valor:t.porClasse[c.id] || 0, cor:c.cor})).filter(i => i.valor > 0);
@@ -3203,7 +3553,7 @@ function cardMercadoResumo(){
 /* =========================================================
    CARTEIRA
    ========================================================= */
-let filtroTipo = 'todos', filtroInst = 'todas';
+let filtrosTipo = [], filtrosInst = [];   /* vazio = tudo */
 function viewCarteira(){
   const t = totais();
   let h = '<div class="card-head"><h1>Carteira</h1><div class="spacer"></div>' +
@@ -3216,28 +3566,34 @@ function viewCarteira(){
       '<button class="btn primary" data-acao="nova" style="margin-top:12px">+ Cadastrar agora</button></div></div>';
   }
 
-  /* filtros */
+  /* filtros (pode marcar vários) */
   h += '<div class="card"><div class="row">';
-  h += '<span class="chip click' + (filtroTipo === 'todos' ? ' on' : '') + '" data-filtro-tipo="todos">Todos</span>';
+  h += '<span class="chip click' + (!filtrosTipo.length ? ' on' : '') + '" data-filtro-tipo="todos">Todos</span>';
   ORDEM_TIPOS.filter(k => t.qtdTipo[k]).forEach(k => {
-    h += '<span class="chip click' + (filtroTipo === k ? ' on' : '') + '" data-filtro-tipo="' + k + '">' +
-         TIPOS[k].ico + ' ' + TIPOS[k].curto + '</span>';
+    const on = filtrosTipo.indexOf(k) >= 0;
+    h += '<span class="chip click' + (on ? ' on' : '') + '" data-filtro-tipo="' + k + '">' +
+         TIPOS[k].ico + ' ' + TIPOS[k].curto + (on ? ' ✕' : '') + '</span>';
   });
   h += '</div>';
   const insts = Object.keys(t.qtdInst);
   if(insts.length > 1){
     h += '<div class="row" style="margin-top:8px">' +
-         '<span class="chip click' + (filtroInst === 'todas' ? ' on' : '') + '" data-filtro-inst="todas">Todas as instituições</span>';
-    insts.forEach(i => h += '<span class="chip click' + (filtroInst === i ? ' on' : '') + '" data-filtro-inst="' + esc(i) + '">' + esc(i) + '</span>');
+         '<span class="chip click' + (!filtrosInst.length ? ' on' : '') + '" data-filtro-inst="todas">Todas as instituições</span>';
+    insts.forEach(i => {
+      const on = filtrosInst.indexOf(i) >= 0;
+      h += '<span class="chip click' + (on ? ' on' : '') + '" data-filtro-inst="' + esc(i) + '">' + esc(i) + (on ? ' ✕' : '') + '</span>';
+    });
     h += '</div>';
   }
+  if(filtrosTipo.length || filtrosInst.length)
+    h += '<div class="row" style="margin-top:8px"><button class="tbl-toggle" data-acao="limpar-filtros">limpar filtros</button></div>';
   h += '</div>';
 
   /* tabela agrupada por tipo */
   const grupos = {};
   t.itens.forEach(it => {
-    if(filtroTipo !== 'todos' && it.p.tipo !== filtroTipo) return;
-    if(filtroInst !== 'todas' && (it.p.inst || 'Não informado') !== filtroInst) return;
+    if(filtrosTipo.length && filtrosTipo.indexOf(it.p.tipo) < 0) return;
+    if(filtrosInst.length && filtrosInst.indexOf(it.p.inst || 'Não informado') < 0) return;
     (grupos[it.p.tipo] = grupos[it.p.tipo] || []).push(it);
   });
 
@@ -3246,8 +3602,9 @@ function viewCarteira(){
 
   if(ehMobile()) return h + carteiraCartoes(chaves, grupos);
 
-  h += '<div class="card pad0"><div class="tbl-wrap"><table><thead><tr>' +
-    '<th>Ativo</th><th>Quantidade</th><th>Preço médio</th><th>Preço atual</th><th>Valor hoje</th><th>Lucro/prejuízo</th><th>Hoje</th><th></th>' +
+  h += '<div class="card pad0"><div class="tbl-wrap"><table class="tbl-carteira"><thead><tr>' +
+    '<th>Ativo</th><th class="c-spark">30 dias</th><th>Qtd.</th><th>Preço médio</th><th>Preço atual</th>' +
+    '<th>Valor hoje</th><th>Lucro/prejuízo</th><th></th>' +
     '</tr></thead><tbody>';
 
   let somaFiltro = 0;
@@ -3256,31 +3613,29 @@ function viewCarteira(){
     const sub = g.reduce((s,i) => s + i.c.valorBase, 0);
     const subPl = g.reduce((s,i) => s + i.c.pl, 0);
     somaFiltro += sub;
-    h += '<tr class="group-row"><td colspan="4">' + TIPOS[k].ico + ' ' + TIPOS[k].nome + ' <span class="t-sub">(' + g.length + ')</span></td>' +
-         '<td>' + fmt(sub) + '</td><td class="' + cls(subPl) + '">' + fmt(subPl) + '</td><td colspan="2"></td></tr>';
+    h += '<tr class="group-row"><td colspan="5">' + TIPOS[k].ico + ' ' + TIPOS[k].nome + ' <span class="t-sub">(' + g.length + ')</span></td>' +
+         '<td>' + fmt(sub) + '</td><td class="' + cls(subPl) + '">' + fmt(subPl) + '</td><td></td></tr>';
     g.forEach(({p,c}) => {
       const badge = c.origem === 'auto' ? '<span class="badge live">auto</span>'
                  : c.origem === 'estimado' ? '<span class="badge est">estimado</span>'
                  : c.origem === 'manual' ? '<span class="badge man">manual</span>'
                  : '<span class="badge">sem preço</span>';
       h += '<tr>' +
-        '<td><span class="t-main">' + esc(p.ticker) + '</span> ' + badge +
+        '<td><button class="lnk-ativo" data-grafico="' + p.id + '" title="Ver gráfico">' +
+            '<span class="t-main">' + esc(p.ticker) + '</span> 📈</button> ' + badge +
           '<div class="t-sub">' + esc(p.nome || '') + (p.inst ? ' · ' + esc(p.inst) : '') + '</div></td>' +
+        '<td class="c-spark">' + vizSparkline(Hist.pontosCurtos(Hist.chaveDe(p))) + '</td>' +
         '<td>' + fmtQtd(c.qtd) + '</td>' +
         '<td>' + precoCelula(c, 'pm') + '</td>' +
-        '<td>' + precoCelula(c, 'atual') + '</td>' +
+        '<td>' + precoCelula(c, 'atual') +
+          (c.varDia == null ? '' : '<div class="t-sub ' + cls(c.varDia) + '">' + fmtPct(c.varDia, true) + ' hoje</div>') + '</td>' +
         '<td class="t-main">' + fmt(c.valorBase) + '</td>' +
         '<td class="' + cls(c.pl) + '">' + fmt(c.pl) + '<div class="t-sub ' + cls(c.pl) + '">' + fmtPct(c.plPct, true) + '</div></td>' +
-        '<td class="' + cls(c.varDia) + '">' + (c.varDia == null ? '—' : fmtPct(c.varDia, true)) + '</td>' +
-        '<td><button class="icon-btn" data-editar="' + p.id + '" title="Editar">✏️</button>' +
-            '<button class="icon-btn" data-aporte="' + p.id + '" title="Novo aporte">➕</button>' +
-            '<button class="icon-btn" data-valor="' + p.id + '" title="' +
-              (TIPOS[p.tipo].fonte === 'manual' ? 'Atualizar valor' : 'Informar preço manualmente') + '">💰</button>' +
-            '<button class="icon-btn" data-excluir="' + p.id + '" title="Excluir">🗑️</button></td>' +
+        '<td><button class="icon-btn" data-acoes-ativo="' + p.id + '" title="Ações">⋯</button></td>' +
       '</tr>';
     });
   });
-  h += '<tr class="group-row"><td colspan="4"><b>Total</b></td><td><b>' + fmt(somaFiltro) + '</b></td><td colspan="3"></td></tr>';
+  h += '<tr class="group-row"><td colspan="5"><b>Total</b></td><td><b>' + fmt(somaFiltro) + '</b></td><td colspan="2"></td></tr>';
   h += '</tbody></table></div></div>';
 
   h += '<p class="tiny muted">Etiquetas: <span class="badge live">auto</span> preço buscado na fonte pública · ' +
@@ -3312,9 +3667,11 @@ function carteiraCartoes(chaves, grupos){
                  : c.origem === 'manual' ? '<span class="badge man">manual</span>'
                  : '<span class="badge">sem preço</span>';
       h += '<div class="ativo-card">' +
-        '<div class="ac-l1"><span class="ac-tk">' + esc(p.ticker) + '</span>' + badge +
+        '<div class="ac-l1"><button class="lnk-ativo" data-grafico="' + p.id + '"><span class="ac-tk">' +
+          esc(p.ticker) + '</span> 📈</button>' + badge +
           '<span class="ac-vl mono">' + fmt(c.valorBase) + '</span></div>' +
         '<div class="ac-l2 t-sub">' + esc(p.nome || '') + (p.inst ? ' · ' + esc(p.inst) : '') + '</div>' +
+        '<div class="ac-spark">' + vizSparkline(Hist.pontosCurtos(Hist.chaveDe(p)), 240, 26) + '</div>' +
         '<div class="ac-l3">' +
           '<span class="muted">' + fmtQtd(c.qtd) + (TIPOS[p.tipo].fonte === 'manual' || TIPOS[p.tipo].fonte === 'taxa'
               ? '' : ' × ' + precoCelula(c, 'atual')) + '</span>' +
@@ -3339,10 +3696,57 @@ function casasPreco(v){ return Math.abs(v) >= 100 ? 2 : (Math.abs(v) >= 1 ? 2 : 
 /* =========================================================
    MERCADO
    ========================================================= */
+let mkSerie = 'USD', mkPer = '6mo', mkCarregando = false;
+const mkDados = {};
+
+async function carregarSerieMercado(){
+  if(mkCarregando) return;
+  mkCarregando = true;
+  const chave = mkSerie + '|' + mkPer;
+  const d = await Hist.serieMercado(mkSerie, mkPer, ST.config);
+  mkDados[chave] = d || {erro:'sem dados', pontos:[]};
+  mkCarregando = false;
+  if(viewAtual === 'mercado') render();
+}
+
+function cardGraficoMercado(){
+  const opcoes = [['USD','Dólar'],['EUR','Euro'],['^BVSP','Ibovespa'],['IFIX.SA','IFIX'],
+                  ['BTC','Bitcoin'],['ETH','Ethereum'],['SELIC','Selic'],['CDI','CDI'],['IPCA','IPCA 12m']];
+  let h = '<div class="card"><div class="card-head"><h3>Gráficos do mercado</h3></div><div class="row">';
+  opcoes.forEach(([id,nome]) => {
+    h += '<span class="chip click' + (mkSerie === id ? ' on' : '') + '" data-mk-serie="' + esc(id) + '">' + nome + '</span>';
+  });
+  h += '</div><div class="row" style="margin-top:8px">';
+  PERIODOS.forEach(per => {
+    h += '<span class="chip click' + (mkPer === per.id ? ' on' : '') + '" data-mk-per="' + per.id + '">' + per.nome + '</span>';
+  });
+  h += '</div>';
+
+  const d = mkDados[mkSerie + '|' + mkPer];
+  if(!d){
+    carregarSerieMercado();
+    h += '<p class="muted small" style="margin-top:14px">Carregando o histórico…</p>';
+  }else if(d.erro || !d.pontos.length){
+    h += '<p class="small down" style="margin-top:14px">' + esc(d.erro || 'Sem dados para este período.') + '</p>';
+  }else{
+    const ini = d.pontos[0].v, fim = d.pontos[d.pontos.length-1].v;
+    const varP = ini ? (fim/ini - 1) * 100 : 0;
+    const ehPct = d.moeda === '%';
+    h += '<div class="graf-topo" style="margin-top:12px"><div>' +
+      '<div class="graf-preco">' + (ehPct ? pnum(fim,2) + '%' : fmt(fim, d.moeda, casasPreco(fim))) + '</div>' +
+      '<div class="small ' + cls(varP) + '">' + (ehPct ? (fim - ini >= 0 ? '+' : '') + pnum(fim - ini, 2) + ' p.p.' : fmtPct(varP, true)) +
+      ' no período</div></div><div class="small muted">Fonte: ' + esc(d.fonte || '—') + '</div></div>' +
+      vizLinhaTempo(d.pontos, {moeda: d.moeda, altura: 230,
+        fmt: v => ehPct ? pnum(v,2) + '%' : fmt(v, d.moeda, v >= 1000 ? 0 : 2)});
+  }
+  return h + '</div>';
+}
+
 function viewMercado(){
   const c = Mercado.cambio, ind = Mercado.indicadores;
   let h = '<div class="card-head"><h1>Mercado</h1><div class="spacer"></div>' +
           '<span class="tiny muted">Última busca: ' + (Mercado.ultima ? fmtHora(Mercado.ultima) : 'ainda não') + '</span></div>';
+  h += cardGraficoMercado();
 
   h += '<div class="card"><div class="card-head"><h3>Moedas</h3>' + info('cambio') + '</div><div class="mk-grid">';
   MOEDAS.forEach(m => {
@@ -4078,7 +4482,12 @@ function salvarAtivo(){
   }else if(tp.fonte === 'manual'){
     p.qtd = 1; p.pm = Number($('#aValor').value) || 0;
     p.valorManual = Number($('#aValorAtual').value) || 0;
-    if(p.valorManual) p.valorManualData = new Date().toISOString();
+    if(p.valorManual){
+      p.valorManualData = new Date().toISOString();
+      p.historicoManual = p.historicoManual || [];
+      const hj = new Date().toISOString().slice(0,10);
+      if(!p.historicoManual.some(x => x[0] === hj)) p.historicoManual.push([hj, p.valorManual]);
+    }
     p.moeda = $('#aMoeda').value;
   }else if(tp.fonte === 'moeda'){
     p.moeda = $('#aMoeda').value;
@@ -4101,6 +4510,70 @@ function salvarAtivo(){
 }
 
 /* aporte rápido: recalcula o preço médio */
+let grafPeriodo = '6mo';
+
+async function abrirGrafico(id){
+  const p = ST.posicoes.find(x => x.id === id); if(!p) return;
+  const c = calc(p);
+  const desenhar = async () => {
+    $('#assetModalTitle').textContent = p.ticker + ' — ' + (p.nome || '');
+    let h = '<div class="row" style="margin-bottom:12px">';
+    PERIODOS.forEach(per => {
+      h += '<span class="chip click' + (grafPeriodo === per.id ? ' on' : '') + '" data-graf-per="' + per.id + '|' + id + '">' + per.nome + '</span>';
+    });
+    h += '<div class="spacer"></div><span class="small muted">' + esc(c.tp.nome) + '</span></div>';
+    h += '<div id="grafArea"><p class="muted small">Carregando o histórico…</p></div>';
+    $('#assetModalBody').innerHTML = h;
+    abrir('assetModal');
+
+    const s = await Hist.serie(p, grafPeriodo, ST.config);
+    const area = $('#grafArea');
+    if(!area) return;
+    if(!s || s.erro || !s.pontos.length){
+      area.innerHTML = '<div class="empty"><span class="ic">📉</span><p>' +
+        esc((s && s.erro) || 'Não há histórico para este ativo.') + '</p>' +
+        (c.tp.fonte === 'manual' || c.tp.fonte === 'taxa'
+          ? '<p class="small muted">Fundos, previdência e renda fixa não têm cotação pública. ' +
+            'Cada vez que você atualizar o valor pelo 💰, o app guarda o ponto e o gráfico vai se formando.</p>' : '') +
+        '</div>';
+      return;
+    }
+    const ini = s.pontos[0].v, fimP = s.pontos[s.pontos.length-1].v;
+    const varPer = ini ? (fimP/ini - 1) * 100 : 0;
+    area.innerHTML =
+      '<div class="graf-topo">' +
+        '<div><div class="graf-preco">' + fmt(fimP, s.moeda, casasPreco(fimP)) + '</div>' +
+        '<div class="small ' + cls(varPer) + '">' + fmtPct(varPer, true) + ' no período</div></div>' +
+        '<div class="graf-lados small muted">' +
+          '<div>Seu preço médio: <b>' + (c.pm ? fmt(c.pm, s.moeda, casasPreco(c.pm)) : '—') + '</b></div>' +
+          '<div>Sua posição: <b>' + fmt(c.valorBase) + '</b> · <span class="' + cls(c.pl) + '">' + fmtPct(c.plPct, true) + '</span></div>' +
+        '</div>' +
+      '</div>' +
+      vizLinhaTempo(s.pontos, {moeda: s.moeda, pm: c.pm || null, altura: 250,
+        fmt: v => fmt(v, s.moeda, v >= 1000 ? 0 : 2)}) +
+      '<p class="tiny muted" style="margin-top:8px">Fonte: ' + esc(s.fonte || '—') +
+      ' · preços de fechamento, com atraso. Passe o dedo ou o mouse sobre o gráfico para ver cada dia.</p>';
+    ligarGraficos(area);
+  };
+  await desenhar();
+}
+
+function abrirAcoesAtivo(id){
+  const p = ST.posicoes.find(x => x.id === id); if(!p) return;
+  const manual = TIPOS[p.tipo].fonte === 'manual';
+  $('#genTitle').textContent = p.ticker;
+  $('#genBody').innerHTML =
+    '<p class="small muted">' + esc(p.nome || '') + (p.inst ? ' · ' + esc(p.inst) : '') + '</p>' +
+    '<div class="menu-acoes">' +
+      '<button class="btn" data-grafico="' + id + '">📈 Ver gráfico</button>' +
+      '<button class="btn" data-editar="' + id + '">✏️ Editar</button>' +
+      '<button class="btn" data-aporte="' + id + '">➕ Novo aporte</button>' +
+      '<button class="btn" data-valor="' + id + '">💰 ' + (manual ? 'Atualizar valor' : 'Preço manual') + '</button>' +
+      '<button class="btn danger" data-excluir="' + id + '">🗑️ Excluir</button>' +
+    '</div>';
+  abrir('genModal');
+}
+
 function abrirAporte(id){
   const p = ST.posicoes.find(x => x.id === id); if(!p) return;
   const tp = TIPOS[p.tipo];
@@ -4209,6 +4682,53 @@ function abrirInfo(chave){
   abrir('infoModal');
 }
 
+/* ---------- interação dos gráficos ---------- */
+function ligarGraficos(raiz){
+  $$('.viz-tempo', raiz || document).forEach(caixa => {
+    if(caixa.dataset.pronto) return;
+    caixa.dataset.pronto = '1';
+    let pontos = [];
+    try{ pontos = JSON.parse(caixa.dataset.pontos); }catch(e){ return; }
+    if(pontos.length < 2) return;
+    const geo = caixa.dataset.geo.split(',').map(Number);
+    const [W,H,mL,mR,mT,mB,min,max] = geo;
+    const svg = caixa.querySelector('svg');
+    const balao = caixa.querySelector('.viz-balao');
+    const cursor = caixa.querySelector('.cursor');
+    const linha = caixa.querySelector('.cursor-l');
+    const bolinha = caixa.querySelector('.cursor-p');
+    const captura = caixa.querySelector('.captura');
+    const moeda = caixa.dataset.moeda;
+
+    function mover(ev){
+      const r = svg.getBoundingClientRect();
+      const cx = (ev.touches && ev.touches[0] ? ev.touches[0].clientX : ev.clientX) - r.left;
+      const x = cx / r.width * W;
+      let i = Math.round(((x - mL) / (W - mL - mR)) * (pontos.length - 1));
+      i = Math.max(0, Math.min(pontos.length - 1, i));
+      const t = pontos[i][0], v = pontos[i][1];
+      const gx = mL + (i / (pontos.length - 1)) * (W - mL - mR);
+      const gy = H - mB - ((v - min) / ((max - min) || 1)) * (H - mT - mB);
+      cursor.style.display = '';
+      linha.setAttribute('x1', gx); linha.setAttribute('x2', gx);
+      bolinha.setAttribute('cx', gx); bolinha.setAttribute('cy', gy);
+      balao.hidden = false;
+      const texto = moeda && moeda !== '%'
+        ? fmt(v, moeda, casasPreco(v))
+        : v.toLocaleString('pt-BR', {maximumFractionDigits:2}) + (moeda === '%' ? '%' : '');
+      balao.innerHTML = '<b>' + esc(texto) + '</b> <span>' + new Date(t).toLocaleDateString('pt-BR') + '</span>';
+      const alvo = gx / W * r.width;
+      balao.style.left = Math.max(46, Math.min(r.width - 46, alvo)) + 'px';
+    }
+    const sair = () => { cursor.style.display = 'none'; balao.hidden = true; };
+    captura.addEventListener('mousemove', mover);
+    captura.addEventListener('mouseleave', sair);
+    captura.addEventListener('touchstart', mover, {passive:true});
+    captura.addEventListener('touchmove', e => { mover(e); e.preventDefault(); }, {passive:false});
+    captura.addEventListener('touchend', sair);
+  });
+}
+
 /* =========================================================
    INFRA: modais, toasts, navegação
    ========================================================= */
@@ -4241,6 +4761,7 @@ function render(){
   el.classList.remove('hidden');
   renderTopo();
   ligarCamposDaView();
+  ligarGraficos(el);
 }
 
 /* ---------- fita rolante do topo (estilo painel de bolsa) ---------- */
@@ -4420,6 +4941,8 @@ async function atualizarCotacoes(forcar){
   btn.classList.add('spinning'); btn.disabled = true;
   try{
     const erros = await Mercado.atualizar(ST.posicoes, ST.config, forcar);
+    Hist.anotarDoMercado();
+    registrarFoto();
     renderTopo();
     if(viewAtual !== 'coach' && viewAtual !== 'glossario' && viewAtual !== 'config') render();
 
@@ -4628,7 +5151,7 @@ function ligarEventos(){
 
   /* cliques gerais (delegação) */
   document.addEventListener('click', async (e) => {
-    const el = e.target.closest('[data-olho],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del]');
+    const el = e.target.closest('[data-olho],[data-mk-serie],[data-mk-per],[data-graf-per],[data-grafico],[data-acoes-ativo],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del]');
     if(!el) return;
     const d = el.dataset;
 
@@ -4644,9 +5167,17 @@ function ligarEventos(){
       return;
     }
     if(d.info != null && (el.classList.contains('info-dot') || el.tagName === 'I' || el.classList.contains('res-item'))){ abrirInfo(d.info); return; }
-    if(d.editar){ abrirModalAtivo(d.editar); return; }
-    if(d.aporte){ abrirAporte(d.aporte); return; }
-    if(d.valor){ abrirValorManual(d.valor); return; }
+    if(d.acoesAtivo){ abrirAcoesAtivo(d.acoesAtivo); return; }
+    if(d.grafico){ fechar('genModal'); abrirGrafico(d.grafico); return; }
+    if(d.mkSerie){ mkSerie = d.mkSerie; render(); return; }
+    if(d.mkPer){ mkPer = d.mkPer; render(); return; }
+    if(d.grafPer){
+      const [per, idg] = d.grafPer.split('|');
+      grafPeriodo = per; abrirGrafico(idg); return;
+    }
+    if(d.editar){ fechar('genModal'); abrirModalAtivo(d.editar); return; }
+    if(d.aporte){ fechar('genModal'); abrirAporte(d.aporte); return; }
+    if(d.valor){ fechar('genModal'); abrirValorManual(d.valor); return; }
     if(d.excluir){
       const p = ST.posicoes.find(x => x.id === d.excluir);
       if(p && confirm('Excluir ' + p.ticker + ' da carteira?')){
@@ -4672,8 +5203,22 @@ function ligarEventos(){
       Store.salvar(); render(); return;
     }
     if(d.letra != null){ glLetra = d.letra; glBusca = ''; render(); return; }
-    if(d.filtroTipo){ filtroTipo = d.filtroTipo; render(); return; }
-    if(d.filtroInst){ filtroInst = d.filtroInst; render(); return; }
+    if(d.filtroTipo){
+      if(d.filtroTipo === 'todos') filtrosTipo = [];
+      else{
+        const i = filtrosTipo.indexOf(d.filtroTipo);
+        if(i >= 0) filtrosTipo.splice(i,1); else filtrosTipo.push(d.filtroTipo);
+      }
+      render(); return;
+    }
+    if(d.filtroInst){
+      if(d.filtroInst === 'todas') filtrosInst = [];
+      else{
+        const i = filtrosInst.indexOf(d.filtroInst);
+        if(i >= 0) filtrosInst.splice(i,1); else filtrosInst.push(d.filtroInst);
+      }
+      render(); return;
+    }
     if(d.perfil){ ST.config.perfil = d.perfil; ST.config.alvoAlocacao = null; Store.salvar(); render(); return; }
     if(d.fonteToggle){
       const atuais = ST.config.fontesNoticias || FONTES_NOTICIAS.filter(x => x.pais === 'BR').map(x => x.id);
@@ -4688,6 +5233,7 @@ function ligarEventos(){
     if(d.cotar){ const b = $('#mkBusca'); if(b) b.value = d.cotar; cotarAvulso(d.cotar); return; }
 
     switch(d.acao){
+      case 'limpar-filtros': filtrosTipo = []; filtrosInst = []; render(); break;
       case 'limpar-busca': coachBusca = ''; render(); break;
       case 'atualizar-noticias': {
         Noticias.carregando = true; render();
@@ -4712,6 +5258,12 @@ function ligarEventos(){
           if(TIPOS[p.tipo].fonte === 'manual'){
             p.valorManual = Number($('#vmValor').value) || 0;
             p.valorManualData = new Date().toISOString();
+            p.historicoManual = p.historicoManual || [];
+            const hojeIso = new Date().toISOString().slice(0,10);
+            const ultimo = p.historicoManual[p.historicoManual.length-1];
+            if(ultimo && ultimo[0] === hojeIso) ultimo[1] = p.valorManual;
+            else p.historicoManual.push([hojeIso, p.valorManual]);
+            if(p.historicoManual.length > 300) p.historicoManual.shift();
           }else{
             const bruto = ($('#vmPreco').value || '').trim();
             if(bruto === ''){ delete p.precoManual; delete p.precoManualData; }
@@ -4851,6 +5403,7 @@ function iniciar(){
   ST = Store.estado;
   Mercado.lerCache();
   Noticias.lerCache();
+  Hist.lerCache();
   aplicarTema();
   sincronizarNivel();
   ligarEventos();
