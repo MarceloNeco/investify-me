@@ -4146,6 +4146,7 @@ function abrirNovaMeta(){
    ========================================================= */
 function autocomplete(input, caixa, aoEscolher){
   let idx = -1, itens = [];
+  input.dataset.ac = '1';
   function fechaAC(){ caixa.innerHTML = ''; idx = -1; }
   function desenha(){
     itens = buscarCatalogo(input.value, 12);
@@ -4161,7 +4162,7 @@ function autocomplete(input, caixa, aoEscolher){
     if(!itens.length) return;
     if(e.key === 'ArrowDown'){ e.preventDefault(); idx = Math.min(idx+1, itens.length-1); desenha(); }
     else if(e.key === 'ArrowUp'){ e.preventDefault(); idx = Math.max(idx-1, 0); desenha(); }
-    else if(e.key === 'Enter' && idx >= 0){ e.preventDefault(); aoEscolher(itens[idx]); fechaAC(); }
+    else if(e.key === 'Enter' && idx >= 0){ e.preventDefault(); e.stopPropagation(); aoEscolher(itens[idx]); fechaAC(); }
     else if(e.key === 'Escape') fechaAC();
   });
   caixa.addEventListener('mousedown', e => {
@@ -4577,7 +4578,16 @@ function ligarEventos(){
     if(e.target.classList.contains('modal-wrap')) e.target.classList.add('hidden');
   });
   document.addEventListener('keydown', e => {
-    if(e.key === 'Escape') $$('.modal-wrap').forEach(m => m.classList.add('hidden'));
+    if(e.key === 'Escape'){ $$('.modal-wrap').forEach(m => m.classList.add('hidden')); return; }
+    if(e.key !== 'Enter') return;
+    const alvo = e.target;
+    if(!alvo || alvo.tagName !== 'INPUT') return;
+    if(alvo.type === 'checkbox' || alvo.type === 'radio') return;
+    if(alvo.dataset.ac === '1') return;                 /* campo com lista de sugestões cuida do Enter */
+    const janela = alvo.closest('.modal-wrap:not(.hidden)');
+    if(!janela) return;
+    const botao = janela.querySelector('.modal-foot .btn.primary, .f-actions .btn.primary, .btn.primary');
+    if(botao && !botao.disabled){ e.preventDefault(); botao.click(); }
   });
 
   /* popup (i) */
