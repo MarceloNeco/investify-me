@@ -723,6 +723,15 @@ details.explica p{margin:9px 0 0}
 .tx-trilho{height:10px; border-radius:5px; background:var(--line); overflow:hidden}
 .tx-trilho i{display:block; height:10px; border-radius:5px}
 
+/* atalho de perfil e cotação de referência */
+.perfil-atalho{margin-top:12px; padding-top:12px; border-top:1px solid var(--line)}
+.pa-lbl{font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--txt3); margin-bottom:7px}
+.perfil-atalho .row{align-items:center}
+.linkinho{background:none; border:0; padding:0; color:var(--accent2); font:inherit; font-size:inherit; cursor:pointer; text-decoration:underline}
+.cotacao-ref{display:flex; align-items:center; gap:9px; flex-wrap:wrap; font-size:.82rem; color:var(--txt2);
+  padding:9px 12px; border:1px solid var(--line); border-radius:10px; background:var(--card2); margin-bottom:12px}
+.cotacao-ref b{color:var(--txt); font-variant-numeric:tabular-nums}
+
 </style>
 </head>
 <body>
@@ -1614,9 +1623,7 @@ GLOSSARIO_EXTRA2.forEach(g => { GLOSSARIO.push(g); GLOS_MAP[g.k] = g; });
 GLOSSARIO.sort((a,b) => a.t.localeCompare(b.t, 'pt-BR'));
 
 /* Devolve o texto do termo conforme o nível escolhido */
-function textoGlossario(chave, nivel){
-  const g = GLOS_MAP[chave,
-
+const GLOSSARIO_EXTRA3 = [
 /* ---------- Medidas de retorno ---------- */
 {k:'xirr', t:'XIRR (retorno do seu bolso)', c:'Estratégia',
  d:'É a taxa anual que leva em conta quanto você aportou e em que data. Responde à pergunta "quanto eu realmente ganhei por ano".',
@@ -1632,8 +1639,12 @@ function textoGlossario(chave, nivel){
  d:'É transformar o ganho de qualquer período em "quanto seria por ano", para dar para comparar coisas de prazos diferentes.',
  m:'Cuidado com anualizar períodos curtos: render 3% em um mês não é render 36% no ano, é 42,6% — e provavelmente não vai se repetir. Anualizar menos de um ano infla a impressão.',
  e:'Taxa equivalente composta: (1+r)^(365/dias) − 1. Não confunda com CAGR sobre valores de ponta a ponta, que ignora fluxos intermediários, nem com média aritmética de retornos, sempre maior que a geométrica quando há volatilidade.'}
-
 ];
+GLOSSARIO_EXTRA3.forEach(g => { GLOSSARIO.push(g); GLOS_MAP[g.k] = g; });
+GLOSSARIO.sort((a,b) => a.t.localeCompare(b.t, 'pt-BR'));
+
+function textoGlossario(chave, nivel){
+  const g = GLOS_MAP[chave];
   if(!g) return null;
   let html = '<p>' + g.d + '</p>';
   if((nivel === 'medio' || nivel === 'expert') && g.m) html += '<p>' + g.m + '</p>';
@@ -5576,7 +5587,18 @@ function cardComparacao(){
 function cardCambio(t){
   const c = Rent.cambio(t);
   if(!c.totalFora) return '';
-  let h = '<div class="grid g3" style="margin-bottom:10px">' +
+  const moedas = Object.keys(c.exposto);
+  const cotacoes = moedas.map(m => {
+    const o = (Mercado.cambio || {})[m];
+    return o ? '<b>1 ' + esc(m) + ' = ' + fmt(o.p, 'BRL', 4) + '</b>' +
+      (o.hora ? ' <span class="tiny muted">(' + fmtHora(o.hora) + ')</span>' : '')
+      : '<b>' + esc(m) + '</b> <span class="tiny muted">(sem cotação)</span>';
+  }).join(' · ');
+
+  let h = '<div class="cotacao-ref">Cotação usada na conversão: ' + cotacoes +
+    '<button class="btn sm ghost" data-acao="atualizar-cambio">⟳ Atualizar</button></div>';
+
+  h += '<div class="grid g3" style="margin-bottom:10px">' +
     kpi('Exposto a moeda estrangeira', fmt(c.totalFora), 'swing-cambial', pnum(c.pct, 1) + '% do patrimônio') +
     kpi('Se a moeda subir 10%', '+' + fmt(c.sensib10), null, 'sem você fazer nada') +
     kpi('Se a moeda cair 10%', '−' + fmt(c.sensib10), null, 'o mesmo, ao contrário') +
@@ -5584,10 +5606,12 @@ function cardCambio(t){
 
   const comDados = c.efeitos.filter(e => e.efeito != null && e.dias >= 3);
   if(comDados.length){
-    h += '<div class="tbl-wrap"><table><thead><tr><th>Moeda</th><th class="num">Valor exposto</th>' +
+    h += '<div class="tbl-wrap"><table><thead><tr><th>Moeda</th><th class="num">Cotação hoje</th><th class="num">Valor exposto</th>' +
       '<th class="num">Variação no período</th><th class="num">Quanto veio do câmbio</th></tr></thead><tbody>';
     comDados.forEach(e => {
+      const cot = ((Mercado.cambio || {})[e.moeda] || {}).p;
       h += '<tr><td><b>' + esc(e.moeda) + '</b><div class="t-sub">desde ' + fmtData(e.desde) + '</div></td>' +
+        '<td class="num mono">' + (cot ? fmt(cot, 'BRL', 4) : '—') + '</td>' +
         '<td class="num mono">' + fmt(e.valor) + '</td>' +
         '<td class="num mono ' + cls(e.varPct) + '">' + fmtPct(e.varPct, true) + '</td>' +
         '<td class="num mono ' + cls(e.efeito) + '">' + (e.efeito >= 0 ? '+' : '−') + fmt(Math.abs(e.efeito)) + '</td></tr>';
@@ -5640,9 +5664,30 @@ function cardPerfilRisco(t){
         '</b><p class="small">' + esc(comp.texto) + '</p></div>'
       : '<div class="perfil-comp neutro"><b>Você ainda não descobriu seu perfil</b>' +
         '<p class="small">O teste leva dois minutos e diz quanto risco combina com a sua situação — não só com a sua coragem.</p>' +
-        '<button class="btn sm primary" data-acao="questionario">Descobrir meu perfil</button></div>');
+        '<button class="btn sm primary" data-acao="questionario">Descobrir meu perfil</button></div>') +
+    atalhoPerfil(meu, temTeste);
 
   return bloco('Perfil de risco da carteira', corpo, 'perfil-investidor', true);
+}
+
+/* atalho para trocar de perfil sem sair do painel */
+function atalhoPerfil(meu, temTeste){
+  let h = '<div class="perfil-atalho"><div class="pa-lbl">Meu perfil declarado' +
+    (ST.config.perfilManual || !temTeste ? '' : ' <span class="tiny muted">(pelo questionário)</span>') + '</div><div class="row">';
+  ORDEM_PERFIS.forEach(k => {
+    h += '<span class="chip click' + (meu === k ? ' on' : '') + '" data-perfil="' + k + '" ' +
+      'title="Adotar o perfil ' + PERFIS[k].nome + '">' + PERFIS[k].nome + '</span>';
+  });
+  h += '<span class="spacer"></span>' +
+    '<button class="btn sm ghost" data-acao="explicar-perfil" data-id="' + meu + '">O que significa</button>' +
+    '<button class="btn sm ghost" data-acao="' + (temTeste ? 'ver-resultado-perfil' : 'questionario') + '">' +
+      (temTeste ? 'Ver meu resultado' : 'Fazer o teste') + '</button>' +
+    '</div>' +
+    (ST.config.perfilManual && temTeste
+      ? '<p class="tiny muted" style="margin-top:6px">Perfil escolhido na mão. ' +
+        '<button class="linkinho" data-acao="voltar-perfil-teste">Voltar ao resultado do questionário</button></p>'
+      : '') + '</div>';
+  return h;
 }
 
 /* explicação completa de um perfil */
@@ -7306,6 +7351,10 @@ function ligarEventos(){
         }
         break;
       case 'mais-mov': movLimite += 40; render(); break;
+      case 'atualizar-cambio':
+        toast('Buscando as cotações…');
+        await atualizarCotacoes(true);
+        break;
       case 'recarregar-comp': delete compDados[compPer]; cdiInicio = null; render(); break;
       case 'semear-mov': {
         const n = Mov.semear(ST.posicoes);
@@ -7340,6 +7389,14 @@ function ligarEventos(){
         render();
         break;
       }
+      case 'voltar-perfil-teste':
+        if(ST.config.perfilResultado){
+          ST.config.perfilManual = false;
+          ST.config.perfil = ST.config.perfilResultado.perfil;
+          ST.config.alvoAlocacao = null;
+          Store.salvar(); render(); toast('Perfil voltou para o resultado do questionário.');
+        }
+        break;
       case 'ver-resultado-perfil':
         if(ST.config.perfilResultado){ abrir('assetModal'); mostrarResultadoPerfil(ST.config.perfilResultado); }
         else abrirQuestionario();
