@@ -760,6 +760,30 @@ details.explica p{margin:9px 0 0}
 .ii-g{margin-top:2px}
 @media (max-width:560px){ .imp-fatos{grid-template-columns:1fr} }
 
+/* ---------- importação em lote ---------- */
+details.imp-arq{border:1px solid var(--line); border-radius:11px; background:var(--card2); margin-bottom:9px}
+details.imp-arq > summary{cursor:pointer; padding:11px 13px; display:flex; align-items:baseline; gap:9px; list-style:none}
+details.imp-arq > summary::-webkit-details-marker{display:none}
+details.imp-arq > summary::before{content:'▸'; color:var(--txt3); margin-right:2px}
+details.imp-arq[open] > summary::before{content:'▾'}
+.ia-t{font-weight:640; font-size:.9rem}
+.ia-p{flex:1}
+.ia-c{background:var(--chip); border-radius:20px; padding:2px 9px; white-space:nowrap}
+.ia-corpo{padding:0 13px 13px}
+
+/* ---------- documentação da carteira ---------- */
+.doc-topo{display:flex; align-items:center; gap:12px; margin-bottom:9px}
+.doc-barra{flex:1; display:flex; height:10px; border-radius:5px; overflow:hidden; background:var(--line)}
+.doc-barra i{display:block; height:10px}
+.db-ok{background:var(--accent)} .db-neu{background:var(--txt3)} .db-par{background:var(--warn)}
+.doc-num{font-variant-numeric:tabular-nums; font-weight:680}
+.doc-lista{display:flex; flex-direction:column; max-height:330px; overflow:auto; margin-top:6px}
+.doc-item{display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--line)}
+.doc-item:first-child{border-top:0}
+.di-n{flex:1; min-width:0}
+.di-b{display:flex; gap:6px; flex-shrink:0}
+@media (max-width:560px){ .doc-item{flex-wrap:wrap} .di-b{width:100%} .di-b .btn{flex:1; justify-content:center} }
+
 </style>
 </head>
 <body>
@@ -1331,17 +1355,17 @@ const GLOSSARIO = [
  m:'Existem dois grandes grupos: fundos de tijolo (donos de shoppings, galpões, lajes) e fundos de papel (que emprestam para o setor imobiliário via CRI). Os rendimentos mensais são isentos de IR para pessoa física, dentro das regras da lei.',
  e:'Avalie P/VP, vacância física e financeira, cap rate, alavancagem, prazo e indexação dos contratos, e concentração de inquilinos. Em fundos de papel, a indexação (CDI vs IPCA) define o comportamento em ciclos de juros.'},
 
-{k:'etf', t:'ETF', c:'Renda variável',
+{k:'etf', t:'ETF — Exchange Traded Fund (fundo de índice negociado em bolsa)', c:'Renda variável',
  d:'É uma cestinha pronta de vários investimentos, negociada como se fosse uma ação. Comprando uma cota de um ETF do S&P 500, você compra um pedacinho das 500 maiores empresas americanas de uma vez.',
  m:'É a forma mais simples e barata de diversificar. A taxa de administração é baixa (muitas vezes abaixo de 0,1% ao ano) e você não precisa escolher empresa por empresa.',
  e:'Avalie tracking difference (não só o erro), método de replicação (física completa, amostral, sintética), empréstimo de ações, domicílio fiscal (ETF irlandês UCITS reduz retenção de dividendo para 15% e evita estate tax dos EUA).'},
 
-{k:'bdr', t:'BDR', c:'Renda variável',
+{k:'bdr', t:'BDR — Brazilian Depositary Receipt (ação estrangeira negociada na B3)', c:'Renda variável',
  d:'É um recibo negociado na bolsa brasileira que representa uma ação estrangeira. Permite investir na Apple comprando AAPL34 em reais, sem abrir conta lá fora.',
  m:'Você fica exposto à ação e ao dólar ao mesmo tempo. Em compensação, paga IR de 15% sobre o ganho sem a isenção mensal de R$ 20 mil das ações comuns, e os dividendos chegam já com retenção lá fora.',
  e:'BDR não patrocinado é emitido por depositário sem envolvimento da empresa; a paridade pode ser ajustada e há spread/iliquidez relevante frente ao ativo-objeto. O custo total costuma superar o de investir direto lá fora em carteiras maiores.'},
 
-{k:'reit', t:'REIT', c:'Renda variável',
+{k:'reit', t:'REIT (o fundo imobiliário americano)', c:'Renda variável',
  d:'É o primo americano do FII: uma empresa de imóveis listada em bolsa que distribui quase todo o lucro aos acionistas.',
  m:'Por lei, distribuem pelo menos 90% do lucro tributável. Para brasileiros, os dividendos sofrem 30% de retenção nos EUA.',
  e:'Analise FFO e AFFO no lugar do lucro contábil (depreciação distorce), além de dívida, prazo médio (WALT) e spread do cap rate frente ao Treasury.'},
@@ -1403,12 +1427,12 @@ const GLOSSARIO = [
  m:'Três caminhos: corretora internacional (Avenue, Nomad, Inter US, Schwab, IBKR), BDRs na bolsa brasileira, ou ETFs brasileiros que seguem índices lá fora (IVVB11, NASD11). Cada um tem custo e imposto diferentes.',
  e:'Considere domicílio fiscal do veículo (US-domiciled vs UCITS irlandês), estate tax americano acima de US$ 60 mil para não residentes, retenção de 30% em dividendos e obrigações de declaração (CBE do Bacen acima do limite vigente).'},
 
-{k:'w8ben', t:'W-8BEN', c:'Internacional',
+{k:'w8ben', t:'W-8BEN (formulário de não residente nos EUA)', c:'Internacional',
  d:'É um formulário que você assina na corretora estrangeira dizendo que não é residente fiscal nos EUA. Toda corretora internacional pede.',
  m:'Ele evita retenção mais pesada e organiza sua situação com o fisco americano. Vale por três anos e precisa ser renovado.',
  e:'Sem W-8BEN válido, aplica-se backup withholding de 24% sobre proventos e, em alguns casos, sobre o bruto da venda. O Brasil não tem tratado de bitributação com os EUA, mas a retenção de 30% em dividendos pode ser compensada parcialmente conforme a legislação brasileira.'},
 
-{k:'estate-tax', t:'Estate tax', c:'Internacional',
+{k:'estate-tax', t:'Estate tax (imposto sobre herança nos EUA)', c:'Internacional',
  d:'É um imposto americano sobre herança. Para estrangeiros, pode alcançar valores acima de US$ 60 mil aplicados em ativos americanos.',
  m:'Vale conhecer se você acumular um valor relevante lá fora: a alíquota chega a 40% sobre o que passar do limite, e o dinheiro pode ficar travado até a regularização.',
  e:'Mitigações comuns: ETFs UCITS domiciliados na Irlanda (situs fora dos EUA), conta conjunta com estrutura adequada, seguro de vida, ou holding offshore — cada uma com trade-offs fiscais no Brasil.'},
@@ -1429,7 +1453,7 @@ const GLOSSARIO = [
  m:'É o ativo mais volátil da lista: quedas de 50% ou mais já aconteceram várias vezes. Costuma-se recomendar posição pequena (1% a 5% da carteira) e só com dinheiro que você suporta ver oscilar muito.',
  e:'Sem fluxo de caixa, a avaliação é reflexiva (oferta programada vs demanda). Considere risco de custódia (self-custody vs exchange), risco regulatório e tributação: no Brasil, ganhos acima de R$ 35 mil/mês em vendas são tributados.'},
 
-{k:'stablecoin', t:'Stablecoin', c:'Cripto',
+{k:'stablecoin', t:'Stablecoin (cripto atrelada a uma moeda)', c:'Cripto',
  d:'É uma criptomoeda que tenta valer sempre US$ 1, como USDT e USDC. Serve para guardar valor em dólar dentro do mundo cripto.',
  m:'Não é igual a dólar no banco: depende da solidez de quem emite e das reservas que essa empresa mantém. Já houve casos de stablecoin perdendo a paridade.',
  e:'Distinga colateralizada em fiat (USDC/USDT), cripto-colateralizada sobrecolateralizada (DAI) e algorítmica (histórico de colapso). Avalie atestações de reserva, custodiantes e risco de resgate.'},
@@ -1487,7 +1511,7 @@ const GLOSSARIO = [
  m:'Ela vem do questionário de suitability que banco e corretora são obrigados a aplicar. Mas o teste de verdade é outro: se a carteira cair 30%, você vende em pânico ou aporta mais? O perfil não é um rótulo permanente: muda quando muda o prazo, a renda ou a reserva.',
  e:'Separe capacidade de risco (objetiva: horizonte, renda, patrimônio, liquidez) de tolerância a risco (subjetiva, comportamental). A carteira precisa respeitar a MENOR das duas — e é assim que o app calcula. Vale também checar o terceiro eixo, a necessidade de risco: se a meta já é alcançável com renda fixa, correr risco extra é assimetria negativa.'},
 
-{k:'suitability', t:'Suitability', c:'Estratégia',
+{k:'suitability', t:'Suitability (questionário de perfil)', c:'Estratégia',
  d:'É o nome técnico do questionário de perfil. Serve para a instituição não vender um produto arriscado demais para quem não aguenta.',
  m:'No Brasil é obrigatório por norma da CVM e precisa ser refeito periodicamente, normalmente a cada 24 meses. Se você responder para agradar — dizendo que aguenta mais risco do que aguenta — o resultado é inútil.',
  e:'CVM Resolução 30 exige avaliar objetivos, situação financeira e conhecimento, e proíbe recomendar produto inadequado sem alerta formal. Na prática, muitas instituições usam o questionário como formalidade; use-o como diagnóstico próprio, não como carimbo.'},
@@ -1502,12 +1526,12 @@ const GLOSSARIO = [
  m:'É a metade subjetiva do perfil. Quase todo mundo superestima a própria tolerância em mercado de alta e descobre a verdade na primeira queda de 20%.',
  e:'Medida por escalas psicométricas e por experiência revelada — o que a pessoa efetivamente fez em drawdowns anteriores vale mais que o que ela diz que faria. Aversão a perda (Kahneman e Tversky) faz a dor de perder pesar cerca de duas vezes o prazer de ganhar o mesmo valor.'},
 
-{k:'benchmark', t:'Benchmark', c:'Estratégia',
+{k:'benchmark', t:'Benchmark (referência de comparação)', c:'Estratégia',
  d:'É a referência usada para comparar seu resultado — CDI para renda fixa, Ibovespa para ações brasileiras, S&P 500 para americanas.',
  m:'Ganhar 8% parece bom, mas se o CDI deu 13% no mesmo período, você perdeu para o básico. Comparar sempre com a régua certa evita ilusão.',
  e:'Use benchmark investível e de risco semelhante. Alfa sem ajuste por beta e por fatores (tamanho, valor, momentum, qualidade) costuma ser exposição a fator disfarçada de habilidade.'},
 
-{k:'custo-oportunidade', t:'Custo de oportunidade', c:'Estratégia',
+{k:'custo-oportunidade', t:'Custo de oportunidade (o que você deixa de ganhar)', c:'Estratégia',
  d:'É o que você deixou de ganhar por ter escolhido uma coisa em vez de outra.',
  m:'Deixar R$ 50 mil parados na conta corrente enquanto o CDI rende 13% ao ano custa uns R$ 6,5 mil por ano de rendimento não recebido.',
  e:'Na prática, é a taxa de desconto correta para comparar projetos: o retorno da melhor alternativa de risco equivalente.'},
@@ -1546,7 +1570,7 @@ GLOSSARIO.forEach(g => GLOS_MAP[g.k] = g);
 const GLOSSARIO_EXTRA = [
 {k:'bolsa', t:'Bolsa de valores', c:'Básico', d:'É o mercado organizado onde se compram e vendem ações e outros papéis. No Brasil é a B3; nos EUA, NYSE e Nasdaq.', m:'Você não negocia direto na bolsa: manda a ordem pela corretora, que leva ao sistema da bolsa e registra a operação no seu CPF.'},
 {k:'corretora', t:'Corretora', c:'Básico', d:'É a empresa que dá acesso aos investimentos. Você transfere o dinheiro para lá e compra os papéis por um aplicativo ou site.', m:'Os ativos ficam registrados no seu nome (na B3 ou no custodiante), não no balanço da corretora — se ela quebrar, seus papéis continuam seus, embora o processo dê trabalho.'},
-{k:'home-broker', t:'Home broker', c:'Básico', d:'É a tela da corretora onde você digita as ordens de compra e venda.', m:'Ordem a mercado executa no melhor preço disponível na hora; ordem limitada só executa no preço que você definir ou melhor.'},
+{k:'home-broker', t:'Home broker (a tela de ordens da corretora)', c:'Básico', d:'É a tela da corretora onde você digita as ordens de compra e venda.', m:'Ordem a mercado executa no melhor preço disponível na hora; ordem limitada só executa no preço que você definir ou melhor.'},
 {k:'ticker', t:'Ticker (código)', c:'Básico', d:'É a sigla do investimento na bolsa: PETR4 é a Petrobras PN, AAPL é a Apple.', m:'No Brasil, o número no fim indica o tipo: 3 é ordinária (ON), 4 preferencial (PN), 11 é unit, BDR ou fundo, e 34 identifica BDR de ação americana.'},
 {k:'lote-padrao', t:'Lote e fracionário', c:'Básico', d:'O lote padrão da bolsa brasileira é de 100 ações. Comprando menos que isso, você usa o mercado fracionário (código com F no fim).', m:'O fracionário tem menos liquidez e o preço pode sair alguns centavos pior; para valores pequenos, a diferença é irrelevante.'},
 {k:'custodia', t:'Custódia', c:'Básico', d:'É o "cofre" onde ficam guardados seus investimentos, em seu nome.', m:'No Brasil, a custódia central é da B3, e você pode conferir tudo pela Área do Investidor da própria B3, sem depender da corretora.'},
@@ -1554,36 +1578,36 @@ const GLOSSARIO_EXTRA = [
 {k:'spread-cambial', t:'Spread cambial e IOF', c:'Custos', d:'É a diferença entre a cotação do dólar que você vê e a que a corretora realmente te cobra, mais o imposto sobre a operação.', m:'Para remessa de investimento, o IOF é bem menor que o do cartão de crédito. Compare o "dólar efetivo" (com spread e IOF) entre as instituições — a diferença costuma ser de 0,5% a 2%.'},
 {k:'taxa-administracao', t:'Taxa de administração', c:'Custos', d:'É quanto o fundo cobra por ano para gerir seu dinheiro, descontada todo dia do valor da cota.', m:'Parece pequena, mas 2% ao ano por 20 anos consomem cerca de um terço do que você teria acumulado. Em ETFs de índice, ela costuma ficar abaixo de 0,3%.'},
 {k:'taxa-performance', t:'Taxa de performance', c:'Custos', d:'É uma taxa extra que alguns fundos cobram quando superam seu benchmark — geralmente 20% do que passar.', m:'Procure a linha d’água (high-water mark): sem ela, o gestor pode cobrar performance depois de recuperar um prejuízo que ele mesmo causou.'},
-{k:'ipo', t:'IPO', c:'Renda variável', d:'É quando uma empresa estreia na bolsa e vende ações ao público pela primeira vez.', m:'Historicamente, participar de IPO no varejo dá resultado irregular: a empresa e os donos escolhem o momento em que vender é mais vantajoso para eles.'},
+{k:'ipo', t:'IPO — Initial Public Offering (estreia da empresa na bolsa)', c:'Renda variável', d:'É quando uma empresa estreia na bolsa e vende ações ao público pela primeira vez.', m:'Historicamente, participar de IPO no varejo dá resultado irregular: a empresa e os donos escolhem o momento em que vender é mais vantajoso para eles.'},
 {k:'jcp', t:'JCP', c:'Renda variável', d:'Juros sobre capital próprio: outra forma de a empresa distribuir dinheiro aos acionistas.', m:'Diferente do dividendo, o JCP é tributado em 15% na fonte, mas gera dedução fiscal para a empresa — por isso muitas preferem pagar assim.'},
 {k:'split', t:'Desdobramento e grupamento', c:'Renda variável', d:'É quando a empresa divide cada ação em várias (desdobramento) ou junta várias em uma (grupamento). O valor total que você tem não muda.', m:'Seu preço médio precisa ser ajustado na mesma proporção, para o imposto sair certo.'},
 {k:'subscricao', t:'Direito de subscrição', c:'Renda variável', d:'É a preferência para comprar novas ações quando a empresa emite mais papéis.', m:'Se você não exercer nem vender o direito, sua fatia na empresa diminui (diluição).'},
-{k:'small-cap', t:'Small cap e blue chip', c:'Renda variável', d:'Blue chips são as empresas grandes e conhecidas; small caps são as menores, mais arriscadas e potencialmente mais rentáveis.', m:'Small caps sofrem mais em crises e com juro alto, porque dependem mais de crédito e do mercado interno.'},
+{k:'small-cap', t:'Small cap e blue chip (empresas pequenas e gigantes)', c:'Renda variável', d:'Blue chips são as empresas grandes e conhecidas; small caps são as menores, mais arriscadas e potencialmente mais rentáveis.', m:'Small caps sofrem mais em crises e com juro alto, porque dependem mais de crédito e do mercado interno.'},
 {k:'pl', t:'P/L (preço/lucro)', c:'Análise', d:'Mostra quantos anos de lucro atual seriam necessários para pagar o preço da ação. P/L 10 significa dez anos.', m:'P/L baixo pode ser barganha ou armadilha (empresa em declínio); P/L alto pode ser exagero ou expectativa legítima de crescimento. Só faz sentido comparado ao setor e ao histórico.'},
-{k:'pvp', t:'P/VP', c:'Análise', d:'Compara o preço da ação ou cota com o valor patrimonial que ela representa. P/VP 0,8 significa pagar R$ 0,80 por R$ 1 de patrimônio.', m:'É muito usado em bancos e FIIs. Em FIIs, P/VP abaixo de 1 pode indicar desconto ou reflexo de vacância e risco de crédito.'},
-{k:'roe', t:'ROE', c:'Análise', d:'Mede quanto de lucro a empresa gera para cada real de patrimônio dos sócios.', m:'ROE alto e sustentável é sinal de negócio bom. Cheque se não vem de dívida excessiva, que amplifica o indicador e o risco.'},
-{k:'ebitda', t:'EBITDA', c:'Análise', d:'É o lucro da operação antes de juros, impostos, depreciação e amortização — uma medida de geração de caixa do negócio.', m:'Útil para comparar empresas com estruturas de dívida diferentes, mas ignora investimentos necessários para manter o negócio de pé.'},
+{k:'pvp', t:'P/VP (preço sobre valor patrimonial)', c:'Análise', d:'Compara o preço da ação ou cota com o valor patrimonial que ela representa. P/VP 0,8 significa pagar R$ 0,80 por R$ 1 de patrimônio.', m:'É muito usado em bancos e FIIs. Em FIIs, P/VP abaixo de 1 pode indicar desconto ou reflexo de vacância e risco de crédito.'},
+{k:'roe', t:'ROE — Return on Equity (retorno sobre o patrimônio)', c:'Análise', d:'Mede quanto de lucro a empresa gera para cada real de patrimônio dos sócios.', m:'ROE alto e sustentável é sinal de negócio bom. Cheque se não vem de dívida excessiva, que amplifica o indicador e o risco.'},
+{k:'ebitda', t:'EBITDA (lucro antes de juros, impostos e depreciação)', c:'Análise', d:'É o lucro da operação antes de juros, impostos, depreciação e amortização — uma medida de geração de caixa do negócio.', m:'Útil para comparar empresas com estruturas de dívida diferentes, mas ignora investimentos necessários para manter o negócio de pé.'},
 {k:'divida-liquida', t:'Dívida líquida / EBITDA', c:'Análise', d:'Mostra quantos anos de geração de caixa a empresa levaria para pagar o que deve.', m:'Acima de 3x costuma acender alerta, mas o limite saudável depende do setor: energia e saneamento suportam mais que varejo.'},
-{k:'payout', t:'Payout', c:'Análise', d:'É a fatia do lucro que a empresa distribui aos acionistas.', m:'Payout perto de 100% deixa pouco para investir no crescimento; payout muito baixo pode indicar retenção com bom uso — ou não.'},
+{k:'payout', t:'Payout (fatia do lucro distribuída)', c:'Análise', d:'É a fatia do lucro que a empresa distribui aos acionistas.', m:'Payout perto de 100% deixa pouco para investir no crescimento; payout muito baixo pode indicar retenção com bom uso — ou não.'},
 {k:'vacancia', t:'Vacância', c:'FIIs', d:'É a parte dos imóveis do fundo que está vazia, sem inquilino pagando.', m:'Vacância física mede metros quadrados vazios; a financeira mede receita perdida — a segunda importa mais para o rendimento da sua cota.'},
 {k:'cri-cra', t:'CRI e CRA', c:'Renda fixa', d:'São títulos lastreados em recebíveis do setor imobiliário (CRI) ou do agronegócio (CRA), isentos de IR para pessoa física.', m:'Não têm FGC e podem ter liquidez baixa. A qualidade depende de quem deve lá na ponta e das garantias envolvidas.'},
 {k:'tabela-regressiva', t:'Tabela regressiva do IR', c:'Impostos', d:'Na renda fixa, quanto mais tempo o dinheiro fica aplicado, menor o imposto: começa em 22,5% e cai até 15% após dois anos.', m:'As faixas são 22,5% até 180 dias, 20% até 360, 17,5% até 720 e 15% acima disso. Resgatar pouco antes de virar a faixa custa caro.'},
 {k:'iof-regressivo', t:'IOF nos 30 dias', c:'Impostos', d:'Resgatar renda fixa antes de 30 dias paga IOF, que come quase todo o rendimento no primeiro dia e zera no trigésimo.', m:'Por isso, dinheiro que pode ser necessário em poucos dias é melhor em conta remunerada ou no Tesouro Selic, atento ao mesmo prazo.'},
 {k:'informe-rendimentos', t:'Informe de rendimentos', c:'Impostos', d:'É o documento que o banco ou corretora emite todo ano com o que você tem e o que rendeu, para preencher a declaração.', m:'Bens ficam na ficha de Bens e Direitos pelo custo de aquisição, não pelo valor de mercado. Ações e fundos têm códigos e grupos específicos.'},
 {k:'bens-exterior', t:'Declarar bens no exterior', c:'Impostos', d:'Quem tem dinheiro ou investimentos fora do Brasil precisa informar na declaração anual do imposto de renda.', m:'Além da declaração à Receita, há a CBE do Banco Central para quem passa do limite em ativos no exterior — confirme o valor e o prazo vigentes no ano.'},
-{k:'drawdown', t:'Drawdown', c:'Risco', d:'É o tamanho da queda desde o ponto mais alto até o mais baixo. Um drawdown de 30% significa que a carteira chegou a valer 30% menos que no pico.', m:'Serve para você se testar: se não dormiria com uma queda de 30%, sua carteira está agressiva demais para o seu perfil.'},
+{k:'drawdown', t:'Drawdown (queda desde o topo)', c:'Risco', d:'É o tamanho da queda desde o ponto mais alto até o mais baixo. Um drawdown de 30% significa que a carteira chegou a valer 30% menos que no pico.', m:'Serve para você se testar: se não dormiria com uma queda de 30%, sua carteira está agressiva demais para o seu perfil.'},
 {k:'correlacao', t:'Correlação', c:'Risco', d:'Mede se dois investimentos costumam andar juntos. Perto de +1 sobem e caem juntos; perto de −1 fazem o contrário.', m:'A diversificação funciona melhor entre ativos de correlação baixa — como ações brasileiras e dólar, que tendem a ir em direções opostas.'},
 {k:'sharpe', t:'Índice de Sharpe', c:'Risco', d:'Mostra quanto de retorno extra o investimento entregou para cada unidade de risco corrida.', m:'Compare fundos parecidos: Sharpe maior significa retorno melhor ajustado pela oscilação. Abaixo de zero, o ativo rendeu menos que a taxa livre de risco.'},
-{k:'beta', t:'Beta', c:'Risco', d:'Mede o quanto um ativo balança em relação ao mercado. Beta 1,5 sobe e desce 50% mais que o índice.', m:'Beta alto não é bom nem ruim; define quanto da oscilação da carteira vem do mercado e quanto vem do papel específico.'},
+{k:'beta', t:'Beta (o quanto oscila junto com o mercado)', c:'Risco', d:'Mede o quanto um ativo balança em relação ao mercado. Beta 1,5 sobe e desce 50% mais que o índice.', m:'Beta alto não é bom nem ruim; define quanto da oscilação da carteira vem do mercado e quanto vem do papel específico.'},
 {k:'renda-passiva', t:'Renda passiva', c:'Estratégia', d:'É a renda que entra sem você precisar trabalhar por ela — aluguéis de FIIs, dividendos, juros de renda fixa.', m:'Para estimar a renda mensal, uma conta simples: patrimônio × rendimento anual ÷ 12. Com regra de retirada de 4% ao ano, R$ 1 milhão gera cerca de R$ 3,3 mil por mês corrigidos pela inflação.'},
 {k:'regra-4', t:'Regra dos 4%', c:'Estratégia', d:'Diz que, num patrimônio bem diversificado, retirar 4% ao ano tende a ser sustentável por décadas.', m:'Vem de estudos com dados americanos e não é lei. No Brasil, com juro real alto, taxas um pouco maiores podem funcionar, mas exigem cuidado com inflação e sequência de retornos.'},
 {k:'aporte-mensal', t:'Aporte mensal', c:'Estratégia', d:'É o valor que você consegue investir todo mês. É a variável mais poderosa no começo da jornada.', m:'No início, o aporte pesa mais que a rentabilidade; depois de alguns anos, os juros compostos assumem a liderança do crescimento.'},
-{k:'efeito-manada', t:'Efeito manada', c:'Comportamento', d:'É a tendência de comprar o que todo mundo está comprando, geralmente depois de já ter subido muito.', m:'O padrão clássico é comprar na euforia e vender no pânico — o contrário do que funciona. Ter uma regra escrita de aportes protege de si mesmo.'},
+{k:'efeito-manada', t:'Efeito manada (herd behavior)', c:'Comportamento', d:'É a tendência de comprar o que todo mundo está comprando, geralmente depois de já ter subido muito.', m:'O padrão clássico é comprar na euforia e vender no pânico — o contrário do que funciona. Ter uma regra escrita de aportes protege de si mesmo.'},
 {k:'vies-confirmacao', t:'Viés de confirmação', c:'Comportamento', d:'É procurar só as informações que concordam com o que você já acredita sobre um investimento.', m:'Antídoto prático: antes de comprar, escreva quais fatos fariam você reconhecer que errou e vender.'},
 {k:'aversao-perda', t:'Aversão à perda', c:'Comportamento', d:'Perder R$ 1.000 dói mais do que ganhar R$ 1.000 alegra. Isso leva gente a segurar prejuízo e realizar lucro cedo demais.', m:'Avalie cada posição pela pergunta: "compraria isso hoje por esse preço?". Se a resposta for não, o preço que você pagou não deveria importar.'},
-{k:'day-trade', t:'Day trade', c:'Comportamento', d:'É comprar e vender no mesmo dia tentando lucrar com a oscilação.', m:'Estudos com dados da B3 mostram que a enorme maioria dos day traders persistentes perde dinheiro. A tributação também é pior: 20% sem faixa de isenção.'},
+{k:'day-trade', t:'Day trade (compra e venda no mesmo dia)', c:'Comportamento', d:'É comprar e vender no mesmo dia tentando lucrar com a oscilação.', m:'Estudos com dados da B3 mostram que a enorme maioria dos day traders persistentes perde dinheiro. A tributação também é pior: 20% sem faixa de isenção.'},
 {k:'custodia-cripto', t:'Carteira de cripto', c:'Cripto', d:'É onde suas criptomoedas ficam guardadas: na corretora (mais fácil) ou numa carteira própria, em que só você tem a chave.', m:'"Not your keys, not your coins": na corretora você depende da solidez dela. Em carteira própria, perder a frase de recuperação significa perder tudo, sem atendimento para recorrer.'},
-{k:'halving', t:'Halving', c:'Cripto', d:'É o evento, a cada quatro anos, que reduz pela metade a emissão de novos bitcoins.', m:'Faz parte do desenho de escassez programada da rede. Historicamente antecedeu ciclos de alta, mas quatro eventos são pouca amostra para virar regra.'}
+{k:'halving', t:'Halving (corte pela metade da emissão)', c:'Cripto', d:'É o evento, a cada quatro anos, que reduz pela metade a emissão de novos bitcoins.', m:'Faz parte do desenho de escassez programada da rede. Historicamente antecedeu ciclos de alta, mas quatro eventos são pouca amostra para virar regra.'}
 ];
 GLOSSARIO_EXTRA.forEach(g => { GLOSSARIO.push(g); GLOS_MAP[g.k] = g; });
 GLOSSARIO.sort((a,b) => a.t.localeCompare(b.t, 'pt-BR'));
@@ -1592,17 +1616,17 @@ GLOSSARIO.sort((a,b) => a.t.localeCompare(b.t, 'pt-BR'));
 const GLOSSARIO_EXTRA2 = [
 {k:'acao-on', t:'Ação ordinária (ON)', c:'Renda variável', d:'É a ação que dá direito a voto nas assembleias da empresa. No Brasil, o código termina em 3 — como PETR3, VALE3, BBAS3.', m:'Quem tem ON participa das decisões (na prática, o peso do pequeno investidor é mínimo) e tem direito ao tag along: se o controlador vender a empresa, você recebe pelo menos 80% do valor pago por ação a ele. Empresas do Novo Mercado só têm ON.', e:'O tag along mínimo é legal (80%), mas níveis de governança elevam para 100%. Em disputas de controle, a ON costuma abrir prêmio sobre a PN — o spread ON/PN é um termômetro da probabilidade percebida de evento societário.'},
 {k:'acao-pn', t:'Ação preferencial (PN)', c:'Renda variável', d:'É a ação sem direito a voto, mas com preferência no recebimento de dividendos. No Brasil, o código termina em 4 — como PETR4, ITUB4, BBDC4.', m:'Costuma ter mais liquidez que a ON da mesma empresa (é a que o mercado mais negocia) e, muitas vezes, dividend yield um pouco maior. Em compensação, o tag along pode ser menor ou inexistente. Existem ainda PNA (5) e PNB (6), classes com regras próprias definidas no estatuto.', e:'A Lei das S.A. limita PN a 50% do capital em companhias abertas registradas após 2001. A escolha entre ON e PN deve pesar liquidez, spread histórico, política de proventos e proteção em evento de controle — não só o preço de tela.'},
-{k:'unit', t:'Unit', c:'Renda variável', d:'É um pacote que junta vários tipos de ação da mesma empresa num único papel. O código termina em 11 — como SANB11, TAEE11, KLBN11.', m:'Comprando uma unit você leva, por exemplo, 1 ON + 2 PN de uma vez. Cuidado: o final 11 também é usado por FIIs (MXRF11) e ETFs (BOVA11) — o nome do ativo é que esclarece qual é qual.'},
+{k:'unit', t:'Unit (pacote de ações)', c:'Renda variável', d:'É um pacote que junta vários tipos de ação da mesma empresa num único papel. O código termina em 11 — como SANB11, TAEE11, KLBN11.', m:'Comprando uma unit você leva, por exemplo, 1 ON + 2 PN de uma vez. Cuidado: o final 11 também é usado por FIIs (MXRF11) e ETFs (BOVA11) — o nome do ativo é que esclarece qual é qual.'},
 {k:'fracionario', t:'Mercado fracionário (F)', c:'Renda variável', d:'É onde se compra menos de 100 ações. O código ganha um F no fim: PETR4F, VALE3F.', m:'A cotação é praticamente a mesma do lote padrão, com liquidez menor. Para quem aporta valores pequenos todo mês, é o mercado normal de uso.'},
-{k:'adr', t:'ADR', c:'Internacional', d:'É o caminho inverso do BDR: uma ação brasileira negociada na bolsa americana, em dólar. A Petrobras, por exemplo, é PBR em Nova York.', m:'Investidores no exterior usam ADR para comprar empresas brasileiras. Para quem mora no Brasil, comprar PBR em vez de PETR4 só faz sentido se o dinheiro já estiver lá fora — e traz a retenção de 30% sobre dividendos.'},
+{k:'adr', t:'ADR — American Depositary Receipt (ação estrangeira negociada nos EUA)', c:'Internacional', d:'É o caminho inverso do BDR: uma ação brasileira negociada na bolsa americana, em dólar. A Petrobras, por exemplo, é PBR em Nova York.', m:'Investidores no exterior usam ADR para comprar empresas brasileiras. Para quem mora no Brasil, comprar PBR em vez de PETR4 só faz sentido se o dinheiro já estiver lá fora — e traz a retenção de 30% sobre dividendos.'},
 {k:'bvsp', t:'IBOV e ^BVSP', c:'Índices', d:'IBOV é o apelido do Ibovespa. O código ^BVSP é como os sites e aplicativos identificam esse índice na hora de buscar a cotação.', m:'Os índices geralmente aparecem com esse acento circunflexo na frente: ^BVSP (Ibovespa), ^GSPC (S&P 500), ^IXIC (Nasdaq Composite), ^DJI (Dow Jones). Não são ativos para comprar — para investir num índice, você compra o ETF correspondente (BOVA11, VOO, QQQ).'},
 {k:'ifix', t:'IFIX', c:'Índices', d:'É o índice dos fundos imobiliários — o "Ibovespa dos FIIs". Serve para saber se a sua carteira de FIIs foi melhor ou pior que a média do setor.', m:'Reúne os FIIs mais líquidos da B3, ponderados por valor de mercado, e é calculado com os rendimentos reinvestidos.'},
 {k:'idiv', t:'IDIV, SMLL e outros índices da B3', c:'Índices', d:'São recortes do mercado brasileiro: IDIV reúne as empresas que mais pagam dividendos, SMLL as empresas menores (small caps), e existem ainda IBRX-100, ICON (consumo) e IEE (energia elétrica), entre outros.', m:'Cada um tem um ETF que o segue: DIVO11 para o IDIV, SMAL11 para o SMLL. Comparar sua carteira com o índice certo evita conclusão errada — uma carteira de dividendos deve ser medida contra o IDIV, não contra o Ibovespa.'},
 {k:'dow', t:'Dow Jones e Russell 2000', c:'Índices', d:'Dow Jones acompanha 30 grandes empresas americanas, das mais tradicionais. Russell 2000 acompanha 2.000 empresas pequenas dos EUA.', m:'O Dow é o índice mais antigo e mais citado na imprensa, mas é ponderado por preço da ação — um critério estranho, que dá mais peso a quem tem ação cara. Para medir o mercado americano, o S&P 500 é referência melhor.'},
-{k:'vix', t:'VIX', c:'Índices', d:'É o "índice do medo": mede a oscilação que o mercado espera para o S&P 500 nos próximos 30 dias.', m:'Abaixo de 15 indica calmaria; acima de 30, tensão alta. Ele sobe quando as bolsas caem, e costuma ser citado nas notícias como termômetro de pânico.', e:'É a volatilidade implícita anualizada extraída das opções do S&P 500. Não prevê direção — só amplitude esperada — e tem prêmio de risco de variância embutido, o que o mantém em média acima da volatilidade realizada.'},
+{k:'vix', t:'VIX (o índice do medo)', c:'Índices', d:'É o "índice do medo": mede a oscilação que o mercado espera para o S&P 500 nos próximos 30 dias.', m:'Abaixo de 15 indica calmaria; acima de 30, tensão alta. Ele sobe quando as bolsas caem, e costuma ser citado nas notícias como termômetro de pânico.', e:'É a volatilidade implícita anualizada extraída das opções do S&P 500. Não prevê direção — só amplitude esperada — e tem prêmio de risco de variância embutido, o que o mantém em média acima da volatilidade realizada.'},
 {k:'bitcoin', t:'Bitcoin (BTC)', c:'Cripto', d:'É a primeira e maior criptomoeda, criada em 2009. Existe no máximo 21 milhões de unidades — e essa escassez programada é o principal argumento de quem investe nele.', m:'Você pode comprar pedaços: 0,001 BTC é uma compra normal. A menor fração se chama satoshi (0,00000001 BTC). O preço costuma ser cotado em dólar (BTC/USD) e também em real (BTC/BRL) — e a diferença entre os dois embute a cotação do câmbio.', e:'Oferta emitida por curva decrescente com halving a cada 210 mil blocos. Correlação com ativos de risco subiu desde 2020, enfraquecendo a tese de reserva de valor descorrelacionada; a exposição regulada via ETF spot transfere risco de custódia, ao custo da taxa e da perda de autocustódia.'},
 {k:'ethereum', t:'Ethereum (ETH)', c:'Cripto', d:'É a segunda maior criptomoeda. Diferente do Bitcoin, ela funciona como uma plataforma onde outras aplicações são construídas.', m:'É a base da maior parte dos projetos de finanças descentralizadas e dos tokens que você vê por aí. Quem investe está apostando no uso dessa plataforma, não só na escassez da moeda.'},
-{k:'blockchain', t:'Blockchain', c:'Cripto', d:'É o "livro-caixa" público onde ficam registradas todas as transações de uma criptomoeda, copiado em milhares de computadores ao mesmo tempo.', m:'Como todos têm a mesma cópia e cada novo bloco depende do anterior, adulterar um registro antigo exigiria refazer tudo o que veio depois em mais da metade da rede.'},
+{k:'blockchain', t:'Blockchain (o livro-caixa público)', c:'Cripto', d:'É o "livro-caixa" público onde ficam registradas todas as transações de uma criptomoeda, copiado em milhares de computadores ao mesmo tempo.', m:'Como todos têm a mesma cópia e cada novo bloco depende do anterior, adulterar um registro antigo exigiria refazer tudo o que veio depois em mais da metade da rede.'},
 {k:'altcoin', t:'Altcoin e token', c:'Cripto', d:'Altcoin é qualquer criptomoeda que não seja o Bitcoin. Token é um ativo digital criado dentro da rede de outra moeda, geralmente a do Ethereum.', m:'A maioria das milhares de altcoins existentes desaparece com o tempo. Concentrar em BTC e ETH é a escolha mais conservadora dentro de uma classe que já é arriscada.'},
 {k:'par-cotacao', t:'Par de cotação (BTC/USD, USD/BRL)', c:'Cotações', d:'Toda cotação compara duas coisas. USD/BRL é quantos reais custa um dólar; BTC/USD é quantos dólares custa um bitcoin.', m:'A primeira sigla é o que está sendo cotado; a segunda é a moeda em que o preço está. Por isso BTC/BRL é um número bem maior que BTC/USD — é o mesmo bitcoin, medido em outra régua.'},
 {k:'dolar-turismo', t:'Dólar comercial, turismo e PTAX', c:'Cotações', d:'Comercial é o usado em investimentos e comércio exterior — é o que aparece nas notícias e neste app. Turismo é o da casa de câmbio, sempre mais caro. PTAX é a média oficial do Banco Central.', m:'Na hora de enviar dinheiro para investir lá fora, o que importa é o dólar comercial mais o spread da instituição e o IOF. Para declarar imposto de renda, usa-se a PTAX do dia da operação.'},
@@ -1664,12 +1688,12 @@ const GLOSSARIO_EXTRA3 = [
  e:'Meça pelo índice de Herfindahl (soma dos quadrados dos pesos) ou pelo número efetivo de posições (1/HHI). Vinte ativos com um deles em 40% têm número efetivo perto de 5. Concentração setorial e de fator costuma ser maior que a aparente: cinco bancos diferentes são quase uma posição só.'},
 
 /* ---------- Medidas de retorno ---------- */
-{k:'xirr', t:'XIRR — Extended Internal Rate of Return', c:'Estratégia',
+{k:'xirr', t:'XIRR — Extended Internal Rate of Return (retorno do seu bolso)', c:'Estratégia',
  d:'Em português: taxa interna de retorno com datas irregulares, ou "retorno do seu bolso". É a taxa anual que leva em conta quanto você aportou e em que data. Responde à pergunta "quanto eu realmente ganhei por ano". Também aparece como MWR (money-weighted return) ou TIR.',
  m:'É diferente de dividir o lucro pelo total aportado. Se você colocou R$ 10 mil em janeiro e mais R$ 10 mil em novembro, o segundo aporte quase não teve tempo de render — o XIRR sabe disso, a conta simples não.',
  e:'Matematicamente é a taxa r que zera o valor presente líquido dos fluxos: Σ CF_i / (1+r)^(d_i/365) = 0. É o MWR (money-weighted return) em tempo irregular. Pode ter múltiplas raízes quando há alternância de sinal repetida; por isso o app usa Newton-Raphson com bissecção de segurança.'},
 
-{k:'twr', t:'TWR — Time-Weighted Return', c:'Estratégia',
+{k:'twr', t:'TWR — Time-Weighted Return (retorno da estratégia)', c:'Estratégia',
  d:'Em português: retorno ponderado pelo tempo, ou "retorno da estratégia". É o retorno da carteira ignorando quando você colocou dinheiro. Mede a qualidade das escolhas, não o timing dos aportes.',
  m:'É o número que fundos e gestores divulgam, e o único justo para comparar com CDI, Ibovespa ou S&P 500 — porque o índice não recebe aportes. Se o seu TWR é bom mas o XIRR é fraco, as escolhas foram boas e o momento dos aportes, ruim.',
  e:'Encadeia os sub-períodos delimitados por cada fluxo: Π(1 + (V_fim − F) / V_ini) − 1. Quanto mais frequente a marcação (diária, no caso do app), menor a distorção causada pela premissa de que o fluxo ocorre no fim do período.'},
@@ -1684,7 +1708,7 @@ const GLOSSARIO_EXTRA3 = [
  m:'A mesma empresa pode ter as duas, com preços diferentes. Quem investe pequeno raramente se importa com voto, então a escolha costuma ser por liquidez e por dividendo. Outros finais: 5 e 6 são classes especiais de PN, 11 é unit (pacote de ON + PN), 31 a 35 são BDR e 34 é o mais comum deles.',
  e:'A diferença de preço entre ON e PN embute o prêmio de controle e o tag along. Desde a Lei 10.303 o tag along mínimo da ON é 80% do valor pago ao controlador; a PN só tem tag along se o estatuto conceder. No Novo Mercado só existe ON, com tag along de 100% — por isso empresas que migram costumam converter PN em ON.'},
 
-{k:'tag-along', t:'Tag along', c:'Renda variável',
+{k:'tag-along', t:'Tag along (direito de vender junto)', c:'Renda variável',
  d:'É o direito de vender sua ação junto quando alguém compra o controle da empresa, recebendo pelo menos parte do preço que o comprador pagou ao dono anterior.',
  m:'Por lei, ações ON têm no mínimo 80% desse valor. Ações PN só têm se o estatuto der. No Novo Mercado é 100%. É uma proteção que só aparece quando a empresa é vendida — mas aí faz muita diferença.',
  e:'Previsto no art. 254-A da Lei 6.404. Cuidado com a base de cálculo: incide sobre o preço pago pelas ações com direito a voto que integram o bloco de controle, não sobre a cotação em bolsa; aquisições feitas por etapas ou via holding já foram usadas para reduzir o valor efetivo.'}
@@ -4983,6 +5007,12 @@ const Importador = {
                   para: fmt(dados.ir.liquido) + ' (IR de ' + fmt(dados.ir.imposto) + ')',
                   ganho:'é o que sobraria se você resgatasse hoje'});
 
+    if(dados.tipo && (!pos || (pos.produto || '') !== dados.tipo))
+      lista.push({id:'produto', nome:'Tipo do plano (PGBL ou VGBL)',
+                  de: pos && pos.produto ? pos.produto : (pos && /VGBL|PGBL/.test(pos.ticker + ' ' + (pos.notas||'')) ? 'pelo nome do ativo' : 'em branco'),
+                  para: dados.tipo + (dados.regime ? ' · ' + dados.regime : ''),
+                  ganho:'PGBL e VGBL pagam imposto de formas diferentes'});
+
     if(dados.taxaAdm != null)
       lista.push({id:'taxa', nome:'Taxa de administração', de: pos && pos.taxaAdm != null ? pnum(pos.taxaAdm,2) + '% a.a.' : 'em branco',
                   para: pnum(dados.taxaAdm, 2) + '% a.a.', ganho:'entra na conta de quanto as taxas custam por ano'});
@@ -5053,6 +5083,18 @@ const Importador = {
       pos.irEstimado = dados.ir.imposto;
       pos.irFaixas = dados.ir.faixas;
       feito.push('valor líquido depois do IR guardado');
+    }
+
+    if(tem('produto') && dados.tipo){
+      const antes = pos.produto;
+      pos.produto = dados.tipo;
+      if(dados.regime) pos.regimeIR = dados.regime;
+      const nota = dados.tipo + (dados.regime ? ' · ' + dados.regime : '');
+      if(!pos.notas) pos.notas = nota;
+      else if(pos.notas.indexOf(dados.tipo) < 0) pos.notas = nota + ' · ' + pos.notas;
+      feito.push(antes && antes !== dados.tipo
+        ? 'tipo corrigido de ' + antes + ' para ' + dados.tipo
+        : 'tipo do plano registrado como ' + nota);
     }
 
     if(tem('taxa') && dados.taxaAdm != null){
@@ -6356,18 +6398,19 @@ function salvarDatasIniciais(){
 
 
 /* =========================================================
-   IMPORTAR EXTRATO
+   IMPORTAR EXTRATO (vários arquivos de uma vez)
    ========================================================= */
-let impDados = null, impPos = null, impEscolhidos = [];
+let impLote = [];          /* [{nome, dados, posId, escolhidos, erro}] */
+let impLendo = false;
 
 function abrirImportar(){
-  impDados = null; impPos = null; impEscolhidos = [];
-  $('#assetModalTitle').textContent = 'Importar extrato';
+  impLote = []; impLendo = false;
+  $('#assetModalTitle').textContent = 'Importar extratos';
   $('#assetModalBody').innerHTML =
     '<div class="solta" id="impSolta">' +
       '<div class="solta-ico">📄</div>' +
-      '<p><b>Arraste o PDF do extrato aqui</b><br>ou clique para escolher o arquivo</p>' +
-      '<input type="file" id="impArquivo" accept=".pdf,application/pdf" hidden>' +
+      '<p><b>Arraste os PDFs aqui</b><br>ou clique para escolher — pode selecionar vários de uma vez</p>' +
+      '<input type="file" id="impArquivo" accept=".pdf,application/pdf" multiple hidden>' +
     '</div>' +
     '<div id="impResultado"></div>' +
     '<div class="card2-box" style="margin-top:14px">' +
@@ -6377,132 +6420,221 @@ function abrirImportar(){
         'taxa de administração, total aplicado e o valor líquido depois do IR.</li>' +
         '<li>Avenue, Itaú, BB Americas e planilhas em geral entram na próxima etapa.</li>' +
       '</ul>' +
-      '<p class="tiny muted" style="margin-top:9px">O arquivo é lido dentro do seu navegador. Nada é enviado para lugar nenhum.</p>' +
+      '<p class="tiny muted" style="margin-top:9px">Os arquivos são lidos dentro do seu navegador. Nada é enviado para lugar nenhum.</p>' +
     '</div>';
   abrir('assetModal');
 
   const area = $('#impSolta'), input = $('#impArquivo');
-  area.addEventListener('click', () => input.click());
-  input.addEventListener('change', () => { if(input.files[0]) lerExtrato(input.files[0]); });
-  ['dragenter','dragover'].forEach(ev => area.addEventListener(ev, e => {
-    e.preventDefault(); area.classList.add('sobre');
-  }));
-  ['dragleave','drop'].forEach(ev => area.addEventListener(ev, e => {
-    e.preventDefault(); area.classList.remove('sobre');
-  }));
-  area.addEventListener('drop', e => {
-    const f = e.dataTransfer.files[0];
-    if(f) lerExtrato(f);
-  });
+  area.addEventListener('click', () => { if(!impLendo) input.click(); });
+  input.addEventListener('change', () => lerExtratos(input.files));
+  ['dragenter','dragover'].forEach(ev => area.addEventListener(ev, e => { e.preventDefault(); area.classList.add('sobre'); }));
+  ['dragleave','drop'].forEach(ev => area.addEventListener(ev, e => { e.preventDefault(); area.classList.remove('sobre'); }));
+  area.addEventListener('drop', e => lerExtratos(e.dataTransfer.files));
 }
 
-async function lerExtrato(arquivo){
+async function lerExtratos(lista){
+  const arquivos = Array.from(lista || []);
+  if(!arquivos.length || impLendo) return;
+  impLendo = true;
   const alvo = $('#impResultado');
-  alvo.innerHTML = '<p class="small muted" style="margin-top:14px">Lendo <b>' + esc(arquivo.name) + '</b>…</p>';
-  try{
-    impDados = await Importador.lerArquivo(arquivo);
-    impPos = Importador.casar(impDados);
-    impEscolhidos = Importador.propostas(impDados, impPos).map(p => p.id);
-    desenharPreviaImport();
-  }catch(e){
-    impDados = null;
-    alvo.innerHTML = '<div class="aviso-box" style="margin-top:14px"><b>Não deu para ler este arquivo</b>' +
-      '<p class="small">' + esc(e.message || 'erro desconhecido') + '</p></div>';
+  for(let i = 0; i < arquivos.length; i++){
+    alvo.innerHTML = '<p class="small muted" style="margin-top:14px">Lendo ' + (i+1) + ' de ' + arquivos.length +
+      ': <b>' + esc(arquivos[i].name) + '</b>…</p>' + (impLote.length ? '<p class="tiny muted">' + impLote.length + ' já lidos.</p>' : '');
+    try{
+      const dados = await Importador.lerArquivo(arquivos[i]);
+      const pos = Importador.casar(dados);
+      impLote.push({nome: arquivos[i].name, dados: dados, posId: pos ? pos.id : '',
+                    escolhidos: Importador.propostas(dados, pos).map(x => x.id)});
+    }catch(e){
+      impLote.push({nome: arquivos[i].name, erro: e.message || 'não consegui ler'});
+    }
   }
+  impLendo = false;
+  /* extratos do mesmo plano: o mais antigo primeiro, para o saldo mais novo prevalecer */
+  impLote.sort((a,b) => ((a.dados && a.dados.periodo && a.dados.periodo.ate) || '')
+    .localeCompare((b.dados && b.dados.periodo && b.dados.periodo.ate) || ''));
+  desenharPreviaImport();
 }
 
 function desenharPreviaImport(){
-  const d = impDados;
-  const props = Importador.propostas(d, impPos);
-  let h = '<div class="imp-cab"><div><span class="pc-lbl">Reconhecido</span>' +
-    '<span class="pc-nome">' + esc(d.leitor) + '</span>' +
-    '<span class="tiny muted">' + esc(d.arquivo) + '</span></div></div>';
+  const bons = impLote.filter(x => x.dados), ruins = impLote.filter(x => x.erro);
+  let h = '';
 
-  h += '<div class="imp-fatos">';
-  const fato = (r,v) => v ? '<div><span>' + r + '</span><b>' + v + '</b></div>' : '';
-  h += fato('Certificado', d.certificado ? esc(d.certificado) : null);
-  h += fato('Produto', [d.tipo, d.regime].filter(Boolean).map(esc).join(' · '));
-  h += fato('Início do plano', d.inicio ? fmtData(d.inicio) : null);
-  h += fato('Período do extrato', d.periodo.de ? fmtData(d.periodo.de) + ' a ' + fmtData(d.periodo.ate) : null);
-  h += fato('Fundo', d.fundo ? esc(d.fundo) : null);
-  h += fato('Saldo no fim do período', d.saldoFinal ? fmt(d.saldoFinal) : null);
-  h += fato('Rendimento no período', d.rendimento ? fmt(d.rendimento) : null);
-  h += fato('Rentabilidade em 12 meses', d.rentab ? pnum(d.rentab.m12,2) + '%' : null);
-  h += '</div>';
+  if(ruins.length){
+    h += '<div class="aviso-box" style="margin-top:14px"><b>' + ruins.length + ' arquivo' +
+      (ruins.length > 1 ? 's' : '') + ' que não consegui ler</b><ul class="small" style="margin:6px 0 0 18px;padding:0">' +
+      ruins.map(x => '<li><b>' + esc(x.nome) + '</b> — ' + esc(x.erro) + '</li>').join('') + '</ul></div>';
+  }
+  if(!bons.length){ $('#impResultado').innerHTML = h; return; }
 
-  /* a qual ativo isso pertence */
   const ops = [['', '— criar um ativo novo —']].concat(
     ST.posicoes.slice().sort((a,b) => (a.ticker||'').localeCompare(b.ticker||''))
       .map(p => [p.id, p.ticker + (p.nome ? ' · ' + p.nome.slice(0,40) : '')]));
-  h += campo('Este extrato é de qual investimento?', selectHTML('impAtivo', ops, impPos ? impPos.id : ''),
-    null, impPos ? 'Encontrei sozinho pelo número do certificado.' : 'Não achei um ativo com este certificado — escolha ou crie.');
 
-  if(!props.length){
-    h += '<p class="small muted">Não encontrei nada de novo neste extrato.</p>';
-  }else{
-    h += '<div class="sub-lbl" style="margin-top:14px">O que vou fazer</div>' +
-         '<div class="imp-lista">';
-    props.forEach(p => {
-      h += '<label class="imp-item"><input type="checkbox" class="imp-ck" value="' + p.id + '"' +
-        (impEscolhidos.indexOf(p.id) >= 0 ? ' checked' : '') + '>' +
-        '<div><div class="ii-n">' + esc(p.nome) + '</div>' +
-        '<div class="ii-v tiny"><span class="muted">' + p.de + '</span> → <b>' + p.para + '</b></div>' +
-        '<div class="ii-g tiny muted">' + esc(p.ganho) + '</div></div></label>';
-    });
+  h += '<div class="sub-lbl" style="margin-top:16px">' + bons.length + ' extrato' + (bons.length > 1 ? 's lidos' : ' lido') + '</div>';
+
+  bons.forEach((item, idx) => {
+    const d = item.dados;
+    const pos = ST.posicoes.find(p => p.id === item.posId) || null;
+    const props = Importador.propostas(d, pos);
+    const marcados = props.filter(p => item.escolhidos.indexOf(p.id) >= 0).length;
+
+    h += '<details class="imp-arq"' + (bons.length === 1 ? ' open' : '') + '>' +
+      '<summary><span class="ia-t">' + esc(d.titulo || d.arquivo) + '</span>' +
+      '<span class="ia-p tiny muted">' + (d.periodo && d.periodo.de ? fmtData(d.periodo.de) + ' a ' + fmtData(d.periodo.ate) : esc(d.arquivo)) + '</span>' +
+      '<span class="ia-c tiny">' + marcados + ' de ' + props.length + '</span></summary><div class="ia-corpo">';
+
+    h += '<div class="imp-fatos">';
+    const fato = (r,v) => v ? '<div><span>' + r + '</span><b>' + v + '</b></div>' : '';
+    h += fato('Certificado', d.certificado ? esc(d.certificado) : null);
+    h += fato('Produto', [d.tipo, d.regime].filter(Boolean).map(esc).join(' · '));
+    h += fato('Início do plano', d.inicio ? fmtData(d.inicio) : null);
+    h += fato('Fundo', d.fundo ? esc(d.fundo) : null);
+    h += fato('Saldo no fim do período', d.saldoFinal ? fmt(d.saldoFinal) : null);
+    h += fato('Rendimento no período', d.rendimento ? fmt(d.rendimento) : null);
     h += '</div>';
-  }
 
-  if(d.avisos && d.avisos.length)
-    h += '<p class="tiny muted" style="margin-top:8px">Observações da leitura: ' + esc(d.avisos.join(' · ')) + '.</p>';
+    h += campo('Este extrato é de qual investimento?',
+      selectHTML('impAtivo' + idx, ops, item.posId).replace('<select ', '<select data-imp-ativo="' + idx + '" '),
+      null, pos ? 'Encontrei sozinho pelo número do certificado.' : 'Escolha o ativo ou deixe criar um novo.');
+
+    if(!props.length) h += '<p class="small muted">Nada de novo neste arquivo.</p>';
+    else{
+      h += '<div class="imp-lista">';
+      props.forEach(p => {
+        h += '<label class="imp-item"><input type="checkbox" class="imp-ck" data-lote="' + idx + '" value="' + p.id + '"' +
+          (item.escolhidos.indexOf(p.id) >= 0 ? ' checked' : '') + '>' +
+          '<div><div class="ii-n">' + esc(p.nome) + '</div>' +
+          '<div class="ii-v tiny"><span class="muted">' + p.de + '</span> → <b>' + p.para + '</b></div>' +
+          '<div class="ii-g tiny muted">' + esc(p.ganho) + '</div></div></label>';
+      });
+      h += '</div>';
+    }
+    h += '</div></details>';
+  });
 
   h += '<div class="f-actions"><button class="btn" data-close="assetModal">Cancelar</button>' +
-       '<button class="btn primary" data-acao="imp-aplicar">Aplicar ao meu investimento</button></div>';
+       '<button class="btn primary" data-acao="imp-aplicar">Aplicar ' +
+       (bons.length > 1 ? 'os ' + bons.length + ' extratos' : 'ao meu investimento') + '</button></div>';
 
   $('#impResultado').innerHTML = h;
   $('#impSolta').classList.add('feito');
-  $('#impAtivo').addEventListener('change', e => {
-    impPos = ST.posicoes.find(p => p.id === e.target.value) || null;
-    impEscolhidos = Importador.propostas(impDados, impPos).map(p => p.id);
+
+  $$('[data-imp-ativo]').forEach(sel => sel.addEventListener('change', e => {
+    const i = Number(e.target.dataset.impAtivo);
+    impLote.filter(x => x.dados)[i].posId = e.target.value;
+    const it = impLote.filter(x => x.dados)[i];
+    it.escolhidos = Importador.propostas(it.dados, ST.posicoes.find(p => p.id === it.posId) || null).map(p => p.id);
     desenharPreviaImport();
-  });
+  }));
+  $$('.imp-ck').forEach(ck => ck.addEventListener('change', () => {
+    const it = impLote.filter(x => x.dados)[Number(ck.dataset.lote)];
+    const i = it.escolhidos.indexOf(ck.value);
+    if(ck.checked && i < 0) it.escolhidos.push(ck.value);
+    if(!ck.checked && i >= 0) it.escolhidos.splice(i,1);
+  }));
 }
 
 function aplicarImportacao(){
-  if(!impDados) return;
-  const escolhidos = $$('.imp-ck').filter(c => c.checked).map(c => c.value);
-  let pos = ST.posicoes.find(p => p.id === $('#impAtivo').value) || null;
+  const bons = impLote.filter(x => x.dados);
+  if(!bons.length) return;
+  const relatorio = [];
 
-  if(!pos){
-    /* cria o ativo a partir do extrato */
-    pos = {
-      id: 'p' + Date.now().toString(36),
-      ticker: (impDados.tipo || 'PREV') + (impDados.certificado ? '-' + impDados.certificado : ''),
-      nome: 'Plano ' + (impDados.certificado || '') + (impDados.fundo ? ' — ' + impDados.fundo : ''),
-      tipo: 'previdencia', qtd: 1, pm: impDados.ir && impDados.ir.nominal ? impDados.ir.nominal : (impDados.saldoFinal || 0),
-      moeda: 'BRL', inst: 'BTG Pactual', data: impDados.inicio || '',
-      notas: [impDados.tipo, impDados.regime].filter(Boolean).join(' · ')
-    };
-    ST.posicoes.push(pos);
-  }
+  bons.forEach(item => {
+    const d = item.dados;
+    let pos = ST.posicoes.find(p => p.id === item.posId) || null;
+    if(!pos){
+      pos = {
+        id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+        ticker: (d.tipo || 'PREV') + (d.certificado ? '-' + d.certificado : ''),
+        nome: 'Plano ' + (d.certificado || '') + (d.fundo ? ' — ' + d.fundo : ''),
+        tipo: 'previdencia', qtd: 1,
+        pm: (d.ir && d.ir.nominal) ? d.ir.nominal : (d.saldoFinal || 0),
+        moeda: 'BRL', inst: 'BTG Pactual', data: d.inicio || '',
+        notas: [d.tipo, d.regime].filter(Boolean).join(' · ')
+      };
+      ST.posicoes.push(pos);
+      item.posId = pos.id;
+    }
+    const feito = Importador.aplicar(d, pos, item.escolhidos);
+    pos.extratoEm = new Date().toISOString();
+    pos.semExtrato = false;
+    relatorio.push({ticker: pos.ticker, arquivo: item.nome, feito: feito});
+  });
 
-  const feito = Importador.aplicar(impDados, pos, escolhidos);
   Store.salvar();
   cdiInicio = null; compDados = {};
   fechar('assetModal');
   render();
 
-  $('#genTitle').textContent = 'Extrato importado';
-  $('#genBody').innerHTML =
-    '<p class="small">Apliquei em <b>' + esc(pos.ticker) + '</b>:</p>' +
-    '<ul class="small" style="margin:8px 0 0 18px;padding:0">' +
-      (feito.length ? feito.map(f => '<li>' + esc(f) + '</li>').join('') : '<li>nada mudou</li>') +
-    '</ul>' +
-    '<p class="small muted" style="margin-top:12px">Se você tiver extratos de outros períodos, importe todos: ' +
-    'cada um vira mais pontos no histórico e deixa a rentabilidade mais precisa.</p>' +
-    '<div class="f-actions"><button class="btn" data-acao="importar-extrato">Importar outro</button>' +
+  $('#genTitle').textContent = relatorio.length > 1 ? relatorio.length + ' extratos importados' : 'Extrato importado';
+  $('#genBody').innerHTML = relatorio.map(r =>
+      '<p class="small" style="margin-bottom:2px"><b>' + esc(r.ticker) + '</b> <span class="tiny muted">' + esc(r.arquivo) + '</span></p>' +
+      '<ul class="small" style="margin:0 0 12px 18px;padding:0">' +
+      (r.feito.length ? r.feito.map(f => '<li>' + esc(f) + '</li>').join('') : '<li class="muted">nada mudou</li>') + '</ul>'
+    ).join('') +
+    '<p class="small muted">Extratos de outros períodos podem ser importados depois: cada um vira mais pontos no histórico.</p>' +
+    '<div class="f-actions"><button class="btn" data-acao="importar-extrato">Importar mais</button>' +
     '<button class="btn primary" data-close="genModal">Pronto</button></div>';
   abrir('genModal');
-  impDados = null; impPos = null;
+  impLote = [];
+}
+
+/* =========================================================
+   DOCUMENTAÇÃO DA CARTEIRA — quem ainda não tem extrato
+   ========================================================= */
+function estadoDocumento(p){
+  const temImportado = Mov.todos().some(m => m.ativoId === p.id && m.origem === 'importado');
+  const semDataReal = Mov.todos().some(m => m.ativoId === p.id && m.origem === 'saldo-inicial' && m.presumida);
+  if(temImportado) return {id:'ok', nome:'Extrato importado', tom:'ok'};
+  if(p.semExtrato) return {id:'dispensado', nome:'Sem extrato (confirmado por você)', tom:'neutro'};
+  if(!semDataReal && p.data) return {id:'parcial', nome:'Data informada à mão', tom:'parcial'};
+  return {id:'falta', nome:'Falta o extrato', tom:'falta'};
+}
+
+function cardDocumentacao(){
+  if(!ST.posicoes.length) return '';
+  const lista = ST.posicoes.map(p => ({p: p, e: estadoDocumento(p)}));
+  const faltando = lista.filter(x => x.e.id === 'falta');
+  const parciais = lista.filter(x => x.e.id === 'parcial');
+  const prontos  = lista.filter(x => x.e.id === 'ok');
+  const dispensados = lista.filter(x => x.e.id === 'dispensado');
+  const pct = Math.round((prontos.length + dispensados.length) / lista.length * 100);
+
+  let h = '<div class="doc-topo"><div class="doc-barra">' +
+    '<i class="db-ok" style="width:' + (prontos.length/lista.length*100) + '%"></i>' +
+    '<i class="db-neu" style="width:' + (dispensados.length/lista.length*100) + '%"></i>' +
+    '<i class="db-par" style="width:' + (parciais.length/lista.length*100) + '%"></i>' +
+    '</div><div class="doc-num">' + pct + '%</div></div>' +
+    '<p class="small muted">' + prontos.length + ' com extrato · ' + parciais.length + ' só com data informada à mão · ' +
+    faltando.length + ' sem nada' + (dispensados.length ? ' · ' + dispensados.length + ' sem extrato por opção' : '') + '.</p>';
+
+  const pendentes = faltando.concat(parciais);
+  if(!pendentes.length){
+    h += '<p class="small up">✓ Todos os investimentos estão documentados.</p>';
+    return bloco('Documentação da carteira', h, 'movimentacao', true);
+  }
+
+  h += '<div class="doc-lista">';
+  pendentes.slice(0, 40).forEach(({p,e}) => {
+    h += '<div class="doc-item"><div class="di-n"><b>' + esc(p.ticker) + '</b>' +
+      '<span class="tiny muted"> · ' + esc((TIPOS[p.tipo]||{}).curto || '') + (p.inst ? ' · ' + esc(p.inst) : '') + '</span>' +
+      '<div class="tiny ' + (e.tom === 'parcial' ? 'muted' : 'down') + '">' + esc(e.nome) + '</div></div>' +
+      '<div class="di-b"><button class="btn sm" data-acao="importar-extrato">Importar</button>' +
+      '<button class="btn sm ghost" data-acao="sem-extrato" data-id="' + p.id + '" title="Marcar que este investimento não tem extrato para importar">Não tenho</button>' +
+      '</div></div>';
+  });
+  h += '</div>';
+  if(pendentes.length > 40) h += '<p class="tiny muted">…e mais ' + (pendentes.length - 40) + '.</p>';
+  if(dispensados.length){
+    h += '<p class="tiny muted" style="margin-top:8px">Marcados como sem extrato: ' +
+      dispensados.map(({p}) => '<button class="linkinho" data-acao="voltar-extrato" data-id="' + p.id + '">' +
+        esc(p.ticker) + '</button>').join(', ') + '. Clique para voltar à lista.</p>';
+  }
+  h += '<p class="tiny muted" style="margin-top:10px">Extrato importado traz data de início, saldos antigos, taxas e rendimento — ' +
+    'é o que deixa a rentabilidade precisa. Para quem não tem extrato, marcar <b>Não tenho</b> tira o item da lista ' +
+    'e evita o aviso voltar toda vez.</p>';
+  return bloco('Documentação da carteira', h, 'movimentacao', true);
 }
 
 /* =========================================================
@@ -6522,7 +6654,7 @@ function viewMovimentos(){
     '<button class="btn primary sm" data-acao="novo-mov">+ Novo lançamento</button></div>';
 
   if(!movs.length){
-    return h + '<div class="card"><div class="empty"><span class="ic">🧾</span>' +
+    return h + cardDocumentacao() + '<div class="card"><div class="empty"><span class="ic">🧾</span>' +
       '<h2>Nenhum lançamento ainda</h2>' +
       '<p>Aqui fica o histórico do que entrou e do que saiu: aportes, compras, vendas, dividendos, juros e taxas. ' +
       'É o que permite calcular a rentabilidade de verdade, separando o que foi mérito do investimento do que foi o momento do aporte.</p>' +
@@ -6530,6 +6662,8 @@ function viewMovimentos(){
       '<button class="btn primary" data-acao="novo-mov">+ Lançar o primeiro</button>' +
       '<button class="btn" data-acao="semear-mov">Criar a partir da carteira</button></div></div></div>';
   }
+
+  h += cardDocumentacao();
 
   const presumidas = Mov.semDataReal().length;
   if(presumidas){
@@ -8097,6 +8231,16 @@ function ligarEventos(){
       }
       case 'importar-extrato': fechar('genModal'); abrirImportar(); break;
       case 'imp-aplicar': aplicarImportacao(); break;
+      case 'sem-extrato': {
+        const p = ST.posicoes.find(x => x.id === d.id);
+        if(p){ p.semExtrato = true; Store.salvar(); render(); toast(p.ticker + ' marcado como sem extrato.'); }
+        break;
+      }
+      case 'voltar-extrato': {
+        const p = ST.posicoes.find(x => x.id === d.id);
+        if(p){ p.semExtrato = false; Store.salvar(); render(); }
+        break;
+      }
 
       /* ---- perfil de investidor ---- */
       case 'questionario': fechar('genModal'); abrirQuestionario(); break;

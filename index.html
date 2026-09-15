@@ -760,6 +760,30 @@ details.explica p{margin:9px 0 0}
 .ii-g{margin-top:2px}
 @media (max-width:560px){ .imp-fatos{grid-template-columns:1fr} }
 
+/* ---------- importação em lote ---------- */
+details.imp-arq{border:1px solid var(--line); border-radius:11px; background:var(--card2); margin-bottom:9px}
+details.imp-arq > summary{cursor:pointer; padding:11px 13px; display:flex; align-items:baseline; gap:9px; list-style:none}
+details.imp-arq > summary::-webkit-details-marker{display:none}
+details.imp-arq > summary::before{content:'▸'; color:var(--txt3); margin-right:2px}
+details.imp-arq[open] > summary::before{content:'▾'}
+.ia-t{font-weight:640; font-size:.9rem}
+.ia-p{flex:1}
+.ia-c{background:var(--chip); border-radius:20px; padding:2px 9px; white-space:nowrap}
+.ia-corpo{padding:0 13px 13px}
+
+/* ---------- documentação da carteira ---------- */
+.doc-topo{display:flex; align-items:center; gap:12px; margin-bottom:9px}
+.doc-barra{flex:1; display:flex; height:10px; border-radius:5px; overflow:hidden; background:var(--line)}
+.doc-barra i{display:block; height:10px}
+.db-ok{background:var(--accent)} .db-neu{background:var(--txt3)} .db-par{background:var(--warn)}
+.doc-num{font-variant-numeric:tabular-nums; font-weight:680}
+.doc-lista{display:flex; flex-direction:column; max-height:330px; overflow:auto; margin-top:6px}
+.doc-item{display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--line)}
+.doc-item:first-child{border-top:0}
+.di-n{flex:1; min-width:0}
+.di-b{display:flex; gap:6px; flex-shrink:0}
+@media (max-width:560px){ .doc-item{flex-wrap:wrap} .di-b{width:100%} .di-b .btn{flex:1; justify-content:center} }
+
 </style>
 </head>
 <body>
@@ -1331,17 +1355,17 @@ const GLOSSARIO = [
  m:'Existem dois grandes grupos: fundos de tijolo (donos de shoppings, galpões, lajes) e fundos de papel (que emprestam para o setor imobiliário via CRI). Os rendimentos mensais são isentos de IR para pessoa física, dentro das regras da lei.',
  e:'Avalie P/VP, vacância física e financeira, cap rate, alavancagem, prazo e indexação dos contratos, e concentração de inquilinos. Em fundos de papel, a indexação (CDI vs IPCA) define o comportamento em ciclos de juros.'},
 
-{k:'etf', t:'ETF', c:'Renda variável',
+{k:'etf', t:'ETF — Exchange Traded Fund (fundo de índice negociado em bolsa)', c:'Renda variável',
  d:'É uma cestinha pronta de vários investimentos, negociada como se fosse uma ação. Comprando uma cota de um ETF do S&P 500, você compra um pedacinho das 500 maiores empresas americanas de uma vez.',
  m:'É a forma mais simples e barata de diversificar. A taxa de administração é baixa (muitas vezes abaixo de 0,1% ao ano) e você não precisa escolher empresa por empresa.',
  e:'Avalie tracking difference (não só o erro), método de replicação (física completa, amostral, sintética), empréstimo de ações, domicílio fiscal (ETF irlandês UCITS reduz retenção de dividendo para 15% e evita estate tax dos EUA).'},
 
-{k:'bdr', t:'BDR', c:'Renda variável',
+{k:'bdr', t:'BDR — Brazilian Depositary Receipt (ação estrangeira negociada na B3)', c:'Renda variável',
  d:'É um recibo negociado na bolsa brasileira que representa uma ação estrangeira. Permite investir na Apple comprando AAPL34 em reais, sem abrir conta lá fora.',
  m:'Você fica exposto à ação e ao dólar ao mesmo tempo. Em compensação, paga IR de 15% sobre o ganho sem a isenção mensal de R$ 20 mil das ações comuns, e os dividendos chegam já com retenção lá fora.',
  e:'BDR não patrocinado é emitido por depositário sem envolvimento da empresa; a paridade pode ser ajustada e há spread/iliquidez relevante frente ao ativo-objeto. O custo total costuma superar o de investir direto lá fora em carteiras maiores.'},
 
-{k:'reit', t:'REIT', c:'Renda variável',
+{k:'reit', t:'REIT (o fundo imobiliário americano)', c:'Renda variável',
  d:'É o primo americano do FII: uma empresa de imóveis listada em bolsa que distribui quase todo o lucro aos acionistas.',
  m:'Por lei, distribuem pelo menos 90% do lucro tributável. Para brasileiros, os dividendos sofrem 30% de retenção nos EUA.',
  e:'Analise FFO e AFFO no lugar do lucro contábil (depreciação distorce), além de dívida, prazo médio (WALT) e spread do cap rate frente ao Treasury.'},
@@ -1403,12 +1427,12 @@ const GLOSSARIO = [
  m:'Três caminhos: corretora internacional (Avenue, Nomad, Inter US, Schwab, IBKR), BDRs na bolsa brasileira, ou ETFs brasileiros que seguem índices lá fora (IVVB11, NASD11). Cada um tem custo e imposto diferentes.',
  e:'Considere domicílio fiscal do veículo (US-domiciled vs UCITS irlandês), estate tax americano acima de US$ 60 mil para não residentes, retenção de 30% em dividendos e obrigações de declaração (CBE do Bacen acima do limite vigente).'},
 
-{k:'w8ben', t:'W-8BEN', c:'Internacional',
+{k:'w8ben', t:'W-8BEN (formulário de não residente nos EUA)', c:'Internacional',
  d:'É um formulário que você assina na corretora estrangeira dizendo que não é residente fiscal nos EUA. Toda corretora internacional pede.',
  m:'Ele evita retenção mais pesada e organiza sua situação com o fisco americano. Vale por três anos e precisa ser renovado.',
  e:'Sem W-8BEN válido, aplica-se backup withholding de 24% sobre proventos e, em alguns casos, sobre o bruto da venda. O Brasil não tem tratado de bitributação com os EUA, mas a retenção de 30% em dividendos pode ser compensada parcialmente conforme a legislação brasileira.'},
 
-{k:'estate-tax', t:'Estate tax', c:'Internacional',
+{k:'estate-tax', t:'Estate tax (imposto sobre herança nos EUA)', c:'Internacional',
  d:'É um imposto americano sobre herança. Para estrangeiros, pode alcançar valores acima de US$ 60 mil aplicados em ativos americanos.',
  m:'Vale conhecer se você acumular um valor relevante lá fora: a alíquota chega a 40% sobre o que passar do limite, e o dinheiro pode ficar travado até a regularização.',
  e:'Mitigações comuns: ETFs UCITS domiciliados na Irlanda (situs fora dos EUA), conta conjunta com estrutura adequada, seguro de vida, ou holding offshore — cada uma com trade-offs fiscais no Brasil.'},
@@ -1429,7 +1453,7 @@ const GLOSSARIO = [
  m:'É o ativo mais volátil da lista: quedas de 50% ou mais já aconteceram várias vezes. Costuma-se recomendar posição pequena (1% a 5% da carteira) e só com dinheiro que você suporta ver oscilar muito.',
  e:'Sem fluxo de caixa, a avaliação é reflexiva (oferta programada vs demanda). Considere risco de custódia (self-custody vs exchange), risco regulatório e tributação: no Brasil, ganhos acima de R$ 35 mil/mês em vendas são tributados.'},
 
-{k:'stablecoin', t:'Stablecoin', c:'Cripto',
+{k:'stablecoin', t:'Stablecoin (cripto atrelada a uma moeda)', c:'Cripto',
  d:'É uma criptomoeda que tenta valer sempre US$ 1, como USDT e USDC. Serve para guardar valor em dólar dentro do mundo cripto.',
  m:'Não é igual a dólar no banco: depende da solidez de quem emite e das reservas que essa empresa mantém. Já houve casos de stablecoin perdendo a paridade.',
  e:'Distinga colateralizada em fiat (USDC/USDT), cripto-colateralizada sobrecolateralizada (DAI) e algorítmica (histórico de colapso). Avalie atestações de reserva, custodiantes e risco de resgate.'},
@@ -1487,7 +1511,7 @@ const GLOSSARIO = [
  m:'Ela vem do questionário de suitability que banco e corretora são obrigados a aplicar. Mas o teste de verdade é outro: se a carteira cair 30%, você vende em pânico ou aporta mais? O perfil não é um rótulo permanente: muda quando muda o prazo, a renda ou a reserva.',
  e:'Separe capacidade de risco (objetiva: horizonte, renda, patrimônio, liquidez) de tolerância a risco (subjetiva, comportamental). A carteira precisa respeitar a MENOR das duas — e é assim que o app calcula. Vale também checar o terceiro eixo, a necessidade de risco: se a meta já é alcançável com renda fixa, correr risco extra é assimetria negativa.'},
 
-{k:'suitability', t:'Suitability', c:'Estratégia',
+{k:'suitability', t:'Suitability (questionário de perfil)', c:'Estratégia',
  d:'É o nome técnico do questionário de perfil. Serve para a instituição não vender um produto arriscado demais para quem não aguenta.',
  m:'No Brasil é obrigatório por norma da CVM e precisa ser refeito periodicamente, normalmente a cada 24 meses. Se você responder para agradar — dizendo que aguenta mais risco do que aguenta — o resultado é inútil.',
  e:'CVM Resolução 30 exige avaliar objetivos, situação financeira e conhecimento, e proíbe recomendar produto inadequado sem alerta formal. Na prática, muitas instituições usam o questionário como formalidade; use-o como diagnóstico próprio, não como carimbo.'},
@@ -1502,12 +1526,12 @@ const GLOSSARIO = [
  m:'É a metade subjetiva do perfil. Quase todo mundo superestima a própria tolerância em mercado de alta e descobre a verdade na primeira queda de 20%.',
  e:'Medida por escalas psicométricas e por experiência revelada — o que a pessoa efetivamente fez em drawdowns anteriores vale mais que o que ela diz que faria. Aversão a perda (Kahneman e Tversky) faz a dor de perder pesar cerca de duas vezes o prazer de ganhar o mesmo valor.'},
 
-{k:'benchmark', t:'Benchmark', c:'Estratégia',
+{k:'benchmark', t:'Benchmark (referência de comparação)', c:'Estratégia',
  d:'É a referência usada para comparar seu resultado — CDI para renda fixa, Ibovespa para ações brasileiras, S&P 500 para americanas.',
  m:'Ganhar 8% parece bom, mas se o CDI deu 13% no mesmo período, você perdeu para o básico. Comparar sempre com a régua certa evita ilusão.',
  e:'Use benchmark investível e de risco semelhante. Alfa sem ajuste por beta e por fatores (tamanho, valor, momentum, qualidade) costuma ser exposição a fator disfarçada de habilidade.'},
 
-{k:'custo-oportunidade', t:'Custo de oportunidade', c:'Estratégia',
+{k:'custo-oportunidade', t:'Custo de oportunidade (o que você deixa de ganhar)', c:'Estratégia',
  d:'É o que você deixou de ganhar por ter escolhido uma coisa em vez de outra.',
  m:'Deixar R$ 50 mil parados na conta corrente enquanto o CDI rende 13% ao ano custa uns R$ 6,5 mil por ano de rendimento não recebido.',
  e:'Na prática, é a taxa de desconto correta para comparar projetos: o retorno da melhor alternativa de risco equivalente.'},
@@ -1546,7 +1570,7 @@ GLOSSARIO.forEach(g => GLOS_MAP[g.k] = g);
 const GLOSSARIO_EXTRA = [
 {k:'bolsa', t:'Bolsa de valores', c:'Básico', d:'É o mercado organizado onde se compram e vendem ações e outros papéis. No Brasil é a B3; nos EUA, NYSE e Nasdaq.', m:'Você não negocia direto na bolsa: manda a ordem pela corretora, que leva ao sistema da bolsa e registra a operação no seu CPF.'},
 {k:'corretora', t:'Corretora', c:'Básico', d:'É a empresa que dá acesso aos investimentos. Você transfere o dinheiro para lá e compra os papéis por um aplicativo ou site.', m:'Os ativos ficam registrados no seu nome (na B3 ou no custodiante), não no balanço da corretora — se ela quebrar, seus papéis continuam seus, embora o processo dê trabalho.'},
-{k:'home-broker', t:'Home broker', c:'Básico', d:'É a tela da corretora onde você digita as ordens de compra e venda.', m:'Ordem a mercado executa no melhor preço disponível na hora; ordem limitada só executa no preço que você definir ou melhor.'},
+{k:'home-broker', t:'Home broker (a tela de ordens da corretora)', c:'Básico', d:'É a tela da corretora onde você digita as ordens de compra e venda.', m:'Ordem a mercado executa no melhor preço disponível na hora; ordem limitada só executa no preço que você definir ou melhor.'},
 {k:'ticker', t:'Ticker (código)', c:'Básico', d:'É a sigla do investimento na bolsa: PETR4 é a Petrobras PN, AAPL é a Apple.', m:'No Brasil, o número no fim indica o tipo: 3 é ordinária (ON), 4 preferencial (PN), 11 é unit, BDR ou fundo, e 34 identifica BDR de ação americana.'},
 {k:'lote-padrao', t:'Lote e fracionário', c:'Básico', d:'O lote padrão da bolsa brasileira é de 100 ações. Comprando menos que isso, você usa o mercado fracionário (código com F no fim).', m:'O fracionário tem menos liquidez e o preço pode sair alguns centavos pior; para valores pequenos, a diferença é irrelevante.'},
 {k:'custodia', t:'Custódia', c:'Básico', d:'É o "cofre" onde ficam guardados seus investimentos, em seu nome.', m:'No Brasil, a custódia central é da B3, e você pode conferir tudo pela Área do Investidor da própria B3, sem depender da corretora.'},
@@ -1554,36 +1578,36 @@ const GLOSSARIO_EXTRA = [
 {k:'spread-cambial', t:'Spread cambial e IOF', c:'Custos', d:'É a diferença entre a cotação do dólar que você vê e a que a corretora realmente te cobra, mais o imposto sobre a operação.', m:'Para remessa de investimento, o IOF é bem menor que o do cartão de crédito. Compare o "dólar efetivo" (com spread e IOF) entre as instituições — a diferença costuma ser de 0,5% a 2%.'},
 {k:'taxa-administracao', t:'Taxa de administração', c:'Custos', d:'É quanto o fundo cobra por ano para gerir seu dinheiro, descontada todo dia do valor da cota.', m:'Parece pequena, mas 2% ao ano por 20 anos consomem cerca de um terço do que você teria acumulado. Em ETFs de índice, ela costuma ficar abaixo de 0,3%.'},
 {k:'taxa-performance', t:'Taxa de performance', c:'Custos', d:'É uma taxa extra que alguns fundos cobram quando superam seu benchmark — geralmente 20% do que passar.', m:'Procure a linha d’água (high-water mark): sem ela, o gestor pode cobrar performance depois de recuperar um prejuízo que ele mesmo causou.'},
-{k:'ipo', t:'IPO', c:'Renda variável', d:'É quando uma empresa estreia na bolsa e vende ações ao público pela primeira vez.', m:'Historicamente, participar de IPO no varejo dá resultado irregular: a empresa e os donos escolhem o momento em que vender é mais vantajoso para eles.'},
+{k:'ipo', t:'IPO — Initial Public Offering (estreia da empresa na bolsa)', c:'Renda variável', d:'É quando uma empresa estreia na bolsa e vende ações ao público pela primeira vez.', m:'Historicamente, participar de IPO no varejo dá resultado irregular: a empresa e os donos escolhem o momento em que vender é mais vantajoso para eles.'},
 {k:'jcp', t:'JCP', c:'Renda variável', d:'Juros sobre capital próprio: outra forma de a empresa distribuir dinheiro aos acionistas.', m:'Diferente do dividendo, o JCP é tributado em 15% na fonte, mas gera dedução fiscal para a empresa — por isso muitas preferem pagar assim.'},
 {k:'split', t:'Desdobramento e grupamento', c:'Renda variável', d:'É quando a empresa divide cada ação em várias (desdobramento) ou junta várias em uma (grupamento). O valor total que você tem não muda.', m:'Seu preço médio precisa ser ajustado na mesma proporção, para o imposto sair certo.'},
 {k:'subscricao', t:'Direito de subscrição', c:'Renda variável', d:'É a preferência para comprar novas ações quando a empresa emite mais papéis.', m:'Se você não exercer nem vender o direito, sua fatia na empresa diminui (diluição).'},
-{k:'small-cap', t:'Small cap e blue chip', c:'Renda variável', d:'Blue chips são as empresas grandes e conhecidas; small caps são as menores, mais arriscadas e potencialmente mais rentáveis.', m:'Small caps sofrem mais em crises e com juro alto, porque dependem mais de crédito e do mercado interno.'},
+{k:'small-cap', t:'Small cap e blue chip (empresas pequenas e gigantes)', c:'Renda variável', d:'Blue chips são as empresas grandes e conhecidas; small caps são as menores, mais arriscadas e potencialmente mais rentáveis.', m:'Small caps sofrem mais em crises e com juro alto, porque dependem mais de crédito e do mercado interno.'},
 {k:'pl', t:'P/L (preço/lucro)', c:'Análise', d:'Mostra quantos anos de lucro atual seriam necessários para pagar o preço da ação. P/L 10 significa dez anos.', m:'P/L baixo pode ser barganha ou armadilha (empresa em declínio); P/L alto pode ser exagero ou expectativa legítima de crescimento. Só faz sentido comparado ao setor e ao histórico.'},
-{k:'pvp', t:'P/VP', c:'Análise', d:'Compara o preço da ação ou cota com o valor patrimonial que ela representa. P/VP 0,8 significa pagar R$ 0,80 por R$ 1 de patrimônio.', m:'É muito usado em bancos e FIIs. Em FIIs, P/VP abaixo de 1 pode indicar desconto ou reflexo de vacância e risco de crédito.'},
-{k:'roe', t:'ROE', c:'Análise', d:'Mede quanto de lucro a empresa gera para cada real de patrimônio dos sócios.', m:'ROE alto e sustentável é sinal de negócio bom. Cheque se não vem de dívida excessiva, que amplifica o indicador e o risco.'},
-{k:'ebitda', t:'EBITDA', c:'Análise', d:'É o lucro da operação antes de juros, impostos, depreciação e amortização — uma medida de geração de caixa do negócio.', m:'Útil para comparar empresas com estruturas de dívida diferentes, mas ignora investimentos necessários para manter o negócio de pé.'},
+{k:'pvp', t:'P/VP (preço sobre valor patrimonial)', c:'Análise', d:'Compara o preço da ação ou cota com o valor patrimonial que ela representa. P/VP 0,8 significa pagar R$ 0,80 por R$ 1 de patrimônio.', m:'É muito usado em bancos e FIIs. Em FIIs, P/VP abaixo de 1 pode indicar desconto ou reflexo de vacância e risco de crédito.'},
+{k:'roe', t:'ROE — Return on Equity (retorno sobre o patrimônio)', c:'Análise', d:'Mede quanto de lucro a empresa gera para cada real de patrimônio dos sócios.', m:'ROE alto e sustentável é sinal de negócio bom. Cheque se não vem de dívida excessiva, que amplifica o indicador e o risco.'},
+{k:'ebitda', t:'EBITDA (lucro antes de juros, impostos e depreciação)', c:'Análise', d:'É o lucro da operação antes de juros, impostos, depreciação e amortização — uma medida de geração de caixa do negócio.', m:'Útil para comparar empresas com estruturas de dívida diferentes, mas ignora investimentos necessários para manter o negócio de pé.'},
 {k:'divida-liquida', t:'Dívida líquida / EBITDA', c:'Análise', d:'Mostra quantos anos de geração de caixa a empresa levaria para pagar o que deve.', m:'Acima de 3x costuma acender alerta, mas o limite saudável depende do setor: energia e saneamento suportam mais que varejo.'},
-{k:'payout', t:'Payout', c:'Análise', d:'É a fatia do lucro que a empresa distribui aos acionistas.', m:'Payout perto de 100% deixa pouco para investir no crescimento; payout muito baixo pode indicar retenção com bom uso — ou não.'},
+{k:'payout', t:'Payout (fatia do lucro distribuída)', c:'Análise', d:'É a fatia do lucro que a empresa distribui aos acionistas.', m:'Payout perto de 100% deixa pouco para investir no crescimento; payout muito baixo pode indicar retenção com bom uso — ou não.'},
 {k:'vacancia', t:'Vacância', c:'FIIs', d:'É a parte dos imóveis do fundo que está vazia, sem inquilino pagando.', m:'Vacância física mede metros quadrados vazios; a financeira mede receita perdida — a segunda importa mais para o rendimento da sua cota.'},
 {k:'cri-cra', t:'CRI e CRA', c:'Renda fixa', d:'São títulos lastreados em recebíveis do setor imobiliário (CRI) ou do agronegócio (CRA), isentos de IR para pessoa física.', m:'Não têm FGC e podem ter liquidez baixa. A qualidade depende de quem deve lá na ponta e das garantias envolvidas.'},
 {k:'tabela-regressiva', t:'Tabela regressiva do IR', c:'Impostos', d:'Na renda fixa, quanto mais tempo o dinheiro fica aplicado, menor o imposto: começa em 22,5% e cai até 15% após dois anos.', m:'As faixas são 22,5% até 180 dias, 20% até 360, 17,5% até 720 e 15% acima disso. Resgatar pouco antes de virar a faixa custa caro.'},
 {k:'iof-regressivo', t:'IOF nos 30 dias', c:'Impostos', d:'Resgatar renda fixa antes de 30 dias paga IOF, que come quase todo o rendimento no primeiro dia e zera no trigésimo.', m:'Por isso, dinheiro que pode ser necessário em poucos dias é melhor em conta remunerada ou no Tesouro Selic, atento ao mesmo prazo.'},
 {k:'informe-rendimentos', t:'Informe de rendimentos', c:'Impostos', d:'É o documento que o banco ou corretora emite todo ano com o que você tem e o que rendeu, para preencher a declaração.', m:'Bens ficam na ficha de Bens e Direitos pelo custo de aquisição, não pelo valor de mercado. Ações e fundos têm códigos e grupos específicos.'},
 {k:'bens-exterior', t:'Declarar bens no exterior', c:'Impostos', d:'Quem tem dinheiro ou investimentos fora do Brasil precisa informar na declaração anual do imposto de renda.', m:'Além da declaração à Receita, há a CBE do Banco Central para quem passa do limite em ativos no exterior — confirme o valor e o prazo vigentes no ano.'},
-{k:'drawdown', t:'Drawdown', c:'Risco', d:'É o tamanho da queda desde o ponto mais alto até o mais baixo. Um drawdown de 30% significa que a carteira chegou a valer 30% menos que no pico.', m:'Serve para você se testar: se não dormiria com uma queda de 30%, sua carteira está agressiva demais para o seu perfil.'},
+{k:'drawdown', t:'Drawdown (queda desde o topo)', c:'Risco', d:'É o tamanho da queda desde o ponto mais alto até o mais baixo. Um drawdown de 30% significa que a carteira chegou a valer 30% menos que no pico.', m:'Serve para você se testar: se não dormiria com uma queda de 30%, sua carteira está agressiva demais para o seu perfil.'},
 {k:'correlacao', t:'Correlação', c:'Risco', d:'Mede se dois investimentos costumam andar juntos. Perto de +1 sobem e caem juntos; perto de −1 fazem o contrário.', m:'A diversificação funciona melhor entre ativos de correlação baixa — como ações brasileiras e dólar, que tendem a ir em direções opostas.'},
 {k:'sharpe', t:'Índice de Sharpe', c:'Risco', d:'Mostra quanto de retorno extra o investimento entregou para cada unidade de risco corrida.', m:'Compare fundos parecidos: Sharpe maior significa retorno melhor ajustado pela oscilação. Abaixo de zero, o ativo rendeu menos que a taxa livre de risco.'},
-{k:'beta', t:'Beta', c:'Risco', d:'Mede o quanto um ativo balança em relação ao mercado. Beta 1,5 sobe e desce 50% mais que o índice.', m:'Beta alto não é bom nem ruim; define quanto da oscilação da carteira vem do mercado e quanto vem do papel específico.'},
+{k:'beta', t:'Beta (o quanto oscila junto com o mercado)', c:'Risco', d:'Mede o quanto um ativo balança em relação ao mercado. Beta 1,5 sobe e desce 50% mais que o índice.', m:'Beta alto não é bom nem ruim; define quanto da oscilação da carteira vem do mercado e quanto vem do papel específico.'},
 {k:'renda-passiva', t:'Renda passiva', c:'Estratégia', d:'É a renda que entra sem você precisar trabalhar por ela — aluguéis de FIIs, dividendos, juros de renda fixa.', m:'Para estimar a renda mensal, uma conta simples: patrimônio × rendimento anual ÷ 12. Com regra de retirada de 4% ao ano, R$ 1 milhão gera cerca de R$ 3,3 mil por mês corrigidos pela inflação.'},
 {k:'regra-4', t:'Regra dos 4%', c:'Estratégia', d:'Diz que, num patrimônio bem diversificado, retirar 4% ao ano tende a ser sustentável por décadas.', m:'Vem de estudos com dados americanos e não é lei. No Brasil, com juro real alto, taxas um pouco maiores podem funcionar, mas exigem cuidado com inflação e sequência de retornos.'},
 {k:'aporte-mensal', t:'Aporte mensal', c:'Estratégia', d:'É o valor que você consegue investir todo mês. É a variável mais poderosa no começo da jornada.', m:'No início, o aporte pesa mais que a rentabilidade; depois de alguns anos, os juros compostos assumem a liderança do crescimento.'},
-{k:'efeito-manada', t:'Efeito manada', c:'Comportamento', d:'É a tendência de comprar o que todo mundo está comprando, geralmente depois de já ter subido muito.', m:'O padrão clássico é comprar na euforia e vender no pânico — o contrário do que funciona. Ter uma regra escrita de aportes protege de si mesmo.'},
+{k:'efeito-manada', t:'Efeito manada (herd behavior)', c:'Comportamento', d:'É a tendência de comprar o que todo mundo está comprando, geralmente depois de já ter subido muito.', m:'O padrão clássico é comprar na euforia e vender no pânico — o contrário do que funciona. Ter uma regra escrita de aportes protege de si mesmo.'},
 {k:'vies-confirmacao', t:'Viés de confirmação', c:'Comportamento', d:'É procurar só as informações que concordam com o que você já acredita sobre um investimento.', m:'Antídoto prático: antes de comprar, escreva quais fatos fariam você reconhecer que errou e vender.'},
 {k:'aversao-perda', t:'Aversão à perda', c:'Comportamento', d:'Perder R$ 1.000 dói mais do que ganhar R$ 1.000 alegra. Isso leva gente a segurar prejuízo e realizar lucro cedo demais.', m:'Avalie cada posição pela pergunta: "compraria isso hoje por esse preço?". Se a resposta for não, o preço que você pagou não deveria importar.'},
-{k:'day-trade', t:'Day trade', c:'Comportamento', d:'É comprar e vender no mesmo dia tentando lucrar com a oscilação.', m:'Estudos com dados da B3 mostram que a enorme maioria dos day traders persistentes perde dinheiro. A tributação também é pior: 20% sem faixa de isenção.'},
+{k:'day-trade', t:'Day trade (compra e venda no mesmo dia)', c:'Comportamento', d:'É comprar e vender no mesmo dia tentando lucrar com a oscilação.', m:'Estudos com dados da B3 mostram que a enorme maioria dos day traders persistentes perde dinheiro. A tributação também é pior: 20% sem faixa de isenção.'},
 {k:'custodia-cripto', t:'Carteira de cripto', c:'Cripto', d:'É onde suas criptomoedas ficam guardadas: na corretora (mais fácil) ou numa carteira própria, em que só você tem a chave.', m:'"Not your keys, not your coins": na corretora você depende da solidez dela. Em carteira própria, perder a frase de recuperação significa perder tudo, sem atendimento para recorrer.'},
-{k:'halving', t:'Halving', c:'Cripto', d:'É o evento, a cada quatro anos, que reduz pela metade a emissão de novos bitcoins.', m:'Faz parte do desenho de escassez programada da rede. Historicamente antecedeu ciclos de alta, mas quatro eventos são pouca amostra para virar regra.'}
+{k:'halving', t:'Halving (corte pela metade da emissão)', c:'Cripto', d:'É o evento, a cada quatro anos, que reduz pela metade a emissão de novos bitcoins.', m:'Faz parte do desenho de escassez programada da rede. Historicamente antecedeu ciclos de alta, mas quatro eventos são pouca amostra para virar regra.'}
 ];
 GLOSSARIO_EXTRA.forEach(g => { GLOSSARIO.push(g); GLOS_MAP[g.k] = g; });
 GLOSSARIO.sort((a,b) => a.t.localeCompare(b.t, 'pt-BR'));
@@ -1592,17 +1616,17 @@ GLOSSARIO.sort((a,b) => a.t.localeCompare(b.t, 'pt-BR'));
 const GLOSSARIO_EXTRA2 = [
 {k:'acao-on', t:'Ação ordinária (ON)', c:'Renda variável', d:'É a ação que dá direito a voto nas assembleias da empresa. No Brasil, o código termina em 3 — como PETR3, VALE3, BBAS3.', m:'Quem tem ON participa das decisões (na prática, o peso do pequeno investidor é mínimo) e tem direito ao tag along: se o controlador vender a empresa, você recebe pelo menos 80% do valor pago por ação a ele. Empresas do Novo Mercado só têm ON.', e:'O tag along mínimo é legal (80%), mas níveis de governança elevam para 100%. Em disputas de controle, a ON costuma abrir prêmio sobre a PN — o spread ON/PN é um termômetro da probabilidade percebida de evento societário.'},
 {k:'acao-pn', t:'Ação preferencial (PN)', c:'Renda variável', d:'É a ação sem direito a voto, mas com preferência no recebimento de dividendos. No Brasil, o código termina em 4 — como PETR4, ITUB4, BBDC4.', m:'Costuma ter mais liquidez que a ON da mesma empresa (é a que o mercado mais negocia) e, muitas vezes, dividend yield um pouco maior. Em compensação, o tag along pode ser menor ou inexistente. Existem ainda PNA (5) e PNB (6), classes com regras próprias definidas no estatuto.', e:'A Lei das S.A. limita PN a 50% do capital em companhias abertas registradas após 2001. A escolha entre ON e PN deve pesar liquidez, spread histórico, política de proventos e proteção em evento de controle — não só o preço de tela.'},
-{k:'unit', t:'Unit', c:'Renda variável', d:'É um pacote que junta vários tipos de ação da mesma empresa num único papel. O código termina em 11 — como SANB11, TAEE11, KLBN11.', m:'Comprando uma unit você leva, por exemplo, 1 ON + 2 PN de uma vez. Cuidado: o final 11 também é usado por FIIs (MXRF11) e ETFs (BOVA11) — o nome do ativo é que esclarece qual é qual.'},
+{k:'unit', t:'Unit (pacote de ações)', c:'Renda variável', d:'É um pacote que junta vários tipos de ação da mesma empresa num único papel. O código termina em 11 — como SANB11, TAEE11, KLBN11.', m:'Comprando uma unit você leva, por exemplo, 1 ON + 2 PN de uma vez. Cuidado: o final 11 também é usado por FIIs (MXRF11) e ETFs (BOVA11) — o nome do ativo é que esclarece qual é qual.'},
 {k:'fracionario', t:'Mercado fracionário (F)', c:'Renda variável', d:'É onde se compra menos de 100 ações. O código ganha um F no fim: PETR4F, VALE3F.', m:'A cotação é praticamente a mesma do lote padrão, com liquidez menor. Para quem aporta valores pequenos todo mês, é o mercado normal de uso.'},
-{k:'adr', t:'ADR', c:'Internacional', d:'É o caminho inverso do BDR: uma ação brasileira negociada na bolsa americana, em dólar. A Petrobras, por exemplo, é PBR em Nova York.', m:'Investidores no exterior usam ADR para comprar empresas brasileiras. Para quem mora no Brasil, comprar PBR em vez de PETR4 só faz sentido se o dinheiro já estiver lá fora — e traz a retenção de 30% sobre dividendos.'},
+{k:'adr', t:'ADR — American Depositary Receipt (ação estrangeira negociada nos EUA)', c:'Internacional', d:'É o caminho inverso do BDR: uma ação brasileira negociada na bolsa americana, em dólar. A Petrobras, por exemplo, é PBR em Nova York.', m:'Investidores no exterior usam ADR para comprar empresas brasileiras. Para quem mora no Brasil, comprar PBR em vez de PETR4 só faz sentido se o dinheiro já estiver lá fora — e traz a retenção de 30% sobre dividendos.'},
 {k:'bvsp', t:'IBOV e ^BVSP', c:'Índices', d:'IBOV é o apelido do Ibovespa. O código ^BVSP é como os sites e aplicativos identificam esse índice na hora de buscar a cotação.', m:'Os índices geralmente aparecem com esse acento circunflexo na frente: ^BVSP (Ibovespa), ^GSPC (S&P 500), ^IXIC (Nasdaq Composite), ^DJI (Dow Jones). Não são ativos para comprar — para investir num índice, você compra o ETF correspondente (BOVA11, VOO, QQQ).'},
 {k:'ifix', t:'IFIX', c:'Índices', d:'É o índice dos fundos imobiliários — o "Ibovespa dos FIIs". Serve para saber se a sua carteira de FIIs foi melhor ou pior que a média do setor.', m:'Reúne os FIIs mais líquidos da B3, ponderados por valor de mercado, e é calculado com os rendimentos reinvestidos.'},
 {k:'idiv', t:'IDIV, SMLL e outros índices da B3', c:'Índices', d:'São recortes do mercado brasileiro: IDIV reúne as empresas que mais pagam dividendos, SMLL as empresas menores (small caps), e existem ainda IBRX-100, ICON (consumo) e IEE (energia elétrica), entre outros.', m:'Cada um tem um ETF que o segue: DIVO11 para o IDIV, SMAL11 para o SMLL. Comparar sua carteira com o índice certo evita conclusão errada — uma carteira de dividendos deve ser medida contra o IDIV, não contra o Ibovespa.'},
 {k:'dow', t:'Dow Jones e Russell 2000', c:'Índices', d:'Dow Jones acompanha 30 grandes empresas americanas, das mais tradicionais. Russell 2000 acompanha 2.000 empresas pequenas dos EUA.', m:'O Dow é o índice mais antigo e mais citado na imprensa, mas é ponderado por preço da ação — um critério estranho, que dá mais peso a quem tem ação cara. Para medir o mercado americano, o S&P 500 é referência melhor.'},
-{k:'vix', t:'VIX', c:'Índices', d:'É o "índice do medo": mede a oscilação que o mercado espera para o S&P 500 nos próximos 30 dias.', m:'Abaixo de 15 indica calmaria; acima de 30, tensão alta. Ele sobe quando as bolsas caem, e costuma ser citado nas notícias como termômetro de pânico.', e:'É a volatilidade implícita anualizada extraída das opções do S&P 500. Não prevê direção — só amplitude esperada — e tem prêmio de risco de variância embutido, o que o mantém em média acima da volatilidade realizada.'},
+{k:'vix', t:'VIX (o índice do medo)', c:'Índices', d:'É o "índice do medo": mede a oscilação que o mercado espera para o S&P 500 nos próximos 30 dias.', m:'Abaixo de 15 indica calmaria; acima de 30, tensão alta. Ele sobe quando as bolsas caem, e costuma ser citado nas notícias como termômetro de pânico.', e:'É a volatilidade implícita anualizada extraída das opções do S&P 500. Não prevê direção — só amplitude esperada — e tem prêmio de risco de variância embutido, o que o mantém em média acima da volatilidade realizada.'},
 {k:'bitcoin', t:'Bitcoin (BTC)', c:'Cripto', d:'É a primeira e maior criptomoeda, criada em 2009. Existe no máximo 21 milhões de unidades — e essa escassez programada é o principal argumento de quem investe nele.', m:'Você pode comprar pedaços: 0,001 BTC é uma compra normal. A menor fração se chama satoshi (0,00000001 BTC). O preço costuma ser cotado em dólar (BTC/USD) e também em real (BTC/BRL) — e a diferença entre os dois embute a cotação do câmbio.', e:'Oferta emitida por curva decrescente com halving a cada 210 mil blocos. Correlação com ativos de risco subiu desde 2020, enfraquecendo a tese de reserva de valor descorrelacionada; a exposição regulada via ETF spot transfere risco de custódia, ao custo da taxa e da perda de autocustódia.'},
 {k:'ethereum', t:'Ethereum (ETH)', c:'Cripto', d:'É a segunda maior criptomoeda. Diferente do Bitcoin, ela funciona como uma plataforma onde outras aplicações são construídas.', m:'É a base da maior parte dos projetos de finanças descentralizadas e dos tokens que você vê por aí. Quem investe está apostando no uso dessa plataforma, não só na escassez da moeda.'},
-{k:'blockchain', t:'Blockchain', c:'Cripto', d:'É o "livro-caixa" público onde ficam registradas todas as transações de uma criptomoeda, copiado em milhares de computadores ao mesmo tempo.', m:'Como todos têm a mesma cópia e cada novo bloco depende do anterior, adulterar um registro antigo exigiria refazer tudo o que veio depois em mais da metade da rede.'},
+{k:'blockchain', t:'Blockchain (o livro-caixa público)', c:'Cripto', d:'É o "livro-caixa" público onde ficam registradas todas as transações de uma criptomoeda, copiado em milhares de computadores ao mesmo tempo.', m:'Como todos têm a mesma cópia e cada novo bloco depende do anterior, adulterar um registro antigo exigiria refazer tudo o que veio depois em mais da metade da rede.'},
 {k:'altcoin', t:'Altcoin e token', c:'Cripto', d:'Altcoin é qualquer criptomoeda que não seja o Bitcoin. Token é um ativo digital criado dentro da rede de outra moeda, geralmente a do Ethereum.', m:'A maioria das milhares de altcoins existentes desaparece com o tempo. Concentrar em BTC e ETH é a escolha mais conservadora dentro de uma classe que já é arriscada.'},
 {k:'par-cotacao', t:'Par de cotação (BTC/USD, USD/BRL)', c:'Cotações', d:'Toda cotação compara duas coisas. USD/BRL é quantos reais custa um dólar; BTC/USD é quantos dólares custa um bitcoin.', m:'A primeira sigla é o que está sendo cotado; a segunda é a moeda em que o preço está. Por isso BTC/BRL é um número bem maior que BTC/USD — é o mesmo bitcoin, medido em outra régua.'},
 {k:'dolar-turismo', t:'Dólar comercial, turismo e PTAX', c:'Cotações', d:'Comercial é o usado em investimentos e comércio exterior — é o que aparece nas notícias e neste app. Turismo é o da casa de câmbio, sempre mais caro. PTAX é a média oficial do Banco Central.', m:'Na hora de enviar dinheiro para investir lá fora, o que importa é o dólar comercial mais o spread da instituição e o IOF. Para declarar imposto de renda, usa-se a PTAX do dia da operação.'},
@@ -1664,12 +1688,12 @@ const GLOSSARIO_EXTRA3 = [
  e:'Meça pelo índice de Herfindahl (soma dos quadrados dos pesos) ou pelo número efetivo de posições (1/HHI). Vinte ativos com um deles em 40% têm número efetivo perto de 5. Concentração setorial e de fator costuma ser maior que a aparente: cinco bancos diferentes são quase uma posição só.'},
 
 /* ---------- Medidas de retorno ---------- */
-{k:'xirr', t:'XIRR — Extended Internal Rate of Return', c:'Estratégia',
+{k:'xirr', t:'XIRR — Extended Internal Rate of Return (retorno do seu bolso)', c:'Estratégia',
  d:'Em português: taxa interna de retorno com datas irregulares, ou "retorno do seu bolso". É a taxa anual que leva em conta quanto você aportou e em que data. Responde à pergunta "quanto eu realmente ganhei por ano". Também aparece como MWR (money-weighted return) ou TIR.',
  m:'É diferente de dividir o lucro pelo total aportado. Se você colocou R$ 10 mil em janeiro e mais R$ 10 mil em novembro, o segundo aporte quase não teve tempo de render — o XIRR sabe disso, a conta simples não.',
  e:'Matematicamente é a taxa r que zera o valor presente líquido dos fluxos: Σ CF_i / (1+r)^(d_i/365) = 0. É o MWR (money-weighted return) em tempo irregular. Pode ter múltiplas raízes quando há alternância de sinal repetida; por isso o app usa Newton-Raphson com bissecção de segurança.'},
 
-{k:'twr', t:'TWR — Time-Weighted Return', c:'Estratégia',
+{k:'twr', t:'TWR — Time-Weighted Return (retorno da estratégia)', c:'Estratégia',
  d:'Em português: retorno ponderado pelo tempo, ou "retorno da estratégia". É o retorno da carteira ignorando quando você colocou dinheiro. Mede a qualidade das escolhas, não o timing dos aportes.',
  m:'É o número que fundos e gestores divulgam, e o único justo para comparar com CDI, Ibovespa ou S&P 500 — porque o índice não recebe aportes. Se o seu TWR é bom mas o XIRR é fraco, as escolhas foram boas e o momento dos aportes, ruim.',
  e:'Encadeia os sub-períodos delimitados por cada fluxo: Π(1 + (V_fim − F) / V_ini) − 1. Quanto mais frequente a marcação (diária, no caso do app), menor a distorção causada pela premissa de que o fluxo ocorre no fim do período.'},
@@ -1684,7 +1708,7 @@ const GLOSSARIO_EXTRA3 = [
  m:'A mesma empresa pode ter as duas, com preços diferentes. Quem investe pequeno raramente se importa com voto, então a escolha costuma ser por liquidez e por dividendo. Outros finais: 5 e 6 são classes especiais de PN, 11 é unit (pacote de ON + PN), 31 a 35 são BDR e 34 é o mais comum deles.',
  e:'A diferença de preço entre ON e PN embute o prêmio de controle e o tag along. Desde a Lei 10.303 o tag along mínimo da ON é 80% do valor pago ao controlador; a PN só tem tag along se o estatuto conceder. No Novo Mercado só existe ON, com tag along de 100% — por isso empresas que migram costumam converter PN em ON.'},
 
-{k:'tag-along', t:'Tag along', c:'Renda variável',
+{k:'tag-along', t:'Tag along (direito de vender junto)', c:'Renda variável',
  d:'É o direito de vender sua ação junto quando alguém compra o controle da empresa, recebendo pelo menos parte do preço que o comprador pagou ao dono anterior.',
  m:'Por lei, ações ON têm no mínimo 80% desse valor. Ações PN só têm se o estatuto der. No Novo Mercado é 100%. É uma proteção que só aparece quando a empresa é vendida — mas aí faz muita diferença.',
  e:'Previsto no art. 254-A da Lei 6.404. Cuidado com a base de cálculo: incide sobre o preço pago pelas ações com direito a voto que integram o bloco de controle, não sobre a cotação em bolsa; aquisições feitas por etapas ou via holding já foram usadas para reduzir o valor efetivo.'}
@@ -4983,6 +5007,12 @@ const Importador = {
                   para: fmt(dados.ir.liquido) + ' (IR de ' + fmt(dados.ir.imposto) + ')',
                   ganho:'é o que sobraria se você resgatasse hoje'});
 
+    if(dados.tipo && (!pos || (pos.produto || '') !== dados.tipo))
+      lista.push({id:'produto', nome:'Tipo do plano (PGBL ou VGBL)',
+                  de: pos && pos.produto ? pos.produto : (pos && /VGBL|PGBL/.test(pos.ticker + ' ' + (pos.notas||'')) ? 'pelo nome do ativo' : 'em branco'),
+                  para: dados.tipo + (dados.regime ? ' · ' + dados.regime : ''),
+                  ganho:'PGBL e VGBL pagam imposto de formas diferentes'});
+
     if(dados.taxaAdm != null)
       lista.push({id:'taxa', nome:'Taxa de administração', de: pos && pos.taxaAdm != null ? pnum(pos.taxaAdm,2) + '% a.a.' : 'em branco',
                   para: pnum(dados.taxaAdm, 2) + '% a.a.', ganho:'entra na conta de quanto as taxas custam por ano'});
@@ -5055,6 +5085,18 @@ const Importador = {
       feito.push('valor líquido depois do IR guardado');
     }
 
+    if(tem('produto') && dados.tipo){
+      const antes = pos.produto;
+      pos.produto = dados.tipo;
+      if(dados.regime) pos.regimeIR = dados.regime;
+      const nota = dados.tipo + (dados.regime ? ' · ' + dados.regime : '');
+      if(!pos.notas) pos.notas = nota;
+      else if(pos.notas.indexOf(dados.tipo) < 0) pos.notas = nota + ' · ' + pos.notas;
+      feito.push(antes && antes !== dados.tipo
+        ? 'tipo corrigido de ' + antes + ' para ' + dados.tipo
+        : 'tipo do plano registrado como ' + nota);
+    }
+
     if(tem('taxa') && dados.taxaAdm != null){
       pos.taxaAdm = dados.taxaAdm;
       feito.push('taxa de administração de ' + pnum(dados.taxaAdm,2) + '% guardada');
@@ -5086,7 +5128,7 @@ const Importador = {
 };
 
 </script>
-<script>window.CARTEIRA_CIFRADA = {"v": 1, "voltas": 210000, "carimbo": "2026-09-15T01:41:12.131961", "ativos": 47, "salt": "ZDIe374GoY2z/7d0s32TGA==", "iv": "ilTz5FG2Jdj4QO0n", "dados": "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"};</script>
+<script>window.CARTEIRA_CIFRADA = {"v": 1, "voltas": 210000, "carimbo": "2026-09-15T01:41:12.131961", "ativos": 47, "salt": "dmohwPsyabSqyyWlDDEq2g==", "iv": "vQ/92FyvYyp2jGcE", "dados": "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"};</script>
 <script>
 /* =========================================================
    InvestifyMe — aplicação
@@ -6356,18 +6398,19 @@ function salvarDatasIniciais(){
 
 
 /* =========================================================
-   IMPORTAR EXTRATO
+   IMPORTAR EXTRATO (vários arquivos de uma vez)
    ========================================================= */
-let impDados = null, impPos = null, impEscolhidos = [];
+let impLote = [];          /* [{nome, dados, posId, escolhidos, erro}] */
+let impLendo = false;
 
 function abrirImportar(){
-  impDados = null; impPos = null; impEscolhidos = [];
-  $('#assetModalTitle').textContent = 'Importar extrato';
+  impLote = []; impLendo = false;
+  $('#assetModalTitle').textContent = 'Importar extratos';
   $('#assetModalBody').innerHTML =
     '<div class="solta" id="impSolta">' +
       '<div class="solta-ico">📄</div>' +
-      '<p><b>Arraste o PDF do extrato aqui</b><br>ou clique para escolher o arquivo</p>' +
-      '<input type="file" id="impArquivo" accept=".pdf,application/pdf" hidden>' +
+      '<p><b>Arraste os PDFs aqui</b><br>ou clique para escolher — pode selecionar vários de uma vez</p>' +
+      '<input type="file" id="impArquivo" accept=".pdf,application/pdf" multiple hidden>' +
     '</div>' +
     '<div id="impResultado"></div>' +
     '<div class="card2-box" style="margin-top:14px">' +
@@ -6377,132 +6420,221 @@ function abrirImportar(){
         'taxa de administração, total aplicado e o valor líquido depois do IR.</li>' +
         '<li>Avenue, Itaú, BB Americas e planilhas em geral entram na próxima etapa.</li>' +
       '</ul>' +
-      '<p class="tiny muted" style="margin-top:9px">O arquivo é lido dentro do seu navegador. Nada é enviado para lugar nenhum.</p>' +
+      '<p class="tiny muted" style="margin-top:9px">Os arquivos são lidos dentro do seu navegador. Nada é enviado para lugar nenhum.</p>' +
     '</div>';
   abrir('assetModal');
 
   const area = $('#impSolta'), input = $('#impArquivo');
-  area.addEventListener('click', () => input.click());
-  input.addEventListener('change', () => { if(input.files[0]) lerExtrato(input.files[0]); });
-  ['dragenter','dragover'].forEach(ev => area.addEventListener(ev, e => {
-    e.preventDefault(); area.classList.add('sobre');
-  }));
-  ['dragleave','drop'].forEach(ev => area.addEventListener(ev, e => {
-    e.preventDefault(); area.classList.remove('sobre');
-  }));
-  area.addEventListener('drop', e => {
-    const f = e.dataTransfer.files[0];
-    if(f) lerExtrato(f);
-  });
+  area.addEventListener('click', () => { if(!impLendo) input.click(); });
+  input.addEventListener('change', () => lerExtratos(input.files));
+  ['dragenter','dragover'].forEach(ev => area.addEventListener(ev, e => { e.preventDefault(); area.classList.add('sobre'); }));
+  ['dragleave','drop'].forEach(ev => area.addEventListener(ev, e => { e.preventDefault(); area.classList.remove('sobre'); }));
+  area.addEventListener('drop', e => lerExtratos(e.dataTransfer.files));
 }
 
-async function lerExtrato(arquivo){
+async function lerExtratos(lista){
+  const arquivos = Array.from(lista || []);
+  if(!arquivos.length || impLendo) return;
+  impLendo = true;
   const alvo = $('#impResultado');
-  alvo.innerHTML = '<p class="small muted" style="margin-top:14px">Lendo <b>' + esc(arquivo.name) + '</b>…</p>';
-  try{
-    impDados = await Importador.lerArquivo(arquivo);
-    impPos = Importador.casar(impDados);
-    impEscolhidos = Importador.propostas(impDados, impPos).map(p => p.id);
-    desenharPreviaImport();
-  }catch(e){
-    impDados = null;
-    alvo.innerHTML = '<div class="aviso-box" style="margin-top:14px"><b>Não deu para ler este arquivo</b>' +
-      '<p class="small">' + esc(e.message || 'erro desconhecido') + '</p></div>';
+  for(let i = 0; i < arquivos.length; i++){
+    alvo.innerHTML = '<p class="small muted" style="margin-top:14px">Lendo ' + (i+1) + ' de ' + arquivos.length +
+      ': <b>' + esc(arquivos[i].name) + '</b>…</p>' + (impLote.length ? '<p class="tiny muted">' + impLote.length + ' já lidos.</p>' : '');
+    try{
+      const dados = await Importador.lerArquivo(arquivos[i]);
+      const pos = Importador.casar(dados);
+      impLote.push({nome: arquivos[i].name, dados: dados, posId: pos ? pos.id : '',
+                    escolhidos: Importador.propostas(dados, pos).map(x => x.id)});
+    }catch(e){
+      impLote.push({nome: arquivos[i].name, erro: e.message || 'não consegui ler'});
+    }
   }
+  impLendo = false;
+  /* extratos do mesmo plano: o mais antigo primeiro, para o saldo mais novo prevalecer */
+  impLote.sort((a,b) => ((a.dados && a.dados.periodo && a.dados.periodo.ate) || '')
+    .localeCompare((b.dados && b.dados.periodo && b.dados.periodo.ate) || ''));
+  desenharPreviaImport();
 }
 
 function desenharPreviaImport(){
-  const d = impDados;
-  const props = Importador.propostas(d, impPos);
-  let h = '<div class="imp-cab"><div><span class="pc-lbl">Reconhecido</span>' +
-    '<span class="pc-nome">' + esc(d.leitor) + '</span>' +
-    '<span class="tiny muted">' + esc(d.arquivo) + '</span></div></div>';
+  const bons = impLote.filter(x => x.dados), ruins = impLote.filter(x => x.erro);
+  let h = '';
 
-  h += '<div class="imp-fatos">';
-  const fato = (r,v) => v ? '<div><span>' + r + '</span><b>' + v + '</b></div>' : '';
-  h += fato('Certificado', d.certificado ? esc(d.certificado) : null);
-  h += fato('Produto', [d.tipo, d.regime].filter(Boolean).map(esc).join(' · '));
-  h += fato('Início do plano', d.inicio ? fmtData(d.inicio) : null);
-  h += fato('Período do extrato', d.periodo.de ? fmtData(d.periodo.de) + ' a ' + fmtData(d.periodo.ate) : null);
-  h += fato('Fundo', d.fundo ? esc(d.fundo) : null);
-  h += fato('Saldo no fim do período', d.saldoFinal ? fmt(d.saldoFinal) : null);
-  h += fato('Rendimento no período', d.rendimento ? fmt(d.rendimento) : null);
-  h += fato('Rentabilidade em 12 meses', d.rentab ? pnum(d.rentab.m12,2) + '%' : null);
-  h += '</div>';
+  if(ruins.length){
+    h += '<div class="aviso-box" style="margin-top:14px"><b>' + ruins.length + ' arquivo' +
+      (ruins.length > 1 ? 's' : '') + ' que não consegui ler</b><ul class="small" style="margin:6px 0 0 18px;padding:0">' +
+      ruins.map(x => '<li><b>' + esc(x.nome) + '</b> — ' + esc(x.erro) + '</li>').join('') + '</ul></div>';
+  }
+  if(!bons.length){ $('#impResultado').innerHTML = h; return; }
 
-  /* a qual ativo isso pertence */
   const ops = [['', '— criar um ativo novo —']].concat(
     ST.posicoes.slice().sort((a,b) => (a.ticker||'').localeCompare(b.ticker||''))
       .map(p => [p.id, p.ticker + (p.nome ? ' · ' + p.nome.slice(0,40) : '')]));
-  h += campo('Este extrato é de qual investimento?', selectHTML('impAtivo', ops, impPos ? impPos.id : ''),
-    null, impPos ? 'Encontrei sozinho pelo número do certificado.' : 'Não achei um ativo com este certificado — escolha ou crie.');
 
-  if(!props.length){
-    h += '<p class="small muted">Não encontrei nada de novo neste extrato.</p>';
-  }else{
-    h += '<div class="sub-lbl" style="margin-top:14px">O que vou fazer</div>' +
-         '<div class="imp-lista">';
-    props.forEach(p => {
-      h += '<label class="imp-item"><input type="checkbox" class="imp-ck" value="' + p.id + '"' +
-        (impEscolhidos.indexOf(p.id) >= 0 ? ' checked' : '') + '>' +
-        '<div><div class="ii-n">' + esc(p.nome) + '</div>' +
-        '<div class="ii-v tiny"><span class="muted">' + p.de + '</span> → <b>' + p.para + '</b></div>' +
-        '<div class="ii-g tiny muted">' + esc(p.ganho) + '</div></div></label>';
-    });
+  h += '<div class="sub-lbl" style="margin-top:16px">' + bons.length + ' extrato' + (bons.length > 1 ? 's lidos' : ' lido') + '</div>';
+
+  bons.forEach((item, idx) => {
+    const d = item.dados;
+    const pos = ST.posicoes.find(p => p.id === item.posId) || null;
+    const props = Importador.propostas(d, pos);
+    const marcados = props.filter(p => item.escolhidos.indexOf(p.id) >= 0).length;
+
+    h += '<details class="imp-arq"' + (bons.length === 1 ? ' open' : '') + '>' +
+      '<summary><span class="ia-t">' + esc(d.titulo || d.arquivo) + '</span>' +
+      '<span class="ia-p tiny muted">' + (d.periodo && d.periodo.de ? fmtData(d.periodo.de) + ' a ' + fmtData(d.periodo.ate) : esc(d.arquivo)) + '</span>' +
+      '<span class="ia-c tiny">' + marcados + ' de ' + props.length + '</span></summary><div class="ia-corpo">';
+
+    h += '<div class="imp-fatos">';
+    const fato = (r,v) => v ? '<div><span>' + r + '</span><b>' + v + '</b></div>' : '';
+    h += fato('Certificado', d.certificado ? esc(d.certificado) : null);
+    h += fato('Produto', [d.tipo, d.regime].filter(Boolean).map(esc).join(' · '));
+    h += fato('Início do plano', d.inicio ? fmtData(d.inicio) : null);
+    h += fato('Fundo', d.fundo ? esc(d.fundo) : null);
+    h += fato('Saldo no fim do período', d.saldoFinal ? fmt(d.saldoFinal) : null);
+    h += fato('Rendimento no período', d.rendimento ? fmt(d.rendimento) : null);
     h += '</div>';
-  }
 
-  if(d.avisos && d.avisos.length)
-    h += '<p class="tiny muted" style="margin-top:8px">Observações da leitura: ' + esc(d.avisos.join(' · ')) + '.</p>';
+    h += campo('Este extrato é de qual investimento?',
+      selectHTML('impAtivo' + idx, ops, item.posId).replace('<select ', '<select data-imp-ativo="' + idx + '" '),
+      null, pos ? 'Encontrei sozinho pelo número do certificado.' : 'Escolha o ativo ou deixe criar um novo.');
+
+    if(!props.length) h += '<p class="small muted">Nada de novo neste arquivo.</p>';
+    else{
+      h += '<div class="imp-lista">';
+      props.forEach(p => {
+        h += '<label class="imp-item"><input type="checkbox" class="imp-ck" data-lote="' + idx + '" value="' + p.id + '"' +
+          (item.escolhidos.indexOf(p.id) >= 0 ? ' checked' : '') + '>' +
+          '<div><div class="ii-n">' + esc(p.nome) + '</div>' +
+          '<div class="ii-v tiny"><span class="muted">' + p.de + '</span> → <b>' + p.para + '</b></div>' +
+          '<div class="ii-g tiny muted">' + esc(p.ganho) + '</div></div></label>';
+      });
+      h += '</div>';
+    }
+    h += '</div></details>';
+  });
 
   h += '<div class="f-actions"><button class="btn" data-close="assetModal">Cancelar</button>' +
-       '<button class="btn primary" data-acao="imp-aplicar">Aplicar ao meu investimento</button></div>';
+       '<button class="btn primary" data-acao="imp-aplicar">Aplicar ' +
+       (bons.length > 1 ? 'os ' + bons.length + ' extratos' : 'ao meu investimento') + '</button></div>';
 
   $('#impResultado').innerHTML = h;
   $('#impSolta').classList.add('feito');
-  $('#impAtivo').addEventListener('change', e => {
-    impPos = ST.posicoes.find(p => p.id === e.target.value) || null;
-    impEscolhidos = Importador.propostas(impDados, impPos).map(p => p.id);
+
+  $$('[data-imp-ativo]').forEach(sel => sel.addEventListener('change', e => {
+    const i = Number(e.target.dataset.impAtivo);
+    impLote.filter(x => x.dados)[i].posId = e.target.value;
+    const it = impLote.filter(x => x.dados)[i];
+    it.escolhidos = Importador.propostas(it.dados, ST.posicoes.find(p => p.id === it.posId) || null).map(p => p.id);
     desenharPreviaImport();
-  });
+  }));
+  $$('.imp-ck').forEach(ck => ck.addEventListener('change', () => {
+    const it = impLote.filter(x => x.dados)[Number(ck.dataset.lote)];
+    const i = it.escolhidos.indexOf(ck.value);
+    if(ck.checked && i < 0) it.escolhidos.push(ck.value);
+    if(!ck.checked && i >= 0) it.escolhidos.splice(i,1);
+  }));
 }
 
 function aplicarImportacao(){
-  if(!impDados) return;
-  const escolhidos = $$('.imp-ck').filter(c => c.checked).map(c => c.value);
-  let pos = ST.posicoes.find(p => p.id === $('#impAtivo').value) || null;
+  const bons = impLote.filter(x => x.dados);
+  if(!bons.length) return;
+  const relatorio = [];
 
-  if(!pos){
-    /* cria o ativo a partir do extrato */
-    pos = {
-      id: 'p' + Date.now().toString(36),
-      ticker: (impDados.tipo || 'PREV') + (impDados.certificado ? '-' + impDados.certificado : ''),
-      nome: 'Plano ' + (impDados.certificado || '') + (impDados.fundo ? ' — ' + impDados.fundo : ''),
-      tipo: 'previdencia', qtd: 1, pm: impDados.ir && impDados.ir.nominal ? impDados.ir.nominal : (impDados.saldoFinal || 0),
-      moeda: 'BRL', inst: 'BTG Pactual', data: impDados.inicio || '',
-      notas: [impDados.tipo, impDados.regime].filter(Boolean).join(' · ')
-    };
-    ST.posicoes.push(pos);
-  }
+  bons.forEach(item => {
+    const d = item.dados;
+    let pos = ST.posicoes.find(p => p.id === item.posId) || null;
+    if(!pos){
+      pos = {
+        id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+        ticker: (d.tipo || 'PREV') + (d.certificado ? '-' + d.certificado : ''),
+        nome: 'Plano ' + (d.certificado || '') + (d.fundo ? ' — ' + d.fundo : ''),
+        tipo: 'previdencia', qtd: 1,
+        pm: (d.ir && d.ir.nominal) ? d.ir.nominal : (d.saldoFinal || 0),
+        moeda: 'BRL', inst: 'BTG Pactual', data: d.inicio || '',
+        notas: [d.tipo, d.regime].filter(Boolean).join(' · ')
+      };
+      ST.posicoes.push(pos);
+      item.posId = pos.id;
+    }
+    const feito = Importador.aplicar(d, pos, item.escolhidos);
+    pos.extratoEm = new Date().toISOString();
+    pos.semExtrato = false;
+    relatorio.push({ticker: pos.ticker, arquivo: item.nome, feito: feito});
+  });
 
-  const feito = Importador.aplicar(impDados, pos, escolhidos);
   Store.salvar();
   cdiInicio = null; compDados = {};
   fechar('assetModal');
   render();
 
-  $('#genTitle').textContent = 'Extrato importado';
-  $('#genBody').innerHTML =
-    '<p class="small">Apliquei em <b>' + esc(pos.ticker) + '</b>:</p>' +
-    '<ul class="small" style="margin:8px 0 0 18px;padding:0">' +
-      (feito.length ? feito.map(f => '<li>' + esc(f) + '</li>').join('') : '<li>nada mudou</li>') +
-    '</ul>' +
-    '<p class="small muted" style="margin-top:12px">Se você tiver extratos de outros períodos, importe todos: ' +
-    'cada um vira mais pontos no histórico e deixa a rentabilidade mais precisa.</p>' +
-    '<div class="f-actions"><button class="btn" data-acao="importar-extrato">Importar outro</button>' +
+  $('#genTitle').textContent = relatorio.length > 1 ? relatorio.length + ' extratos importados' : 'Extrato importado';
+  $('#genBody').innerHTML = relatorio.map(r =>
+      '<p class="small" style="margin-bottom:2px"><b>' + esc(r.ticker) + '</b> <span class="tiny muted">' + esc(r.arquivo) + '</span></p>' +
+      '<ul class="small" style="margin:0 0 12px 18px;padding:0">' +
+      (r.feito.length ? r.feito.map(f => '<li>' + esc(f) + '</li>').join('') : '<li class="muted">nada mudou</li>') + '</ul>'
+    ).join('') +
+    '<p class="small muted">Extratos de outros períodos podem ser importados depois: cada um vira mais pontos no histórico.</p>' +
+    '<div class="f-actions"><button class="btn" data-acao="importar-extrato">Importar mais</button>' +
     '<button class="btn primary" data-close="genModal">Pronto</button></div>';
   abrir('genModal');
-  impDados = null; impPos = null;
+  impLote = [];
+}
+
+/* =========================================================
+   DOCUMENTAÇÃO DA CARTEIRA — quem ainda não tem extrato
+   ========================================================= */
+function estadoDocumento(p){
+  const temImportado = Mov.todos().some(m => m.ativoId === p.id && m.origem === 'importado');
+  const semDataReal = Mov.todos().some(m => m.ativoId === p.id && m.origem === 'saldo-inicial' && m.presumida);
+  if(temImportado) return {id:'ok', nome:'Extrato importado', tom:'ok'};
+  if(p.semExtrato) return {id:'dispensado', nome:'Sem extrato (confirmado por você)', tom:'neutro'};
+  if(!semDataReal && p.data) return {id:'parcial', nome:'Data informada à mão', tom:'parcial'};
+  return {id:'falta', nome:'Falta o extrato', tom:'falta'};
+}
+
+function cardDocumentacao(){
+  if(!ST.posicoes.length) return '';
+  const lista = ST.posicoes.map(p => ({p: p, e: estadoDocumento(p)}));
+  const faltando = lista.filter(x => x.e.id === 'falta');
+  const parciais = lista.filter(x => x.e.id === 'parcial');
+  const prontos  = lista.filter(x => x.e.id === 'ok');
+  const dispensados = lista.filter(x => x.e.id === 'dispensado');
+  const pct = Math.round((prontos.length + dispensados.length) / lista.length * 100);
+
+  let h = '<div class="doc-topo"><div class="doc-barra">' +
+    '<i class="db-ok" style="width:' + (prontos.length/lista.length*100) + '%"></i>' +
+    '<i class="db-neu" style="width:' + (dispensados.length/lista.length*100) + '%"></i>' +
+    '<i class="db-par" style="width:' + (parciais.length/lista.length*100) + '%"></i>' +
+    '</div><div class="doc-num">' + pct + '%</div></div>' +
+    '<p class="small muted">' + prontos.length + ' com extrato · ' + parciais.length + ' só com data informada à mão · ' +
+    faltando.length + ' sem nada' + (dispensados.length ? ' · ' + dispensados.length + ' sem extrato por opção' : '') + '.</p>';
+
+  const pendentes = faltando.concat(parciais);
+  if(!pendentes.length){
+    h += '<p class="small up">✓ Todos os investimentos estão documentados.</p>';
+    return bloco('Documentação da carteira', h, 'movimentacao', true);
+  }
+
+  h += '<div class="doc-lista">';
+  pendentes.slice(0, 40).forEach(({p,e}) => {
+    h += '<div class="doc-item"><div class="di-n"><b>' + esc(p.ticker) + '</b>' +
+      '<span class="tiny muted"> · ' + esc((TIPOS[p.tipo]||{}).curto || '') + (p.inst ? ' · ' + esc(p.inst) : '') + '</span>' +
+      '<div class="tiny ' + (e.tom === 'parcial' ? 'muted' : 'down') + '">' + esc(e.nome) + '</div></div>' +
+      '<div class="di-b"><button class="btn sm" data-acao="importar-extrato">Importar</button>' +
+      '<button class="btn sm ghost" data-acao="sem-extrato" data-id="' + p.id + '" title="Marcar que este investimento não tem extrato para importar">Não tenho</button>' +
+      '</div></div>';
+  });
+  h += '</div>';
+  if(pendentes.length > 40) h += '<p class="tiny muted">…e mais ' + (pendentes.length - 40) + '.</p>';
+  if(dispensados.length){
+    h += '<p class="tiny muted" style="margin-top:8px">Marcados como sem extrato: ' +
+      dispensados.map(({p}) => '<button class="linkinho" data-acao="voltar-extrato" data-id="' + p.id + '">' +
+        esc(p.ticker) + '</button>').join(', ') + '. Clique para voltar à lista.</p>';
+  }
+  h += '<p class="tiny muted" style="margin-top:10px">Extrato importado traz data de início, saldos antigos, taxas e rendimento — ' +
+    'é o que deixa a rentabilidade precisa. Para quem não tem extrato, marcar <b>Não tenho</b> tira o item da lista ' +
+    'e evita o aviso voltar toda vez.</p>';
+  return bloco('Documentação da carteira', h, 'movimentacao', true);
 }
 
 /* =========================================================
@@ -6522,7 +6654,7 @@ function viewMovimentos(){
     '<button class="btn primary sm" data-acao="novo-mov">+ Novo lançamento</button></div>';
 
   if(!movs.length){
-    return h + '<div class="card"><div class="empty"><span class="ic">🧾</span>' +
+    return h + cardDocumentacao() + '<div class="card"><div class="empty"><span class="ic">🧾</span>' +
       '<h2>Nenhum lançamento ainda</h2>' +
       '<p>Aqui fica o histórico do que entrou e do que saiu: aportes, compras, vendas, dividendos, juros e taxas. ' +
       'É o que permite calcular a rentabilidade de verdade, separando o que foi mérito do investimento do que foi o momento do aporte.</p>' +
@@ -6530,6 +6662,8 @@ function viewMovimentos(){
       '<button class="btn primary" data-acao="novo-mov">+ Lançar o primeiro</button>' +
       '<button class="btn" data-acao="semear-mov">Criar a partir da carteira</button></div></div></div>';
   }
+
+  h += cardDocumentacao();
 
   const presumidas = Mov.semDataReal().length;
   if(presumidas){
@@ -8097,6 +8231,16 @@ function ligarEventos(){
       }
       case 'importar-extrato': fechar('genModal'); abrirImportar(); break;
       case 'imp-aplicar': aplicarImportacao(); break;
+      case 'sem-extrato': {
+        const p = ST.posicoes.find(x => x.id === d.id);
+        if(p){ p.semExtrato = true; Store.salvar(); render(); toast(p.ticker + ' marcado como sem extrato.'); }
+        break;
+      }
+      case 'voltar-extrato': {
+        const p = ST.posicoes.find(x => x.id === d.id);
+        if(p){ p.semExtrato = false; Store.salvar(); render(); }
+        break;
+      }
 
       /* ---- perfil de investidor ---- */
       case 'questionario': fechar('genModal'); abrirQuestionario(); break;
