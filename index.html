@@ -10611,12 +10611,14 @@ function ligarEventos(){
   });
 
   /* navegação */
-  $$('.nav-item, .tab').forEach(b => b.addEventListener('click', () => {
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.nav-item, .tab');
+    if(!b || !b.dataset.view) return;
     if(b.dataset.view === '__mais'){
       $('#sidenav').classList.add('open'); $('#navBackdrop').classList.add('on'); return;
     }
     irPara(b.dataset.view);
-  }));
+  });
   $('#btnMenu').addEventListener('click', () => {
     $('#sidenav').classList.toggle('open');
     $('#navBackdrop').classList.toggle('on');
