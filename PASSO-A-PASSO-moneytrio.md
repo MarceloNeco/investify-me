@@ -1,4 +1,4 @@
-# MoneyTRIO v3.1 — passo a passo
+# MoneyTRIO v3.2 — passo a passo
 
 ## 1. O que veio neste zip
 
@@ -57,7 +57,76 @@ silencioso. Os apps se comportam igual; só não compartilham o arquivo.
 **Onde o módulo continua valendo:** nos seus outros sites (cifras, histórias,
 RiseONE, portal). Lá ele resolve de uma vez o que aqui já estava resolvido.
 
-## 4. O que entrou nesta versão
+## 4. O que entrou na 3.2
+
+### O inglês agora vale na tela inteira
+
+Eram **431 textos** que continuavam em português quando você trocava o idioma —
+título de tela, indicador, cabeçalho de tabela, filtro, legenda de gráfico,
+botão, fita do topo, rodapé e a cláusula de uso. Agora sobrou **zero**.
+
+Como funciona: a tradução acontece no instante em que a tela é desenhada, em
+cima do HTML já pronto. Em português a passagem não faz nada. Não fica ninguém
+vigiando a página — por isso não mudou nada de velocidade no celular.
+
+**O que você escreveu nunca é traduzido.** Nome de categoria, de fundo, de
+pessoa e descrição de lançamento aparecem como você digitou, nos dois idiomas.
+"Empregada" continua "Empregada" em inglês; "Habitação", que é rótulo do app,
+vira "Housing".
+
+As notas de versão continuam em português de propósito — são registro
+histórico, e em inglês a tela avisa isso em uma linha.
+
+### A diarista, do jeito que ela realmente acontece
+
+Marque o compromisso como **serviço por visita** e o app passa a separar duas
+coisas que não são a mesma: **quando ela vem** e **quando você paga**.
+
+Ela vem toda segunda; você paga na última segunda do mês (ou no último dia, ou
+no dia que escolher). O pagamento soma os dias trabalhados no período, e a tela
+do vencimento mostra dia a dia de onde veio aquele valor.
+
+O que a vida faz por cima disso:
+
+| Aconteceu | O que o app faz |
+|---|---|
+| Feriado na segunda | Ela não vem, e o dia **não entra** no pagamento. Não é falta. |
+| Trocou a segunda pela terça | O dia conta igual, mesmo valor. |
+| Veio num domingo extra | Vale mais — sugere 250 + 40% = **R$ 350**, e você confirma. |
+| O domingo extra substitui a segunda | Você marca isso na hora, e a segunda sai do mês. |
+
+Os feriados nacionais já vêm calculados, inclusive Carnaval, Sexta-feira Santa e
+Corpus Christi, que mudam de data todo ano. Feriado da sua cidade você
+acrescenta você mesmo.
+
+Os dias ficam em **Custos → Recorrentes → 📋** no compromisso.
+
+### Reajuste com data
+
+O botão **↗** em cada compromisso. De R$ 250 para R$ 276 a partir de novembro,
+ou já. O passado continua com o valor antigo nos gráficos; as próximas
+ocorrências e as provisões passam a usar o novo. Tem atalho de +5%, +10% e pelo
+IPCA de 12 meses.
+
+Mudar o valor direto no formulário de edição também vira um reajuste que começa
+hoje — para não reescrever o que já aconteceu.
+
+### O calendário leva a algum lugar
+
+Tocar num vencimento agora abre a tela dele: estado do pagamento (pendente,
+agendado, débito automático, pago, confirmado), valor só daquele mês, e — quando
+é serviço por visita — a lista dos dias que formaram o valor. Dali dá para ir
+direto para editar ou reajustar.
+
+Feriado fica pintado no calendário, e o dia avisa qual é.
+
+### O pé do menu
+
+No **InvestifyONE** voltou o nível das explicações, com as palavras de antes —
+Iniciante, Médio, Expert. No **BudgetONE** ficou só o calendário. O PT/EN saiu
+dos dois: mora no topo, uma vez só.
+
+## 5. O que entrou na 3.1
 
 ### Instalar na tela de início
 
@@ -125,7 +194,7 @@ A tabela "As dez maiores contas" esticava a página para 562 px numa tela de
 390 px — no celular, tudo ficava torto e dava para arrastar a tela de lado.
 Agora ela rola dentro do cartão. A regra vale para qualquer tabela larga.
 
-## 5. O que ainda precisa de servidor
+## 6. O que ainda precisa de servidor
 
 | Item | Hoje | Com servidor |
 |---|---|---|
@@ -140,7 +209,7 @@ Quando quiser resolver isso sem escrever servidor, o caminho é **Supabase** ou
 **Firebase** — os dois têm plano gratuito e já trazem cadastro, confirmação de
 e-mail e redefinição de senha prontos. Me avise que eu ligo.
 
-## 6. E o OCR
+## 7. E o OCR
 
 Continua como na 3.0: o app procura o Tesseract em três lugares (embutido,
 ao lado do arquivo, internet) e hoje cai no terceiro, porque o ambiente onde eu
