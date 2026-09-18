@@ -1,0 +1,46 @@
+MoneyTRIO v3.1 — LEIA-ME
+========================
+
+ESTE ZIP E SO DO MONEYTRIO.
+Repositorio: investify-me  (github.com/MarceloNeco/investify-me)
+
+
+1) VAO PARA O GITHUB — 5 arquivos, na raiz do repositorio
+
+     index.html          <- o app inteiro (carteira cifrada dentro)
+     manifest.json       <- faz virar aplicativo no celular
+     sw.js               <- faz abrir sem internet
+     icone-192.png       <- icone do app instalado
+     icone-512.png       <- icone do app instalado
+
+   Add file -> Upload files -> arraste os 5 -> Commit changes.
+   NAO precisa colar nenhuma linha em lugar nenhum. Ja esta tudo ligado
+   dentro do index.html.
+
+
+2) NUNCA VAO PARA O GITHUB
+
+     MoneyTRIO-local.html                    <- carteira ABERTA
+     NAO-SUBIR-NO-GITHUB-backup-carteira.json <- carteira ABERTA
+
+   O repositorio e publico. Estes dois tem os seus dados em claro.
+
+
+3) SO PARA VOCE LER
+
+     PASSO-A-PASSO-moneytrio.md
+     LEIA-ME-moneytrio.txt
+
+
+4) O ARQUIVO LOCAL MUDOU DE NOME
+
+   Era InvestifyONE-local.html, agora e MoneyTRIO-local.html, porque o
+   conjunto se chama MoneyTRIO. Pode apagar o antigo.
+
+
+5) TODA VEZ QUE EU MANDAR UMA VERSAO NOVA
+
+   Alem de trocar o index.html, abra o sw.js no GitHub e troque
+   var VERSAO = 'v1';  por  'v2', depois 'v3', e assim por diante.
+   E o que avisa os celulares de que existe conteudo novo. Se esquecer,
+   quem ja instalou pode continuar vendo a versao antiga por um tempo.
