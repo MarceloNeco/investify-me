@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Teste do MoneyTRIO</title>
+<style>
+  :root{
+    --fundo:#0d1117; --cartao:#161b22; --borda:#2a3441; --txt:#e6edf3; --txt2:#9aa7b4;
+    --ok:#2ea043; --erro:#f85149; --aviso:#d29922; --marca:#2ea043; --r:14px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --fundo:#f6f8fa; --cartao:#fff; --borda:#d8dee4; --txt:#14202e; --txt2:#5b6b7c; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--fundo); color:var(--txt); font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; padding:20px 16px 60px}
+  .caixa{max-width:760px; margin:0 auto}
+  h1{font-size:1.5rem; margin:0 0 4px; letter-spacing:-.02em}
+  h1 b{color:var(--marca)}
+  .sub{color:var(--txt2); margin:0 0 20px; font-size:.92rem}
+  .card{background:var(--cartao); border:1px solid var(--borda); border-radius:var(--r); padding:16px; margin:0 0 14px}
+  .card h2{font-size:1rem; margin:0 0 10px; display:flex; align-items:center; gap:8px}
+  ul{margin:0; padding:0; list-style:none}
+  li{display:flex; gap:10px; align-items:flex-start; padding:7px 0; border-bottom:1px solid var(--borda); font-size:.9rem}
+  li:last-child{border-bottom:0}
+  .ic{flex:0 0 20px; text-align:center; font-weight:700}
+  .ok{color:var(--ok)} .erro{color:var(--erro)} .aviso{color:var(--aviso)} .esperando{color:var(--txt2)}
+  .det{color:var(--txt2); font-size:.82rem; display:block}
+  .bts{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+  a.bt, button.bt{
+    display:inline-block; background:var(--marca); color:#fff; border:0; border-radius:10px;
+    padding:10px 16px; font:inherit; font-weight:600; font-size:.9rem; text-decoration:none; cursor:pointer;
+  }
+  a.bt.fraco, button.bt.fraco{background:transparent; color:var(--txt); border:1px solid var(--borda)}
+  .placar{font-size:.85rem; color:var(--txt2); margin-top:10px}
+  .idi{position:absolute; top:18px; right:16px}
+  .nunca{border-left:3px solid var(--erro)}
+  .nunca code{color:var(--erro)}
+  code{background:rgba(127,127,127,.14); padding:1px 5px; border-radius:5px; font-size:.86em}
+  .rodape{color:var(--txt2); font-size:.8rem; text-align:center; margin-top:24px}
+</style>
+</head>
+<body>
+<div class="idi"><button class="bt fraco" id="btIdi">EN</button></div>
+<div class="caixa">
+
+  <h1>Teste do Money<b>TRIO</b></h1>
+  <p class="sub" data-pt="Confira aqui se o pacote está inteiro antes de subir para o GitHub. Esta página não envia nada para lugar nenhum."
+     data-en="Check here that the package is complete before uploading to GitHub. This page sends nothing anywhere.">
+     Confira aqui se o pacote está inteiro antes de subir para o GitHub. Esta página não envia nada para lugar nenhum.</p>
+
+  <div class="card">
+    <h2 data-pt="1. Os arquivos que vão para o GitHub" data-en="1. The files that go to GitHub">1. Os arquivos que vão para o GitHub</h2>
+    <ul id="listaSite"></ul>
+    <div class="placar" id="placarSite"></div>
+  </div>
+
+  <div class="card">
+    <h2 data-pt="2. O app abre?" data-en="2. Does the app open?">2. O app abre?</h2>
+    <ul id="listaApp"></ul>
+    <div class="bts">
+      <a class="bt" href="index.html" target="_blank" data-pt="Abrir a versão do site (pede senha)" data-en="Open the site version (asks for password)">Abrir a versão do site (pede senha)</a>
+      <a class="bt fraco" href="MoneyTRIO-local.html" target="_blank" data-pt="Abrir a versão local (sem senha)" data-en="Open the local version (no password)">Abrir a versão local (sem senha)</a>
+    </div>
+  </div>
+
+  <div class="card nunca">
+    <h2>⛔ <span data-pt="Nunca suba estes dois" data-en="Never upload these two">Nunca suba estes dois</span></h2>
+    <ul>
+      <li><span class="ic erro">×</span><div><code>MoneyTRIO-local.html</code>
+        <span class="det" data-pt="tem a sua carteira aberta, sem senha" data-en="has your wallet open, with no password">tem a sua carteira aberta, sem senha</span></div></li>
+      <li><span class="ic erro">×</span><div><code>NAO-SUBIR-NO-GITHUB-backup-carteira.json</code>
+        <span class="det" data-pt="a mesma coisa, em texto puro" data-en="the same thing, in plain text">a mesma coisa, em texto puro</span></div></li>
+    </ul>
+    <p class="det" style="margin:10px 0 0" data-pt="O repositório é público: o que subir ali, qualquer pessoa lê."
+       data-en="The repository is public: whatever you upload there, anyone can read.">O repositório é público: o que subir ali, qualquer pessoa lê.</p>
+  </div>
+
+  <div class="card">
+    <h2 data-pt="3. Depois de subir" data-en="3. After uploading">3. Depois de subir</h2>
+    <ul>
+      <li><span class="ic esperando">1</span><div data-pt="Abra marceloneco.github.io/investify-me no celular." data-en="Open marceloneco.github.io/investify-me on your phone.">Abra marceloneco.github.io/investify-me no celular.</div></li>
+      <li><span class="ic esperando">2</span><div data-pt="Se ainda aparecer a versão antiga, feche a aba, espere um minuto e abra de novo." data-en="If the old version still shows, close the tab, wait a minute and open it again.">Se ainda aparecer a versão antiga, feche a aba, espere um minuto e abra de novo.</div></li>
+      <li><span class="ic esperando">3</span><div data-pt="O número da versão fica no rodapé do app." data-en="The version number is at the bottom of the app.">O número da versão fica no rodapé do app.</div></li>
+    </ul>
+  </div>
+
+  <p class="rodape" id="rodape"></p>
+</div>
+
+<script>
+/* Só funciona por http://localhost — o navegador não deixa uma página
+   aberta com duplo clique (file://) ler os arquivos da pasta. Use o
+   atalho abrir-teste-moneytrio que veio no zip. */
+var PT = true;
+
+var ARQUIVOS = [
+  {n:'index.html',     d:{pt:'o app inteiro, com a carteira cifrada dentro', en:'the whole app, with the encrypted wallet inside'}, min:400000},
+  {n:'manifest.json',  d:{pt:'faz virar aplicativo no celular',             en:'makes it an app on the phone'},                    min:200},
+  {n:'sw.js',          d:{pt:'faz abrir sem internet',                       en:'makes it open without internet'},                  min:200},
+  {n:'icone-192.png',  d:{pt:'ícone do app instalado',                       en:'icon of the installed app'},                       min:500},
+  {n:'icone-512.png',  d:{pt:'ícone do app instalado',                       en:'icon of the installed app'},                       min:500}
+];
+
+function li(estado, titulo, detalhe){
+  var sinais = {ok:'✓', erro:'×', aviso:'!', esperando:'…'};
+  return '<li><span class="ic ' + estado + '">' + sinais[estado] + '</span>' +
+         '<div><b>' + titulo + '</b><span class="det">' + (detalhe || '') + '</span></div></li>';
+}
+
+function kb(n){ return (n/1024).toFixed(0) + ' KB'; }
+
+async function conferir(){
+  var lista = document.getElementById('listaSite');
+  var linhas = [], bons = 0;
+
+  if(location.protocol === 'file:'){
+    lista.innerHTML = li('aviso',
+      PT ? 'Abra esta página pelo atalho' : 'Open this page using the shortcut',
+      PT ? 'Com duplo clique o navegador bloqueia a leitura dos arquivos da pasta. Use abrir-teste-moneytrio.bat (Windows) ou abrir-teste-moneytrio.command (Mac).'
+         : 'With a double click the browser blocks reading the files in the folder. Use abrir-teste-moneytrio.bat (Windows) or abrir-teste-moneytrio.command (Mac).');
+    document.getElementById('placarSite').textContent = '';
+    return;
+  }
+
+  for(var i = 0; i < ARQUIVOS.length; i++){
+    var a = ARQUIVOS[i];
+    try{
+      var r = await fetch(a.n, {cache:'no-store'});
+      if(!r.ok) throw new Error(r.status);
+      var b = await r.blob();
+      if(b.size < a.min){
+        linhas.push(li('erro', a.n, (PT ? 'existe, mas está pequeno demais (' : 'exists, but is too small (') + kb(b.size) + ')'));
+      }else{
+        bons++;
+        linhas.push(li('ok', a.n, a.d[PT ? 'pt' : 'en'] + ' · ' + kb(b.size)));
+      }
+    }catch(e){
+      linhas.push(li('erro', a.n, PT ? 'não encontrei este arquivo na pasta' : 'I could not find this file in the folder'));
+    }
+  }
+  lista.innerHTML = linhas.join('');
+  document.getElementById('placarSite').textContent = bons + ' / ' + ARQUIVOS.length +
+    (PT ? ' arquivos prontos para subir.' : ' files ready to upload.');
+
+  conferirApp();
+}
+
+async function conferirApp(){
+  var lista = document.getElementById('listaApp');
+  lista.innerHTML = li('esperando', PT ? 'Conferindo…' : 'Checking…', '');
+  var linhas = [];
+
+  try{
+    var txt = await (await fetch('index.html', {cache:'no-store'})).text();
+
+    /* 1. a carteira está cifrada? */
+    /* o nome sozinho aparece no codigo do app; o que importa e a
+       atribuicao com o conteudo da carteira logo depois */
+    var cifrada = /window\.CARTEIRA_CIFRADA\s*=\s*\{/.test(txt);
+    var aberta  = /window\.CARTEIRA_(?:ZIP|EMBUTIDA)\s*=\s*["'][A-Za-z0-9+/=]{200,}/.test(txt);
+    if(cifrada && !aberta)
+      linhas.push(li('ok', PT ? 'A carteira está cifrada' : 'The wallet is encrypted',
+        PT ? 'só abre com a sua senha' : 'only opens with your password'));
+    else if(aberta)
+      linhas.push(li('erro', PT ? 'ATENÇÃO: carteira aberta dentro do index.html' : 'WARNING: open wallet inside index.html',
+        PT ? 'não suba este arquivo — me avise' : 'do not upload this file — tell me'));
+    else
+      linhas.push(li('aviso', PT ? 'Não achei a carteira dentro do arquivo' : 'I did not find the wallet inside the file', ''));
+
+    /* 2. sobrou alguma chave de API colada no arquivo? */
+    var chave = /(sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_\-]{30,})/.test(txt);
+    linhas.push(chave
+      ? li('erro', PT ? 'Achei algo parecido com uma chave de API' : 'I found something that looks like an API key',
+           PT ? 'não suba — me avise' : 'do not upload — tell me')
+      : li('ok', PT ? 'Nenhuma chave de API no arquivo' : 'No API key in the file',
+           PT ? 'as suas chaves ficam só no navegador' : 'your keys stay in the browser only'));
+
+    /* 3. tudo num arquivo só, sem depender de nada de fora? */
+    /* so conta tag que CARREGA algo de fora; link de texto para um
+       site de noticia nao e dependencia */
+    var externo = /<script[^>]+src\s*=\s*["']https?:/i.test(txt) ||
+                  /<link[^>]+href\s*=\s*["']https?:/i.test(txt);
+    linhas.push(externo
+      ? li('aviso', PT ? 'O arquivo chama algo de fora' : 'The file calls something external',
+           PT ? 'pode ser só um link de texto — confere comigo' : 'it may be just a text link — check with me')
+      : li('ok', PT ? 'Arquivo único, sem depender de nada de fora' : 'Single file, no external dependency',
+           PT ? 'abre mesmo sem internet' : 'opens even without internet'));
+
+    /* 4. versão do cache do PWA */
+    var sw = await (await fetch('sw.js', {cache:'no-store'})).text();
+    var mv = /VERSAO\s*=\s*'([^']+)'/.exec(sw);
+    linhas.push(mv
+      ? li('ok', PT ? 'Versão do cache: ' + mv[1] : 'Cache version: ' + mv[1],
+           PT ? 'é o que avisa os celulares de que tem conteúdo novo' : 'this is what tells phones there is new content')
+      : li('aviso', PT ? 'Não achei a versão dentro do sw.js' : 'I did not find the version inside sw.js', ''));
+
+    /* 5. o número da versão do app */
+    var mvv = /MUDANCAS\s*=\s*\[\s*\{\s*v:\s*'([^']+)'/.exec(txt);
+    if(mvv) linhas.push(li('ok', PT ? 'Versão do app: ' + mvv[1] : 'App version: ' + mvv[1], ''));
+
+  }catch(e){
+    linhas.push(li('erro', PT ? 'Não consegui ler o index.html' : 'I could not read index.html', String(e.message || e)));
+  }
+  lista.innerHTML = linhas.join('');
+}
+
+function aplicarIdioma(){
+  var nos = document.querySelectorAll('[data-pt]');
+  for(var i = 0; i < nos.length; i++) nos[i].textContent = PT ? nos[i].dataset.pt : nos[i].dataset.en;
+  document.getElementById('btIdi').textContent = PT ? 'EN' : 'PT';
+  document.documentElement.lang = PT ? 'pt-BR' : 'en';
+  document.getElementById('rodape').textContent = PT
+    ? 'Esta página é só para conferir o pacote. Ela não faz parte do app e não precisa ir para o GitHub.'
+    : 'This page is only for checking the package. It is not part of the app and does not need to go to GitHub.';
+  conferir();
+}
+document.getElementById('btIdi').addEventListener('click', function(){ PT = !PT; aplicarIdioma(); });
+aplicarIdioma();
+</script>
+</body>
+</html>

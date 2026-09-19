@@ -1,4 +1,7 @@
-# MoneyTRIO v3.2 — passo a passo
+# MoneyTRIO v3.3 — passo a passo
+
+> **Esta entrega substitui todas as anteriores.** Pode apagar os zips
+> antigos do MoneyTRIO. O que vale é só o que está aqui dentro.
 
 ## 1. O que veio neste zip
 
@@ -8,7 +11,7 @@
 |---|---|
 | `index.html` | o app inteiro, com a carteira cifrada dentro |
 | `manifest.json` | faz o app poder ser instalado no celular |
-| `sw.js` | faz o site abrir sem internet |
+| `sw.js` | faz o site abrir sem internet — **já vem com a versão v2** |
 | `icone-192.png` · `icone-512.png` | o ícone do app instalado |
 
 **Nunca vão para o GitHub:**
@@ -18,46 +21,118 @@
 | `MoneyTRIO-local.html` | carteira **aberta** dentro |
 | `NAO-SUBIR-NO-GITHUB-backup-carteira.json` | carteira **aberta** |
 
-**Só para você ler:** este guia e o `LEIA-ME-moneytrio.txt`.
+**Para conferir o pacote antes de subir:**
 
-## 2. Subir (1 minuto)
+| Arquivo | O que faz |
+|---|---|
+| `abrir-teste-moneytrio.bat` | Windows: dois cliques e abre a página de teste |
+| `abrir-teste-moneytrio.command` | Mac: dois cliques e abre a página de teste |
+| `TESTE-moneytrio.html` | a página em si (precisa ser aberta pelo atalho) |
+
+**Só para ler:** este guia, o `LEIA-ME-moneytrio.txt` e o `ARQUITETURA.md`
+(esse último é técnico — serve para quando você pedir uma mudança a mim ou a
+outra IA; não precisa entender nada dele).
+
+## 2. Testar antes de subir (1 minuto)
+
+1. Descompacte o zip numa pasta.
+2. **Windows:** dois cliques em `abrir-teste-moneytrio.bat`.
+   **Mac:** dois cliques em `abrir-teste-moneytrio.command` — na primeira vez o
+   Mac pode recusar; então clique com o botão direito → **Abrir** → **Abrir**.
+3. Vai abrir uma janela preta (é o servidor, deixe aberta) e o navegador com a
+   página de teste.
+4. A página confere sozinha se os 5 arquivos estão inteiros, se a carteira saiu
+   cifrada e se não sobrou nenhuma chave de API dentro do arquivo. Tem que ficar
+   tudo com ✓ verde.
+5. Para fechar, feche a janela preta.
+
+Se você não tiver Python no computador, o atalho avisa e não acontece nada de
+errado — dá para testar abrindo o `MoneyTRIO-local.html` com dois cliques, só
+não tem a conferência automática.
+
+## 3. Subir (1 minuto)
 
 1. `https://github.com/MarceloNeco/investify-me`
 2. **Add file → Upload files**
-3. Arraste os **5** arquivos da primeira tabela. Confirme "replace" no `index.html`.
+3. Arraste os **5** arquivos da primeira tabela. Confirme "replace".
 4. **Commit changes**
 
-Não há nenhuma linha para colar em lugar nenhum — diferente do pacote de
-diretrizes que você recebeu, aqui tudo já está dentro do `index.html`.
+Desta vez o `sw.js` **já vem com `v2`** — você não precisa editar nada dentro
+dele. É esse número que avisa os celulares de que existe conteúdo novo.
 
-## 3. Por que eu não usei o `diretrizes.js`
+## 4. O que entrou na 3.3
 
-Você me mandou o pacote com `diretrizes.js` + `diretrizes-config.js` e as duas
-linhas para colar. Eu li os 144 KB do módulo antes de decidir, e **não colei**,
-por três motivos concretos:
+### A tela ficou mais calma
 
-**Duplicaria o que o MoneyTRIO já faz.** O app já tem seletor PT/EN no topo,
-datas `18/Set/2026` ⇄ `Sep/18/2026`, banner `<ANUNCIE AQUI>`, modo visitante,
-biometria, compartilhamento nativo e OCR. Colar o módulo daria dois botões de
-idioma, dois banners e duas telas de login na mesma página.
+Você disse que estava poluída e confusa para quem não é de tecnologia. O que
+mudou, sem tirar nenhuma função:
 
-**Deixaria o celular lento de novo.** O módulo instala um `MutationObserver`
-que varre a tela inteira a cada mudança do DOM. O MoneyTRIO redesenha a tela
-inteira a cada clique, filtro e tique da fita, com 11.595 lançamentos em
-memória. Seria a volta do problema que a gente levou duas versões pra resolver.
+- **Configurações fechadas por padrão.** Cada bloco virou um título com uma
+  linha de resumo; abre ao tocar. Eram 19 cartões abertos de uma vez.
+- **Texto comprido dobrado.** Explicação longa mostra duas linhas e um
+  **"ler mais"**. O texto continua todo lá.
+- **Filtros de período enxutos.** Seis botões (Mês atual, Mês passado, Ano
+  atual, Últimos 12 meses, Últimos 24 meses, Tudo) e os anos num seletor, em
+  vez de uma parede de botões.
+- **Avisos curtos.** Os recados do canto agora cabem em duas linhas no celular.
+- **Espaçamento e tamanhos padronizados** na tela inteira, no tema escuro e no
+  claro.
 
-**O arquivo local pararia de funcionar.** O `MoneyTRIO-local.html` é um arquivo
-só, sem nada ao lado. Com `<script src="diretrizes.js">` ele perderia tudo
-silenciosamente.
+### Um botão só de ajuda: o **?** no topo
 
-Então eu fiz o que **faltava**, nativo, com as mesmas decisões do módulo — mesmo
-formato de código de recuperação, mesmos cinco tipos de aviso, mesmo horário
-silencioso. Os apps se comportam igual; só não compartilham o arquivo.
+Abre a central **Assist ONE**, com quatro abas:
 
-**Onde o módulo continua valendo:** nos seus outros sites (cifras, histórias,
-RiseONE, portal). Lá ele resolve de uma vez o que aqui já estava resolvido.
+| Aba | O que tem |
+|---|---|
+| 💡 Esta tela | o que é a tela que você está vendo, e o que dá para fazer nela |
+| 🧭 Tutorial | cinco passos, do zero ao primeiro lançamento |
+| ✨ Começar | atalhos para as tarefas comuns (subir planilha, cadastrar ativo…) |
+| 🔎 Buscar | procura ao mesmo tempo no glossário e nas aulas do Coach |
 
-## 4. O que entrou na 3.2
+Na primeira vez o tutorial abre sozinho. Depois disso, só quando você pedir.
+
+### O nível das explicações só aparece onde muda alguma coisa
+
+Era o que você tinha pedido. Agora o seletor Iniciante / Médio / Expert some das
+telas em que o nível não muda nada, e aparece no Coach, no Glossário e em
+qualquer tela que tenha um ⓘ — com uma linha embaixo dizendo o que ele muda
+ali ("3 explicações nesta tela").
+
+Cada nível tem **texto próprio**, escrito um a um: 137 verbetes do glossário e
+18 aulas do Coach, em português e em inglês. Não é o mesmo texto ficando maior.
+
+### Duas coisas de segurança que eu arrumei
+
+Fiz a revisão do código inteiro que as suas diretrizes pedem (sete checagens).
+Duas coisas eram risco de verdade e eu corrigi; o resto está no fim deste guia.
+
+**1. O espelho da carteira em cookie vinha ligado de fábrica.**
+Um cookie sobe junto com **todo** pedido que o navegador faz ao endereço do
+site. Na prática, a sua lista de ativos — código, quantidade, preço médio e
+instituição — passava pelo servidor que hospeda a página a cada visita, e
+qualquer outra página sua no mesmo endereço podia ler. Isso contradizia o que o
+próprio app promete na tela de entrada.
+
+Agora vem **desligado**. Quem já tinha ligado (você) é desligado uma vez, com
+aviso na tela de Configurações. **Nada foi perdido:** a carteira continua no
+navegador, no arquivo de backup e, se você usar, no Drive. Dá para religar em
+**Configurações → Onde seus dados ficam salvos**, agora com a explicação do que
+isso significa escrita ali do lado.
+
+**2. Link vindo de fora podia rodar código dentro do app.**
+Os links de notícia (que vêm de sites de fora), os de anúncio e o endereço lido
+de um QR code de nota fiscal iam direto para a tela. Um endereço começando com
+`javascript:` viraria código rodando dentro do app, com a carteira aberta ao
+lado. Agora só passa `http` e `https`; o resto é descartado.
+
+### Um documento técnico novo
+
+O `ARQUITETURA.md` explica o que cada um dos 40 arquivos faz, o que nunca mexer
+e onde mudar o quê. Ele não é para você ler — é para colar numa conversa quando
+você pedir uma mudança a mim ou a outra IA, para ninguém quebrar o que já
+funciona.
+
+## 5. O que entrou na 3.2
 
 ### O inglês agora vale na tela inteira
 
@@ -126,7 +201,7 @@ No **InvestifyONE** voltou o nível das explicações, com as palavras de antes 
 Iniciante, Médio, Expert. No **BudgetONE** ficou só o calendário. O PT/EN saiu
 dos dois: mora no topo, uma vez só.
 
-## 5. O que entrou na 3.1
+## 6. O que entrou na 3.1
 
 ### Instalar na tela de início
 
@@ -194,7 +269,7 @@ A tabela "As dez maiores contas" esticava a página para 562 px numa tela de
 390 px — no celular, tudo ficava torto e dava para arrastar a tela de lado.
 Agora ela rola dentro do cartão. A regra vale para qualquer tabela larga.
 
-## 6. O que ainda precisa de servidor
+## 7. O que ainda precisa de servidor
 
 | Item | Hoje | Com servidor |
 |---|---|---|
@@ -209,7 +284,7 @@ Quando quiser resolver isso sem escrever servidor, o caminho é **Supabase** ou
 **Firebase** — os dois têm plano gratuito e já trazem cadastro, confirmação de
 e-mail e redefinição de senha prontos. Me avise que eu ligo.
 
-## 7. E o OCR
+## 8. E o OCR
 
 Continua como na 3.0: o app procura o Tesseract em três lugares (embutido,
 ao lado do arquivo, internet) e hoje cai no terceiro, porque o ambiente onde eu
@@ -220,3 +295,47 @@ curl -o tesseract.min.js https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1
 ```
 
 e me mande o arquivo. Ler QR de nota e código de boleto não depende disso.
+
+## 9. A revisão de código, por inteiro
+
+As suas diretrizes pedem sete checagens em todo código que já estava no
+repositório, reportadas em três níveis: **risco** (eu arrumo e aviso),
+**problema** (eu reporto e você decide), **observação** (só registro). Foi isso:
+
+### Riscos — arrumados nesta versão
+
+| O que era | Onde | O que acontecia |
+|---|---|---|
+| Espelho em cookie ligado de fábrica | `armazenamento.js` | a lista de ativos ia junto com todo pedido feito ao endereço do site |
+| Link externo sem conferência | notícias, anúncios, QR de nota | `javascript:` num link viraria código rodando dentro do app |
+| Ícone de anúncio entrando sem limpeza | `acesso.js` | um `anuncios.json` maldoso poderia injetar HTML |
+| `JSON.parse` do cadastro de biometria sem proteção | `acesso.js` | um registro corrompido travava a entrada por biometria |
+
+### Problemas — você decide
+
+**O leitor de cupom (Tesseract) vem da internet.** O app procura em três
+lugares e hoje só acha na internet, no cdnjs. Se aquele endereço for
+comprometido, o que ele mandar roda dentro da página onde a sua carteira está
+aberta. O código já prefere uma cópia local: se você baixar o
+`tesseract.min.js` (§8) e me mandar, ele passa a vir de dentro do seu próprio
+site e o problema acaba. Enquanto isso, o OCR de foto de cupom é a única parte
+do app que depende de um arquivo de fora.
+
+### Observações — nada a fazer
+
+- **Nenhuma chave de API no código.** As suas chaves ficam só no navegador, e
+  são retiradas do arquivo de backup antes de exportar.
+- **Nenhuma telemetria.** Não existe analytics, pixel ou envio de estatística
+  em lugar nenhum do app.
+- **Chaves do armazenamento sem colisão.** Todas começam com `investifyme.` ou
+  `moneytrio.`, então os seus outros sites no mesmo endereço não se atrapalham.
+  A única compartilhada de propósito é a chave de IA (`dgo:global:ia`), que vale
+  para todos os apps da família — era o combinado.
+- **Permissão do Google Drive é a mínima possível** (`drive.appdata`): o app só
+  enxerga o arquivo que ele mesmo criou, nada do resto do seu Drive.
+- **Permissão de notificação e de câmera só em botão**, nunca na abertura.
+- **A IA diz o que manda.** Antes de perguntar, a tela mostra exatamente o
+  resumo que vai junto — e avisa que a resposta é de um modelo de linguagem,
+  que pode errar e não é recomendação de investimento.
+- **Todos os `JSON.parse` de arquivo importado** já estavam protegidos: arquivo
+  inválido vira aviso na tela, não tela branca.

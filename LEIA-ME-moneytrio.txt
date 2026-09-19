@@ -1,46 +1,102 @@
-MoneyTRIO v3.2 — LEIA-ME
+MoneyTRIO v3.3 — LEIA-ME
 ========================
+
+ESTA ENTREGA SUBSTITUI TODAS AS ANTERIORES.
+Pode apagar os zips antigos do MoneyTRIO.
 
 ESTE ZIP E SO DO MONEYTRIO.
 Repositorio: investify-me  (github.com/MarceloNeco/investify-me)
 
 
-1) VAO PARA O GITHUB — 5 arquivos, na raiz do repositorio
+1) ANTES DE SUBIR — TESTE EM 1 MINUTO
+
+   Windows: dois cliques em  abrir-teste-moneytrio.bat
+   Mac:     dois cliques em  abrir-teste-moneytrio.command
+            (na primeira vez: botao direito > Abrir > Abrir)
+
+   Abre uma janela preta (o servidor, deixe aberta) e o navegador com a
+   pagina de teste. Ela confere sozinha se os 5 arquivos estao inteiros,
+   se a carteira saiu cifrada e se nao sobrou nenhuma chave de API.
+   Tem que ficar tudo com visto verde.
+
+   Para fechar: feche a janela preta.
+
+
+2) VAO PARA O GITHUB — 5 arquivos, na raiz do repositorio
 
      index.html          <- o app inteiro (carteira cifrada dentro)
      manifest.json       <- faz virar aplicativo no celular
-     sw.js               <- faz abrir sem internet
+     sw.js               <- faz abrir sem internet (JA VEM COM v2)
      icone-192.png       <- icone do app instalado
      icone-512.png       <- icone do app instalado
 
    Add file -> Upload files -> arraste os 5 -> Commit changes.
-   NAO precisa colar nenhuma linha em lugar nenhum. Ja esta tudo ligado
-   dentro do index.html.
+   NAO precisa colar nenhuma linha em lugar nenhum, e desta vez NAO
+   precisa editar o sw.js: ele ja veio com o numero novo.
 
 
-2) NUNCA VAO PARA O GITHUB
+3) NUNCA VAO PARA O GITHUB
 
-     MoneyTRIO-local.html                    <- carteira ABERTA
+     MoneyTRIO-local.html                     <- carteira ABERTA
      NAO-SUBIR-NO-GITHUB-backup-carteira.json <- carteira ABERTA
 
    O repositorio e publico. Estes dois tem os seus dados em claro.
 
 
-3) SO PARA VOCE LER
+4) SO PARA VOCE LER
 
-     PASSO-A-PASSO-moneytrio.md
-     LEIA-ME-moneytrio.txt
+     PASSO-A-PASSO-moneytrio.md   <- o guia, com tudo o que mudou
+     LEIA-ME-moneytrio.txt        <- este arquivo
+     ARQUITETURA.md               <- tecnico: o que cada arquivo faz.
+                                     Nao precisa entender. Serve para
+                                     colar numa conversa quando voce
+                                     pedir uma mudanca a mim ou a outra
+                                     IA, para ninguem quebrar o que ja
+                                     funciona.
 
 
-4) O ARQUIVO LOCAL MUDOU DE NOME
+5) UMA COISA MUDOU SOZINHA NO SEU APP
 
-   Era InvestifyONE-local.html, agora e MoneyTRIO-local.html, porque o
-   conjunto se chama MoneyTRIO. Pode apagar o antigo.
+   O espelho da carteira em cookie vinha ligado de fabrica e foi
+   desligado nesta versao. Motivo: um cookie sobe junto com todo pedido
+   feito ao endereco do site, entao a sua lista de ativos passava pelo
+   servidor a cada visita.
+
+   NADA FOI PERDIDO. A carteira continua no navegador, no arquivo de
+   backup e no Drive, se voce usar. O app avisa isso na tela de
+   Configuracoes, e da para religar ali mesmo se voce quiser.
 
 
-5) TODA VEZ QUE EU MANDAR UMA VERSAO NOVA
+6) SE O GITHUB DER "AW, SNAP!" NA HORA DE SUBIR
 
-   Alem de trocar o index.html, abra o sw.js no GitHub e troque
-   var VERSAO = 'v1';  por  'v2', depois 'v3', e assim por diante.
-   E o que avisa os celulares de que existe conteudo novo. Se esquecer,
-   quem ja instalou pode continuar vendo a versao antiga por um tempo.
+   Nesta versao eu ja corrigi a causa mais provavel: o index.html tinha
+   uma linha unica com 354 MIL caracteres (o bloco da carteira), e isso
+   derruba a aba do Chrome. Agora a maior linha tem 1.200. E o mesmo
+   arquivo, funcionando igual - so escrito em linhas curtas.
+
+   Se ainda assim travar, tente nesta ordem:
+
+   a) Feche as outras abas do Chrome e tente de novo. Voce estava com
+      mais de dez abertas; e memoria que falta, nao e o arquivo.
+
+   b) Abra uma janela anonima (Ctrl+Shift+N), entre no GitHub e suba
+      por ali.
+
+   c) Use o editor do proprio GitHub: na pagina do repositorio aperte
+      a tecla ponto (.). Abre um editor parecido com o VS Code dentro
+      do navegador. Arraste os arquivos para a coluna da esquerda, e
+      depois clique no icone de ramo (terceiro da barra lateral) para
+      confirmar o envio.
+
+   d) Tente por outro navegador (Edge ou Firefox).
+
+
+7) O QUE MUDOU NESTA VERSAO, EM UMA LINHA
+
+   A tela ficou mais calma (configuracoes fechadas, texto comprido
+   dobrado, filtros enxutos, avisos curtos), a ajuda virou um botao so
+   (o ? do topo, com tutorial e busca), o nivel das explicacoes so
+   aparece onde muda alguma coisa, e duas falhas de seguranca foram
+   corrigidas.
+
+   O detalhe esta no PASSO-A-PASSO-moneytrio.md.
