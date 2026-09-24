@@ -1,4 +1,4 @@
-MONEY-TRIO v3.4 — LEIA-ME
+MONEY-TRIO v3.5 — LEIA-ME
 =========================
 
 ESTA ENTREGA SUBSTITUI TODAS AS ANTERIORES.
@@ -26,7 +26,7 @@ Repositorio: investify-me  (github.com/MarceloNeco/investify-me)
 
      index.html          <- o app inteiro (carteira cifrada dentro)
      manifest.json       <- faz virar aplicativo no celular
-     sw.js               <- faz abrir sem internet (JA VEM COM v3)
+     sw.js               <- faz abrir sem internet (JA VEM COM v4)
      icone-192.png       <- icone do app instalado
      icone-512.png       <- icone do app instalado
 
@@ -91,7 +91,29 @@ Repositorio: investify-me  (github.com/MarceloNeco/investify-me)
    d) Tente por outro navegador (Edge ou Firefox).
 
 
-7) O QUE MUDOU NESTA VERSAO
+7) O QUE MUDOU NA 3.5 (correcoes do que voce reportou)
+
+   - Botao saindo para fora do cartao nas Configuracoes: corrigido.
+     Era tabela sem invólucro de rolagem; achei 12 no codigo e
+     corrigi todas de uma vez.
+   - Regua de valores numa linha so: negativos a esquerda, 0 em azul
+     no meio, positivos a direita. Cabe em tela de 320 px.
+   - Microfone que nao preenchia o valor: o erro estava sendo engolido
+     em silencio. Agora ele diz o que houve (sem permissao, nao
+     entendi, ou navegador sem o servico) e para sozinho depois de 12
+     segundos. O campo pisca em azul quando o valor chega pela voz.
+   - Lista de instituicoes do InvestifyONE: selo colorido, ordem
+     alfabetica, busca, favoritas com estrela no topo e cadastro de
+     instituicao nova.
+   - BudgetONE ficou azul, InvestifyONE verde, TaxONE ambar.
+   - O nome do app no topo virou menu de troca, com movimento.
+   - O hamburguer saiu do rodape (ja existe no topo). Agora cabem
+     cinco favoritos embaixo.
+   - A lupa de busca apareceu no topo.
+   - Microfone tambem na IA, para falar a pergunta.
+
+
+8) O QUE MUDOU NA 3.4
 
    - Banco e cartao viraram cadastro de verdade, com lista pronta de
      27 instituicoes (nome, codigo e CNPJ ja preenchidos). "Como pagou"
@@ -122,7 +144,7 @@ Repositorio: investify-me  (github.com/MarceloNeco/investify-me)
    PASSO-A-PASSO-moneytrio.md, com o motivo de cada um.
 
 
-8) EM UMA LINHA
+9) EM UMA LINHA
 
    A tela ficou mais calma (configuracoes fechadas, texto comprido
    dobrado, filtros enxutos, avisos curtos), a ajuda virou um botao so
