@@ -1,5 +1,5 @@
-MoneyTRIO v3.3 — LEIA-ME
-========================
+MONEY-TRIO v3.4 — LEIA-ME
+=========================
 
 ESTA ENTREGA SUBSTITUI TODAS AS ANTERIORES.
 Pode apagar os zips antigos do MoneyTRIO.
@@ -26,7 +26,7 @@ Repositorio: investify-me  (github.com/MarceloNeco/investify-me)
 
      index.html          <- o app inteiro (carteira cifrada dentro)
      manifest.json       <- faz virar aplicativo no celular
-     sw.js               <- faz abrir sem internet (JA VEM COM v2)
+     sw.js               <- faz abrir sem internet (JA VEM COM v3)
      icone-192.png       <- icone do app instalado
      icone-512.png       <- icone do app instalado
 
@@ -91,7 +91,38 @@ Repositorio: investify-me  (github.com/MarceloNeco/investify-me)
    d) Tente por outro navegador (Edge ou Firefox).
 
 
-7) O QUE MUDOU NESTA VERSAO, EM UMA LINHA
+7) O QUE MUDOU NESTA VERSAO
+
+   - Banco e cartao viraram cadastro de verdade, com lista pronta de
+     27 instituicoes (nome, codigo e CNPJ ja preenchidos). "Como pagou"
+     deixou de ser texto solto: agora e uma lista, e ele pergunta o
+     banco ou o cartao conforme o caso. O que voce ja tinha escrito foi
+     convertido sozinho.
+   - Do cartao guardo so os 4 ultimos digitos. O numero inteiro nao tem
+     campo no app e nao deve ser digitado em app nenhum.
+   - A foto do cupom agora le tambem como foi pago (forma, banco,
+     bandeira e final do cartao).
+   - Digitar valor no celular virou tocar: botoes de somar e subtrair
+     embaixo de cada campo de dinheiro, com passo escolhido pelo
+     tamanho do numero. Segurar repete.
+   - Voz: microfone para falar o valor (Chrome e Edge; o Safari do
+     iPhone nao tem, e la o botao nem aparece) e botao para ouvir o
+     texto das explicacoes (funciona em todo aparelho, inclusive
+     iPhone).
+   - Salario bruto -> liquido com as tabelas de 2026, e comparacao
+     PJ x CLT na mesma regua.
+   - No computador, o menu da esquerda passou a rolar quando nao cabe,
+     e o calendario continua aparecendo inteiro.
+   - A frequencia de cada compromisso agora esta escrita por extenso.
+   - Sair do passo a passo pergunta se quer salvar.
+   - A IA nao ve mais os nomes que voce escreveu nos lancamentos, a nao
+     ser que voce ligue a chavinha (que vem desligada).
+
+   O que da sua lista ficou de fora esta no item 10 do
+   PASSO-A-PASSO-moneytrio.md, com o motivo de cada um.
+
+
+8) EM UMA LINHA
 
    A tela ficou mais calma (configuracoes fechadas, texto comprido
    dobrado, filtros enxutos, avisos curtos), a ajuda virou um botao so

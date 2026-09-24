@@ -1,7 +1,7 @@
-# MoneyTRIO v3.3 — passo a passo
+# MONEY-TRIO v3.4 — passo a passo
 
 > **Esta entrega substitui todas as anteriores.** Pode apagar os zips
-> antigos do MoneyTRIO. O que vale é só o que está aqui dentro.
+> antigos. O que vale é só o que está aqui dentro.
 
 ## 1. O que veio neste zip
 
@@ -11,7 +11,7 @@
 |---|---|
 | `index.html` | o app inteiro, com a carteira cifrada dentro |
 | `manifest.json` | faz o app poder ser instalado no celular |
-| `sw.js` | faz o site abrir sem internet — **já vem com a versão v2** |
+| `sw.js` | faz o site abrir sem internet — **já vem com a versão v3** |
 | `icone-192.png` · `icone-512.png` | o ícone do app instalado |
 
 **Nunca vão para o GitHub:**
@@ -21,44 +21,164 @@
 | `MoneyTRIO-local.html` | carteira **aberta** dentro |
 | `NAO-SUBIR-NO-GITHUB-backup-carteira.json` | carteira **aberta** |
 
-**Para conferir o pacote antes de subir:**
+**Para conferir o pacote antes de subir:** `abrir-teste-moneytrio.bat`
+(Windows) ou `abrir-teste-moneytrio.command` (Mac) — dois cliques.
 
-| Arquivo | O que faz |
-|---|---|
-| `abrir-teste-moneytrio.bat` | Windows: dois cliques e abre a página de teste |
-| `abrir-teste-moneytrio.command` | Mac: dois cliques e abre a página de teste |
-| `TESTE-moneytrio.html` | a página em si (precisa ser aberta pelo atalho) |
+**Só para ler:** este guia, o `LEIA-ME-moneytrio.txt` e o
+`ARQUITETURA.md` (técnico, para colar numa conversa quando você pedir
+uma mudança a mim ou a outra IA).
 
-**Só para ler:** este guia, o `LEIA-ME-moneytrio.txt` e o `ARQUITETURA.md`
-(esse último é técnico — serve para quando você pedir uma mudança a mim ou a
-outra IA; não precisa entender nada dele).
-
-## 2. Testar antes de subir (1 minuto)
-
-1. Descompacte o zip numa pasta.
-2. **Windows:** dois cliques em `abrir-teste-moneytrio.bat`.
-   **Mac:** dois cliques em `abrir-teste-moneytrio.command` — na primeira vez o
-   Mac pode recusar; então clique com o botão direito → **Abrir** → **Abrir**.
-3. Vai abrir uma janela preta (é o servidor, deixe aberta) e o navegador com a
-   página de teste.
-4. A página confere sozinha se os 5 arquivos estão inteiros, se a carteira saiu
-   cifrada e se não sobrou nenhuma chave de API dentro do arquivo. Tem que ficar
-   tudo com ✓ verde.
-5. Para fechar, feche a janela preta.
-
-Se você não tiver Python no computador, o atalho avisa e não acontece nada de
-errado — dá para testar abrindo o `MoneyTRIO-local.html` com dois cliques, só
-não tem a conferência automática.
-
-## 3. Subir (1 minuto)
+## 2. Subir (1 minuto)
 
 1. `https://github.com/MarceloNeco/investify-me`
 2. **Add file → Upload files**
 3. Arraste os **5** arquivos da primeira tabela. Confirme "replace".
 4. **Commit changes**
 
-Desta vez o `sw.js` **já vem com `v2`** — você não precisa editar nada dentro
-dele. É esse número que avisa os celulares de que existe conteúdo novo.
+O `sw.js` já vem com `v3` — você não precisa editar nada dentro dele.
+
+Se a aba do Chrome travar com "Aw, Snap!", feche as outras abas e tente
+de novo; as outras saídas estão no item 6 do LEIA-ME.
+
+## 3. O que entrou na 3.4
+
+### Banco e cartão deixaram de ser texto solto
+
+Antes, "Como pagou" e "Conta ou cartão" eram dois campos onde você
+digitava o que quisesse. Agora:
+
+- **"Como pagou" é uma lista**: Pix, cartão de crédito, cartão de
+  débito, boleto, transferência, débito automático, espécie, vale.
+- **Escolheu Pix ou boleto**, ele pergunta **por qual banco**. Escolheu
+  cartão, pergunta **qual cartão**. Escolheu espécie, não pergunta nada.
+- **O que você já tinha escrito foi convertido sozinho.** "Crédito"
+  virou cartão de crédito, "Pix" virou Pix, e assim por diante. Nada foi
+  perdido: o texto antigo continua guardado embaixo.
+
+**Cadastro de bancos** — em Configurações → BudgetONE. Você escolhe de
+uma lista com 27 instituições e ela já traz **nome, código do banco e
+CNPJ** preenchidos. Se você tem mais de uma conta no mesmo banco, dá um
+apelido a cada uma ("conta corrente", "PJ").
+
+**Cadastro de cartões** — apelido, bandeira, **últimos 4 dígitos**,
+banco, dia em que a fatura fecha e dia do pagamento. Com isso o app
+passa a somar sozinho quanto está aberto em cada fatura e quando ela
+vence, e a compra entra na fatura certa: comprou depois do fechamento,
+cai na seguinte.
+
+> **Sobre o número do cartão:** o app guarda só os quatro últimos
+> dígitos, que é o que aparece no comprovante. O número inteiro não tem
+> campo em lugar nenhum e não deve ser digitado em app nenhum.
+
+**Sobre os logos:** cada banco e cada bandeira ganharam um selo colorido
+na cor oficial, com a sigla, **desenhado pelo próprio app**. Não uso a
+marca registrada de nenhum banco — além de ser marca de terceiro, eu
+teria que baixar as imagens de fora, e aí o arquivo deixaria de abrir
+sem internet.
+
+### A foto do cupom agora lê como foi pago
+
+O OCR já achava valor, data, CNPJ e loja. Agora também reconhece a
+**forma de pagamento**, o **banco**, a **bandeira** e o **final do
+cartão**, e deixa tudo escolhido no formulário — você só confere.
+
+Se o cartão lido já está cadastrado, ele mesmo diz se é crédito ou
+débito. Se não está, o app mostra "••4821 (cartão não cadastrado)" em
+vez de inventar.
+
+### Digitar valor no celular virou tocar
+
+Embaixo de cada campo de dinheiro aparece uma fileira de botões de
+somar e subtrair. Os passos vão de um centavo a cinquenta mil, e o app
+escolhe quais mostrar **pelo tamanho do número que já está no campo**:
+quem está em 1.200 vê −10 +10 −50 +50 −100 +100 −500 +500; quem está em
+3,50 vê −,50 +,50 −1 +1 −5 +5 −10 +10. Segurar o botão repete.
+
+Tem também um **zerar** e, onde o aparelho permite, um **microfone**.
+
+### Voz: ouvir e ditar
+
+**Ditar (🎤)** — toque no microfone ao lado de um campo de valor e fale.
+Funciona com "mil e duzentos", "R$ 1.234,56", "quarenta e cinco" e até
+"doze reais e cinquenta" (que vira 12,50, não 62).
+
+- Funciona no **Chrome e no Edge**, no computador e no Android.
+- **Não funciona no Safari do iPhone**, porque a Apple não oferece
+  reconhecimento de voz para páginas. Nesse caso o botão **nem
+  aparece** — botão que não funciona é pior do que botão nenhum.
+- Nada é gravado e nenhum áudio vai para o app: quem converte é o
+  próprio navegador.
+
+**Ouvir (🔊)** — os cartões de explicação ganharam um botão que lê o
+texto em voz alta, no idioma escolhido. Esse funciona em todo aparelho
+atual, **inclusive iPhone**.
+
+### Salário bruto → líquido
+
+Em Configurações → BudgetONE → **Salário**. Você informa o bruto e ele
+calcula o líquido com as tabelas em vigor:
+
+- **INSS por faixa** — é progressivo, não é uma alíquota só. Quem ganha
+  R$ 8.000 paga R$ 921,51, e não 14% de tudo.
+- **Imposto de renda com a regra de 2026** — que **zera o imposto até
+  R$ 5.000** por mês e vai soltando aos poucos até R$ 7.350.
+- O app escolhe sozinho entre o desconto simplificado e as deduções
+  legais, o que der menos imposto para você, e diz qual usou.
+
+Vale-transporte, plano de saúde, pensão e sindicato **você acrescenta
+como linhas**, porque variam de empresa para empresa e não dá para
+adivinhar.
+
+Dá para fazer o caminho inverso também: *sei o líquido, quanto é o
+bruto?*
+
+A tela escreve a data de vigência das tabelas. **Quando a lei mudar, o
+número muda na próxima versão** — não há consulta automática à
+legislação, e eu não vou fingir que há.
+
+### PJ × CLT, na mesma régua
+
+O erro clássico é comparar o salário CLT com o valor cheio da nota PJ.
+Não são a mesma coisa. A tela põe os dois lado a lado:
+
+- **No CLT** entram 13º, férias com um terço e FGTS — e ela soma tudo
+  para dizer quanto aquele emprego vale, de verdade, por mês.
+- **No PJ** saem imposto, contador e INSS do pró-labore, e sobra o que
+  você precisa **guardar sozinho** para ter o mesmo conforto.
+- No fim: **quanto uma proposta PJ precisa ser para empatar**.
+
+A conta é só de dinheiro, e a tela diz isso: estabilidade,
+seguro-desemprego, licença e quem paga a conta quando você fica doente
+ficam de fora.
+
+### Menu da esquerda, no computador
+
+Quando as opções não cabiam na altura da tela, o calendário do
+BudgetONE era empurrado para fora. Agora **quem rola é a lista de
+opções**, com a barra de rolagem **à mostra** — barra escondida é opção
+escondida —, e o calendário continua aparecendo inteiro embaixo.
+
+### A frequência agora está escrita
+
+No calendário e no passo a passo, cada compromisso mostra com que
+frequência cai, **por extenso**: "toda segunda-feira", "todo dia 10",
+"5º dia útil do mês", "anual em janeiro". Antes só aparecia o número.
+
+### Sair do passo a passo
+
+Clicar fora do passo a passo com valores preenchidos **pergunta se você
+quer salvar**, em vez de jogar o trabalho fora em silêncio. Respondendo,
+você volta para a tela onde estava.
+
+### O que você escreve é seu
+
+A IA **não vê mais os nomes que você digitou** nos lançamentos. Ela
+recebe a categoria no lugar — "Escola" em vez de "Escola da Ana". Para
+mudar isso existe uma chavinha na tela da IA, **desligada de fábrica**,
+e a lista do que sai daqui agora aparece **aberta**, não escondida.
+
+Nada do app é publicado em lugar nenhum: não há envio automático, nem
+telemetria, nem analytics.
 
 ## 4. O que entrou na 3.3
 
@@ -339,3 +459,65 @@ do app que depende de um arquivo de fora.
   que pode errar e não é recomendação de investimento.
 - **Todos os `JSON.parse` de arquivo importado** já estavam protegidos: arquivo
   inválido vira aviso na tela, não tela branca.
+
+## 10. O que da sua lista ficou de fora, e por quê
+
+Você mandou 22 itens. Entraram os 8 de prioridade **Alta**, os 4 de
+**Média** e a calculadora **PJ × CLT**. Ficaram de fora estes, todos de
+prioridade Baixa na sua própria planilha — e não por falta de vontade:
+
+### Os itens de PJ no TaxONE
+
+| Item | Por que não dá agora |
+|---|---|
+| PJ Visão no TaxONE (CNPJ, pró-labore, MEI, Simples, Fator R) | O TaxONE ainda é uma casca — está marcado "em construção" no app. Isso é um app inteiro, não um campo a mais. |
+| PJ Consulta Leis | Precisa de uma base de legislação atualizada e de uma fonte com data e link para cada regra. Um site estático não tem onde guardar nem como atualizar isso. |
+| PJ Atualização de Cálculos (automática) | Não existe API pública gratuita com as regras do Simples e do MEI em formato consultável. Sem servidor e sem fonte, "atualização automática" seria promessa vazia. |
+| PJ Integrado (BudgetONE + TaxONE + InvestifyONE) | Depende do TaxONE existir primeiro. |
+
+**O que eu fiz no lugar:** a calculadora PJ × CLT, que é a parte que dá
+para fazer com honestidade hoje, porque as contas são aritmética e as
+tabelas cabem num arquivo com a data de vigência escrita ao lado.
+
+**Se você quiser ir adiante com o PJ**, o caminho honesto é:
+1. Definir o que o TaxONE precisa fazer no primeiro ano (só IRPF? já com
+   PJ?).
+2. As alíquotas do Simples podem morar num arquivo, como as do INSS
+   moram hoje — com data de vigência e atualização manual a cada versão.
+3. "Consulta de leis" com resposta confiável precisa de servidor. Sem
+   ele, o máximo honesto é: eu escrever o conteúdo, com data e fonte, e
+   o app mostrar — nunca o app "consultar a lei" sozinho.
+
+### As três integrações bancárias
+
+| Item | Por que não dá agora |
+|---|---|
+| Open Finance (Pluggy, Belvo, Celcoin…) | Todo agregador exige **credencial secreta no servidor**. Num site estático a chave ficaria dentro do `index.html`, num repositório público — qualquer pessoa leria e usaria a sua conta. Isso não é uma limitação técnica que dá para contornar: é o motivo pelo qual eles exigem servidor. |
+| Parsing de e-mails / notificações push | Ler notificação de banco no Android exige um **aplicativo Android** com a permissão de Notification Listener. Uma página web não tem acesso a isso, em nenhum navegador. Você mesmo anotou a limitação: não recupera o passado. |
+| Automação de CSV/OFX pelos bancos | A parte automática precisa de servidor (agendar, buscar, processar). |
+
+**O que dá para fazer sem servidor, se você quiser:** **importar OFX**
+que você mesmo baixa do banco. O app já lê extrato e planilha; ler OFX é
+mais um formato — o arquivo é XML e a leitura é local, sem chave nenhuma
+e sem sair do aparelho. É trabalho de uma entrega, não de um projeto.
+Me diga se quer.
+
+**Se você quiser Open Finance de verdade**, aí o caminho é o mesmo que
+já apareceu antes: **Firebase ou Supabase**, que dão servidor com plano
+gratuito. Aí a chave do agregador fica lá, longe do repositório, e o app
+conversa com ele. Também é o que resolveria conta valendo em qualquer
+aparelho, "esqueci a senha" por e-mail e aviso com o app fechado.
+
+### Dois itens que já estavam prontos
+
+| Item | Situação |
+|---|---|
+| Três apps em um | Você já tinha marcado **Done**. |
+| Barra inferior reordenável com alternativa de um toque (WCAG 2.5.7) | **Já estava atendido** desde a 3.1: além de arrastar, cada botão tem ↑ e ↓ que movem com um toque só. Conferi nesta versão. |
+
+### Tutoriais de investimento em voz alta
+
+Entrou como **leitura em voz alta de qualquer cartão de explicação**
+(o botão 🔊), que cobre o Coach, o Glossário e os textos das telas. O que
+não fiz foi um "modo áudio" que lê uma aula inteira sozinho, passo a
+passo — se for isso que você quer, me diga que eu faço.

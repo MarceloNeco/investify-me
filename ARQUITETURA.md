@@ -1,6 +1,6 @@
 # MoneyTRIO — como o app é feito por dentro
 
-Versão do documento: 3.3 · Setembro de 2026
+Versão do documento: 3.4 · Setembro de 2026
 
 Este arquivo é para quem for mexer no código depois — inclusive uma IA
 a quem você peça "muda tal coisa no MoneyTRIO". Leia as três primeiras
@@ -121,6 +121,9 @@ dele **depois** dos que ele usa e **antes** de `app.js`.
 | `contas.js` | contas de acesso: apelido, senha (PBKDF2), código de recuperação |
 | `acesso.js` | níveis de acesso, o portão `Acesso.pode()` e os anúncios |
 | `notificacoes.js` | avisos, horário silencioso, registro do service worker |
+| `bancos.js` | lista pronta de bancos e bandeiras, cadastro de banco e cartão, fatura do cartão, leitura da forma de pagamento num texto |
+| `salario.js` | tabelas de INSS e IRRF (com a data de vigência), bruto↔líquido e comparação PJ × CLT |
+| `voz.js` | ler em voz alta e ditar; entende número falado por extenso |
 
 ### Entrada de dados
 
@@ -141,13 +144,15 @@ dele **depois** dos que ele usa e **antes** de `app.js`.
 | `custos-ui.js` | tela de custos e compromissos |
 | `acesso-ui.js` | porta de entrada, cartão da conta, painel do administrador |
 | `servicos-ui.js` | tela de assinaturas |
+| `bancos-ui.js` | bloco de bancos e cartões nas Configurações, e os dois formulários |
+| `salario-ui.js` | as duas abas do salário: bruto→líquido e PJ × CLT |
 | `graficos.js` | gráficos em SVG puro, e os utilitários `esc()` e `urlSegura()` |
 | `calendario.js` | o calendário do BudgetONE |
 | `fita-budget.js` | a fita que corre no topo |
 | `barra-baixo.js` | escolha de quais botões ficam fixos no rodapé do celular |
 | `wizard.js` | o passo a passo de primeiro uso |
 | `assist.js` | a central de ajuda: ajuda desta tela, tutorial, "começar", busca |
-| `ux.js` | sanfona das Configurações e dobra de texto longo, depois de cada render |
+| `ux.js` | sanfona das Configurações, dobra de texto longo, régua de somar/subtrair nos campos de dinheiro e botão de ouvir — tudo aplicado depois de cada render |
 | `versao.js` | número da versão e a lista de mudanças |
 
 ---
@@ -223,7 +228,14 @@ Acessos: `glosTexto(g, nivel)`, `glosTitulo(g)`, `coachTexto(m, nivel)`,
 5. **Senha de conta nunca em texto.** `contas.js` guarda só o resultado
    de PBKDF2 com 150.000 voltas, e compara em tempo constante. O mesmo
    vale para o código de recuperação.
-6. **O espelho em cookie vem desligado** desde a 3.3. Um cookie sobe
+6. **A IA não vê o que a pessoa escreveu**, a não ser que ela ligue
+   a chavinha em ✨ IA. Desligada — que é como vem —, o nome do
+   compromisso é trocado pela categoria antes de sair. A tela mostra,
+   aberta, exatamente o texto que vai junto com a pergunta.
+7. **Do cartão guardamos só os quatro últimos dígitos.** O número
+   inteiro não tem campo em lugar nenhum do app e não deve ser
+   digitado. Nenhum dado de cartão sai do aparelho.
+8. **O espelho em cookie vem desligado** desde a 3.3. Um cookie sobe
    junto com todo pedido feito ao endereço do site, então ele levaria a
    lista de ativos para o servidor que hospeda a página a cada visita.
    Quem quiser liga em Configurações, avisado do que isso significa.
@@ -257,6 +269,7 @@ app apagaria os dados do outro.
 | `moneytrio.anuncios.v1` | contagem de exibição e clique |
 | `moneytrio.tutorial.v1` | se o tutorial já foi visto |
 | `moneytrio.cfg.abertos.v1` | quais blocos das Configurações ficam abertos |
+| (dentro de `investifyme.dados.v1`) | `bancos` e `cartoes` moram no mesmo lugar da carteira, então entram no backup e no Drive junto com o resto |
 | `dgo:global:ia` | **compartilhada de propósito** — a chave de IA vale para todos os apps da família |
 | `ifm_bkp` (cookie) | espelho da carteira, **desligado de fábrica** |
 
@@ -282,6 +295,11 @@ valer em todos os apps.
 | o que aparece numa tela | a função `view...()` correspondente, em `app.js` ou `budget-ui.js` |
 | a lista de mudanças e o número da versão | `versao.js` |
 | a versão do cache do PWA | `pwa/sw.js`, linha `var VERSAO` |
+| a lista de bancos ou de bandeiras | `bancos.js` — `BANCOS_BR` e `BANDEIRAS` (cor, sigla, código, CNPJ) |
+| as formas de pagamento | `bancos.js` — `FORMAS_PGTO`; o campo `pede` diz se ela pergunta banco, cartão ou nada |
+| as pistas que o OCR usa para achar banco e bandeira | `bancos.js` — `PISTAS_BANCO`, dentro de `lerDoTexto` |
+| as tabelas de INSS e imposto de renda | `salario.js` — `TABELAS_SALARIO`. **Nenhuma conta tem número escrito no meio do código**: quando a lei mudar, troque só os números de lá e a data de `vigencia` |
+| os passos dos botões de valor | `ux.js` — `PASSOS` e `passosPara()` |
 
 ---
 
@@ -308,6 +326,7 @@ para `entrega3/`.
 | `tmede.mjs` | passa tudo para inglês e conta quanto português sobrou |
 | `tux.mjs` | tutorial, sanfona, fita do topo, anúncio, painel do administrador, IA |
 | `tv33.mjs` | hub nos dois idiomas, telas vazias, tema claro, tamanho dos avisos |
+| `tv34.mjs` | cadastro de banco e cartão, fatura, régua de valores, formulário de lançamento, salário, PJ × CLT, wizard e rolagem do menu |
 | `tniv2.mjs` | os três níveis nos dois idiomas |
 
 Rode assim:

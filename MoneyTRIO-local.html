@@ -1624,6 +1624,109 @@ body:has(.modal-wrap:not(.hidden)) .faixa{display:none}
 /* ---- avisos longos também dobram ---- */
 .aviso-box p.explica.fechada{-webkit-line-clamp:2}
 
+/* =========================================================
+   CAMADA v3.4 — bancos, cartões, valor no dedo e voz
+   ========================================================= */
+
+/* ---------- menu da esquerda que não cabe na altura ----------
+   O calendário do BudgetONE mora no pé do menu. Quando as
+   opções não cabem, quem rola é a lista — nunca o calendário,
+   que precisa aparecer inteiro. A barra fica à mostra de
+   propósito: barra escondida é opção escondida. */
+.sidenav{overflow:hidden}
+/* #navLista é display:contents lá em cima, para a barra de baixo do
+   celular não quebrar. Só na lateral do computador ele volta a ser
+   uma caixa de verdade — que é o que permite rolar. */
+.sidenav #navLista{
+  display:flex !important; flex-direction:column; gap:3px;
+  overflow-y:auto; overscroll-behavior:contain;
+  min-height:0; flex:1 1 auto;
+  scrollbar-width:thin; scrollbar-color:var(--line) transparent;
+  padding-right:4px;
+}
+.sidenav #navLista::-webkit-scrollbar{width:8px}
+.sidenav #navLista::-webkit-scrollbar-track{background:var(--card2); border-radius:8px}
+.sidenav #navLista::-webkit-scrollbar-thumb{background:var(--line); border-radius:8px}
+.sidenav #navLista::-webkit-scrollbar-thumb:hover{background:var(--txt3)}
+.sidenav .nav-item{flex:0 0 auto}
+.sidenav .nav-foot{flex:0 0 auto; margin-top:10px}
+/* a borda de cima avisa que a lista continua */
+.sidenav #navLista.tem-mais{border-bottom:1px solid var(--line)}
+
+/* ---------- selo de banco e de bandeira ---------- */
+.selo{
+  display:inline-flex; align-items:center; justify-content:center;
+  font-weight:800; letter-spacing:.02em; border-radius:9px;
+  font-size:.62rem; line-height:1; padding:0 4px; text-align:center;
+}
+.selo-s{width:28px; height:20px; font-size:.54rem; border-radius:6px}
+.selo-m{width:40px; height:28px}
+.selo-g{width:56px; height:40px; font-size:.78rem; border-radius:11px}
+.bk-previa{
+  display:flex; align-items:center; gap:12px; margin:12px 0 4px;
+  padding:12px; background:var(--card2); border-radius:var(--r-sm);
+}
+.bk-previa .t-sub{display:block; margin-top:2px}
+h4.bl-sub{font-size:.88rem; margin:18px 0 8px; color:var(--txt2); font-weight:650}
+
+/* ---------- régua de valores ----------
+   A linha de botões que soma e subtrai, embaixo do campo. */
+.val-regua{
+  display:flex; flex-wrap:wrap; gap:4px; margin-top:7px; align-items:center;
+}
+.val-par{display:inline-flex; border-radius:8px; overflow:hidden; border:1px solid var(--line)}
+.val-bt{
+  background:var(--card2); border:none; color:var(--txt2);
+  font:inherit; font-size:.76rem; font-weight:650; line-height:1;
+  padding:8px 9px; min-height:34px; cursor:pointer;
+  font-variant-numeric:tabular-nums; -webkit-user-select:none; user-select:none;
+  touch-action:manipulation;
+}
+.val-par .val-bt + .val-bt{border-left:1px solid var(--line)}
+.val-bt:hover{background:var(--line); color:var(--txt)}
+.val-bt:active{transform:scale(.94)}
+.val-bt.menos{color:var(--down)}
+.val-bt.mais{color:var(--up)}
+.val-bt.zerar, .val-bt.voz-mic{
+  border:1px solid var(--line); border-radius:8px; color:var(--txt3);
+}
+.val-bt.voz-mic{font-size:.95rem; padding:6px 10px}
+.val-bt.voz-mic.on{background:var(--down); color:#fff; border-color:var(--down); animation:micPulsa 1.1s infinite}
+@keyframes micPulsa{0%,100%{opacity:1}50%{opacity:.55}}
+@media (max-width:560px){
+  .val-bt{font-size:.8rem; padding:9px 10px; min-height:38px}
+}
+
+/* ---------- ouvir o texto ---------- */
+.voz-ler{
+  float:right; margin:0 0 4px 8px;
+  background:var(--card2); border:1px solid var(--line); color:var(--txt2);
+  border-radius:8px; padding:5px 9px; font-size:.85rem; cursor:pointer; line-height:1;
+}
+.voz-ler:hover{background:var(--line); color:var(--txt)}
+.voz-ler.on{background:var(--accent); color:#fff; border-color:var(--accent)}
+
+/* ---------- frequência dita por extenso ---------- */
+.oc-freq{font-size:.72rem; color:var(--txt3); margin-top:3px}
+.wz-freq{display:block; font-size:.72rem; color:var(--accent); margin-top:3px; font-weight:600}
+
+/* ---------- salário ---------- */
+.sal-outros{margin-top:16px; padding:14px; background:var(--card2); border-radius:var(--r-sm)}
+.sal-linha{margin-top:8px}
+.sal-linha .sal-nome, .sal-linha .sal-valor{margin:0}
+.sal-inverso{display:flex; flex-direction:column; justify-content:center; padding:0 0 0 4px}
+.sal-inverso b{font-size:1.25rem}
+.tr-total td{border-top:2px solid var(--line); padding-top:10px}
+
+/* dentro de um modal estreito, o valor do indicador não pode quebrar
+   no meio de "R$ 8.000,00" — diminui a fonte em vez de partir a linha */
+.modal-body .kpi-val, .modal-wrap .kpi-val{
+  font-size:1.16rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+@media (max-width:560px){
+  .modal-body .kpi-val, .modal-wrap .kpi-val{font-size:1.02rem}
+}
+
 </style>
 </head>
 <body>
@@ -2778,6 +2881,9 @@ const FRASES_EN = {
   'tirar da barra':'remove from bar',
   'trimestral':'quarterly',
   'trocou de dia':'swapped day',
+  'Funcionam sem cadastro: câmbio, cripto, indicadores do Banco Central e as principais ações da B3. Para FIIs, ETFs brasileiros e ações dos EUA, cole abaixo as chaves gratuitas — é rápido e não precisa de cartão.':'They work with no sign-up: FX, crypto, Central Bank indicators and the main B3 stocks. For Brazilian REITs, ETFs and US stocks, paste the free keys below — it is quick and needs no card.',
+  'Guarda uma cópia da sua carteira numa pasta privada do seu próprio Drive, para você abrir o app em outro aparelho e continuar de onde parou. O app enxerga apenas essa pasta — nenhum outro arquivo seu.':'Keeps a copy of your wallet in a private folder of your own Drive, so you can open the app on another device and carry on. The app sees only that folder — none of your other files.',
+  'Passo a passo para ligar (uma vez só)':'Step by step to switch it on (once only)',
   'Manter espelho em cookie':'Keep a cookie mirror',
   'Vem desligado. Um cookie sobe junto com todo pedido feito ao site, então a sua lista de ativos passaria pelo servidor que hospeda a página a cada visita. Para ter backup, prefira o arquivo .json ou o Google Drive.':'Off by default. A cookie travels with every request made to the site, so your list of assets would pass through the server that hosts the page on every visit. For backup, prefer the .json file or Google Drive.',
   'Esta atualização desligou o espelho em cookie, que antes vinha ligado de fábrica. Nada foi perdido: a carteira continua no navegador.':'This update turned off the cookie mirror, which used to be on by default. Nothing was lost: the wallet is still in the browser.',
@@ -6717,6 +6823,8 @@ function estadoPadrao(){
     pagamentos: [],                // BudgetONE: o estado de cada vencimento
     categorias: {},                // BudgetONE: categorias criadas à mão, por grupo
     precos: [],                    // BudgetONE: preços de referência ao longo do tempo
+    bancos: [],                    // BudgetONE: bancos que a pessoa usa, da lista pronta
+    cartoes: [],                   // BudgetONE: cartões, com final, fechamento e vencimento
     appAtual: '',                  // qual dos três apps estava aberto
     agenda: [],                    // resgates e aplicações já programados no banco
     metas: [],
@@ -6897,6 +7005,18 @@ const Store = {
     st.recorrentes = Array.isArray(o.recorrentes) ? o.recorrentes : [];
     st.pagamentos = Array.isArray(o.pagamentos) ? o.pagamentos : [];
     st.categorias = (o.categorias && typeof o.categorias === 'object') ? o.categorias : {};
+    st.bancos  = Array.isArray(o.bancos)  ? o.bancos  : [];
+    st.cartoes = Array.isArray(o.cartoes) ? o.cartoes : [];
+
+    /* v3.4 — "Como pagou" era texto livre ("Crédito", "Pix"). Vira o
+       id de uma forma conhecida, sem apagar o que estava escrito:
+       o texto antigo continua em g.forma e serve de legenda. */
+    if(!st.config.formasMigradas && typeof Banco !== 'undefined'){
+      st.config.formasMigradas = true;
+      st.gastos.forEach(g => {
+        if(!g.formaId && g.forma) g.formaId = Banco.formaDoTextoAntigo(g.forma);
+      });
+    }
     st.config.perfilRespostas = (o.config || {}).perfilRespostas || {};
     st.metas = Array.isArray(o.metas) ? o.metas : [];
     st.vistos = o.vistos || {};
@@ -8392,6 +8512,831 @@ function cantoArredondado(x, y, w, alt, r, paraCima){
          ' L' + (x+w-r) + ' ' + (y+alt) + ' Q' + (x+w) + ' ' + (y+alt) + ' ' + (x+w) + ' ' + (y+alt-r) +
          ' L' + (x+w) + ' ' + y + ' Z';
 }
+
+</script>
+<script>
+/* =========================================================
+   MoneyTRIO — bancos, cartões e forma de pagamento
+
+   Três coisas que andavam soltas num campo de texto livre
+   ("Como pagou" e "Conta ou cartão") e agora têm cadastro:
+
+   1. BANCOS — lista pronta com nome, código do banco (o
+      número de três dígitos do COMPE) e CNPJ. Escolher da
+      lista já preenche tudo.
+   2. CARTÕES — apelido, bandeira, final de 4 dígitos, banco,
+      dia de fechamento e dia de pagamento da fatura.
+   3. FORMA DE PAGAMENTO — deixou de ser texto solto: é uma
+      forma (Pix, Crédito, Débito, Espécie…) mais, quando faz
+      sentido, o banco ou o cartão que foi usado.
+
+   Não há logo de banco aqui. Logo de banco é marca de
+   terceiro; em vez disso cada instituição tem a cor oficial
+   dela e uma sigla curta, desenhadas pelo próprio app.
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   A lista que vem pronta.
+   cod = código COMPE (o número que aparece no comprovante).
+   Os CNPJ são o da instituição principal do conglomerado.
+   --------------------------------------------------------- */
+const BANCOS_BR = [
+  {cod:'001', sigla:'BB',   nome:'Banco do Brasil',        cnpj:'00.000.000/0001-91', cor:'#f5d400', tinta:'#1a1a00'},
+  {cod:'341', sigla:'ITAÚ', nome:'Itaú Unibanco',          cnpj:'60.701.190/0001-04', cor:'#ec7000', tinta:'#241000'},
+  {cod:'237', sigla:'BRA',  nome:'Bradesco',               cnpj:'60.746.948/0001-12', cor:'#cc092f', tinta:'#ffffff'},
+  {cod:'033', sigla:'SAN',  nome:'Santander',              cnpj:'90.400.888/0001-42', cor:'#ec0000', tinta:'#ffffff'},
+  {cod:'104', sigla:'CEF',  nome:'Caixa Econômica Federal',cnpj:'00.360.305/0001-04', cor:'#0070af', tinta:'#ffffff'},
+  {cod:'260', sigla:'NU',   nome:'Nubank',                 cnpj:'18.236.120/0001-58', cor:'#820ad1', tinta:'#ffffff'},
+  {cod:'077', sigla:'INTER',nome:'Banco Inter',            cnpj:'00.416.968/0001-01', cor:'#ff7a00', tinta:'#241000'},
+  {cod:'336', sigla:'C6',   nome:'C6 Bank',                cnpj:'31.872.495/0001-72', cor:'#242424', tinta:'#ffffff'},
+  {cod:'208', sigla:'BTG',  nome:'BTG Pactual',            cnpj:'30.306.294/0001-45', cor:'#0d2b4e', tinta:'#ffffff'},
+  {cod:'218', sigla:'BS2',  nome:'Banco BS2',              cnpj:'71.027.866/0001-34', cor:'#00a0df', tinta:'#04202b'},
+  {cod:'212', sigla:'ORI',  nome:'Banco Original',         cnpj:'92.894.922/0001-08', cor:'#00a868', tinta:'#04231a'},
+  {cod:'422', sigla:'SAFRA',nome:'Banco Safra',            cnpj:'58.160.789/0001-28', cor:'#1c355e', tinta:'#ffffff'},
+  {cod:'655', sigla:'VOT',  nome:'Banco Votorantim (BV)',  cnpj:'59.588.111/0001-03', cor:'#00a0a0', tinta:'#04231f'},
+  {cod:'623', sigla:'PAN',  nome:'Banco Pan',              cnpj:'59.285.411/0001-13', cor:'#00b5e2', tinta:'#04202b'},
+  {cod:'318', sigla:'BMG',  nome:'Banco BMG',              cnpj:'61.186.680/0001-74', cor:'#f26522', tinta:'#241000'},
+  {cod:'756', sigla:'SIC',  nome:'Sicoob',                 cnpj:'02.038.232/0001-64', cor:'#00ae9d', tinta:'#04231f'},
+  {cod:'748', sigla:'SICR', nome:'Sicredi',                cnpj:'01.181.521/0001-55', cor:'#3fa110', tinta:'#ffffff'},
+  {cod:'070', sigla:'BRB',  nome:'BRB — Banco de Brasília',cnpj:'00.000.208/0001-00', cor:'#0066b3', tinta:'#ffffff'},
+  {cod:'745', sigla:'CITI', nome:'Citibank',               cnpj:'33.479.023/0001-80', cor:'#003b70', tinta:'#ffffff'},
+  {cod:'399', sigla:'HSBC', nome:'HSBC',                   cnpj:'01.701.201/0001-89', cor:'#db0011', tinta:'#ffffff'},
+  {cod:'290', sigla:'PS',   nome:'PagBank (PagSeguro)',    cnpj:'08.561.701/0001-01', cor:'#04a24f', tinta:'#ffffff'},
+  {cod:'323', sigla:'MP',   nome:'Mercado Pago',           cnpj:'10.573.521/0001-91', cor:'#00b1ea', tinta:'#04202b'},
+  {cod:'380', sigla:'PP',   nome:'PicPay',                 cnpj:'22.896.431/0001-10', cor:'#11c76f', tinta:'#04231a'},
+  {cod:'197', sigla:'STONE',nome:'Stone',                  cnpj:'16.501.555/0001-57', cor:'#00a868', tinta:'#04231a'},
+  {cod:'102', sigla:'XP',   nome:'XP Investimentos',       cnpj:'02.332.886/0001-04', cor:'#0f0f0f', tinta:'#ffffff'},
+  {cod:'457', sigla:'AVE',  nome:'Avenue',                 cnpj:'34.111.187/0001-06', cor:'#0a2540', tinta:'#ffffff'},
+  {cod:'000', sigla:'OUT',  nome:'Outro',                  cnpj:'',                   cor:'#5b6b7c', tinta:'#ffffff'}
+];
+
+/* As bandeiras. Também sem logo: cor e sigla desenhadas aqui. */
+const BANDEIRAS = [
+  {id:'visa',     nome:'Visa',             cor:'#1a1f71', tinta:'#ffffff', ini:['4']},
+  {id:'master',   nome:'Mastercard',       cor:'#eb001b', tinta:'#ffffff', ini:['51','52','53','54','55']},
+  {id:'elo',      nome:'Elo',              cor:'#ffcb05', tinta:'#1a1a00', ini:['4011','4312','5041','6362','6504']},
+  {id:'amex',     nome:'American Express', cor:'#006fcf', tinta:'#ffffff', ini:['34','37']},
+  {id:'hiper',    nome:'Hipercard',        cor:'#b3131b', tinta:'#ffffff', ini:['38','60']},
+  {id:'diners',   nome:'Diners Club',      cor:'#0079be', tinta:'#ffffff', ini:['30','36','38']},
+  {id:'outra',    nome:'Outra',            cor:'#5b6b7c', tinta:'#ffffff', ini:[]}
+];
+
+/* ---------------------------------------------------------
+   Formas de pagamento — quais pedem banco, quais pedem cartão
+   --------------------------------------------------------- */
+const FORMAS_PGTO = [
+  {id:'pix',      nome:{pt:'Pix',              en:'Pix'},            ico:'⚡',  pede:'banco'},
+  {id:'credito',  nome:{pt:'Cartão de crédito',en:'Credit card'},    ico:'💳',  pede:'cartao'},
+  {id:'debito',   nome:{pt:'Cartão de débito', en:'Debit card'},     ico:'🏧',  pede:'cartao'},
+  {id:'boleto',   nome:{pt:'Boleto',           en:'Bank slip'},      ico:'🧾',  pede:'banco'},
+  {id:'transf',   nome:{pt:'Transferência',    en:'Transfer'},       ico:'↔️',  pede:'banco'},
+  {id:'debaut',   nome:{pt:'Débito automático',en:'Direct debit'},   ico:'🔁',  pede:'banco'},
+  {id:'especie',  nome:{pt:'Espécie',          en:'Cash'},           ico:'💵',  pede:''},
+  {id:'vale',     nome:{pt:'Vale / benefício', en:'Meal voucher'},   ico:'🎟️', pede:''},
+  {id:'outra',    nome:{pt:'Outra',            en:'Other'},          ico:'•',   pede:''}
+];
+
+const FORMA_POR_ID = {};
+FORMAS_PGTO.forEach(f => FORMA_POR_ID[f.id] = f);
+const BANCO_POR_COD = {};
+BANCOS_BR.forEach(b => BANCO_POR_COD[b.cod] = b);
+const BANDEIRA_POR_ID = {};
+BANDEIRAS.forEach(b => BANDEIRA_POR_ID[b.id] = b);
+
+/* =========================================================
+   O cadastro — o que o usuário guardou
+   ========================================================= */
+const Banco = {
+
+  /* ---------- bancos dele ---------- */
+  todos(){ return (ST.bancos || []); },
+
+  achar(id){ return this.todos().find(b => b.id === id) || null; },
+
+  /* cria a partir da lista pronta; se já existir, devolve o que existe */
+  adicionar(cod, apelido){
+    const base = BANCO_POR_COD[cod];
+    if(!base) return null;
+    const jaTem = this.todos().find(b => b.cod === cod && (b.apelido || '') === (apelido || ''));
+    if(jaTem) return jaTem;
+    const b = {
+      id: 'bk' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+      cod: base.cod, nome: base.nome, cnpj: base.cnpj,
+      apelido: apelido || '', criadoEm: new Date().toISOString()
+    };
+    ST.bancos = this.todos().concat([b]);
+    return b;
+  },
+
+  remover(id){
+    ST.bancos = this.todos().filter(b => b.id !== id);
+    /* o que apontava para ele volta a ficar sem banco, não some */
+    (ST.cartoes || []).forEach(c => { if(c.bancoId === id) c.bancoId = ''; });
+    (ST.gastos  || []).forEach(g => { if(g.bancoId === id) g.bancoId = ''; });
+  },
+
+  /* o jeito de desenhar um banco: selo com a cor oficial e a sigla */
+  selo(cod, tam){
+    const b = BANCO_POR_COD[cod] || BANCO_POR_COD['000'];
+    const t = tam || 'm';
+    return '<span class="selo selo-' + t + '" style="background:' + b.cor + ';color:' + b.tinta + '">' +
+           esc(b.sigla) + '</span>';
+  },
+
+  rotulo(id){
+    const b = this.achar(id);
+    if(!b) return '';
+    return (b.apelido ? b.apelido + ' · ' : '') + b.nome;
+  },
+
+  /* nome curto para caber numa linha de tabela */
+  curto(id){
+    const b = this.achar(id);
+    if(!b) return '';
+    return b.apelido || (BANCO_POR_COD[b.cod] || {}).sigla || b.nome;
+  },
+
+  /* ---------- cartões dele ---------- */
+  cartoes(){ return (ST.cartoes || []); },
+
+  acharCartao(id){ return this.cartoes().find(c => c.id === id) || null; },
+
+  salvarCartao(dados){
+    const lista = this.cartoes();
+    const fim = String(dados.fim || '').replace(/\D/g, '').slice(-4);
+    if(dados.id){
+      const c = lista.find(x => x.id === dados.id);
+      if(!c) return null;
+      Object.assign(c, {
+        apelido: dados.apelido || c.apelido, tipo: dados.tipo || c.tipo,
+        bandeira: dados.bandeira || c.bandeira, fim: fim || c.fim,
+        bancoId: dados.bancoId != null ? dados.bancoId : c.bancoId,
+        fecha: dados.fecha != null ? Number(dados.fecha) || 0 : c.fecha,
+        vence: dados.vence != null ? Number(dados.vence) || 0 : c.vence,
+        limite: dados.limite != null ? Number(dados.limite) || 0 : c.limite
+      });
+      return c;
+    }
+    const c = {
+      id: 'ct' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+      apelido: dados.apelido || '', tipo: dados.tipo || 'credito',
+      bandeira: dados.bandeira || this.bandeiraPeloNumero(dados.numero || fim),
+      fim: fim, bancoId: dados.bancoId || '',
+      fecha: Number(dados.fecha) || 0, vence: Number(dados.vence) || 0,
+      limite: Number(dados.limite) || 0, criadoEm: new Date().toISOString()
+    };
+    ST.cartoes = lista.concat([c]);
+    return c;
+  },
+
+  removerCartao(id){
+    ST.cartoes = this.cartoes().filter(c => c.id !== id);
+    (ST.gastos || []).forEach(g => { if(g.cartaoId === id) g.cartaoId = ''; });
+  },
+
+  /* adivinha a bandeira pelos primeiros dígitos, quando o número inteiro vem */
+  bandeiraPeloNumero(num){
+    const n = String(num || '').replace(/\D/g, '');
+    if(n.length < 6) return 'outra';               /* só o final não diz a bandeira */
+    let achada = 'outra', tamanho = 0;
+    BANDEIRAS.forEach(b => b.ini.forEach(p => {
+      if(n.indexOf(p) === 0 && p.length > tamanho){ achada = b.id; tamanho = p.length; }
+    }));
+    return achada;
+  },
+
+  seloCartao(id, tam){
+    const c = this.acharCartao(id);
+    if(!c) return '';
+    const b = BANDEIRA_POR_ID[c.bandeira] || BANDEIRA_POR_ID.outra;
+    return '<span class="selo selo-' + (tam || 'm') + '" style="background:' + b.cor + ';color:' + b.tinta + '">' +
+           esc(b.nome.slice(0,4).toUpperCase()) + '</span>';
+  },
+
+  rotuloCartao(id){
+    const c = this.acharCartao(id);
+    if(!c) return '';
+    const b = BANDEIRA_POR_ID[c.bandeira] || BANDEIRA_POR_ID.outra;
+    return (c.apelido || b.nome) + (c.fim ? ' ••' + c.fim : '');
+  },
+
+  /* ---------- a fatura ----------
+     Em que mês cai a fatura de uma compra feita nesta data:
+     comprou depois do fechamento, cai na fatura seguinte. */
+  faturaDe(cartaoId, dataISO){
+    const c = this.acharCartao(cartaoId);
+    if(!c || !c.vence || !dataISO) return null;
+    const d = new Date(dataISO + 'T12:00:00');
+    if(isNaN(d)) return null;
+    let mes = d.getMonth(), ano = d.getFullYear();
+    if(c.fecha && d.getDate() > c.fecha) mes += 1;      /* passou do fechamento */
+    if(c.vence <= (c.fecha || 0)) mes += 1;             /* vence no mês seguinte ao fechamento */
+    const venc = new Date(ano, mes, 1);
+    const ultimo = new Date(venc.getFullYear(), venc.getMonth() + 1, 0).getDate();
+    venc.setDate(Math.min(c.vence, ultimo));
+    return {
+      vencimento: venc.toISOString().slice(0,10),
+      competencia: venc.toISOString().slice(0,7)
+    };
+  },
+
+  /* quanto está aberto em cada cartão, por vencimento */
+  faturas(cartaoId){
+    const por = {};
+    (ST.gastos || []).forEach(g => {
+      if(g.cartaoId !== cartaoId || g.fluxo === 'entrada') return;
+      const f = this.faturaDe(cartaoId, g.data);
+      if(!f) return;
+      if(!por[f.vencimento]) por[f.vencimento] = {vencimento: f.vencimento, total: 0, n: 0};
+      por[f.vencimento].total += Number(g.valor) || 0;
+      por[f.vencimento].n++;
+    });
+    return Object.keys(por).sort().map(k => por[k]);
+  },
+
+  /* ---------- ler de um texto (OCR, extrato colado, PDF) ----------
+     Devolve o que deu para reconhecer, sem inventar: campos que
+     não apareceram no texto voltam vazios. */
+  lerDoTexto(txt){
+    const t = ' ' + String(txt || '').replace(/\s+/g, ' ') + ' ';
+    const semAc = t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const achado = {forma:'', bancoCod:'', bandeira:'', fim:'', confianca:[]};
+
+    /* a forma de pagamento */
+    const pistas = [
+      ['pix',      /\bpix\b/],
+      ['credito',  /\bcredito\b|\bcred\b|\ba vista credito\b|\bparcelad/],
+      ['debito',   /\bdebito\b|\bdeb\b|\bcartao de debito\b/],
+      ['boleto',   /\bboleto\b|\bficha de compensacao\b|\bcodigo de barras\b/],
+      ['transf',   /\bted\b|\bdoc\b|\btransferencia\b/],
+      ['debaut',   /\bdebito automatico\b/],
+      ['especie',  /\bdinheiro\b|\bespecie\b|\ba vista\b/],
+      ['vale',     /\bvale refeicao\b|\bvale alimentacao\b|\bticket\b|\balelo\b|\bsodexo\b|\bvr\b|\bva\b/]
+    ];
+    /* débito automático antes de débito, senão o mais curto ganha */
+    if(/\bdebito automatico\b/.test(semAc)) achado.forma = 'debaut';
+    else for(const [id, re] of pistas){ if(re.test(semAc)){ achado.forma = id; break; } }
+    if(achado.forma) achado.confianca.push('forma');
+
+    /* O banco, pelo nome. Não dá para usar a primeira palavra do
+       nome: metade dos bancos começa com "Banco", e aí qualquer
+       cupom que dissesse "banco" cairia no primeiro da lista. Cada
+       um tem as palavras que realmente o identificam. */
+    const PISTAS_BANCO = {
+      '001':['banco do brasil','bco do brasil'], '341':['itau','unibanco'],
+      '237':['bradesco'], '033':['santander'], '104':['caixa economica'],
+      '260':['nubank','nu pagamentos'], '077':['banco inter','intermedium'],
+      '336':['c6 bank','c6bank'], '208':['btg'], '218':['bs2'],
+      '212':['banco original'], '422':['safra'], '655':['votorantim','banco bv'],
+      '623':['banco pan'], '318':['bmg'], '756':['sicoob'], '748':['sicredi'],
+      '070':['brb'], '745':['citibank'], '399':['hsbc'],
+      '290':['pagbank','pagseguro'], '323':['mercado pago'], '380':['picpay'],
+      '197':['stone'], '102':['xp investimentos'], '457':['avenue']
+    };
+    for(const cod of Object.keys(PISTAS_BANCO)){
+      if(PISTAS_BANCO[cod].some(p => semAc.indexOf(p) >= 0)){ achado.bancoCod = cod; break; }
+    }
+    if(achado.bancoCod) achado.confianca.push('banco');
+
+    /* A bandeira, pelo nome — com palavra inteira, senão "Alelo"
+       vira "Elo" e o vale-refeição vira cartão de crédito. */
+    for(const b of BANDEIRAS){
+      if(b.id === 'outra') continue;
+      const alvo = b.nome.toLowerCase().split(' ')[0];
+      if(new RegExp('\\b' + alvo + '\\b').test(semAc)){ achado.bandeira = b.id; break; }
+    }
+
+    /* o final do cartão: "**** 1234", "final 1234", "xxxx1234" */
+    const mf = /(?:\*{2,}|x{2,}|final|finais|terminado em)\s*\.?\s*(\d{4})\b/i.exec(t.replace(/\s+/g,' '));
+    if(mf){ achado.fim = mf[1]; achado.confianca.push('final'); }
+
+    return achado;
+  },
+
+  /* do que foi lido, qual cartão já cadastrado combina */
+  cartaoDoTexto(lido){
+    if(!lido || !lido.fim) return '';
+    const c = this.cartoes().find(x => x.fim === lido.fim &&
+      (!lido.bandeira || !x.bandeira || x.bandeira === lido.bandeira));
+    return c ? c.id : '';
+  },
+
+  /* O cupom mostrou a bandeira e o final, mas não escreveu se foi
+     crédito ou débito. Se esse cartão está cadastrado, ele mesmo
+     diz o que é — não é chute, é o cadastro respondendo. */
+  completarForma(lido){
+    if(!lido || lido.forma) return lido;
+    const id = this.cartaoDoTexto(lido);
+    if(id){ const c = this.acharCartao(id); if(c) lido.forma = c.tipo === 'debito' ? 'debito' : 'credito'; }
+    return lido;
+  },
+
+  bancoDoTexto(lido){
+    if(!lido || !lido.bancoCod) return '';
+    const b = this.todos().find(x => x.cod === lido.bancoCod);
+    return b ? b.id : '';
+  },
+
+  /* ---------- migração do campo de texto antigo ----------
+     O "Como pagou" era texto livre ("Crédito", "Pix", "Débito").
+     Isso vira o id da forma, sem apagar o que estava escrito. */
+  formaDoTextoAntigo(txt){
+    const s = String(txt || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+    if(!s) return '';
+    const mapa = {
+      'credito':'credito', 'cred':'credito', 'cartao de credito':'credito',
+      'debito':'debito', 'deb':'debito', 'cartao de debito':'debito',
+      'dinheiro':'especie', 'especie':'especie',
+      'pix':'pix', 'boleto':'boleto', 'transferencia':'transf', 'ted':'transf', 'doc':'transf',
+      'debito automatico':'debaut',
+      'ticket restaurante':'vale', 'vale alimentacao':'vale', 'vale refeicao':'vale', 'vale':'vale'
+    };
+    return mapa[s] || '';
+  }
+};
+
+</script>
+<script>
+/* =========================================================
+   MoneyTRIO — salário bruto → líquido, e PJ × CLT
+
+   Duas contas que as pessoas fazem no papel e erram:
+
+   1. Do bruto ao líquido: INSS por faixa (progressivo, não é
+      uma alíquota só) e IRRF com a regra nova de 2026, que
+      zera o imposto até R$ 5.000 e vai soltando aos poucos
+      até R$ 7.350.
+   2. Quanto uma proposta PJ precisa pagar para empatar com um
+      salário CLT — contando 13º, férias, FGTS e o que o PJ
+      tem que provisionar sozinho.
+
+   As tabelas ficam todas em TABELAS_SALARIO, com a data de
+   vigência e a fonte ao lado. Quando a lei mudar, é só trocar
+   os números de lá; nenhuma conta neste arquivo tem valor
+   escrito no meio do código.
+   ========================================================= */
+
+const TABELAS_SALARIO = {
+  vigencia: '2026-01-01',
+  rotulo: {pt:'tabelas de 2026', en:'2026 tables'},
+  fonte: 'Lei 15.270/2025 (IRRF) · Portaria interministerial do reajuste (INSS)',
+
+  salarioMinimo: 1621.00,
+
+  /* INSS do empregado: progressivo por faixa, como o imposto de renda.
+     Cada faixa cobra só sobre a parte do salário que cai nela. */
+  inss: {
+    teto: 8475.55,
+    faixas: [
+      {ate: 1621.00, aliq: 0.075},
+      {ate: 2902.84, aliq: 0.090},
+      {ate: 4354.27, aliq: 0.120},
+      {ate: 8475.55, aliq: 0.140}
+    ]
+  },
+
+  /* IRRF mensal */
+  irrf: {
+    faixas: [
+      {ate: 2428.80, aliq: 0,     deduz: 0},
+      {ate: 2826.65, aliq: 0.075, deduz: 182.16},
+      {ate: 3751.05, aliq: 0.15,  deduz: 394.16},
+      {ate: 4664.68, aliq: 0.225, deduz: 675.49},
+      {ate: Infinity,aliq: 0.275, deduz: 908.73}
+    ],
+    porDependente: 189.59,       /* por mês */
+    descontoSimplificado: 607.20,/* por mês, no lugar das deduções legais */
+
+    /* A regra de 2026: até 5.000 não paga nada; de 5.000,01 a
+       7.350,00 o imposto é abatido por um redutor que vai
+       diminuindo até zerar. Acima de 7.350 a regra não vale. */
+    redutor: {
+      isencaoAte: 5000.00,
+      acabaEm: 7350.00,
+      base: 978.62,
+      fator: 0.133145
+    }
+  },
+
+  /* o que o empregador paga por cima do salário, e que o PJ não tem */
+  clt: {
+    fgtsMensal: 0.08,            /* 8% do salário, depositado todo mês */
+    multaFgts: 0.40,             /* na demissão sem justa causa */
+    tercoFerias: 1/3
+  }
+};
+
+const Salario = {
+
+  /* ---------- INSS ---------- */
+  inss(bruto){
+    const t = TABELAS_SALARIO.inss;
+    const base = Math.min(Number(bruto) || 0, t.teto);
+    let total = 0, piso = 0;
+    for(const f of t.faixas){
+      if(base <= piso) break;
+      total += (Math.min(base, f.ate) - piso) * f.aliq;
+      piso = f.ate;
+    }
+    return Math.round(total * 100) / 100;
+  },
+
+  /* ---------- IRRF ----------
+     deducoes = outros descontos que abatem a base por lei
+     (pensão alimentícia, previdência privada). Vale-transporte,
+     plano de saúde e coisas do tipo NÃO abatem a base do IRRF
+     na folha, então entram só como desconto do líquido. */
+  irrf(bruto, opcoes){
+    const o = opcoes || {};
+    const t = TABELAS_SALARIO.irrf;
+    const b = Number(bruto) || 0;
+    const inss = o.inss != null ? o.inss : this.inss(b);
+    const dependentes = Number(o.dependentes) || 0;
+    const legais = Number(o.deducoesLegais) || 0;
+
+    /* dois caminhos: deduções de verdade, ou o desconto simplificado.
+       A lei deixa usar o que der menos imposto. */
+    const baseCompleta   = Math.max(0, b - inss - dependentes * t.porDependente - legais);
+    const baseSimplificada = Math.max(0, b - t.descontoSimplificado);
+
+    const calcular = base => {
+      const f = t.faixas.find(x => base <= x.ate) || t.faixas[t.faixas.length - 1];
+      return Math.max(0, base * f.aliq - f.deduz);
+    };
+
+    let impostoCompleta = calcular(baseCompleta);
+    let impostoSimples  = calcular(baseSimplificada);
+    const usouSimplificado = impostoSimples < impostoCompleta;
+    let imposto = usouSimplificado ? impostoSimples : impostoCompleta;
+    const base  = usouSimplificado ? baseSimplificada : baseCompleta;
+
+    /* o redutor de 2026 */
+    const r = t.redutor;
+    let redutor = 0;
+    if(b <= r.isencaoAte) redutor = imposto;                      /* zera */
+    else if(b <= r.acabaEm) redutor = Math.max(0, r.base - r.fator * b);
+    const impostoFinal = Math.max(0, imposto - redutor);
+
+    return {
+      base: Math.round(base * 100) / 100,
+      antesDoRedutor: Math.round(imposto * 100) / 100,
+      redutor: Math.round(Math.min(redutor, imposto) * 100) / 100,
+      imposto: Math.round(impostoFinal * 100) / 100,
+      usouSimplificado: usouSimplificado
+    };
+  },
+
+  /* ---------- bruto → líquido ----------
+     outros = [{nome, valor}] — vale-transporte, plano de saúde,
+     o que a empresa desconta e que a pessoa digita. */
+  liquido(bruto, opcoes){
+    const o = opcoes || {};
+    const b = Number(bruto) || 0;
+    const inss = this.inss(b);
+    const ir = this.irrf(b, {inss: inss, dependentes: o.dependentes, deducoesLegais: o.deducoesLegais});
+    const outros = (o.outros || []).filter(x => x && Number(x.valor));
+    const somaOutros = outros.reduce((s, x) => s + (Number(x.valor) || 0), 0);
+    const liq = b - inss - ir.imposto - somaOutros - (Number(o.deducoesLegais) || 0);
+
+    return {
+      bruto: b,
+      inss: inss,
+      irrf: ir.imposto,
+      irDetalhe: ir,
+      deducoesLegais: Number(o.deducoesLegais) || 0,
+      outros: outros,
+      somaOutros: Math.round(somaOutros * 100) / 100,
+      liquido: Math.round(liq * 100) / 100,
+      mordida: b ? Math.round((1 - liq / b) * 1000) / 10 : 0,   /* % que sai */
+      vigencia: TABELAS_SALARIO.vigencia
+    };
+  },
+
+  /* ---------- líquido → bruto ----------
+     Não tem fórmula fechada por causa das faixas: procura por
+     bisseção, que converge em ~40 voltas e é exata ao centavo. */
+  bruto(liquidoAlvo, opcoes){
+    const alvo = Number(liquidoAlvo) || 0;
+    if(alvo <= 0) return 0;
+    let baixo = alvo, alto = alvo * 3 + 10000;
+    for(let i = 0; i < 60; i++){
+      const meio = (baixo + alto) / 2;
+      if(this.liquido(meio, opcoes).liquido < alvo) baixo = meio; else alto = meio;
+    }
+    return Math.round(alto * 100) / 100;
+  },
+
+  /* =========================================================
+     PJ × CLT
+     O erro clássico é comparar o salário CLT com o valor cheio
+     da nota PJ. Não são a mesma coisa: no CLT entram 13º,
+     férias com um terço e FGTS, e o PJ paga imposto, contador
+     e precisa guardar sozinho o que o CLT recebe de brinde.
+     ========================================================= */
+
+  /* quanto um CLT custa de verdade, por mês, para quem recebe */
+  cltAnual(bruto, opcoes){
+    const o = opcoes || {};
+    const b = Number(bruto) || 0;
+    const mes = this.liquido(b, o);
+
+    /* 13º: um salário a mais, tributado sozinho (INSS e IRRF próprios) */
+    const decimo = this.liquido(b, o);
+
+    /* férias: um salário mais um terço; o terço também é tributado */
+    const feriasBruto = b * (1 + TABELAS_SALARIO.clt.tercoFerias);
+    const ferias = this.liquido(feriasBruto, o);
+
+    /* FGTS: 8% por mês, 13 vezes (conta o 13º). Não é salário,
+       mas é dinheiro que fica no nome da pessoa. */
+    const fgtsAno = b * TABELAS_SALARIO.clt.fgtsMensal * 13;
+
+    /* no ano: 11 meses normais + férias + 13º */
+    const liquidoAno = mes.liquido * 11 + ferias.liquido + decimo.liquido;
+
+    return {
+      brutoMes: b,
+      liquidoMes: mes.liquido,
+      liquidoAno: Math.round(liquidoAno * 100) / 100,
+      fgtsAno: Math.round(fgtsAno * 100) / 100,
+      totalAno: Math.round((liquidoAno + fgtsAno) * 100) / 100,
+      equivalenteMes: Math.round((liquidoAno + fgtsAno) / 12 * 100) / 100,
+      detalhe: {mes: mes, decimo: decimo, ferias: ferias}
+    };
+  },
+
+  /* o líquido de um PJ no Simples, anexo III (serviço)
+     custos = {contador, inss, saude, outros} por mês */
+  pj(faturamentoMes, opcoes){
+    const o = opcoes || {};
+    const f = Number(faturamentoMes) || 0;
+    /* alíquota efetiva: quem informa, informa; senão usa a de entrada
+       do anexo III, que é o piso e a mais comum em começo de ano */
+    const aliq = o.aliquota != null ? Number(o.aliquota) / 100 : 0.06;
+    const imposto = f * aliq;
+    const contador = Number(o.contador) || 0;
+    const inssPro  = Number(o.inss) || 0;      /* INSS sobre o pró-labore */
+    const saude    = Number(o.saude) || 0;
+    const outros   = Number(o.outros) || 0;
+    const custos = imposto + contador + inssPro + saude + outros;
+    const sobra = f - custos;
+
+    /* O PJ que quiser o mesmo conforto do CLT guarda sozinho o que
+       o CLT recebe de brinde ao longo do ano: o 13º (1 salário), o
+       terço de férias (1/3) e uma reserva do tamanho do FGTS
+       (8% em 13 parcelas ≈ 1,04 salário). Dá pouco menos de 20%
+       do que sobra por mês. */
+    const extrasDoClt = 1 + TABELAS_SALARIO.clt.tercoFerias +
+                        TABELAS_SALARIO.clt.fgtsMensal * 13;
+    const provisao = (Number(o.provisionar) === 0) ? 0 : sobra * extrasDoClt / 12;
+    return {
+      faturamento: f, aliquota: aliq * 100,
+      imposto: Math.round(imposto * 100) / 100,
+      contador: contador, inss: inssPro, saude: saude, outros: outros,
+      custos: Math.round(custos * 100) / 100,
+      sobraMes: Math.round(sobra * 100) / 100,
+      sobraAno: Math.round(sobra * 12 * 100) / 100,
+      provisaoSugerida: Math.round(provisao * 100) / 100,
+      noBolsoMes: Math.round((sobra - provisao) * 100) / 100
+    };
+  },
+
+  /* quanto o PJ precisa faturar para empatar com um CLT */
+  pjEquivalente(brutoClt, opcoes){
+    const o = opcoes || {};
+    const alvo = this.cltAnual(brutoClt, o).totalAno / 12;   /* o que o CLT põe no bolso por mês */
+    let baixo = alvo, alto = alvo * 4 + 20000;
+    for(let i = 0; i < 60; i++){
+      const meio = (baixo + alto) / 2;
+      if(this.pj(meio, o).noBolsoMes < alvo) baixo = meio; else alto = meio;
+    }
+    return {alvoMes: Math.round(alvo * 100) / 100, faturamentoMes: Math.round(alto * 100) / 100};
+  }
+};
+
+</script>
+<script>
+/* =========================================================
+   MoneyTRIO — voz: ouvir e ditar
+
+   Duas coisas diferentes, que o navegador trata separado:
+
+   OUVIR (TTS)   — o app lê um texto em voz alta. Funciona em
+                   praticamente todo navegador atual, inclusive
+                   no iPhone.
+   DITAR (STT)   — a pessoa fala e o app escreve. Depende do
+                   reconhecimento de voz do navegador, que o
+                   Chrome e o Edge têm e o Safari do iPhone
+                   não tem. Onde não existe, o botão nem
+                   aparece — botão que não funciona é pior do
+                   que botão nenhum.
+
+   Nada disso grava nada nem manda áudio para o app: quem
+   converte é o próprio navegador/sistema.
+   ========================================================= */
+
+const Voz = {
+  lendo: false,
+  ouvindo: false,
+  reconhecedor: null,
+  aoOuvir: null,
+
+  /* ---------- o que este aparelho consegue ---------- */
+  podeLer(){ return typeof window !== 'undefined' && 'speechSynthesis' in window; },
+
+  podeOuvir(){
+    return typeof window !== 'undefined' &&
+           !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  },
+
+  idioma(){ return I18n.atual === 'en' ? 'en-US' : 'pt-BR'; },
+
+  /* ---------- ler em voz alta ---------- */
+  vozEscolhida(){
+    if(!this.podeLer()) return null;
+    const alvo = this.idioma();
+    const vozes = window.speechSynthesis.getVoices() || [];
+    return vozes.find(v => v.lang === alvo) ||
+           vozes.find(v => v.lang && v.lang.indexOf(alvo.slice(0,2)) === 0) || null;
+  },
+
+  /* texto solto, ou um elemento da tela (aí limpa o que é enfeite) */
+  textoDe(alvo){
+    if(typeof alvo === 'string') return alvo;
+    if(!alvo || !alvo.cloneNode) return '';
+    const copia = alvo.cloneNode(true);
+    copia.querySelectorAll('button, .voz-bt, script, style, .explica-mais').forEach(n => n.remove());
+    return (copia.textContent || '').replace(/\s+/g, ' ').trim();
+  },
+
+  ler(alvo){
+    if(!this.podeLer()) return false;
+    const txt = this.textoDe(alvo);
+    if(!txt) return false;
+    this.parar();
+    /* em pedaços: fala longa demais é cortada por alguns navegadores */
+    const pedacos = txt.match(/[^.!?]{1,220}([.!?]+|$)/g) || [txt];
+    pedacos.forEach((p, i) => {
+      const f = new SpeechSynthesisUtterance(p.trim());
+      f.lang = this.idioma();
+      const v = this.vozEscolhida(); if(v) f.voice = v;
+      f.rate = 0.98;
+      if(i === pedacos.length - 1) f.onend = () => { this.lendo = false; this.pintarBotoes(); };
+      window.speechSynthesis.speak(f);
+    });
+    this.lendo = true;
+    this.pintarBotoes();
+    return true;
+  },
+
+  parar(){
+    if(this.podeLer()) window.speechSynthesis.cancel();
+    this.lendo = false;
+    this.pintarBotoes();
+  },
+
+  alternar(alvo){ if(this.lendo) this.parar(); else this.ler(alvo); },
+
+  pintarBotoes(){
+    $$('.voz-ler').forEach(b => {
+      b.classList.toggle('on', this.lendo);
+      b.title = this.lendo
+        ? (I18n.atual === 'pt' ? 'parar a leitura' : 'stop reading')
+        : (I18n.atual === 'pt' ? 'ouvir este texto' : 'listen to this text');
+    });
+  },
+
+  /* ---------- ditar ---------- */
+  ouvir(aoTerminar, opcoes){
+    if(!this.podeOuvir()) return false;
+    const o = opcoes || {};
+    const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    this.pararDeOuvir();
+    const r = new Rec();
+    r.lang = this.idioma();
+    r.continuous = false;
+    r.interimResults = !!o.parcial;
+    r.maxAlternatives = 1;
+
+    r.onresult = e => {
+      let txt = '';
+      for(let i = e.resultIndex; i < e.results.length; i++) txt += e.results[i][0].transcript;
+      txt = txt.trim();
+      if(e.results[e.results.length - 1].isFinal){
+        this.ouvindo = false; this.pintarMicrofones();
+        if(aoTerminar) aoTerminar(txt, true);
+      }else if(aoTerminar) aoTerminar(txt, false);
+    };
+    r.onerror = e => {
+      this.ouvindo = false; this.pintarMicrofones();
+      const pt = I18n.atual === 'pt';
+      if(e.error === 'not-allowed' || e.error === 'service-not-allowed')
+        toast(pt ? 'Preciso da permissão do microfone para escrever o que você falar.'
+                 : 'I need microphone permission to write what you say.', 'warn');
+      else if(e.error === 'no-speech')
+        toast(pt ? 'Não ouvi nada. Toque no microfone e fale de novo.'
+                 : 'I heard nothing. Tap the mic and speak again.', 'warn');
+      else if(e.error !== 'aborted')
+        toast(pt ? 'O reconhecimento de voz falhou neste aparelho.'
+                 : 'Speech recognition failed on this device.', 'warn');
+    };
+    r.onend = () => { this.ouvindo = false; this.pintarMicrofones(); };
+
+    this.reconhecedor = r;
+    try{ r.start(); this.ouvindo = true; this.pintarMicrofones(); }
+    catch(e){ this.ouvindo = false; return false; }
+    return true;
+  },
+
+  pararDeOuvir(){
+    if(this.reconhecedor){ try{ this.reconhecedor.abort(); }catch(e){} this.reconhecedor = null; }
+    this.ouvindo = false;
+    this.pintarMicrofones();
+  },
+
+  pintarMicrofones(){
+    $$('.voz-mic').forEach(b => b.classList.toggle('on', this.ouvindo));
+  },
+
+  /* ---------- falar um número ----------
+     "mil e duzentos", "1200", "12,50", "doze reais e cinquenta"
+     viram 1200 / 1200 / 12.5 / 12.5. O que não der para entender
+     volta null, e o campo não muda. */
+  numeroDoQueFoiDito(txt){
+    const cru = ' ' + String(txt || '').toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '') + ' ';
+
+    /* "doze reais e cinquenta" são 12,50 — e não 62. Quando a
+       palavra "reais" separa as duas partes, o que vem depois
+       são centavos. */
+    const emDuas = /^\s*(.+?)\s+reais?\s+e\s+(.+?)\s*$/.exec(cru);
+    if(emDuas){
+      const inteiro  = this.numeroDoQueFoiDito(emDuas[1]);
+      const centavos = this.numeroDoQueFoiDito(emDuas[2].replace(/\bcentavos?\b/g, ' '));
+      if(inteiro != null && centavos != null && centavos < 100)
+        return Math.round((inteiro + centavos / 100) * 100) / 100;
+    }
+
+    const s = cru.replace(/\breais?\b|\br\$|\bcentavos?\b/g, ' ');
+
+    /* Já veio em algarismos? O formato com ponto de milhar precisa
+       ter pelo menos um grupo de três — senão "1200" viraria "120". */
+    const m = /(\d{1,3}(?:[.\s]\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?)/.exec(s);
+    if(m){
+      let n = m[1].replace(/\s/g, '');
+      if(n.indexOf(',') >= 0) n = n.replace(/\./g, '').replace(',', '.');
+      else if(/^\d{1,3}(\.\d{3})+$/.test(n)) n = n.replace(/\./g, '');
+      const v = parseFloat(n);
+      if(!isNaN(v)) return this.comMultiplicador(v, s);
+    }
+
+    /* veio por extenso */
+    const U = {zero:0, um:1, uma:1, dois:2, duas:2, tres:3, quatro:4, cinco:5, seis:6, sete:7, oito:8, nove:9,
+      dez:10, onze:11, doze:12, treze:13, catorze:14, quatorze:14, quinze:15, dezesseis:16, dezessete:17,
+      dezoito:18, dezenove:19, vinte:20, trinta:30, quarenta:40, cinquenta:50, sessenta:60, setenta:70,
+      oitenta:80, noventa:90, cem:100, cento:100, duzentos:200, trezentos:300, quatrocentos:400,
+      quinhentos:500, seiscentos:600, setecentos:700, oitocentos:800, novecentos:900};
+    const palavras = s.trim().split(/\s+/);
+    let total = 0, parcial = 0, achou = false;
+    palavras.forEach(p => {
+      if(U[p] != null){ parcial += U[p]; achou = true; }
+      else if(p === 'mil'){ total += (parcial || 1) * 1000; parcial = 0; achou = true; }
+      else if(p === 'milhao' || p === 'milhoes'){ total += (parcial || 1) * 1000000; parcial = 0; achou = true; }
+    });
+    if(!achou) return null;
+    return total + parcial;
+  },
+
+  comMultiplicador(v, s){
+    if(/\bmilhao\b|\bmilhoes\b/.test(s)) return v * 1000000;
+    if(/\bmil\b/.test(s) && v < 1000) return v * 1000;
+    return v;
+  },
+
+  /* liga o microfone a um campo de valor */
+  ditarNoCampo(input){
+    if(!input) return;
+    const pt = I18n.atual === 'pt';
+    const ok = this.ouvir((txt, final) => {
+      if(!final) return;
+      const n = this.numeroDoQueFoiDito(txt);
+      if(n == null){
+        toast(pt ? 'Entendi "' + txt + '", mas não achei um número aí.'
+                 : 'I understood "' + txt + '", but found no number in it.', 'warn');
+        return;
+      }
+      input.value = String(n);
+      input.dispatchEvent(new Event('input', {bubbles:true}));
+      input.dispatchEvent(new Event('change', {bubbles:true}));
+      toast(pt ? 'Anotei ' + fmt(n) + '.' : 'Noted ' + fmt(n) + '.');
+    });
+    if(ok) toast(pt ? 'Pode falar o valor.' : 'Say the amount.');
+  }
+};
+
+/* a lista de vozes chega depois em alguns navegadores */
+if(typeof window !== 'undefined' && 'speechSynthesis' in window)
+  window.speechSynthesis.onvoiceschanged = () => {};
 
 </script>
 <script>
@@ -10347,6 +11292,21 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.4', d:'2026-09-24', t:'Banco, cartão, valor no dedo e voz', itens:[
+    'Cadastro de bancos: escolha de uma lista pronta com 27 instituições, cada uma já com nome, código do banco e CNPJ. O selo colorido é desenhado pelo próprio app, com a cor da instituição — não uso a marca de ninguém.',
+    'Cadastro de cartões: apelido, bandeira, últimos 4 dígitos, banco, dia em que a fatura fecha e dia do pagamento. O app passa a somar sozinho quanto está aberto em cada fatura. O número inteiro do cartão não entra aqui e nunca deve ser digitado em app nenhum.',
+    '"Como pagou" deixou de ser texto solto: virou uma lista com Pix, crédito, débito, boleto, transferência, débito automático, espécie e vale. Escolheu Pix ou boleto, ele pergunta o banco; escolheu cartão, pergunta qual. O que já estava escrito foi convertido sozinho, sem perder nada.',
+    'A foto do cupom agora também lê como foi pago: reconhece a forma, o banco, a bandeira e o final do cartão, e já deixa tudo escolhido no formulário. Se o cartão está cadastrado, ele mesmo diz se é crédito ou débito.',
+    'Digitar valor no celular: embaixo de cada campo de dinheiro aparecem botões de somar e subtrair, de um centavo a cinquenta mil, escolhidos pelo tamanho do número que já está lá. Segurar repete.',
+    'Ditado por voz: onde tem valor, tem microfone. Falar "mil e duzentos", "R$ 1.234,56" ou "doze reais e cinquenta" escreve o número certo. Funciona no Chrome e no Edge; o Safari do iPhone não tem reconhecimento de voz, e lá o microfone nem aparece.',
+    'Leitura em voz alta: os cartões de explicação ganharam um botão 🔊 que lê o texto no idioma escolhido. Funciona em todo aparelho atual, inclusive iPhone.',
+    'Salário bruto → líquido, com as tabelas de 2026: INSS por faixa e imposto de renda com a regra nova, que zera o imposto até R$ 5.000 e vai soltando aos poucos até R$ 7.350. Dá para fazer o caminho inverso também: sei o líquido, quanto é o bruto.',
+    'Comparação PJ × CLT: põe os dois na mesma régua, contando 13º, férias com um terço e FGTS de um lado, e imposto, contador e o que o PJ precisa guardar sozinho do outro. Diz quanto uma proposta PJ precisa ser para empatar.',
+    'No computador, quando as opções do menu da esquerda não cabem na altura, a lista passa a rolar com a barra à mostra — e o calendário do BudgetONE continua aparecendo inteiro embaixo.',
+    'A frequência de cada compromisso agora está escrita por extenso no calendário e no passo a passo: "toda segunda-feira", "todo dia 10", "anual em janeiro". Antes só aparecia o número do dia.',
+    'Sair do passo a passo com valores preenchidos passou a perguntar se você quer salvar, em vez de jogar o trabalho fora em silêncio.',
+    'A IA não vê mais os nomes que você escreveu nos lançamentos, a não ser que você ligue a chavinha. Desligada, ela recebe a categoria no lugar — "Escola" em vez de "Escola da Ana". E a tela mostra, aberta, exatamente o que sai daqui junto com a pergunta.'
+  ]},
   {v:'3.3', d:'2026-09-19', t:'Mais fácil de usar, e mais seguro', itens:[
     'A tela ficou mais calma: menos coisa aparecendo ao mesmo tempo, texto comprido dobrado com um "ler mais", e cada bloco das Configurações fechado até você tocar nele.',
     'Central de ajuda num botão só, o ? do topo: a ajuda desta tela, o tutorial de cinco passos, os atalhos para começar e uma busca que procura no glossário e nas aulas.',
@@ -10840,7 +11800,7 @@ const Gasto = {
    dicionário e cada lançamento vira uma lista de números.
    ========================================================= */
 const GastoCodec = {
-  CAMPOS: ['grupo','sub','per','status','quem','forma','conta','origem'],
+  CAMPOS: ['grupo','sub','per','status','quem','forma','conta','origem','formaId','bancoId','cartaoId'],
 
   empacotar(lista){
     const dic = {}, mapa = {};
@@ -10860,7 +11820,8 @@ const GastoCodec = {
       g.irpf ? 1 : 0,
       g.desc || '',
       g.id || '', g.criadoEm || '',
-      (g.favorito ? 1 : 0) | (g.revisar ? 2 : 0), g.recorrenteId || ''
+      (g.favorito ? 1 : 0) | (g.revisar ? 2 : 0), g.recorrenteId || '',
+      idx('formaId', g.formaId), idx('bancoId', g.bancoId), idx('cartaoId', g.cartaoId)
     ]);
     return {v:1, d: dic, l: linhas};
   },
@@ -10879,6 +11840,7 @@ const GastoCodec = {
       criadoEm: x[13] || '',
       favorito: !!(Number(x[14]) & 1), revisar: !!(Number(x[14]) & 2),
       recorrenteId: x[15] || '',
+      formaId: le('formaId', x[16]), bancoId: le('bancoId', x[17]), cartaoId: le('cartaoId', x[18]),
       fluxo: (GRUPOS[le('grupo', x[2])] || GRUPOS.OUTROS).fluxo
     }));
   },
@@ -12964,7 +13926,7 @@ function abrirLancamento(id){
 
   $('#assetModalTitle').textContent = g ? 'Editar lançamento' : 'Novo lançamento';
   $('#assetModalBody').innerHTML = Verter.html('<div class="grid g2">' +
-      campo('Valor', '<input type="number" id="glValor" step="0.01" min="0" placeholder="0,00" value="' +
+      campo('Valor', '<input type="number" inputmode="decimal" data-dinheiro="1" id="glValor" step="0.01" min="0" placeholder="0,00" value="' +
             (g ? g.valor : '') + '">') +
       campo('Data', '<input type="date" id="glData" value="' + (g ? (g.data || '') : hojeISO()) + '">') +
     '</div>' +
@@ -12986,15 +13948,18 @@ function abrirLancamento(id){
           PERIODICIDADES[k].ico + ' ' + PERIODICIDADES[k].nome + '</option>').join('') + '</select>',
         null, 'Mensal, trimestral e anual entram no custo fixo.') +
       campo('Como pagou',
-        '<input id="glForma" list="glFormaLista" placeholder="Crédito, Pix…" value="' +
-        (g ? esc(g.forma) : '') + '"><datalist id="glFormaLista">' +
-        Object.keys(FORMAS).map(f => '<option value="' + f + '"></option>').join('') + '</datalist>') +
+        '<select id="glForma">' +
+        '<option value="">—</option>' +
+        FORMAS_PGTO.map(f => '<option value="' + f.id + '"' +
+          (g && g.formaId === f.id ? ' selected' : '') + '>' + f.ico + ' ' +
+          esc(f.nome[I18n.atual === 'en' ? 'en' : 'pt']) + '</option>').join('') + '</select>') +
     '</div>' +
+    '<div id="glOnde">' + campoOndePagou(g) + '</div>' +
     '<div class="grid g2">' +
       campo('Quem pagou', '<input id="glQuem" list="glQuemLista" placeholder="opcional" value="' +
         (g ? esc(g.quem) : '') + '"><datalist id="glQuemLista">' +
         Gasto.pessoas().map(p => '<option value="' + esc(p.chave) + '"></option>').join('') + '</datalist>') +
-      campo('Conta ou cartão', '<input id="glConta" placeholder="opcional" value="' +
+      campo('Observação da conta', '<input id="glConta" placeholder="opcional" value="' +
         (g ? esc(g.conta) : '') + '">') +
     '</div>' +
     '<label class="linha-check"><input type="checkbox" id="glIrpf"' + (g && g.irpf ? ' checked' : '') + '> ' +
@@ -13018,6 +13983,53 @@ function abrirLancamento(id){
   $('#glGrupo').addEventListener('change', e => {
     $('#glSubLista').innerHTML = Verter.html(opcoesSub(e.target.value));
   });
+
+  /* trocar a forma de pagamento troca o que se pergunta depois:
+     Pix e boleto pedem banco, cartão pede cartão, espécie não pede nada */
+  $('#glForma').addEventListener('change', () => {
+    const caixa = $('#glOnde');
+    if(caixa) caixa.innerHTML = Verter.html(campoOndePagou({formaId: $('#glForma').value}));
+  });
+
+  if(typeof UX !== 'undefined') UX.reguasDeValor($('#assetModalBody'));
+}
+
+/* o campo que vem depois de "Como pagou": banco, cartão ou nada.
+   Fica num bloco próprio para poder ser redesenhado sozinho. */
+function campoOndePagou(g){
+  const pede = ((FORMA_POR_ID[(g && g.formaId) || ''] || {}).pede) || '';
+  const pt = I18n.atual !== 'en';
+
+  if(pede === 'cartao'){
+    const cartoes = Banco.cartoes();
+    if(!cartoes.length)
+      return '<div class="aviso-box"><p class="small">' + (pt
+        ? 'Você ainda não cadastrou nenhum cartão. Dá para lançar assim mesmo — ou cadastrar agora, em Configurações, e o app passa a somar a fatura de cada um.'
+        : 'You have no card registered yet. You can post it anyway — or register one now in Settings, and the app starts adding up each invoice.') + '</p>' +
+        '<button class="btn sm" data-acao="cartao-novo" style="margin-top:8px">' +
+        (pt ? '+ Cadastrar cartão' : '+ Add card') + '</button></div>';
+    return campo(pt ? 'Em qual cartão' : 'Which card',
+      '<select id="glCartao"><option value="">—</option>' +
+      cartoes.map(c => '<option value="' + c.id + '"' + (g && g.cartaoId === c.id ? ' selected' : '') + '>' +
+        esc(Banco.rotuloCartao(c.id)) + '</option>').join('') + '</select>',
+      null, pt ? 'A compra entra na fatura que fecha depois desta data.'
+               : 'The purchase goes into the invoice that closes after this date.');
+  }
+
+  if(pede === 'banco'){
+    const bancos = Banco.todos();
+    if(!bancos.length)
+      return '<div class="aviso-box"><p class="small">' + (pt
+        ? 'Nenhum banco cadastrado ainda. Dá para lançar assim mesmo — ou cadastrar em Configurações, escolhendo de uma lista pronta.'
+        : 'No bank registered yet. You can post it anyway — or add one in Settings, picking from a ready-made list.') + '</p>' +
+        '<button class="btn sm" data-acao="banco-novo" style="margin-top:8px">' +
+        (pt ? '+ Cadastrar banco' : '+ Add bank') + '</button></div>';
+    return campo(pt ? 'Por qual banco' : 'Which bank',
+      '<select id="glBanco"><option value="">—</option>' +
+      bancos.map(b => '<option value="' + b.id + '"' + (g && g.bancoId === b.id ? ' selected' : '') + '>' +
+        esc(Banco.rotulo(b.id)) + '</option>').join('') + '</select>');
+  }
+  return '';
 }
 
 function salvarLancamento(){
@@ -13027,7 +14039,11 @@ function salvarLancamento(){
     valor: v, data: $('#glData').value || null,
     grupo: $('#glGrupo').value, sub: $('#glSub').value,
     desc: $('#glDesc').value, per: $('#glPer').value,
-    forma: $('#glForma').value, quem: $('#glQuem').value,
+    formaId: $('#glForma').value,
+    forma: ((FORMA_POR_ID[$('#glForma').value] || {}).nome || {}).pt || '',
+    bancoId:  ($('#glBanco')  || {}).value || '',
+    cartaoId: ($('#glCartao') || {}).value || '',
+    quem: $('#glQuem').value,
     conta: $('#glConta').value, irpf: $('#glIrpf').checked,
     favorito: !!($('#glFav') || {}).checked, revisar: !!($('#glRev') || {}).checked
   };
@@ -13633,7 +14649,10 @@ function desenharWizard(){
       return '<div class="wz-item">' +
         '<div class="wz-nome"><b>' + esc(wzTxt(x.nome)) + '</b>' +
           '<span class="t-sub">' + ((GRUPOS[x.grupo] || {}).ico || '') + ' ' + esc(x.sub) +
-          (hist ? ' · seu histórico diz ' + fmt(hist.valor) : '') + '</span></div>' +
+          (hist ? ' · seu histórico diz ' + fmt(hist.valor) : '') + '</span>' +
+          /* com que frequência isso cai — dito por extenso, aqui mesmo,
+             para ninguém precisar adivinhar pelo número do dia */
+          '<span class="wz-freq">' + esc(Recorrente.explicar(x)) + '</span></div>' +
         '<div class="wz-campos">' +
           '<input type="number" class="wz-v" data-wzi="' + i + '" step="0.01" min="0" placeholder="' +
             (hist ? pnum(hist.valor, 0) : 'valor') + '">' +
@@ -14262,6 +15281,17 @@ function mostrarCupom(r){
       (r.cnpj ? linhaEsc('CNPJ', esc(r.cnpj.fmt) +
         (r.cnpj.valido ? '' : ' <span class="down">' + de('(não confere)','(invalid)') + '</span>')) : '') +
       (r.itens.length ? linhaEsc(de('Itens', 'Items'), r.itens.length + ' · ' + fmt(r.somaItens)) : '') +
+      /* o que o cupom disse sobre a forma de pagamento */
+      (r.formaId || r.pagamento && r.pagamento.fim
+        ? linhaEsc(de('Como foi pago', 'Paid with'),
+            (r.formaId && FORMA_POR_ID[r.formaId]
+              ? FORMA_POR_ID[r.formaId].ico + ' ' + esc(FORMA_POR_ID[r.formaId].nome[L === 'en' ? 'en' : 'pt'])
+              : '<span class="muted">—</span>') +
+            (r.cartaoId ? ' · ' + esc(Banco.rotuloCartao(r.cartaoId))
+              : (r.pagamento && r.pagamento.fim ? ' · ••' + esc(r.pagamento.fim) +
+                  ' <span class="tiny muted">' + de('(cartão não cadastrado)', '(card not registered)') + '</span>' : '')) +
+            (r.bancoId ? ' · ' + esc(Banco.curto(r.bancoId)) : ''))
+        : '') +
     '</tbody></table>';
 
   h += '<div class="conf-barra"><div class="conf-fill" style="width:' + (r.confianca * 10) + '%;' +
@@ -14370,6 +15400,15 @@ function lancarEscaneado(){
         : r.tipo === 'nota'
           ? 'Nota fiscal ' + r.cnpjFmt + (r.chave ? ' — chave ' + r.chave : '')
           : 'Boleto' + (r.banco ? ' ' + r.banco : '') + (r.codigo ? ' — ' + r.codigo : '');
+    /* a forma de pagamento lida no cupom, já escolhida no formulário */
+    if(r.formaId && $('#glForma')){
+      $('#glForma').value = r.formaId;
+      $('#glForma').dispatchEvent(new Event('change', {bubbles:true}));
+      setTimeout(() => {
+        if(r.cartaoId && $('#glCartao')) $('#glCartao').value = r.cartaoId;
+        if(r.bancoId  && $('#glBanco'))  $('#glBanco').value  = r.bancoId;
+      }, 20);
+    }
     /* leitura fraca já nasce marcada para conferir depois */
     if(r.tipo === 'cupom' && !r.confiavel && $('#glRev')) $('#glRev').checked = true;
     if(!r.valor && $('#glValor')) $('#glValor').focus();
@@ -14612,8 +15651,19 @@ const CupomTexto = {
     if(itens.length >= 2) pontos += 1;
     if(tot && somaItens && Math.abs(somaItens - tot.valor) / tot.valor < 0.02) pontos += 2;
 
+    /* como foi pago, e em que cartão: lido do próprio cupom.
+       Só entra o que apareceu escrito; nada é chutado. */
+    const pgto = (typeof Banco !== 'undefined') ? Banco.completarForma(Banco.lerDoTexto(txt))
+                                                : {forma:'', bancoCod:'', bandeira:'', fim:'', confianca:[]};
+    if(pgto.forma) pontos += 1;
+    if(pgto.fim) pontos += 1;
+
     return {
       tipo: 'cupom',
+      pagamento: pgto,
+      formaId:  pgto.forma || '',
+      cartaoId: (typeof Banco !== 'undefined') ? Banco.cartaoDoTexto(pgto) : '',
+      bancoId:  (typeof Banco !== 'undefined') ? Banco.bancoDoTexto(pgto)  : '',
       valor: tot ? tot.valor : null,
       rotuloTotal: tot ? tot.rotulo : null,
       data: this.data(txt) || (chave && chave.competencia ? chave.competencia + '-01' : null),
@@ -16337,6 +17387,9 @@ function linhaOcorrencia(o, op){
       '<span class="t-main">' + esc(o.r.nome) + (o.r.favorito ? ' <i class="fav-on">★</i>' : '') + '</span>' +
       '<div class="t-sub">' + (G.ico || '') + ' ' + esc(o.r.sub) +
         ' · ' + esc(I18n.quando(o.data)) + '</div>' +
+      /* com que frequência isso se repete: dito por extenso na
+         própria linha, para não precisar abrir o compromisso */
+      '<div class="oc-freq">🔁 ' + esc(Recorrente.explicar(o.r)) + '</div>' +
     '</div>' +
     '<div class="oc-dir">' +
       '<div class="oc-valor ' + (ent ? 'up' : 'down') + '">' + (ent ? '+' : '−') + fmt(o.valor) + '</div>' +
@@ -17102,11 +18155,127 @@ const UX = {
     });
   },
 
+  /* ---------- 3. digitar valor no celular ----------
+     Teclado de celular e vírgula não se entendem. Em vez de
+     digitar, a pessoa toca: os passos vão de um centavo a
+     cinquenta mil, e o app escolhe quais mostrar pelo tamanho
+     do número que já está no campo — quem está em 1.200 não
+     precisa de +0,01, e quem está em 3,50 não precisa de
+     +10.000. Segurar o botão repete. */
+  PASSOS: [0.01, 0.10, 0.50, 1, 5, 10, 50, 100, 500, 1000, 10000, 50000],
+
+  passosPara(valor){
+    const v = Math.abs(Number(valor) || 0);
+    /* quatro passos, começando perto da ordem de grandeza do valor */
+    let i = 0;
+    if(v >= 100000) i = 8;
+    else if(v >= 20000) i = 7;
+    else if(v >= 2000) i = 6;
+    else if(v >= 1000) i = 5;
+    else if(v >= 200) i = 4;
+    else if(v >= 20) i = 3;
+    else if(v >= 2) i = 2;
+    else if(v > 0) i = 0;
+    else i = 5;                       /* campo vazio: começa em 10, 50, 100, 500 */
+    return this.PASSOS.slice(i, i + 4);
+  },
+
+  rotuloPasso(n){
+    if(n >= 1000) return (n / 1000) + 'k';
+    if(n >= 1) return String(n);
+    return String(n).replace('.', ',').replace(/^0,/, ',');
+  },
+
+  /* põe a régua de botões embaixo de um campo de valor */
+  reguaDeValor(input){
+    if(!input || input.dataset.regua) return;
+    input.dataset.regua = '1';
+
+    const caixa = document.createElement('div');
+    caixa.className = 'val-regua';
+
+    const pt = (typeof I18n === 'undefined' || I18n.atual !== 'en');
+    const lerValor = () => {
+      const bruto = String(input.value || '').replace(/\s/g, '').replace(',', '.');
+      const n = parseFloat(bruto);
+      return isNaN(n) ? 0 : n;
+    };
+    const escrever = n => {
+      const arredondado = Math.round(n * 100) / 100;
+      input.value = String(arredondado);
+      input.dispatchEvent(new Event('input', {bubbles:true}));
+      input.dispatchEvent(new Event('change', {bubbles:true}));
+    };
+
+    const desenhar = () => {
+      const passos = this.passosPara(lerValor());
+      caixa.innerHTML = passos.map(n =>
+        '<span class="val-par">' +
+          '<button type="button" class="val-bt menos" data-passo="' + (-n) + '">−' + this.rotuloPasso(n) + '</button>' +
+          '<button type="button" class="val-bt mais"  data-passo="' + n + '">+' + this.rotuloPasso(n) + '</button>' +
+        '</span>').join('') +
+        '<button type="button" class="val-bt zerar" data-zerar="1">' + (pt ? 'zerar' : 'clear') + '</button>' +
+        (typeof Voz !== 'undefined' && Voz.podeOuvir()
+          ? '<button type="button" class="val-bt voz-mic" data-ditar="1" title="' +
+            (pt ? 'falar o valor' : 'say the amount') + '">🎤</button>' : '');
+    };
+    desenhar();
+
+    let repetindo = null;
+    const parar = () => { clearInterval(repetindo); repetindo = null; };
+
+    caixa.addEventListener('click', ev => {
+      const b = ev.target.closest('.val-bt');
+      if(!b) return;
+      ev.preventDefault();
+      if(b.dataset.zerar){ escrever(0); desenhar(); return; }
+      if(b.dataset.ditar){ if(typeof Voz !== 'undefined') Voz.ditarNoCampo(input); return; }
+      escrever(Math.max(0, lerValor() + Number(b.dataset.passo)));
+      desenhar();
+    });
+    /* segurar repete, no dedo e no mouse */
+    ['pointerdown'].forEach(ev => caixa.addEventListener(ev, e => {
+      const b = e.target.closest('.val-bt[data-passo]');
+      if(!b) return;
+      parar();
+      repetindo = setInterval(() => { escrever(Math.max(0, lerValor() + Number(b.dataset.passo))); }, 130);
+    }));
+    ['pointerup','pointerleave','pointercancel'].forEach(ev =>
+      caixa.addEventListener(ev, () => { if(repetindo){ parar(); desenhar(); } }));
+
+    input.insertAdjacentElement('afterend', caixa);
+  },
+
+  /* quais campos ganham a régua: os de dinheiro */
+  reguasDeValor(raiz){
+    if(!raiz) return;
+    raiz.querySelectorAll('input[data-dinheiro], input.campo-valor').forEach(i => this.reguaDeValor(i));
+  },
+
+  /* ---------- 4. ouvir o texto de um cartão ---------- */
+  botoesDeVoz(raiz){
+    if(!raiz || typeof Voz === 'undefined' || !Voz.podeLer()) return;
+    const pt = (typeof I18n === 'undefined' || I18n.atual !== 'en');
+    raiz.querySelectorAll('[data-ouvir]').forEach(alvo => {
+      if(alvo.querySelector(':scope > .voz-ler')) return;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'voz-ler';
+      b.title = pt ? 'ouvir este texto' : 'listen to this text';
+      b.setAttribute('aria-label', b.title);
+      b.textContent = '🔊';
+      b.addEventListener('click', ev => { ev.stopPropagation(); Voz.alternar(alvo); });
+      alvo.insertAdjacentElement('afterbegin', b);
+    });
+  },
+
   /* chamado no fim de cada render */
   aplicar(view, el){
     try{
       if(view === 'config') this.sanfona(el);
       this.dobrarExplicacoes(el);
+      this.reguasDeValor(el);
+      this.botoesDeVoz(el);
     }catch(e){ console.warn('ux:', e); }
   }
 };
@@ -17367,6 +18536,462 @@ const Assist = {
 </script>
 <script>
 /* =========================================================
+   MoneyTRIO — as telas de banco e cartão
+
+   Um bloco nas Configurações do BudgetONE e dois formulários.
+   O selo colorido de cada instituição é desenhado aqui mesmo:
+   cor oficial da marca e sigla curta, nada baixado de fora.
+   ========================================================= */
+
+function blocoBancosCartoes(){
+  const pt = I18n.atual !== 'en';
+  const bancos = Banco.todos();
+  const cartoes = Banco.cartoes();
+
+  let h = '<div class="card cfg-sec" data-sec="budget">' +
+    '<div class="card-head"><h3>' + (pt ? 'Bancos e cartões' : 'Banks and cards') + '</h3></div>' +
+    '<p class="small muted">' + (pt
+      ? 'Cadastre uma vez e depois é só escolher na hora de lançar. Com o cartão cadastrado, o app soma sozinho quanto está aberto em cada fatura.'
+      : 'Register once and then just pick it when posting. With a card registered, the app adds up what is open on each invoice by itself.') + '</p>';
+
+  /* ---------- bancos ---------- */
+  h += '<h4 class="bl-sub">' + (pt ? 'Seus bancos' : 'Your banks') + '</h4>';
+  if(!bancos.length){
+    h += '<p class="small muted">' + (pt ? 'Nenhum ainda.' : 'None yet.') + '</p>';
+  }else{
+    h += '<div class="tbl-wrap"><table class="tbl"><tbody>' + bancos.map(b => {
+      const base = BANCO_POR_COD[b.cod] || BANCO_POR_COD['000'];
+      return '<tr>' +
+        '<td style="width:52px">' + Banco.selo(b.cod) + '</td>' +
+        '<td><b>' + esc(b.apelido || b.nome) + '</b>' +
+          (b.apelido ? '<span class="t-sub">' + esc(b.nome) + '</span>' : '') + '</td>' +
+        '<td class="tiny muted">' + (pt ? 'cód. ' : 'code ') + esc(b.cod) +
+          (b.cnpj ? '<span class="t-sub">' + esc(b.cnpj) + '</span>' : '') + '</td>' +
+        '<td style="text-align:right"><button class="linkinho" data-bkdel="' + b.id + '">' +
+          (pt ? 'remover' : 'remove') + '</button></td>' +
+      '</tr>';
+    }).join('') + '</tbody></table></div>';
+  }
+  h += '<button class="btn sm" data-acao="banco-novo" style="margin-top:8px">' +
+       (pt ? '+ Cadastrar banco' : '+ Add bank') + '</button>';
+
+  /* ---------- cartões ---------- */
+  h += '<h4 class="bl-sub">' + (pt ? 'Seus cartões' : 'Your cards') + '</h4>';
+  if(!cartoes.length){
+    h += '<p class="small muted">' + (pt ? 'Nenhum ainda.' : 'None yet.') + '</p>';
+  }else{
+    h += '<div class="tbl-wrap"><table class="tbl"><tbody>' + cartoes.map(c => {
+      const abertas = Banco.faturas(c.id).filter(f => f.vencimento >= hojeISO());
+      const prox = abertas[0];
+      return '<tr>' +
+        '<td style="width:60px">' + Banco.seloCartao(c.id) + '</td>' +
+        '<td><b>' + esc(Banco.rotuloCartao(c.id)) + '</b>' +
+          '<span class="t-sub">' + esc(c.tipo === 'debito' ? (pt ? 'débito' : 'debit') : (pt ? 'crédito' : 'credit')) +
+          (c.bancoId ? ' · ' + esc(Banco.curto(c.bancoId)) : '') + '</span></td>' +
+        '<td class="tiny muted">' +
+          (c.fecha ? (pt ? 'fecha dia ' : 'closes on ') + c.fecha : '') +
+          (c.vence ? '<span class="t-sub">' + (pt ? 'vence dia ' : 'due on ') + c.vence + '</span>' : '') + '</td>' +
+        '<td class="tiny" style="text-align:right">' +
+          (prox ? '<b>' + fmt(prox.total) + '</b><span class="t-sub">' + fmtData(prox.vencimento) + '</span>' : '—') + '</td>' +
+        '<td style="text-align:right"><button class="linkinho" data-ctedit="' + c.id + '">' +
+          (pt ? 'editar' : 'edit') + '</button></td>' +
+      '</tr>';
+    }).join('') + '</tbody></table></div>';
+  }
+  h += '<button class="btn sm" data-acao="cartao-novo" style="margin-top:8px">' +
+       (pt ? '+ Cadastrar cartão' : '+ Add card') + '</button>';
+
+  h += '<p class="tiny muted" style="margin-top:12px">' + (pt
+    ? 'O selo colorido é desenhado pelo próprio app, com a cor da instituição. Não uso a marca de nenhum banco.'
+    : 'The coloured badge is drawn by the app itself, in the institution colour. I do not use any bank trademark.') + '</p>';
+
+  return h + '</div>';
+}
+
+/* ---------- formulário do banco ---------- */
+function abrirBanco(){
+  const pt = I18n.atual !== 'en';
+  $('#assetModalTitle').textContent = pt ? 'Cadastrar banco' : 'Add bank';
+  $('#assetModalBody').innerHTML = Verter.html(
+    campo(pt ? 'Qual instituição' : 'Which institution',
+      '<select id="bkCod">' + BANCOS_BR.map(b =>
+        '<option value="' + b.cod + '">' + esc(b.nome) + (b.cod !== '000' ? ' — ' + b.cod : '') + '</option>'
+      ).join('') + '</select>',
+      null, pt ? 'A lista já traz o código do banco e o CNPJ.'
+               : 'The list already carries the bank code and the CNPJ.') +
+    campo(pt ? 'Apelido' : 'Nickname',
+      '<input id="bkApelido" placeholder="' + (pt ? 'opcional — conta corrente, PJ, poupança…' : 'optional — checking, business, savings…') + '">',
+      null, pt ? 'Use se você tem mais de uma conta no mesmo banco.'
+               : 'Use it if you have more than one account at the same bank.') +
+    '<div id="bkPrevia" class="bk-previa"></div>' +
+    '<div class="f-actions">' +
+      '<button class="btn" data-close="assetModal">' + (pt ? 'Cancelar' : 'Cancel') + '</button>' +
+      '<button class="btn primary" data-acao="banco-salvar">' + (pt ? 'Salvar' : 'Save') + '</button>' +
+    '</div>');
+  abrir('assetModal');
+  const previa = () => {
+    const b = BANCO_POR_COD[$('#bkCod').value] || BANCO_POR_COD['000'];
+    $('#bkPrevia').innerHTML = Banco.selo(b.cod, 'g') +
+      '<div><b>' + esc(b.nome) + '</b><span class="t-sub tiny muted">' +
+      (b.cnpj ? 'CNPJ ' + esc(b.cnpj) + ' · ' : '') + (pt ? 'código ' : 'code ') + esc(b.cod) + '</span></div>';
+  };
+  previa();
+  $('#bkCod').addEventListener('change', previa);
+}
+
+function salvarBanco(){
+  const b = Banco.adicionar($('#bkCod').value, $('#bkApelido').value.trim());
+  if(!b){ toast(I18n.atual === 'pt' ? 'Escolha uma instituição.' : 'Pick an institution.', 'warn'); return; }
+  Store.salvar(); fechar('assetModal'); render();
+  toast(I18n.atual === 'pt' ? 'Banco cadastrado.' : 'Bank added.');
+}
+
+/* ---------- formulário do cartão ---------- */
+function abrirCartao(id){
+  const pt = I18n.atual !== 'en';
+  const c = id ? Banco.acharCartao(id) : null;
+  const bancos = Banco.todos();
+  const dias = n => { let o = '<option value="0">—</option>';
+    for(let i = 1; i <= 31; i++) o += '<option value="' + i + '"' + (n === i ? ' selected' : '') + '>' + i + '</option>';
+    return o; };
+
+  $('#assetModalTitle').textContent = pt ? (c ? 'Editar cartão' : 'Cadastrar cartão')
+                                         : (c ? 'Edit card' : 'Add card');
+  $('#assetModalBody').innerHTML = Verter.html(
+    '<div class="grid g2">' +
+      campo(pt ? 'Apelido' : 'Nickname',
+        '<input id="ctApelido" placeholder="' + (pt ? 'Cartão do dia a dia' : 'Everyday card') + '" value="' +
+        (c ? esc(c.apelido) : '') + '">') +
+      campo(pt ? 'Últimos 4 dígitos' : 'Last 4 digits',
+        '<input id="ctFim" inputmode="numeric" maxlength="4" placeholder="1234" value="' +
+        (c ? esc(c.fim) : '') + '">') +
+    '</div>' +
+    '<div class="grid g2">' +
+      campo(pt ? 'Crédito ou débito' : 'Credit or debit',
+        '<select id="ctTipo">' +
+          '<option value="credito"' + (!c || c.tipo === 'credito' ? ' selected' : '') + '>' +
+            (pt ? 'Crédito' : 'Credit') + '</option>' +
+          '<option value="debito"' + (c && c.tipo === 'debito' ? ' selected' : '') + '>' +
+            (pt ? 'Débito' : 'Debit') + '</option></select>') +
+      campo(pt ? 'Bandeira' : 'Brand',
+        '<select id="ctBandeira">' + BANDEIRAS.map(b =>
+          '<option value="' + b.id + '"' + (c && c.bandeira === b.id ? ' selected' : '') + '>' +
+          esc(b.nome) + '</option>').join('') + '</select>') +
+    '</div>' +
+    campo(pt ? 'De qual banco' : 'Which bank',
+      '<select id="ctBanco"><option value="">—</option>' +
+      bancos.map(b => '<option value="' + b.id + '"' + (c && c.bancoId === b.id ? ' selected' : '') + '>' +
+        esc(Banco.rotulo(b.id)) + '</option>').join('') + '</select>',
+      null, bancos.length ? '' : (pt ? 'Cadastre um banco antes, se quiser ligar os dois.'
+                                     : 'Add a bank first if you want to link them.')) +
+    '<div class="grid g2">' +
+      campo(pt ? 'Dia em que a fatura fecha' : 'Day the invoice closes',
+        '<select id="ctFecha">' + dias(c ? c.fecha : 0) + '</select>') +
+      campo(pt ? 'Dia do pagamento' : 'Payment day',
+        '<select id="ctVence">' + dias(c ? c.vence : 0) + '</select>') +
+    '</div>' +
+    campo(pt ? 'Limite' : 'Limit',
+      '<input type="number" inputmode="decimal" data-dinheiro="1" id="ctLimite" step="0.01" min="0" placeholder="' +
+      (pt ? 'opcional' : 'optional') + '" value="' + (c && c.limite ? c.limite : '') + '">') +
+    '<div id="ctPrevia" class="bk-previa"></div>' +
+    '<p class="tiny muted">' + (pt
+      ? 'Guardo só os quatro últimos dígitos, que é o que aparece no comprovante. O número inteiro do cartão não entra aqui e nunca deve ser digitado em nenhum app.'
+      : 'I keep only the last four digits, which is what the receipt shows. The full card number does not belong here and should never be typed into any app.') + '</p>' +
+    '<div class="f-actions">' +
+      (c ? '<button class="btn danger" data-ctdel="' + c.id + '">' + (pt ? 'Excluir' : 'Delete') + '</button>' : '') +
+      '<button class="btn" data-close="assetModal">' + (pt ? 'Cancelar' : 'Cancel') + '</button>' +
+      '<button class="btn primary" data-acao="cartao-salvar" data-id="' + (c ? c.id : '') + '">' +
+        (pt ? 'Salvar' : 'Save') + '</button>' +
+    '</div>');
+  abrir('assetModal');
+
+  const previa = () => {
+    const b = BANDEIRA_POR_ID[$('#ctBandeira').value] || BANDEIRA_POR_ID.outra;
+    const fim = $('#ctFim').value.replace(/\D/g, '').slice(-4);
+    $('#ctPrevia').innerHTML =
+      '<span class="selo selo-g" style="background:' + b.cor + ';color:' + b.tinta + '">' +
+      esc(b.nome.slice(0,4).toUpperCase()) + '</span>' +
+      '<div><b>' + esc($('#ctApelido').value || b.nome) + (fim ? ' ••' + esc(fim) : '') + '</b>' +
+      '<span class="t-sub tiny muted">' + esc(b.nome) + '</span></div>';
+  };
+  previa();
+  ['ctBandeira','ctFim','ctApelido'].forEach(k => {
+    const el = $('#' + k); if(el){ el.addEventListener('input', previa); el.addEventListener('change', previa); }
+  });
+  if(typeof UX !== 'undefined') UX.reguasDeValor($('#assetModalBody'));
+}
+
+function salvarCartao(id){
+  const fim = $('#ctFim').value.replace(/\D/g, '');
+  if(fim.length && fim.length !== 4){
+    toast(I18n.atual === 'pt' ? 'O final do cartão tem 4 dígitos.' : 'The card ending has 4 digits.', 'warn');
+    return;
+  }
+  Banco.salvarCartao({
+    id: id || '', apelido: $('#ctApelido').value.trim(), tipo: $('#ctTipo').value,
+    bandeira: $('#ctBandeira').value, fim: fim, bancoId: $('#ctBanco').value,
+    fecha: $('#ctFecha').value, vence: $('#ctVence').value, limite: $('#ctLimite').value
+  });
+  Store.salvar(); fechar('assetModal'); render();
+  toast(I18n.atual === 'pt' ? 'Cartão salvo.' : 'Card saved.');
+}
+
+</script>
+<script>
+/* =========================================================
+   MoneyTRIO — a tela do salário e a comparação PJ × CLT
+   Duas abas dentro do mesmo modal.
+   ========================================================= */
+
+let salAba = 'liquido';
+let salOutros = [];          /* descontos que a pessoa acrescenta */
+
+function abrirSalario(aba){
+  salAba = aba || salAba;
+  if(!salOutros.length) salOutros = [{nome:'', valor:''}];
+  desenharSalario();
+  abrir('genModal');
+}
+
+function desenharSalario(){
+  const pt = I18n.atual !== 'en';
+  $('#genTitle').textContent = pt ? 'Salário' : 'Salary';
+  const abas = [
+    {id:'liquido', t: pt ? 'Bruto → líquido' : 'Gross → net'},
+    {id:'pjclt',   t: pt ? 'PJ × CLT'        : 'Contractor × employee'}
+  ];
+  let h = '<div class="abas-c">' + abas.map(a =>
+    '<button class="aba-c' + (salAba === a.id ? ' on' : '') + '" data-salaba="' + a.id + '">' +
+    esc(a.t) + '</button>').join('') + '</div>';
+
+  h += salAba === 'liquido' ? htmlLiquido() : htmlPjClt();
+
+  h += '<p class="tiny muted" style="margin-top:14px">' + (pt
+    ? 'Contas com as ' + TABELAS_SALARIO.rotulo.pt + ', em vigor desde ' + fmtData(TABELAS_SALARIO.vigencia) +
+      '. É uma estimativa para você se planejar: a folha da sua empresa pode ter descontos que só ela conhece. ' +
+      'Quando a lei mudar, o número aqui muda junto na próxima versão.'
+    : 'Figures use the ' + TABELAS_SALARIO.rotulo.en + ', in force since ' + fmtData(TABELAS_SALARIO.vigencia) +
+      '. This is an estimate for planning: your company payroll may have deductions only it knows about.') +
+    '</p>';
+
+  $('#genBody').innerHTML = Verter.html(h);
+  ligarSalario();
+}
+
+/* ---------------------------------------------------------
+   bruto → líquido
+   --------------------------------------------------------- */
+function htmlLiquido(){
+  const pt = I18n.atual !== 'en';
+  const bruto = Number(($('#slBruto') || {}).value) || Number(ST.config.salarioBruto) || 0;
+  const dep = Number(($('#slDep') || {}).value) || Number(ST.config.salarioDependentes) || 0;
+  const r = Salario.liquido(bruto, {dependentes: dep, outros: salOutros});
+
+  let h = '<div class="grid g2">' +
+    campo(pt ? 'Salário bruto por mês' : 'Gross monthly salary',
+      '<input type="number" inputmode="decimal" data-dinheiro="1" id="slBruto" step="0.01" min="0" placeholder="0,00" value="' +
+      (bruto || '') + '">') +
+    campo(pt ? 'Dependentes no IR' : 'Dependants for tax',
+      '<input type="number" inputmode="numeric" id="slDep" min="0" max="20" step="1" value="' + dep + '">',
+      null, pt ? 'Cada um abate ' + fmt(TABELAS_SALARIO.irrf.porDependente) + ' da base.'
+               : 'Each one cuts ' + fmt(TABELAS_SALARIO.irrf.porDependente) + ' off the base.') +
+  '</div>';
+
+  /* outros descontos, escritos pela pessoa */
+  h += '<div class="sal-outros"><b class="small">' +
+       (pt ? 'Outros descontos da sua folha' : 'Other deductions on your payslip') + '</b>' +
+       '<p class="tiny muted">' + (pt
+         ? 'Vale-transporte, plano de saúde, pensão, sindicato — o que aparecer no seu holerite. Varia de empresa para empresa, por isso não dá para adivinhar.'
+         : 'Transport, health plan, alimony, union — whatever is on your payslip. It varies by company, so it cannot be guessed.') + '</p>';
+  salOutros.forEach((o, i) => {
+    h += '<div class="grid g2 sal-linha">' +
+      '<input class="sal-nome" data-salnome="' + i + '" placeholder="' + (pt ? 'nome do desconto' : 'deduction name') +
+        '" value="' + esc(o.nome || '') + '">' +
+      '<input class="sal-valor" type="number" inputmode="decimal" data-salvalor="' + i + '" step="0.01" min="0" placeholder="0,00" value="' +
+        (o.valor || '') + '">' +
+    '</div>';
+  });
+  h += '<button class="btn sm" data-acao="sal-mais">+ ' + (pt ? 'outra linha' : 'another line') + '</button></div>';
+
+  /* o resultado */
+  if(bruto > 0){
+    const ir = r.irDetalhe;
+    h += '<div class="card" data-ouvir="1" style="margin-top:14px">' +
+      '<div class="kpis kpis-3">' +
+        kpiB(pt ? 'Bruto' : 'Gross', fmt(r.bruto)) +
+        kpiB(pt ? 'Sai em desconto' : 'Deducted', fmt(r.bruto - r.liquido), null, r.mordida + '%', 'down') +
+        kpiB(pt ? 'Líquido' : 'Net', fmt(r.liquido), null, null, 'up') +
+      '</div>' +
+      '<div class="tbl-wrap"><table class="tbl"><tbody>' +
+        linhaSal(pt ? 'INSS' : 'Social security', r.inss,
+          pt ? 'por faixa, até o teto de ' + fmt(TABELAS_SALARIO.inss.teto)
+             : 'by band, up to the ' + fmt(TABELAS_SALARIO.inss.teto) + ' ceiling') +
+        linhaSal(pt ? 'Imposto de renda' : 'Income tax', r.irrf,
+          ir.redutor > 0
+            ? (pt ? 'seriam ' + fmt(ir.antesDoRedutor) + '; a regra de 2026 abateu ' + fmt(ir.redutor)
+                  : 'would be ' + fmt(ir.antesDoRedutor) + '; the 2026 rule cut ' + fmt(ir.redutor))
+            : (ir.usouSimplificado
+               ? (pt ? 'usando o desconto simplificado, que sai melhor para você'
+                     : 'using the simplified deduction, which works out better')
+               : (pt ? 'sobre a base de ' + fmt(ir.base) : 'on a base of ' + fmt(ir.base)))) +
+        (r.somaOutros ? linhaSal(pt ? 'Seus outros descontos' : 'Your other deductions', r.somaOutros,
+          salOutros.filter(o => Number(o.valor)).map(o => o.nome || '—').join(' · ')) : '') +
+      '</tbody></table></div>';
+
+    if(r.irrf === 0 && r.bruto <= TABELAS_SALARIO.irrf.redutor.isencaoAte)
+      h += '<p class="small" style="color:var(--up);margin:10px 0 0">' + (pt
+        ? 'Nessa faixa você não paga imposto de renda na fonte: a regra que vale desde 2026 isenta quem ganha até ' +
+          fmt(TABELAS_SALARIO.irrf.redutor.isencaoAte) + ' por mês.'
+        : 'At this level you pay no withholding tax: the rule in force since 2026 exempts monthly income up to ' +
+          fmt(TABELAS_SALARIO.irrf.redutor.isencaoAte) + '.') + '</p>';
+
+    h += '<div class="f-actions" style="justify-content:flex-start">' +
+      '<button class="btn primary sm" data-acao="sal-usar">' +
+        (pt ? 'Usar ' + fmt(r.liquido) + ' como meu salário' : 'Use ' + fmt(r.liquido) + ' as my salary') + '</button>' +
+      '</div></div>';
+
+    /* caminho inverso */
+    h += '<details class="ia-ctx" style="margin-top:10px"><summary class="tiny muted">' +
+      (pt ? 'Quero o contrário: sei o líquido, quanto é o bruto?' : 'The other way round: I know the net, what is the gross?') +
+      '</summary><div class="grid g2" style="margin-top:8px">' +
+      campo(pt ? 'Líquido desejado' : 'Net wanted',
+        '<input type="number" inputmode="decimal" data-dinheiro="1" id="slAlvo" step="0.01" min="0" placeholder="0,00">') +
+      '<div class="sal-inverso" id="slInverso"></div></div></details>';
+  }
+  return h;
+}
+
+function linhaSal(nome, valor, nota){
+  return '<tr><td><b>' + esc(nome) + '</b>' + (nota ? '<span class="t-sub">' + esc(nota) + '</span>' : '') + '</td>' +
+         '<td style="text-align:right" class="down">− ' + fmt(valor) + '</td></tr>';
+}
+
+/* ---------------------------------------------------------
+   PJ × CLT
+   --------------------------------------------------------- */
+function htmlPjClt(){
+  const pt = I18n.atual !== 'en';
+  const clt = Number(($('#pjClt') || {}).value) || Number(ST.config.pjSalarioClt) || 0;
+  const fat = Number(($('#pjFat') || {}).value) || Number(ST.config.pjFaturamento) || 0;
+  const cont = Number(($('#pjCont') || {}).value);
+  const inssPro = Number(($('#pjInss') || {}).value);
+  const aliq = Number(($('#pjAliq') || {}).value);
+  const opcoes = {
+    contador: isNaN(cont) ? 400 : cont,
+    inss: isNaN(inssPro) ? 0 : inssPro,
+    aliquota: isNaN(aliq) ? 6 : aliq
+  };
+
+  let h = '<p class="small muted">' + (pt
+    ? 'O erro clássico é comparar o salário CLT com o valor cheio da nota PJ. Não são a mesma coisa: no CLT entram 13º, férias com um terço e FGTS; no PJ sai imposto, contador, e o que o CLT ganha de brinde você guarda sozinho.'
+    : 'The classic mistake is comparing an employee salary with the full contractor invoice. They are not the same: employment includes a 13th salary, holiday pay and a severance fund; as a contractor you pay tax, an accountant, and set aside on your own what the employee gets for free.') + '</p>';
+
+  h += '<div class="grid g2">' +
+    campo(pt ? 'Salário CLT (bruto/mês)' : 'Employee salary (gross/month)',
+      '<input type="number" inputmode="decimal" data-dinheiro="1" id="pjClt" step="0.01" min="0" placeholder="0,00" value="' + (clt || '') + '">') +
+    campo(pt ? 'Proposta PJ (nota/mês)' : 'Contractor offer (invoice/month)',
+      '<input type="number" inputmode="decimal" data-dinheiro="1" id="pjFat" step="0.01" min="0" placeholder="0,00" value="' + (fat || '') + '">') +
+  '</div>' +
+  '<div class="grid g3">' +
+    campo(pt ? 'Imposto (%)' : 'Tax (%)',
+      '<input type="number" id="pjAliq" step="0.1" min="0" max="33" value="' + opcoes.aliquota + '">',
+      null, pt ? 'Simples, anexo III: começa em 6%.' : 'Simplified regime: starts at 6%.') +
+    campo(pt ? 'Contador/mês' : 'Accountant/month',
+      '<input type="number" inputmode="decimal" id="pjCont" step="0.01" min="0" value="' + opcoes.contador + '">') +
+    campo(pt ? 'INSS do pró-labore' : 'Own pension',
+      '<input type="number" inputmode="decimal" id="pjInss" step="0.01" min="0" value="' + opcoes.inss + '">') +
+  '</div>';
+
+  if(clt > 0){
+    const c = Salario.cltAnual(clt, {});
+    const eq = Salario.pjEquivalente(clt, opcoes);
+    h += '<div class="card" data-ouvir="1" style="margin-top:14px">' +
+      '<h4 class="bl-sub" style="margin-top:0">' + (pt ? 'O que o CLT põe no bolso' : 'What the job actually pays') + '</h4>' +
+      '<div class="tbl-wrap"><table class="tbl"><tbody>' +
+        '<tr><td>' + (pt ? 'Líquido de um mês normal' : 'Net of a normal month') + '</td>' +
+          '<td style="text-align:right">' + fmt(c.liquidoMes) + '</td></tr>' +
+        '<tr><td>' + (pt ? 'No ano, com 13º e férias' : 'Per year, with bonus and holiday') + '</td>' +
+          '<td style="text-align:right">' + fmt(c.liquidoAno) + '</td></tr>' +
+        '<tr><td>' + (pt ? 'FGTS depositado no ano' : 'Severance fund deposited') + '</td>' +
+          '<td style="text-align:right">' + fmt(c.fgtsAno) + '</td></tr>' +
+        '<tr class="tr-total"><td><b>' + (pt ? 'Equivale a, por mês' : 'Equivalent per month') + '</b></td>' +
+          '<td style="text-align:right"><b>' + fmt(c.equivalenteMes) + '</b></td></tr>' +
+      '</tbody></table></div>' +
+      '<p class="small" style="margin:12px 0 0">' + (pt
+        ? 'Para empatar com isso, uma proposta PJ precisa ser de cerca de <b>' + fmt(eq.faturamentoMes) + '</b> por mês.'
+        : 'To match that, a contractor offer needs to be around <b>' + fmt(eq.faturamentoMes) + '</b> a month.') + '</p>' +
+    '</div>';
+
+    if(fat > 0){
+      const p = Salario.pj(fat, opcoes);
+      const dif = p.noBolsoMes - c.equivalenteMes;
+      h += '<div class="card" data-ouvir="1">' +
+        '<h4 class="bl-sub" style="margin-top:0">' + (pt ? 'A proposta PJ, na mesma régua' : 'The contractor offer, same ruler') + '</h4>' +
+        '<div class="tbl-wrap"><table class="tbl"><tbody>' +
+          linhaSal(pt ? 'Imposto (' + p.aliquota + '%)' : 'Tax (' + p.aliquota + '%)', p.imposto, '') +
+          (p.contador ? linhaSal(pt ? 'Contador' : 'Accountant', p.contador, '') : '') +
+          (p.inss ? linhaSal(pt ? 'INSS' : 'Pension', p.inss, '') : '') +
+          linhaSal(pt ? 'Guardar para 13º, férias e reserva' : 'Set aside for bonus, holiday and reserve',
+            p.provisaoSugerida, pt ? 'o que o CLT recebe sem precisar guardar' : 'what the employee gets without saving') +
+          '<tr class="tr-total"><td><b>' + (pt ? 'Sobra no bolso, por mês' : 'Left in pocket, per month') + '</b></td>' +
+            '<td style="text-align:right"><b>' + fmt(p.noBolsoMes) + '</b></td></tr>' +
+        '</tbody></table></div>' +
+        '<p class="small ' + (dif >= 0 ? 'up' : 'down') + '" style="margin:12px 0 0">' +
+          (dif >= 0
+            ? (pt ? 'A proposta PJ sai <b>' + fmt(dif) + '</b> por mês à frente do CLT.'
+                  : 'The contractor offer comes out <b>' + fmt(dif) + '</b> a month ahead.')
+            : (pt ? 'A proposta PJ fica <b>' + fmt(-dif) + '</b> por mês atrás do CLT.'
+                  : 'The contractor offer falls <b>' + fmt(-dif) + '</b> a month behind.')) + '</p>' +
+        '<p class="tiny muted" style="margin:8px 0 0">' + (pt
+          ? 'A conta é só de dinheiro. Fora dela ficam coisas que pesam: estabilidade, seguro-desemprego, licença, férias de verdade e quem paga a conta quando você fica doente.'
+          : 'This is money only. Outside it sit things that weigh: stability, unemployment insurance, paid leave, real holidays and who pays when you fall ill.') + '</p>' +
+      '</div>';
+    }
+  }
+  return h;
+}
+
+/* ---------------------------------------------------------
+   eventos
+   --------------------------------------------------------- */
+function ligarSalario(){
+  const redesenhar = () => {
+    /* guarda o que foi digitado antes de redesenhar */
+    ['slBruto','slDep','pjClt','pjFat','pjAliq','pjCont','pjInss'].forEach(k => {
+      const el = $('#' + k); if(!el) return;
+      const mapa = {slBruto:'salarioBruto', slDep:'salarioDependentes', pjClt:'pjSalarioClt', pjFat:'pjFaturamento'};
+      if(mapa[k]) ST.config[mapa[k]] = Number(el.value) || 0;
+    });
+    desenharSalario();
+  };
+
+  ['slBruto','slDep','pjClt','pjFat','pjAliq','pjCont','pjInss'].forEach(k => {
+    const el = $('#' + k);
+    if(el) el.addEventListener('change', redesenhar);
+  });
+
+  $$('[data-salnome]').forEach(el => el.addEventListener('change', e => {
+    salOutros[Number(e.target.dataset.salnome)].nome = e.target.value; }));
+  $$('[data-salvalor]').forEach(el => el.addEventListener('change', e => {
+    salOutros[Number(e.target.dataset.salvalor)].valor = e.target.value; redesenhar(); }));
+
+  const alvo = $('#slAlvo');
+  if(alvo) alvo.addEventListener('change', () => {
+    const v = Number(alvo.value) || 0;
+    const pt = I18n.atual !== 'en';
+    $('#slInverso').innerHTML = v > 0
+      ? '<b>' + fmt(Salario.bruto(v, {dependentes: Number(($('#slDep')||{}).value) || 0})) + '</b>' +
+        '<span class="t-sub tiny muted">' + (pt ? 'de salário bruto' : 'of gross salary') + '</span>'
+      : '';
+  });
+
+  if(typeof UX !== 'undefined') UX.reguasDeValor($('#genBody'));
+  if(typeof UX !== 'undefined') UX.botoesDeVoz($('#genBody'));
+}
+
+</script>
+<script>
+/* =========================================================
    MoneyTRIO — ✨ IA
 
    Um botão na faixa do topo: "pergunte sobre o que está na
@@ -17496,7 +19121,13 @@ const IA = {
           const dec = Recorrente.porMes();
           linhas.push((L === 'pt' ? 'Compromissos fixos: entra ' : 'Fixed commitments: in ') + fmt(dec.entra) +
                       (L === 'pt' ? ', sai ' : ', out ') + fmt(dec.sai));
-          const prox = Recorrente.proximos(15).slice(0, 6).map(o => o.r.nome + ' ' + fmt(o.valor) + ' (' + I18n.data(o.data) + ')').join('; ');
+          /* O nome do compromisso foi escrito pela pessoa — "Escola da
+             Ana", "Dr. Paulo". Isso é dela, não meu: só sai daqui se ela
+             ligar a chavinha. Desligado, vai a categoria no lugar. */
+          const mandaNomes = !!(ST.config && ST.config.iaMandaNomes);
+          const prox = Recorrente.proximos(15).slice(0, 6).map(o =>
+            (mandaNomes ? o.r.nome : (o.r.sub || o.r.grupo || (L === 'pt' ? 'compromisso' : 'commitment'))) +
+            ' ' + fmt(o.valor) + ' (' + I18n.data(o.data) + ')').join('; ');
           if(prox) linhas.push((L === 'pt' ? 'Próximos 15 dias: ' : 'Next 15 days: ') + prox);
         }
       }
@@ -17577,7 +19208,15 @@ const IA = {
         : 'E.g.: what does this return in my pocket mean? Why did the month end negative?') + '"></textarea>' +
       '<button class="btn primary" data-acao="ia-perguntar"' + (this.ocupado ? ' disabled' : '') + '>' +
         (this.ocupado ? (pt ? 'Pensando…' : 'Thinking…') : (pt ? 'Perguntar' : 'Ask')) + '</button></div>' +
-      '<details class="ia-ctx"><summary class="tiny muted">' + (pt ? 'O que a IA recebe junto com a pergunta' : 'What the AI receives with the question') + '</summary>' +
+      '<label class="linha-check ia-nomes"><input type="checkbox" id="iaNomes"' +
+        ((ST.config && ST.config.iaMandaNomes) ? ' checked' : '') + '> ' +
+        (pt ? 'Deixar a IA ver os nomes que eu escrevi nos lançamentos'
+            : 'Let the AI see the names I typed on my entries') + '</label>' +
+      '<p class="tiny muted" style="margin:2px 0 10px">' + (pt
+        ? 'Vem desligado. Desligado, a IA recebe só os números e a categoria — "Escola" em vez de "Escola da Ana". O que você escreve é seu.'
+        : 'Off by default. With it off, the AI gets only the figures and the category — "School" instead of "Ana\'s school". What you write is yours.') + '</p>' +
+      '<details class="ia-ctx"' + (this.historico.length ? '' : ' open') + '><summary class="tiny muted">' +
+        (pt ? 'Veja exatamente o que sai daqui junto com a pergunta' : 'See exactly what leaves with the question') + '</summary>' +
         '<pre class="tiny">' + esc(this.contexto()) + '</pre></details>' +
       '<p class="tiny muted" style="margin:10px 0 0">' + (pt
         ? 'A resposta é de um modelo de linguagem: pode errar e não é recomendação de investimento. A pergunta e o resumo acima vão para o provedor escolhido; nada mais sai daqui.'
@@ -17588,12 +19227,26 @@ const IA = {
 
     const sel = $('#iaProv');
     if(sel) sel.addEventListener('change', () => { const c = this.cofre(); c.provedor = sel.value; this.guardar(c); this.render(); });
+
+    /* a chavinha dos nomes: muda o que sai daqui, então redesenha
+       para a pessoa ver na hora o que passou a ir junto */
+    const nomes = $('#iaNomes');
+    if(nomes) nomes.addEventListener('change', () => {
+      ST.config.iaMandaNomes = nomes.checked;
+      Store.salvar();
+      this.render();
+      toast(I18n.atual === 'pt'
+        ? (nomes.checked ? 'A IA passa a ver os nomes que você escreveu.'
+                         : 'A IA volta a ver só a categoria, sem os seus nomes.')
+        : (nomes.checked ? 'The AI can now see the names you typed.'
+                         : 'The AI sees only the category again, without your names.'));
+    });
   }
 };
 
 </script>
 <script>window.CARTEIRA_ZIP = [
-"H4sIANP/rmoC/+y9S3PjSpYm+FdgMdljcaskhj/geMSiyxQKRaTujYda0o2szrS0MbxIggQBEi8+MstsbHa971WvproWaVk2taoeG7Nalv5J/5JxB0kRoAjBKbpThFln3bo3xKDc8X1+/Lz8+MGf3uRv3sOzN07sW250NXrz/g0CSDsH5jkk9xC/J+A9xh0dAB2iN2dvrDSzAn+x47sIvleN9wB0",
+"H4sIAKSStWoC/+y9S3PjSpYm+FdgMdljcaskhj/geMSiyxQKRaTujYda0o2szrS0MbxIggQBEi8+MstsbHa971WvproWaVk2taoeG7Nalv5J/5JxB0kRoAjBKbpThFln3bo3xKDc8X1+/Lz8+MGf3uRv3sOzN07sW250NXrz/g0CSDsH5jkk9xC/J+A9xh0dAB2iN2dvrDSzAn+x47sIvleN9wB0",
 "kAZ/T785ijzX+mAlHv3ah9sv9JPQz72A/uSHvuNbYerRz1JvZNGPXCse0p+6WehGb96nceadvRlHie9EXvLm/R/+9MZ32S+OxgCyX/KdoRfTDz5d3/1gA0cjNssnP/Hi/Ey5Dp1O8a0xHeuN5VjReZbQDyYpHYTQgemTQ6J1dGP1lPRbv959pN/wwySlP1zkXpixp3Ot1FqiVM+Bfg61YrLUos/0",
 "hv5xHHtO9NUKKSV0YNQBuPLZx8ffrufTm6WxlT4lnrxXzffA6Oi6yshMvNHV8ptv3netIPH+4azECSpz8v328suGk++x5QSechnF43pOjBUnGl08k58TfA7hOcTPcAJV3DFV4aQYADaTgsuk3H/68n1Din/Xt2IvUe5jz0qyeK58CiIr9cOecmulnvIhCl3l6v7Thi8v7ZbogkDrAADgkjUCOkTf",
 "izRwDs3nBIkOaIjnDOrNnKllzm6+3N9uOLuxArpl/Vi595x+GAVRz6cM0q2mnCuXgZUkykWtfKlr+dI6Kj9ThG05DJ8TLx12VPg64kUqe+53pS33Icg85fs0UC6tsZ9aASdJcE1SB+n7kETFCTwnTpCKkwSKUDNFWpmi29vbmw+/L7EUW7mlXIVe3PMtxTzTyX9Q/uf/+V8VCtHpKIC8A+gdAhhu",
@@ -21472,6 +23125,25 @@ function viewConfig(){
   }
 
   /* ---- só do BudgetONE ---- */
+  /* bancos, cartões e a calculadora de salário */
+  if(typeof blocoBancosCartoes === 'function') h += blocoBancosCartoes();
+
+  h += '<div class="card cfg-sec" data-sec="budget"><div class="card-head"><h3>' +
+    (I18n.atual === 'pt' ? 'Salário' : 'Salary') + '</h3></div>' +
+    '<p class="small muted">' + (I18n.atual === 'pt'
+      ? 'Informe o bruto e o app calcula o líquido com as tabelas em vigor, ou compare uma proposta PJ com o seu salário CLT na mesma régua.'
+      : 'Enter the gross and the app works out the net with the tables in force, or compare a contractor offer with your employee salary on the same ruler.') + '</p>' +
+    (ST.config.salarioLiquido
+      ? '<p class="small">' + (I18n.atual === 'pt' ? 'Guardado: ' : 'Saved: ') +
+        '<b>' + fmt(ST.config.salarioLiquido) + '</b> ' +
+        (I18n.atual === 'pt' ? 'de salário líquido.' : 'net salary.') + '</p>' : '') +
+    '<div class="f-actions" style="justify-content:flex-start">' +
+      '<button class="btn sm" data-acao="salario">' +
+        (I18n.atual === 'pt' ? 'Bruto → líquido' : 'Gross → net') + '</button>' +
+      '<button class="btn sm" data-acao="pj-clt">' +
+        (I18n.atual === 'pt' ? 'Comparar PJ × CLT' : 'Compare contractor × employee') + '</button>' +
+    '</div></div>';
+
   h += '<div class="card cfg-sec" data-sec="budget"><div class="card-head"><h3>A fita do BudgetONE</h3></div>' +
     '<p class="small muted" style="margin:0 0 14px">No BudgetONE a fita do topo não mostra cotação: mostra o que ' +
     'vence, o que mudou de patamar e como vai o mês. Escolha o que quer ver passando por lá.</p>' +
@@ -22121,6 +23793,32 @@ function abrirDia(iso){
   abrir('genModal');
 }
 
+/* Sair do wizard com coisa preenchida não pode jogar fora o
+   trabalho em silêncio. Pergunta uma vez, salva se a pessoa
+   quiser, e devolve ela para a tela onde estava.
+   Devolve true quando pode fechar. */
+function sairDoWizard(idDoModal){
+  if(idDoModal !== 'assetModal') return true;
+  if(typeof wz === 'undefined' || !wz) return true;
+  if(!$('#assetModalBody') || !$('#assetModalBody').querySelector('.wz-trilha')) return true;
+
+  const pt = I18n.atual !== 'en';
+  const preenchidos = $$('.wz-v').filter(c => Number(c.value) > 0).length;
+  if(preenchidos){
+    const salvar = confirm(pt
+      ? 'Você preencheu ' + preenchidos + (preenchidos > 1 ? ' valores' : ' valor') +
+        ' neste passo.\n\nOK = salvar e sair.\nCancelar = sair sem salvar.'
+      : 'You filled in ' + preenchidos + (preenchidos > 1 ? ' values' : ' value') +
+        ' on this step.\n\nOK = save and leave.\nCancel = leave without saving.');
+    if(salvar){
+      const n = salvarPassoWizard();
+      if(n) toast(pt ? n + ' compromissos salvos.' : n + ' commitments saved.');
+    }
+  }
+  wz = null;                       /* da próxima vez o wizard começa do zero */
+  return true;
+}
+
 function abrir(id){ $('#' + id).classList.remove('hidden'); }
 function fechar(id){ $('#' + id).classList.add('hidden'); }
 const MAX_TOASTS = 3;
@@ -22741,11 +24439,17 @@ function ligarEventos(){
   /* modais: fechar */
   document.addEventListener('click', e => {
     const c = e.target.closest('[data-close]');
-    if(c){ fechar(c.dataset.close); return; }
-    if(e.target.classList.contains('modal-wrap')) e.target.classList.add('hidden');
+    if(c){ if(!sairDoWizard(c.dataset.close)) return; fechar(c.dataset.close); return; }
+    if(e.target.classList.contains('modal-wrap')){
+      if(!sairDoWizard(e.target.id)) return;
+      e.target.classList.add('hidden');
+    }
   });
   document.addEventListener('keydown', e => {
-    if(e.key === 'Escape'){ $$('.modal-wrap').forEach(m => m.classList.add('hidden')); return; }
+    if(e.key === 'Escape'){
+      $$('.modal-wrap:not(.hidden)').forEach(m => { if(sairDoWizard(m.id)) m.classList.add('hidden'); });
+      return;
+    }
     if(e.key !== 'Enter') return;
     const alvo = e.target;
     if(!alvo || alvo.tagName !== 'INPUT') return;
@@ -22786,7 +24490,7 @@ function ligarEventos(){
 
   /* cliques gerais (delegação) */
   document.addEventListener('click', async (e) => {
-    const el = e.target.closest('[data-olho],[data-assunto],[data-mk-serie],[data-mk-per],[data-mk-ativo],[data-comp-per],[data-mov],[data-fmov],[data-resp],[data-graf-per],[data-grafico],[data-acoes-ativo],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del],[data-app],[data-bgrupo],[data-bsub],[data-bquem],[data-bforma],[data-bper],[data-bid],[data-bpag],[data-banos],[data-bpreco],[data-item],[data-recedit],[data-recoff],[data-recsug],[data-cfgsec],[data-avisof],[data-bamove],[data-basai],[data-baentra],[data-app2],[data-custaba],[data-caldia],[data-calandar],[data-calhoje],[data-cdtabre],[data-ocor],[data-ocestado],[data-pgest],[data-recfav],[data-gfav],[data-grev],[data-rcregra],[data-para],[data-idioma],[data-bmarca],[data-contaba],[data-porta],[data-avtipo],[data-campon],[data-campdel],[data-servmes],[data-servaj],[data-ajtipo],[data-rjpct],[data-servir],[data-reaj],[data-visitas],[data-asaba],[data-vercomo],[data-nivelconta]');
+    const el = e.target.closest('[data-olho],[data-assunto],[data-mk-serie],[data-mk-per],[data-mk-ativo],[data-comp-per],[data-mov],[data-fmov],[data-resp],[data-graf-per],[data-grafico],[data-acoes-ativo],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del],[data-app],[data-bgrupo],[data-bsub],[data-bquem],[data-bforma],[data-bper],[data-bid],[data-bpag],[data-banos],[data-bpreco],[data-item],[data-recedit],[data-recoff],[data-recsug],[data-cfgsec],[data-avisof],[data-bamove],[data-basai],[data-baentra],[data-app2],[data-custaba],[data-caldia],[data-calandar],[data-calhoje],[data-cdtabre],[data-ocor],[data-ocestado],[data-pgest],[data-recfav],[data-gfav],[data-grev],[data-rcregra],[data-para],[data-idioma],[data-bmarca],[data-contaba],[data-porta],[data-avtipo],[data-campon],[data-campdel],[data-servmes],[data-servaj],[data-ajtipo],[data-rjpct],[data-servir],[data-reaj],[data-visitas],[data-asaba],[data-vercomo],[data-nivelconta],[data-bkdel],[data-ctedit],[data-ctdel],[data-salaba]');
     if(!el) return;
     const d = el.dataset;
 
@@ -22962,6 +24666,25 @@ function ligarEventos(){
     if(d.editar){ fechar('genModal'); abrirModalAtivo(d.editar); return; }
     if(d.aporte){ fechar('genModal'); abrirAporte(d.aporte); return; }
     if(d.valor){ fechar('genModal'); abrirValorManual(d.valor); return; }
+    if(d.bkdel){
+      const b2 = Banco.achar(d.bkdel);
+      if(b2 && confirm(I18n.atual === 'pt'
+          ? 'Remover ' + Banco.rotulo(d.bkdel) + '? Os lançamentos continuam; só perdem a ligação com o banco.'
+          : 'Remove ' + Banco.rotulo(d.bkdel) + '? Entries stay; they just lose the link to the bank.')){
+        Banco.remover(d.bkdel); Store.salvar(); render();
+      }
+      return;
+    }
+    if(d.ctedit){ abrirCartao(d.ctedit); return; }
+    if(d.ctdel){
+      if(confirm(I18n.atual === 'pt'
+          ? 'Excluir ' + Banco.rotuloCartao(d.ctdel) + '? Os lançamentos continuam.'
+          : 'Delete ' + Banco.rotuloCartao(d.ctdel) + '? Entries stay.')){
+        Banco.removerCartao(d.ctdel); Store.salvar(); fechar('assetModal'); render();
+      }
+      return;
+    }
+    if(d.salaba){ salAba = d.salaba; desenharSalario(); return; }
     if(d.excluir){
       const p = ST.posicoes.find(x => x.id === d.excluir);
       if(p && confirm('Excluir ' + p.ticker + ' da carteira?')){
@@ -23355,6 +25078,21 @@ function ligarEventos(){
         bFiltro = {busca:'', grupos:[], subs:[], quem:[], formas:[], de:'', ate:'', fluxo:'', periodo:'tudo'};
         bPagina = 0; bProj = null; render(); break;
       case 'gl-salvar': salvarLancamento(); break;
+      case 'banco-novo':    abrirBanco(); break;
+      case 'banco-salvar':  salvarBanco(); break;
+      case 'cartao-novo':   abrirCartao(); break;
+      case 'cartao-salvar': salvarCartao(bt.dataset.id || ''); break;
+      case 'salario':       abrirSalario('liquido'); break;
+      case 'pj-clt':        abrirSalario('pjclt'); break;
+      case 'sal-mais':      salOutros.push({nome:'', valor:''}); desenharSalario(); break;
+      case 'sal-usar': {
+        const liq = Salario.liquido(Number(ST.config.salarioBruto) || 0,
+          {dependentes: Number(ST.config.salarioDependentes) || 0, outros: salOutros}).liquido;
+        ST.config.salarioLiquido = liq; Store.salvar(); fechar('genModal'); render();
+        toast(I18n.atual === 'pt' ? 'Salário líquido guardado: ' + fmt(liq) + '.'
+                                  : 'Net salary saved: ' + fmt(liq) + '.');
+        break;
+      }
       case 'gl-excluir': excluirLancamento(); break;
       case 'pr-salvar': salvarPreco(); break;
       case 'pl-aplicar': aplicarPlanilha(); break;
