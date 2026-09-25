@@ -2,7 +2,7 @@
    Faz o site abrir sem internet e permite instalar como app.
    AO PUBLICAR UMA VERSÃO NOVA, troque o número abaixo (v1 -> v2).
    É o que avisa os celulares de que existe conteúdo novo. */
-var VERSAO = 'v4';
+var VERSAO = 'v8';
 var CACHE = 'moneytrio-' + VERSAO;
 
 self.addEventListener('install', function (e) {
@@ -14,7 +14,13 @@ self.addEventListener('install', function (e) {
 
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (nomes) {
-    return Promise.all(nomes.map(function (n) { return n === CACHE ? null : caches.delete(n); }));
+    /* Só apaga caches ANTIGOS DO MONEYTRIO. Todos os apps de
+       marceloneco.github.io moram no mesmo endereço e dividem a lista
+       de caches: apagar "tudo que não é meu" tirava o modo sem internet
+       dos outros apps (RiseONE, Cifras, Histórias…). */
+    return Promise.all(nomes.map(function (n) {
+      return (n.indexOf('moneytrio-') === 0 && n !== CACHE) ? caches.delete(n) : null;
+    }));
   }).then(function () { return self.clients.claim(); }));
 });
 
