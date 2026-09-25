@@ -2,7 +2,7 @@
    Faz o site abrir sem internet e permite instalar como app.
    AO PUBLICAR UMA VERSÃO NOVA, troque o número abaixo (v1 -> v2).
    É o que avisa os celulares de que existe conteúdo novo. */
-var VERSAO = 'v9';
+var VERSAO = 'v10';
 var CACHE = 'moneytrio-' + VERSAO;
 
 self.addEventListener('install', function (e) {
