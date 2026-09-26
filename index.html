@@ -7581,6 +7581,11 @@ const Store = {
     st.beneficios = Array.isArray(o.beneficios) ? o.beneficios : [];
     st.lugares = Array.isArray(o.lugares) ? o.lugares : [];
     st.trajetos = Array.isArray(o.trajetos) ? o.trajetos : [];
+    /* a 3.19 gravou registros sem id (o id vazio do formulário apagava o novo): dá id a eles */
+    const novoId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    st.beneficios.forEach(b => { if(!b.id) b.id = novoId('b'); });
+    st.lugares.forEach(l => { if(!l.id) l.id = novoId('l'); });
+    st.trajetos.forEach(t => { if(!t.id) t.id = novoId('t'); });
     /* TaxONE: declarações e acompanhamentos (restituição, processos) */
     st.tax = (o.tax && typeof o.tax === 'object') ? o.tax : {};
     st.tax.declaracoes = Array.isArray(st.tax.declaracoes) ? st.tax.declaracoes : [];
@@ -13368,6 +13373,9 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.20', d:'2026-09-26', t:'Correção: vários benefícios', itens:[
+    'Consertado: só dava para cadastrar um benefício (o segundo substituía o primeiro) e não dava para editar nem excluir. O mesmo defeito valia para lugares e trajetos. Registros já salvos assim ganham identificação sozinhos ao abrir o app.'
+  ]},
   {v:'3.19', d:'2026-09-26', t:'Benefícios, deslocamentos e filtros', itens:[
     'Benefícios pendurados no salário: vale-alimentação, vale-refeição, vale-transporte, plano de saúde, odontológico, creche, educação, home office, academia, seguro de vida, previdência, PLR e qualquer outro. Cada um é obrigatoriamente ligado a um salário: se o emprego acaba, o benefício acaba junto. Três modos: entra como dinheiro (cai no caixa como o salário, no último dia útil, no 5º dia útil, num dia fixo ou junto com o salário), só referência (economia estimada: VT, estacionamento, plano) ou desconta no salário (informativo). Aparecem dentro do cadastro do salário e num cartão próprio em Renda, com a foto do extrato do vale preenchendo operadora e valor.',
     'Deslocamentos (BudgetONE → Deslocamentos, atrás da flag "deslocamentos"): lugares com endereço e coordenadas pelo OpenStreetMap, trajetos com jeito de ir, quem vai e quantas vezes, distância de carro estimada (e editável), pedágio, abastecimentos por viagem longa, app/táxi e transporte público (coberto pelo vale-transporte quando há). Duas pessoas no mesmo carro contam uma vez ("vai junto com", inclusive a partir de uma data). A estimativa pode virar custo fixo.',
@@ -23177,6 +23185,8 @@ const Beneficios = {
   salvar(d){
     ST.beneficios = ST.beneficios || [];
     const sal = Salarios.todos().find(r => r.id === d.salarioId);
+    d = Object.assign({}, d);
+    if(!d.id) delete d.id;                 /* id vazio do formulário não pode apagar o id novo */
     const b = Object.assign({}, this.achar(d.id) || {id: this.novoId()}, d, {
       quem: (d.quem || (sal && sal.quem) || '').trim(),
       valor: Math.abs(Number(d.valor) || 0),
@@ -23378,16 +23388,18 @@ function salvarBeneficio(){
   const voltar = benCad && benCad.voltar;
   benCad = null;
   toast(pt ? 'Benefício guardado, pendurado no salário.' : 'Benefit saved, attached to the salary.');
+  render();
   if(voltar){ abrirCadastroSalario(voltar); return; }
-  fechar('assetModal'); render();
+  fechar('assetModal');
 }
 function excluirBeneficio(id){
   const pt = I18n.atual !== 'en';
   if(!confirm(pt ? 'Excluir este benefício?' : 'Delete this benefit?')) return;
   Beneficios.excluir(id); Store.salvar();
   const voltar = benCad && benCad.voltar; benCad = null;
+  render();
   if(voltar){ abrirCadastroSalario(voltar); return; }
-  fechar('assetModal'); render();
+  fechar('assetModal');
 }
 
 /* ---------- os benefícios de um salário, dentro do formulário do salário ---------- */
@@ -23548,6 +23560,7 @@ const Desloc = {
 
   salvarLugar(d){
     ST.lugares = ST.lugares || [];
+    d = Object.assign({}, d); if(!d.id) delete d.id;
     const l = Object.assign({}, this.lugar(d.id) || {id: this.novoId('l')}, d);
     const i = ST.lugares.findIndex(x => x.id === l.id);
     if(i >= 0) ST.lugares[i] = l; else ST.lugares.push(l);
@@ -23559,6 +23572,7 @@ const Desloc = {
   },
   salvarTrajeto(d){
     ST.trajetos = ST.trajetos || [];
+    d = Object.assign({}, d); if(!d.id) delete d.id;
     const t = Object.assign({}, this.trajeto(d.id) || {id: this.novoId('t')}, d);
     const i = ST.trajetos.findIndex(x => x.id === t.id);
     if(i >= 0) ST.trajetos[i] = t; else ST.trajetos.push(t);
