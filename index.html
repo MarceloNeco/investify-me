@@ -1989,6 +1989,126 @@ b.trio{ font-weight:inherit }
 .dirf-item .row label{display:inline-flex; align-items:center; gap:6px; white-space:nowrap}
 .dirf-item .row input[type=checkbox]{width:18px; height:18px; min-height:0; margin:0}
 
+/* =========================================================
+   CAMADA VISUAL — v3.16
+   Contornos mais suaves, menos borda e menos peso; no celular,
+   topo enxuto só com ícones, janelas que sobem como folha e o
+   AssistONE no canto. Vem por último para vencer o que está acima.
+   ========================================================= */
+:root{
+  --r:20px; --r-sm:12px;
+  --shadow:0 12px 32px rgba(0,0,0,.28);
+  --sombra-leve:0 1px 2px rgba(0,0,0,.14);
+  --linha-suave:color-mix(in srgb, var(--line) 55%, transparent);
+}
+html[data-theme="light"]{ --shadow:0 12px 32px rgba(20,40,70,.10); --sombra-leve:0 1px 2px rgba(20,40,70,.05); }
+h1{font-weight:700; letter-spacing:-.02em}
+.card, .barra-f, .hub-card{border-radius:var(--r); border-color:var(--linha-suave); box-shadow:var(--sombra-leve)}
+.kpi, .ativo-card, .serv-linha, .mk-card, .as-item, .cfg-aba, .app-menu-caixa{border-radius:16px; border-color:var(--linha-suave)}
+.btn, .icon-btn, input, select, textarea, .callout, .aviso-box, .toast, .ac-list{border-radius:12px}
+.callout{border-radius:12px; border-left-width:3px}
+.chip, .aba-c, .wz-p, .ia-bt, .idioma-bt, .chip-select, .badge{border-radius:999px}
+.modal{border-radius:22px; border-color:var(--linha-suave)}
+.lock-box{border-radius:24px}
+.topbar{border-bottom-color:var(--linha-suave); background:color-mix(in srgb, var(--bg) 84%, transparent)}
+html[data-theme="light"] .topbar{background:color-mix(in srgb, #fff 88%, transparent)}
+.faixa, .nav-foot, .modal-head, .modal-foot, .footer{border-color:var(--linha-suave)}
+.tbl th{background:transparent}
+
+/* tudo que abre, abre com movimento curto e suave */
+.modal{animation:modalSobe .22s cubic-bezier(.2,.8,.3,1)}
+@keyframes modalSobe{from{opacity:0; transform:translateY(14px) scale(.98)} to{opacity:1; transform:none}}
+@keyframes folhaSobe{from{opacity:0; transform:translateY(28px)} to{opacity:1; transform:none}}
+.sidenav{transition:transform .22s cubic-bezier(.2,.8,.3,1)}
+@media (prefers-reduced-motion:reduce){ .modal{animation:none !important} .sidenav{transition:none} }
+
+/* rodapé: os avisos legais continuam ali, mas recolhidos */
+.footer-legal summary{cursor:pointer; color:var(--txt2); font-weight:600; list-style:none; display:flex; align-items:center; gap:6px; padding:4px 0; min-height:32px}
+.footer-legal summary::-webkit-details-marker{display:none}
+.footer-legal summary::before{content:'▸'; font-size:.8rem; color:var(--txt3); transition:transform .15s; display:inline-block}
+.footer-legal[open] summary::before{transform:rotate(90deg)}
+.footer-legal p:first-of-type{margin-top:10px}
+
+/* celular: topo só com ícones, cartões leves, janela vira folha */
+@media (max-width:760px){
+  .topbar{padding:6px 8px; gap:4px; min-height:52px}
+  .topbar-actions{gap:0}
+  .icon-btn{min-width:42px; min-height:42px; display:inline-grid; place-items:center; padding:0; font-size:1.1rem}
+  .btn-refresh{border:0; background:transparent; box-shadow:none; padding:0; min-width:42px; min-height:42px; justify-content:center; color:var(--txt2); font-size:1.1rem}
+  .refresh-time{display:none}
+  /* tema fica em ⚙ e a ajuda é o AssistONE no canto: no topo estreito, só o que não existe em outro lugar */
+  #btnTheme, #btnAssist{display:none}
+  .brand{font-size:.98rem}
+  .brand-btn{padding:4px 4px}
+  .content{padding:12px 12px 124px}
+  .card{padding:14px; margin-bottom:10px; box-shadow:none}
+  .kpi{padding:12px 13px}
+  .kpi .val{font-size:1.2rem}
+  .card-head h1{font-size:1.32rem}
+  .hub-lista{display:none}
+  .hub-card{padding:18px 16px 14px}
+  .hub-topo{margin-bottom:18px}
+  .hub-frase{font-size:.92rem; margin-top:8px}
+  .hub-grade{gap:12px}
+  .cfg-abas{grid-template-columns:1fr 1fr; gap:8px}
+  .cfg-aba{padding:10px 12px}
+  .cfg-aba span{display:none}
+  .faixa{padding:5px 10px}
+  .footer{font-size:.74rem; margin-top:18px}
+  .modal-wrap{align-items:flex-end; padding:0}
+  .modal{max-width:none; border-radius:22px 22px 0 0; max-height:92vh; border-bottom:0; animation:folhaSobe .25s cubic-bezier(.2,.8,.3,1)}
+  .modal-body{padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+  .tabbar{background:color-mix(in srgb, var(--bg2) 92%, transparent); backdrop-filter:blur(12px); border-top-color:var(--linha-suave); padding:5px 6px calc(5px + env(safe-area-inset-bottom))}
+  .tab{border-radius:14px; padding:4px 2px; gap:1px; min-height:48px}
+  .tab span{width:44px; height:28px; display:grid; place-items:center; border-radius:12px; transition:background .15s}
+  .tab.active span{background:color-mix(in srgb, var(--accent) 18%, transparent)}
+  #toasts{bottom:150px}
+}
+
+/* ---- AssistONE: o personagem no canto e o balão ---- */
+.assistone{position:fixed; right:16px; bottom:calc(20px + env(safe-area-inset-bottom)); z-index:95}
+.assistone.desligado{display:none}
+body:has(.modal-wrap:not(.hidden)) .assistone, body:has(#lockScreen:not(.hidden)) .assistone,
+body:has(.sidenav.open) .assistone, body:has(.popup-an) .assistone{display:none}
+.assistone-bt{width:58px; height:58px; border-radius:50%; border:0; cursor:pointer; padding:0; display:grid; place-items:center; position:relative;
+  background:radial-gradient(circle at 35% 30%, #ffe9a6, #e0a92a 55%, #a86f0c);
+  box-shadow:0 8px 22px rgba(224,169,42,.35), inset 0 -3px 6px rgba(0,0,0,.18);
+  transform-origin:bottom right; transition:transform .25s cubic-bezier(.2,.8,.3,1), box-shadow .25s;
+  animation:aoneFlutua 3.4s ease-in-out infinite}
+.assistone-bt:hover{box-shadow:0 10px 26px rgba(224,169,42,.5)}
+.assistone-bt:focus-visible{outline:none; box-shadow:0 0 0 3px color-mix(in srgb, var(--accent2) 55%, transparent), 0 8px 22px rgba(224,169,42,.35)}
+.assistone-fig{font-size:1.9rem; font-weight:800; color:#3b2800; font-family:Georgia,"Times New Roman",serif; line-height:1; text-shadow:0 1px 0 rgba(255,255,255,.45)}
+.assistone.aberto .assistone-bt{transform:scale(2); animation:none}
+.assistone-retomar{position:absolute; right:64px; bottom:12px; white-space:nowrap; background:var(--card); border:1px solid var(--linha-suave); color:var(--txt2);
+  border-radius:999px; padding:6px 12px; font:inherit; font-size:.78rem; cursor:pointer; box-shadow:var(--sombra-leve)}
+@keyframes aoneFlutua{0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)}}
+@media (prefers-reduced-motion:reduce){ .assistone-bt{animation:none; transition:none} }
+.assistone-balao{position:absolute; right:0; bottom:calc(100% + 14px); width:min(calc(100vw - 32px), 340px);
+  max-height:min(72vh, calc(100vh - 200px)); overflow:auto; background:var(--card); border:1px solid var(--linha-suave);
+  border-radius:20px; box-shadow:var(--shadow); padding:14px 12px 8px; animation:balaoSobe .2s cubic-bezier(.2,.8,.3,1)}
+.assistone.aberto .assistone-balao{bottom:calc(100% + 72px)}
+@keyframes balaoSobe{from{opacity:0; transform:translateY(10px) scale(.97)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion:reduce){ .assistone-balao{animation:none} }
+.aone-ola{display:flex; align-items:center; gap:10px; margin:0 2px 10px}
+.aone-ola b{font-size:1rem}
+.aone-ola span{display:block; font-size:.8rem; color:var(--txt2)}
+.aone-tela{background:var(--card2); border-radius:14px; padding:10px 12px; margin-bottom:8px}
+.aone-tela b{display:block; font-size:.9rem; margin-bottom:2px}
+.aone-tela p{margin:0; font-size:.82rem; color:var(--txt2); line-height:1.45}
+.aone-atalhos{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+.aone-atalhos .btn.sm{min-height:34px; border-radius:999px}
+.aone-op{display:flex; align-items:center; gap:10px; width:100%; background:transparent; border:0; padding:8px 8px; border-radius:12px;
+  color:var(--txt); font:inherit; font-size:.9rem; text-align:left; cursor:pointer; min-height:42px}
+.aone-op:hover{background:var(--card2)}
+.aone-op i{font-style:normal; width:22px; text-align:center}
+.aone-pe{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:4px; padding:4px 8px 0; border-top:1px solid var(--linha-suave)}
+.aone-pe button{background:none; border:0; color:var(--txt3); font:inherit; font-size:.76rem; cursor:pointer; padding:8px 0; min-height:32px}
+.aone-pe button:hover{color:var(--txt)}
+@media (max-width:760px){
+  .assistone{right:12px; bottom:calc(76px + env(safe-area-inset-bottom))}
+  .content{padding-bottom:150px}
+}
+@media (min-width:761px){ #toasts{bottom:96px} }
 </style>
 </head>
 <body>
@@ -2023,6 +2143,7 @@ b.trio{ font-weight:inherit }
       <button class="icon-btn assist-bt" id="btnAssist" aria-label="Ajuda" title="Assist ONE — ajuda, tutorial e passo a passo">
         <span class="assist-ico">?</span>
       </button>
+      <button class="icon-btn" id="btnInicio" aria-label="Início" title="Início — escolher o app">🏠</button>
       <button class="icon-btn" id="btnTheme" aria-label="Alternar tema">🌙</button>
     </div>
   </header>
@@ -2098,6 +2219,7 @@ b.trio{ font-weight:inherit }
           <span id="fvData">—</span>
           <button class="linkinho" data-acao="ver-mudancas">o que mudou</button>
         </div>
+        <details class="footer-legal"><summary>Avisos legais e privacidade</summary>
         <p><b>Uso pessoal, estudo e pesquisa.</b> Esta ferramenta foi construída por uma pessoa física para
         organizar o próprio patrimônio e os próprios gastos, e também como exercício de estudo. Não é produto,
         não é serviço, não é oferecida a terceiros e não tem qualquer vínculo com instituição financeira,
@@ -2119,6 +2241,7 @@ b.trio{ font-weight:inherit }
         e ninguém mais tem acesso por aqui. Ainda assim, nenhum sistema é totalmente seguro: manter dispositivo,
         navegador e conta Google protegidos é responsabilidade do usuário, e não há responsabilidade por acesso
         indevido, vazamento, corrupção ou perda de dados. Recomenda-se fazer backups pelo botão de exportar.</p>
+        </details>
       </footer>
     </main>
   </div>
@@ -2208,6 +2331,14 @@ b.trio{ font-weight:inherit }
     </div>
     <div class="modal-body" id="contaCorpo"></div>
   </div>
+</div>
+
+<!-- ======= ASSIST ONE: o personagem no canto ======= -->
+<div class="assistone" id="assistOne">
+  <div class="assistone-balao hidden" id="assistBalao" role="dialog" aria-label="AssistONE"></div>
+  <button class="assistone-bt" id="assistFab" aria-label="AssistONE — ajuda" aria-expanded="false" aria-controls="assistBalao">
+    <span class="assistone-fig" aria-hidden="true">?</span>
+  </button>
 </div>
 
 <div id="toasts"></div>
@@ -2603,6 +2734,10 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  'Avisos legais e privacidade':'Legal notices and privacy',
+  'O personagem de ajuda no canto da tela.':'The help character in the corner of the screen.',
+  'Abrir o AssistONE':'Open AssistONE',
+  'Recomeçar o passo a passo e as dicas':'Restart the walkthrough and tips',
   '% da carteira':'% of portfolio',
   '(vai para a pasta Downloads).':'(goes to your Downloads folder).',
   '+ Anotar preço':'+ Note a price',
@@ -13166,6 +13301,14 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.16', d:'2026-09-26', t:'Visual mais limpo e o AssistONE', itens:[
+    'AssistONE: o personagem redondo no canto de baixo da tela, em todas as telas. Ao tocar, ele cresce e abre um balão que começa por "Você está em…", com uma frase da tela e atalhos que já executam a ação (novo lançamento, escanear, importar, novo investimento…), e depois oferece Começar, Tour rápido, Procurar algo e Ajuda desta tela. Na primeira visita ele se apresenta. Liga e desliga em ⚙ → Compartilhadas → Preferências.',
+    'Visual mais suave: cantos mais arredondados, menos bordas e menos peso nos cartões, botões e janelas; tudo que abre, abre com um movimento curto.',
+    'Celular: o topo ficou só com ícones (☰, nome do app, ⟳, 🔍, 🏠); o tema fica em Configurações e a ajuda é o AssistONE. As janelas sobem de baixo como uma folha; a barra de baixo ganhou um destaque suave na aba atual.',
+    'Menos texto: os avisos legais do rodapé ficam recolhidos em "Avisos legais e privacidade"; no celular, as explicações longas dobram mais cedo e os cartões do início mostram só a frase principal.',
+    'Botão 🏠 Início no topo, em todos os apps: volta para a tela de escolha do MoneyTRIO.',
+    'Ajuda das telas do TaxONE (painel, imposto, PJ × CLT, declarações, processos, documentos, deduções).'
+  ]},
   {v:'3.15', d:'2026-09-26', t:'IA: troca sozinha e teste da chave', itens:[
     'Se a IA escolhida falhar por falta de cota, de crédito ou chave recusada, o app espera uns 3 segundos e usa a próxima IA que tem chave salva, na ordem da lista, avisando na tela: "🔁 <IA> está sem cota agora — usando <outra>". A sua escolha continua salva.',
     'O cofre mostra no topo quais IAs já têm chave salva; na lista, elas vêm primeiro, com o selo "✓ chave salva" ou "sem chave".',
@@ -20784,7 +20927,9 @@ const UX = {
     raiz.querySelectorAll('.card > p.small.muted, .card > p.tiny.muted, .card > .card-head + p.small, .aviso-box > p, .aviso-box p.small').forEach(p => {
       if(p.classList.contains('explica') || p.closest('.cfg-corpo-acc')) return;
       const txt = p.textContent.trim();
-      if(txt.length < (p.closest('.aviso-box') ? 120 : 180)) return;   /* curto não precisa dobrar */
+      /* curto não precisa dobrar; no celular, dobra mais cedo */
+      const lim = window.innerWidth < 600 ? 110 : 180;
+      if(txt.length < (p.closest('.aviso-box') ? Math.min(120, lim) : lim)) return;
       p.classList.add('explica', 'fechada');
       const b = document.createElement('button');
       b.type = 'button';
@@ -21129,6 +21274,48 @@ const AJUDA_TELAS = {
     en: {t:'Glossary', o:'137 terms explained at three levels. The same texts open in the ⓘ scattered around the app.',
          f:['Search by word or browse by letter.','The level at the bottom of the menu switches the text of every entry.']}
   },
+  't-painel': {
+    pt: {t:'Painel do TaxONE', o:'O imposto de renda do ano num olhar: previsão do ajuste, o que já foi retido, deduções e processos.',
+         f:['Cadastre o salário para a previsão sair certa.','Importe a última declaração para conferir tudo.']},
+    en: {t:'TaxONE dashboard', o:'The year’s income tax at a glance: expected balance, what was withheld, deductions and cases.',
+         f:['Register the salary so the forecast is right.','Import the last return to check everything.']}
+  },
+  't-imposto': {
+    pt: {t:'Imposto do ano', o:'Quanto de imposto o salário gera mês a mês, com as tabelas de INSS e IRRF em vigor.',
+         f:['As tabelas trazem a data em que valem.','Bruto ou líquido: o app calcula o outro.']},
+    en: {t:'Tax for the year', o:'How much tax the salary generates month by month, with the current INSS and IRRF tables.',
+         f:['The tables show the date they apply from.','Gross or net: the app computes the other.']}
+  },
+  't-pjclt': {
+    pt: {t:'PJ × CLT', o:'Compara o que sobra no bolso como CLT e como PJ, com Simples, Fator R e pró-labore.',
+         f:['Mude a alíquota ou deixe o app calcular.','Não é aconselhamento contábil: confira com um contador.']},
+    en: {t:'PJ × CLT', o:'Compares take-home pay as an employee and as a contractor, with Simples, R factor and pro-labore.',
+         f:['Change the rate or let the app compute it.','Not accounting advice: check with an accountant.']}
+  },
+  't-declaracoes': {
+    pt: {t:'Declarações', o:'As declarações entregues, lidas do PDF da Receita, com todos os números conferidos.',
+         f:['Importe a declaração e o recibo de uma vez.','Nenhum CPF por extenso fica guardado.']},
+    en: {t:'Tax returns', o:'The returns you filed, read from the Receita PDF, with every number checked.',
+         f:['Import the return and the receipt together.','No full CPF is ever stored.']}
+  },
+  't-processos': {
+    pt: {t:'Restituição e processos', o:'Restituição retida, malha fina e processos do e-Processo, com o prazo legal contado.',
+         f:['Cole a lista do e-Processo e o app lê tudo.','O cartão fica vermelho quando o prazo passa.']},
+    en: {t:'Refund and cases', o:'Withheld refund, audit and e-Processo cases, with the legal deadline counted.',
+         f:['Paste the e-Processo list and the app reads it all.','The card turns red when the deadline passes.']}
+  },
+  't-docs': {
+    pt: {t:'Documentos do IR', o:'Todos os papéis do ano de uma vez: informes, recibos, holerites. O app lê e junta os repetidos.',
+         f:['Escolha vários arquivos de uma vez.','Nada é gravado antes de você conferir.']},
+    en: {t:'Tax documents', o:'All the year’s papers at once: statements, receipts, payslips. The app reads and merges duplicates.',
+         f:['Pick several files at once.','Nothing is saved before you check it.']}
+  },
+  't-deducoes': {
+    pt: {t:'Deduções', o:'Saúde, educação e dependentes que abatem o imposto — o que já está marcado e o que pode ter sido esquecido.',
+         f:['Os lançamentos do BudgetONE já entram aqui.']},
+    en: {t:'Deductions', o:'Health, education and dependants that reduce tax — what is already marked and what may have been missed.',
+         f:['BudgetONE entries already show up here.']}
+  },
   config: {
     pt: {t:'Configurações', o:'Compartilhadas valem para os dois apps; as outras abas têm só o que é de cada um. Toque num título para abrir.',
          f:['Chaves gratuitas destravam cotações dos EUA e mais manchetes.','Exporte um backup de vez em quando — é o seu seguro.','Instalar na tela de início faz o app abrir sem internet.']},
@@ -21168,11 +21355,16 @@ const Assist = {
   jaViuTutorial(){ try{ return !!localStorage.getItem(CHAVE_TUTORIAL); }catch(e){ return true; } },
   marcarTutorial(){ try{ localStorage.setItem(CHAVE_TUTORIAL, new Date().toISOString()); }catch(e){} },
 
-  /* na primeira abertura o tutorial aparece sozinho, uma vez */
+  /* na primeira abertura o AssistONE se apresenta, uma vez; com ele
+     desligado, vale o tutorial de antes */
   primeiraVez(){
     if(this.jaViuTutorial()) return;
     tutorialPasso = 0;
-    setTimeout(() => { if(!this.jaViuTutorial()) this.abrir('tutorial'); }, 900);
+    setTimeout(() => {
+      if(this.jaViuTutorial()) return;
+      if(typeof AssistOne !== 'undefined' && AssistOne.ligado()) AssistOne.abrir('ola');
+      else this.abrir('tutorial');
+    }, 900);
   },
 
   telaAtual(){
@@ -21263,6 +21455,135 @@ const Assist = {
         '" value="' + esc(assistBusca) + '" autocomplete="off">' +
       '<div id="asResultados" style="margin-top:12px">' +
         (assistBusca.trim().length >= 2 ? resultadosBusca(assistBusca.trim()) : '') + '</div></div>';
+  }
+};
+
+/* =========================================================
+   AssistONE — o personagem redondo no canto da tela
+
+   Sempre no mesmo lugar, em todas as telas. Ao tocar, dobra de
+   tamanho e abre um balão que começa pela tela atual ("Você está
+   em…", uma frase e 1 a 3 atalhos que já executam a ação) e
+   depois oferece o resto: Começar, Tour rápido, Procurar algo,
+   Ajuda desta tela. Some quando há janela, menu ou senha na
+   frente. Liga e desliga em ⚙ → Compartilhadas → Preferências.
+   Os atalhos reaproveitam os data-acao que já existem: nada aqui
+   inventa recurso.
+   ========================================================= */
+
+/* atalhos por tela: ícone, rótulo PT/EN e a ação que já existe */
+const ATALHOS_TELA = {
+  'b-painel':   [{i:'🧾', pt:'Novo lançamento', en:'New entry', a:'b-novo'}, {i:'✨', pt:'Passo a passo', en:'Step-by-step', a:'as-wizard'}],
+  'b-lanc':     [{i:'➕', pt:'Novo lançamento', en:'New entry', a:'b-novo'}, {i:'📷', pt:'Escanear', en:'Scan', a:'b-escanear'}, {i:'📄', pt:'Importar', en:'Import', a:'b-importar'}],
+  'b-custos':   [{i:'📌', pt:'Novo compromisso', en:'New commitment', a:'rec-novo'}, {i:'✨', pt:'Passo a passo', en:'Step-by-step', a:'as-wizard'}],
+  'b-renda':    [{i:'✨', pt:'Passo a passo', en:'Step-by-step', a:'as-wizard'}],
+  'b-precos':   [{i:'🏷️', pt:'Anotar preço', en:'Note a price', a:'b-novo-preco'}],
+  painel:       [{i:'➕', pt:'Novo investimento', en:'New investment', a:'nova'}, {i:'📄', pt:'Importar extrato', en:'Import statement', a:'as-importar'}],
+  carteira:     [{i:'➕', pt:'Novo investimento', en:'New investment', a:'nova'}, {i:'📄', pt:'Importar extrato', en:'Import statement', a:'as-importar'}],
+  movimentos:   [{i:'➕', pt:'Nova movimentação', en:'New transaction', a:'novo-mov'}, {i:'📄', pt:'Importar extrato', en:'Import statement', a:'as-importar'}],
+  mercado:      [{i:'🔑', pt:'Chaves gratuitas', en:'Free keys', a:'as-chaves'}],
+  config:       [{i:'🔑', pt:'Chaves gratuitas', en:'Free keys', a:'as-chaves'}],
+  't-painel':   [{i:'💰', pt:'Cadastrar salário', en:'Add salary', a:'sal-cad-novo'}, {i:'📄', pt:'Importar declaração', en:'Import return', a:'tx-importar'}],
+  't-imposto':  [{i:'💰', pt:'Cadastrar salário', en:'Add salary', a:'sal-cad-novo'}],
+  't-declaracoes': [{i:'📄', pt:'Importar declaração', en:'Import return', a:'tx-importar'}],
+  't-processos': [{i:'📁', pt:'Novo processo', en:'New case', a:'tx-proc-novo'}]
+};
+
+const AssistOne = {
+  aberto: false,
+
+  ligado(){ return !(typeof ST !== 'undefined' && ST.config && ST.config.assistOne === false); },
+
+  /* mostra ou esconde o personagem conforme a preferência */
+  aplicar(){
+    const c = $('#assistOne');
+    if(!c) return;
+    c.classList.toggle('desligado', !this.ligado());
+    if(!this.ligado()) this.fechar();
+  },
+
+  ligar(){
+    const fab = $('#assistFab'), balao = $('#assistBalao');
+    if(!fab || fab.dataset.ligado) return;
+    fab.dataset.ligado = '1';
+    fab.addEventListener('click', () => this.aberto ? this.fechar() : this.abrir('tela'));
+    /* dentro do balão: as opções gerais são minhas; os atalhos usam o
+       data-acao de sempre e o clique geral cuida deles — aqui só fecho */
+    balao.addEventListener('click', ev => {
+      const op = ev.target.closest('[data-aone]');
+      if(op){ this.opcao(op.dataset.aone); return; }
+      if(ev.target.closest('[data-acao]')){ Assist.marcarTutorial(); this.fechar(); }
+    });
+    document.addEventListener('click', ev => {
+      if(this.aberto && !ev.target.closest('#assistOne')) this.fechar();
+    });
+    document.addEventListener('keydown', ev => { if(ev.key === 'Escape' && this.aberto) this.fechar(); });
+    this.aplicar();
+  },
+
+  abrir(modo){
+    if(!this.ligado()) return;
+    const balao = $('#assistBalao'), caixa = $('#assistOne'), fab = $('#assistFab');
+    if(!balao) return;
+    balao.innerHTML = this.html(modo || 'tela');
+    balao.classList.remove('hidden');
+    caixa.classList.add('aberto');
+    fab.setAttribute('aria-expanded', 'true');
+    this.aberto = true;
+  },
+
+  fechar(){
+    const balao = $('#assistBalao'), caixa = $('#assistOne'), fab = $('#assistFab');
+    if(!balao || !this.aberto) return;
+    balao.classList.add('hidden');
+    caixa.classList.remove('aberto');
+    fab.setAttribute('aria-expanded', 'false');
+    this.aberto = false;
+  },
+
+  opcao(qual){
+    Assist.marcarTutorial();
+    this.fechar();
+    switch(qual){
+      case 'comecar':  Assist.abrir('comecar'); break;
+      case 'tour':     tutorialPasso = 0; Assist.abrir('tutorial'); break;
+      case 'buscar':   Assist.abrir('buscar'); break;
+      case 'ajuda':    Assist.abrir('tela'); break;
+      case 'desligar':
+        ST.config.assistOne = false; Store.salvar(); this.aplicar();
+        toast(I18n.atual === 'pt' ? 'AssistONE desligado. Para religar: ⚙ Configurações → Compartilhadas → Preferências.'
+                                  : 'AssistONE off. To turn it back on: ⚙ Settings → Shared → Preferences.');
+        break;
+      default: break;
+    }
+  },
+
+  html(modo){
+    const L = I18n.atual === 'en' ? 'en' : 'pt';
+    const de = (a, b) => L === 'pt' ? a : b;
+    const v = Assist.telaAtual();
+    const a = (AJUDA_TELAS[v] || {})[L];
+    const titulo = a ? a.t : (v === 'hub' ? 'MoneyTRIO' : v);
+    let h = '';
+    if(modo === 'ola'){
+      h += '<div class="aone-ola"><b>' + de('Olá! Eu sou o AssistONE 👋', 'Hi! I am AssistONE 👋') + '</b></div>' +
+           '<p class="small muted" style="margin:0 2px 10px">' + de('Eu explico cada tela e abro os atalhos. Fico aqui no canto, sem atrapalhar.',
+                                                                     'I explain each screen and open the shortcuts. I stay here in the corner, out of the way.') + '</p>';
+    }
+    h += '<div class="aone-tela"><b>📍 ' + de('Você está em ', 'You are in ') + esc(titulo) + '</b>' +
+         (a ? '<p>' + esc(a.o) + '</p>' : '');
+    const atalhos = ATALHOS_TELA[v] || [];
+    if(atalhos.length) h += '<div class="aone-atalhos">' + atalhos.map(x =>
+      '<button class="btn sm" data-acao="' + x.a + '">' + x.i + ' ' + esc(x[L]) + '</button>').join('') + '</div>';
+    h += '</div>';
+    const op = (id, ico, txt) => '<button class="aone-op" data-aone="' + id + '"><i>' + ico + '</i>' + esc(txt) + '</button>';
+    h += op('comecar', '✨', de('Começar', 'Get started')) +
+         op('tour', '🧭', de('Tour rápido', 'Quick tour')) +
+         op('buscar', '🔎', de('Procurar algo', 'Find something')) +
+         op('ajuda', '💡', de('Ajuda desta tela', 'Help for this screen'));
+    h += '<div class="aone-pe"><button data-aone="fechar">' + de('Agora não', 'Not now') + '</button>' +
+         '<button data-aone="desligar">' + de('Desligar o AssistONE', 'Turn AssistONE off') + '</button></div>';
+    return h;
   }
 };
 
@@ -29424,6 +29745,11 @@ function viewConfig(){
     campo('Tema', selectHTML('cTema', [['dark','Escuro'],['light','Claro']], ST.tema)) +
     campo('Fundo decorativo', selectHTML('cFundo', [['sim','Ligado'],['nao','Desligado']], ST.fundo === false ? 'nao' : 'sim'),
           null, 'A arte de gráficos atrás das telas.') +
+    campo('AssistONE', selectHTML('cAssist', [['sim','Ligado'],['nao','Desligado']], cfg.assistOne === false ? 'nao' : 'sim'),
+          null, 'O personagem de ajuda no canto da tela.') +
+    '<div class="row" style="margin-bottom:12px">' +
+      '<button class="btn sm" data-acao="aone-abrir">Abrir o AssistONE</button>' +
+      '<button class="btn sm" data-acao="aone-recomecar">Recomeçar o passo a passo e as dicas</button></div>' +
     campo('Atualizar cotações a cada', selectHTML('cAuto', [[5,'5 minutos'],[10,'10 minutos'],[30,'30 minutos'],[0,'só quando eu clicar']], String(cfg.autoRefreshMin))) +
   '</div></div>';
 
@@ -30741,6 +31067,7 @@ function ligarCamposDaView(){
     liga('cNivel', e => { ST.nivel = e.value; sincronizarNivel(); Store.salvar(); render(); });
     liga('cTema',  e => { ST.tema = e.value; aplicarTema(); Store.salvar(); });
     liga('cFundo', e => { ST.fundo = (e.value === 'sim'); aplicarTema(); Store.salvar(); });
+    liga('cAssist', e => { ST.config.assistOne = (e.value === 'sim'); Store.salvar(); AssistOne.aplicar(); });
     const chk = $('#cCofre');
     if(chk) chk.addEventListener('change', async () => {
       if(chk.checked && !Cofre.senhaSessao){
@@ -31017,6 +31344,8 @@ function ligarEventos(){
   $('#btnTheme').addEventListener('click', () => {
     ST.tema = ST.tema === 'light' ? 'dark' : 'light'; aplicarTema(); Store.salvar();
   });
+  /* 🏠 Início: a tela de escolha do MoneyTRIO, de qualquer lugar */
+  $('#btnInicio').addEventListener('click', () => { fecharMenuApps(); mostrarHub(); });
   $('#btnRefresh').addEventListener('click', () => atualizarCotacoes(true));
   $$('#levelSeg button').forEach(b => b.addEventListener('click', () => {
     ST.nivel = b.dataset.level; sincronizarNivel(); Store.salvar(); render();
@@ -31620,8 +31949,8 @@ function ligarEventos(){
       case 'tut-pular': case 'tut-fim':
         Assist.marcarTutorial(); tutorialPasso = 0; Assist.fechar();
         if(d.acao === 'tut-fim') toast(I18n.atual === 'pt'
-          ? 'Quando precisar, o ? lá em cima abre a ajuda de novo.'
-          : 'Whenever you need it, the ? at the top opens help again.');
+          ? 'Quando precisar, o AssistONE no canto da tela abre a ajuda de novo.'
+          : 'Whenever you need it, AssistONE in the corner opens help again.');
         break;
       case 'as-wizard':
         Assist.fechar();
@@ -31639,6 +31968,13 @@ function ligarEventos(){
         Assist.fechar();
         if((ST.appAtual || 'investify') !== 'budget') abrirApp('budget');
         irPara('b-lanc'); abrirEscanear(); break;
+      case 'aone-abrir':
+        if(ST.config.assistOne === false){ ST.config.assistOne = true; Store.salvar(); AssistOne.aplicar(); render(); }
+        AssistOne.abrir('tela'); break;
+      case 'aone-recomecar':
+        try{ localStorage.removeItem(CHAVE_TUTORIAL); }catch(e2){}
+        if(ST.config.assistOne === false){ ST.config.assistOne = true; Store.salvar(); AssistOne.aplicar(); render(); }
+        AssistOne.abrir('ola'); break;
       case 'as-chaves':
         Assist.fechar(); cfgSecao = 'todos'; irPara('config'); cfgSecao = 'todos'; render();
         setTimeout(() => { const c2 = $$('#view-config .cfg-acc').find(x => /Chaves|keys/i.test(x.textContent));
@@ -32106,6 +32442,7 @@ function comecarApp(r){
 
   ligarIdioma();
   ligarAssist();
+  AssistOne.ligar();
   PWA.preparar();
   ligarAvisos();
   Assist.primeiraVez();

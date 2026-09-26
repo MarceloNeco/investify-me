@@ -105,7 +105,7 @@ dele **depois** dos que ele usa e **antes** de `app.js`.
 | `mercado.js` | cotação: brapi (B3), Twelve Data / Finnhub / Alpha Vantage (EUA), CoinGecko (cripto), AwesomeAPI (câmbio) |
 | `historico.js` | série histórica de preço, para os gráficos de evolução |
 | `noticias.js` | manchetes por RSS, através do serviço rss2json |
-| `ia.js` | o botão ✨ IA: cofre de chave compartilhado, adaptadores Gemini / OpenAI / Anthropic |
+| `ia.js` | o botão ✨ IA: cofre de chave compartilhado, adaptadores Gemini / OpenAI / Anthropic. Cada adaptador tem `perguntar` e `testar` (a chave é testada ao colar: recusada não salva; "falta permissão" e "sem cota" contam como válida). Se a IA escolhida falhar por cota, crédito ou chave recusada, `IA.perguntar` espera 3 s e tenta a próxima com chave, na ordem da lista, avisando na tela |
 
 ### Cálculo (não desenham nada)
 
@@ -151,7 +151,7 @@ dele **depois** dos que ele usa e **antes** de `app.js`.
 | `fita-budget.js` | a fita que corre no topo |
 | `barra-baixo.js` | escolha de quais botões ficam fixos no rodapé do celular |
 | `wizard.js` | o passo a passo de primeiro uso |
-| `assist.js` | a central de ajuda: ajuda desta tela, tutorial, "começar", busca |
+| `assist.js` | a central de ajuda (`Assist`: ajuda desta tela, tutorial, "começar", busca) e o **AssistONE** (`AssistOne`): o personagem redondo no canto da tela, com o balão "Você está em…" + atalhos por tela (`ATALHOS_TELA`, só `data-acao` que já existem). Liga/desliga em `ST.config.assistOne` |
 | `ux.js` | sanfona das Configurações, dobra de texto longo, régua de somar/subtrair nos campos de dinheiro e botão de ouvir — tudo aplicado depois de cada render |
 | `versao.js` | número da versão e a lista de mudanças |
 
@@ -288,6 +288,8 @@ valer em todos os apps.
 | o texto de uma aula | `coach-conteudo.js` |
 | uma tradução | `frases.js` (frase inteira) ou `idioma.js` (rótulo curto) |
 | a ajuda de uma tela ou o tutorial | `assist.js` — `AJUDA_TELAS` e `TUTORIAL` |
+| os atalhos do balão do AssistONE numa tela | `assist.js` — `ATALHOS_TELA` (use só `data-acao` que já existe) |
+| cantos, sombras e o topo do celular | `assets/css/style.css` — bloco "CAMADA VISUAL — v3.16", no fim do arquivo |
 | quem pode usar o quê | `acesso.js` — `SERVICOS_PADRAO` |
 | os anúncios | `acesso.js` — `ANUNCIOS_PADRAO`, ou um `anuncios.json` ao lado do site |
 | um cálculo do BudgetONE | `gastos.js`, `recorrentes.js` ou `orcamento.js` |
