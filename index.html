@@ -2117,6 +2117,7 @@ body:has(.sidenav.open) .assistone, body:has(.popup-an) .assistone{display:none}
 .card-link{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; text-align:left; cursor:pointer; color:var(--txt); font:inherit; padding:12px 16px}
 .card-link:hover{border-color:var(--accent)}
 .card-link > span:first-child{font-weight:620}
+.gl-fixo{margin:0 0 12px}
 /* ---- benefícios ---- */
 .ben-sal{margin:4px 0 14px; padding:12px 14px; background:var(--card2); border-radius:14px}
 .ben-lista{display:grid; gap:6px}
@@ -13373,6 +13374,12 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.21', d:'2026-09-26', t:'Outras rendas, com dia e banco', itens:[
+    'Renda ganhou "+ Nova renda": aluguel recebido, pró-labore, freelance/PJ, aposentadoria ou pensão do INSS, pensão alimentícia, dividendos, restituição do IR, bônus/13º, venda de um bem ou qualquer outra. Diz de quem vem, quem recebe, o valor, quando cai (dia fixo, dia útil, último dia, último dia útil, toda semana, uma vez por ano ou só uma vez) e em qual banco. Entra na agenda, no calendário e no caixa; a lista fica num cartão próprio, com edição e exclusão.',
+    'Banco em qualquer lugar: o seletor mostra os seus bancos primeiro e, embaixo, a lista inteira — escolher um da lista já cadastra, sem ir às Configurações.',
+    'No lançamento, ao marcar Mensal (ou semanal, trimestral, anual), aparece o atalho "Cadastrar como renda fixa" ou "Cadastrar como compromisso", já com o valor, o dia e a categoria preenchidos.',
+    'Consertado: a pergunta "Isto parece conta fixa" ficava por cima do formulário e travava a tela; agora fecha ao clicar em Cadastrar, e não aparece por cima de outra janela. Quando a conta é de renda, abre o formulário de renda.'
+  ]},
   {v:'3.20', d:'2026-09-26', t:'Correção: vários benefícios', itens:[
     'Consertado: só dava para cadastrar um benefício (o segundo substituía o primeiro) e não dava para editar nem excluir. O mesmo defeito valia para lugares e trajetos. Registros já salvos assim ganham identificação sozinhos ao abrir o app.'
   ]},
@@ -16090,7 +16097,7 @@ function salvarCategoriaNova(paraCampo){
    BudgetONE — Renda
    ========================================================= */
 function viewBRenda(){
-  if(!Gasto.todos().length) return bVazio();
+  if(!Gasto.todos().length && !Recorrente.todos().length) return bVazio();
   const jan = Gasto.janela();
   const doze = Gasto.filtrar({de: jan.de, ate: jan.ate, fluxo:'entrada'});
   const toda = bLista({fluxo:'entrada'});
@@ -16099,15 +16106,17 @@ function viewBRenda(){
 
   let h = '<div class="card-head"><h1>Renda</h1>' +
     '<span class="small muted">' + toda.length + ' lançamentos desde ' +
-    (toda.length ? fmtData(toda.map(g => g.data).filter(Boolean).sort()[0]) : '—') + '</span></div>' +
+    (toda.length ? fmtData(toda.map(g => g.data).filter(Boolean).sort()[0]) : '—') + '</span>' +
+    '<div class="head-acoes"><button class="btn primary sm" data-acao="renda-nova">+ ' + (I18n.atual === 'pt' ? 'Nova renda' : 'New income') + '</button>' +
+    '<button class="btn sm" data-acao="sal-cad-novo">+ ' + (I18n.atual === 'pt' ? 'Salário' : 'Salary') + '</button></div></div>' +
     barraFiltros({busca:false});
 
   if(!toda.length)
-    return h + blocoSalarios({}) + blocoBeneficios() + '<div class="card"><p class="muted small" style="margin:0">Nenhuma entrada cadastrada. ' +
-      'Lance salário, pró-labore, aluguel recebido ou restituição com o grupo <b>Renda</b>.</p></div>';
+    return h + blocoSalarios({}) + blocoBeneficios() + blocoOutrasRendas();
 
   h += blocoSalarios({limite: 6});
   h += blocoBeneficios();
+  h += blocoOutrasRendas();
   h += '<div class="kpis kpis-3">' +
     kpiB('Entrou por mês', fmt(soma12 / 12), null, 'média dos 12 meses', 'up') +
     kpiB('Saiu por mês', fmt(real.saida), null, null, 'down') +
@@ -16330,6 +16339,7 @@ function abrirLancamento(id){
           esc(f.nome[I18n.atual === 'en' ? 'en' : 'pt']) + '</option>').join('') + '</select>') +
     '</div>' +
     '<div id="glOnde">' + campoOndePagou(g) + '</div>' +
+    '<div id="glFixo"></div>' +
     '<div class="grid g2">' +
       campo('Quem pagou/recebeu', '<input id="glQuem" list="glQuemLista" placeholder="opcional" value="' +
         (g ? esc(g.quem) : '') + '"><datalist id="glQuemLista">' +
@@ -16369,10 +16379,12 @@ function abrirLancamento(id){
     contaSalarioLancamento();
   };
   const janela = corpoNovo('#assetModalBody');
+  const blocoFixo = () => { const cx = $('#glFixo'); if(cx) cx.innerHTML = Verter.html(g ? '' : blocoFixoLancamento()); };
   ['change', 'input'].forEach(ev => janela.addEventListener(ev, e => {
     if(['glGrupo', 'glSub', 'glValor', 'glCalcIR'].indexOf(e.target.id) >= 0 || e.target.name === 'glBase') blocoSal();
+    if(e.target.id === 'glPer' || e.target.id === 'glGrupo' || e.target.id === 'glSub') blocoFixo();
   }));
-  blocoSal();
+  blocoSal(); blocoFixo();
 
   /* trocar a forma de pagamento troca o que se pergunta depois:
      Pix e boleto pedem banco, cartão pede cartão, espécie não pede nada */
@@ -16425,17 +16437,9 @@ function campoOndePagou(g){
   }
 
   if(pede === 'banco'){
-    const bancos = Banco.todos();
-    if(!bancos.length)
-      return '<div class="aviso-box"><p class="small">' + (pt
-        ? 'Nenhum banco cadastrado ainda. Dá para lançar assim mesmo — ou cadastrar em Configurações, escolhendo de uma lista pronta.'
-        : 'No bank registered yet. You can post it anyway — or add one in Settings, picking from a ready-made list.') + '</p>' +
-        '<button class="btn sm" data-acao="banco-novo" style="margin-top:8px">' +
-        (pt ? '+ Cadastrar banco' : '+ Add bank') + '</button></div>';
-    return campo(pt ? 'Por qual banco' : 'Which bank',
-      '<select id="glBanco"><option value="">—</option>' +
-      bancos.map(b => '<option value="' + b.id + '"' + (g && g.bancoId === b.id ? ' selected' : '') + '>' +
-        esc(Banco.rotulo(b.id)) + '</option>').join('') + '</select>');
+    /* os seus primeiro; embaixo, todos os bancos — escolher um já cadastra */
+    return campo(pt ? 'Por qual banco' : 'Which bank', selectBancoHTML('glBanco', g && g.bancoId || ''),
+      null, pt ? 'Não está nos seus? Escolha na lista inteira: já fica cadastrado.' : 'Not in yours? Pick from the full list: it gets registered.');
   }
   return '';
 }
@@ -16460,7 +16464,7 @@ function salvarLancamento(){
     desc: $('#glDesc').value, per: $('#glPer').value,
     formaId: $('#glForma').value,
     forma: ((FORMA_POR_ID[$('#glForma').value] || {}).nome || {}).pt || '',
-    bancoId:  ($('#glBanco')  || {}).value || '',
+    bancoId:  resolverBanco(($('#glBanco')  || {}).value),
     cartaoId: ($('#glCartao') || {}).value || '',
     /* só vale para compra no cartão; trocou para Pix, a data de cobrança some */
     dataCobranca: (($('#glCartao') || {}).value && ($('#glCobranca') || {}).value) || '',
@@ -21515,7 +21519,7 @@ const AJUDA_TELAS = {
          f:['Recurring: set them up with the right day and the app warns before they are due.','Calendar: the dots show what falls on each day; tap to open.','Review: what went unmarked past its date and what looks like a new fixed bill.']}
   },
   'b-renda': {
-    pt: {t:'Renda', o:'Tudo que entra: salário, aluguel recebido, benefícios, restituição.',
+    pt: {t:'Renda', o:'Tudo que entra: salário (com benefícios pendurados), aluguel recebido, pró-labore, freelance, aposentadoria, pensão, dividendos, restituição. "+ Nova renda" cadastra com o dia em que cai e o banco.',
          f:['O passo a passo cadastra a renda com o dia em que cai — inclusive lendo o holerite.','Trocou de emprego? Desligue a renda antiga em vez de apagar: o histórico fica.']},
     en: {t:'Income', o:'Everything that comes in: salary, rent received, benefits, tax refund.',
          f:['The step-by-step sets up income with the day it lands — including reading the payslip.','Changed jobs? Turn the old income off instead of deleting it: the history stays.']}
@@ -21794,7 +21798,7 @@ const ATALHOS_TELA = {
   'b-painel':   [{i:'🧾', pt:'Novo lançamento', en:'New entry', a:'b-novo'}, {i:'✨', pt:'Passo a passo', en:'Step-by-step', a:'as-wizard'}],
   'b-lanc':     [{i:'➕', pt:'Novo lançamento', en:'New entry', a:'b-novo'}, {i:'📷', pt:'Escanear', en:'Scan', a:'b-escanear'}, {i:'📄', pt:'Importar', en:'Import', a:'b-importar'}],
   'b-custos':   [{i:'📌', pt:'Novo compromisso', en:'New commitment', a:'rec-novo'}, {i:'✨', pt:'Passo a passo', en:'Step-by-step', a:'as-wizard'}],
-  'b-renda':    [{i:'💰', pt:'Cadastrar salário', en:'Add salary', a:'sal-cad-novo'}, {i:'🛒', pt:'Benefício', en:'Benefit', a:'ben-novo'}],
+  'b-renda':    [{i:'➕', pt:'Nova renda', en:'New income', a:'renda-nova'}, {i:'💰', pt:'Salário', en:'Salary', a:'sal-cad-novo'}, {i:'🛒', pt:'Benefício', en:'Benefit', a:'ben-novo'}],
   'b-desloc':   [{i:'📍', pt:'Novo lugar', en:'New place', a:'lug-novo'}, {i:'🧭', pt:'Novo trajeto', en:'New trip', a:'trj-novo'}],
   'b-precos':   [{i:'🏷️', pt:'Anotar preço', en:'Note a price', a:'b-novo-preco'}],
   painel:       [{i:'➕', pt:'Novo investimento', en:'New investment', a:'nova'}, {i:'📄', pt:'Importar extrato', en:'Import statement', a:'as-importar'}],
@@ -23806,6 +23810,252 @@ function salvarTrajeto(){
   if(d.origemId === d.destinoId){ toast(pt ? 'Origem e destino são o mesmo lugar.' : 'Origin and destination are the same place.', 'warn'); return; }
   if(!d.vezes){ toast(pt ? 'Diga quantas vezes vai.' : 'Say how many times.', 'warn'); return; }
   Desloc.salvarTrajeto(d); Store.salvar(); fechar('assetModal'); render();
+}
+</script>
+<script>
+/* =========================================================
+   BudgetONE — Outras rendas
+
+   Aluguel recebido, pró-labore, freelance, aposentadoria, pensão,
+   dividendos, restituição, bônus, venda de um bem… O que se repete
+   vira um Recorrente do grupo RENDA (com o dia certo de cair e o
+   banco em que cai); o que acontece uma vez vira um lançamento de
+   entrada. Salário e benefício têm formulários próprios; tudo o
+   mais entra por aqui. O Recorrente guarda renda = {tipo, fonte,
+   bancoId}.
+   ========================================================= */
+const CATALOGO_RENDA = [
+  {id:'aluguel',      ico:'🏘️', pt:'Aluguel recebido',            en:'Rent received',            sub:'Aluguel recebido',  regra:'dia',  dia:10},
+  {id:'prolabore',    ico:'💼', pt:'Pró-labore',                  en:'Partner draw',             sub:'Pró-labore',        regra:'dia',  dia:5},
+  {id:'freelance',    ico:'🧾', pt:'Freelance / PJ',              en:'Freelance / invoices',     sub:'Freelance',         regra:'dia',  dia:10},
+  {id:'aposentadoria',ico:'🧓', pt:'Aposentadoria / pensão INSS', en:'Retirement pension',       sub:'Aposentadoria',     regra:'dia',  dia:1},
+  {id:'pensao',       ico:'👨‍👧', pt:'Pensão alimentícia recebida', en:'Child support received', sub:'Pensão recebida',   regra:'dia',  dia:5},
+  {id:'dividendos',   ico:'📈', pt:'Dividendos / proventos',      en:'Dividends',                sub:'Dividendos',        regra:'dia',  dia:15},
+  {id:'restituicao',  ico:'🧮', pt:'Restituição do IR',           en:'Tax refund',               sub:'Restituição',       regra:'anual', dia:30, mes:6},
+  {id:'bonus',        ico:'🎁', pt:'Bônus / 13º',                 en:'Bonus / 13th salary',      sub:'Bônus',             regra:'anual', dia:20, mes:12},
+  {id:'venda',        ico:'🏷️', pt:'Venda de um bem',             en:'Sale of an asset',         sub:'Venda de bem',      regra:'pontual'},
+  {id:'outro',        ico:'➕', pt:'Outra renda…',                en:'Other income…',            sub:'',                  regra:'dia',  dia:10}
+];
+const RECEBE_RENDA = {
+  dia:        {pt:'Todo mês, num dia fixo',        en:'Monthly, on a fixed day'},
+  diaUtil:    {pt:'Todo mês, num dia útil',        en:'Monthly, on a business day'},
+  ultimoDia:  {pt:'Todo mês, no último dia',       en:'Monthly, on the last day'},
+  ultimoUtil: {pt:'Todo mês, no último dia útil',  en:'Monthly, on the last business day'},
+  semanal:    {pt:'Toda semana',                   en:'Every week'},
+  anual:      {pt:'Uma vez por ano',               en:'Once a year'},
+  pontual:    {pt:'Só uma vez (numa data)',        en:'Just once (on a date)'}
+};
+
+/* o seletor de banco: os cadastrados primeiro e, embaixo, a lista
+   inteira — escolher um da lista inteira já cadastra o banco */
+function selectBancoHTML(id, sel){
+  const pt = I18n.atual !== 'en';
+  const meus = Banco.todos();
+  const lista = BANCOS_BR.slice().sort((a, b) => (a.cod === '000') - (b.cod === '000') || a.nome.localeCompare(b.nome, 'pt', {sensitivity:'base'}));
+  return '<select id="' + id + '"><option value="">—</option>' +
+    (meus.length ? '<optgroup label="' + (pt ? 'Meus bancos' : 'My banks') + '">' + meus.map(b =>
+      '<option value="' + b.id + '"' + (sel === b.id ? ' selected' : '') + '>' + esc(Banco.rotulo(b.id)) + '</option>').join('') + '</optgroup>' : '') +
+    '<optgroup label="' + (pt ? 'Todos os bancos (escolher já cadastra)' : 'All banks (picking one registers it)') + '">' + lista.map(b =>
+      '<option value="cod:' + b.cod + '"' + (sel === 'cod:' + b.cod ? ' selected' : '') + '>' + esc(b.nome) + (b.cod !== '000' ? ' · ' + b.cod : '') + '</option>').join('') + '</optgroup></select>';
+}
+/* "cod:341" vira um banco cadastrado; um id de banco volta como está */
+function resolverBanco(valor){
+  const v = String(valor || '');
+  if(!v) return '';
+  if(v.indexOf('cod:') === 0){ const b = Banco.adicionar(v.slice(4), ''); return b ? b.id : ''; }
+  return v;
+}
+
+const Rendas = {
+  /* os recorrentes de renda que não são salário nem benefício */
+  todos(){ return Recorrente.todos().filter(r => r.grupo === 'RENDA' && !r.sal && !r.ben); },
+  cat(tipo){ return CATALOGO_RENDA.find(c => c.id === tipo) || CATALOGO_RENDA[CATALOGO_RENDA.length - 1]; },
+  porMes(){
+    let s = 0;
+    this.todos().filter(r => r.ativo !== false && Salarios.vigenteEm(r, hojeISO())).forEach(r => {
+      s += Recorrente.valorEm(r, hojeISO()) * (r.regra === 'semanal' ? 52 : r.regra === 'anual' ? 1 : 12 / (r.cada || 1)) / 12;
+    });
+    return s;
+  }
+};
+
+let rendaCad = null;
+function abrirRenda(id, semente){
+  const pt = I18n.atual !== 'en', L = pt ? 'pt' : 'en';
+  const r = id ? Recorrente.achar(id) : null;
+  const s = semente || {};
+  const info = (r && r.renda) || {};
+  rendaCad = {id: r ? r.id : null};
+  const tipo = info.tipo || s.tipo || (r ? 'outro' : 'aluguel');
+  const cat = Rendas.cat(tipo);
+  const pessoas = (typeof Gasto !== 'undefined' ? Gasto.pessoas() : []).map(p => p.chave);
+  let recebe = s.recebe || 'dia';
+  if(r){
+    recebe = r.regra === 'diaUtil' ? (r.dia === -1 ? 'ultimoUtil' : 'diaUtil') : r.regra === 'dia' ? (r.dia === 31 ? 'ultimoDia' : 'dia') : r.regra === 'semanal' ? 'semanal' : r.regra === 'anual' ? 'anual' : 'dia';
+  }else if(!s.recebe) recebe = cat.regra === 'pontual' ? 'pontual' : cat.regra;
+  const dia = r ? (r.dia > 0 ? r.dia : 5) : (s.dia || cat.dia || 10);
+  const fonte = info.fonte || s.fonte || (r && !info.tipo ? r.nome.replace(/^[^·]+·\s*/, '') : '') || '';
+
+  $('#assetModalTitle').textContent = r ? (pt ? 'Editar renda' : 'Edit income') : (pt ? 'Nova renda' : 'New income');
+  $('#assetModalBody').innerHTML = Verter.html(
+    campo(pt ? 'Que renda é' : 'What income',
+      '<select id="rdTipo">' + CATALOGO_RENDA.map(c => '<option value="' + c.id + '"' + (c.id === tipo ? ' selected' : '') + '>' + c.ico + ' ' + esc(c[L]) + '</option>').join('') + '</select>') +
+    '<div id="rdNomeCaixa"' + (tipo === 'outro' ? '' : ' class="hidden"') + '>' +
+      campo(pt ? 'Nome da renda' : 'Income name', '<input id="rdNome" value="' + esc(r && tipo === 'outro' ? (r.sub || '') : (s.sub || '')) + '" placeholder="' + (pt ? 'ex.: Aulas particulares' : 'e.g. Private lessons') + '">') + '</div>' +
+    '<div class="grid g2">' +
+      campo(pt ? 'De quem / de onde' : 'From whom / where',
+        '<input id="rdFonte" value="' + esc(fonte) + '" placeholder="' + (pt ? 'ex.: Gaspar Fernandes, INSS, Empresa X' : 'e.g. tenant, employer') + '">',
+        null, pt ? 'vira o nome: "Aluguel recebido · Gaspar Fernandes"' : 'becomes the name') +
+      campo(pt ? 'Quem recebe' : 'Who receives',
+        '<input id="rdQuem" list="rdQuemLista" value="' + esc((r && r.quem) || s.quem || '') + '" placeholder="' + (pt ? 'opcional' : 'optional') + '">' +
+        '<datalist id="rdQuemLista">' + pessoas.map(p => '<option value="' + esc(p) + '"></option>').join('') + '</datalist>') +
+    '</div>' +
+    '<div class="grid g2">' +
+      campo(pt ? 'Valor' : 'Amount',
+        '<input type="number" inputmode="decimal" data-dinheiro="1" id="rdValor" step="0.01" min="0" placeholder="0,00" value="' + ((r && r.valor) || s.valor || '') + '">') +
+      campo(pt ? 'Cai em qual banco' : 'Lands in which bank', selectBancoHTML('rdBanco', info.bancoId || s.bancoId || ''),
+        null, pt ? 'Não achou nos seus? Escolha na lista inteira: já cadastra.' : 'Not in yours? Pick from the full list: it registers it.') +
+    '</div>' +
+    campo(pt ? 'Recebe' : 'Received',
+      '<select id="rdRecebe">' + Object.keys(RECEBE_RENDA).map(k => '<option value="' + k + '"' + (k === recebe ? ' selected' : '') + '>' + esc(RECEBE_RENDA[k][L]) + '</option>').join('') + '</select>') +
+    '<div id="rdQuando" class="grid g2"></div>' +
+    '<div class="grid g2" id="rdVigencia">' +
+      campo(pt ? 'Desde' : 'Since', '<input type="date" id="rdDesde" value="' + esc((r && r.desde) || s.desde || '') + '">', null, pt ? 'vazio = sempre' : 'blank = always') +
+      campo(pt ? 'Até' : 'Until', '<input type="date" id="rdAte" value="' + esc((r && r.ate) || '') + '">', null, pt ? 'vazio = sem fim' : 'blank = no end') +
+    '</div>' +
+    '<label class="linha-check"><input type="checkbox" id="rdIrpf"' + ((r && r.irpf) || (s.irpf) || tipo === 'aluguel' || tipo === 'prolabore' || tipo === 'freelance' ? ' checked' : '') + '> ' +
+      (pt ? 'Entra no imposto de renda' : 'Counts for income tax') + '</label>' +
+    campo(pt ? 'Observação' : 'Notes', '<input id="rdObs" value="' + esc((r && r.obs) || s.obs || '') + '" placeholder="' + (pt ? 'opcional' : 'optional') + '">') +
+    '<div class="f-actions">' +
+      (r ? '<button class="btn danger" data-acao="renda-excluir" data-id="' + r.id + '">' + (pt ? 'Excluir' : 'Delete') + '</button>' : '') +
+      '<button class="btn" data-close="assetModal">' + (pt ? 'Cancelar' : 'Cancel') + '</button>' +
+      '<button class="btn primary" data-acao="renda-salvar">' + (pt ? 'Salvar' : 'Save') + '</button>' +
+    '</div>');
+  abrir('assetModal');
+  const corpo = corpoNovo('#assetModalBody');
+  const quando = () => {
+    const k = $('#rdRecebe').value;
+    let h = '';
+    if(k === 'dia') h = campo(pt ? 'Dia do mês' : 'Day of month', '<input type="number" id="rdDia" min="1" max="31" value="' + dia + '">');
+    else if(k === 'diaUtil') h = campo(pt ? 'Qual dia útil' : 'Which business day', '<input type="number" id="rdDia" min="1" max="23" value="' + Math.min(dia, 23) + '">');
+    else if(k === 'semanal') h = campo(pt ? 'Dia da semana' : 'Day of the week', '<select id="rdDiaSemana">' + [0,1,2,3,4,5,6].map(n => '<option value="' + n + '"' + (Number((r && r.diaSemana) || 1) === n ? ' selected' : '') + '>' + esc(I18n.diaSemana(n, 'longo')) + '</option>').join('') + '</select>');
+    else if(k === 'anual') h = campo(pt ? 'Mês' : 'Month', '<select id="rdMes">' + [1,2,3,4,5,6,7,8,9,10,11,12].map(n => '<option value="' + n + '"' + (Number((r && r.mes) || cat.mes || 1) === n ? ' selected' : '') + '>' + esc(I18n.mesLongo(n)) + '</option>').join('') + '</select>') +
+                               campo(pt ? 'Dia' : 'Day', '<input type="number" id="rdDia" min="1" max="31" value="' + dia + '">');
+    else if(k === 'pontual') h = campo(pt ? 'Data' : 'Date', '<input type="date" id="rdData" value="' + esc(s.data || hojeISO()) + '">');
+    $('#rdQuando').innerHTML = Verter.html(h);
+    $('#rdVigencia').classList.toggle('hidden', k === 'pontual');
+  };
+  corpo.addEventListener('change', e => {
+    if(e.target.id === 'rdTipo'){
+      const c = Rendas.cat(e.target.value);
+      $('#rdNomeCaixa').classList.toggle('hidden', c.id !== 'outro');
+      if(!r){ $('#rdRecebe').value = c.regra === 'pontual' ? 'pontual' : c.regra; quando(); }
+      $('#rdIrpf').checked = ['aluguel','prolabore','freelance','dividendos'].indexOf(c.id) >= 0;
+    }
+    if(e.target.id === 'rdRecebe') quando();
+  });
+  if(typeof UX !== 'undefined') UX.reguasDeValor(corpo);
+  quando();
+}
+
+function salvarRenda(){
+  const pt = I18n.atual !== 'en';
+  const tipo = $('#rdTipo').value, cat = Rendas.cat(tipo);
+  const valor = Number($('#rdValor').value) || 0;
+  const nome = tipo === 'outro' ? $('#rdNome').value.trim() : cat.sub;
+  const fonte = $('#rdFonte').value.trim();
+  if(!valor){ toast(pt ? 'Informe o valor.' : 'Enter the amount.', 'warn'); return; }
+  if(!nome){ toast(pt ? 'Dê um nome à renda.' : 'Name the income.', 'warn'); return; }
+  const recebe = $('#rdRecebe').value;
+  const bancoId = resolverBanco($('#rdBanco').value);
+  const quem = $('#rdQuem').value.trim();
+  const irpf = $('#rdIrpf').checked, obs = $('#rdObs').value.trim();
+
+  if(recebe === 'pontual'){
+    Gasto.add({grupo:'RENDA', sub: nome, desc: fonte, valor, data: $('#rdData').value || hojeISO(), quem, bancoId, per:'Pontual', irpf, conta: obs,
+               formaId: bancoId ? 'transf' : ''});
+    Gasto._idx = null; bProj = null;
+    Store.salvar(); fechar('assetModal'); render();
+    toast(pt ? 'Entrada lançada.' : 'Income posted.');
+    return;
+  }
+  let regra = 'dia', dia = Number(($('#rdDia') || {}).value) || 1, mes = 0, diaSemana = 1;
+  if(recebe === 'diaUtil') regra = 'diaUtil';
+  else if(recebe === 'ultimoDia'){ regra = 'dia'; dia = 31; }
+  else if(recebe === 'ultimoUtil'){ regra = 'diaUtil'; dia = -1; }
+  else if(recebe === 'semanal'){ regra = 'semanal'; diaSemana = Number($('#rdDiaSemana').value) || 1; }
+  else if(recebe === 'anual'){ regra = 'anual'; mes = Number($('#rdMes').value) || 1; }
+  const dados = {
+    grupo:'RENDA', sub: nome, nome: nome + (fonte ? ' · ' + fonte : ''),
+    valor, regra, dia, mes, diaSemana, cada: 1, quem,
+    desde: $('#rdDesde').value, ate: $('#rdAte').value, irpf, obs,
+    estadoPadrao: 'automatico', avisar: true, ativo: true,
+    renda: {tipo, fonte, bancoId}
+  };
+  if(rendaCad && rendaCad.id){
+    const antes = Recorrente.achar(rendaCad.id);
+    if(antes && antes.valor !== valor && (antes.valores || []).length){ Recorrente.reajustar(rendaCad.id, valor, hojeISO()); delete dados.valor; }
+    Recorrente.atualizar(rendaCad.id, dados);
+  }else Recorrente.add(dados);
+  rendaCad = null;
+  Store.salvar(); fechar('assetModal'); render(); renderFita();
+  toast(pt ? 'Renda guardada: entra na agenda e no caixa.' : 'Income saved: it joins the calendar and the cash flow.');
+}
+
+/* o cartão "Outras rendas" na tela de Renda */
+function blocoOutrasRendas(){
+  const pt = I18n.atual !== 'en';
+  const lista = Rendas.todos().slice().sort((a, b) => (b.ativo !== false) - (a.ativo !== false));
+  const jan = Gasto.janela();
+  const avulsas = Gasto.filtrar({de: jan.de, ate: jan.ate, fluxo:'entrada'}).filter(g => !/sal[aá]rio/i.test(g.sub || ''));
+  let h = '<div class="card"><div class="card-head"><h3>' + (pt ? 'Outras rendas' : 'Other income') + '</h3>' +
+    '<button class="btn primary sm" data-acao="renda-nova">+ ' + (pt ? 'Nova renda' : 'New income') + '</button></div>';
+  if(!lista.length) h += '<p class="small muted" style="margin:0 0 10px">' + (pt
+    ? 'Aluguel recebido, pró-labore, freelance, aposentadoria, pensão, dividendos, restituição, bônus, venda de um bem. Com o dia em que cai e o banco onde entra, vai para a agenda e para o caixa.'
+    : 'Rent received, partner draw, freelance, pension, dividends, refund, bonus, a sale. With the day it lands and the bank, it joins the calendar and the cash flow.') + '</p>';
+  else h += '<div class="kpis kpis-3"><div class="kpi"><div class="lbl">' + (pt ? 'Por mês, hoje' : 'Per month, today') + '</div><div class="val up">' + fmt(Rendas.porMes()) + '</div>' +
+      '<div class="sub">' + lista.filter(r => r.ativo !== false && Salarios.vigenteEm(r, hojeISO())).length + (pt ? ' em vigor' : ' in force') + '</div></div></div>' +
+    '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>' + (pt ? 'Renda' : 'Income') + '</th><th>' + (pt ? 'Quando' : 'When') + '</th><th class="num" data-principal>' + (pt ? 'Valor' : 'Amount') + '</th></tr></thead><tbody>' +
+    lista.map(r => { const c = Rendas.cat((r.renda || {}).tipo || 'outro'); const vig = r.ativo !== false && Salarios.vigenteEm(r, hojeISO());
+      return '<tr class="linha-click' + (vig ? '' : ' linha-off') + '" data-acao="renda-editar" data-id="' + r.id + '">' +
+        '<td><span class="t-main">' + c.ico + ' ' + esc(r.nome) + '</span><div class="t-sub">' + esc(r.quem || '') + ((r.renda || {}).bancoId ? (r.quem ? ' · ' : '') + esc(Banco.curto(r.renda.bancoId)) : '') +
+          (vig ? '' : ' · <span class="badge">' + (pt ? 'encerrada' : 'ended') + '</span>') + '</div></td>' +
+        '<td class="tiny">' + esc(Recorrente.explicar(r)) + '</td>' +
+        '<td class="num"><b class="up">' + fmt(Recorrente.valorEm(r, hojeISO())) + '</b>' + (r.regra === 'anual' ? '<span class="t-sub">' + (pt ? 'por ano' : 'per year') + '</span>' : '') + '</td></tr>'; }).join('') +
+    '</tbody></table></div>';
+  h += '<p class="tiny muted" style="margin:10px 0 0">' + (pt ? 'Entradas avulsas nos últimos 12 meses: ' : 'One-off income in the last 12 months: ') + '<b>' + avulsas.length + '</b> · ' +
+    '<button class="linkinho" data-acao="renda-avulsas">' + (pt ? 'ver nos lançamentos' : 'see in entries') + '</button> · ' +
+    '<button class="linkinho" data-acao="renda-nova" data-recebe="pontual">' + (pt ? 'lançar uma entrada avulsa' : 'post a one-off') + '</button></p>';
+  return h + '</div>';
+}
+
+/* no lançamento: "isso se repete — quer cadastrar com o dia certo?" */
+function blocoFixoLancamento(){
+  const pt = I18n.atual !== 'en';
+  const per = ($('#glPer') || {}).value, grupo = ($('#glGrupo') || {}).value;
+  if(!per || per === 'Pontual' || per === 'Frequente' || per === 'Diario') return '';
+  const renda = grupo === 'RENDA';
+  if(renda && Gasto.lerSubSalario(($('#glSub') || {}).value)) return '';
+  return '<div class="aviso-box gl-fixo"><p class="small" style="margin:0"><b>' + (pt ? 'Isso se repete. ' : 'This repeats. ') + '</b>' +
+    (renda ? (pt ? 'Cadastre como renda fixa, com o dia em que cai e o banco: entra na agenda e no caixa todo mês.' : 'Register it as fixed income, with the day it lands and the bank.')
+           : (pt ? 'Cadastre como compromisso, com o dia de vencer: entra na agenda e avisa antes.' : 'Register it as a commitment, with the due day.')) + '</p>' +
+    '<button type="button" class="btn sm primary" style="margin-top:8px" data-acao="' + (renda ? 'renda-do-lanc' : 'rec-do-lanc') + '">' +
+    (renda ? (pt ? '💰 Cadastrar como renda fixa' : '💰 Register as fixed income') : (pt ? '📌 Cadastrar como compromisso' : '📌 Register as commitment')) + '</button></div>';
+}
+/* leva o que já foi digitado no lançamento para o formulário certo */
+function lancamentoParaFixo(renda){
+  const pega = id => (($('#' + id) || {}).value || '');
+  const data = pega('glData') || hojeISO();
+  const sub = pega('glSub').trim();
+  const semente = {valor: Number(pega('glValor')) || '', quem: pega('glQuem'), dia: Number(data.slice(8, 10)) || 10, desde: data.slice(0, 8) + '01',
+                   irpf: !!($('#glIrpf') || {}).checked, bancoId: pega('glBanco'), obs: pega('glConta')};
+  bEditando = null;
+  if(renda){
+    const c = CATALOGO_RENDA.find(x => sub && x.sub && x.sub.toLowerCase().indexOf(sub.toLowerCase().slice(0, 6)) === 0);
+    abrirRenda(null, Object.assign(semente, {tipo: c ? c.id : 'outro', sub: c ? '' : sub, fonte: pega('glDesc'), recebe: 'dia'}));
+  }else{
+    abrirRecorrente(null, {grupo: pega('glGrupo'), sub: sub, nome: sub || pega('glDesc'), valor: semente.valor, dia: semente.dia, regra: 'dia', quem: semente.quem, desde: semente.desde, irpf: semente.irpf});
+  }
 }
 </script>
 <script>
@@ -31703,6 +31953,8 @@ function verMudancas(){
 /* "isto se repete todo mês; quer cadastrar?" — perguntado uma vez, sem insistir */
 function sugerirRecorrente(p){
   const L = I18n.atual, de = (a,b) => L === 'pt' ? a : b;
+  /* já tem outra janela aberta: não pergunta por cima dela */
+  if(!$('#assetModal').classList.contains('hidden')) return;
   $('#genTitle').textContent = Verter.txt(de('Isto parece conta fixa', 'This looks like a fixed bill'));
   $('#genBody').innerHTML = Verter.html('<p class="small"><b>' + esc(p.sub) + '</b> ' +
       de('apareceu em ' + p.meses + ' meses diferentes, com valor perto de ',
@@ -32634,7 +32886,10 @@ function ligarEventos(){
     if(d.recsug){
       const [grupo, sub] = d.recsug.split('|');
       const x = Recorrente.sugestoes().find(y => y.grupo === grupo && y.sub === sub);
-      abrirRecorrente(null, x ? {grupo, sub, nome: sub, valor: x.valor, dia: x.dia, per:'Mensal'} : {grupo, sub, nome: sub});
+      fechar('genModal');                    /* a pergunta sai da frente do formulário */
+      if(grupo === 'RENDA' && typeof abrirRenda === 'function')
+        abrirRenda(null, {tipo: 'outro', sub: sub, valor: x ? x.valor : '', dia: x ? x.dia : 10, recebe: 'dia'});
+      else abrirRecorrente(null, x ? {grupo, sub, nome: sub, valor: x.valor, dia: x.dia, per:'Mensal'} : {grupo, sub, nome: sub});
       return;
     }
 
@@ -33159,6 +33414,14 @@ function ligarEventos(){
       case 'sal-cad-modo':    salvarCadastroSalario(d.modo); break;
       case 'sal-cad-excluir': excluirCadastroSalario(d.id); break;
       case 'sal-holerite':    { const a = $('#scArquivo'); if(a) a.click(); break; }
+      /* ---- outras rendas ---- */
+      case 'renda-nova':    abrirRenda(null, d.recebe ? {recebe: d.recebe} : null); break;
+      case 'renda-editar':  abrirRenda(d.id); break;
+      case 'renda-salvar':  salvarRenda(); break;
+      case 'renda-excluir': if(confirm(I18n.atual === 'pt' ? 'Excluir esta renda? O que já entrou continua.' : 'Delete this income? Past entries stay.')){ Recorrente.excluir(d.id); rendaCad = null; Store.salvar(); fechar('assetModal'); render(); renderFita(); } break;
+      case 'renda-avulsas': bFiltro.grupos = ['RENDA']; bFiltro.subs = []; bPagina = 0; irPara('b-lanc'); break;
+      case 'renda-do-lanc': lancamentoParaFixo(true); break;
+      case 'rec-do-lanc':   lancamentoParaFixo(false); break;
       /* ---- benefícios pendurados no salário ---- */
       case 'ben-novo':     abrirBeneficio(null, d.sal || null); break;
       case 'ben-editar':   abrirBeneficio(d.id, d.sal || null); break;
