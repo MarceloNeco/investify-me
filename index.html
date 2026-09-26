@@ -9329,8 +9329,14 @@ const Banco = {
       ['especie',  /\bdinheiro\b|\bespecie\b|\ba vista\b/],
       ['vale',     /\bvale refeicao\b|\bvale alimentacao\b|\bticket\b|\balelo\b|\bsodexo\b|\bvr\b|\bva\b/]
     ];
+    /* Comprovante de maquininha: a bandeira e o final do cartão estão
+       ali, então "CRÉDITO"/"DÉBITO" (ou "CREDIT") manda — mesmo que o
+       papel traga "pix" ou "à vista" impressos no fundo. */
+    const deCartao = /\*{2,}\s*\d{4}|via cliente|\baid\s*:|\bcielo\b|\bgetnet\b|laranjinha|\bstone\b|ifood pago|pagseguro|safrapay|sumup/.test(semAc);
     /* débito automático antes de débito, senão o mais curto ganha */
     if(/\bdebito automatico\b/.test(semAc)) achado.forma = 'debaut';
+    else if(deCartao && /\bcredit\w*\b|\bcred\b/.test(semAc)) achado.forma = 'credito';
+    else if(deCartao && /\bdebit\w*\b|\bdeb\b/.test(semAc)) achado.forma = 'debito';
     else for(const [id, re] of pistas){ if(re.test(semAc)){ achado.forma = id; break; } }
     if(achado.forma) achado.confianca.push('forma');
 
@@ -9349,22 +9355,31 @@ const Banco = {
       '290':['pagbank','pagseguro'], '323':['mercado pago'], '380':['picpay'],
       '197':['stone'], '102':['xp investimentos'], '457':['avenue']
     };
-    for(const cod of Object.keys(PISTAS_BANCO)){
+    /* na maquininha o banco impresso é o da loja (laranjinha = Itaú da
+       loja), não o de quem pagou: não vale como banco da pessoa */
+    if(!deCartao) for(const cod of Object.keys(PISTAS_BANCO)){
       if(PISTAS_BANCO[cod].some(p => semAc.indexOf(p) >= 0)){ achado.bancoCod = cod; break; }
     }
     if(achado.bancoCod) achado.confianca.push('banco');
 
-    /* A bandeira, pelo nome — com palavra inteira, senão "Alelo"
-       vira "Elo" e o vale-refeição vira cartão de crédito. */
-    for(const b of BANDEIRAS){
-      if(b.id === 'outra') continue;
-      const alvo = b.nome.toLowerCase().split(' ')[0];
-      if(new RegExp('\\b' + alvo + '\\b').test(semAc)){ achado.bandeira = b.id; break; }
-    }
-
     /* o final do cartão: "**** 1234", "final 1234", "xxxx1234" */
     const mf = /(?:\*{2,}|x{2,}|final|finais|terminado em)\s*\.?\s*(\d{4})\b/i.exec(t.replace(/\s+/g,' '));
     if(mf){ achado.fim = mf[1]; achado.confianca.push('final'); }
+
+    /* A bandeira, pelo nome — com palavra inteira, senão "Alelo"
+       vira "Elo" e o vale-refeição vira cartão de crédito. O papel
+       da maquininha traz VISA e ELO impressos no fundo: a bandeira
+       que está colada no final do cartão ("MASTERCARD ****9458") é
+       a que vale; sem final, a primeira que aparecer. */
+    const perto = mf ? semAc.slice(Math.max(0, mf.index - 40), mf.index + mf[0].length + 40) : '';
+    for(const onde of (perto ? [perto, semAc] : [semAc])){
+      for(const b of BANDEIRAS){
+        if(b.id === 'outra') continue;
+        const alvo = b.nome.toLowerCase().split(' ')[0];
+        if(new RegExp('\\b' + alvo + '\\b').test(onde)){ achado.bandeira = b.id; break; }
+      }
+      if(achado.bandeira) break;
+    }
 
     return achado;
   },
@@ -13301,6 +13316,11 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.17', d:'2026-09-26', t:'Leitura de comprovante de maquininha', itens:[
+    'O leitor de cupom por foto passa a entender o comprovante da maquininha (Cielo, Rede/laranjinha, Getnet, Stone, iFood Pago, PagSeguro…): valor na linha do CRÉDITO/DÉBITO ou sozinho com R$, data (a que vem com a hora), loja (a linha com LTDA perto do CNPJ), CNPJ que confere pelo dígito (o AID não é confundido com CNPJ), crédito ou débito, bandeira e final do cartão.',
+    'A bandeira certa é a que está colada no final do cartão ("MASTERCARD ****9458"); VISA e ELO impressos no fundo do papel não enganam mais. "Pix" e "à vista" impressos no papel também não viram forma de pagamento quando o comprovante é de cartão.',
+    'O banco impresso na maquininha (laranjinha = Itaú da loja) não é mais tomado como banco de quem pagou.'
+  ]},
   {v:'3.16', d:'2026-09-26', t:'Visual mais limpo e o AssistONE', itens:[
     'AssistONE: o personagem redondo no canto de baixo da tela, em todas as telas. Ao tocar, ele cresce e abre um balão que começa por "Você está em…", com uma frase da tela e atalhos que já executam a ação (novo lançamento, escanear, importar, novo investimento…), e depois oferece Começar, Tour rápido, Procurar algo e Ajuda desta tela. Na primeira visita ele se apresenta. Liga e desliga em ⚙ → Compartilhadas → Preferências.',
     'Visual mais suave: cantos mais arredondados, menos bordas e menos peso nos cartões, botões e janelas; tudo que abre, abre com um movimento curto.',
@@ -17940,6 +17960,8 @@ function abrirEscanear(){
       '<ul class="small muted" style="margin:7px 0 0 18px;padding:0">' +
         '<li><b>QR da nota fiscal (NFC-e):</b> sai a data, o CNPJ da loja e, quando o QR carrega, o valor total.</li>' +
         '<li><b>Código do boleto:</b> sai o valor e o vencimento, direto dos números. Vira conta a pagar na agenda.</li>' +
+        '<li><b>Comprovante da maquininha (Cielo, Rede, Getnet, Stone, iFood Pago…):</b> sai o valor, a data, ' +
+        'a loja, o CNPJ, crédito ou débito, a bandeira e o final do cartão.</li>' +
         '<li><b>Foto de um cupom comum:</b> o app lê o texto do papel e procura o total, a data, ' +
         'o CNPJ e os itens. Papel amassado ou foto escura erram bastante, então ele mostra o quanto ' +
         'confia na leitura e deixa tudo editável antes de salvar.</li>' +
@@ -18018,7 +18040,7 @@ function mostrarCupom(r){
   escaneado = r;
   const L = I18n.atual, de = (a,b) => L === 'pt' ? a : b;
   let h = '<div class="card2-box esc-achado" style="margin-top:14px">' +
-    '<b class="small">🧾 ' + de('Cupom lido', 'Receipt read') + '</b>' +
+    '<b class="small">🧾 ' + (r.maquininha ? de('Comprovante de cartão lido', 'Card receipt read') : de('Cupom lido', 'Receipt read')) + '</b>' +
     '<table class="tbl tbl-mini"><tbody>' +
       linhaEsc(de('Loja', 'Merchant'), r.loja ? esc(r.loja) : '<span class="muted">—</span>') +
       linhaEsc(t('fin.valor'), r.valor ? '<b>' + fmt(r.valor) + '</b>'
@@ -18286,12 +18308,75 @@ const Ocr = {
     if(w){ try{ await w.terminate(); }catch(e){} }
   },
 
-  /* o caminho completo: foto -> texto -> lançamento pronto */
+  /* gira um canvas em múltiplos de 90° (foto tirada com o papel deitado) */
+  girar(c, graus){
+    const r = document.createElement('canvas');
+    const deitado = graus === 90 || graus === 270;
+    r.width = deitado ? c.height : c.width; r.height = deitado ? c.width : c.height;
+    const g = r.getContext('2d');
+    g.translate(r.width / 2, r.height / 2); g.rotate(graus * Math.PI / 180);
+    g.drawImage(c, -c.width / 2, -c.height / 2);
+    return r;
+  },
+
+  /* o caminho completo: foto -> texto -> lançamento pronto.
+     Uma foto só, várias leituras: primeiro com o preparo dos documentos
+     do IR (cinza, contraste, tamanho), depois a imagem como veio, o
+     modo de bloco, e por fim o papel de lado e de cabeça para
+     baixo. Para na primeira que acha o valor com confiança; senão
+     fica com a mais confiante e completa o que faltou (data, CNPJ,
+     loja, final do cartão) com o que as outras leram. Testado com
+     comprovantes de Cielo, Rede, Getnet e iFood Pago: o valor do
+     iFood só sai na imagem crua, o CNPJ só na preparada. */
   async lerCupom(arquivo, aviso){
-    const txt = await this.texto(arquivo, aviso);
-    const dados = CupomTexto.entender(txt);
-    dados.textoCru = txt;
-    return dados;
+    let cru = null, prep = null;
+    try{
+      if(typeof DocIR !== 'undefined' && DocIR.preparar && DocIR.canvasDaImagem){
+        cru = await DocIR.canvasDaImagem(arquivo);
+        prep = DocIR.preparar(cru);
+      }
+    }catch(e){ cru = prep = null; }
+    if(!prep){
+      const txt = await this.texto(arquivo, aviso);
+      const dados = CupomTexto.entender(txt);
+      dados.textoCru = txt;
+      return dados;
+    }
+    /* a preparada vai primeiro: é a que acerta mais; a crua entra
+       porque em papel muito claro o contraste esticado apaga o valor */
+    const passadas = [
+      {img: prep, psm: '3', nome: 0},
+      {img: cru,  psm: '3', nome: 0},
+      {img: prep, psm: '6', nome: 0},
+      {img: () => this.girar(prep, 90),  psm: '3', nome: 90},
+      {img: () => this.girar(prep, 270), psm: '3', nome: 270},
+      {img: () => this.girar(prep, 180), psm: '3', nome: 180}
+    ];
+    let melhor = null;
+    const lidas = [];
+    try{
+      for(let i = 0; i < passadas.length; i++){
+        const p = passadas[i];
+        if(i === 3 && aviso) aviso(I18n.atual === 'pt' ? 'A foto pode estar deitada: tentando de lado…' : 'The photo may be sideways: trying rotated…');
+        const txt = await this.texto(typeof p.img === 'function' ? p.img() : p.img, aviso, {psm: p.psm, lote: true});
+        const d = CupomTexto.entender(txt); d.textoCru = txt; d.rotacao = p.nome;
+        lidas.push(d);
+        if(!melhor || d.confianca > melhor.confianca) melhor = d;
+        if(d.valor && d.confianca >= 5) break;
+      }
+    }finally{ await this.fecharLote(); }
+    /* o que faltou na melhor, outra leitura pode ter achado */
+    lidas.forEach(d => {
+      if(d === melhor) return;
+      if(!melhor.valor && d.valor) melhor.valor = d.valor;
+      if(!melhor.data && d.data) melhor.data = d.data;
+      if((!melhor.cnpj || !melhor.cnpj.valido) && d.cnpj && d.cnpj.valido) melhor.cnpj = d.cnpj;
+      if(!melhor.loja && d.loja) melhor.loja = d.loja;
+      if(!melhor.pagamento.fim && d.pagamento.fim){ melhor.pagamento.fim = d.pagamento.fim; melhor.cartaoId = melhor.cartaoId || d.cartaoId; }
+      if(!melhor.formaId && d.formaId) melhor.formaId = d.formaId;
+      if(!melhor.pagamento.bandeira && d.pagamento.bandeira) melhor.pagamento.bandeira = d.pagamento.bandeira;
+    });
+    return melhor;
   }
 };
 
@@ -18340,22 +18425,96 @@ const CupomTexto = {
     return null;
   },
 
-  /* a data: dd/mm/aaaa em qualquer lugar do cupom */
+  /* a data: dd/mm/aaaa em qualquer lugar do cupom. Quando há mais de
+     uma, a que vem com hora do lado é a da compra (a maquininha imprime
+     "20/09/2026 14H26"); um pedaço de CNPJ nunca vale como data. */
   data(txt){
-    const m = /(\d{2})[\/.-](\d{2})[\/.-](\d{2,4})/.exec(String(txt || ''));
-    if(!m) return null;
-    const ano = m[3].length === 2 ? '20' + m[3] : m[3];
-    const mes = Number(m[2]), dia = Number(m[1]);
-    if(mes < 1 || mes > 12 || dia < 1 || dia > 31) return null;
-    return ano + '-' + ('0'+mes).slice(-2) + '-' + ('0'+dia).slice(-2);
+    const re = /(?<![\d.\/])(\d{2})[\/.-](\d{2})[\/.-](\d{2,4})(?![\d\/-])(\s*-?\s*\d{1,2}[:hH]\d{2})?/g;
+    let m, primeira = null;
+    while((m = re.exec(String(txt || '')))){
+      const ano = m[3].length === 2 ? '20' + m[3] : m[3];
+      const mes = Number(m[2]), dia = Number(m[1]);
+      if(mes < 1 || mes > 12 || dia < 1 || dia > 31 || m[3].length === 3) continue;
+      const iso = ano + '-' + ('0'+mes).slice(-2) + '-' + ('0'+dia).slice(-2);
+      if(m[4]) return iso;
+      if(!primeira) primeira = iso;
+    }
+    return primeira;
   },
 
+  /* o CNPJ: entre vários candidatos (o AID da maquininha também tem
+     14 dígitos), o que confere pelo dígito ganha; depois o que veio
+     pontuado como CNPJ se escreve. */
   cnpj(txt){
-    const m = /(\d{2})[.\s]?(\d{3})[.\s]?(\d{3})[\/\s]?(\d{4})[-\s]?(\d{2})/.exec(String(txt || ''));
-    if(!m) return null;
-    const so = m.slice(1).join('');
-    return {cru: so, fmt: m[1]+'.'+m[2]+'.'+m[3]+'/'+m[4]+'-'+m[5], valido: this.cnpjValido(so)};
+    const re = /(\d{2})[.\s]?(\d{3})[.\s]?(\d{3})[\/\s]?(\d{4})[-\s]?(\d{2})/g;
+    let m, melhor = null;
+    while((m = re.exec(String(txt || '')))){
+      const so = m.slice(1).join('');
+      const c = {cru: so, fmt: m[1]+'.'+m[2]+'.'+m[3]+'/'+m[4]+'-'+m[5], valido: this.cnpjValido(so),
+                 pontuado: /\d\.\d{3}\.\d{3}\/\d{4}-?\d{2}/.test(m[0]), pos: m.index};
+      const nota = (c.valido ? 2 : 0) + (c.pontuado ? 1 : 0);
+      if(!melhor || nota > melhor.nota) melhor = Object.assign(c, {nota});
+    }
+    if(!melhor) return null;
+    delete melhor.nota; delete melhor.pontuado;
+    return melhor;
   },
+
+  /* ---------- comprovante de maquininha ----------
+     Cielo, Rede/laranjinha, Getnet, Stone, iFood Pago, PagSeguro…
+     Não tem "TOTAL" nem itens: o valor está na linha do CRÉDITO/
+     DÉBITO ou sozinho com "R$"; a loja é a linha com LTDA perto do
+     CNPJ; a bandeira e o final do cartão vêm juntos. */
+  MAQUININHA: /via cliente|\baid\s*:|\bauto\s*:|venda aprovada|comprovante de venda|\bcielo\b|\bgetnet\b|\brede\b|laranjinha|\bstone\b|pagseguro|pagbank|ifood pago|safrapay|sumup|mercado pago|n\.?\s*estab|\bterm\s*:|\bpos\s+\d/,
+  semAcento(t){ return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); },
+  ehMaquininha(txt){ return this.MAQUININHA.test(this.semAcento(txt)); },
+
+  totalMaquininha(txt){
+    const linhas = String(txt || '').split(/\r?\n/);
+    /* fora: data e hora, CNPJ e códigos longos ("000.000001.87" não é dinheiro) */
+    const limpa = l => l.replace(/\d{2}[\/.-]\d{2}[\/.-]\d{2,4}(\s*-?\s*\d{1,2}[:hH]\d{2}(:\d{2})?)?/g, ' ')
+                        .replace(/\d{2}\.\d{3}\.\d{3}\/\d{4}-?\d{2}/g, ' ')
+                        .replace(/(?<![\d,])[\d.]{9,}(?![\d,])/g, ' ');
+    const acha = re => {
+      for(let i = 0; i < linhas.length; i++){
+        const l = this.semAcento(linhas[i]);
+        if(!re.test(l)) continue;
+        const v = this.numero(limpa(linhas[i])) != null ? this.numero(limpa(linhas[i])) : this.numero(limpa(linhas[i+1] || ''));
+        if(v != null && v > 0) return {valor: v, rotulo: linhas[i].trim().slice(0, 60), linha: i};
+      }
+      return null;
+    };
+    /* o "R$" manda: é o único número do papel que é dinheiro na certa */
+    return acha(/r\s?\$|\brs\s*\d/) ||
+           acha(/credito|debito|venda aprovada|\bvalor\b|\btotal\b/) ||
+           (() => {
+             /* último recurso: o maior número com centavos que sobrou */
+             let melhor = null;
+             linhas.forEach((l, i) => { const v = this.numero(limpa(l)); if(v != null && v > 0 && (!melhor || v > melhor.valor)) melhor = {valor: v, rotulo: l.trim().slice(0, 60), linha: i}; });
+             return melhor;
+           })();
+  },
+
+  lojaMaquininha(txt){
+    const linhas = String(txt || '').split(/\r?\n/).map(l => l.trim());
+    const pula = /via cliente|cliente|credito|debito|venda|aprovad|mastercard|visa|\belo\b|amex|hipercard|diners|\baid\b|\bauto\s*:?\s*\d|\bterm|estab|\bpos\b|comprovante|exija|documento|fiscal|cielo|getnet|\brede\b|laranjinha|itau|stone|pagseguro|pagbank|ifood|safrapay|sumup|mercado pago|www\.|\.com|cnpj|cpf|pix|parcel|valor|total|obrigad|volte|sempre|mercadoria|servico/;
+    const iCnpj = linhas.findIndex(l => /\d{2}\.?\d{3}\.?\d{3}\/\d{4}-?\d{2}/.test(l));
+    let melhor = null;
+    linhas.forEach((l, i) => {
+      /* "AUTO POSTO CERGAL LTDA   CREDIT": o CREDIT da coluna da direita não é da loja */
+      const s = this.semAcento(l).replace(/\s*[|].*$/, '').replace(/\s+\b(credit\w*|debit\w*)\b\s*$/, '');
+      if(s.length < 4 || s.length > 48 || /^\d/.test(s) || pula.test(s)) return;
+      const letras = (s.match(/[a-z]/g) || []).length;
+      if(letras < s.length * 0.55) return;
+      let nota = 1;
+      if(/\bltda\b|\bme\b|eireli|\bs\.?a\.?\b|\bsa\b|epp/.test(s)) nota += 3;
+      if(iCnpj >= 0 && Math.abs(i - iCnpj) <= 2) nota += 2;
+      if(/lanchonete|restaurante|cucina|pizzaria|posto|mercado|farmacia|padaria|bar\b|cafe|hotel|loja|supermercado|drogaria/.test(s)) nota += 1;
+      if(!melhor || nota > melhor.nota) melhor = {nome: l.replace(/\s*[|].*$/, '').replace(/\s+(CREDIT\w*|DEBIT\w*)\s*$/i, '').replace(/\s{2,}/g, ' '), nota};
+    });
+    return melhor ? melhor.nome : null;
+  },
+
 
   cnpjValido(c){
     if(!/^\d{14}$/.test(c) || /^(\d)\1{13}$/.test(c)) return false;
@@ -18407,10 +18566,11 @@ const CupomTexto = {
   },
 
   entender(txt){
-    const tot = this.total(txt);
+    const maq = this.ehMaquininha(txt);
+    const tot = this.total(txt) || (maq ? this.totalMaquininha(txt) : null);
     const chave = this.chave(txt);
     const cnpj = this.cnpj(txt);
-    const itens = this.itens(txt);
+    const itens = maq ? [] : this.itens(txt);
     const somaItens = itens.reduce((s,i) => s + i.valor, 0);
 
     /* confiança: quanto do que importa foi achado, e se os itens fecham com o total */
@@ -18431,6 +18591,7 @@ const CupomTexto = {
 
     return {
       tipo: 'cupom',
+      maquininha: maq,
       pagamento: pgto,
       formaId:  pgto.forma || '',
       cartaoId: (typeof Banco !== 'undefined') ? Banco.cartaoDoTexto(pgto) : '',
@@ -18438,7 +18599,7 @@ const CupomTexto = {
       valor: tot ? tot.valor : null,
       rotuloTotal: tot ? tot.rotulo : null,
       data: this.data(txt) || (chave && chave.competencia ? chave.competencia + '-01' : null),
-      loja: this.loja(txt),
+      loja: maq ? this.lojaMaquininha(txt) : this.loja(txt),
       cnpj: cnpj, chave: chave,
       itens: itens, somaItens: somaItens,
       confianca: Math.min(10, pontos),
