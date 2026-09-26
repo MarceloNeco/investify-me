@@ -2110,6 +2110,32 @@ body:has(.sidenav.open) .assistone, body:has(.popup-an) .assistone{display:none}
 }
 @media (min-width:761px){ #toasts{bottom:96px} }
 
+/* ---- cartões que levam a uma tela ---- */
+.kpi-link{cursor:pointer; transition:border-color .15s, transform .15s}
+.kpi-link:hover{border-color:var(--accent); transform:translateY(-1px)}
+.kpi-link .lbl::after{content:'›'; margin-left:auto; color:var(--txt3); font-size:.9rem}
+.card-link{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; text-align:left; cursor:pointer; color:var(--txt); font:inherit; padding:12px 16px}
+.card-link:hover{border-color:var(--accent)}
+.card-link > span:first-child{font-weight:620}
+/* ---- benefícios ---- */
+.ben-sal{margin:4px 0 14px; padding:12px 14px; background:var(--card2); border-radius:14px}
+.ben-lista{display:grid; gap:6px}
+.ben-item{display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; width:100%; text-align:left; background:var(--card);
+  border:1px solid var(--linha-suave); border-radius:12px; padding:8px 12px; color:inherit; font:inherit; cursor:pointer; min-height:44px}
+.ben-item:hover{border-color:var(--accent)}
+.ben-nome b{display:block; font-size:.88rem} .ben-nome i{display:block; font-style:normal; font-size:.74rem; color:var(--txt3)}
+.ben-valor{font-weight:650; font-variant-numeric:tabular-nums; white-space:nowrap}
+/* ---- deslocamentos ---- */
+.desloc-cfg label.f{margin-bottom:6px}
+.lug-lista{display:grid; gap:6px}
+.lug-item{display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; width:100%; text-align:left; background:var(--card2);
+  border:1px solid var(--linha-suave); border-radius:12px; padding:9px 12px; color:inherit; font:inherit; cursor:pointer; min-height:48px}
+.lug-item:hover{border-color:var(--accent)}
+.lug-ico{font-size:1.3rem} .lug-txt b{display:block; font-size:.9rem} .lug-txt i{display:block; font-style:normal; font-size:.76rem; color:var(--txt3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw}
+.lug-geo{font-size:.72rem; color:var(--txt3)} .lug-geo.ok{color:var(--accent)}
+.bf-cel{gap:8px} .bf-per-sel{flex:1; min-width:0; max-width:100%}
+@media (max-width:600px){ .desloc-cfg{grid-template-columns:1fr 1fr} }
+
 /* ---- tabela empilhada (celular): cada linha vira um cartão ---- */
 .tbl-empilha{display:block; width:100%}
 .tbl-empilha thead{display:none}
@@ -2219,6 +2245,7 @@ body:has(.sidenav.open) .assistone, body:has(.popup-an) .assistone{display:none}
       <section class="view hidden" id="view-b-fluxo"></section>
       <section class="view hidden" id="view-b-custos"></section>
       <section class="view hidden" id="view-b-renda"></section>
+      <section class="view hidden" id="view-b-desloc"></section>
       <section class="view hidden" id="view-b-futuro"></section>
       <section class="view hidden" id="view-b-precos"></section>
       <!-- TaxONE -->
@@ -2420,6 +2447,7 @@ const TEXTOS = {
   'nav.fluxo':         {pt:'Fluxo',             en:'Cash flow'},
   'nav.custos':        {pt:'Custos',            en:'Costs'},
   'nav.renda':         {pt:'Renda',             en:'Income'},
+  'nav.desloc':        {pt:'Deslocamentos',     en:'Commutes'},
   'nav.futuro':        {pt:'Futuro',            en:'Forecast'},
   'nav.precos':        {pt:'Preços',            en:'Prices'},
   'nav.agenda':        {pt:'Agenda',            en:'Calendar'},
@@ -7549,6 +7577,10 @@ const Store = {
     st.categorias = (o.categorias && typeof o.categorias === 'object') ? o.categorias : {};
     st.bancos  = Array.isArray(o.bancos)  ? o.bancos  : [];
     st.cartoes = Array.isArray(o.cartoes) ? o.cartoes : [];
+    /* v3.19: benefícios pendurados no salário e deslocamentos */
+    st.beneficios = Array.isArray(o.beneficios) ? o.beneficios : [];
+    st.lugares = Array.isArray(o.lugares) ? o.lugares : [];
+    st.trajetos = Array.isArray(o.trajetos) ? o.trajetos : [];
     /* TaxONE: declarações e acompanhamentos (restituição, processos) */
     st.tax = (o.tax && typeof o.tax === 'object') ? o.tax : {};
     st.tax.declaracoes = Array.isArray(st.tax.declaracoes) ? st.tax.declaracoes : [];
@@ -13336,6 +13368,14 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.19', d:'2026-09-26', t:'Benefícios, deslocamentos e filtros', itens:[
+    'Benefícios pendurados no salário: vale-alimentação, vale-refeição, vale-transporte, plano de saúde, odontológico, creche, educação, home office, academia, seguro de vida, previdência, PLR e qualquer outro. Cada um é obrigatoriamente ligado a um salário: se o emprego acaba, o benefício acaba junto. Três modos: entra como dinheiro (cai no caixa como o salário, no último dia útil, no 5º dia útil, num dia fixo ou junto com o salário), só referência (economia estimada: VT, estacionamento, plano) ou desconta no salário (informativo). Aparecem dentro do cadastro do salário e num cartão próprio em Renda, com a foto do extrato do vale preenchendo operadora e valor.',
+    'Deslocamentos (BudgetONE → Deslocamentos, atrás da flag "deslocamentos"): lugares com endereço e coordenadas pelo OpenStreetMap, trajetos com jeito de ir, quem vai e quantas vezes, distância de carro estimada (e editável), pedágio, abastecimentos por viagem longa, app/táxi e transporte público (coberto pelo vale-transporte quando há). Duas pessoas no mesmo carro contam uma vez ("vai junto com", inclusive a partir de uma data). A estimativa pode virar custo fixo.',
+    'Os cartões do Painel do BudgetONE são clicáveis: Entrou leva a Renda, Saiu a Lançamentos, Sobrou a Fluxo e Custo de viver a Custos. Os cartões do salário levam a Renda.',
+    'O filtro de período começa em "Últimos 12 meses" e o app lembra o que você deixou, neste aparelho. No celular, os períodos viraram um seletor só, ao lado de "mais filtros".',
+    'O seletor de nível (Iniciante/Médio/Expert) só aparece onde muda alguma coisa: no BudgetONE as explicações têm um texto só, então ele some ali.',
+    'Compromisso que cai no último dia útil do mês.'
+  ]},
   {v:'3.18', d:'2026-09-26', t:'Tabelas que cabem no celular', itens:[
     'No celular, tabela que não cabe na tela vira uma lista de cartões, sem rolar para o lado e sem fonte menor: a primeira coluna à esquerda, o valor principal em destaque à direita e o resto em uma linha abaixo, cada um com o seu rótulo. Vale para "As dez maiores contas" no início do BudgetONE, para os Lançamentos, para o ano a ano do Fluxo e para qualquer tabela que estourar.',
     'Tocar na linha continua abrindo o lançamento. Ao girar o celular, a tela se refaz sozinha.'
@@ -14303,7 +14343,7 @@ const Recorrente = {
     if(!o.regra) o.regra = o.diaUtil ? 'diaUtil' : (o.per === 'Anual' ? 'anual' : 'dia');
     if(!REGRAS_REC[o.regra]) o.regra = 'dia';
 
-    o.dia = Math.min(31, Math.max(1, Number(o.dia) || 1));
+    o.dia = Number(o.dia) === -1 ? -1 : Math.min(31, Math.max(1, Number(o.dia) || 1));   /* -1 = último dia útil */
     o.mes = Math.min(12, Math.max(0, Number(o.mes) || 0));
     o.semana = Number(o.semana) || 1;                 /* 1..4 ou -1 para a última */
     o.diaSemana = Math.min(6, Math.max(0, Number(o.diaSemana) || 1));
@@ -14418,6 +14458,12 @@ const Recorrente = {
 
   /* o n-ésimo dia útil de um mês, pulando sábado e domingo */
   diaUtilDoMes(ano, mes, n){
+    /* n = -1: o último dia útil do mês (é quando o vale costuma cair) */
+    if(Number(n) === -1){
+      const u = new Date(ano, mes, 0);
+      while(u.getDay() === 0 || u.getDay() === 6) u.setDate(u.getDate() - 1);
+      return u;
+    }
     const d = new Date(ano, mes - 1, 1);
     let contados = 0;
     while(d.getMonth() === mes - 1){
@@ -14507,12 +14553,14 @@ const Recorrente = {
     const ds = I18n.diaSemana(r.diaSemana, 'longo');
     const de = (a,b) => L === 'pt' ? a : b;
     switch(r.regra){
-      case 'diaUtil': return de(r.dia + 'º dia útil do mês', r.dia + (r.dia===1?'st':r.dia===2?'nd':r.dia===3?'rd':'th') + ' business day');
+      case 'diaUtil': return r.dia === -1 ? de('último dia útil do mês', 'last business day')
+                           : de(r.dia + 'º dia útil do mês', r.dia + (r.dia===1?'st':r.dia===2?'nd':r.dia===3?'rd':'th') + ' business day');
       case 'semana':  return de(ord + ' ' + ds + ' do mês', ord + ' ' + ds + ' of the month');
       case 'semanal': return de('toda ' + ds, 'every ' + ds);
       case 'anual':   return de('todo dia ' + r.dia + ' de ' + I18n.mesLongo(r.mes || 1),
                                 'every ' + I18n.mesLongo(r.mes || 1) + ' ' + r.dia);
-      default:        return r.cada > 1
+      default:        if(r.dia === 31 && !(r.cada > 1)) return de('no último dia do mês', 'on the last day of the month');
+                      return r.cada > 1
                         ? de('dia ' + r.dia + ', a cada ' + r.cada + ' meses', 'day ' + r.dia + ', every ' + r.cada + ' months')
                         : de('todo dia ' + r.dia, 'every month on day ' + r.dia);
     }
@@ -15396,6 +15444,7 @@ const ABAS = {
     {v:'b-custos',   ico:'📌', chave:'nav.custos',      mobile:true},
     {v:'b-fluxo',    ico:'📈', chave:'nav.fluxo',       mobile:true},
     {v:'b-renda',    ico:'💰', chave:'nav.renda',       mobile:false},
+    {v:'b-desloc',   ico:'🗺️', chave:'nav.desloc',      mobile:false},
     {v:'b-futuro',   ico:'🔮', chave:'nav.futuro',      mobile:false},
     {v:'b-precos',   ico:'🏷️', chave:'nav.precos',      mobile:false},
     {v:'config',     ico:'⚙️', chave:'nav.config',      mobile:false}
@@ -15423,7 +15472,7 @@ ABAS.tax = [
   {v:'t-deducoes',   ico:'🩺', chave:'nav.t.ded',      mobile:false},
   {v:'config',       ico:'⚙️', chave:'nav.config',     mobile:false}
 ];
-const VIEWS_BUDGET = ['b-painel','b-lanc','b-fluxo','b-custos','b-renda','b-futuro','b-precos'];
+const VIEWS_BUDGET = ['b-painel','b-lanc','b-fluxo','b-custos','b-renda','b-desloc','b-futuro','b-precos'];
 const VIEWS_TAX = ['t-painel','t-imposto','t-pjclt','t-declaracoes','t-processos','t-docs','t-deducoes'];
 /* o rótulo da aba sai do dicionário, para trocar de idioma sem remexer em nada */
 function nomeAba(a){ return a.chave ? t(a.chave) : (a.nome || a.v); }
@@ -15501,7 +15550,8 @@ function mostrarHub(){
 /* a barra lateral e a de baixo, montadas conforme o app escolhido */
 function montarNav(){
   const app = ST.appAtual || 'investify';
-  const abas = ABAS[app] || ABAS.investify;
+  /* telas atrás de uma flag (o RootifyONE vai publicar) só entram quando ligadas */
+  const abas = (ABAS[app] || ABAS.investify).filter(a => a.v !== 'b-desloc' || (typeof Flags === 'undefined' || Flags.ligada('deslocamentos')));
   const lado = $('#navLista');
   if(lado) lado.innerHTML = Verter.html(abas.map(a =>
     '<button class="nav-item" data-view="' + a.v + '"><span>' + a.ico + '</span> ' + esc(nomeAba(a)) + '</button>').join(''));
@@ -15591,20 +15641,21 @@ function viewBPainel(){
   const doze = bTemFiltro() ? bLista() : Gasto.filtrar({de: jan.de, ate: jan.ate});
   const c    = Gasto.caixa(doze);
 
+  const pDe = bFiltro.de || jan.de, pAte = bFiltro.ate || jan.ate;
   let h = '<div class="card-head"><h1>Painel</h1>' +
-    '<span class="small muted">' + fmtData(jan.de) + ' a ' + fmtData(jan.ate) + '</span></div>';
+    '<span class="small muted">' + (pDe ? fmtData(pDe) : '…') + ' a ' + (pAte ? fmtData(pAte) : (I18n.atual === 'pt' ? 'hoje' : 'today')) + '</span></div>';
 
   h += barraFiltros({busca:false});
   h += avisoDensidade(real);
 
   /* os quatro números que importam */
   h += '<div class="kpis">' +
-    kpiB('Entrou por mês', fmt(real.entrada), 'renda-mensal', 'média dos 12 meses') +
-    kpiB('Saiu por mês', fmt(real.saida), 'gasto-mensal', c.n + ' lançamentos no período') +
+    kpiB('Entrou por mês', fmt(real.entrada), 'renda-mensal', 'média dos 12 meses', '', 'b-renda') +
+    kpiB('Saiu por mês', fmt(real.saida), 'gasto-mensal', c.n + ' lançamentos no período', '', 'b-lanc') +
     kpiB('Sobrou por mês', fmt(real.entrada - real.saida), 'sobra-mensal',
          real.entrada ? pnum((real.entrada - real.saida) / real.entrada * 100, 0) + '% do que entrou' : '—',
-         (real.entrada - real.saida) >= 0 ? 'up' : 'down') +
-    kpiB('Custo de viver', fmt(fixo.mensal), 'custo-fixo', fixo.itens.length + ' compromissos fixos') +
+         (real.entrada - real.saida) >= 0 ? 'up' : 'down', 'b-fluxo') +
+    kpiB('Custo de viver', fmt(fixo.mensal), 'custo-fixo', fixo.itens.length + ' compromissos fixos', '', 'b-custos') +
     '</div>';
 
   /* para onde foi o dinheiro */
@@ -15663,8 +15714,8 @@ function viewBPainel(){
   return h;
 }
 
-function kpiB(rotulo, valor, info, sub, classe){
-  return '<div class="kpi"><div class="lbl">' + esc(rotulo) +
+function kpiB(rotulo, valor, info, sub, classe, irpara){
+  return '<div class="kpi' + (irpara ? ' kpi-link' : '') + '"' + (irpara ? ' data-irpara="' + irpara + '" role="link" tabindex="0"' : '') + '><div class="lbl">' + esc(rotulo) +
     (info ? ' <button class="info-dot" data-info="' + info + '">i</button>' : '') + '</div>' +
     '<div class="val' + (classe ? ' ' + classe : '') + '">' + valor + '</div>' +
     (sub ? '<div class="sub">' + esc(sub) + '</div>' : '') + '</div>';
@@ -15708,7 +15759,20 @@ function bVazio(){
    BudgetONE — Lançamentos
    ========================================================= */
 let bFiltro = {busca:'', grupos:[], subs:[], quem:[], formas:[], de:'', ate:'', fluxo:'',
-               periodo:'tudo', favoritos:false, revisar:false, irpf:false};
+               periodo:'12m', favoritos:false, revisar:false, irpf:false};
+/* o período escolhido fica guardado neste aparelho: o padrão são os
+   últimos 12 meses, mas o app lembra o que a pessoa deixou */
+const CHAVE_BFILTRO = 'moneytrio.bfiltro.v1';
+function bGuardarFiltro(){
+  try{ localStorage.setItem(CHAVE_BFILTRO, JSON.stringify({periodo: bFiltro.periodo, de: bFiltro.de, ate: bFiltro.ate})); }catch(e){}
+}
+function bCarregarFiltro(){
+  let g = null;
+  try{ g = JSON.parse(localStorage.getItem(CHAVE_BFILTRO) || 'null'); }catch(e){}
+  if(g && g.periodo === '' && (g.de || g.ate)){ bFiltro.periodo = ''; bFiltro.de = g.de || ''; bFiltro.ate = g.ate || ''; return; }
+  const id = g && g.periodo ? g.periodo : '12m';
+  if(!bAplicarPeriodo(id)) bAplicarPeriodo('12m');
+}
 let bPagina = 0;
 const B_POR_PAGINA = 60;
 
@@ -16031,10 +16095,11 @@ function viewBRenda(){
     barraFiltros({busca:false});
 
   if(!toda.length)
-    return h + blocoSalarios({}) + '<div class="card"><p class="muted small" style="margin:0">Nenhuma entrada cadastrada. ' +
+    return h + blocoSalarios({}) + blocoBeneficios() + '<div class="card"><p class="muted small" style="margin:0">Nenhuma entrada cadastrada. ' +
       'Lance salário, pró-labore, aluguel recebido ou restituição com o grupo <b>Renda</b>.</p></div>';
 
   h += blocoSalarios({limite: 6});
+  h += blocoBeneficios();
   h += '<div class="kpis kpis-3">' +
     kpiB('Entrou por mês', fmt(soma12 / 12), null, 'média dos 12 meses', 'up') +
     kpiB('Saiu por mês', fmt(real.saida), null, null, 'down') +
@@ -17077,9 +17142,11 @@ function periodosProntos(){
 
 function bAplicarPeriodo(id){
   const p = periodosProntos().find(x => x.id === id);
-  if(!p) return;
+  if(!p) return false;
   bFiltro.periodo = id; bFiltro.de = p.de; bFiltro.ate = p.ate;
   bPagina = 0; bProj = null;
+  bGuardarFiltro();
+  return true;
 }
 
 /* o recorte que todas as telas usam */
@@ -17091,7 +17158,7 @@ function bTemFiltro(){
   return !!(bFiltro.busca || bFiltro.grupos.length || bFiltro.subs.length ||
             bFiltro.quem.length || bFiltro.formas.length ||
             bFiltro.favoritos || bFiltro.revisar || bFiltro.irpf ||
-            (bFiltro.periodo && bFiltro.periodo !== 'tudo'));
+            (bFiltro.periodo !== 'tudo' && bFiltro.periodo !== '12m'));
 }
 
 function barraFiltros(op){
@@ -17114,8 +17181,14 @@ function barraFiltros(op){
   const nomeados = pers.filter(p => !/^a\d{4}$/.test(String(p.id)));
   const anosLista = pers.filter(p => /^a\d{4}$/.test(String(p.id)));
   const anoEscolhido = anosLista.find(p => p.id === bFiltro.periodo);
-  h += '<div class="bf-linha">' +
-    '<div class="chips bf-per">' +
+  const celular = window.innerWidth <= 600;
+  h += '<div class="bf-linha' + (celular ? ' bf-cel' : '') + '">' +
+    (celular
+      ? '<select class="chip-select bf-per-sel' + (bFiltro.periodo ? ' on' : '') + '" id="bPer" aria-label="' + esc(I18n.atual === 'en' ? 'Period' : 'Período') + '">' +
+          (bFiltro.periodo ? '' : '<option value="" selected>' + esc(I18n.atual === 'en' ? 'Custom dates' : 'Datas escolhidas') + '</option>') +
+          nomeados.concat(anosLista).map(p => '<option value="' + p.id + '"' + (bFiltro.periodo === p.id ? ' selected' : '') + '>📅 ' + esc(p.nome) + '</option>').join('') + '</select>'
+      : '') +
+    '<div class="chips bf-per' + (celular ? ' hidden' : '') + '">' +
       nomeados.map(p => '<button class="chip click' + (bFiltro.periodo === p.id ? ' on' : '') +
         '" data-bper="' + p.id + '">' + esc(p.nome) + '</button>').join('') +
       (anosLista.length
@@ -20396,6 +20469,12 @@ function viewBCustos(){
          dec.sobra >= 0 ? 'up' : 'down') +
     '</div>';
 
+  if(typeof Desloc !== 'undefined' && Flags.ligada('deslocamentos')){
+    const rd = Desloc.resumo(hojeISO());
+    h += '<button class="card card-link" data-irpara="b-desloc"><span>🗺️ ' + (I18n.atual === 'pt' ? 'Deslocamentos' : 'Commutes') + '</span>' +
+      '<span class="small muted">' + (Desloc.trajetos().length ? fmt(rd.total) + (I18n.atual === 'pt' ? ' por mês estimado em combustível, pedágio e transporte' : ' per month estimated')
+                                                              : (I18n.atual === 'pt' ? 'quanto custa ir e vir: cadastre lugares e trajetos' : 'what going back and forth costs')) + ' ›</span></button>';
+  }
   if(atrasados.length)
     h += '<div class="aviso-box"><b>' + atrasados.length + ' ' +
       (I18n.atual === 'pt' ? 'vencimentos passaram sem você marcar nada' : 'due dates went by unmarked') +
@@ -21439,6 +21518,12 @@ const AJUDA_TELAS = {
     en: {t:'Cash flow', o:'Money in and out month by month, what was left and the running total — next to InvestifyONE’s net worth.',
          f:['The two charts share the same time axis: the top one is the running total, the bottom one is the month.','If income starts after expenses, the app warns and starts the chart on the right month.']}
   },
+  'b-desloc': {
+    pt: {t:'Deslocamentos', o:'Lugares e trajetos da família, e quanto custa ir e vir por mês: combustível, pedágio, app e transporte público.',
+         f:['Cadastre casa, trabalho, escola e a família; com o endereço o app acha as coordenadas.','Cada trajeto diz como vai, quem vai e quantas vezes; duas pessoas no mesmo carro contam uma vez.','Lance a estimativa como custo fixo para entrar no custo de viver.']},
+    en: {t:'Commutes', o:'The family’s places and trips, and what going back and forth costs per month: fuel, tolls, ride-hailing and public transport.',
+         f:['Add home, work, school and family; from the address the app finds coordinates.','Each trip says how, who and how often; two people in one car count once.','Post the estimate as a fixed cost so it enters the cost of living.']}
+  },
   'b-futuro': {
     pt: {t:'Futuro', o:'Quanto a vida vai custar daqui a alguns anos, projetando cada grupo pela sua própria inflação (IPCA por grupo).',
          f:['Saúde e educação sobem mais que a média; transporte e comunicação, menos.','Use para saber quanto a renda precisa crescer só para ficar no lugar.']},
@@ -21701,7 +21786,8 @@ const ATALHOS_TELA = {
   'b-painel':   [{i:'🧾', pt:'Novo lançamento', en:'New entry', a:'b-novo'}, {i:'✨', pt:'Passo a passo', en:'Step-by-step', a:'as-wizard'}],
   'b-lanc':     [{i:'➕', pt:'Novo lançamento', en:'New entry', a:'b-novo'}, {i:'📷', pt:'Escanear', en:'Scan', a:'b-escanear'}, {i:'📄', pt:'Importar', en:'Import', a:'b-importar'}],
   'b-custos':   [{i:'📌', pt:'Novo compromisso', en:'New commitment', a:'rec-novo'}, {i:'✨', pt:'Passo a passo', en:'Step-by-step', a:'as-wizard'}],
-  'b-renda':    [{i:'✨', pt:'Passo a passo', en:'Step-by-step', a:'as-wizard'}],
+  'b-renda':    [{i:'💰', pt:'Cadastrar salário', en:'Add salary', a:'sal-cad-novo'}, {i:'🛒', pt:'Benefício', en:'Benefit', a:'ben-novo'}],
+  'b-desloc':   [{i:'📍', pt:'Novo lugar', en:'New place', a:'lug-novo'}, {i:'🧭', pt:'Novo trajeto', en:'New trip', a:'trj-novo'}],
   'b-precos':   [{i:'🏷️', pt:'Anotar preço', en:'Note a price', a:'b-novo-preco'}],
   painel:       [{i:'➕', pt:'Novo investimento', en:'New investment', a:'nova'}, {i:'📄', pt:'Importar extrato', en:'Import statement', a:'as-importar'}],
   carteira:     [{i:'➕', pt:'Novo investimento', en:'New investment', a:'nova'}, {i:'📄', pt:'Importar extrato', en:'Import statement', a:'as-importar'}],
@@ -22473,16 +22559,21 @@ const Salarios = {
     ST.recorrentes = ST.recorrentes || [];
     const r = Recorrente.arruma(base);
     r.sal = base.sal;                                   /* arruma() não conhece o pedaço do salário */
+    const segue = x => { if(typeof Beneficios !== 'undefined') Beneficios.seguirSalario(x); return x; };
     if(dados.id){
       const i = ST.recorrentes.findIndex(x => x.id === dados.id);
-      if(i >= 0){ r.id = dados.id; ST.recorrentes[i] = Object.assign({}, ST.recorrentes[i], r); return ST.recorrentes[i]; }
+      if(i >= 0){ r.id = dados.id; ST.recorrentes[i] = Object.assign({}, ST.recorrentes[i], r); return segue(ST.recorrentes[i]); }
     }
     r.id = Recorrente.novoId();
     ST.recorrentes.push(r);
-    return r;
+    return segue(r);
   },
 
-  excluir(id){ ST.recorrentes = (ST.recorrentes || []).filter(r => r.id !== id); },
+  /* o emprego acabou: os benefícios pendurados nele vão junto */
+  excluir(id){
+    if(typeof Beneficios !== 'undefined') Beneficios.apagarDoSalario(id);
+    ST.recorrentes = (ST.recorrentes || []).filter(r => r.id !== id);
+  },
 
   /* ---------- o ano inteiro, mês a mês ----------
      Para o TaxONE: rendimento tributável, INSS e IR retido no ano,
@@ -22702,6 +22793,7 @@ function abrirCadastroSalario(id){
       '</select>' +
       '<input type="number" id="scDia" min="1" max="31" value="' + ((r && r.dia) || 5) + '" style="margin-top:6px" aria-label="' + (pt ? 'dia' : 'day') + '">') +
 
+    blocoBeneficiosDoSalario(r ? r.id : null) +
     '<div id="scPergunta"></div>' +
     '<div class="f-actions">' +
       (r ? '<button class="btn danger" data-acao="sal-cad-excluir" data-id="' + r.id + '">' + (pt ? 'Excluir' : 'Delete') + '</button>' : '') +
@@ -22876,7 +22968,9 @@ function salvarCadastroSalario(modo){
 
 function excluirCadastroSalario(id){
   const pt = ptSal();
-  if(!confirm(pt ? 'Excluir este salário? Os lançamentos que já entraram continuam.' : 'Delete this salary? Past entries stay.')) return;
+  const nBen = (typeof Beneficios !== 'undefined') ? Beneficios.doSalario(id).length : 0;
+  if(!confirm((pt ? 'Excluir este salário? Os lançamentos que já entraram continuam.' : 'Delete this salary? Past entries stay.') +
+    (nBen ? (pt ? ' Os ' + nBen + ' benefícios pendurados nele saem junto.' : ' Its ' + nBen + ' benefits go with it.') : ''))) return;
   Salarios.excluir(id); Store.salvar(); fechar('assetModal'); render();
 }
 
@@ -22895,10 +22989,12 @@ function blocoSalarios(opcoes){
       : 'No salary yet. Add it once and it counts in all three apps.') + '</p></div>';
     return h;
   }
+  /* fora da tela de Renda, os cartões levam para ela */
+  const alvo = (typeof viewAtual !== 'undefined' && viewAtual !== 'b-renda') ? 'b-renda' : '';
   if(mes.n) h += '<div class="kpis kpis-3">' +
-    kpiB(pt ? 'Cai na conta por mês' : 'Net per month', fmt(mes.liquido), null, mes.n + (pt ? (mes.n > 1 ? ' salários em vigor' : ' salário em vigor') : ' in force'), 'up') +
-    kpiB(pt ? 'Bruto por mês' : 'Gross per month', mes.bruto ? fmt(mes.bruto) : '—') +
-    kpiB(pt ? 'IR na fonte por mês' : 'Tax withheld', fmt(mes.irrf), null, mes.bruto ? pnum(mes.irrf / mes.bruto * 100, 1) + '%' : '') +
+    kpiB(pt ? 'Cai na conta por mês' : 'Net per month', fmt(mes.liquido), null, mes.n + (pt ? (mes.n > 1 ? ' salários em vigor' : ' salário em vigor') : ' in force'), 'up', alvo) +
+    kpiB(pt ? 'Bruto por mês' : 'Gross per month', mes.bruto ? fmt(mes.bruto) : '—', null, null, '', alvo) +
+    kpiB(pt ? 'IR na fonte por mês' : 'Tax withheld', fmt(mes.irrf), null, mes.bruto ? pnum(mes.irrf / mes.bruto * 100, 1) + '%' : '', '', alvo) +
     '</div>';
   h += '<div class="tbl-wrap"><table class="tbl sal-tbl"><tbody>' + todos.slice(0, o.limite || 12).map(r => {
     const vale = Salarios.vigenteEm(r, hoje);
@@ -22963,6 +23059,740 @@ function dadosSalarioLancamento(){
   return {salBase: b.value, bruto: c.bruto, valor: c.liquido};
 }
 
+</script>
+<script>
+/* =========================================================
+   BudgetONE — Benefícios pendurados no salário
+
+   Vale-alimentação, vale-refeição, vale-transporte, plano de
+   saúde, creche, estacionamento… Cada benefício é OBRIGATORIAMENTE
+   ligado a um salário cadastrado: se o emprego acaba, o benefício
+   acaba junto. Três modos:
+     renda      — é dinheiro que dá para gastar (VA, VR, auxílios):
+                  vira um compromisso de entrada (Recorrente) e cai
+                  no caixa como o salário;
+     referencia — não é dinheiro na conta (VT, estacionamento,
+                  plano sem desconto): fica registrado como economia
+                  estimada, para as contas de transporte e saúde;
+     desconto   — desconta na folha (plano com coparticipação, VT
+                  6%): só informativo, porque o líquido do salário já
+                  veio sem ele.
+   Guardado em ST.beneficios; o Recorrente ligado guarda ben = id.
+   Preparado para o OmniLifeONE (plano de saúde: operadora e
+   coparticipação ficam aqui e saem no backup).
+   ========================================================= */
+
+const CATALOGO_BEN = [
+  {id:'va',        ico:'🛒', pt:'Vale-alimentação',        en:'Food allowance (groceries)', modo:'renda',      regra:'ultimoUtil'},
+  {id:'vr',        ico:'🍽️', pt:'Vale-refeição',           en:'Meal allowance',            modo:'renda',      regra:'ultimoUtil'},
+  {id:'vt',        ico:'🚌', pt:'Vale-transporte',         en:'Transport allowance',       modo:'referencia', regra:'salario'},
+  {id:'combustivel',ico:'⛽', pt:'Auxílio-combustível',    en:'Fuel allowance',            modo:'renda',      regra:'salario'},
+  {id:'estacionamento',ico:'🅿️', pt:'Estacionamento na empresa', en:'Parking at work', modo:'referencia', regra:'salario'},
+  {id:'saude',     ico:'🩺', pt:'Plano de saúde',          en:'Health plan',               modo:'referencia', regra:'salario'},
+  {id:'odonto',    ico:'🦷', pt:'Plano odontológico',      en:'Dental plan',               modo:'referencia', regra:'salario'},
+  {id:'creche',    ico:'🧸', pt:'Auxílio-creche / babá',   en:'Childcare allowance',       modo:'renda',      regra:'salario'},
+  {id:'educacao',  ico:'🎓', pt:'Auxílio-educação / bolsa', en:'Education allowance',      modo:'renda',      regra:'salario'},
+  {id:'homeoffice',ico:'🏠', pt:'Auxílio home office',     en:'Home-office allowance',     modo:'renda',      regra:'salario'},
+  {id:'academia',  ico:'🏋️', pt:'Wellhub / TotalPass / academia', en:'Gym benefit',       modo:'referencia', regra:'salario'},
+  {id:'vida',      ico:'🛡️', pt:'Seguro de vida',          en:'Life insurance',            modo:'referencia', regra:'salario'},
+  {id:'previdencia',ico:'📈', pt:'Previdência (parte da empresa)', en:'Pension (employer part)', modo:'referencia', regra:'salario'},
+  {id:'plr',       ico:'🎁', pt:'PLR / bônus',             en:'Profit share / bonus',      modo:'renda',      regra:'anual'},
+  {id:'outro',     ico:'➕', pt:'Outro benefício…',        en:'Other benefit…',            modo:'renda',      regra:'salario'}
+];
+const MODOS_BEN = {
+  renda:      {ico:'💵', pt:'Entra como dinheiro',       en:'Counts as money',
+               sub:{pt:'cai no caixa e nas rendas, como o salário', en:'lands in the cash and income, like the salary'}},
+  referencia: {ico:'📎', pt:'Só referência (economia)',  en:'Reference only (saving)',
+               sub:{pt:'não é dinheiro na conta; vale como economia estimada', en:'not money in the account; counts as an estimated saving'}},
+  desconto:   {ico:'➖', pt:'Desconta no salário',        en:'Deducted from salary',
+               sub:{pt:'informativo: o líquido já veio sem isso', en:'informational: the net already excludes it'}}
+};
+const REGRAS_BEN = {
+  ultimoUtil: {pt:'no último dia útil do mês', en:'on the last business day'},
+  ultimoDia:  {pt:'no último dia do mês',      en:'on the last day of the month'},
+  diaUtil5:   {pt:'no 5º dia útil',            en:'on the 5th business day'},
+  dia:        {pt:'num dia fixo do mês',       en:'on a fixed day'},
+  salario:    {pt:'junto com o salário',       en:'with the salary'},
+  anual:      {pt:'uma vez por ano',           en:'once a year'}
+};
+const OPERADORAS_BEN = ['Swile','Alelo','VR','Sodexo/Pluxee','Ticket','Flash','Caju','iFood Benefícios','Amil','Bradesco Saúde','SulAmérica','Unimed','Porto Seguro','Hapvida','NotreDame','Wellhub','TotalPass'];
+
+const Beneficios = {
+  todos(){ return (ST.beneficios || []); },
+  achar(id){ return this.todos().find(b => b.id === id) || null; },
+  doSalario(salId){ return this.todos().filter(b => b.salarioId === salId); },
+  novoId(){ return 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); },
+  cat(tipo){ return CATALOGO_BEN.find(c => c.id === tipo) || CATALOGO_BEN[CATALOGO_BEN.length - 1]; },
+  nome(b){ const L = I18n.atual === 'en' ? 'en' : 'pt'; return b.nome || this.cat(b.tipo)[L]; },
+  vigente(b, iso){
+    const d = String(iso || hojeISO()).slice(0, 10);
+    const s = Salarios.todos().find(r => r.id === b.salarioId);
+    if(s && !Salarios.vigenteEm(s, d)) return false;
+    return (!b.desde || b.desde <= d) && (!b.ate || b.ate >= d);
+  },
+  /* por mês: quanto é dinheiro, quanto é economia, quanto desconta */
+  doMes(iso, quem){
+    const l = this.todos().filter(b => this.vigente(b, iso) && (quem == null || Salarios.mesmaPessoa(b.quem, quem)));
+    const mensal = b => (Number(b.valor) || 0) / (b.regra === 'anual' ? 12 : 1);
+    return {
+      n: l.length,
+      renda:      l.filter(b => b.modo === 'renda').reduce((s, b) => s + mensal(b), 0),
+      referencia: l.filter(b => b.modo === 'referencia').reduce((s, b) => s + mensal(b), 0),
+      desconto:   l.filter(b => b.modo === 'desconto').reduce((s, b) => s + mensal(b), 0),
+      lista: l
+    };
+  },
+
+  /* o compromisso de entrada que representa um benefício em dinheiro */
+  sincronizar(b){
+    ST.recorrentes = ST.recorrentes || [];
+    const i = ST.recorrentes.findIndex(r => r.ben === b.id || (b.recId && r.id === b.recId));
+    if(b.modo !== 'renda'){
+      if(i >= 0) ST.recorrentes.splice(i, 1);
+      b.recId = '';
+      return;
+    }
+    const sal = Salarios.todos().find(r => r.id === b.salarioId);
+    let regra = 'diaUtil', dia = -1, mes = 0;
+    if(b.regra === 'diaUtil5'){ dia = 5; }
+    else if(b.regra === 'ultimoDia'){ regra = 'dia'; dia = 31; }        /* o app encurta para o último dia de cada mês */
+    else if(b.regra === 'dia'){ regra = 'dia'; dia = Number(b.dia) || 1; }
+    else if(b.regra === 'salario' && sal){ regra = sal.regra || 'diaUtil'; dia = Number(sal.dia) || 5; }
+    else if(b.regra === 'anual'){ regra = 'anual'; dia = Number(b.dia) || 1; mes = Number(b.mes) || 0; }
+    const cat = this.cat(b.tipo);
+    const base = {
+      grupo:'RENDA', sub: b.nome || cat.pt,
+      nome: this.nome(b) + (b.operadora ? ' · ' + b.operadora : ''),
+      quem: b.quem, valor: Number(b.valor) || 0,
+      regra, dia, mes, desde: b.desde || '', ate: b.ate || '',
+      ativo: true, estadoPadrao: 'pendente', avisar: false, ben: b.id
+    };
+    const r = Recorrente.arruma(base);
+    r.ben = b.id;
+    if(i >= 0){ r.id = ST.recorrentes[i].id; ST.recorrentes[i] = Object.assign({}, ST.recorrentes[i], r); }
+    else { r.id = Recorrente.novoId(); ST.recorrentes.push(r); }
+    b.recId = r.id;
+  },
+
+  salvar(d){
+    ST.beneficios = ST.beneficios || [];
+    const sal = Salarios.todos().find(r => r.id === d.salarioId);
+    const b = Object.assign({}, this.achar(d.id) || {id: this.novoId()}, d, {
+      quem: (d.quem || (sal && sal.quem) || '').trim(),
+      valor: Math.abs(Number(d.valor) || 0),
+      desde: d.desde || (sal && sal.desde) || hojeISO().slice(0, 8) + '01',
+      ate: d.ate || ''
+    });
+    /* o benefício nunca vive além do salário a que está preso */
+    if(sal && sal.ate && (!b.ate || b.ate > sal.ate)) b.ate = sal.ate;
+    const i = ST.beneficios.findIndex(x => x.id === b.id);
+    if(i >= 0) ST.beneficios[i] = b; else ST.beneficios.push(b);
+    this.sincronizar(b);
+    return b;
+  },
+
+  excluir(id){
+    const b = this.achar(id);
+    if(b) ST.recorrentes = (ST.recorrentes || []).filter(r => r.ben !== id && r.id !== b.recId);
+    ST.beneficios = this.todos().filter(x => x.id !== id);
+  },
+
+  /* o salário mudou de vigência ou acabou: os benefícios seguem junto */
+  seguirSalario(sal){
+    if(!sal) return;
+    this.doSalario(sal.id).forEach(b => {
+      if(sal.ate && (!b.ate || b.ate > sal.ate)) b.ate = sal.ate;
+      if(sal.ativo === false) b.ate = b.ate || hojeISO();
+      if(sal.quem && !b.quem) b.quem = sal.quem;
+      this.sincronizar(b);
+    });
+  },
+  apagarDoSalario(salId){ this.doSalario(salId).map(b => b.id).forEach(id => this.excluir(id)); },
+
+  /* ---------- ler o extrato do vale (foto ou PDF) ----------
+     Procura a operadora pelo nome, a última carga/crédito e a data. */
+  lerExtrato(txt){
+    const t = String(txt || '');
+    const semAc = t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const r = {operadora:'', valor:null, data:null, tipo:''};
+    const ops = [['swile',/\bswile\b/],['Alelo',/\balelo\b/],['VR',/\bvr\b|vr beneficios/],['Sodexo/Pluxee',/sodexo|pluxee/],['Ticket',/\bticket\b/],['Flash',/\bflash\b/],['Caju',/\bcaju\b/],['iFood Benefícios',/ifood benef/]];
+    for(const [nome, re] of ops){ if(re.test(semAc)){ r.operadora = nome === 'swile' ? 'Swile' : nome; break; } }
+    if(/refeicao|restaurante/.test(semAc) && !/alimentacao/.test(semAc)) r.tipo = 'vr';
+    else if(/alimentacao|mercado/.test(semAc)) r.tipo = 'va';
+    const num = s => { const m = /(\d{1,3}(?:\.\d{3})*,\d{2})/.exec(s); return m ? parseFloat(m[1].replace(/\./g, '').replace(',', '.')) : null; };
+    const linhas = t.split(/\r?\n/);
+    let melhor = null;
+    linhas.forEach(l => {
+      const s = l.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+      const v = num(l);
+      if(v == null) return;
+      const peso = /credito|carga|deposito|recarga|recebid|beneficio/.test(s) ? 3 : /saldo/.test(s) ? 1 : 0;
+      if(!melhor || peso > melhor.peso || (peso === melhor.peso && v > melhor.valor)) melhor = {valor: v, peso};
+    });
+    if(melhor) r.valor = melhor.valor;
+    r.data = (typeof CupomTexto !== 'undefined') ? CupomTexto.data(t) : null;
+    r.achou = !!(r.valor || r.operadora);
+    return r;
+  }
+};
+
+/* ---------- o formulário do benefício ---------- */
+let benCad = null;
+function abrirBeneficio(id, salarioId){
+  const pt = I18n.atual !== 'en', L = pt ? 'pt' : 'en';
+  const b = id ? Beneficios.achar(id) : null;
+  const sals = Salarios.todos().slice().sort((a, c) => (c.desde || '').localeCompare(a.desde || ''));
+  if(!sals.length){
+    toast(pt ? 'Cadastre primeiro o salário: o benefício fica pendurado nele.' : 'Add the salary first: the benefit hangs on it.', 'warn');
+    abrirCadastroSalario(null); return;
+  }
+  const salId = (b && b.salarioId) || salarioId || (sals.find(s => Salarios.vigenteEm(s, hojeISO())) || sals[0]).id;
+  benCad = {id: b ? b.id : null, voltar: salarioId || null, extrato: b ? b.extrato : null};
+  const tipo = b ? b.tipo : 'va';
+  const cat = Beneficios.cat(tipo);
+  const rotSal = s => (s.quem || '—') + (s.sal.fonte ? ' · ' + s.sal.fonte : '') + (Salarios.vigenteEm(s, hojeISO()) ? '' : (pt ? ' (encerrado)' : ' (ended)'));
+
+  $('#assetModalTitle').textContent = b ? (pt ? 'Editar benefício' : 'Edit benefit') : (pt ? 'Novo benefício' : 'New benefit');
+  $('#assetModalBody').innerHTML = Verter.html(
+    campo(pt ? 'Qual benefício' : 'Which benefit',
+      '<select id="bnTipo">' + CATALOGO_BEN.map(c => '<option value="' + c.id + '"' + (c.id === tipo ? ' selected' : '') + '>' + c.ico + ' ' + esc(c[L]) + '</option>').join('') + '</select>') +
+    '<div id="bnNomeCaixa"' + (tipo === 'outro' ? '' : ' class="hidden"') + '>' +
+      campo(pt ? 'Nome do benefício' : 'Benefit name', '<input id="bnNome" value="' + esc(b && b.tipo === 'outro' ? b.nome || '' : '') + '" placeholder="' + (pt ? 'ex.: Auxílio-mudança' : 'e.g. Relocation allowance') + '">') + '</div>' +
+    campo(pt ? 'Pendurado no salário de' : 'Hangs on the salary of',
+      '<select id="bnSal">' + sals.map(s => '<option value="' + s.id + '"' + (s.id === salId ? ' selected' : '') + '>' + esc(rotSal(s)) + '</option>').join('') + '</select>',
+      null, pt ? 'Obrigatório. Se esse salário acabar, o benefício acaba junto.' : 'Required. When that salary ends, the benefit ends with it.') +
+
+    '<fieldset class="sal-base" id="bnModoCaixa"><legend>' + (pt ? 'Como entra nas contas' : 'How it counts') + '</legend>' +
+      Object.keys(MODOS_BEN).map(m => '<label class="sal-op"><input type="radio" name="bnModo" value="' + m + '"' + (((b && b.modo) || cat.modo) === m ? ' checked' : '') + '> <span><b>' +
+        MODOS_BEN[m].ico + ' ' + esc(MODOS_BEN[m][L]) + '</b><i>' + esc(MODOS_BEN[m].sub[L]) + '</i></span></label>').join('') +
+    '</fieldset>' +
+
+    '<div class="sal-holerite">' +
+      '<button type="button" class="btn sm" data-acao="ben-extrato">📷 ' + (pt ? 'Ler extrato do vale (foto ou PDF)' : 'Read the card statement (photo or PDF)') + '</button>' +
+      '<input type="file" id="bnArquivo" accept=".pdf,image/*" capture="environment" class="hidden">' +
+      '<span class="tiny muted">' + (pt ? 'Opcional. Acha a operadora e a última carga.' : 'Optional. Finds the operator and the last top-up.') + '</span>' +
+      '<div id="bnExtratoInfo"></div>' +
+    '</div>' +
+
+    '<div class="grid g2">' +
+      campo(pt ? 'Valor' : 'Amount',
+        '<input type="number" inputmode="decimal" data-dinheiro="1" id="bnValor" step="0.01" min="0" placeholder="0,00" value="' + (b ? b.valor || '' : '') + '">',
+        null, pt ? 'por mês (ou por ano, se for anual)' : 'per month (or per year, if yearly)') +
+      campo(pt ? 'Operadora / plano' : 'Operator / plan',
+        '<input id="bnOper" list="bnOperLista" value="' + esc(b ? b.operadora || '' : '') + '" placeholder="' + (pt ? 'ex.: Swile, Amil' : 'e.g. Swile, Amil') + '">' +
+        '<datalist id="bnOperLista">' + OPERADORAS_BEN.map(o => '<option value="' + esc(o) + '"></option>').join('') + '</datalist>') +
+    '</div>' +
+    '<div class="grid g2">' +
+      campo(pt ? 'Cai quando' : 'Paid when',
+        '<select id="bnRegra">' + Object.keys(REGRAS_BEN).map(k => '<option value="' + k + '"' + (((b && b.regra) || cat.regra) === k ? ' selected' : '') + '>' + esc(REGRAS_BEN[k][L]) + '</option>').join('') + '</select>' +
+        '<input type="number" id="bnDia" min="1" max="31" value="' + ((b && b.dia) || 1) + '" style="margin-top:6px" aria-label="' + (pt ? 'dia' : 'day') + '"' + (b && b.regra === 'dia' ? '' : ' hidden') + '>') +
+      campo(pt ? 'Quem recebe' : 'Who receives',
+        '<input id="bnQuem" value="' + esc(b ? b.quem || '' : '') + '" placeholder="' + (pt ? 'vazio = quem recebe o salário' : 'blank = the salary holder') + '">') +
+    '</div>' +
+    '<div class="grid g2">' +
+      campo(pt ? 'Vale a partir de' : 'Valid from', '<input type="date" id="bnDesde" value="' + esc(b ? b.desde || '' : '') + '">', null, pt ? 'vazio = desde o salário' : 'blank = since the salary') +
+      campo(pt ? 'Até' : 'Until', '<input type="date" id="bnAte" value="' + esc(b ? b.ate || '' : '') + '">', null, pt ? 'vazio = enquanto o salário durar' : 'blank = while the salary lasts') +
+    '</div>' +
+    campo(pt ? 'Observação' : 'Notes', '<input id="bnObs" value="' + esc(b ? b.obs || '' : '') + '" placeholder="' + (pt ? 'ex.: coparticipação de 30% nas consultas' : 'e.g. 30% co-payment on visits') + '">') +
+    '<div class="f-actions">' +
+      (b ? '<button class="btn danger" data-acao="ben-excluir" data-id="' + b.id + '">' + (pt ? 'Excluir' : 'Delete') + '</button>' : '') +
+      '<button class="btn" data-acao="ben-cancelar">' + (pt ? 'Cancelar' : 'Cancel') + '</button>' +
+      '<button class="btn primary" data-acao="ben-salvar">' + (pt ? 'Salvar' : 'Save') + '</button>' +
+    '</div>');
+  abrir('assetModal');
+  const corpo = corpoNovo('#assetModalBody');
+  corpo.addEventListener('change', e => {
+    if(e.target.id === 'bnTipo'){
+      const c = Beneficios.cat(e.target.value);
+      $('#bnNomeCaixa').classList.toggle('hidden', c.id !== 'outro');
+      const rm = document.querySelector('input[name="bnModo"][value="' + c.modo + '"]'); if(rm) rm.checked = true;
+      $('#bnRegra').value = c.regra; $('#bnDia').hidden = c.regra !== 'dia';
+    }
+    if(e.target.id === 'bnRegra') $('#bnDia').hidden = e.target.value !== 'dia';
+    if(e.target.id === 'bnArquivo' && e.target.files && e.target.files[0]) lerExtratoBeneficio(e.target.files[0]);
+  });
+  if(typeof UX !== 'undefined') UX.reguasDeValor(corpo);
+  if(benCad.extrato) mostrarExtratoBeneficio(benCad.extrato);
+}
+
+async function lerExtratoBeneficio(arq){
+  const pt = I18n.atual !== 'en';
+  const info = $('#bnExtratoInfo');
+  info.innerHTML = '<p class="tiny muted">' + (pt ? 'Lendo o extrato…' : 'Reading the statement…') + '</p>';
+  let texto = '';
+  try{
+    if(/^image\//.test(arq.type)){
+      if(typeof Ocr === 'undefined') throw new Error(pt ? 'o leitor de fotos não está disponível' : 'photo reader unavailable');
+      texto = await Ocr.texto(arq, m => { info.innerHTML = '<p class="tiny muted">' + esc(m) + '</p>'; });
+    }else{
+      const lido = await Arquivos.ler(arq);
+      if(lido.erro) throw new Error(lido.erro);
+      texto = lido.texto || '';
+    }
+  }catch(e){
+    info.innerHTML = '<p class="small down">' + esc((pt ? 'Não consegui ler: ' : 'Could not read: ') + (e.message || e)) + '</p>';
+    return;
+  }
+  const r = Beneficios.lerExtrato(texto);
+  r.arquivo = arq.name;
+  if(!r.achou){
+    info.innerHTML = '<p class="small down">' + (pt ? 'Não achei valor nem operadora neste arquivo. Tente uma foto com mais luz, ou digite o valor.'
+                                                     : 'No amount or operator found. Try a brighter photo, or type the amount.') + '</p>';
+    return;
+  }
+  benCad.extrato = r;
+  if(r.valor) $('#bnValor').value = r.valor;
+  if(r.operadora && !$('#bnOper').value) $('#bnOper').value = r.operadora;
+  if(r.tipo && !benCad.id){ $('#bnTipo').value = r.tipo; $('#bnTipo').dispatchEvent(new Event('change', {bubbles: true})); }
+  mostrarExtratoBeneficio(r);
+}
+function mostrarExtratoBeneficio(r){
+  const pt = I18n.atual !== 'en';
+  $('#bnExtratoInfo').innerHTML = Verter.html('<div class="aviso-box" style="margin-top:8px"><p class="small"><b>📄 ' + esc(r.arquivo || (pt ? 'extrato' : 'statement')) + '</b>' +
+    (r.operadora ? ' · ' + esc(r.operadora) : '') + (r.valor ? ' · ' + (pt ? 'carga ' : 'top-up ') + fmt(r.valor) : '') +
+    (r.data ? ' · ' + fmtData(r.data) : '') + '</p></div>');
+}
+
+function lerFormBeneficio(){
+  const m = document.querySelector('input[name="bnModo"]:checked');
+  return {
+    id: benCad && benCad.id, tipo: $('#bnTipo').value,
+    nome: $('#bnTipo').value === 'outro' ? $('#bnNome').value.trim() : '',
+    salarioId: $('#bnSal').value, modo: m ? m.value : 'renda',
+    valor: Number($('#bnValor').value) || 0, operadora: $('#bnOper').value.trim(),
+    regra: $('#bnRegra').value, dia: Number($('#bnDia').value) || 1,
+    quem: $('#bnQuem').value.trim(), desde: $('#bnDesde').value, ate: $('#bnAte').value,
+    obs: $('#bnObs').value.trim(), extrato: benCad && benCad.extrato || null
+  };
+}
+function salvarBeneficio(){
+  const pt = I18n.atual !== 'en';
+  const d = lerFormBeneficio();
+  const erro = !d.salarioId ? (pt ? 'Escolha o salário a que este benefício pertence.' : 'Pick the salary this benefit belongs to.')
+    : (d.tipo === 'outro' && !d.nome) ? (pt ? 'Dê um nome ao benefício.' : 'Name the benefit.')
+    : !d.valor ? (pt ? 'Informe o valor.' : 'Enter the amount.')
+    : (d.ate && d.desde && d.ate < d.desde) ? (pt ? 'A data final vem antes da inicial.' : 'End date is before start date.') : '';
+  if(erro){ toast(erro, 'warn'); return; }
+  Beneficios.salvar(d);
+  Store.salvar();
+  const voltar = benCad && benCad.voltar;
+  benCad = null;
+  toast(pt ? 'Benefício guardado, pendurado no salário.' : 'Benefit saved, attached to the salary.');
+  if(voltar){ abrirCadastroSalario(voltar); return; }
+  fechar('assetModal'); render();
+}
+function excluirBeneficio(id){
+  const pt = I18n.atual !== 'en';
+  if(!confirm(pt ? 'Excluir este benefício?' : 'Delete this benefit?')) return;
+  Beneficios.excluir(id); Store.salvar();
+  const voltar = benCad && benCad.voltar; benCad = null;
+  if(voltar){ abrirCadastroSalario(voltar); return; }
+  fechar('assetModal'); render();
+}
+
+/* ---------- os benefícios de um salário, dentro do formulário do salário ---------- */
+function blocoBeneficiosDoSalario(salId){
+  const pt = I18n.atual !== 'en', L = pt ? 'pt' : 'en';
+  let h = '<div class="ben-sal"><div class="card-head" style="margin-bottom:6px"><h3 style="font-size:.95rem">' + (pt ? 'Benefícios desta empresa' : 'Benefits from this employer') + '</h3>';
+  if(!salId) return h + '</div><p class="tiny muted" style="margin:0">' + (pt ? 'Salve o salário e depois pendure aqui o vale-alimentação, o plano de saúde e o resto.'
+                                                                                : 'Save the salary, then hang the food card, health plan and the rest here.') + '</p></div>';
+  h += '<button type="button" class="btn sm" data-acao="ben-novo" data-sal="' + salId + '">+ ' + (pt ? 'Benefício' : 'Benefit') + '</button></div>';
+  const lista = Beneficios.doSalario(salId);
+  if(!lista.length) return h + '<p class="tiny muted" style="margin:0">' + (pt ? 'Nenhum ainda. Se sair da empresa, tudo que estiver aqui acaba junto com o salário.'
+                                                                              : 'None yet. Leaving the employer ends everything here with the salary.') + '</p></div>';
+  h += '<div class="ben-lista">' + lista.map(b => '<button type="button" class="ben-item" data-acao="ben-editar" data-id="' + b.id + '" data-sal="' + salId + '">' +
+    '<span>' + Beneficios.cat(b.tipo).ico + '</span><span class="ben-nome"><b>' + esc(Beneficios.nome(b)) + (b.operadora ? ' · ' + esc(b.operadora) : '') + '</b>' +
+    '<i>' + esc(MODOS_BEN[b.modo][L]) + ' · ' + esc(REGRAS_BEN[b.regra] ? REGRAS_BEN[b.regra][L] : '') + '</i></span>' +
+    '<span class="ben-valor' + (b.modo === 'renda' ? ' up' : b.modo === 'desconto' ? ' down' : '') + '">' + fmt(b.valor) + '</span></button>').join('') + '</div></div>';
+  return h;
+}
+
+/* ---------- o cartão de Benefícios na tela de Renda ---------- */
+function blocoBeneficios(){
+  const pt = I18n.atual !== 'en', L = pt ? 'pt' : 'en';
+  const todos = Beneficios.todos();
+  const mes = Beneficios.doMes(hojeISO());
+  let h = '<div class="card"><div class="card-head"><h3>' + (pt ? 'Benefícios' : 'Benefits') + '</h3>' +
+    '<button class="btn sm" data-acao="ben-novo">+ ' + (pt ? 'Adicionar' : 'Add') + '</button></div>';
+  if(!todos.length) return h + '<p class="small muted" style="margin:0">' + (pt
+    ? 'Vale-alimentação, vale-refeição, vale-transporte, plano de saúde, creche, estacionamento… Cada um fica pendurado no salário da empresa que paga: se o emprego acabar, ele acaba junto.'
+    : 'Food card, meal card, transport, health plan, childcare, parking… Each hangs on the salary of the employer that pays it: when the job ends, so does the benefit.') + '</p></div>';
+  h += '<div class="kpis kpis-3">' +
+    kpiB(pt ? 'Em dinheiro por mês' : 'As money per month', fmt(mes.renda), null, pt ? 'vale-alimentação, refeição, auxílios' : 'food, meal, allowances', 'up') +
+    kpiB(pt ? 'Economia estimada por mês' : 'Estimated saving per month', fmt(mes.referencia), null, pt ? 'transporte, plano, estacionamento…' : 'transport, plan, parking…') +
+    kpiB(pt ? 'Descontado na folha' : 'Deducted in payroll', fmt(mes.desconto), null, pt ? 'já fora do líquido' : 'already out of the net', mes.desconto ? 'down' : '') +
+    '</div>';
+  const salDe = b => { const s = Salarios.todos().find(r => r.id === b.salarioId); return s ? (s.sal.fonte || s.quem || '') : (pt ? 'salário removido' : 'salary removed'); };
+  h += '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>' + (pt ? 'Benefício' : 'Benefit') + '</th><th>' + (pt ? 'Modo' : 'Mode') + '</th><th class="num" data-principal>' + (pt ? 'Valor' : 'Amount') + '</th></tr></thead><tbody>' +
+    todos.map(b => '<tr class="linha-click" data-acao="ben-editar" data-id="' + b.id + '">' +
+      '<td><span class="t-main">' + Beneficios.cat(b.tipo).ico + ' ' + esc(Beneficios.nome(b)) + (b.operadora ? ' · ' + esc(b.operadora) : '') + '</span>' +
+        '<div class="t-sub">' + esc(salDe(b)) + (b.quem ? ' · ' + esc(b.quem) : '') + ' · ' + esc(REGRAS_BEN[b.regra] ? REGRAS_BEN[b.regra][L] : '') +
+        (Beneficios.vigente(b, hojeISO()) ? '' : ' · <span class="badge">' + (pt ? 'encerrado' : 'ended') + '</span>') + '</div></td>' +
+      '<td><span class="badge">' + MODOS_BEN[b.modo].ico + ' ' + esc(MODOS_BEN[b.modo][L]) + '</span></td>' +
+      '<td class="num"><b class="' + (b.modo === 'renda' ? 'up' : b.modo === 'desconto' ? 'down' : '') + '">' + fmt(b.valor) + (b.regra === 'anual' ? '<span class="t-sub">' + (pt ? 'por ano' : 'per year') + '</span>' : '') + '</b></td></tr>').join('') +
+    '</tbody></table></div></div>';
+  return h;
+}
+
+/* =========================================================
+   BudgetONE — Deslocamentos: quanto custa ir e vir
+
+   Lugares (casa, trabalho, escola, os pais, a família em outra
+   cidade) e trajetos entre eles, com o jeito de ir (carro, ônibus e
+   metrô coberto pelo vale-transporte, app, a pé) e a frequência de
+   cada pessoa. A distância de carro sai das coordenadas (linha reta
+   × 1,3, a média das ruas) e pode ser corrigida à mão. O app estima
+   por mês: combustível, pedágio, app/táxi e transporte público — e
+   sabe quando duas pessoas vão juntas no mesmo carro (uma viagem
+   só), inclusive a partir de uma data ("quando estudarem juntas").
+   Coordenadas vêm do OpenStreetMap (Nominatim), sem chave.
+   Ligado/desligado pela flag deslocamentos (que o RootifyONE vai
+   publicar); guardado em ST.lugares, ST.trajetos e ST.config.veiculo.
+   ========================================================= */
+const Flags = {
+  ligada(k){ const f = (ST.config && ST.config.flags) || {}; return f[k] !== false; }
+};
+const TIPOS_LUGAR = {
+  casa:{ico:'🏠', pt:'Casa', en:'Home'}, trabalho:{ico:'🏢', pt:'Trabalho', en:'Work'},
+  escola:{ico:'🏫', pt:'Escola / creche', en:'School / daycare'}, familia:{ico:'👨‍👩‍👧', pt:'Família', en:'Family'},
+  saude:{ico:'🩺', pt:'Médico / terapia', en:'Doctor / therapy'}, lazer:{ico:'🎬', pt:'Lazer / esporte', en:'Leisure / sport'},
+  outro:{ico:'📍', pt:'Outro', en:'Other'}
+};
+const MODOS_DESLOC = {
+  carro:{ico:'🚗', pt:'Carro', en:'Car'}, publico:{ico:'🚇', pt:'Ônibus / metrô / trem', en:'Bus / metro / train'},
+  app:{ico:'🚕', pt:'App / táxi', en:'Ride-hailing / taxi'}, pe:{ico:'🚶', pt:'A pé', en:'On foot'}, bike:{ico:'🚲', pt:'Bicicleta', en:'Bicycle'}
+};
+const FREQ_DESLOC = {
+  semana:{pt:'vezes por semana', en:'times a week', mes: 4.345}, mes:{pt:'vezes por mês', en:'times a month', mes: 1}, ano:{pt:'vezes por ano', en:'times a year', mes: 1/12}
+};
+
+const Desloc = {
+  lugares(){ return (ST.lugares || []); },
+  trajetos(){ return (ST.trajetos || []); },
+  lugar(id){ return this.lugares().find(l => l.id === id) || null; },
+  trajeto(id){ return this.trajetos().find(t => t.id === id) || null; },
+  novoId(p){ return p + Date.now().toString(36) + Math.random().toString(36).slice(2,5); },
+  veiculo(){ return Object.assign({consumo: 11, precoLitro: 6.2, tanque: 45, tarifaPublico: 5.2}, (ST.config && ST.config.veiculo) || {}); },
+
+  /* linha reta entre dois pontos, em km */
+  reta(a, b){
+    if(!a || !b || a.lat == null || b.lat == null) return null;
+    const R = 6371, r = x => x * Math.PI / 180;
+    const dLat = r(b.lat - a.lat), dLon = r(b.lon - a.lon);
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  },
+  /* de carro anda-se mais que a linha reta: 1,3 é a média das cidades */
+  kmEstimado(t){
+    const d = this.reta(this.lugar(t.origemId), this.lugar(t.destinoId));
+    return d == null ? null : Math.round(d * 1.3 * 10) / 10;
+  },
+  km(t){ return t.km != null && t.km !== '' ? Number(t.km) : this.kmEstimado(t); },
+
+  ativo(t, iso){
+    const d = String(iso || hojeISO()).slice(0, 10);
+    return t.ativo !== false && (!t.desde || t.desde <= d) && (!t.ate || t.ate >= d);
+  },
+  vezesMes(t){ return (Number(t.vezes) || 0) * (FREQ_DESLOC[t.freq] || FREQ_DESLOC.semana).mes; },
+
+  /* o custo de um trajeto por mês, em partes */
+  custo(t, iso){
+    const V = this.veiculo();
+    const z = {km: 0, combustivel: 0, pedagio: 0, app: 0, publico: 0, total: 0, junto: null, vezes: 0};
+    if(!this.ativo(t, iso)) return z;
+    /* vai junto com outro trajeto ativo: é a mesma viagem, custa uma vez só */
+    if(t.juntoCom){ const j = this.trajeto(t.juntoCom); if(j && this.ativo(j, iso)) return Object.assign(z, {junto: j}); }
+    const vezes = this.vezesMes(t) * (t.idaVolta === false ? 1 : 2);
+    const km = this.km(t) || 0;
+    z.vezes = vezes; z.km = km * vezes;
+    if(t.modo === 'carro'){
+      const preco = Number(t.precoLitro) || V.precoLitro;
+      z.combustivel = t.abastecimentos ? Number(t.abastecimentos) * V.tanque * preco * this.vezesMes(t)
+                                       : z.km / (V.consumo || 11) * preco;
+      z.pedagio = (Number(t.pedagio) || 0) * vezes;
+    }else if(t.modo === 'app'){
+      z.app = (Number(t.custoApp) || 0) * vezes;
+    }else if(t.modo === 'publico'){
+      z.publico = (Number(t.tarifa) || V.tarifaPublico) * vezes;
+    }
+    z.total = z.combustivel + z.pedagio + z.app + z.publico;
+    return z;
+  },
+  /* alguém tem vale-transporte em vigor? então o público está coberto para essa pessoa */
+  temVT(quem){
+    if(typeof Beneficios === 'undefined') return false;
+    return Beneficios.todos().some(b => b.tipo === 'vt' && Beneficios.vigente(b, hojeISO()) &&
+      (!quem || !quem.length || quem.some(q => Salarios.mesmaPessoa(q, b.quem))));
+  },
+  resumo(iso){
+    const r = {combustivel: 0, pedagio: 0, app: 0, publico: 0, publicoCoberto: 0, km: 0, total: 0};
+    this.trajetos().forEach(t => {
+      const c = this.custo(t, iso);
+      r.combustivel += c.combustivel; r.pedagio += c.pedagio; r.app += c.app; r.km += c.km;
+      if(this.temVT(t.quem)) r.publicoCoberto += c.publico; else r.publico += c.publico;
+    });
+    r.total = r.combustivel + r.pedagio + r.app + r.publico;
+    return r;
+  },
+
+  /* endereço → coordenadas, pelo OpenStreetMap */
+  async localizar(endereco){
+    const q = String(endereco || '').trim();
+    if(!q) throw new Error('sem endereço');
+    const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=' + encodeURIComponent(q), {headers: {'Accept': 'application/json'}});
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    if(!j || !j.length) throw new Error(I18n.atual === 'pt' ? 'endereço não encontrado — tente com cidade e estado' : 'address not found — try adding city and state');
+    return {lat: Number(j[0].lat), lon: Number(j[0].lon), nome: j[0].display_name};
+  },
+
+  salvarLugar(d){
+    ST.lugares = ST.lugares || [];
+    const l = Object.assign({}, this.lugar(d.id) || {id: this.novoId('l')}, d);
+    const i = ST.lugares.findIndex(x => x.id === l.id);
+    if(i >= 0) ST.lugares[i] = l; else ST.lugares.push(l);
+    return l;
+  },
+  excluirLugar(id){
+    ST.lugares = this.lugares().filter(l => l.id !== id);
+    ST.trajetos = this.trajetos().filter(t => t.origemId !== id && t.destinoId !== id);
+  },
+  salvarTrajeto(d){
+    ST.trajetos = ST.trajetos || [];
+    const t = Object.assign({}, this.trajeto(d.id) || {id: this.novoId('t')}, d);
+    const i = ST.trajetos.findIndex(x => x.id === t.id);
+    if(i >= 0) ST.trajetos[i] = t; else ST.trajetos.push(t);
+    return t;
+  },
+  excluirTrajeto(id){ ST.trajetos = this.trajetos().filter(t => t.id !== id); this.trajetos().forEach(t => { if(t.juntoCom === id) t.juntoCom = ''; }); },
+
+  /* o custo estimado vira um compromisso fixo, para o "custo de viver" */
+  lancarComoFixo(){
+    const r = this.resumo(hojeISO());
+    ST.recorrentes = ST.recorrentes || [];
+    const partes = [
+      {chave:'combustivel', grupo:'VEICULO', sub:'Combustível', nome: I18n.atual === 'pt' ? 'Combustível (estimado pelos deslocamentos)' : 'Fuel (estimated from commutes)', valor: r.combustivel},
+      {chave:'pedagio', grupo:'VEICULO', sub:'Pedágio', nome: I18n.atual === 'pt' ? 'Pedágios (estimado)' : 'Tolls (estimated)', valor: r.pedagio},
+      {chave:'app', grupo:'TRANSPORTE', sub:'Aplicativo', nome: I18n.atual === 'pt' ? 'App / táxi (estimado)' : 'Ride-hailing (estimated)', valor: r.app},
+      {chave:'publico', grupo:'TRANSPORTE', sub:'Transporte público', nome: I18n.atual === 'pt' ? 'Ônibus e metrô (estimado, fora do VT)' : 'Public transport (estimated, beyond VT)', valor: r.publico}
+    ];
+    let n = 0;
+    partes.forEach(p => {
+      const i = ST.recorrentes.findIndex(x => x.desloc === p.chave);
+      if(!p.valor || p.valor < 1){ if(i >= 0) ST.recorrentes.splice(i, 1); return; }
+      const base = Recorrente.arruma({grupo: p.grupo, sub: p.sub, nome: p.nome, valor: Math.round(p.valor * 100) / 100, regra: 'dia', dia: 1,
+        desde: hojeISO().slice(0, 8) + '01', ativo: true, estadoPadrao: 'automatico', avisar: false, desloc: p.chave});
+      base.desloc = p.chave;
+      if(i >= 0){ base.id = ST.recorrentes[i].id; ST.recorrentes[i] = Object.assign({}, ST.recorrentes[i], base); }
+      else { base.id = Recorrente.novoId(); ST.recorrentes.push(base); }
+      n++;
+    });
+    return n;
+  }
+};
+
+/* ---------- a tela ---------- */
+function viewBDesloc(){
+  const pt = I18n.atual !== 'en', L = pt ? 'pt' : 'en';
+  const V = Desloc.veiculo();
+  const lugares = Desloc.lugares(), trajetos = Desloc.trajetos();
+  const r = Desloc.resumo(hojeISO());
+  let h = '<div class="card-head"><h1>' + (pt ? 'Deslocamentos' : 'Commutes') + '</h1>' +
+    '<div class="head-acoes">' +
+      '<button class="btn sm" data-acao="lug-novo">+ ' + (pt ? 'Lugar' : 'Place') + '</button>' +
+      '<button class="btn primary sm" data-acao="trj-novo"' + (lugares.length < 2 ? ' disabled title="' + (pt ? 'cadastre dois lugares primeiro' : 'add two places first') + '"' : '') + '>+ ' + (pt ? 'Trajeto' : 'Trip') + '</button>' +
+    '</div></div>';
+
+  h += '<div class="kpis">' +
+    kpiB(pt ? 'Combustível por mês' : 'Fuel per month', fmt(r.combustivel), null, Math.round(r.km) + ' km ' + (pt ? 'de carro' : 'by car'), r.combustivel ? 'down' : '') +
+    kpiB(pt ? 'Pedágios' : 'Tolls', fmt(r.pedagio), null, null, r.pedagio ? 'down' : '') +
+    kpiB(pt ? 'App / táxi' : 'Ride-hailing', fmt(r.app), null, null, r.app ? 'down' : '') +
+    kpiB(pt ? 'Ônibus e metrô' : 'Public transport', fmt(r.publico), null,
+         r.publicoCoberto ? fmt(r.publicoCoberto) + (pt ? ' cobertos pelo vale-transporte' : ' covered by the transport allowance') : (pt ? 'fora do vale-transporte' : 'beyond the allowance'), r.publico ? 'down' : '') +
+    '</div>';
+
+  /* o carro e os preços: editáveis na hora */
+  h += '<div class="card"><div class="card-head"><h3>🚗 ' + (pt ? 'O carro e os preços' : 'The car and the prices') + '</h3>' +
+    '<span class="small muted">' + (pt ? 'salva ao mudar' : 'saves on change') + '</span></div>' +
+    '<div class="grid g4 desloc-cfg">' +
+      campo(pt ? 'Consumo (km por litro)' : 'Consumption (km per litre)', '<input type="number" step="0.1" min="1" data-veiculo="consumo" value="' + V.consumo + '">') +
+      campo(pt ? 'Preço do litro (R$)' : 'Fuel price (R$/l)', '<input type="number" step="0.01" min="0" data-veiculo="precoLitro" value="' + V.precoLitro + '">') +
+      campo(pt ? 'Tanque (litros)' : 'Tank (litres)', '<input type="number" step="1" min="10" data-veiculo="tanque" value="' + V.tanque + '">', null, pt ? 'para viagens contadas em abastecimentos' : 'for trips counted in fill-ups') +
+      campo(pt ? 'Tarifa de ônibus/metrô (R$)' : 'Bus/metro fare (R$)', '<input type="number" step="0.01" min="0" data-veiculo="tarifaPublico" value="' + V.tarifaPublico + '">') +
+    '</div></div>';
+
+  /* lugares */
+  h += '<div class="card"><div class="card-head"><h3>📍 ' + (pt ? 'Lugares' : 'Places') + '</h3><span class="small muted">' + lugares.length + '</span></div>';
+  if(!lugares.length) h += '<p class="small muted" style="margin:0">' + (pt
+    ? 'Comece pela casa e pelo trabalho. Depois a escola, os pais, a família em outra cidade. Com o endereço, o app acha as coordenadas e calcula a distância de carro entre eles.'
+    : 'Start with home and work. Then school, parents, family in another town. From the address the app finds coordinates and works out the driving distance.') + '</p>';
+  else h += '<div class="lug-lista">' + lugares.map(l => '<button class="lug-item" data-acao="lug-editar" data-id="' + l.id + '">' +
+    '<span class="lug-ico">' + (TIPOS_LUGAR[l.tipo] || TIPOS_LUGAR.outro).ico + '</span>' +
+    '<span class="lug-txt"><b>' + esc(l.nome) + '</b><i>' + esc(l.endereco || '') + (l.quem ? ' · ' + esc(l.quem) : '') + '</i></span>' +
+    '<span class="lug-geo' + (l.lat != null ? ' ok' : '') + '">' + (l.lat != null ? '📌' : (pt ? 'sem mapa' : 'no map')) + '</span></button>').join('') + '</div>';
+  h += '</div>';
+
+  /* trajetos */
+  h += '<div class="card"><div class="card-head"><h3>🧭 ' + (pt ? 'Trajetos' : 'Trips') + '</h3>' +
+    (trajetos.length && r.total ? '<button class="btn sm" data-acao="desloc-fixo">' + (pt ? 'Lançar como custo fixo' : 'Add as fixed cost') + '</button>' : '') + '</div>';
+  if(!trajetos.length) h += '<p class="small muted" style="margin:0">' + (pt
+    ? 'Cada trajeto diz de onde para onde, como vai, quem vai e quantas vezes. Ex.: casa → escola da Lara, de carro, 5 vezes por semana; casa → pais, de carro, 1 vez por semana; casa → Passos-MG, de carro, 4 vezes por ano, 2,5 tanques.'
+    : 'Each trip says from where to where, how, who and how often. E.g. home → school, by car, 5 times a week; home → parents, by car, once a week.') + '</p>';
+  else h += '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>' + (pt ? 'Trajeto' : 'Trip') + '</th><th>' + (pt ? 'Como e quando' : 'How and when') + '</th><th class="num" data-principal>' + (pt ? 'Por mês' : 'Per month') + '</th></tr></thead><tbody>' +
+    trajetos.map(t => {
+      const o = Desloc.lugar(t.origemId), d = Desloc.lugar(t.destinoId), c = Desloc.custo(t, hojeISO());
+      const km = Desloc.km(t), m = MODOS_DESLOC[t.modo] || MODOS_DESLOC.carro;
+      const ativo = Desloc.ativo(t, hojeISO());
+      return '<tr class="linha-click' + (ativo ? '' : ' linha-off') + '" data-acao="trj-editar" data-id="' + t.id + '">' +
+        '<td><span class="t-main">' + esc(o ? o.nome : '?') + ' → ' + esc(d ? d.nome : '?') + '</span>' +
+          '<div class="t-sub">' + esc((t.quem || []).join(', ')) + (km != null ? ' · ' + pnum(km, 1) + ' km' + (t.idaVolta === false ? '' : (pt ? ' (ida)' : ' (one way)')) : '') +
+          (t.desde || t.ate ? ' · ' + (t.desde ? fmtData(t.desde) : '…') + ' → ' + (t.ate ? fmtData(t.ate) : (pt ? 'sem fim' : 'open')) : '') + '</div></td>' +
+        '<td class="tiny">' + m.ico + ' ' + esc(m[L]) + '<div class="t-sub">' + (Number(t.vezes) || 0) + ' ' + esc(FREQ_DESLOC[t.freq] ? FREQ_DESLOC[t.freq][L] : '') +
+          (t.idaVolta === false ? (pt ? ' · só ida' : ' · one way') : (pt ? ' · ida e volta' : ' · return')) + '</div></td>' +
+        '<td class="num">' + (c.junto ? '<span class="t-sub">' + (pt ? 'vai junto com ' : 'rides with ') + esc((Desloc.lugar(c.junto.destinoId) || {}).nome || '') + '</span><b>' + fmt(0) + '</b>'
+                             : '<b class="' + (c.total ? 'down' : '') + '">' + fmt(c.total) + '</b>' + (t.modo === 'publico' && Desloc.temVT(t.quem) ? '<span class="t-sub">' + (pt ? 'coberto pelo VT' : 'covered by VT') + '</span>' : '')) + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+  h += '<p class="tiny muted" style="margin-top:10px">' + (pt
+    ? 'Estimativa: distância de carro = linha reta × 1,3 (corrija no trajeto se souber a real). Combustível = km ÷ consumo × preço do litro. "Vai junto com" conta a viagem uma vez só — use quando duas pessoas vão no mesmo carro, inclusive a partir de uma data futura.'
+    : 'Estimate: driving distance = straight line × 1.3 (fix it in the trip if you know the real one). Fuel = km ÷ consumption × price per litre. "Rides with" counts the trip once — for two people in the same car, including from a future date.') + '</p></div>';
+  return h;
+}
+
+/* ---------- lugar ---------- */
+let lugCad = null;
+function abrirLugar(id){
+  const pt = I18n.atual !== 'en', L = pt ? 'pt' : 'en';
+  const l = id ? Desloc.lugar(id) : null;
+  lugCad = {id: l ? l.id : null, lat: l ? l.lat : null, lon: l ? l.lon : null};
+  const pessoas = (typeof Gasto !== 'undefined' ? Gasto.pessoas() : []).map(p => p.chave);
+  $('#assetModalTitle').textContent = l ? (pt ? 'Editar lugar' : 'Edit place') : (pt ? 'Novo lugar' : 'New place');
+  $('#assetModalBody').innerHTML = Verter.html(
+    '<div class="grid g2">' +
+      campo(pt ? 'Nome' : 'Name', '<input id="lgNome" value="' + esc(l ? l.nome : '') + '" placeholder="' + (pt ? 'ex.: Casa, Escola da Lara, Pais' : 'e.g. Home, School, Parents') + '">') +
+      campo(pt ? 'Tipo' : 'Type', '<select id="lgTipo">' + Object.keys(TIPOS_LUGAR).map(k => '<option value="' + k + '"' + ((l ? l.tipo : 'casa') === k ? ' selected' : '') + '>' + TIPOS_LUGAR[k].ico + ' ' + esc(TIPOS_LUGAR[k][L]) + '</option>').join('') + '</select>') +
+    '</div>' +
+    campo(pt ? 'Endereço' : 'Address', '<input id="lgEnd" value="' + esc(l ? l.endereco || '' : '') + '" placeholder="' + (pt ? 'rua, número, cidade, estado' : 'street, number, city, state') + '">',
+      null, pt ? 'Com cidade e estado o mapa acha melhor.' : 'City and state help the map find it.') +
+    '<div class="row" style="margin:-4px 0 12px">' +
+      '<button type="button" class="btn sm" data-acao="lug-localizar">🗺️ ' + (pt ? 'Achar no mapa' : 'Find on the map') + '</button>' +
+      '<span id="lgGeo" class="small muted">' + (l && l.lat != null ? '📌 ' + l.lat.toFixed(5) + ', ' + l.lon.toFixed(5) : (pt ? 'sem coordenadas ainda' : 'no coordinates yet')) + '</span>' +
+    '</div>' +
+    '<div class="grid g2">' +
+      campo(pt ? 'Latitude' : 'Latitude', '<input type="number" step="any" id="lgLat" value="' + (l && l.lat != null ? l.lat : '') + '">', null, pt ? 'ou cole do Google Maps' : 'or paste from Google Maps') +
+      campo(pt ? 'Longitude' : 'Longitude', '<input type="number" step="any" id="lgLon" value="' + (l && l.lon != null ? l.lon : '') + '">') +
+    '</div>' +
+    campo(pt ? 'De quem é este lugar' : 'Whose place', '<input id="lgQuem" list="lgQuemLista" value="' + esc(l ? l.quem || '' : '') + '" placeholder="' + (pt ? 'opcional — ex.: Lara, pais do Marcelo' : 'optional') + '">' +
+      '<datalist id="lgQuemLista">' + pessoas.map(p => '<option value="' + esc(p) + '"></option>').join('') + '</datalist>') +
+    '<div class="f-actions">' +
+      (l ? '<button class="btn danger" data-acao="lug-excluir" data-id="' + l.id + '">' + (pt ? 'Excluir' : 'Delete') + '</button>' : '') +
+      '<button class="btn" data-close="assetModal">' + (pt ? 'Cancelar' : 'Cancel') + '</button>' +
+      '<button class="btn primary" data-acao="lug-salvar">' + (pt ? 'Salvar' : 'Save') + '</button></div>');
+  abrir('assetModal');
+}
+async function localizarLugar(){
+  const pt = I18n.atual !== 'en';
+  const alvo = $('#lgGeo');
+  alvo.textContent = pt ? 'Procurando…' : 'Searching…';
+  try{
+    const r = await Desloc.localizar($('#lgEnd').value);
+    $('#lgLat').value = r.lat; $('#lgLon').value = r.lon;
+    alvo.textContent = '📌 ' + r.nome.slice(0, 80);
+  }catch(e){ alvo.textContent = (pt ? 'Não achei: ' : 'Not found: ') + (e.message || e); }
+}
+function salvarLugar(){
+  const pt = I18n.atual !== 'en';
+  const nome = $('#lgNome').value.trim();
+  if(!nome){ toast(pt ? 'Dê um nome ao lugar.' : 'Name the place.', 'warn'); return; }
+  const lat = $('#lgLat').value === '' ? null : Number($('#lgLat').value), lon = $('#lgLon').value === '' ? null : Number($('#lgLon').value);
+  Desloc.salvarLugar({id: lugCad && lugCad.id, nome, tipo: $('#lgTipo').value, endereco: $('#lgEnd').value.trim(), lat, lon, quem: $('#lgQuem').value.trim()});
+  Store.salvar(); fechar('assetModal'); render();
+}
+
+/* ---------- trajeto ---------- */
+let trjCad = null;
+function abrirTrajeto(id){
+  const pt = I18n.atual !== 'en', L = pt ? 'pt' : 'en';
+  const t = id ? Desloc.trajeto(id) : null;
+  trjCad = {id: t ? t.id : null};
+  const lug = Desloc.lugares();
+  const pessoas = (typeof Gasto !== 'undefined' ? Gasto.pessoas() : []).map(p => p.chave);
+  const opLug = sel => lug.map(l => '<option value="' + l.id + '"' + (l.id === sel ? ' selected' : '') + '>' + (TIPOS_LUGAR[l.tipo] || TIPOS_LUGAR.outro).ico + ' ' + esc(l.nome) + '</option>').join('');
+  const outros = Desloc.trajetos().filter(x => !t || x.id !== t.id);
+  $('#assetModalTitle').textContent = t ? (pt ? 'Editar trajeto' : 'Edit trip') : (pt ? 'Novo trajeto' : 'New trip');
+  $('#assetModalBody').innerHTML = Verter.html(
+    '<div class="grid g2">' +
+      campo(pt ? 'De' : 'From', '<select id="tjDe">' + opLug(t ? t.origemId : (lug.find(l => l.tipo === 'casa') || lug[0]).id) + '</select>') +
+      campo(pt ? 'Para' : 'To', '<select id="tjPara">' + opLug(t ? t.destinoId : (lug.find(l => l.tipo !== 'casa') || lug[1] || lug[0]).id) + '</select>') +
+    '</div>' +
+    campo(pt ? 'Como vai' : 'How',
+      '<div class="chips" id="tjModo">' + Object.keys(MODOS_DESLOC).map(k => '<button type="button" class="chip click' + (((t && t.modo) || 'carro') === k ? ' on' : '') + '" data-modo="' + k + '">' + MODOS_DESLOC[k].ico + ' ' + esc(MODOS_DESLOC[k][L]) + '</button>').join('') + '</div>') +
+    campo(pt ? 'Quem vai' : 'Who goes', '<input id="tjQuem" value="' + esc(t ? (t.quem || []).join(', ') : '') + '" placeholder="' + (pt ? 'ex.: Marcelo, Lara — separe por vírgula' : 'comma-separated') + '" list="tjQuemLista">' +
+      '<datalist id="tjQuemLista">' + pessoas.map(p => '<option value="' + esc(p) + '"></option>').join('') + '</datalist>') +
+    '<div class="grid g3">' +
+      campo(pt ? 'Quantas vezes' : 'How many times', '<input type="number" id="tjVezes" min="0" step="0.5" value="' + (t ? t.vezes : 5) + '">') +
+      campo(pt ? 'Por' : 'Per', '<select id="tjFreq">' + Object.keys(FREQ_DESLOC).map(k => '<option value="' + k + '"' + (((t && t.freq) || 'semana') === k ? ' selected' : '') + '>' + esc(FREQ_DESLOC[k][L]) + '</option>').join('') + '</select>') +
+      campo(pt ? 'Ida e volta' : 'Return trip', '<select id="tjIdaVolta"><option value="sim"' + (!t || t.idaVolta !== false ? ' selected' : '') + '>' + (pt ? 'Sim' : 'Yes') + '</option><option value="nao"' + (t && t.idaVolta === false ? ' selected' : '') + '>' + (pt ? 'Só ida' : 'One way') + '</option></select>') +
+    '</div>' +
+    '<div class="grid g3" id="tjCarro">' +
+      campo(pt ? 'Distância (km, ida)' : 'Distance (km, one way)', '<input type="number" id="tjKm" min="0" step="0.1" value="' + (t && t.km != null && t.km !== '' ? t.km : '') + '" placeholder="' + (pt ? 'auto' : 'auto') + '">', null, '<span id="tjKmAuto"></span>') +
+      campo(pt ? 'Pedágio por trecho (R$)' : 'Toll per leg (R$)', '<input type="number" id="tjPedagio" min="0" step="0.01" value="' + (t ? t.pedagio || '' : '') + '">') +
+      campo(pt ? 'Preço do litro lá (R$)' : 'Fuel price there (R$)', '<input type="number" id="tjPreco" min="0" step="0.01" value="' + (t ? t.precoLitro || '' : '') + '" placeholder="' + (pt ? 'vazio = o padrão' : 'blank = default') + '">') +
+      campo(pt ? 'Abastecimentos por viagem' : 'Fill-ups per trip', '<input type="number" id="tjAbast" min="0" step="0.5" value="' + (t ? t.abastecimentos || '' : '') + '">', null, pt ? 'viagem longa: 2,5 tanques ida e volta, em vez de km' : 'long trip: 2.5 tanks round trip, instead of km') +
+    '</div>' +
+    '<div class="grid g2" id="tjOutros">' +
+      campo(pt ? 'Custo por corrida (app/táxi, R$)' : 'Cost per ride (R$)', '<input type="number" id="tjApp" min="0" step="0.01" value="' + (t ? t.custoApp || '' : '') + '">') +
+      campo(pt ? 'Tarifa (ônibus/metrô, R$)' : 'Fare (R$)', '<input type="number" id="tjTarifa" min="0" step="0.01" value="' + (t ? t.tarifa || '' : '') + '" placeholder="' + (pt ? 'vazio = a padrão' : 'blank = default') + '">') +
+    '</div>' +
+    campo(pt ? 'Vai junto com' : 'Rides with', '<select id="tjJunto"><option value="">' + (pt ? '— viagem própria —' : '— its own trip —') + '</option>' +
+      outros.map(x => { const o = Desloc.lugar(x.origemId), d = Desloc.lugar(x.destinoId); return '<option value="' + x.id + '"' + (t && t.juntoCom === x.id ? ' selected' : '') + '>' + esc((o ? o.nome : '?') + ' → ' + (d ? d.nome : '?') + ' · ' + (x.quem || []).join(', ')) + '</option>'; }).join('') + '</select>',
+      null, pt ? 'Mesmo carro, mesma hora: a viagem conta uma vez só. Ex.: a Julia passa a ir com a Lara quando estudarem juntas.' : 'Same car, same time: the trip counts once.') +
+    '<div class="grid g2">' +
+      campo(pt ? 'Vale a partir de' : 'Valid from', '<input type="date" id="tjDesde" value="' + esc(t ? t.desde || '' : '') + '">') +
+      campo(pt ? 'Até' : 'Until', '<input type="date" id="tjAte" value="' + esc(t ? t.ate || '' : '') + '">') +
+    '</div>' +
+    campo(pt ? 'Observação' : 'Notes', '<input id="tjObs" value="' + esc(t ? t.obs || '' : '') + '" placeholder="' + (pt ? 'ex.: 6 h de viagem, sai sexta à noite' : 'e.g. 6-hour drive') + '">') +
+    '<div id="tjRota" class="small muted" style="margin:-4px 0 12px"></div>' +
+    '<div class="f-actions">' +
+      (t ? '<button class="btn danger" data-acao="trj-excluir" data-id="' + t.id + '">' + (pt ? 'Excluir' : 'Delete') + '</button>' : '') +
+      '<button class="btn" data-close="assetModal">' + (pt ? 'Cancelar' : 'Cancel') + '</button>' +
+      '<button class="btn primary" data-acao="trj-salvar">' + (pt ? 'Salvar' : 'Save') + '</button></div>');
+  abrir('assetModal');
+  const corpo = corpoNovo('#assetModalBody');
+  const modoAtual = () => { const b = corpo.querySelector('#tjModo .chip.on'); return b ? b.dataset.modo : 'carro'; };
+  const refazer = () => {
+    const modo = modoAtual();
+    $('#tjCarro').classList.toggle('hidden', modo !== 'carro');
+    $('#tjOutros').classList.toggle('hidden', modo === 'carro' || modo === 'pe' || modo === 'bike');
+    const o = Desloc.lugar($('#tjDe').value), d = Desloc.lugar($('#tjPara').value);
+    const reta = Desloc.reta(o, d);
+    $('#tjKmAuto').textContent = reta == null ? (pt ? 'sem coordenadas nos dois lugares: digite a distância' : 'no coordinates on both places: type the distance')
+                                              : (pt ? 'estimado: ' : 'estimated: ') + pnum(reta * 1.3, 1) + ' km';
+    $('#tjRota').innerHTML = (o && d && o.lat != null && d.lat != null)
+      ? '<a href="https://www.google.com/maps/dir/?api=1&origin=' + o.lat + ',' + o.lon + '&destination=' + d.lat + ',' + d.lon + '" target="_blank" rel="noopener">🗺️ ' + (pt ? 'ver a rota no mapa' : 'see the route on the map') + '</a>' : '';
+  };
+  corpo.querySelector('#tjModo').addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if(!b) return;
+    corpo.querySelectorAll('#tjModo .chip').forEach(x => x.classList.toggle('on', x === b)); refazer();
+  });
+  corpo.addEventListener('change', refazer);
+  refazer();
+}
+function salvarTrajeto(){
+  const pt = I18n.atual !== 'en';
+  const modo = (document.querySelector('#tjModo .chip.on') || {}).dataset ? document.querySelector('#tjModo .chip.on').dataset.modo : 'carro';
+  const d = {
+    id: trjCad && trjCad.id, origemId: $('#tjDe').value, destinoId: $('#tjPara').value, modo,
+    quem: $('#tjQuem').value.split(',').map(s => s.trim()).filter(Boolean),
+    vezes: Number($('#tjVezes').value) || 0, freq: $('#tjFreq').value, idaVolta: $('#tjIdaVolta').value !== 'nao',
+    km: $('#tjKm').value === '' ? null : Number($('#tjKm').value), pedagio: Number($('#tjPedagio').value) || 0,
+    precoLitro: Number($('#tjPreco').value) || 0, abastecimentos: Number($('#tjAbast').value) || 0,
+    custoApp: Number($('#tjApp').value) || 0, tarifa: Number($('#tjTarifa').value) || 0,
+    juntoCom: $('#tjJunto').value, desde: $('#tjDesde').value, ate: $('#tjAte').value, obs: $('#tjObs').value.trim()
+  };
+  if(d.origemId === d.destinoId){ toast(pt ? 'Origem e destino são o mesmo lugar.' : 'Origin and destination are the same place.', 'warn'); return; }
+  if(!d.vezes){ toast(pt ? 'Diga quantas vezes vai.' : 'Say how many times.', 'warn'); return; }
+  Desloc.salvarTrajeto(d); Store.salvar(); fechar('assetModal'); render();
+}
 </script>
 <script>
 /* =========================================================
@@ -30977,7 +31807,7 @@ function render(){
                  noticias:viewNoticias, prognostico:viewPrognostico, coach:viewCoach,
                  glossario:viewGlossario, config:viewConfig,
                  'b-painel':viewBPainel, 'b-lanc':viewBLanc,
-                 'b-renda':viewBRenda, 'b-futuro':viewBFuturo, 'b-precos':viewBPrecos,
+                 'b-renda':viewBRenda, 'b-desloc':viewBDesloc, 'b-futuro':viewBFuturo, 'b-precos':viewBPrecos,
                  'b-fluxo':viewBFluxo, 'b-custos':viewBCustos,
                  't-painel':viewTPainel, 't-imposto':viewTImposto, 't-pjclt':viewTPjClt,
                  't-declaracoes':viewTDeclaracoes, 't-processos':viewTProcessos, 't-deducoes':viewTDeducoes, 't-docs':viewTDocs};
@@ -31164,8 +31994,12 @@ function renderCalendarioMenu(){
      no Coach, no Glossário e em qualquer tela que tenha um ⓘ (as
      explicações do ⓘ mudam com o nível). Um botão que não faz nada
      na tela atual é um botão morto — então ele some. */
+  /* e só conta o ⓘ cuja explicação de fato muda com o nível: no
+     BudgetONE quase todos têm um texto só, então o seletor some lá */
   const tela = $('#view-' + viewAtual);
-  const quantosInfo = tela ? tela.querySelectorAll('[data-info]').length : 0;
+  const comNiveis = k => { const g = (typeof GLOSSARIO !== 'undefined') ? GLOSSARIO.find(x => x.k === k) : null;
+    return !!(g && g.pt && ['iniciante','medio','expert'].filter(n => g.pt[n]).length > 1); };
+  const quantosInfo = tela ? Array.from(tela.querySelectorAll('[data-info]')).filter(b => comNiveis(b.dataset.info)).length : 0;
   const temNivel = viewAtual === 'coach' || viewAtual === 'glossario' || quantosInfo > 0;
   const nivel = $('#navNivel');
   if(nivel) nivel.classList.toggle('hidden', !temNivel);
@@ -31221,8 +32055,16 @@ function ligarCamposDaView(){
       render(); const n = $('#bBusca'); if(n){ n.focus(); n.setSelectionRange(pos,pos); }
     });
     const de = $('#bDe'), ate = $('#bAte');
-    if(de)  de.addEventListener('change',  e => { bFiltro.de  = e.target.value; bFiltro.periodo = ''; bPagina = 0; bProj = null; render(); });
-    if(ate) ate.addEventListener('change', e => { bFiltro.ate = e.target.value; bFiltro.periodo = ''; bPagina = 0; bProj = null; render(); });
+    if(de)  de.addEventListener('change',  e => { bFiltro.de  = e.target.value; bFiltro.periodo = ''; bPagina = 0; bProj = null; bGuardarFiltro(); render(); });
+    if(ate) ate.addEventListener('change', e => { bFiltro.ate = e.target.value; bFiltro.periodo = ''; bPagina = 0; bProj = null; bGuardarFiltro(); render(); });
+    /* o seletor de período do celular */
+    const bPer = $('#bPer');
+    if(bPer) bPer.addEventListener('change', () => { if(bPer.value) bAplicarPeriodo(bPer.value); render(); });
+    /* o carro e os preços dos deslocamentos */
+    $$('[data-veiculo]').forEach(inp => inp.addEventListener('change', () => {
+      ST.config.veiculo = Object.assign({}, ST.config.veiculo || {}, {[inp.dataset.veiculo]: Number(inp.value) || 0});
+      Store.salvar(); render();
+    }));
   }
   if(viewAtual === 'movimentos'){
     const b = $('#movBusca');
@@ -31646,7 +32488,7 @@ function ligarEventos(){
 
   /* cliques gerais (delegação) */
   document.addEventListener('click', async (e) => {
-    const el = e.target.closest('[data-olho],[data-assunto],[data-mk-serie],[data-mk-per],[data-mk-ativo],[data-comp-per],[data-mov],[data-fmov],[data-resp],[data-graf-per],[data-grafico],[data-acoes-ativo],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del],[data-app],[data-bgrupo],[data-bsub],[data-bquem],[data-bforma],[data-bper],[data-bid],[data-bpag],[data-banos],[data-bpreco],[data-item],[data-recedit],[data-recoff],[data-recsug],[data-cfgsec],[data-avisof],[data-bamove],[data-basai],[data-baentra],[data-app2],[data-custaba],[data-caldia],[data-calandar],[data-calhoje],[data-cdtabre],[data-ocor],[data-ocestado],[data-pgest],[data-recfav],[data-gfav],[data-grev],[data-rcregra],[data-para],[data-idioma],[data-bmarca],[data-contaba],[data-porta],[data-avtipo],[data-campon],[data-campdel],[data-servmes],[data-servaj],[data-ajtipo],[data-rjpct],[data-servir],[data-reaj],[data-visitas],[data-asaba],[data-vercomo],[data-nivelconta],[data-bkdel],[data-ctedit],[data-ctdel],[data-salaba],[data-trocaapp]');
+    const el = e.target.closest('[data-olho],[data-assunto],[data-mk-serie],[data-mk-per],[data-mk-ativo],[data-comp-per],[data-mov],[data-fmov],[data-resp],[data-graf-per],[data-grafico],[data-acoes-ativo],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del],[data-app],[data-bgrupo],[data-bsub],[data-bquem],[data-bforma],[data-bper],[data-bid],[data-bpag],[data-banos],[data-bpreco],[data-item],[data-recedit],[data-recoff],[data-recsug],[data-cfgsec],[data-avisof],[data-bamove],[data-basai],[data-baentra],[data-app2],[data-custaba],[data-caldia],[data-calandar],[data-calhoje],[data-cdtabre],[data-ocor],[data-ocestado],[data-pgest],[data-recfav],[data-gfav],[data-grev],[data-rcregra],[data-para],[data-idioma],[data-bmarca],[data-contaba],[data-porta],[data-avtipo],[data-campon],[data-campdel],[data-servmes],[data-servaj],[data-ajtipo],[data-rjpct],[data-servir],[data-reaj],[data-visitas],[data-asaba],[data-vercomo],[data-nivelconta],[data-bkdel],[data-ctedit],[data-ctdel],[data-salaba],[data-trocaapp],[data-irpara]');
     if(!el) return;
     const d = el.dataset;
 
@@ -31667,6 +32509,7 @@ function ligarEventos(){
     if(d.bmarca){ bFiltro[d.bmarca] = !bFiltro[d.bmarca]; bPagina = 0; bProj = null; render(); return; }
     if(d.bpag != null && d.bpag !== ''){ bPagina = Number(d.bpag); render(); window.scrollTo({top:0,behavior:'smooth'}); return; }
     if(d.banos){ bAnos = Number(d.banos); if(bProj && bProj.series) bProj = Orcamento.projetar(bAnos, bProj.series); render(); return; }
+    if(d.irpara){ if(appDaView(d.irpara) !== (ST.appAtual || 'investify')) abrirApp(appDaView(d.irpara)); irPara(d.irpara); return; }
     if(d.bid){ abrirLancamento(d.bid); return; }
     if(d.bpreco){ verHistoriaPreco(d.bpreco); return; }
     if(d.idioma !== undefined){ I18n.definir(d.idioma || I18n.outro()); return; }
@@ -32273,8 +33116,8 @@ function ligarEventos(){
           Store.salvar(); fechar('assetModal'); render(); renderFita(); toast('Compromisso excluído.'); }
         break;
       case 'b-limpar-filtro':
-        bFiltro = {busca:'', grupos:[], subs:[], quem:[], formas:[], de:'', ate:'', fluxo:'', periodo:'tudo'};
-        bPagina = 0; bProj = null; render(); break;
+        bFiltro = {busca:'', grupos:[], subs:[], quem:[], formas:[], de:'', ate:'', fluxo:'', periodo:'12m', favoritos:false, revisar:false, irpf:false};
+        bAplicarPeriodo('12m'); render(); break;
       case 'gl-salvar': salvarLancamento(); break;
       case 'banco-novo':    abrirBanco(); break;
       case 'banco-salvar':  salvarBanco(); break;
@@ -32302,6 +33145,25 @@ function ligarEventos(){
       case 'sal-cad-modo':    salvarCadastroSalario(d.modo); break;
       case 'sal-cad-excluir': excluirCadastroSalario(d.id); break;
       case 'sal-holerite':    { const a = $('#scArquivo'); if(a) a.click(); break; }
+      /* ---- benefícios pendurados no salário ---- */
+      case 'ben-novo':     abrirBeneficio(null, d.sal || null); break;
+      case 'ben-editar':   abrirBeneficio(d.id, d.sal || null); break;
+      case 'ben-salvar':   salvarBeneficio(); break;
+      case 'ben-excluir':  excluirBeneficio(d.id); break;
+      case 'ben-extrato':  { const a = $('#bnArquivo'); if(a) a.click(); break; }
+      case 'ben-cancelar': { const v = benCad && benCad.voltar; benCad = null; if(v) abrirCadastroSalario(v); else fechar('assetModal'); break; }
+      /* ---- deslocamentos ---- */
+      case 'lug-novo':      abrirLugar(null); break;
+      case 'lug-editar':    abrirLugar(d.id); break;
+      case 'lug-localizar': localizarLugar(); break;
+      case 'lug-salvar':    salvarLugar(); break;
+      case 'lug-excluir':   if(confirm(I18n.atual === 'pt' ? 'Excluir este lugar e os trajetos que passam por ele?' : 'Delete this place and its trips?')){ Desloc.excluirLugar(d.id); Store.salvar(); fechar('assetModal'); render(); } break;
+      case 'trj-novo':      abrirTrajeto(null); break;
+      case 'trj-editar':    abrirTrajeto(d.id); break;
+      case 'trj-salvar':    salvarTrajeto(); break;
+      case 'trj-excluir':   Desloc.excluirTrajeto(d.id); Store.salvar(); fechar('assetModal'); render(); break;
+      case 'desloc-fixo':   { const n = Desloc.lancarComoFixo(); Store.salvar(); render();
+        toast(I18n.atual === 'pt' ? n + ' compromisso(s) de transporte atualizados em Custos fixos.' : n + ' transport commitment(s) updated in Fixed costs.'); break; }
       /* TaxONE */
       case 'tx-ir':           irPara(d.tela); break;
       case 'tx-ano':          ST.config.taxAno = Number(d.ano); Store.salvar(); render(); break;
@@ -32686,6 +33548,7 @@ function comecarApp(r){
   Anuncio.carregarLista();
   /* o pop-up de depois do login, só para quem vê anúncio, e depois do tutorial */
   if(Acesso.mostraAnuncio() && Assist.jaViuTutorial()) setTimeout(() => Anuncio.popup('depois'), 2500);
+  if(typeof bCarregarFiltro === 'function') bCarregarFiltro();
   montarNav();
   mostrarHub();
   ligarAuto();
