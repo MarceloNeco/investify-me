@@ -1605,6 +1605,8 @@ body:has(.modal-wrap:not(.hidden)) .faixa{display:none}
 .ia-msg{padding:10px 12px; border-radius:12px; font-size:.9rem; line-height:1.5; max-width:92%}
 .ia-msg.eu{background:var(--chip); justify-self:end; border-bottom-right-radius:4px}
 .ia-msg.ia{background:color-mix(in srgb, var(--accent2) 12%, transparent); border-bottom-left-radius:4px}
+.ia-msg.aviso{justify-self:center; background:color-mix(in srgb, var(--warn, #d9a441) 14%, transparent); font-size:.82rem; text-align:center}
+.ia-salvas{margin:0 0 6px}
 .ia-caixa{display:grid; grid-template-columns:1fr auto; gap:8px; align-items:end}
 .ia-caixa textarea{width:100%; resize:vertical; min-height:56px}
 .ia-ctx{margin-top:8px}
@@ -13164,6 +13166,11 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.15', d:'2026-09-26', t:'IA: troca sozinha e teste da chave', itens:[
+    'Se a IA escolhida falhar por falta de cota, de crédito ou chave recusada, o app espera uns 3 segundos e usa a próxima IA que tem chave salva, na ordem da lista, avisando na tela: "🔁 <IA> está sem cota agora — usando <outra>". A sua escolha continua salva.',
+    'O cofre mostra no topo quais IAs já têm chave salva; na lista, elas vêm primeiro, com o selo "✓ chave salva" ou "sem chave".',
+    'Ao colar a chave, o app testa no provedor antes de guardar. Chave recusada não é salva; "falta permissão" e "sem cota" contam como chave válida e são aceitas.'
+  ]},
   {v:'3.14', d:'2026-09-25', t:'Documentos do IR: ler, juntar e conferir', itens:[
     'Nova tela TaxONE → Documentos do IR: escolha de uma vez todos os papéis do ano (PDF ou foto) e o app lê cada um: informe de rendimentos da empresa, do banco e da corretora, extrato de reembolso do plano de saúde, nota fiscal e recibo de médico e dentista, recibo do Receita Saúde, holerite e pró-labore, financiamento, consórcio, sociedade em conta de participação, conta e corretora no exterior (statement, 1042-S, relatório auxiliar).',
     'Junta os repetidos: a nota fiscal e o comprovante do Pix ou do cartão do mesmo pagamento viram uma despesa só; o extrato do plano completa com o reembolso, e o dedutível já sai líquido.',
@@ -25439,6 +25446,14 @@ function ligarTDocs(el){
 
 const CHAVE_IA = 'dgo:global:ia';
 
+/* Erro de API com o código HTTP guardado: é ele que diz se foi cota,
+   crédito ou chave recusada — e se vale a pena trocar de IA. */
+function erroIA(r, j){
+  const e = new Error((j && j.error && j.error.message) || ('HTTP ' + r.status));
+  e.status = r.status;
+  return e;
+}
+
 const PROVEDORES_IA = {
   gemini: {
     nome: 'Google Gemini',
@@ -25455,8 +25470,11 @@ const PROVEDORES_IA = {
         })
       });
       const j = await r.json();
-      if(!r.ok) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status));
+      if(!r.ok) throw erroIA(r, j);
       return (((j.candidates || [])[0] || {}).content || {}).parts?.map(p => p.text).join('') || '';
+    },
+    testar(chave){
+      return fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1&key=' + encodeURIComponent(chave));
     }
   },
   openai: {
@@ -25470,8 +25488,11 @@ const PROVEDORES_IA = {
           messages:[{role:'system', content: sistema}, {role:'user', content: pergunta}]})
       });
       const j = await r.json();
-      if(!r.ok) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status));
+      if(!r.ok) throw erroIA(r, j);
       return (((j.choices || [])[0] || {}).message || {}).content || '';
+    },
+    testar(chave){
+      return fetch('https://api.openai.com/v1/models', {headers:{'Authorization':'Bearer ' + chave}});
     }
   },
   anthropic: {
@@ -25487,8 +25508,12 @@ const PROVEDORES_IA = {
           messages:[{role:'user', content: pergunta}]})
       });
       const j = await r.json();
-      if(!r.ok) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status));
+      if(!r.ok) throw erroIA(r, j);
       return (j.content || []).map(c => c.text || '').join('');
+    },
+    testar(chave){
+      return fetch('https://api.anthropic.com/v1/models?limit=1', {headers:{'x-api-key': chave,
+        'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true'}});
     }
   }
 };
@@ -25517,6 +25542,48 @@ const IA = {
     this.guardar(c);
   },
   pronta(){ return !!(this.provedor() && this.chave()); },
+  /* na ordem da lista, primeiro quem já tem chave salva */
+  ordem(){
+    const ks = Object.keys(PROVEDORES_IA);
+    return ks.filter(k => this.chave(k)).concat(ks.filter(k => !this.chave(k)));
+  },
+  comChave(){ return Object.keys(PROVEDORES_IA).filter(k => this.chave(k)); },
+
+  /* Testa a chave no provedor sem gastar cota. Só recusa quando o
+     provedor diz que a chave é inválida. "Falta permissão" (chave
+     restrita, sem o escopo daquele endpoint) quer dizer que a chave
+     existe e é dela: aceita. Sem cota também é chave válida. */
+  async testar(p, chave){
+    let r;
+    try{ r = await PROVEDORES_IA[p].testar(chave); }
+    catch(e){ return {ok:true, incerto:true}; }            /* rede ou bloqueio do navegador */
+    if(r.ok) return {ok:true};
+    let msg = '';
+    try{
+      const txt = await r.text();
+      let j = null; try{ j = JSON.parse(txt); }catch(e){}
+      const d = j && (j.error || j.detail || j);
+      msg = String((d && (d.message || d.status || d.type)) || txt || '');
+    }catch(e){}
+    if(r.status === 403 || /permission|scope|forbidden|not authorized|not enabled/i.test(msg)) return {ok:true, permissao:true};
+    if(r.status === 429 || r.status === 402 || /quota|rate.?limit|credit|billing|exceeded/i.test(msg)) return {ok:true, cota:true};
+    if(r.status === 400 || r.status === 401) return {ok:false, msg};
+    return {ok:true, incerto:true};
+  },
+
+  /* falha que justifica trocar de IA: cota, crédito ou chave recusada */
+  falhaTrocavel(e){
+    if(e && [401, 402, 403, 429].indexOf(e.status) >= 0) return true;
+    return /quota|rate.?limit|resource.?exhausted|insufficient|credit|billing|exceeded|api key|unauthorized|permission|expired/i.test(String(e && e.message || ''));
+  },
+  avisarTroca(de, para){
+    const pt = I18n.atual === 'pt';
+    const txt = pt ? '🔁 ' + PROVEDORES_IA[de].nome + ' está sem cota agora — usando ' + PROVEDORES_IA[para].nome
+                   : '🔁 ' + PROVEDORES_IA[de].nome + ' is out of quota right now — using ' + PROVEDORES_IA[para].nome;
+    this.historico.push({de:'aviso', txt});
+    this.render();
+    toast(txt, 'warn');
+  },
 
   /* ---------- o que a IA vê: um resumo curto, nunca a carteira inteira ---------- */
   contexto(){
@@ -25576,10 +25643,23 @@ const IA = {
   async perguntar(texto){
     const p = this.provedor();
     if(!p || !this.chave()) throw new Error(I18n.atual === 'pt' ? 'Cole uma chave primeiro.' : 'Paste a key first.');
-    const prov = PROVEDORES_IA[p];
     const pergunta = (I18n.atual === 'pt' ? 'Contexto da tela:\n' : 'Screen context:\n') + this.contexto() +
                      (I18n.atual === 'pt' ? '\n\nPergunta: ' : '\n\nQuestion: ') + texto;
-    return await prov.perguntar(this.chave(), this.sistema(), pergunta);
+    /* a escolhida primeiro; se ela falhar por cota, crédito ou chave
+       recusada, a próxima que tem chave, na ordem da lista, depois de
+       uns 3 segundos. A escolha salva não muda. */
+    const fila = [p].concat(this.comChave().filter(k => k !== p));
+    let ultimo;
+    for(let i = 0; i < fila.length; i++){
+      try{ return await PROVEDORES_IA[fila[i]].perguntar(this.chave(fila[i]), this.sistema(), pergunta); }
+      catch(e){
+        ultimo = e;
+        if(!fila[i + 1] || !this.falhaTrocavel(e)) throw e;
+        this.avisarTroca(fila[i], fila[i + 1]);
+        await new Promise(ok => setTimeout(ok, 3000));
+      }
+    }
+    throw ultimo;
   },
 
   /* ---------- a tela ---------- */
@@ -25605,12 +25685,17 @@ const IA = {
       return;
     }
 
-    /* provedor e chave */
+    /* provedor e chave: quem já tem chave salva vem primeiro, com selo */
+    const salvas = this.comChave();
+    h += '<p class="tiny muted ia-salvas">' + (salvas.length
+        ? (pt ? '✓ Chave salva: ' : '✓ Key saved: ') + salvas.map(k => esc(PROVEDORES_IA[k].nome)).join(', ')
+        : (pt ? 'Nenhuma chave salva ainda.' : 'No key saved yet.')) + '</p>';
     h += '<div class="ia-prov">' +
       '<select id="iaProv" class="chip-select">' +
         '<option value="">' + (pt ? 'Escolha o provedor…' : 'Pick the provider…') + '</option>' +
-        Object.keys(PROVEDORES_IA).map(k => '<option value="' + k + '"' + (k === p ? ' selected' : '') + '>' +
-          esc(PROVEDORES_IA[k].nome) + (this.chave(k) ? ' ✓' : '') + '</option>').join('') + '</select>' +
+        this.ordem().map(k => '<option value="' + k + '"' + (k === p ? ' selected' : '') + '>' +
+          esc(PROVEDORES_IA[k].nome) + (this.chave(k) ? (pt ? ' — ✓ chave salva' : ' — ✓ key saved')
+                                                        : (pt ? ' — sem chave' : ' — no key')) + '</option>').join('') + '</select>' +
       '<button class="btn sm" data-acao="ia-chave">' + (this.chave(p) ? (pt ? 'trocar a chave' : 'change key') : (pt ? 'colar a chave' : 'paste key')) + '</button>' +
       (this.chave(p) ? '<button class="btn sm" data-acao="ia-esquecer">' + (pt ? 'esquecer' : 'forget') + '</button>' : '') +
       '</div>';
@@ -31484,9 +31569,29 @@ function ligarEventos(){
         const p2 = ($('#iaProv') || {}).value || IA.provedor();
         if(!p2){ toast(I18n.atual === 'pt' ? 'Escolha o provedor primeiro.' : 'Pick the provider first.', 'warn'); break; }
         const k2 = prompt((I18n.atual === 'pt' ? 'Cole a chave do ' : 'Paste the key for ') + PROVEDORES_IA[p2].nome + ':');
-        if(k2 && k2.trim()){ IA.definir(p2, k2.trim()); IA.render();
-          toast(I18n.atual === 'pt' ? 'Chave guardada neste aparelho. Vale para os outros apps também.'
-                                     : 'Key stored on this device. It works in the other apps too.'); }
+        if(k2 && k2.trim()){
+          const ptI = I18n.atual === 'pt';
+          toast(ptI ? 'Testando a chave…' : 'Testing the key…');
+          const rt = await IA.testar(p2, k2.trim());
+          if(!rt.ok){
+            toast((ptI ? 'O provedor recusou a chave: copie a chave inteira ou crie outra.'
+                       : 'The provider refused the key: copy the whole key or create a new one.') +
+                  (rt.msg ? ' (' + rt.msg.slice(0, 120) + ')' : ''), 'err');
+            break;
+          }
+          IA.definir(p2, k2.trim()); IA.render();
+          toast(rt.permissao
+            ? (ptI ? 'Chave válida (o provedor só limita algumas permissões). Guardada neste aparelho; vale para os outros apps também.'
+                   : 'Valid key (the provider only limits some permissions). Stored on this device; it works in the other apps too.')
+            : rt.cota
+            ? (ptI ? 'Chave válida, mas sem cota agora. Guardada neste aparelho; vale para os outros apps também.'
+                   : 'Valid key, but out of quota right now. Stored on this device; it works in the other apps too.', 'warn')
+            : rt.incerto
+            ? (ptI ? 'Não consegui testar a chave (rede ou bloqueio do navegador). Guardei mesmo assim: tente usar.'
+                   : 'Could not test the key (network or browser block). Stored anyway: try using it.', 'warn')
+            : (ptI ? 'Chave conferida e guardada neste aparelho. Vale para os outros apps também.'
+                   : 'Key checked and stored on this device. It works in the other apps too.'));
+        }
         break;
       }
       case 'ia-esquecer': IA.esquecer(IA.provedor()); IA.render(); break;
