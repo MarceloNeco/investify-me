@@ -2109,6 +2109,26 @@ body:has(.sidenav.open) .assistone, body:has(.popup-an) .assistone{display:none}
   .content{padding-bottom:150px}
 }
 @media (min-width:761px){ #toasts{bottom:96px} }
+
+/* ---- tabela empilhada (celular): cada linha vira um cartão ---- */
+.tbl-empilha{display:block; width:100%}
+.tbl-empilha thead{display:none}
+.tbl-empilha tbody{display:block}
+.tbl-empilha tr{display:flex; flex-wrap:wrap; align-items:baseline; gap:3px 12px; padding:11px 14px;
+  border-bottom:1px solid var(--linha-suave); white-space:normal}
+.tbl-empilha tr:last-child{border-bottom:0}
+.tbl-empilha tr:hover{background:transparent}
+.tbl.tbl-empilha td, .tbl.tbl-empilha td.num, .tbl.tbl-empilha td.nowrap{display:block; width:auto; padding:0; border:0; text-align:left; white-space:normal; max-width:none; font-variant-numeric:tabular-nums}
+.tbl-empilha td:first-child{flex:1 1 0; min-width:50%}
+.tbl-empilha td:first-child .t-sub{white-space:normal; max-width:none}
+.tbl.tbl-empilha td.principal{order:1; flex:0 0 auto; margin-left:auto; text-align:right; font-weight:680; font-size:1rem}
+.tbl.tbl-empilha td.extra{order:2; flex:0 0 auto; font-size:.8rem; color:var(--txt2)}
+.tbl.tbl-empilha td.extra.larga, .tbl.tbl-empilha td.extra.desc-cel{flex-basis:100%; max-width:none; font-size:.84rem; font-weight:400; overflow-wrap:anywhere}
+.tbl.tbl-empilha td.extra.desc-cel .t-sub{display:block; margin:1px 0 0}
+.tbl-empilha td.extra[data-r]::before{content:attr(data-r) ' '; color:var(--txt3); font-size:.72rem}
+.tbl-empilha td.extra .t-sub{display:inline; margin-left:4px}
+.tbl-empilha td.extra .t-main{font-weight:600; color:var(--txt)}
+.card.sem-pad .tbl-empilha tr:first-child{padding-top:12px}
 </style>
 </head>
 <body>
@@ -13316,6 +13336,10 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.18', d:'2026-09-26', t:'Tabelas que cabem no celular', itens:[
+    'No celular, tabela que não cabe na tela vira uma lista de cartões, sem rolar para o lado e sem fonte menor: a primeira coluna à esquerda, o valor principal em destaque à direita e o resto em uma linha abaixo, cada um com o seu rótulo. Vale para "As dez maiores contas" no início do BudgetONE, para os Lançamentos, para o ano a ano do Fluxo e para qualquer tabela que estourar.',
+    'Tocar na linha continua abrindo o lançamento. Ao girar o celular, a tela se refaz sozinha.'
+  ]},
   {v:'3.17', d:'2026-09-26', t:'Leitura de comprovante de maquininha', itens:[
     'O leitor de cupom por foto passa a entender o comprovante da maquininha (Cielo, Rede/laranjinha, Getnet, Stone, iFood Pago, PagSeguro…): valor na linha do CRÉDITO/DÉBITO ou sozinho com R$, data (a que vem com a hora), loja (a linha com LTDA perto do CNPJ), CNPJ que confere pelo dígito (o AID não é confundido com CNPJ), crédito ou débito, bandeira e final do cartão.',
     'A bandeira certa é a que está colada no final do cartão ("MASTERCARD ****9458"); VISA e ELO impressos no fundo do papel não enganam mais. "Pix" e "à vista" impressos no papel também não viram forma de pagamento quando o comprovante é de cartão.',
@@ -15723,7 +15747,7 @@ function viewBLanc(){
   const pag = lista.slice(bPagina * B_POR_PAGINA, (bPagina + 1) * B_POR_PAGINA);
 
   h += '<div class="card sem-pad"><table class="tbl tbl-lanc"><thead><tr>' +
-       '<th>Data</th><th>Categoria</th><th>Descrição</th><th class="num">Valor</th></tr></thead><tbody>';
+       '<th>Data</th><th>Categoria</th><th>Descrição</th><th class="num" data-principal>Valor</th></tr></thead><tbody>';
   pag.forEach(g => {
     const G = GRUPOS[g.grupo] || {};
     const sinal = g.fluxo === 'entrada' ? 'up' : (g.fluxo === 'aplicacao' ? '' : 'down');
@@ -17237,7 +17261,7 @@ function viewBFluxo(){
   if(anos.length > 1){
     h += '<div class="card sem-pad"><table class="tbl"><thead><tr><th>Ano</th>' +
       '<th class="num">Entrou</th><th class="num">Saiu</th><th class="num">Investiu</th>' +
-      '<th class="num">Sobrou</th></tr></thead><tbody>' +
+      '<th class="num" data-principal>Sobrou</th></tr></thead><tbody>' +
       anos.reverse().map(a => {
         const sobra = a.entrada - a.saida - a.aplicacao;
         return '<tr><td><b>' + a.ano + '</b></td>' +
@@ -21307,9 +21331,49 @@ const UX = {
   },
 
   /* chamado no fim de cada render */
+  /* ---------- tabela que não cabe no celular vira lista ----------
+     Rolar para o lado é a pior experiência do celular: a pessoa
+     perde a coluna do valor. Então cada linha vira um cartão:
+     a primeira coluna à esquerda, a coluna principal (a de
+     dinheiro, ou a marcada com data-principal no cabeçalho) à
+     direita, e o resto numa linha abaixo, cada um com o seu
+     rótulo. Os <tr> continuam os mesmos, então tocar na linha
+     segue funcionando. Só no celular e só quando estoura. */
+  empilharTabelas(raiz){
+    if(!raiz || window.innerWidth > 600) return;
+    raiz.querySelectorAll('table.tbl').forEach(tb => {
+      if(tb.classList.contains('tbl-empilha') || tb.classList.contains('tbl-mini')) return;
+      const ths = Array.from(tb.querySelectorAll('thead th'));
+      if(ths.length < 3) return;
+      const caixa = tb.parentElement;
+      if(tb.scrollWidth <= caixa.clientWidth + 2) return;
+      const linhas = Array.from(tb.querySelectorAll('tbody tr')).filter(tr => tr.children.length === ths.length);
+      if(!linhas.length) return;
+      /* qual coluna é a principal */
+      let principal = ths.findIndex(th => th.hasAttribute('data-principal'));
+      const temDinheiro = i => linhas.some(tr => /R\$|US\$|€/.test(tr.children[i].textContent));
+      if(principal < 0) principal = ths.findIndex((th, i) => i > 0 && th.classList.contains('num') && temDinheiro(i));
+      if(principal < 0) principal = ths.findIndex((th, i) => i > 0 && temDinheiro(i));
+      if(principal < 0) principal = ths.length - 1;
+      const rot = ths.map(th => th.textContent.trim());
+      linhas.forEach(tr => {
+        Array.from(tr.children).forEach((td, i) => {
+          if(i === 0) return;
+          if(i === principal){ td.classList.add('principal'); return; }
+          td.classList.add('extra');
+          /* rótulo só em célula "seca" (número ou palavra); célula com nome e subtítulo já se explica */
+          if(!td.querySelector('.t-main, .t-sub, b, .badge') && rot[i]) td.setAttribute('data-r', rot[i]);
+          if(td.textContent.trim().length > 40) td.classList.add('larga');
+        });
+      });
+      tb.classList.add('tbl-empilha');
+    });
+  },
+
   aplicar(view, el){
     try{
       this.envolverTabelas(el);          /* antes da sanfona, que remexe o conteúdo */
+      this.empilharTabelas(el);
       if(view === 'config') this.sanfona(el);
       this.dobrarExplicacoes(el);
       this.reguasDeValor(el);
@@ -31504,6 +31568,14 @@ function ligarEventos(){
   });
   $('#btnTheme').addEventListener('click', () => {
     ST.tema = ST.tema === 'light' ? 'dark' : 'light'; aplicarTema(); Store.salvar();
+  });
+  /* girou o celular ou mudou a janela de faixa: as tabelas empilhadas dependem disso */
+  let faixaLargura = window.innerWidth <= 600;
+  window.addEventListener('resize', () => {
+    const agora = window.innerWidth <= 600;
+    if(agora === faixaLargura) return;
+    faixaLargura = agora;
+    if(!$('#app').classList.contains('hidden')) render();
   });
   /* 🏠 Início: a tela de escolha do MoneyTRIO, de qualquer lugar */
   $('#btnInicio').addEventListener('click', () => { fecharMenuApps(); mostrarHub(); });
