@@ -123,6 +123,7 @@ dele **depois** dos que ele usa e **antes** de `app.js`.
 | `notificacoes.js` | avisos, horário silencioso, registro do service worker |
 | `bancos.js` | lista pronta de bancos e bandeiras, cadastro de banco e cartão, fatura do cartão, leitura da forma de pagamento num texto |
 | `salario.js` | tabelas de INSS e IRRF (com a data de vigência), bruto↔líquido e comparação PJ × CLT |
+| `beneficios.js` | `Beneficios`: vale-alimentação, VT, plano de saúde etc. pendurados num salário (`salarioId` obrigatório; acabou o salário, acabam juntos). Modo `renda` vira um `Recorrente` de entrada (`ben` = id); `referencia` e `desconto` são só registro. `lerExtrato` lê a foto do extrato do vale. `Desloc`: lugares (com coordenadas do Nominatim), trajetos e a estimativa mensal de combustível, pedágio, app e transporte público; `lancarComoFixo` grava `Recorrente`s com `desloc`. Atrás da flag `deslocamentos` (`Flags.ligada`) |
 | `voz.js` | ler em voz alta e ditar; entende número falado por extenso |
 
 ### Entrada de dados
@@ -269,7 +270,8 @@ app apagaria os dados do outro.
 | `moneytrio.anuncios.v1` | contagem de exibição e clique |
 | `moneytrio.tutorial.v1` | se o tutorial já foi visto |
 | `moneytrio.cfg.abertos.v1` | quais blocos das Configurações ficam abertos |
-| (dentro de `investifyme.dados.v1`) | `bancos` e `cartoes` moram no mesmo lugar da carteira, então entram no backup e no Drive junto com o resto |
+| (dentro de `investifyme.dados.v1`) | `bancos`, `cartoes`, `beneficios`, `lugares`, `trajetos` e `config.veiculo` moram no mesmo lugar da carteira, então entram no backup e no Drive junto com o resto |
+| `moneytrio.bfiltro.v1` | o período que a pessoa deixou no filtro do BudgetONE (padrão: últimos 12 meses) |
 | `dgo:global:ia` | **compartilhada de propósito** — a chave de IA vale para todos os apps da família |
 | `ifm_bkp` (cookie) | espelho da carteira, **desligado de fábrica** |
 
@@ -289,6 +291,8 @@ valer em todos os apps.
 | uma tradução | `frases.js` (frase inteira) ou `idioma.js` (rótulo curto) |
 | a ajuda de uma tela ou o tutorial | `assist.js` — `AJUDA_TELAS` e `TUTORIAL` |
 | os atalhos do balão do AssistONE numa tela | `assist.js` — `ATALHOS_TELA` (use só `data-acao` que já existe) |
+| a lista de benefícios oferecidos ou os modos | `beneficios.js` — `CATALOGO_BEN`, `MODOS_BEN`, `REGRAS_BEN` |
+| o fator da distância de carro ou os padrões do carro | `beneficios.js` — `Desloc.kmEstimado` (× 1,3) e `Desloc.veiculo()` |
 | cantos, sombras e o topo do celular | `assets/css/style.css` — bloco "CAMADA VISUAL — v3.16", no fim do arquivo |
 | quem pode usar o quê | `acesso.js` — `SERVICOS_PADRAO` |
 | os anúncios | `acesso.js` — `ANUNCIOS_PADRAO`, ou um `anuncios.json` ao lado do site |
