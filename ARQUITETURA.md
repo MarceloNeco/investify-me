@@ -321,7 +321,31 @@ valer em todos os apps.
 
 ---
 
-## 12. Testes
+## 12. Diretriz geral da plataforma: restaurar uma cópia nunca duplica usuário
+
+Regra que vale para todos os apps da SolverONE (registrada aqui até entrar na planilha de
+diretrizes; já aplicada no OmniLifeONE 2.11.0). **Pendente neste app:** o MoneyTRIO restaura
+backup só depois de entrar (`Store.importarTexto`) e as contas (`contas.js`) não passam pelo
+mesmo reconhecimento de pessoa.
+
+1. **Restaurar na primeira tela, antes de entrar, só se for seguro:** só a **cópia protegida**
+   (conteúdo cifrado; abre com a senha da cópia ou com o código de recuperação do dono). Cópia
+   aberta só entra depois de a pessoa entrar no próprio perfil, e só por um responsável.
+2. **Reconhecer a mesma pessoa e juntar:** mesmo id interno na cópia, ou mesmo nome com a
+   identidade confirmada pela senha/código. Se já existe usuário no aparelho, perguntar
+   **Juntar** (padrão), **Substituir** ou **Manter separado**. Juntar troca o id da cópia pelo id
+   local em todos os registros; o PIN/senha que vale é o do perfil local.
+3. **Digital de outro endereço:** a digital (WebAuthn) é presa ao endereço. Avisar "ligue a
+   digital de novo neste endereço" e deixar entrar pelo PIN/senha.
+4. **Quem já ficou duplicado:** tela segura para unir dois usuários — mostra o que cada um
+   tem, confirmação dupla (marcar + digitar o nome que some), baixa uma cópia antes.
+5. **Riscos de fraude considerados:** cópia aberta restaurada por qualquer um na primeira tela
+   (bloqueado); cópia protegida roubada (sem senha/código não abre; PBKDF2 310 mil voltas);
+   juntar por nome sem prova (só com a cópia aberta pela senha/código; cópia aberta junta só
+   por id); criança restaurando ou unindo (só responsável); Substituir apagando tudo (aviso
+   vermelho e confirmação própria); perfil unido por engano (cópia baixada antes).
+
+## 13. Testes
 
 Os testes usam Playwright e um servidor local na porta 8099, apontado
 para `entrega3/`.
