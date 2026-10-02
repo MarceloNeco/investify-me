@@ -1,6 +1,6 @@
 # MoneyTRIO — como o app é feito por dentro
 
-Versão do documento: 3.4 · Setembro de 2026
+Versão do documento: 3.5 · Outubro de 2026
 
 Este arquivo é para quem for mexer no código depois — inclusive uma IA
 a quem você peça "muda tal coisa no MoneyTRIO". Leia as três primeiras
@@ -300,6 +300,8 @@ valer em todos os apps.
 | um cálculo do InvestifyONE | `rentabilidade.js` ou `mercado.js` |
 | o que aparece numa tela | a função `view...()` correspondente, em `app.js` ou `budget-ui.js` |
 | a lista de mudanças e o número da versão | `versao.js` |
+| o topo padrão (☰, nome do sub-app ▾, 🔍 📥 👤) | `index.html` (`<header class="topbar">`) e `app.js` — `menuDeApps` (Início + outros sub-apps), `identidade`/`htmlPerfilMenu`/`acaoPerfil` (menu do 👤), `inboxItens`/`abrirInbox` (📥), `ligarTopoPadrao` |
+| o personagem do AssistONE (`ajuda-botao.png`, o mesmo em todos os apps) | `index.html` — `#assistFab` e o CSS `.assistone-bt` (fundo escuro sempre, anel dourado, balanço `aoneFlutua` 3,2 s); o arquivo entra no cache do `sw.js` |
 | a versão do cache do PWA | `pwa/sw.js`, linha `var VERSAO` |
 | a lista de bancos ou de bandeiras | `bancos.js` — `BANCOS_BR` e `BANDEIRAS` (cor, sigla, código, CNPJ) |
 | as formas de pagamento | `bancos.js` — `FORMAS_PGTO`; o campo `pede` diz se ela pergunta banco, cartão ou nada |

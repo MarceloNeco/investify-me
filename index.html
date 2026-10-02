@@ -49,6 +49,12 @@ html[data-theme="light"]{
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
+html{scroll-padding-top:72px}   /* o topo é fixo: o foco por Tab nunca fica escondido atrás dele (WCAG 2.4.11) */
+/* acessibilidade: letra maior e menos movimento, escolhidos em 👤 → Configurações → Preferências */
+html.letra-grande{font-size:112.5%}
+html.letra-maior{font-size:125%}
+html.sem-animacao *, html.sem-animacao *::before, html.sem-animacao *::after{animation:none !important; transition:none !important; scroll-behavior:auto !important}
+.sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
 body{
   background:var(--bg); color:var(--txt);
   font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
@@ -81,8 +87,6 @@ html[data-theme="light"] .topbar{background:rgba(255,255,255,.9)}
 .tq b{font-weight:600; color:var(--txt)}
 .tq .v{font-variant-numeric:tabular-nums}
 .topbar-actions{display:flex; align-items:center; gap:10px; margin-left:auto}
-.refresh-box{display:flex; align-items:center; gap:8px}
-.refresh-time{font-size:.72rem; color:var(--txt3); white-space:nowrap}
 .refresh-icon{display:inline-block}
 .spinning .refresh-icon{animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -988,7 +992,7 @@ details.imp-arq.repetido{border-color:var(--warn)}
 @media (max-width:860px){ .hub-grade{grid-template-columns:1fr} .hub-marca{font-size:2rem} }
 
 /* a marca do topo vira botão de troca */
-.brand-btn{background:none; border:0; cursor:pointer; color:inherit; font:inherit;
+.brand-btn{background:none; border:0; cursor:pointer; color:inherit; font:inherit; min-height:44px;
            display:flex; align-items:center; gap:8px; padding:4px 8px; border-radius:9px}
 .brand-btn:hover{background:var(--card2)}
 .brand-troca{color:var(--txt3); font-size:.7rem}
@@ -1536,6 +1540,7 @@ label.campo > span, .campo > span{font-size:.78rem; color:var(--txt2)}
 .assist-ico{display:inline-grid; place-items:center; width:22px; height:22px; border-radius:50%;
   background:var(--accent); color:#04121f; font-weight:800; font-size:.85rem; line-height:1}
 .assist-marca{display:inline-flex; margin-right:8px}
+.assist-ico-img{width:28px; height:28px; border-radius:50%; display:block}
 .modal-assist{max-width:520px}
 .as-tela h3, .as-tut h3{margin:6px 0 6px}
 .as-lista{margin:8px 0 12px 18px; padding:0; font-size:.9rem; line-height:1.55}
@@ -1618,8 +1623,6 @@ body:has(.modal-wrap:not(.hidden)) .faixa{display:none}
   .topbar .brand{min-width:0; overflow:hidden; flex:1 1 auto}
   .topbar .brand-name{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:40vw}
   .topbar-actions{margin-left:auto; gap:6px; flex-wrap:nowrap; flex:0 0 auto}
-  .refresh-time{display:none}
-  .btn-refresh{padding:6px 9px; min-height:36px}
 }
 
 /* ---- o seletor de ano tem tamanho de chip, não de campo ---- */
@@ -1870,7 +1873,7 @@ b.trio{ font-weight:inherit }
 .app-op-txt > b b{color:var(--ccard, var(--accent)); font-weight:800}
 .app-op-txt > span{font-size:.75rem; color:var(--txt2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .app-op-ok{color:var(--accent); font-weight:800}
-.app-op-hub{border-top:1px solid var(--line); border-radius:0 0 var(--r-sm) var(--r-sm); margin-top:4px}
+.app-op-inicio{border-bottom:1px solid var(--line); border-radius:var(--r-sm) var(--r-sm) 0 0; margin-bottom:4px}
 .brand-btn[aria-expanded="true"] .brand-troca{transform:rotate(180deg)}
 .brand-troca{transition:transform .18s cubic-bezier(.2,.8,.3,1); display:inline-block}
 @media (prefers-reduced-motion:reduce){ .brand-troca{transition:none} }
@@ -2034,10 +2037,6 @@ html[data-theme="light"] .topbar{background:color-mix(in srgb, #fff 88%, transpa
   .topbar{padding:6px 8px; gap:4px; min-height:52px}
   .topbar-actions{gap:0}
   .icon-btn{min-width:42px; min-height:42px; display:inline-grid; place-items:center; padding:0; font-size:1.1rem}
-  .btn-refresh{border:0; background:transparent; box-shadow:none; padding:0; min-width:42px; min-height:42px; justify-content:center; color:var(--txt2); font-size:1.1rem}
-  .refresh-time{display:none}
-  /* tema fica em ⚙ e a ajuda é o AssistONE no canto: no topo estreito, só o que não existe em outro lugar */
-  #btnTheme, #btnAssist{display:none}
   .brand{font-size:.98rem}
   .brand-btn{padding:4px 4px}
   .content{padding:12px 12px 124px}
@@ -2070,23 +2069,27 @@ html[data-theme="light"] .topbar{background:color-mix(in srgb, #fff 88%, transpa
 .assistone.desligado{display:none}
 body:has(.modal-wrap:not(.hidden)) .assistone, body:has(#lockScreen:not(.hidden)) .assistone,
 body:has(.sidenav.open) .assistone, body:has(.popup-an) .assistone{display:none}
-.assistone-bt{width:58px; height:58px; border-radius:50%; border:0; cursor:pointer; padding:0; display:grid; place-items:center; position:relative;
-  background:radial-gradient(circle at 35% 30%, #ffe9a6, #e0a92a 55%, #a86f0c);
-  box-shadow:0 8px 22px rgba(224,169,42,.35), inset 0 -3px 6px rgba(0,0,0,.18);
-  transform-origin:bottom right; transition:transform .25s cubic-bezier(.2,.8,.3,1), box-shadow .25s;
-  animation:aoneFlutua 3.4s ease-in-out infinite}
-.assistone-bt:hover{box-shadow:0 10px 26px rgba(224,169,42,.5)}
-.assistone-bt:focus-visible{outline:none; box-shadow:0 0 0 3px color-mix(in srgb, var(--accent2) 55%, transparent), 0 8px 22px rgba(224,169,42,.35)}
-.assistone-fig{font-size:1.9rem; font-weight:800; color:#3b2800; font-family:Georgia,"Times New Roman",serif; line-height:1; text-shadow:0 1px 0 rgba(255,255,255,.45)}
-.assistone.aberto .assistone-bt{transform:scale(2); animation:none}
+/* o personagem: fundo SEMPRE escuro (também no tema claro), anel dourado,
+   balanço leve — igual em todos os apps (diretriz AssistONE, 02/Out/2026) */
+.assistone-bt{width:58px; height:58px; border-radius:50%; padding:0; cursor:pointer; display:block; position:relative; margin-left:auto;
+  border:1px solid rgba(201,162,74,.55);
+  background:radial-gradient(circle at 50% 38%, #232838, #11141c 72%);
+  box-shadow:0 6px 18px rgba(0,0,0,.28), 0 0 0 3px rgba(201,162,74,.16);
+  animation:aoneFlutua 3.2s ease-in-out infinite; transition:width .25s, height .25s}
+.assistone-bt img{width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; pointer-events:none}
+.assistone-bt:hover{box-shadow:0 8px 22px rgba(0,0,0,.34), 0 0 0 3px rgba(201,162,74,.28)}
+.assistone-bt:focus-visible{outline:3px solid var(--cor-app, #22c55e); outline-offset:3px}
+.assistone-bt[aria-expanded="true"]{animation:none}
+.assistone.aberto .assistone-bt{width:116px; height:116px; animation:none}
 .assistone-retomar{position:absolute; right:64px; bottom:12px; white-space:nowrap; background:var(--card); border:1px solid var(--linha-suave); color:var(--txt2);
   border-radius:999px; padding:6px 12px; font:inherit; font-size:.78rem; cursor:pointer; box-shadow:var(--sombra-leve)}
-@keyframes aoneFlutua{0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)}}
+@keyframes aoneFlutua{0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}}
 @media (prefers-reduced-motion:reduce){ .assistone-bt{animation:none; transition:none} }
+html.sem-animacao .assistone-bt{animation:none; transition:none}
 .assistone-balao{position:absolute; right:0; bottom:calc(100% + 14px); width:min(calc(100vw - 32px), 340px);
   max-height:min(72vh, calc(100vh - 200px)); overflow:auto; background:var(--card); border:1px solid var(--linha-suave);
   border-radius:20px; box-shadow:var(--shadow); padding:14px 12px 8px; animation:balaoSobe .2s cubic-bezier(.2,.8,.3,1)}
-.assistone.aberto .assistone-balao{bottom:calc(100% + 72px)}
+.assistone.aberto .assistone-balao{bottom:calc(100% + 14px)}
 @keyframes balaoSobe{from{opacity:0; transform:translateY(10px) scale(.97)} to{opacity:1; transform:none}}
 @media (prefers-reduced-motion:reduce){ .assistone-balao{animation:none} }
 .aone-ola{display:flex; align-items:center; gap:10px; margin:0 2px 10px}
@@ -2156,6 +2159,68 @@ body:has(.sidenav.open) .assistone, body:has(.popup-an) .assistone{display:none}
 .tbl-empilha td.extra .t-sub{display:inline; margin-left:4px}
 .tbl-empilha td.extra .t-main{font-weight:600; color:var(--txt)}
 .card.sem-pad .tbl-empilha tr:first-child{padding-top:12px}
+
+/* =========================================================
+   TOPO PADRÃO (diretriz 02/Out/2026)
+   ☰ · nome do sub-app ▾ · … · 🔍 📥 👤
+   ========================================================= */
+.topbar .icon-btn{min-width:44px; min-height:44px; display:inline-grid; place-items:center; padding:0}
+#btnMenu{font-size:1.25rem}
+#btnMenu[aria-expanded="true"]{background:var(--card2); color:var(--txt)}
+/* no computador o ☰ recolhe e abre o menu da esquerda, com movimento */
+@media (min-width:761px){
+  .sidenav{transition:width .22s cubic-bezier(.2,.8,.3,1), opacity .18s, padding .22s; overflow:hidden}
+  html.nav-recolhida .sidenav{width:0; padding-left:0; padding-right:0; opacity:0; border-right-color:transparent; pointer-events:none}
+  @media (prefers-reduced-motion:reduce){ .sidenav{transition:none} }
+}
+/* 📥 com contador */
+.inbox-bt{position:relative}
+.inbox-n{position:absolute; top:4px; right:2px; min-width:18px; height:18px; padding:0 5px; border-radius:999px;
+  background:var(--down); color:#fff; font-size:.68rem; font-weight:700; line-height:18px; text-align:center}
+/* 👤 perfil: iniciais e o nome (no computador) */
+.perfil-caixa{position:relative; display:flex}
+.perfil-bt{display:inline-flex !important; align-items:center; gap:8px; padding:0 8px 0 4px !important}
+.perfil-av{width:32px; height:32px; border-radius:50%; display:grid; place-items:center; flex:0 0 auto;
+  background:color-mix(in srgb, var(--cor-app, var(--accent)) 28%, var(--card2)); color:var(--txt);
+  font-weight:700; font-size:.82rem; letter-spacing:.02em; overflow:hidden}
+.perfil-av img{width:100%; height:100%; object-fit:cover}
+.perfil-nome{font-size:.84rem; font-weight:600; color:var(--txt); max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.perfil-menu{position:absolute; top:calc(100% + 8px); right:0; z-index:120; width:min(330px, calc(100vw - 24px));
+  background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:6px;
+  transform-origin:top right; animation:appMenuAbre .18s cubic-bezier(.2,.8,.3,1)}
+@media (prefers-reduced-motion:reduce){ .perfil-menu{animation:none} }
+.perfil-cab{display:flex; align-items:center; gap:12px; padding:10px 10px 12px; border-bottom:1px solid var(--linha-suave); margin-bottom:4px}
+.perfil-cab .perfil-av{width:44px; height:44px; font-size:1rem}
+.perfil-cab-txt{min-width:0; flex:1}
+.perfil-cab-txt b{display:block; font-size:.95rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.perfil-cab-txt span{display:block; font-size:.76rem; color:var(--txt2); line-height:1.4; overflow-wrap:anywhere}
+.perfil-op{display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:transparent; border:0;
+  color:var(--txt); font:inherit; font-size:.92rem; padding:10px 12px; border-radius:12px; cursor:pointer; min-height:44px}
+.perfil-op:hover, .perfil-op:focus-visible{background:var(--card2)}
+.perfil-op i{font-style:normal; width:24px; text-align:center; flex:0 0 auto; display:inline-block}
+.perfil-op .perfil-sub{margin-left:auto; font-size:.74rem; color:var(--txt3); white-space:nowrap}
+.perfil-op.sair{color:var(--down); border-top:1px solid var(--linha-suave); border-radius:0 0 12px 12px; margin-top:4px}
+.perfil-op.spinning i{display:inline-block; animation:spin .9s linear infinite}
+.perfil-op .tog{margin-left:auto; width:38px; height:22px; border-radius:999px; background:var(--line2); position:relative; flex:0 0 auto; transition:background .15s}
+.perfil-op .tog::after{content:''; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; transition:transform .15s}
+.perfil-op .tog.on{background:var(--cor-app, var(--accent))}
+.perfil-op .tog.on::after{transform:translateX(16px)}
+/* a caixa de mensagens */
+.inbox-lista{list-style:none; margin:0; padding:0}
+.inbox-item{display:flex; align-items:center; gap:10px; padding:10px 8px; border-bottom:1px solid var(--linha-suave); font-size:.9rem}
+.inbox-item i{font-style:normal; width:24px; text-align:center}
+.inbox-item .t-sub{display:block; font-size:.78rem; color:var(--txt2)}
+.inbox-item.atrasado b{color:var(--down)}
+.inbox-item .inbox-val{margin-left:auto; font-variant-numeric:tabular-nums; white-space:nowrap}
+@media (max-width:760px){
+  .sidenav{top:var(--topo-h, 0px); height:auto}
+  .nav-backdrop{top:var(--topo-h, 0px)}
+  .perfil-op{white-space:normal}
+  .perfil-bt{padding:0 4px !important}
+  .brand-caixa{min-width:0; flex:1 1 auto}
+  .brand-btn{max-width:100%}
+  .brand-name{overflow:hidden; text-overflow:ellipsis}
+}
 </style>
 </head>
 <body>
@@ -2166,32 +2231,35 @@ body:has(.sidenav.open) .assistone, body:has(.popup-an) .assistone{display:none}
 
   <!-- ======= BARRA SUPERIOR ======= -->
   <header class="topbar">
-    <button class="icon-btn only-mobile" id="btnMenu" aria-label="Menu">☰</button>
+    <!-- padrão comum (diretriz 02/Out/2026): ☰ · nome do sub-app ▾ · … · 🔍 📥 👤 -->
+    <button type="button" class="icon-btn" id="btnMenu" aria-label="Menu" title="Menu"
+            aria-expanded="false" aria-controls="sidenav">☰</button>
     <div class="brand-caixa">
-      <button class="brand brand-btn" id="btnMarca" title="Trocar de app"
-              aria-haspopup="true" aria-expanded="false" aria-controls="appMenuCaixa">
+      <button type="button" class="brand brand-btn" id="btnMarca" title="Trocar de app ou voltar ao início"
+              aria-label="Trocar de app ou voltar ao início"
+              aria-haspopup="menu" aria-expanded="false" aria-controls="appMenuCaixa">
         <span class="brand-mark">▲</span>
         <span class="brand-name" id="brandNome">Investify<b>ONE</b></span>
-        <span class="brand-troca" id="brandTroca">▾</span>
+        <span class="brand-troca" id="brandTroca" aria-hidden="true">▾</span>
       </button>
-      <div class="app-menu-caixa hidden" id="appMenuCaixa"></div>
+      <div class="app-menu-caixa hidden" id="appMenuCaixa" role="menu"></div>
     </div>
 
     <div class="fita" id="fita"><div class="fita-trilho" id="fitaTrilho"></div></div>
 
     <div class="topbar-actions">
-      <div class="refresh-box">
-        <button class="btn btn-refresh" id="btnRefresh" title="Atualizar cotações">
-          <span class="refresh-icon">⟳</span><span class="only-desktop">Atualizar</span>
+      <button type="button" class="icon-btn" id="btnBusca" aria-label="Buscar" title="Buscar no app">🔍</button>
+      <button type="button" class="icon-btn inbox-bt" id="btnInbox" aria-label="Mensagens" title="Mensagens e avisos"
+              aria-haspopup="dialog">📥<span class="inbox-n hidden" id="inboxN" aria-hidden="true"></span></button>
+      <span class="sr-only" id="inboxLive" aria-live="polite"></span>
+      <div class="perfil-caixa">
+        <button type="button" class="icon-btn perfil-bt" id="btnPerfil" aria-label="Perfil" title="Perfil"
+                aria-haspopup="menu" aria-expanded="false" aria-controls="perfilMenu">
+          <span class="perfil-av" id="perfilAv" aria-hidden="true">👤</span>
+          <span class="perfil-nome only-desktop" id="perfilNome"></span>
         </button>
-        <span class="refresh-time" id="refreshTime">—</span>
+        <div class="perfil-menu hidden" id="perfilMenu" role="menu" aria-label="Perfil"></div>
       </div>
-      <button class="icon-btn" id="btnBusca" aria-label="Buscar" title="Buscar no app">🔎</button>
-      <button class="icon-btn assist-bt" id="btnAssist" aria-label="Ajuda" title="Assist ONE — ajuda, tutorial e passo a passo">
-        <span class="assist-ico">?</span>
-      </button>
-      <button class="icon-btn" id="btnInicio" aria-label="Início" title="Início — escolher o app">🏠</button>
-      <button class="icon-btn" id="btnTheme" aria-label="Alternar tema">🌙</button>
     </div>
   </header>
 
@@ -2362,7 +2430,7 @@ body:has(.sidenav.open) .assistone, body:has(.popup-an) .assistone{display:none}
 <div class="modal-wrap hidden" id="assistModal">
   <div class="modal modal-assist">
     <div class="modal-head">
-      <span class="assist-marca"><span class="assist-ico">?</span></span>
+      <span class="assist-marca"><img class="assist-ico-img" src="ajuda-botao.png" alt=""></span>
       <h3 id="assistTitulo">Assist ONE</h3>
       <button class="icon-btn" data-close="assistModal">✕</button>
     </div>
@@ -2384,8 +2452,9 @@ body:has(.sidenav.open) .assistone, body:has(.popup-an) .assistone{display:none}
 <!-- ======= ASSIST ONE: o personagem no canto ======= -->
 <div class="assistone" id="assistOne">
   <div class="assistone-balao hidden" id="assistBalao" role="dialog" aria-label="AssistONE"></div>
-  <button class="assistone-bt" id="assistFab" aria-label="AssistONE — ajuda" aria-expanded="false" aria-controls="assistBalao">
-    <span class="assistone-fig" aria-hidden="true">?</span>
+  <button type="button" class="assistone-bt" id="assistFab" aria-label="AssistONE — ajuda e assistente"
+          aria-haspopup="dialog" aria-expanded="false" aria-controls="assistBalao">
+    <img src="ajuda-botao.png" alt="">
   </button>
 </div>
 
@@ -2783,6 +2852,25 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.22 */
+  'AssistONE com o personagem e topo padronizado':'AssistONE with the character and the standard top bar',
+  'O AssistONE ganhou o personagem oficial (o mesmo de todos os apps): botão redondo no canto de baixo, fundo escuro também no tema claro, anel dourado e um balanço leve, que para quando o balão abre ou quando o aparelho pede menos movimento.':'AssistONE now wears the official character (the same across all apps): a round button in the bottom corner, dark background even in the light theme, a golden ring and a gentle float that stops when the bubble opens or when the device asks for reduced motion.',
+  'Topo padronizado: ☰ na ponta esquerda (no computador recolhe e abre o menu da esquerda), o nome do app aberto com ▾ abre o seletor com Início (o MoneyTRIO com os três) e os outros apps; à direita, 🔍 busca, 📥 mensagens (contas a vencer, atrasadas e entradas do dia, com contador) e 👤 perfil.':'Standard top bar: ☰ at the far left (on desktop it collapses and opens the left menu), the open app\'s name with ▾ opens the picker with Home (MoneyTRIO with all three) and the other apps; on the right, 🔍 search, 📥 messages (bills due, overdue and today\'s income, with a counter) and 👤 profile.',
+  'O 👤 mostra quem está conectado (nome, e-mail, papel, desde quando) e reúne Configurações, Tema, Atualizar cotações, Ajuda, IA e Sair. O 🏠, o 🌙 e o PT|EN saíram do topo: o idioma fica em Configurações → Idioma e formatos.':'👤 shows who is signed in (name, e-mail, role, since when) and gathers Settings, Theme, Refresh quotes, Help, AI and Sign out. 🏠, 🌙 and PT|EN left the top bar: the language lives in Settings → Language and formats.',
+  'Acessibilidade: tamanho da letra (normal, grande, maior) e "Reduzir animações" em Configurações → Preferências; o foco por teclado nunca fica escondido atrás do topo; o contador de mensagens é anunciado ao leitor de tela.':'Accessibility: text size (normal, large, larger) and "Reduce animations" in Settings → Preferences; keyboard focus is never hidden behind the top bar; the message counter is announced to screen readers.',
+  'Consertado: quem entrava sem a senha da carteira ("Entrar sem abrir a carteira") era tratado como dono; agora é visitante, como o botão diz.':'Fixed: entering without the wallet password ("Enter without opening the wallet") was treated as the owner; now it is a guest, as the button says.',
+  'Trocar de app ou voltar ao início':'Switch app or go home',
+  'Mensagens e avisos':'Messages and alerts',
+  'Tamanho da letra':'Text size',
+  'Vale no app inteiro. O zoom do navegador continua funcionando por cima.':'Applies to the whole app. Browser zoom still works on top of it.',
+  'Reduzir animações':'Reduce animations',
+  'Tira o balanço do AssistONE e os movimentos de abrir e fechar.':'Removes the AssistONE float and the open/close movements.',
+  'Normal':'Normal',
+  'Grande':'Large',
+  'Maior':'Larger',
+  'Mensagens':'Messages',
+  'Perfil':'Profile',
+  'Menu':'Menu',
   'Avisos legais e privacidade':'Legal notices and privacy',
   'O personagem de ajuda no canto da tela.':'The help character in the corner of the screen.',
   'Abrir o AssistONE':'Open AssistONE',
@@ -13374,6 +13462,13 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.22', d:'2026-10-02', t:'AssistONE com o personagem e topo padronizado', itens:[
+    'O AssistONE ganhou o personagem oficial (o mesmo de todos os apps): botão redondo no canto de baixo, fundo escuro também no tema claro, anel dourado e um balanço leve, que para quando o balão abre ou quando o aparelho pede menos movimento.',
+    'Topo padronizado: ☰ na ponta esquerda (no computador recolhe e abre o menu da esquerda), o nome do app aberto com ▾ abre o seletor com Início (o MoneyTRIO com os três) e os outros apps; à direita, 🔍 busca, 📥 mensagens (contas a vencer, atrasadas e entradas do dia, com contador) e 👤 perfil.',
+    'O 👤 mostra quem está conectado (nome, e-mail, papel, desde quando) e reúne Configurações, Tema, Atualizar cotações, Ajuda, IA e Sair. O 🏠, o 🌙 e o PT|EN saíram do topo: o idioma fica em Configurações → Idioma e formatos.',
+    'Acessibilidade: tamanho da letra (normal, grande, maior) e "Reduzir animações" em Configurações → Preferências; o foco por teclado nunca fica escondido atrás do topo; o contador de mensagens é anunciado ao leitor de tela.',
+    'Consertado: quem entrava sem a senha da carteira ("Entrar sem abrir a carteira") era tratado como dono; agora é visitante, como o botão diz.'
+  ]},
   {v:'3.21', d:'2026-09-26', t:'Outras rendas, com dia e banco', itens:[
     'Renda ganhou "+ Nova renda": aluguel recebido, pró-labore, freelance/PJ, aposentadoria ou pensão do INSS, pensão alimentícia, dividendos, restituição do IR, bônus/13º, venda de um bem ou qualquer outra. Diz de quem vem, quem recebe, o valor, quando cai (dia fixo, dia útil, último dia, último dia útil, toda semana, uma vez por ano ou só uma vez) e em qual banco. Entra na agenda, no calendário e no caixa; a lista fica num cartão próprio, com edição e exclusão.',
     'Banco em qualquer lugar: o seletor mostra os seus bancos primeiro e, embaixo, a lista inteira — escolher um da lista já cadastra, sem ir às Configurações.',
@@ -15598,22 +15693,24 @@ function montarNav(){
    Trocar de app pelo nome, lá em cima
    ========================================================= */
 function menuDeApps(){
+  /* diretriz do topo: o nome do sub-app atual com ▾ abre "Início" (o
+     MoneyTRIO, com o seletor dos três) e os OUTROS sub-apps */
   const atual = ST.appAtual || 'investify';
   const pt = I18n.atual !== 'en';
-  const prontos = Object.keys(APPS).filter(k => APPS[k].pronto);
-  return '<div class="app-menu" id="appMenu">' + prontos.map(k => {
+  const outros = Object.keys(APPS).filter(k => APPS[k].pronto && k !== atual);
+  return '<div class="app-menu" id="appMenu">' +
+  '<button class="app-op app-op-inicio" role="menuitem" data-trocaapp="__hub">' +
+    '<span class="app-op-ico">⌂</span>' +
+    '<span class="app-op-txt"><b>' + (pt ? 'Início' : 'Home') + '</b>' +
+    '<span>Money<b>TRIO</b> · ' + (pt ? 'os três apps juntos' : 'all three apps together') + '</span></span></button>' +
+  outros.map(k => {
     const a = APPS[k];
-    return '<button class="app-op' + (k === atual ? ' on' : '') + '" data-trocaapp="' + k + '"' +
+    return '<button class="app-op" role="menuitem" data-trocaapp="' + k + '"' +
       ' style="--ccard:var(' + a.cor + ')">' +
       '<span class="app-op-ico">' + a.ico + '</span>' +
       '<span class="app-op-txt"><b>' + a.nome.replace('ONE','<b>ONE</b>') + '</b>' +
-      '<span>' + esc(t(a.chaveFrase)) + '</span></span>' +
-      (k === atual ? '<span class="app-op-ok">✓</span>' : '') + '</button>';
+      '<span>' + esc(t(a.chaveFrase)) + '</span></span></button>';
   }).join('') +
-  '<button class="app-op app-op-hub" data-trocaapp="__hub">' +
-    '<span class="app-op-ico">⌂</span>' +
-    '<span class="app-op-txt"><b>Money<b>TRIO</b></b>' +
-    '<span>' + (pt ? 'ver os três juntos' : 'see all three') + '</span></span></button>' +
   '</div>';
 }
 
@@ -19295,14 +19392,10 @@ const Anuncio = {
   },
 
   html(){
-    const rot = IDIOMAS[I18n.outro()];
     const comAnuncio = this.mostrar();
     const podeIA = (typeof Acesso !== 'undefined') && Acesso.pode('ia');
+    /* o PT|EN saiu daqui: idioma fica em 👤 → Configurações → Idioma e formatos (diretriz do topo) */
     return '<div class="faixa' + (comAnuncio ? ' com-anuncio' : '') + '">' +
-      '<button class="idioma-bt idioma-topo" data-idioma="" title="Português / English">' +
-        '<span class="idi-b">' + IDIOMAS[I18n.atual].bandeira + '</span>' +
-        '<b>' + IDIOMAS[I18n.atual].curto + '</b><span class="idi-seta">⇄</span>' +
-        '<span class="idi-off">' + rot.curto + '</span></button>' +
       '<button class="ia-bt' + (podeIA ? '' : ' ia-off') + '" data-acao="ia-abrir" title="' +
         esc(I18n.atual === 'pt' ? 'Perguntar à IA sobre o que está na tela' : 'Ask the AI about what is on screen') + '">✨ IA</button>' +
       (comAnuncio ? '<div class="anuncio" id="anuncio">' + this.htmlAnuncio() +
@@ -31062,6 +31155,10 @@ function viewConfig(){
           'Em que moeda você quer ver os totais.') +
     campo('Nível das explicações', selectHTML('cNivel', [['iniciante','Iniciante'],['medio','Médio'],['expert','Expert']], ST.nivel), 'nivel-conhecimento') +
     campo('Tema', selectHTML('cTema', [['dark','Escuro'],['light','Claro']], ST.tema)) +
+    campo('Tamanho da letra', selectHTML('cLetra', [['normal','Normal'],['grande','Grande'],['maior','Maior']], cfg.letra || 'normal'),
+          null, 'Vale no app inteiro. O zoom do navegador continua funcionando por cima.') +
+    campo('Reduzir animações', selectHTML('cAnim', [['nao','Não'],['sim','Sim']], cfg.semAnimacao ? 'sim' : 'nao'),
+          null, 'Tira o balanço do AssistONE e os movimentos de abrir e fechar.') +
     campo('Fundo decorativo', selectHTML('cFundo', [['sim','Ligado'],['nao','Desligado']], ST.fundo === false ? 'nao' : 'sim'),
           null, 'A arte de gráficos atrás das telas.') +
     campo('AssistONE', selectHTML('cAssist', [['sim','Ligado'],['nao','Desligado']], cfg.assistOne === false ? 'nao' : 'sim'),
@@ -31372,9 +31469,9 @@ function viewConfig(){
     '<p class="small muted" style="margin:0 0 10px">' +
       (I18n.atual === 'pt'
         ? 'As datas seguem a região: <b>' + I18n.data('2026-09-18') + '</b> em português, ' +
-          '<b>Sep/18/2026</b> em inglês. O botão de troca rápida fica sempre visível no topo e no pé do menu.'
+          '<b>Sep/18/2026</b> em inglês. O idioma se troca aqui, em 👤 → Configurações.'
         : 'Dates follow the region: <b>Sep/18/2026</b> in English, <b>18/Set/2026</b> in Portuguese. ' +
-          'The quick switch is always visible at the top and in the menu footer.') + '</p>' +
+          'The language is changed here, in 👤 → Settings.') + '</p>' +
     (function(){
       const p2 = I18n.pendencias();
       const falta = p2.semChave.length + p2.semTraducao.length;
@@ -32222,6 +32319,7 @@ function aoTrocarIdioma(){
   Verter.no($('#lockScreen'));
   Verter.no($('.topbar'));
   Verter.no($('.footer'));
+  if(typeof renderPerfilTopo === 'function'){ renderPerfilTopo(); renderInboxN(); renderPerfilMenu(); }
   if(typeof Anuncio !== 'undefined') Anuncio.render();
   const hub = $('#hubTela');
   if(hub && !hub.classList.contains('hidden') && typeof viewHub === 'function')
@@ -32289,8 +32387,210 @@ function renderCalendarioMenu(){
 
 function renderTopo(){
   renderFita();
-  $('#refreshTime').textContent = Mercado.ultima ? fmtHora(Mercado.ultima)
-    : (I18n.atual === 'en' ? 'never' : 'nunca');
+  const rt = $('#refreshTime');
+  if(rt) rt.textContent = horaCotacoes();
+  renderPerfilTopo();
+  renderInboxN();
+}
+function horaCotacoes(){
+  return Mercado.ultima ? fmtHora(Mercado.ultima) : (I18n.atual === 'en' ? 'never' : 'nunca');
+}
+
+/* =========================================================
+   👤 PERFIL, 📥 MENSAGENS — o topo padrão (diretriz 02/Out/2026)
+   ========================================================= */
+/* quem está conectado, numa frase: vale para o topo e para o menu */
+function identidade(){
+  const pt = I18n.atual !== 'en';
+  const s = (typeof Sessao !== 'undefined') ? Sessao.resumo() : {};
+  const admin = s.tipo !== 'visitante' && !s.apelido && (typeof Acesso !== 'undefined') && Acesso.ehAdmin();
+  const visitante = s.tipo === 'visitante' || (!s.tipo && !admin);
+  const papel = admin ? t('ct.admin') : (s.tipo ? t((ACESSOS[s.tipo] || ACESSOS.visitante).t) : t('ac.visitante'));
+  const nome = s.apelido || (admin ? (pt ? 'Dono da carteira' : 'Wallet owner') : t('ac.visitante'));
+  const conta = (typeof Sessao !== 'undefined') ? Sessao.conta : null;
+  let via = '';
+  if(conta) via = pt ? 'conta com senha' : 'account password';
+  else if(admin) via = pt ? 'senha da carteira' : 'wallet password';
+  const desde = conta && conta.entradaEm ? conta.entradaEm : null;
+  const ini = nome.split(/\s+/).filter(Boolean).slice(0, 2).map(x => x.slice(0, 1).toUpperCase()).join('') || '?';
+  return {nome, papel, email: s.email || '', via, desde, iniciais: visitante ? '👤' : ini, visitante, admin, temConta: !!conta};
+}
+
+function renderPerfilTopo(){
+  const av = $('#perfilAv'), nm = $('#perfilNome'), bt = $('#btnPerfil');
+  if(!bt) return;
+  const id = identidade();
+  const pt = I18n.atual !== 'en';
+  if(av) av.textContent = id.iniciais;
+  if(nm) nm.textContent = id.nome;
+  const rotulo = (pt ? 'Perfil: ' : 'Profile: ') + id.nome + (id.email ? ' · ' + id.email : '') + ' · ' + id.papel;
+  bt.setAttribute('aria-label', rotulo);
+  bt.title = rotulo;
+}
+
+function htmlPerfilMenu(){
+  const pt = I18n.atual !== 'en';
+  const id = identidade();
+  const op = (acao, ico, txt, extra, cls) => '<button type="button" role="menuitem" class="perfil-op' + (cls ? ' ' + cls : '') +
+    '" data-perfil="' + acao + '"><i>' + ico + '</i>' + esc(txt) + (extra || '') + '</button>';
+  let h = '<div class="perfil-cab"><span class="perfil-av" aria-hidden="true">' + esc(id.iniciais) + '</span>' +
+    '<div class="perfil-cab-txt"><b>' + esc(id.nome) + '</b>' +
+    (id.email ? '<span>' + esc(id.email) + '</span>' : '') +
+    '<span>' + esc(id.papel) + (id.via ? ' · ' + esc(id.via) : '') + '</span>' +
+    (id.desde ? '<span>' + esc(pt ? 'conectado desde ' : 'signed in since ') + esc(fmtData(id.desde.slice(0, 10))) + '</span>' : '') +
+    '</div></div>';
+  h += op('config', '⚙️', pt ? 'Configurações' : 'Settings');
+  h += op('tema', ST.tema === 'light' ? '☀️' : '🌙', pt ? 'Tema claro' : 'Light theme',
+          '<span class="tog' + (ST.tema === 'light' ? ' on' : '') + '" aria-hidden="true"></span>');
+  h += '<button type="button" role="menuitem" class="perfil-op' + (cotacoesAtualizando ? ' spinning' : '') +
+       '" id="btnRefresh" data-perfil="atualizar"' + (cotacoesAtualizando ? ' disabled' : '') + '><i class="refresh-icon">⟳</i>' +
+       esc(pt ? 'Atualizar cotações' : 'Refresh quotes') + '<span class="perfil-sub" id="refreshTime">' + esc(horaCotacoes()) + '</span></button>';
+  h += op('ajuda', '💡', pt ? 'Ajuda e tutorial' : 'Help and tutorial');
+  if(typeof Acesso !== 'undefined' && Acesso.pode('ia')) h += op('ia', '✨', pt ? 'Perguntar à IA' : 'Ask the AI');
+  h += op('portal', '🏠', pt ? 'Todos os apps (portal)' : 'All apps (portal)', '<span class="perfil-sub">↗</span>');
+  if(id.visitante) h += op('entrar', '🔑', t('ct.entrar'), '', 'sair');
+  else if(id.temConta) h += op('sair', '⏏', t('ct.sair'), '', 'sair');
+  else if(window.CARTEIRA_CIFRADA) h += op('bloquear', '🔒', pt ? 'Sair e bloquear neste aparelho' : 'Sign out and lock on this device', '', 'sair');
+  return h;
+}
+
+function renderPerfilMenu(){
+  const m = $('#perfilMenu');
+  if(!m || m.classList.contains('hidden')) return;
+  m.innerHTML = Verter.html(htmlPerfilMenu());
+}
+
+function alternarPerfilMenu(){
+  const m = $('#perfilMenu'), bt = $('#btnPerfil');
+  if(!m) return;
+  if(!m.classList.contains('hidden')){ fecharPerfilMenu(); return; }
+  fecharMenuApps();
+  m.classList.remove('hidden');
+  renderPerfilMenu();
+  if(bt) bt.setAttribute('aria-expanded', 'true');
+}
+
+function fecharPerfilMenu(){
+  const m = $('#perfilMenu'), bt = $('#btnPerfil');
+  if(m) m.classList.add('hidden');
+  if(bt) bt.setAttribute('aria-expanded', 'false');
+}
+
+function acaoPerfil(qual){
+  switch(qual){
+    case 'config':
+      fecharPerfilMenu();
+      if($('#app').classList.contains('hidden')) abrirApp(ST.appAtual || 'investify');
+      irPara('config'); break;
+    case 'tema':
+      /* alterna sem sair do menu */
+      ST.tema = ST.tema === 'light' ? 'dark' : 'light'; aplicarTema(); Store.salvar(); break;
+    case 'atualizar':
+      atualizarCotacoes(true); renderPerfilMenu(); break;
+    case 'ajuda':     fecharPerfilMenu(); Assist.abrir('tela'); break;
+    case 'ia':        fecharPerfilMenu(); IA.abrir(); break;
+    case 'portal':    fecharPerfilMenu(); window.open(ALVO_ANUNCIO, '_blank', 'noopener'); break;
+    case 'entrar':    fecharPerfilMenu(); abrirConta(); break;
+    case 'sair':
+      fecharPerfilMenu();
+      Sessao.sair();
+      Acesso.definir(window.CARTEIRA_CIFRADA ? 'dono' : 'local');
+      Anuncio.render(); renderPerfilTopo(); if(!$('#app').classList.contains('hidden')) render();
+      toast(I18n.atual === 'pt' ? 'Você saiu da conta.' : 'Signed out.');
+      break;
+    case 'bloquear':
+      fecharPerfilMenu();
+      if(confirm(I18n.atual === 'pt'
+        ? 'Isso apaga a carteira deste aparelho. Na próxima vez o site vai pedir a senha para abrir de novo. Continuar?'
+        : 'This removes the wallet from this device. Next time the site will ask for the password again. Continue?')){
+        Store.limparTudo(); location.reload();
+      }
+      break;
+    default: break;
+  }
+}
+
+/* ---- 📥 mensagens: o que o app tem a dizer, sem depender de notificação do sistema ---- */
+function inboxItens(){
+  const itens = [];
+  if(typeof Recorrente === 'undefined') return itens;
+  const pt = I18n.atual !== 'en';
+  const hoje = hojeISO();
+  const dias = (typeof Avisos !== 'undefined') ? (Avisos.carregar().diasAntes || 3) : 3;
+  try{
+    (Recorrente.atrasados() || []).forEach(o => itens.push({tipo:'atrasado', ico:'⚠️', nome:o.r.nome, valor:o.valor, data:o.data,
+      sub: pt ? 'em atraso desde ' + I18n.data(o.data) : 'overdue since ' + I18n.data(o.data)}));
+    (Recorrente.proximos(dias) || []).forEach(o => {
+      const d = Math.round((new Date(o.data + 'T12:00:00') - new Date(hoje + 'T12:00:00')) / 86400000);
+      if(o.r.fluxo === 'entrada'){
+        if(d === 0) itens.push({tipo:'entrada', ico:'💰', nome:o.r.nome, valor:o.valor, data:o.data, sub: pt ? 'entra hoje' : 'lands today'});
+        return;
+      }
+      if(o.estado === 'pago') return;
+      itens.push({tipo:'vencer', ico:'📅', nome:o.r.nome, valor:o.valor, data:o.data,
+        sub: pt ? (d <= 0 ? 'vence hoje' : d === 1 ? 'vence amanhã' : 'vence em ' + d + ' dias')
+                : (d <= 0 ? 'due today' : d === 1 ? 'due tomorrow' : 'due in ' + d + ' days')});
+    });
+  }catch(e){}
+  return itens;
+}
+
+function renderInboxN(){
+  const n = $('#inboxN'), bt = $('#btnInbox');
+  if(!n || !bt) return;
+  const itens = inboxItens();
+  const q = itens.filter(x => x.tipo !== 'entrada').length;
+  n.textContent = q > 99 ? '99+' : String(q);
+  n.classList.toggle('hidden', !q);
+  const pt = I18n.atual !== 'en';
+  const rotulo = (pt ? 'Mensagens' : 'Messages') + (q ? (pt ? ' — ' + q + ' pendente' + (q > 1 ? 's' : '') : ' — ' + q + ' pending') : '');
+  bt.setAttribute('aria-label', rotulo);
+  const live = $('#inboxLive');
+  if(live && live.textContent !== rotulo) live.textContent = rotulo;
+}
+
+function abrirInbox(){
+  const pt = I18n.atual !== 'en';
+  const itens = inboxItens();
+  let h = '';
+  if(!itens.length){
+    h += '<p class="small muted">' + esc(pt ? 'Nada pendente. Contas a vencer, atrasadas e entradas do dia aparecem aqui.'
+                                           : 'Nothing pending. Bills due, overdue bills and today\'s income show up here.') + '</p>';
+  }else{
+    h += '<ul class="inbox-lista">' + itens.map(x =>
+      '<li class="inbox-item ' + x.tipo + '"><i>' + x.ico + '</i><div><b>' + esc(x.nome) + '</b>' +
+      '<span class="t-sub">' + esc(x.sub) + '</span></div>' +
+      '<span class="inbox-val">' + fmt(x.valor) + '</span></li>').join('') + '</ul>';
+  }
+  h += '<div class="f-actions" style="margin-top:12px">' +
+    '<button class="btn sm" data-irpara="b-custos" data-close="genModal">📌 ' + esc(pt ? 'Ver compromissos' : 'See commitments') + '</button>' +
+    '<button class="btn sm" data-irpara="config" data-close="genModal">🔔 ' + esc(pt ? 'Avisos' : 'Alerts') + '</button>' +
+    '<button class="btn primary sm" data-close="genModal">' + esc(pt ? 'Fechar' : 'Close') + '</button></div>';
+  $('#genTitle').textContent = pt ? 'Mensagens' : 'Messages';
+  $('#genBody').innerHTML = Verter.html(h);
+  abrir('genModal');
+}
+
+function ligarTopoPadrao(){
+  const bp = $('#btnPerfil');
+  if(bp && !bp.dataset.ligado){
+    bp.dataset.ligado = '1';
+    bp.addEventListener('click', ev => { ev.stopPropagation(); alternarPerfilMenu(); });
+    $('#perfilMenu').addEventListener('click', ev => {
+      const op = ev.target.closest('[data-perfil]');
+      if(op){ ev.stopPropagation(); acaoPerfil(op.dataset.perfil); }
+    });
+    document.addEventListener('click', ev => {
+      const m = $('#perfilMenu');
+      if(m && !m.classList.contains('hidden') && !ev.target.closest('.perfil-caixa')) fecharPerfilMenu();
+    });
+    document.addEventListener('keydown', ev => { if(ev.key === 'Escape') fecharPerfilMenu(); });
+  }
+  const bi = $('#btnInbox');
+  if(bi && !bi.dataset.ligado){ bi.dataset.ligado = '1'; bi.addEventListener('click', () => { fecharPerfilMenu(); abrirInbox(); }); }
+  document.addEventListener('mt:entrou', () => { renderPerfilTopo(); renderPerfilMenu(); });
+  document.addEventListener('mt:saiu', () => { renderPerfilTopo(); renderPerfilMenu(); });
+  renderPerfilTopo();
 }
 
 /* liga inputs que existem só depois do render */
@@ -32399,6 +32699,8 @@ function ligarCamposDaView(){
     liga('cMoeda', e => { ST.moedaBase = e.value; Store.salvar(); atualizarCotacoes(true); render(); });
     liga('cNivel', e => { ST.nivel = e.value; sincronizarNivel(); Store.salvar(); render(); });
     liga('cTema',  e => { ST.tema = e.value; aplicarTema(); Store.salvar(); });
+    liga('cLetra', e => { ST.config.letra = e.value; aplicarTema(); Store.salvar(); });
+    liga('cAnim',  e => { ST.config.semAnimacao = (e.value === 'sim'); aplicarTema(); Store.salvar(); });
     liga('cFundo', e => { ST.fundo = (e.value === 'sim'); aplicarTema(); Store.salvar(); });
     liga('cAssist', e => { ST.config.assistOne = (e.value === 'sim'); Store.salvar(); AssistOne.aplicar(); });
     const chk = $('#cCofre');
@@ -32487,9 +32789,12 @@ function avisarSemRede(){
 
 if(typeof window !== 'undefined') window.addEventListener('online', () => { avisouSemRede = false; });
 
+let cotacoesAtualizando = false;
 async function atualizarCotacoes(forcar){
+  /* o botão vive no menu do 👤 e só existe enquanto o menu está aberto */
   const btn = $('#btnRefresh');
-  btn.classList.add('spinning'); btn.disabled = true;
+  cotacoesAtualizando = true;
+  if(btn){ btn.classList.add('spinning'); btn.disabled = true; }
   try{
     const erros = await Mercado.atualizar(ST.posicoes, ST.config, forcar);
     Hist.anotarDoMercado();
@@ -32522,7 +32827,9 @@ async function atualizarCotacoes(forcar){
     if(semRede(e.message)) avisarSemRede();
     else toast('Não consegui atualizar as cotações: ' + e.message, 'err');
   }finally{
-    btn.classList.remove('spinning'); btn.disabled = false;
+    cotacoesAtualizando = false;
+    const btn2 = $('#btnRefresh');
+    if(btn2){ btn2.classList.remove('spinning'); btn2.disabled = false; }
   }
 }
 
@@ -32614,8 +32921,14 @@ document.addEventListener('visibilitychange', () => {
    ========================================================= */
 function aplicarTema(){
   document.documentElement.setAttribute('data-theme', ST.tema === 'light' ? 'light' : 'dark');
+  const cfg = ST.config || {};
+  document.documentElement.classList.toggle('letra-grande', cfg.letra === 'grande');
+  document.documentElement.classList.toggle('letra-maior', cfg.letra === 'maior');
+  document.documentElement.classList.toggle('sem-animacao', !!cfg.semAnimacao);
   document.documentElement.classList.toggle('sem-fundo', ST.fundo === false);
-  $('#btnTheme').textContent = ST.tema === 'light' ? '☀️' : '🌙';
+  const bt = $('#btnTheme');
+  if(bt) bt.textContent = ST.tema === 'light' ? '☀️' : '🌙';
+  if(typeof renderPerfilMenu === 'function') renderPerfilMenu();
 }
 function sincronizarNivel(){
   $$('#levelSeg button').forEach(b => b.classList.toggle('active', b.dataset.level === ST.nivel));
@@ -32667,16 +32980,28 @@ function ligarEventos(){
     }
     irPara(b.dataset.view);
   });
+  /* ☰: no celular abre a gaveta; no computador recolhe e abre o menu da esquerda */
+  const menuAberto = () => ehMobile() ? $('#sidenav').classList.contains('open')
+                                      : !document.documentElement.classList.contains('nav-recolhida');
+  const marcarMenu = () => $('#btnMenu').setAttribute('aria-expanded', menuAberto() ? 'true' : 'false');
+  try{ if(localStorage.getItem('moneytrio.nav.v1') === 'recolhido') document.documentElement.classList.add('nav-recolhida'); }catch(e){}
+  marcarMenu();
   $('#btnMenu').addEventListener('click', () => {
-    $('#sidenav').classList.toggle('open');
-    $('#navBackdrop').classList.toggle('on');
+    if(ehMobile()){
+      const tb = $('.topbar').getBoundingClientRect();
+      document.documentElement.style.setProperty('--topo-h', Math.max(0, Math.round(tb.bottom)) + 'px');
+      $('#sidenav').classList.toggle('open');
+      $('#navBackdrop').classList.toggle('on');
+    }else{
+      const rec = document.documentElement.classList.toggle('nav-recolhida');
+      try{ localStorage.setItem('moneytrio.nav.v1', rec ? 'recolhido' : 'aberto'); }catch(e){}
+    }
+    marcarMenu();
   });
   $('#navBackdrop').addEventListener('click', () => {
-    $('#sidenav').classList.remove('open'); $('#navBackdrop').classList.remove('on');
+    $('#sidenav').classList.remove('open'); $('#navBackdrop').classList.remove('on'); marcarMenu();
   });
-  $('#btnTheme').addEventListener('click', () => {
-    ST.tema = ST.tema === 'light' ? 'dark' : 'light'; aplicarTema(); Store.salvar();
-  });
+  ligarTopoPadrao();
   /* girou o celular ou mudou a janela de faixa: as tabelas empilhadas dependem disso */
   let faixaLargura = window.innerWidth <= 600;
   window.addEventListener('resize', () => {
@@ -32685,9 +33010,7 @@ function ligarEventos(){
     faixaLargura = agora;
     if(!$('#app').classList.contains('hidden')) render();
   });
-  /* 🏠 Início: a tela de escolha do MoneyTRIO, de qualquer lugar */
-  $('#btnInicio').addEventListener('click', () => { fecharMenuApps(); mostrarHub(); });
-  $('#btnRefresh').addEventListener('click', () => atualizarCotacoes(true));
+  /* Início (o hub) e Atualizar vivem no seletor do nome e no menu do 👤 */
   $$('#levelSeg button').forEach(b => b.addEventListener('click', () => {
     ST.nivel = b.dataset.level; sincronizarNivel(); Store.salvar(); render();
   }));
@@ -32745,7 +33068,7 @@ function ligarEventos(){
 
   /* o nome do app lá em cima abre o menu de troca, com movimento */
   const marca = $('#btnMarca');
-  if(marca) marca.addEventListener('click', ev => { ev.stopPropagation(); alternarMenuApps(); });
+  if(marca) marca.addEventListener('click', ev => { ev.stopPropagation(); fecharPerfilMenu(); alternarMenuApps(); });
   document.addEventListener('click', ev => {
     const caixa = $('#appMenuCaixa');
     if(caixa && !caixa.classList.contains('hidden') && !ev.target.closest('.brand-caixa')) fecharMenuApps();
@@ -33810,6 +34133,7 @@ function comecarApp(r){
      o de sempre (carteira aberta com senha, ou arquivo local) */
   const sess = Sessao.carregar();
   if(sess && sess.tipo) Acesso.definir(sess.tipo);
+  else if(Sessao.tipo === 'visitante') Acesso.definir('visitante');   /* entrou sem a senha: não é o dono */
   else Acesso.definir(window.CARTEIRA_CIFRADA ? 'dono' : 'local');
 
   ligarIdioma();
