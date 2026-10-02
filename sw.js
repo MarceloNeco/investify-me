@@ -2,13 +2,13 @@
    Faz o site abrir sem internet e permite instalar como app.
    AO PUBLICAR UMA VERSÃO NOVA, troque o número abaixo (v1 -> v2).
    É o que avisa os celulares de que existe conteúdo novo. */
-var VERSAO = 'v21';
+var VERSAO = 'v22';
 var CACHE = 'moneytrio-' + VERSAO;
 
 self.addEventListener('install', function (e) {
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(function (c) {
-    return c.addAll(['./', './index.html', './manifest.json']).catch(function () {});
+    return c.addAll(['./', './index.html', './manifest.json', './ajuda-botao.png', './icone-192.png']).catch(function () {});
   }));
 });
 
