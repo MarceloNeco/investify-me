@@ -1307,6 +1307,7 @@ details.imp-arq.repetido{border-color:var(--warn)}
 .bloco-regra .chips{margin-bottom:12px}
 .esc-tipo{display:flex; align-items:center; gap:10px; margin:0 0 12px} .esc-tipo label{white-space:nowrap} .esc-tipo select{flex:1; min-width:0}
 .esc-cand{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
+.esc-opcoes{display:flex; flex-direction:column; gap:6px; margin:0 0 12px} .esc-opcoes label{align-items:flex-start; gap:8px} .esc-opcoes input{width:auto; margin-top:3px}
 .esc-achado .warn{color:var(--warn)}
 .esc-papeis{display:block; width:100%; height:auto; border-radius:10px; margin:10px 0}
 .esc-mais{margin-top:14px} .esc-mais summary{cursor:pointer; color:var(--accent2)}
@@ -2859,6 +2860,12 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.25 */
+  'Ler comprovante: mais rápido, foto torta e nome da loja pelo CNPJ (ou pela IA)':'Read receipt: faster, tilted photos and the merchant name by CNPJ (or by the AI)',
+  'Mais rápido: a foto de celular (12 MP) é recortada no papel e reduzida antes de ler; leitura que levava minutos no celular cai para segundos. Foto torta (até 45°) vai direto para o motor que endireita, sem gastar tempo lendo o quadro torto.':'Faster: the phone photo (12 MP) is cropped to the paper and reduced before reading; a reading that took minutes on the phone drops to seconds. A tilted photo (up to 45°) goes straight to the engine that straightens it, without wasting time reading the tilted frame.',
+  'Consertado: o endireitamento girava para o lado errado (um comprovante a 21° saía a 42°). Agora o comprovante inclinado da maquininha sai com valor confirmado, data, CNPJ e bandeira.':'Fixed: the straightening turned the wrong way (a receipt at 21° came out at 42°). Now the tilted card machine receipt comes out with confirmed amount, date, CNPJ and brand.',
+  'Nome da loja pelo CNPJ: quando o CNPJ lido confere, o app busca o nome oficial na Receita Federal (BrasilAPI) e troca o nome mal lido pelo OCR. Só os 14 números saem do aparelho; dá para desligar na tela de escanear.':'Merchant name by CNPJ: when the CNPJ read checks out, the app looks up the official name at the Federal Revenue (BrasilAPI) and replaces the name misread by the OCR. Only the 14 digits leave the device; it can be turned off on the scan screen.',
+  'Ler com a IA: quem tem chave de IA (Gemini, OpenAI ou Claude) pode ligar "🤖 Ler com a IA" na tela de escanear — a foto vai para a IA, que lê papel amassado e torto muito melhor; e em qualquer cartão lido no aparelho há o botão "Tentar com a IA". A foto só sai do aparelho com a chavinha ligada ou ao tocar nesse botão.':'Read with the AI: whoever has an AI key (Gemini, OpenAI or Claude) can turn on "🤖 Read with the AI" on the scan screen — the photo goes to the AI, which reads crumpled and tilted paper much better; and every card read on the device has a "Try with the AI" button. The photo only leaves the device with that switch on or when tapping that button.',
   /* 3.24 */
   'BudgetONE vazio: cada aba com o seu começo, e a foto como primeira entrada':'Empty BudgetONE: each tab with its own start, and the photo as the first entry',
   'Consertado: sem nenhum gasto, as seis abas do BudgetONE (Painel, Lançamentos, Custos, Fluxo, Renda, Futuro) mostravam a mesma tela, e parecia que o app tinha travado ao tocar embaixo ou no ☰. Agora cada aba tem o seu título e o seu convite: Custos chama o primeiro compromisso, Renda chama o salário, e as outras chamam o primeiro lançamento.':'Fixed: with no expenses, the six BudgetONE tabs (Dashboard, Entries, Costs, Cash flow, Income, Future) showed the same screen, and the app seemed frozen when tapping the bottom bar or ☰. Now each tab has its own title and invitation: Costs asks for the first commitment, Income asks for the salary, and the others ask for the first entry.',
@@ -13494,6 +13501,12 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.25', d:'2026-10-09', t:'Ler comprovante: mais rápido, foto torta e nome da loja pelo CNPJ (ou pela IA)', itens:[
+    'Mais rápido: a foto de celular (12 MP) é recortada no papel e reduzida antes de ler; leitura que levava minutos no celular cai para segundos. Foto torta (até 45°) vai direto para o motor que endireita, sem gastar tempo lendo o quadro torto.',
+    'Consertado: o endireitamento girava para o lado errado (um comprovante a 21° saía a 42°). Agora o comprovante inclinado da maquininha sai com valor confirmado, data, CNPJ e bandeira.',
+    'Nome da loja pelo CNPJ: quando o CNPJ lido confere, o app busca o nome oficial na Receita Federal (BrasilAPI) e troca o nome mal lido pelo OCR. Só os 14 números saem do aparelho; dá para desligar na tela de escanear.',
+    'Ler com a IA: quem tem chave de IA (Gemini, OpenAI ou Claude) pode ligar "🤖 Ler com a IA" na tela de escanear — a foto vai para a IA, que lê papel amassado e torto muito melhor; e em qualquer cartão lido no aparelho há o botão "Tentar com a IA". A foto só sai do aparelho com a chavinha ligada ou ao tocar nesse botão.'
+  ]},
   {v:'3.24', d:'2026-10-09', t:'BudgetONE vazio: cada aba com o seu começo, e a foto como primeira entrada', itens:[
     'Consertado: sem nenhum gasto, as seis abas do BudgetONE (Painel, Lançamentos, Custos, Fluxo, Renda, Futuro) mostravam a mesma tela, e parecia que o app tinha travado ao tocar embaixo ou no ☰. Agora cada aba tem o seu título e o seu convite: Custos chama o primeiro compromisso, Renda chama o salário, e as outras chamam o primeiro lançamento.',
     'A foto do comprovante é a primeira forma de começar: 📷 Ler comprovante aparece em primeiro em todas as telas vazias, antes de "Começar pelo básico", "Importar arquivo" e "Novo lançamento".'
@@ -18195,6 +18208,18 @@ function abrirEscanear(){
         '<option value="' + k + '"' + (k === tipoSalvo ? ' selected' : '') + '>' +
         esc(Leitor.TIPOS[k][L === 'en' ? 'en' : 'nome']) + '</option>').join('') + '</select></div>' +
 
+    /* o que pode sair do aparelho — cada coisa com a sua chavinha, e dito com todas as letras */
+    '<div class="esc-opcoes">' +
+      '<label class="row small"><input type="checkbox" id="escCnpj"' + (ST.config.leitorCnpj === false ? '' : ' checked') + '> ' +
+        de('Buscar o nome da loja pelo CNPJ na internet', 'Look up the merchant name by CNPJ online') +
+        ' <span class="tiny muted">' + de('(só os 14 números do CNPJ saem do aparelho)', '(only the 14 CNPJ digits leave the device)') + '</span></label>' +
+      (escIADisponivel()
+        ? '<label class="row small"><input type="checkbox" id="escIA"' + (ST.config.leitorIA ? ' checked' : '') + '> 🤖 ' +
+          de('Ler com a IA (' + esc(PROVEDORES_IA[IA.provedor() || IA.comChave()[0]].nome) + ')', 'Read with the AI (' + esc(PROVEDORES_IA[IA.provedor() || IA.comChave()[0]].nome) + ')') +
+          ' <span class="tiny muted">' + de('(a foto sai do aparelho para a IA; lê melhor papel amassado e torto)', '(the photo leaves the device to the AI; reads crumpled and tilted paper better)') + '</span></label>'
+        : '') +
+    '</div>' +
+
     '<div id="escResultado"></div>' +
 
     '<details class="esc-mais"><summary class="small">' + de('Colar um código ou texto', 'Paste a code or text') + '</summary>' +
@@ -18216,6 +18241,86 @@ function abrirEscanear(){
   });
   const sel = $('#escTipo');
   if(sel) sel.addEventListener('change', () => { ST.config.leitorTipo = sel.value; Store.salvar(); });
+  const cn = $('#escCnpj');
+  if(cn) cn.addEventListener('change', () => { ST.config.leitorCnpj = cn.checked; Store.salvar(); });
+  const ia = $('#escIA');
+  if(ia) ia.addEventListener('change', () => { ST.config.leitorIA = ia.checked; Store.salvar(); });
+}
+
+/* a IA só entra para quem tem chave e nível para usá-la */
+function escIADisponivel(){
+  return typeof IA !== 'undefined' && IA.comChave().length > 0 &&
+    (typeof Acesso === 'undefined' || Acesso.pode('ia'));
+}
+
+/* O que a IA respondeu, no mesmo formato do cupom lido pelo OCR. Tudo é
+   conferido antes de entrar: CNPJ pelo dígito, data no formato, forma e
+   bandeira só das listas do app. */
+function cupomDaIA(j, provedor, fonte){
+  const num = v => {
+    if(typeof v === 'number') return v > 0 ? Math.round(v * 100) / 100 : null;
+    const n = CupomTexto.numero(String(v || ''));
+    return n != null && n > 0 ? n : null;
+  };
+  const cru = String(j.cnpj || '').replace(/\D/g, '');
+  const cnpj = cru.length === 14
+    ? {cru, fmt: cru.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5'), valido: CupomTexto.cnpjValido(cru)} : null;
+  const forma = ['credito', 'debito', 'pix', 'especie', 'boleto'].indexOf(j.forma) >= 0 ? j.forma : '';
+  const band = BANDEIRAS.some(b => b.id === j.bandeira) ? j.bandeira : '';
+  const fim = /^\d{4}$/.test(String(j.final_cartao || '')) ? String(j.final_cartao) : '';
+  const pgto = Banco.completarForma({forma, bancoCod: '', bandeira: band, fim, confianca: []});
+  const itens = Array.isArray(j.itens)
+    ? j.itens.map(i => ({nome: String((i && i.nome) || '').trim().slice(0, 60), valor: num(i && i.valor)})).filter(i => i.nome && i.valor) : [];
+  const valor = num(j.valor);
+  const tipo = ['cartao', 'nfce', 'conta'].indexOf(j.tipo) >= 0 ? j.tipo : (j.tipo === 'boleto' ? 'nfce' : 'livre');
+  const legivel = j.legivel !== false;
+  return {
+    tipo: 'cupom', ia: provedor, tipoPapel: tipo, maquininha: tipo === 'cartao',
+    pagamento: pgto, formaId: pgto.forma || '', cartaoId: Banco.cartaoDoTexto(pgto), bancoId: '',
+    valor, candidatos: [], confirmado: false,
+    data: /^\d{4}-\d{2}-\d{2}$/.test(String(j.data || '')) ? j.data : null,
+    hora: /^\d{2}:\d{2}$/.test(String(j.hora || '')) ? j.hora : null,
+    loja: j.loja ? String(j.loja).trim().slice(0, 60) : null,
+    cnpj, chave: /^\d{44}$/.test(String(j.chave || '')) ? Camera.lerChave(String(j.chave)) : null,
+    itens, somaItens: itens.reduce((s, i) => s + i.valor, 0),
+    bandeira: band, modalidade: null, nota: null, parcelas: j.parcelas || null,
+    textoCru: '', campos: [], codigos: [], estado: valor ? 'ok' : 'bad', fonte,
+    confianca: !legivel ? 3 : (valor ? 9 : 4), confiavel: !!valor && legivel
+  };
+}
+
+/* o nome oficial pelo CNPJ, quando a pessoa deixou e há internet */
+async function completarLojaPeloCnpj(lista, passo){
+  if(ST.config.leitorCnpj === false || !navigator.onLine) return;
+  for(const c of lista){
+    if(c.tipo !== 'cupom' || !c.cnpj || !c.cnpj.valido || c.lojaFonte === 'cnpj') continue;
+    if(passo) passo(I18n.atual === 'pt' ? 'Buscando o nome da loja pelo CNPJ…' : 'Looking up the merchant by CNPJ…');
+    const n = await Leitor.nomePeloCnpj(c.cnpj.cru);
+    if(!n) continue;
+    if(c.loja && c.loja !== n.nome) c.lojaLida = c.loja;
+    c.loja = n.nome; c.lojaFonte = 'cnpj'; c.cidade = [n.cidade, n.uf].filter(Boolean).join(' - ');
+    c.confianca = Math.min(10, (c.confianca || 0) + 1);
+  }
+}
+
+/* o cartão já lido pelo OCR, lido de novo pela IA a pedido */
+async function tentarIAEscaneado(i){
+  const r = escaneados[i];
+  if(!r || !r.fonte || !escIADisponivel()) return;
+  const pt = I18n.atual === 'pt';
+  const bt = $('#escResultado [data-acao="esc-ia"][data-idx="' + i + '"]');
+  if(bt){ bt.disabled = true; bt.textContent = pt ? 'Lendo com a IA…' : 'Reading with the AI…'; }
+  try{
+    const resp = await IA.lerFoto(r.fonte, m => { if(bt) bt.textContent = m; });
+    const novo = cupomDaIA(resp.dados, resp.provedor, r.fonte);
+    novo.nome = r.nome;
+    await completarLojaPeloCnpj([novo], null);
+    escaneados[i] = novo;
+    mostrarLidos(escaneados);
+  }catch(e){
+    if(bt){ bt.disabled = false; bt.textContent = '🤖 ' + (pt ? 'Tentar com a IA' : 'Try with the AI'); }
+    toast((pt ? 'A IA não conseguiu: ' : 'The AI could not: ') + String((e && e.message) || e).slice(0, 120), 'warn');
+  }
 }
 
 /* a faixa de progresso dentro da janela (recriada se a tela mudou no meio) */
@@ -18240,7 +18345,27 @@ async function lerArquivosEscaneados(arquivos){
   const barra = f => { const b = $('#escBarra'); if(b) b.style.width = Math.round(f * 100) + '%'; };
   passo(de('Preparando…', 'Getting ready…'));
   try{
-    const papeis = await Leitor.ler(lista, {
+    /* com a chavinha da IA ligada e internet, as fotos vão primeiro para a
+       IA; o que ela não conseguir (ou PDF) segue pelo leitor do aparelho */
+    const porIA = [];
+    let restantes = lista;
+    if(ST.config.leitorIA && escIADisponivel() && navigator.onLine){
+      restantes = [];
+      for(const f of lista){
+        if(!/^image\//.test(f.type || '')){ restantes.push(f); continue; }
+        try{
+          const img = await Leitor.imagemDe(f);
+          const resp = await IA.lerFoto(img, passo);
+          const c = cupomDaIA(resp.dados, resp.provedor, img);
+          c.nome = lista.length > 1 ? (de('Foto ', 'Photo ') + (lista.indexOf(f) + 1)) : '';
+          porIA.push(c);
+        }catch(e){
+          toast(de('A IA não leu esta foto; lendo no aparelho. ', 'The AI could not read this photo; reading on the device. ') + String((e && e.message) || '').slice(0, 80), 'warn');
+          restantes.push(f);
+        }
+      }
+    }
+    const papeis = restantes.length ? await Leitor.ler(restantes, {
       tipo, aviso: passo, progresso: barra,
       perguntarPapeis: perguntarPapeisEsc,
       /* o QR da nota com valor, ou o código do boleto, já dizem tudo: nem precisa ler o texto */
@@ -18251,7 +18376,7 @@ async function lerArquivosEscaneados(arquivos){
         }
         return null;
       }
-    });
+    }) : [];
     const lidos = papeis.map(p => {
       if(p.atalho){ p.atalho.nome = p.nome; return p.atalho; }
       const c = Leitor.paraCupom(p);
@@ -18262,9 +18387,12 @@ async function lerArquivosEscaneados(arquivos){
         if(!c.cnpj && qr.cnpjFmt) c.cnpj = {cru: qr.cnpj, fmt: qr.cnpjFmt, valido: true};
         if(!c.data && qr.data) c.data = qr.data;
       }
+      c.fonte = p.img;
       return c;
     });
-    mostrarLidos(lidos);
+    const todos = porIA.concat(lidos);
+    await completarLojaPeloCnpj(todos, passo);
+    mostrarLidos(todos);
   }catch(e){
     const alvo = $('#escResultado');
     if(!alvo) return;
@@ -18334,7 +18462,8 @@ function htmlCupom(r, i, n){
   let valor;
   if(r.valor)
     valor = '<b>' + fmt(r.valor) + '</b>' +
-      (r.confirmado ? ' <span class="tiny up">' + de('✓ confirmado em 2 leituras', '✓ confirmed by 2 readings') + '</span>'
+      (r.ia ? ' <span class="tiny up">🤖 ' + de('lido pela IA', 'read by the AI') + '</span>'
+       : r.confirmado ? ' <span class="tiny up">' + de('✓ confirmado em 2 leituras', '✓ confirmed by 2 readings') + '</span>'
        : r.escolhido ? ' <span class="tiny muted">' + de('(escolhido por você)', '(your pick)') + '</span>' : '');
   else if(cand.length)
     valor = '<span class="warn">' + de('não tenho certeza — toque no valor certo:', 'not sure — tap the right amount:') + '</span>' +
@@ -18344,7 +18473,8 @@ function htmlCupom(r, i, n){
 
   let h = '<div class="card2-box esc-achado" style="margin-top:14px">' + titulo +
     '<table class="tbl tbl-mini"><tbody>' +
-      (livre ? '' : linhaEsc(de('Loja', 'Merchant'), r.loja ? esc(r.loja) : '<span class="muted">—</span>')) +
+      (livre ? '' : linhaEsc(de('Loja', 'Merchant'), (r.loja ? esc(r.loja) : '<span class="muted">—</span>') +
+        (r.lojaFonte === 'cnpj' ? ' <span class="tiny muted">' + de('(nome pelo CNPJ)', '(name by CNPJ)') + (r.cidade ? ' · ' + esc(r.cidade) : '') + '</span>' : ''))) +
       linhaEsc(t('fin.valor'), valor) +
       linhaEsc(t('fin.data'), r.data ? esc(I18n.data(r.data)) + (r.hora ? ' · ' + esc(r.hora) : '') : '<span class="muted">—</span>') +
       (r.cnpj ? linhaEsc('CNPJ', esc(r.cnpj.fmt) +
@@ -18370,6 +18500,8 @@ function htmlCupom(r, i, n){
     'background:' + (r.confiavel ? 'var(--accent)' : 'var(--warn)') + '"></div></div>' +
     '<p class="tiny muted" style="margin:4px 0 0">' +
     (livre ? de('Confira o texto abaixo.', 'Check the text below.')
+     : r.ia ? de('Lido pela IA (' + esc(PROVEDORES_IA[r.ia] ? PROVEDORES_IA[r.ia].nome : r.ia) + '). A IA também erra: confira antes de salvar.',
+                 'Read by the AI (' + esc(PROVEDORES_IA[r.ia] ? PROVEDORES_IA[r.ia].nome : r.ia) + '). The AI can be wrong too: check before saving.')
      : r.confirmado ? de('Leitura consistente — confira o valor mesmo assim.', 'Consistent reading — still check the amount.')
      : r.escolhido ? de('Valor escolhido por você. Confira o resto antes de salvar.', 'Amount picked by you. Check the rest before saving.')
      : de('Leitura fraca. Papel amassado ou foto escura erram bastante: confira tudo antes de salvar.',
@@ -18389,6 +18521,8 @@ function htmlCupom(r, i, n){
 
   h += '<div class="f-actions" style="margin-top:12px">' +
     (i === n - 1 ? '<button class="btn" data-acao="esc-limpar">' + de('Ler outro', 'Read another') + '</button>' : '') +
+    (!r.ia && r.fonte && escIADisponivel() && navigator.onLine
+      ? '<button class="btn" data-acao="esc-ia" data-idx="' + i + '" title="' + de('A foto sai do aparelho para a IA', 'The photo leaves the device to the AI') + '">🤖 ' + de('Tentar com a IA', 'Try with the AI') + '</button>' : '') +
     '<button class="btn primary" data-acao="esc-lancar" data-idx="' + i + '">' + de('Criar lançamento', 'Create entry') + '</button></div></div>';
   return h;
 }
@@ -19723,7 +19857,7 @@ const Leitor = (() => {
     ['nfce', 'cartao', 'conta'].forEach(k => { sinais[k] = (allText.match(DOC_TYPES[k].sinais) || []).length; });
     const debug = {
       tipo, detected, sinais, valor, candidates, textKind, tilt: tilt, codes: codes || [],
-      readings: readings.map((r, i) => ({ text: r.text, conf: r.conf, words: r.words.length, good: goodWords(r), rot: r.rot, bin: r.bin, size: r.size, region: r.region, candidatos: parsed[i].candidatos }))
+      readings: readings.map((r, i) => ({ text: r.text, conf: r.conf, words: r.words.length, good: goodWords(r), rot: r.rot, bin: r.bin, size: r.size, ms: r.ms, region: r.region, candidatos: parsed[i].candidatos }))
     };
 
     return { fields, tipo, expectsValue, valor, candidates, status, hint, textKind, far, debug, melhor: bestIdx };
@@ -19934,11 +20068,12 @@ const Leitor = (() => {
     let readings = [];
     let tipo = tipoPedido;
     const read = async (rot, bin, size, region = null) => {
+      const t0 = Date.now();
       const canvas = buildOcrCanvas(img, rot, bin, size, region);
       const res = await worker.recognize(canvas);
       const f = canvas.frame;
       const lines = (res.data.lines || []).map(l => ({ text: (l.text || '').trim(), conf: l.confidence || 0 })).filter(l => l.text);
-      return { text: res.data.text || '', conf: res.data.confidence || 0, words: res.data.words || [], lines, rot, bin, size, region: { cx: f.cx, cy: f.cy, cw: f.cw, ch: f.ch }, frame: f };
+      return { text: res.data.text || '', conf: res.data.confidence || 0, words: res.data.words || [], lines, rot, bin, size, region: { cx: f.cx, cy: f.cy, cw: f.cw, ch: f.ch }, frame: f, ms: Date.now() - t0 };
     };
     const started = Date.now();
 
@@ -19949,23 +20084,26 @@ const Leitor = (() => {
     // Leitor OCR clareiam a linha do "R$". São leituras independentes
     // (processamentos diferentes), então duas iguais já confirmam o valor
     // — e a foto boa termina em poucos segundos.
-    const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
-    const quadro = (c, scale) => ({ cx: 0, cy: 0, cw: w0, ch: h0, scale, width: w0, height: h0 });
-    const legado = async (bin) => {
-      let canvas = img;
+    // A inclinação é medida antes de tudo, e as leituras do quadro inteiro
+    // já recebem a foto endireitada. O sinal é invertido de propósito: o
+    // estimateAngles devolve o ângulo em que as linhas ficam retas quando
+    // os pontos giram por -a, e o canvas gira por +a — com o sinal do
+    // Leitor OCR, um comprovante a 21° saía a 42°.
+    const tilt = estimateAngles(cropPaper(img));
+    let base = -tilt[0];
+    const legado = async (bin, fonte, rot) => {
+      const fw = fonte.naturalWidth || fonte.width, fh = fonte.naturalHeight || fonte.height;
+      let canvas = fonte;
       if (bin === 'prep' && typeof DocIR !== 'undefined' && DocIR.preparar) {
-        if (!img.getContext) { canvas = document.createElement('canvas'); canvas.width = w0; canvas.height = h0; canvas.getContext('2d').drawImage(img, 0, 0); }
+        if (!canvas.getContext) { canvas = document.createElement('canvas'); canvas.width = fw; canvas.height = fh; canvas.getContext('2d').drawImage(fonte, 0, 0); }
         canvas = DocIR.preparar(canvas);
       }
+      const t0 = Date.now();
       const res = await worker.recognize(canvas);
-      const f = quadro(canvas, canvas.width / w0);
       const lines = (res.data.lines || []).map(l => ({ text: (l.text || '').trim(), conf: l.confidence || 0 })).filter(l => l.text);
-      return { text: res.data.text || '', conf: res.data.confidence || 0, words: res.data.words || [], lines, rot: 0, bin, size: canvas.width, region: { cx: 0, cy: 0, cw: w0, ch: h0 }, frame: f };
+      return { text: res.data.text || '', conf: res.data.confidence || 0, words: res.data.words || [], lines, rot, bin, size: canvas.width, ms: Date.now() - t0,
+               region: { cx: 0, cy: 0, cw: fw, ch: fh }, frame: { cx: 0, cy: 0, cw: fw, ch: fh, scale: canvas.width / fw, width: fw, height: fh } };
     };
-    readings.push(await legado('prep'));
-    aviso(tx('Conferindo com outra leitura…', 'Checking with another reading…'));
-    readings.push(await legado('cru'));
-
     const tipoDe = () => {
       let t = tipoPedido === 'auto' ? detectDocType(readings) : tipoPedido;
       // (MoneyTRIO) leitura ruidosa de maquininha dá poucos sinais, mas se tem
@@ -19982,12 +20120,19 @@ const Leitor = (() => {
       if (DOC_TYPES[tipo].vitais.includes('Valor')) return agreedValue(readings, tipo) !== null;
       return readings.some(r => goodWords(r) >= 8);   // texto livre: uma leitura legível basta
     };
-    if (resolvido()) return { readings, tipo, tilt: 0 };
+    // Foto claramente torta (8° a 45°): as leituras do quadro inteiro, sem
+    // girar, gastam uns 10 s e não leem nada — vão direto para o motor, que
+    // endireita. Fora dessa faixa (reta, ou medida duvidosa de 87°), o
+    // quadro inteiro vai primeiro: é o que acerta a foto comum em 3 s.
+    const torta = Math.abs(base) >= 8 && Math.abs(base) < 45;
+    if (!torta) {
+      readings.push(await legado('prep', img, 0));
+      aviso(tx('Conferindo com outra leitura…', 'Checking with another reading…'));
+      readings.push(await legado('cru', img, 0));
+      if (resolvido()) return { readings, tipo, tilt: base };
+    }
 
-    // Daqui em diante é o Leitor OCR como ele é.
-    // Endireita sozinho: mede a inclinação em vez de supor a foto reta
-    const tilt = estimateAngles(cropPaper(img));
-    let base = tilt[0];
+    // Daqui em diante é o Leitor OCR como ele é (com o sinal do ângulo corrigido).
     aviso(tx('Lendo o papel endireitado…', 'Reading the straightened paper…'));
     const primeira = await read(base, false, 1000);
     readings.push(primeira);
@@ -20019,7 +20164,7 @@ const Leitor = (() => {
     // Mais leituras da mesma foto: como veio, maior, com contraste
     // reforçado. O valor só vale com duas leituras concordando.
     const done = p => readings.some(r => r.rot === p[0] && r.bin === p[1] && r.size === p[2]);
-    const passes = [[0, false, 1000, null], [base, false, 1400, region], [base, true, 1000, region]].filter(p => !done(p));
+    const passes = [[base, false, 1400, region], [base, true, 1000, region], [0, false, 1000, null]].filter(p => !done(p));
     let next = 0;
     while (true) {
       tipo = tipoDe();
@@ -20031,7 +20176,39 @@ const Leitor = (() => {
       aviso(tx('Conferindo com outra leitura…', 'Checking with another reading…'));
       readings.push(await read(...passes[next++]));
     }
-    return { readings, tipo, tilt: tilt[0] };
+    return { readings, tipo, tilt: base };
+  }
+
+  /* (MoneyTRIO) Antes de ler: achar onde está o texto e recortar, e
+     limitar o tamanho. Foto de celular tem 12 MP (4000 x 3000) e o
+     comprovante ocupa um canto: ler o quadro inteiro leva minutos no
+     celular e a letra sai pequena demais. O recorte pelo bloco de letras
+     (findTextBox numa cópia de 400 px) acha o papel mesmo em mesa clara,
+     onde o detector de papel não separa nada; depois a imagem fica com no
+     máximo 2200 px, que é o que o Tesseract lê bem e rápido. */
+  const MAX_LADO = 1600;
+  function enquadrar(img) {
+    const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+    let src = img;
+    if (!img.getContext) { src = document.createElement('canvas'); src.width = w0; src.height = h0; src.getContext('2d').drawImage(img, 0, 0); }
+    let { cx, cy, cw, ch } = { cx: 0, cy: 0, cw: w0, ch: h0 };
+    // foto pequena (até o tamanho máximo) vai inteira: recortar só tira contexto
+    if (Math.max(w0, h0) <= MAX_LADO) return img;
+    const box = findTextBox(src, 400);
+    if (box && box.cw * box.ch < 0.6 * w0 * h0) {
+      const mx = Math.round(box.cw * 0.12), my = Math.round(box.ch * 0.12);
+      cx = Math.max(0, box.cx - mx); cy = Math.max(0, box.cy - my);
+      cw = Math.min(w0 - cx, box.cw + 2 * mx); ch = Math.min(h0 - cy, box.ch + 2 * my);
+    }
+    const k = Math.min(1, MAX_LADO / Math.max(cw, ch));
+    if (cx === 0 && cy === 0 && cw === w0 && ch === h0 && k === 1) return img;
+    const out = document.createElement('canvas');
+    out.width = Math.round(cw * k); out.height = Math.round(ch * k);
+    const g = out.getContext('2d');
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+    g.drawImage(src, cx, cy, cw, ch, 0, 0, out.width, out.height);
+    out.recorte = { cx, cy, cw, ch, k, w0, h0 };
+    return out;
   }
 
   const ehPdf = f => /pdf$/i.test(f.type || '') || /\.pdf$/i.test(f.name || '');
@@ -20068,7 +20245,7 @@ const Leitor = (() => {
     op = op || {};
     const aviso = op.aviso || (() => {});
     const w = await trabalhador(aviso, op.progresso);
-    const p = await readPaper(img, w, op.tipo || 'auto', aviso);
+    const p = await readPaper(enquadrar(img), w, op.tipo || 'auto', aviso);
     p.codes = [];
     p.result = buildResult(p.readings, p.tipo, [], p.tilt);
     return p;
@@ -20121,8 +20298,9 @@ const Leitor = (() => {
           if (atalho) { saida.push({ nome, img, codes, atalho, readings: [], tipo: tipoPedido }); continue; }
           const w = await trabalhador(aviso, op.progresso);
           aviso(rot + tx('Lendo o texto…', 'Reading the text…'));
-          const p = await readPaper(img, w, tipoPedido, m => aviso(rot + m));
-          p.nome = nome; p.img = img; p.codes = codes;
+          const quadro = enquadrar(img);
+          const p = await readPaper(quadro, w, tipoPedido, m => aviso(rot + m));
+          p.nome = nome; p.img = quadro; p.codes = codes;
           p.result = buildResult(p.readings, p.tipo, codes, p.tilt);
           saida.push(p);
         }
@@ -20183,10 +20361,35 @@ const Leitor = (() => {
     });
   }
 
+  /* O nome da loja pelo CNPJ, na BrasilAPI (dados públicos da Receita
+     Federal). Só os 14 dígitos saem do aparelho; nada da foto. O OCR
+     troca letras no nome ("EJANOVSKY CLINICA MEDICA DÁ"), mas o CNPJ tem
+     dígito verificador: quando ele confere, o nome oficial é certo. */
+  const nomesCnpj = {};
+  async function nomePeloCnpj(cru) {
+    cru = String(cru || '').replace(/\D/g, '');
+    if (cru.length !== 14) return null;
+    if (nomesCnpj[cru] !== undefined) return nomesCnpj[cru];
+    let out = null;
+    try {
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 7000);
+      const r = await fetch('https://brasilapi.com.br/api/cnpj/v1/' + cru, { signal: ctl.signal });
+      clearTimeout(t);
+      if (r.ok) {
+        const j = await r.json();
+        const nome = (j.nome_fantasia || j.razao_social || '').trim();
+        if (nome) out = { nome, razao: j.razao_social || '', cidade: j.municipio || '', uf: j.uf || '' };
+      }
+    } catch (e) { out = null; }
+    nomesCnpj[cru] = out;
+    return out;
+  }
+
   return {
     BASE, TIPOS: DOC_TYPES, CAMPOS: ORDERED_FIELD_KEYS,
-    ler, lerPapel, textoDe, paraCupom, fecharLote,
-    imagemDe: loadImageFile, findPapers, readCodes, parseDocument, findMoney, parseChave, buildResult, detectDocType
+    ler, lerPapel, textoDe, paraCupom, fecharLote, enquadrar, nomePeloCnpj,
+    imagemDe: loadImageFile, findPapers, findTextBox, findPaperBox, estimateAngles, cropPaper, buildOcrCanvas, readCodes, parseDocument, findMoney, parseChave, buildResult, detectDocType
   };
 })();
 </script>
@@ -28586,6 +28789,21 @@ const PROVEDORES_IA = {
       if(!r.ok) throw erroIA(r, j);
       return (((j.candidates || [])[0] || {}).content || {}).parts?.map(p => p.text).join('') || '';
     },
+    /* a mesma pergunta, com uma foto junto (comprovante) */
+    async perguntarFoto(chave, sistema, pergunta, b64){
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + this.modelo +
+        ':generateContent?key=' + encodeURIComponent(chave), {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          systemInstruction: {parts:[{text: sistema}]},
+          contents: [{role:'user', parts:[{text: pergunta}, {inline_data: {mime_type: 'image/jpeg', data: b64}}]}],
+          generationConfig: {temperature: 0, maxOutputTokens: 900, responseMimeType: 'application/json'}
+        })
+      });
+      const j = await r.json();
+      if(!r.ok) throw erroIA(r, j);
+      return (((j.candidates || [])[0] || {}).content || {}).parts?.map(p => p.text).join('') || '';
+    },
     testar(chave){
       return fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1&key=' + encodeURIComponent(chave));
     }
@@ -28599,6 +28817,18 @@ const PROVEDORES_IA = {
         method:'POST', headers:{'Content-Type':'application/json', 'Authorization':'Bearer ' + chave},
         body: JSON.stringify({model: this.modelo, temperature: 0.3, max_tokens: 700,
           messages:[{role:'system', content: sistema}, {role:'user', content: pergunta}]})
+      });
+      const j = await r.json();
+      if(!r.ok) throw erroIA(r, j);
+      return (((j.choices || [])[0] || {}).message || {}).content || '';
+    },
+    async perguntarFoto(chave, sistema, pergunta, b64){
+      const r = await fetch('https://api.openai.com/v1/chat/completions', {
+        method:'POST', headers:{'Content-Type':'application/json', 'Authorization':'Bearer ' + chave},
+        body: JSON.stringify({model: this.modelo, temperature: 0, max_tokens: 900,
+          messages:[{role:'system', content: sistema}, {role:'user', content: [
+            {type:'text', text: pergunta},
+            {type:'image_url', image_url: {url: 'data:image/jpeg;base64,' + b64}}]}]})
       });
       const j = await r.json();
       if(!r.ok) throw erroIA(r, j);
@@ -28619,6 +28849,20 @@ const PROVEDORES_IA = {
                  'anthropic-dangerous-direct-browser-access':'true'},
         body: JSON.stringify({model: this.modelo, max_tokens: 700, temperature: 0.3, system: sistema,
           messages:[{role:'user', content: pergunta}]})
+      });
+      const j = await r.json();
+      if(!r.ok) throw erroIA(r, j);
+      return (j.content || []).map(c => c.text || '').join('');
+    },
+    async perguntarFoto(chave, sistema, pergunta, b64){
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{'Content-Type':'application/json', 'x-api-key': chave, 'anthropic-version':'2023-06-01',
+                 'anthropic-dangerous-direct-browser-access':'true'},
+        body: JSON.stringify({model: this.modelo, max_tokens: 900, temperature: 0, system: sistema,
+          messages:[{role:'user', content: [
+            {type:'image', source: {type:'base64', media_type:'image/jpeg', data: b64}},
+            {type:'text', text: pergunta}]}]})
       });
       const j = await r.json();
       if(!r.ok) throw erroIA(r, j);
@@ -28751,6 +28995,56 @@ const IA = {
         'de forma simples e curta (no máximo 8 frases curtas), sem jargão a não ser que explique. Use os números do contexto. ' +
         'Nunca recomende comprar ou vender um ativo específico; descreva opções e prós e contras e deixe a decisão com a pessoa. ' +
         'Valem as regras brasileiras (B3, Receita Federal, Selic, CDI, IPCA). Se não souber, diga que não sabe.';
+  },
+
+  /* ---------- ler uma FOTO de comprovante ----------
+     A foto sai do aparelho só quando a pessoa ligou isso na tela de
+     escanear (ST.config.leitorIA). Vai reduzida (até 1600 px) e recortada
+     no papel; a resposta é um JSON com os campos, nunca texto livre. A
+     mesma fila de provedores da pergunta de texto: sem cota num, o
+     próximo com chave. Quem não tem perguntarFoto (só texto) é pulado. */
+  sistemaFoto(){
+    return 'Você lê fotos de comprovantes brasileiros: comprovante de maquininha de cartão, cupom fiscal, nota fiscal, ' +
+      'conta de restaurante, boleto. Responda SOMENTE um JSON válido, sem markdown e sem comentários, com estas chaves: ' +
+      'tipo ("cartao", "nfce", "conta", "boleto" ou "outro"); loja (nome do estabelecimento como está impresso, ou null); ' +
+      'cnpj (os 14 dígitos, só números, ou null); valor (número, o total pago em reais, ou null); data ("AAAA-MM-DD" ou null); ' +
+      'hora ("HH:MM" ou null); forma ("credito", "debito", "pix", "especie", "boleto" ou null); ' +
+      'bandeira ("visa", "master", "elo", "amex", "hiper", "diners" ou null); final_cartao (os 4 últimos dígitos ou null); ' +
+      'parcelas (número ou null); itens (lista de {"nome", "valor"} quando o cupom lista itens, senão []); ' +
+      'chave (os 44 dígitos da nota fiscal ou null); legivel (true se a foto está legível, false se não). ' +
+      'Nunca invente: o que não estiver legível vai como null. Um ponto e vírgula entre milhares ("1.000,00") é mil reais.';
+  },
+  async lerFoto(fonte, aviso){
+    const pt = I18n.atual === 'pt';
+    const p0 = this.provedor();
+    const fila = (p0 ? [p0] : []).concat(this.comChave().filter(k => k !== p0)).filter(k => PROVEDORES_IA[k].perguntarFoto);
+    if(!fila.length) throw new Error(pt ? 'Cole uma chave primeiro.' : 'Paste a key first.');
+    const c = (typeof Leitor !== 'undefined') ? Leitor.enquadrar(fonte) : fonte;
+    let canvas = c;
+    if(!c.getContext){
+      canvas = document.createElement('canvas');
+      canvas.width = c.naturalWidth || c.width; canvas.height = c.naturalHeight || c.height;
+      canvas.getContext('2d').drawImage(c, 0, 0, canvas.width, canvas.height);
+    }
+    const b64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+    let ultimo;
+    for(let i = 0; i < fila.length; i++){
+      const p = fila[i];
+      try{
+        if(aviso) aviso((pt ? 'Lendo com a IA (' : 'Reading with the AI (') + PROVEDORES_IA[p].nome + ')…');
+        const txt = await PROVEDORES_IA[p].perguntarFoto(this.chave(p), this.sistemaFoto(),
+          pt ? 'Leia este comprovante.' : 'Read this receipt.', b64);
+        const m = /\{[\s\S]*\}/.exec(String(txt || ''));
+        if(!m) throw new Error(pt ? 'a IA não devolveu os campos' : 'the AI did not return the fields');
+        return {dados: JSON.parse(m[0]), provedor: p};
+      }catch(e){
+        ultimo = e;
+        if(!fila[i + 1] || !this.falhaTrocavel(e)) throw e;
+        this.avisarTroca(p, fila[i + 1]);
+        await new Promise(ok => setTimeout(ok, 3000));
+      }
+    }
+    throw ultimo;
   },
 
   async perguntar(texto){
@@ -34799,6 +35093,7 @@ function ligarEventos(){
       case 'esc-lancar': if(d.idx != null && escaneados[d.idx]) escaneado = escaneados[d.idx]; lancarEscaneado(); break;
       case 'esc-agendar': if(d.idx != null && escaneados[d.idx]) escaneado = escaneados[d.idx]; agendarEscaneado(); break;
       /* o motor não teve certeza do valor: a pessoa toca no certo */
+      case 'esc-ia': tentarIAEscaneado(Number(d.idx)); break;
       case 'esc-valor': { const r = escaneados[d.idx]; if(r){ r.valor = Number(d.v); r.confiavel = true; r.escolhido = true; r.confianca = Math.max(r.confianca || 0, 7); mostrarLidos(escaneados); } break; }
       case 'b-projetar': bProjetar(); break;
       case 'b-novo-preco': fechar('genModal'); abrirPreco(d.item || ''); break;
