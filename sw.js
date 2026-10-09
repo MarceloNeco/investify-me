@@ -2,8 +2,12 @@
    Faz o site abrir sem internet e permite instalar como app.
    AO PUBLICAR UMA VERSÃO NOVA, troque o número abaixo (v1 -> v2).
    É o que avisa os celulares de que existe conteúdo novo. */
-var VERSAO = 'v22';
+var VERSAO = 'v23';
 var CACHE = 'moneytrio-' + VERSAO;
+/* O motor de leitura de fotos (assets/ocr: Tesseract, português, ZXing,
+   jsQR — uns 10 MB) tem cache próprio, que NÃO muda a cada versão do app:
+   baixa na primeira leitura e fica. Para trocar o motor, troque o número. */
+var CACHE_OCR = 'moneytrio-ocr-1';
 
 self.addEventListener('install', function (e) {
   self.skipWaiting();
@@ -19,7 +23,7 @@ self.addEventListener('activate', function (e) {
        de caches: apagar "tudo que não é meu" tirava o modo sem internet
        dos outros apps (RiseONE, Cifras, Histórias…). */
     return Promise.all(nomes.map(function (n) {
-      return (n.indexOf('moneytrio-') === 0 && n !== CACHE) ? caches.delete(n) : null;
+      return (n.indexOf('moneytrio-') === 0 && n !== CACHE && n !== CACHE_OCR) ? caches.delete(n) : null;
     }));
   }).then(function () { return self.clients.claim(); }));
 });
@@ -29,6 +33,21 @@ self.addEventListener('fetch', function (e) {
   if (req.method !== 'GET') return;
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;   /* não encosta em cotação nem notícia */
+
+  /* o motor de leitura: cache primeiro e para sempre; só busca na rede o que ainda não tem */
+  if (url.pathname.indexOf('/assets/ocr/') >= 0) {
+    e.respondWith(
+      caches.open(CACHE_OCR).then(function (c) {
+        return c.match(req).then(function (r) {
+          return r || fetch(req).then(function (resp) {
+            if (resp && resp.status === 200) c.put(req, resp.clone());
+            return resp;
+          });
+        });
+      })
+    );
+    return;
+  }
 
   /* a página: rede primeiro, para o conteúdo estar sempre atual;
      o cache é a reserva de quando não há internet */
