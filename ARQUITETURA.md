@@ -138,6 +138,7 @@ dele **depois** dos que ele usa e **antes** de `app.js`.
 | `pdf-texto.js` | texto de dentro de PDF |
 | `ocr.js` | `Ocr`: carregar o Tesseract (de `assets/ocr/`, do arquivo embutido ou da CDN, nesta ordem) e ler texto cru; `CupomTexto`: entender o texto de um cupom brasileiro (total, data, CNPJ, itens, forma de pagamento e cartão) |
 | `leitor.js` | `Leitor`: **o motor de leitura de fotos**, portado do app Leitor OCR (`MarceloNeco/leitor-ocr`, v0.6.0) sem mexer na lógica dele. Endireita a foto (`estimateAngles`), acha o papel ou vários papéis (`findPapers`), lê até 4 vezes de jeitos diferentes e só afirma o **valor quando duas leituras concordam** (`agreedValue`); senão devolve candidatos. Lê QR code e código de barras (ZXing + jsQR). É UM motor para os três apps: BudgetONE (Escanear), InvestifyONE (Ler comprovante), TaxONE (Documentos do IR, via `DocIR.textoDe`). O que é nosso está marcado `(MoneyTRIO)`: `enquadrar` (foto de celular de 12 MP é recortada no bloco de texto e reduzida a 1600 px antes de tudo — é o que tira a leitura de minutos para segundos); o **sinal do ângulo invertido** (`base = -tilt[0]`: o motor original girava para o lado errado); a ordem pela inclinação (foto reta → duas leituras do quadro inteiro, cru e preparado como nos documentos do IR, que acertam o valor em negrito que o ajuste local do motor clareava; foto torta de 8° a 45° → direto para o motor, que endireita); `nomePeloCnpj` (nome oficial na BrasilAPI quando o CNPJ confere pelo dígito; só os 14 números saem); e `paraCupom`, que traduz o resultado para o formato que a tela já entendia. **Leitura pela IA** (`IA.lerFoto` + `perguntarFoto` em cada provedor + `cupomDaIA`): a foto só sai do aparelho com a chavinha "Ler com a IA" ligada (`ST.config.leitorIA`) ou pelo botão "Tentar com a IA" de um cartão; vai reduzida, a resposta é JSON e cada campo é conferido antes de entrar |
+| `fundo.js` | `Fundo`: trabalho demorado que não morre ao sair da tela (§13). `comecar/passo/terminar/limpar`; segura a tela acesa (Wake Lock), arma o aviso de fechar/recarregar e mostra a pílula `#fundoPill` que leva de volta ao resultado |
 | `camera.js`, `camera-ui.js` | a tela de escanear (`abrirEscanear`, `lerArquivosEscaneados`, cartões de resultado com os candidatos de valor) e `Camera`: entender QR da NFC-e, chave de 44 dígitos e código de boleto |
 
 ### Tela
@@ -354,7 +355,46 @@ mesmo reconhecimento de pessoa.
    por id); criança restaurando ou unindo (só responsável); Substituir apagando tudo (aviso
    vermelho e confirmação própria); perfil unido por engano (cópia baixada antes).
 
-## 13. Testes
+## 13. Diretriz geral da plataforma: trabalho demorado nunca morre ao sair da tela
+
+Pedido do dono em 09/Out/2026, depois de uma leitura de foto que levou minutos no celular. Vale
+para **todos os apps** (MoneyTRIO, OmniLifeONE, RiseONE, HyperNutry, Leitor OCR, Contador…) e
+para tudo que demora segundos ou minutos: ler uma foto (OCR ou IA), importar extrato ou
+planilha, gerar áudio, perguntar à IA, sincronizar. No MoneyTRIO está no módulo `Fundo`.
+
+1. **O trabalho não depende da tela.** Ele é uma promessa que roda solta; fechar a janela,
+   trocar de aba do app ou apertar Voltar **não cancela**. O resultado é entregue onde a
+   pessoa estiver: na tela de origem, se ela está aberta; senão fica guardado (`escPendente`)
+   e a tela o mostra assim que for aberta de novo.
+2. **A tela não apaga sozinha** enquanto há trabalho: `navigator.wakeLock.request('screen')`,
+   pedido de novo ao voltar para a aba (`visibilitychange`), solto quando o último trabalho
+   termina. Onde não existe (Firefox), nada quebra.
+3. **Fechar ou recarregar pergunta antes**: `beforeunload` armado só enquanto há trabalho
+   ativo (o navegador mostra o "Sair da página?"). Nunca armado à toa.
+4. **Uma pílula fixa** no canto de baixo à esquerda (o AssistONE fica à direita):
+   "⏳ Lendo comprovante… 40%" com barra; some com o menu ☰ e as janelas abertas; no fim vira
+   "✓ Comprovante lido · toque para ver", com um aviso curto. Tocar abre a tela de origem com
+   o resultado e apaga a pílula. `role="status"`, `aria-live="polite"`.
+5. **A tela de origem diz** "Pode ir para outra tela: a leitura continua e eu aviso quando
+   terminar. Só não feche o app." Ao reabrir no meio, mostra o andamento atual.
+6. **Um trabalho por vez do mesmo tipo**: começar outro enquanto o primeiro roda avisa
+   "Ainda estou lendo a foto anterior".
+7. **App nativo (futuro)**: o mesmo módulo vira o serviço em primeiro plano (Android
+   Foreground Service / iOS background task) — adaptador, como manda a diretriz de nuvem e
+   plataforma. O resto do app não muda.
+8. **O que o PWA não garante**: com o app em segundo plano (outra app na frente) o Android
+   pode congelar a aba; o Wake Lock evita a tela apagar, não o congelamento. Por isso a
+   pílula e o aviso, e por isso a leitura é rápida (§5, `leitor.js`).
+
+Texto para a planilha **DIRETRIZ GERAL** (categoria *Desempenho e rede*): "Trabalho demorado
+(foto, OCR, IA, importação, áudio) nunca morre ao sair da tela: roda solto, segura a tela acesa
+(Wake Lock), pergunta antes de fechar/recarregar, mostra pílula de andamento que leva de volta
+ao resultado, entrega o resultado onde a pessoa estiver. Um módulo só por app (`Fundo`); no
+nativo vira serviço em primeiro plano."
+
+---
+
+## 14. Testes
 
 Os testes usam Playwright e um servidor local na porta 8099, apontado
 para `entrega3/`.

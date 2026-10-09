@@ -1307,6 +1307,15 @@ details.imp-arq.repetido{border-color:var(--warn)}
 .bloco-regra .chips{margin-bottom:12px}
 .esc-tipo{display:flex; align-items:center; gap:10px; margin:0 0 12px} .esc-tipo label{white-space:nowrap} .esc-tipo select{flex:1; min-width:0}
 .esc-cand{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
+.fundo-pill{position:fixed; left:16px; bottom:calc(20px + env(safe-area-inset-bottom)); z-index:96; max-width:calc(100vw - 112px);
+  display:flex; align-items:center; gap:8px; background:var(--card); color:var(--txt); border:1px solid var(--linha-suave); border-radius:999px;
+  padding:9px 16px 11px; font:inherit; font-size:.8rem; box-shadow:var(--shadow); cursor:pointer; text-align:left}
+.fundo-pill .fundo-txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.fundo-pill .fundo-barra{position:absolute; left:16px; right:16px; bottom:4px; height:2px; background:var(--line); border-radius:2px; overflow:hidden}
+.fundo-pill .fundo-barra i{display:block; height:100%; width:0; background:var(--cor-app, var(--accent)); transition:width .3s}
+.fundo-pill.pronto{border-color:var(--accent)} .fundo-pill.pronto .fundo-barra{display:none}
+body:has(.sidenav.open) .fundo-pill, body:has(.modal-wrap:not(.hidden)) .fundo-pill{display:none}
+@media (max-width:760px){ .fundo-pill{left:12px; bottom:calc(76px + env(safe-area-inset-bottom))} }
 .esc-opcoes{display:flex; flex-direction:column; gap:6px; margin:0 0 12px} .esc-opcoes label{align-items:flex-start; gap:8px} .esc-opcoes input{width:auto; margin-top:3px}
 .esc-achado .warn{color:var(--warn)}
 .esc-papeis{display:block; width:100%; height:auto; border-radius:10px; margin:10px 0}
@@ -2467,6 +2476,8 @@ html.sem-animacao .assistone-bt{animation:none; transition:none}
 </div>
 
 <div id="toasts"></div>
+<!-- trabalho em segundo plano (leitura de foto, importação): a pílula que fica enquanto a pessoa navega -->
+<button type="button" id="fundoPill" class="fundo-pill hidden" role="status" aria-live="polite"></button>
 
 <script>
 /* =========================================================
@@ -2860,6 +2871,11 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.26 */
+  'Leitura de foto que não morre ao sair da tela':'Photo reading that survives leaving the screen',
+  'Enquanto o app lê uma foto, a tela do celular não apaga (Wake Lock) e o navegador pergunta antes de fechar ou recarregar a página. A janela diz: pode ir para outra tela, a leitura continua.':'While the app reads a photo, the phone screen stays on (Wake Lock) and the browser asks before closing or reloading the page. The window says: you can go to another screen, the reading continues.',
+  'Uma pílula fixa no canto ("⏳ Lendo comprovante… 40%") acompanha você pelo app; quando termina, vira "✓ Comprovante lido — toque para ver" e traz de volta a tela com o resultado. Fechar a janela no meio não cancela nada.':'A fixed pill in the corner ("⏳ Reading receipt… 40%") follows you through the app; when it finishes it becomes "✓ Receipt read — tap to see" and brings back the screen with the result. Closing the window halfway cancels nothing.',
+  'Isso é um módulo só (Fundo), pensado para virar diretriz de todos os apps e, no app nativo, o serviço que segura o processo.':'It is a single module (Fundo), meant to become a guideline for every app and, in the native app, the service that keeps the process alive.',
   /* 3.25 */
   'Ler comprovante: mais rápido, foto torta e nome da loja pelo CNPJ (ou pela IA)':'Read receipt: faster, tilted photos and the merchant name by CNPJ (or by the AI)',
   'Mais rápido: a foto de celular (12 MP) é recortada no papel e reduzida antes de ler; leitura que levava minutos no celular cai para segundos. Foto torta (até 45°) vai direto para o motor que endireita, sem gastar tempo lendo o quadro torto.':'Faster: the phone photo (12 MP) is cropped to the paper and reduced before reading; a reading that took minutes on the phone drops to seconds. A tilted photo (up to 45°) goes straight to the engine that straightens it, without wasting time reading the tilted frame.',
@@ -13501,6 +13517,11 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.26', d:'2026-10-09', t:'Leitura de foto que não morre ao sair da tela', itens:[
+    'Enquanto o app lê uma foto, a tela do celular não apaga (Wake Lock) e o navegador pergunta antes de fechar ou recarregar a página. A janela diz: pode ir para outra tela, a leitura continua.',
+    'Uma pílula fixa no canto ("⏳ Lendo comprovante… 40%") acompanha você pelo app; quando termina, vira "✓ Comprovante lido — toque para ver" e traz de volta a tela com o resultado. Fechar a janela no meio não cancela nada.',
+    'Isso é um módulo só (Fundo), pensado para virar diretriz de todos os apps e, no app nativo, o serviço que segura o processo.'
+  ]},
   {v:'3.25', d:'2026-10-09', t:'Ler comprovante: mais rápido, foto torta e nome da loja pelo CNPJ (ou pela IA)', itens:[
     'Mais rápido: a foto de celular (12 MP) é recortada no papel e reduzida antes de ler; leitura que levava minutos no celular cai para segundos. Foto torta (até 45°) vai direto para o motor que endireita, sem gastar tempo lendo o quadro torto.',
     'Consertado: o endireitamento girava para o lado errado (um comprovante a 21° saía a 42°). Agora o comprovante inclinado da maquininha sai com valor confirmado, data, CNPJ e bandeira.',
@@ -18177,6 +18198,91 @@ const BANCOS = {
 </script>
 <script>
 /* =========================================================
+   MoneyTRIO — Fundo: trabalho demorado que não morre ao sair da tela
+   Diretriz geral da plataforma (ver ARQUITETURA §13). Ler uma foto,
+   importar um extrato ou perguntar à IA leva segundos ou minutos. Nesse
+   tempo a pessoa pode ir para outra tela, e o celular não pode apagar.
+   Este módulo é o ÚNICO lugar que cuida disso:
+     - segura a tela acesa (Screen Wake Lock) enquanto há trabalho;
+     - avisa o navegador para perguntar antes de fechar ou recarregar;
+     - mostra uma pílula fixa ("⏳ Lendo comprovante… 40%") que
+       acompanha a pessoa pelo app e, no fim, vira "✓ pronto — toque
+       para ver" e leva de volta à tela do resultado.
+   O trabalho em si é uma promessa comum: fechar a janela não cancela.
+   Num app nativo, este módulo vira o serviço em primeiro plano; o resto
+   do app não muda.
+   ========================================================= */
+const Fundo = {
+  tarefas: {},      /* id -> {titulo, msg, frac, pronto, aoAbrir} */
+  trava: null,      /* o Wake Lock da tela, enquanto há trabalho */
+  ligado: false,
+
+  comecar(o){
+    this.tarefas[o.id] = {titulo: o.titulo, msg: o.titulo, frac: 0, pronto: false, aoAbrir: o.aoAbrir || null};
+    this.ligar(); this.segurar(); this.render();
+  },
+  passo(id, msg, frac){
+    const t = this.tarefas[id]; if(!t) return;
+    if(msg) t.msg = msg;
+    if(frac != null) t.frac = Math.max(0, Math.min(1, frac));
+    this.render();
+  },
+  terminar(id, resumo){
+    const t = this.tarefas[id]; if(!t) return;
+    t.pronto = true; t.frac = 1; t.msg = resumo || t.titulo;
+    this.soltar(); this.render();
+    toast(t.msg + (I18n.atual === 'pt' ? ' — toque na pílula para ver' : ' — tap the pill to see'));
+  },
+  limpar(id){ delete this.tarefas[id]; this.soltar(); this.render(); },
+  ativa(id){ return id ? !!(this.tarefas[id] && !this.tarefas[id].pronto) : Object.values(this.tarefas).some(t => !t.pronto); },
+  estado(id){ return this.tarefas[id] || null; },
+
+  /* a tela fica acesa enquanto houver trabalho; o navegador solta a trava
+     sozinho quando a aba some, por isso pedimos de novo ao voltar */
+  async segurar(){
+    try{
+      if(!navigator.wakeLock || this.trava) return;
+      this.trava = await navigator.wakeLock.request('screen');
+      this.trava.addEventListener('release', () => { this.trava = null; });
+    }catch(e){ this.trava = null; }
+  },
+  soltar(){
+    if(this.ativa()) return;
+    const w = this.trava; this.trava = null;
+    if(w){ try{ w.release(); }catch(e){} }
+  },
+
+  ligar(){
+    if(this.ligado) return;
+    this.ligado = true;
+    const pill = $('#fundoPill');
+    if(pill) pill.addEventListener('click', () => {
+      const id = Object.keys(this.tarefas)[0]; const t = this.tarefas[id];
+      if(!t) return;
+      if(t.aoAbrir) t.aoAbrir();
+      if(t.pronto) this.limpar(id);
+    });
+    /* fechar a aba ou recarregar no meio: o navegador pergunta antes */
+    window.addEventListener('beforeunload', e => { if(this.ativa()){ e.preventDefault(); e.returnValue = ''; } });
+    document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && this.ativa()) this.segurar(); });
+  },
+
+  render(){
+    const pill = $('#fundoPill'); if(!pill) return;
+    const id = Object.keys(this.tarefas)[0]; const t = this.tarefas[id];
+    if(!t){ pill.classList.add('hidden'); return; }
+    const pt = I18n.atual === 'pt';
+    pill.classList.remove('hidden');
+    pill.classList.toggle('pronto', t.pronto);
+    pill.innerHTML = '<span class="fundo-txt">' + (t.pronto ? '✓ ' : '⏳ ') + esc(t.msg) +
+      (t.pronto ? ' · <b>' + (pt ? 'toque para ver' : 'tap to see') + '</b>' : (t.frac > 0 ? ' ' + Math.round(t.frac * 100) + '%' : '')) + '</span>' +
+      '<span class="fundo-barra"><i style="width:' + Math.round(t.frac * 100) + '%"></i></span>';
+    pill.setAttribute('aria-label', (t.pronto ? (pt ? 'Pronto: ' : 'Done: ') : (pt ? 'Em andamento: ' : 'In progress: ')) + t.msg);
+  }
+};
+</script>
+<script>
+/* =========================================================
    BudgetONE — a tela de escanear
    Foto (ou PDF) de nota, cupom, comprovante de maquininha ou
    boleto, ou o código colado na mão. A leitura é do Leitor —
@@ -18186,6 +18292,7 @@ const BANCOS = {
 
 let escaneado = null;      /* o papel escolhido para virar lançamento */
 let escaneados = [];       /* tudo que a última leitura achou, um por papel */
+let escPendente = null;    /* leitura que terminou com a janela fechada: {lidos} ou {erro} */
 
 function abrirEscanear(){
   escaneado = null; escaneados = [];
@@ -18245,6 +18352,18 @@ function abrirEscanear(){
   if(cn) cn.addEventListener('change', () => { ST.config.leitorCnpj = cn.checked; Store.salvar(); });
   const ia = $('#escIA');
   if(ia) ia.addEventListener('change', () => { ST.config.leitorIA = ia.checked; Store.salvar(); });
+
+  /* a pessoa saiu no meio da leitura e voltou: o resultado (ou o andamento) está aqui */
+  if(escPendente){
+    const p = escPendente; escPendente = null;
+    if(p.lidos) mostrarLidos(p.lidos); else escErro(p.erro);
+    Fundo.limpar('leitor');
+  }else if(Fundo.ativa('leitor')){
+    const t = Fundo.estado('leitor');
+    escProgresso();
+    const el = $('#escPasso'); if(el) el.textContent = t.msg;
+    const b = $('#escBarra'); if(b) b.style.width = Math.round(t.frac * 100) + '%';
+  }
 }
 
 /* a IA só entra para quem tem chave e nível para usá-la */
@@ -18329,8 +18448,50 @@ function escProgresso(){
   if(!alvo) return null;
   if(!$('#escPasso'))
     alvo.innerHTML = '<div class="esc-prog" style="margin-top:14px"><p class="small muted" id="escPasso" style="margin:0 0 6px">…</p>' +
-      '<div class="barra-prog" style="margin:0"><i id="escBarra" style="width:0%"></i></div></div>';
+      '<div class="barra-prog" style="margin:0"><i id="escBarra" style="width:0%"></i></div>' +
+      '<p class="tiny muted" style="margin:8px 0 0">' + (I18n.atual === 'pt'
+        ? 'Pode ir para outra tela: a leitura continua e eu aviso quando terminar. Só não feche o app.'
+        : 'You can go to another screen: the reading continues and I will tell you when it is done. Just do not close the app.') + '</p></div>';
   return alvo;
+}
+
+/* o resultado da leitura chega onde a pessoa estiver: na janela, se ela
+   está aberta; senão fica guardado e a pílula avisa */
+function escAberta(){
+  /* a janela fechada continua no HTML (só ganha "hidden"): olhar a classe, não o elemento */
+  return !!$('#escResultado') && !$('#assetModal').classList.contains('hidden');
+}
+
+function escEntregar(p){
+  const de = (a,b) => I18n.atual === 'pt' ? a : b;
+  if(escAberta()){
+    if(p.lidos) mostrarLidos(p.lidos); else escErro(p.erro);
+    Fundo.limpar('leitor');
+    return;
+  }
+  escPendente = p;
+  Fundo.terminar('leitor', p.lidos
+    ? (p.lidos.length > 1 ? de(p.lidos.length + ' papéis lidos', p.lidos.length + ' papers read') : de('Comprovante lido', 'Receipt read'))
+    : de('Não consegui ler', 'Could not read'));
+}
+
+function escErro(e){
+  const alvo = $('#escResultado');
+  if(!alvo) return;
+  const de = (a,b) => I18n.atual === 'pt' ? a : b;
+  if(e && e.message === 'semMotor'){
+    alvo.innerHTML = Verter.html('<div class="aviso-box" style="margin-top:14px">' +
+      '<b>' + de('O leitor de texto não carregou', 'The text reader did not load') + '</b>' +
+      '<p class="small" style="margin:6px 0 0">' + de(
+        'Na primeira vez ele precisa de internet para ser baixado; depois fica guardado no aparelho. ' +
+        'Sem ele, cole o código do QR em "Colar um código" ou digite o valor em + Novo.',
+        'The first time it needs internet to download; after that it stays on the device. ' +
+        'Without it, paste the QR code under "Paste a code" or type the amount in + New.') + '</p></div>');
+  }else{
+    alvo.innerHTML = Verter.html('<div class="aviso-box" style="margin-top:14px"><b>' +
+      de('Não consegui ler', 'Could not read') + '</b><p class="small" style="margin:6px 0 0">' +
+      esc((e && e.message) || '') + '</p></div>');
+  }
 }
 
 /* O caminho único: fotos ou PDF -> Leitor -> cartões para conferir.
@@ -18339,10 +18500,14 @@ async function lerArquivosEscaneados(arquivos){
   const lista = Array.from(arquivos || []).filter(Boolean);
   if(!lista.length) return;
   const L = I18n.atual, de = (a,b) => L === 'pt' ? a : b;
+  if(Fundo.ativa('leitor')){ toast(de('Ainda estou lendo a foto anterior. Espere terminar.', 'Still reading the previous photo. Wait for it to finish.'), 'warn'); return; }
   const sel = $('#escTipo');
   const tipo = (sel && sel.value) || (ST.config && ST.config.leitorTipo) || 'auto';
-  const passo = msg => { escProgresso(); const p = $('#escPasso'); if(p) p.textContent = msg; };
-  const barra = f => { const b = $('#escBarra'); if(b) b.style.width = Math.round(f * 100) + '%'; };
+  /* a leitura segue mesmo com a janela fechada: a pílula do Fundo acompanha */
+  Fundo.comecar({id: 'leitor', titulo: de('Lendo comprovante…', 'Reading receipt…'),
+    aoAbrir: () => { if(!escAberta()) abrirEscanear(); }});
+  const passo = msg => { escProgresso(); const p = $('#escPasso'); if(p) p.textContent = msg; Fundo.passo('leitor', msg); };
+  const barra = f => { const b = $('#escBarra'); if(b) b.style.width = Math.round(f * 100) + '%'; Fundo.passo('leitor', null, f); };
   passo(de('Preparando…', 'Getting ready…'));
   try{
     /* com a chavinha da IA ligada e internet, as fotos vão primeiro para a
@@ -18392,23 +18557,9 @@ async function lerArquivosEscaneados(arquivos){
     });
     const todos = porIA.concat(lidos);
     await completarLojaPeloCnpj(todos, passo);
-    mostrarLidos(todos);
+    escEntregar({lidos: todos});
   }catch(e){
-    const alvo = $('#escResultado');
-    if(!alvo) return;
-    if(e && e.message === 'semMotor'){
-      alvo.innerHTML = Verter.html('<div class="aviso-box" style="margin-top:14px">' +
-        '<b>' + de('O leitor de texto não carregou', 'The text reader did not load') + '</b>' +
-        '<p class="small" style="margin:6px 0 0">' + de(
-          'Na primeira vez ele precisa de internet para ser baixado; depois fica guardado no aparelho. ' +
-          'Sem ele, cole o código do QR em "Colar um código" ou digite o valor em + Novo.',
-          'The first time it needs internet to download; after that it stays on the device. ' +
-          'Without it, paste the QR code under "Paste a code" or type the amount in + New.') + '</p></div>');
-    }else{
-      alvo.innerHTML = Verter.html('<div class="aviso-box" style="margin-top:14px"><b>' +
-        de('Não consegui ler', 'Could not read') + '</b><p class="small" style="margin:6px 0 0">' +
-        esc((e && e.message) || '') + '</p></div>');
-    }
+    escEntregar({erro: e});
   }
 }
 
