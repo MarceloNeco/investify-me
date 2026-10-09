@@ -32,10 +32,12 @@ internet (cotação, notícia, IA, Google Drive).
 | Não traduza o que a pessoa digitou | nome de categoria, de fundo, de pessoa, descrição de lançamento — ver §6 |
 | Não troque `esc()` por concatenação direta ao montar HTML | é o que segura XSS |
 | Não use `<a href="' + link + '">` com link de fora | use `urlSegura(link)` — ver §8 |
+| Não suba foto de comprovante, cupom ou documento (nem pasta de testes com fotos) | tem CNPJ, final de cartão, nome de loja, valor — dado pessoal; as fotos de teste ficam fora do repositório |
 
-**Vão para o GitHub exatamente 5 arquivos:**
-`index.html`, `manifest.json`, `sw.js`, `icone-192.png`, `icone-512.png`.
-Mais nada.
+**Vão para o GitHub exatamente 5 arquivos e uma pasta:**
+`index.html`, `manifest.json`, `sw.js`, `icone-192.png`, `icone-512.png`
+e a pasta `assets/ocr/` (o motor de leitura de fotos: Tesseract, português,
+ZXing, jsQR — uns 10 MB, copiados do app Leitor OCR). Mais nada.
 
 ---
 
@@ -133,8 +135,9 @@ dele **depois** dos que ele usa e **antes** de `app.js`.
 | `importar.js` | leitura de extrato e de planilha, reconhecimento de colunas |
 | `planilha.js` | leitura de `.xlsx` e `.csv` |
 | `pdf-texto.js` | texto de dentro de PDF |
-| `ocr.js` | leitura de foto de cupom (Tesseract) |
-| `camera.js`, `camera-ui.js` | tirar a foto e ler o QR code da nota fiscal |
+| `ocr.js` | `Ocr`: carregar o Tesseract (de `assets/ocr/`, do arquivo embutido ou da CDN, nesta ordem) e ler texto cru; `CupomTexto`: entender o texto de um cupom brasileiro (total, data, CNPJ, itens, forma de pagamento e cartão) |
+| `leitor.js` | `Leitor`: **o motor de leitura de fotos**, portado do app Leitor OCR (`MarceloNeco/leitor-ocr`, v0.6.0) sem mexer na lógica dele. Endireita a foto (`estimateAngles`), acha o papel ou vários papéis (`findPapers`), lê até 4 vezes de jeitos diferentes e só afirma o **valor quando duas leituras concordam** (`agreedValue`); senão devolve candidatos. Lê QR code e código de barras (ZXing + jsQR). É UM motor para os três apps: BudgetONE (Escanear), InvestifyONE (Ler comprovante), TaxONE (Documentos do IR, via `DocIR.textoDe`). O que é nosso está marcado `(MoneyTRIO)`: duas leituras do quadro inteiro antes do motor (a imagem como veio e a preparada como nos documentos do IR), porque nos comprovantes de maquininha testados o recorte + ajuste local do motor clareava o valor em negrito; e `paraCupom`, que traduz o resultado para o formato que a tela já entendia |
+| `camera.js`, `camera-ui.js` | a tela de escanear (`abrirEscanear`, `lerArquivosEscaneados`, cartões de resultado com os candidatos de valor) e `Camera`: entender QR da NFC-e, chave de 44 dígitos e código de boleto |
 
 ### Tela
 
@@ -317,7 +320,10 @@ valer em todos os apps.
    número da versão e a data saem dali sozinhos.
 2. Troque `var VERSAO` em `pwa/sw.js` (`v2` → `v3`). É o que avisa os
    celulares de que existe conteúdo novo — sem isso o app instalado
-   continua mostrando a versão velha.
+   continua mostrando a versão velha. A pasta `assets/ocr/` tem cache
+   próprio (`CACHE_OCR`, `moneytrio-ocr-1`), que **não** muda com a versão:
+   o motor baixa na primeira leitura e fica. Só troque esse número se
+   trocar os arquivos do motor.
 3. Rode `python3 gerar/gerar-arquivo-unico.py`.
 4. Suba **só** os 5 arquivos da §2.
 
@@ -360,6 +366,7 @@ para `entrega3/`.
 | `tv33.mjs` | hub nos dois idiomas, telas vazias, tema claro, tamanho dos avisos |
 | `tv34.mjs` | cadastro de banco e cartão, fatura, régua de valores, formulário de lançamento, salário, PJ × CLT, wizard e rolagem do menu |
 | `tniv2.mjs` | os três níveis nos dois idiomas |
+| `t_leitor.mjs` | o motor de leitura de fotos: `node t_leitor.mjs motor foto.jpg` lê a foto e mostra o que cada leitura achou; `node t_leitor.mjs tela` passa duas fotos pela tela de escanear e confere o botão Criar lançamento. As fotos ficam numa pasta **fora** do repositório (têm dado pessoal) |
 
 Rode assim:
 

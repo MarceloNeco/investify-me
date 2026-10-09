@@ -1303,7 +1303,12 @@ details.imp-arq.repetido{border-color:var(--warn)}
 .cat-linha input{flex:1}
 .bloco-regra{background:var(--card2); border-radius:11px; padding:12px; margin-bottom:14px}
 .bloco-regra .chips{margin-bottom:12px}
-.esc-ocr{grid-template-columns:1fr; margin-bottom:14px}
+.esc-tipo{display:flex; align-items:center; gap:10px; margin:0 0 12px} .esc-tipo label{white-space:nowrap} .esc-tipo select{flex:1; min-width:0}
+.esc-cand{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
+.esc-achado .warn{color:var(--warn)}
+.esc-papeis{display:block; width:100%; height:auto; border-radius:10px; margin:10px 0}
+.esc-mais{margin-top:14px} .esc-mais summary{cursor:pointer; color:var(--accent2)}
+.esc-texto{white-space:pre-wrap; font-size:.78rem; max-height:220px; overflow:auto; margin:6px 0 0}
 .conf-barra{height:4px; background:var(--card); border-radius:3px; overflow:hidden; margin-top:10px}
 .conf-fill{height:100%; border-radius:3px}
 .esc-itens{margin-top:10px}
@@ -2852,6 +2857,13 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.23 */
+  'Ler comprovante por foto, com o motor do Leitor OCR':'Read a receipt from a photo, with the Leitor OCR engine',
+  'Tire uma foto (ou escolha fotos e PDF) de um comprovante de maquininha, cupom, nota fiscal, conta de restaurante ou boleto: o app endireita a foto, acha o papel, lê o texto várias vezes e só afirma o valor quando duas leituras concordam — senão mostra os valores possíveis para você tocar no certo. Lê também o QR da nota e o código de barras do boleto em qualquer celular, sem depender do leitor do navegador.':'Take a photo (or pick photos and PDFs) of a card machine receipt, a receipt, an invoice, a restaurant bill or a boleto: the app straightens the photo, finds the paper, reads the text several times and only states the amount when two readings agree — otherwise it shows the possible amounts for you to tap the right one. It also reads the invoice QR code and the boleto barcode on any phone, without depending on the browser\'s reader.',
+  'É um motor só, o do app Leitor OCR, já testado com dezenas de comprovantes: o BudgetONE chama em Escanear, o InvestifyONE em "Ler comprovante" (Carteira e Movimentações), e o TaxONE usa o mesmo motor nos Documentos do IR. O AssistONE tem o atalho em cada tela.':'It is a single engine, the one from the Leitor OCR app, already tested with dozens of receipts: BudgetONE calls it in Scan, InvestifyONE in "Read receipt" (Portfolio and Transactions), and TaxONE uses the same engine in Tax documents. AssistONE has the shortcut on each screen.',
+  'Vários papéis numa foto só (a nota e o comprovante do cartão lado a lado): o app pergunta se lê separado e avisa quando dois papéis são a mesma compra.':'Several papers in one photo (the invoice and the card receipt side by side): the app asks whether to read them apart and tells you when two papers are the same purchase.',
+  'O leitor de texto agora vem junto com o app (assets/ocr) e fica guardado no aparelho: depois da primeira leitura funciona sem internet.':'The text reader now ships with the app (assets/ocr) and stays on the device: after the first reading it works offline.',
+  'Ler comprovante':'Read receipt',
   /* 3.22 */
   'AssistONE com o personagem e topo padronizado':'AssistONE with the character and the standard top bar',
   'O AssistONE ganhou o personagem oficial (o mesmo de todos os apps): botão redondo no canto de baixo, fundo escuro também no tema claro, anel dourado e um balanço leve, que para quando o balão abre ou quando o aparelho pede menos movimento.':'AssistONE now wears the official character (the same across all apps): a round button in the bottom corner, dark background even in the light theme, a golden ring and a gentle float that stops when the bubble opens or when the device asks for reduced motion.',
@@ -13462,6 +13474,12 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.23', d:'2026-10-09', t:'Ler comprovante por foto, com o motor do Leitor OCR', itens:[
+    'Tire uma foto (ou escolha fotos e PDF) de um comprovante de maquininha, cupom, nota fiscal, conta de restaurante ou boleto: o app endireita a foto, acha o papel, lê o texto várias vezes e só afirma o valor quando duas leituras concordam — senão mostra os valores possíveis para você tocar no certo. Lê também o QR da nota e o código de barras do boleto em qualquer celular, sem depender do leitor do navegador.',
+    'É um motor só, o do app Leitor OCR, já testado com dezenas de comprovantes: o BudgetONE chama em Escanear, o InvestifyONE em "Ler comprovante" (Carteira e Movimentações), e o TaxONE usa o mesmo motor nos Documentos do IR. O AssistONE tem o atalho em cada tela.',
+    'Vários papéis numa foto só (a nota e o comprovante do cartão lado a lado): o app pergunta se lê separado e avisa quando dois papéis são a mesma compra.',
+    'O leitor de texto agora vem junto com o app (assets/ocr) e fica guardado no aparelho: depois da primeira leitura funciona sem internet.'
+  ]},
   {v:'3.22', d:'2026-10-02', t:'AssistONE com o personagem e topo padronizado', itens:[
     'O AssistONE ganhou o personagem oficial (o mesmo de todos os apps): botão redondo no canto de baixo, fundo escuro também no tema claro, anel dourado e um balanço leve, que para quando o balão abre ou quando o aparelho pede menos movimento.',
     'Topo padronizado: ☰ na ponta esquerda (no computador recolhe e abre o menu da esquerda), o nome do app aberto com ▾ abre o seletor com Início (o MoneyTRIO com os três) e os outros apps; à direita, 🔍 busca, 📥 mensagens (contas a vencer, atrasadas e entradas do dia, com contador) e 👤 perfil.',
@@ -17952,24 +17970,8 @@ function appDaColuna(el){
    ========================================================= */
 
 const Camera = {
-  leitorDisponivel(){ return typeof window !== 'undefined' && 'BarcodeDetector' in window; },
-
-  async formatos(){
-    if(!this.leitorDisponivel()) return [];
-    try{ return await window.BarcodeDetector.getSupportedFormats(); }catch(e){ return []; }
-  },
-
-  /* lê os códigos que houver numa imagem */
-  async lerImagem(arquivo){
-    if(!this.leitorDisponivel()) throw new Error('semLeitor');
-    const suportados = await this.formatos();
-    const quero = ['qr_code','code_128','itf','ean_13','codabar','code_39'].filter(f => suportados.indexOf(f) >= 0);
-    const det = new window.BarcodeDetector(quero.length ? {formats: quero} : undefined);
-    const bmp = await createImageBitmap(arquivo);
-    const achados = await det.detect(bmp);
-    if(bmp.close) bmp.close();
-    return achados.map(a => ({texto: a.rawValue, formato: a.format}));
-  },
+  /* a leitura do QR e do código de barras na foto é do Leitor (ZXing + jsQR,
+     em qualquer navegador); aqui fica só o entendimento do que foi lido */
 
   /* ---------- nota fiscal do consumidor ---------- */
   /* A chave tem 44 dígitos e conta a história toda:
@@ -18119,144 +18121,194 @@ const BANCOS = {
 <script>
 /* =========================================================
    BudgetONE — a tela de escanear
-   Foto do QR da nota ou do código do boleto, ou a linha
-   digitada na mão. O que sai daqui é um lançamento pronto
-   para conferir — nunca um lançamento salvo às cegas.
+   Foto (ou PDF) de nota, cupom, comprovante de maquininha ou
+   boleto, ou o código colado na mão. A leitura é do Leitor —
+   o mesmo motor para os três apps. O que sai daqui é um
+   lançamento pronto para conferir — nunca salvo às cegas.
    ========================================================= */
 
-let escaneado = null;
+let escaneado = null;      /* o papel escolhido para virar lançamento */
+let escaneados = [];       /* tudo que a última leitura achou, um por papel */
 
 function abrirEscanear(){
-  escaneado = null;
-  const temLeitor = Camera.leitorDisponivel();
+  escaneado = null; escaneados = [];
+  const L = I18n.atual, de = (a,b) => L === 'pt' ? a : b;
+  const tipoSalvo = (ST.config && ST.config.leitorTipo) || 'auto';
 
-  $('#assetModalTitle').textContent = 'Escanear nota ou boleto';
-  $('#assetModalBody').innerHTML = Verter.html((temLeitor
-      ? '<div class="esc-botoes">' +
-          '<label class="esc-bt esc-bt-p"><span class="esc-ico">📷</span>' +
-            '<b>Tirar foto</b><i>abre a câmera</i>' +
-            '<input type="file" id="escFoto" accept="image/*" capture="environment" hidden></label>' +
-          '<label class="esc-bt"><span class="esc-ico">🖼️</span>' +
-            '<b>Escolher imagem</b><i>do rolo da câmera</i>' +
-            '<input type="file" id="escArquivo" accept="image/*" hidden></label>' +
-        '</div>'
-      : '<div class="aviso-box"><b>Este navegador não lê código por foto</b>' +
-        '<p class="small" style="margin:6px 0 0">A leitura de QR e código de barras direto da imagem existe hoje ' +
-        'no Chrome do Android. No iPhone e no Firefox ainda não. Duas saídas: use o leitor de QR da própria ' +
-        'câmera do celular e cole aqui o endereço que aparecer, ou digite a linha do boleto abaixo — ' +
-        'o resultado é o mesmo.</p></div>') +
-
-    '<div class="esc-botoes esc-ocr">' +
-      '<label class="esc-bt"><span class="esc-ico">🧾</span>' +
-        '<b>' + (I18n.atual === 'pt' ? 'Ler cupom por foto' : 'Read receipt from photo') + '</b>' +
-        '<i>' + (I18n.atual === 'pt' ? 'texto do papel, sem QR' : 'paper text, no QR needed') + '</i>' +
-        '<input type="file" id="escOcr" accept="image/*" capture="environment" hidden></label>' +
+  $('#assetModalTitle').textContent = de('Ler nota, cupom ou comprovante', 'Read a receipt, invoice or bill');
+  $('#assetModalBody').innerHTML = Verter.html(
+    '<div class="esc-botoes">' +
+      '<label class="esc-bt esc-bt-p"><span class="esc-ico">📷</span>' +
+        '<b>' + de('Tirar foto', 'Take a photo') + '</b><i>' + de('abre a câmera', 'opens the camera') + '</i>' +
+        '<input type="file" id="escFoto" accept="image/*" capture="environment" hidden></label>' +
+      '<label class="esc-bt"><span class="esc-ico">🖼️</span>' +
+        '<b>' + de('Fotos ou PDF', 'Photos or PDF') + '</b><i>' + de('do rolo da câmera, várias de uma vez', 'from the gallery, several at once') + '</i>' +
+        '<input type="file" id="escArquivo" accept="image/*,.pdf,application/pdf" multiple hidden></label>' +
     '</div>' +
 
-    campo('Ou cole aqui',
-      '<textarea id="escTexto" rows="3" placeholder="O endereço do QR da nota fiscal, a chave de 44 dígitos, ' +
-      'ou a linha digitável do boleto"></textarea>',
-      null, 'Serve o que o leitor da câmera copiou, a chave de acesso ou os 47 números do boleto.') +
-    '<button class="btn primary sm" data-acao="esc-ler-texto">Ler</button>' +
+    '<div class="esc-tipo"><label class="small" for="escTipo">' + de('O que é o papel', 'What the paper is') + '</label>' +
+      '<select id="escTipo">' + Object.keys(Leitor.TIPOS).map(k =>
+        '<option value="' + k + '"' + (k === tipoSalvo ? ' selected' : '') + '>' +
+        esc(Leitor.TIPOS[k][L === 'en' ? 'en' : 'nome']) + '</option>').join('') + '</select></div>' +
 
     '<div id="escResultado"></div>' +
 
-    '<div class="card2-box" style="margin-top:16px">' +
-      '<b class="small">O que dá e o que não dá</b>' +
-      '<ul class="small muted" style="margin:7px 0 0 18px;padding:0">' +
-        '<li><b>QR da nota fiscal (NFC-e):</b> sai a data, o CNPJ da loja e, quando o QR carrega, o valor total.</li>' +
-        '<li><b>Código do boleto:</b> sai o valor e o vencimento, direto dos números. Vira conta a pagar na agenda.</li>' +
-        '<li><b>Comprovante da maquininha (Cielo, Rede, Getnet, Stone, iFood Pago…):</b> sai o valor, a data, ' +
-        'a loja, o CNPJ, crédito ou débito, a bandeira e o final do cartão.</li>' +
-        '<li><b>Foto de um cupom comum:</b> o app lê o texto do papel e procura o total, a data, ' +
-        'o CNPJ e os itens. Papel amassado ou foto escura erram bastante, então ele mostra o quanto ' +
-        'confia na leitura e deixa tudo editável antes de salvar.</li>' +
-      '</ul>' +
-      '<p class="tiny muted" style="margin-top:9px">Tudo acontece dentro do seu navegador: a imagem não é enviada ' +
-      'para lugar nenhum, nem para a Sefaz. O leitor de texto é baixado uma vez e fica no cache.</p>' +
-    '</div>');
+    '<details class="esc-mais"><summary class="small">' + de('Colar um código ou texto', 'Paste a code or text') + '</summary>' +
+      campo(de('Cole aqui', 'Paste here'),
+        '<textarea id="escTexto" rows="3" placeholder="' + de('O endereço do QR da nota, a chave de 44 dígitos, a linha do boleto ou o texto de um cupom',
+          'The invoice QR address, the 44-digit key, the boleto line or the text of a receipt') + '"></textarea>') +
+      '<button class="btn primary sm" data-acao="esc-ler-texto">' + de('Ler', 'Read') + '</button></details>' +
+
+    '<p class="tiny muted" style="margin-top:14px">' + de(
+      'Lê o QR da nota, o código do boleto e o texto do papel: maquininha, cupom, nota, conta de restaurante. ' +
+      'Tudo acontece no seu aparelho — nenhuma foto sai dele. O leitor de texto é baixado uma vez e fica guardado.',
+      'Reads the invoice QR, the boleto barcode and the text on the paper: card machine, receipt, invoice, restaurant bill. ' +
+      'Everything happens on your device — no photo leaves it. The text reader is downloaded once and kept.') + '</p>');
   abrir('assetModal');
 
-  ['escFoto','escArquivo'].forEach(id => {
+  ['escFoto', 'escArquivo'].forEach(id => {
     const el = $('#' + id);
-    if(el) el.addEventListener('change', () => lerImagemEscaneada(el.files[0]));
+    if(el) el.addEventListener('change', () => { lerArquivosEscaneados(el.files); el.value = ''; });
   });
-  const ocr = $('#escOcr');
-  if(ocr) ocr.addEventListener('change', () => lerCupomPorFoto(ocr.files[0]));
+  const sel = $('#escTipo');
+  if(sel) sel.addEventListener('change', () => { ST.config.leitorTipo = sel.value; Store.salvar(); });
 }
 
-async function lerImagemEscaneada(arquivo){
-  if(!arquivo) return;
+/* a faixa de progresso dentro da janela (recriada se a tela mudou no meio) */
+function escProgresso(){
   const alvo = $('#escResultado');
-  alvo.innerHTML = Verter.html('<p class="small muted" style="margin-top:14px">Procurando o código na imagem…</p>');
-  try{
-    const achados = await Camera.lerImagem(arquivo);
-    if(!achados.length){
-      alvo.innerHTML = Verter.html('<div class="aviso-box" style="margin-top:14px"><b>Não achei código nenhum</b>' +
-        '<p class="small" style="margin:6px 0 0">Tente de novo com o código bem enquadrado e com luz. ' +
-        'Se for um cupom sem QR, digite o valor na mão em <b>+ Novo</b>.</p></div>');
-      return;
-    }
-    for(const a of achados){
-      const r = Camera.entender(a.texto);
-      if(r){ mostrarEscaneado(r, a); return; }
-    }
-    alvo.innerHTML = Verter.html('<div class="aviso-box" style="margin-top:14px"><b>Achei um código, mas não é de nota nem de boleto</b>' +
-      '<p class="small" style="margin:6px 0 0">Veio: <code class="tiny">' + esc(achados[0].texto.slice(0,90)) +
-      '</code></p></div>');
-  }catch(e){
-    alvo.innerHTML = Verter.html('<div class="aviso-box" style="margin-top:14px"><b>Não consegui ler</b>' +
-      '<p class="small" style="margin:6px 0 0">' +
-      (e.message === 'semLeitor'
-        ? 'Este navegador não tem leitor de código. Cole o texto no campo acima.'
-        : esc(e.message || 'erro na leitura')) + '</p></div>');
-  }
+  if(!alvo) return null;
+  if(!$('#escPasso'))
+    alvo.innerHTML = '<div class="esc-prog" style="margin-top:14px"><p class="small muted" id="escPasso" style="margin:0 0 6px">…</p>' +
+      '<div class="barra-prog" style="margin:0"><i id="escBarra" style="width:0%"></i></div></div>';
+  return alvo;
 }
 
-/* o caminho do OCR: foto do cupom -> texto -> lançamento para conferir */
-async function lerCupomPorFoto(arquivo){
-  if(!arquivo) return;
-  const alvo = $('#escResultado');
+/* O caminho único: fotos ou PDF -> Leitor -> cartões para conferir.
+   É o mesmo motor para os três apps; só o atalho até aqui muda. */
+async function lerArquivosEscaneados(arquivos){
+  const lista = Array.from(arquivos || []).filter(Boolean);
+  if(!lista.length) return;
   const L = I18n.atual, de = (a,b) => L === 'pt' ? a : b;
-  const passo = msg => { alvo.innerHTML = Verter.html('<p class="small muted" style="margin-top:14px">' + esc(msg) + '</p>'); };
+  const sel = $('#escTipo');
+  const tipo = (sel && sel.value) || (ST.config && ST.config.leitorTipo) || 'auto';
+  const passo = msg => { escProgresso(); const p = $('#escPasso'); if(p) p.textContent = msg; };
+  const barra = f => { const b = $('#escBarra'); if(b) b.style.width = Math.round(f * 100) + '%'; };
   passo(de('Preparando…', 'Getting ready…'));
   try{
-    const r = await Ocr.lerCupom(arquivo, passo);
-    mostrarCupom(r);
+    const papeis = await Leitor.ler(lista, {
+      tipo, aviso: passo, progresso: barra,
+      perguntarPapeis: perguntarPapeisEsc,
+      /* o QR da nota com valor, ou o código do boleto, já dizem tudo: nem precisa ler o texto */
+      codigos: codes => {
+        for(const c of codes || []){
+          const r = Camera.entender(c.text);
+          if(r && (r.tipo === 'boleto' || (r.tipo === 'nota' && r.valor))) return r;
+        }
+        return null;
+      }
+    });
+    const lidos = papeis.map(p => {
+      if(p.atalho){ p.atalho.nome = p.nome; return p.atalho; }
+      const c = Leitor.paraCupom(p);
+      /* QR de nota sem o valor no código: a chave completa o que o texto deu */
+      const qr = (p.codes || []).map(x => Camera.entender(x.text)).find(x => x && x.tipo === 'nota');
+      if(qr){
+        c.chave = c.chave || qr;
+        if(!c.cnpj && qr.cnpjFmt) c.cnpj = {cru: qr.cnpj, fmt: qr.cnpjFmt, valido: true};
+        if(!c.data && qr.data) c.data = qr.data;
+      }
+      return c;
+    });
+    mostrarLidos(lidos);
   }catch(e){
-    if(e.message === 'semMotor'){
+    const alvo = $('#escResultado');
+    if(!alvo) return;
+    if(e && e.message === 'semMotor'){
       alvo.innerHTML = Verter.html('<div class="aviso-box" style="margin-top:14px">' +
-        '<b>' + de('O leitor de texto não está aqui', 'The text reader is not available') + '</b>' +
+        '<b>' + de('O leitor de texto não carregou', 'The text reader did not load') + '</b>' +
         '<p class="small" style="margin:6px 0 0">' + de(
-          'Ler o texto de um papel precisa de um motor de OCR que não vem embutido neste arquivo. ' +
-          'Com internet, o app baixa ele sozinho na primeira vez. Sem internet, use o QR da nota ou ' +
-          'digite o valor — o resto do app funciona igual.',
-          'Reading text from paper needs an OCR engine that is not embedded in this file. ' +
-          'Online, the app downloads it once. Offline, use the receipt QR code or type the amount.') +
-        '</p></div>');
+          'Na primeira vez ele precisa de internet para ser baixado; depois fica guardado no aparelho. ' +
+          'Sem ele, cole o código do QR em "Colar um código" ou digite o valor em + Novo.',
+          'The first time it needs internet to download; after that it stays on the device. ' +
+          'Without it, paste the QR code under "Paste a code" or type the amount in + New.') + '</p></div>');
     }else{
       alvo.innerHTML = Verter.html('<div class="aviso-box" style="margin-top:14px"><b>' +
         de('Não consegui ler', 'Could not read') + '</b><p class="small" style="margin:6px 0 0">' +
-        esc(e.message || '') + '</p></div>');
+        esc((e && e.message) || '') + '</p></div>');
     }
   }
 }
 
-function mostrarCupom(r){
-  escaneado = r;
+/* vários papéis na mesma foto: mostra onde estão e pergunta antes de ler separado */
+function perguntarPapeisEsc(img, boxes, nome){
   const L = I18n.atual, de = (a,b) => L === 'pt' ? a : b;
-  let h = '<div class="card2-box esc-achado" style="margin-top:14px">' +
-    '<b class="small">🧾 ' + (r.maquininha ? de('Comprovante de cartão lido', 'Card receipt read') : de('Cupom lido', 'Receipt read')) + '</b>' +
+  return new Promise(ok => {
+    const alvo = $('#escResultado');
+    if(!alvo){ ok(false); return; }
+    alvo.innerHTML = '<div class="card2-box esc-achado" style="margin-top:14px">' +
+      '<b class="small">' + de('Encontrei ' + boxes.length + ' papéis', 'Found ' + boxes.length + ' papers') + (nome ? ' · ' + esc(nome) : '') + '</b>' +
+      '<canvas id="escPapeis" class="esc-papeis"></canvas>' +
+      '<p class="small muted" style="margin:0">' + de('Posso ler cada um separado. Se for um papel só, diga.', 'I can read each one apart. If it is one paper, say so.') + '</p>' +
+      '<div class="f-actions" style="margin-top:12px">' +
+        '<button class="btn" id="escPapUm">' + de('É um papel só', 'It is one paper') + '</button>' +
+        '<button class="btn primary" id="escPapVarios">' + de('Ler os ' + boxes.length + ' separados', 'Read the ' + boxes.length + ' apart') + '</button>' +
+      '</div></div>';
+    const c = $('#escPapeis');
+    const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+    const sc = Math.min(1, 700 / Math.max(w0, h0));
+    c.width = Math.round(w0 * sc); c.height = Math.round(h0 * sc);
+    const x = c.getContext('2d');
+    x.drawImage(img, 0, 0, c.width, c.height);
+    x.lineWidth = 4; x.strokeStyle = '#ef4444'; x.fillStyle = '#ef4444'; x.font = 'bold 28px sans-serif';
+    boxes.forEach((b, i) => { x.strokeRect(b.cx * sc, b.cy * sc, b.cw * sc, b.ch * sc); x.fillText(String(i + 1), b.cx * sc + 8, b.cy * sc + 30); });
+    $('#escPapUm').onclick = () => ok(false);
+    $('#escPapVarios').onclick = () => ok(true);
+  });
+}
+
+function mostrarLidos(lista){
+  escaneados = lista;
+  escaneado = lista[0] || null;
+  const alvo = $('#escResultado');
+  if(!alvo) return;
+  const n = lista.length;
+  alvo.innerHTML = Verter.html(lista.map((r, i) => r.tipo === 'cupom' ? htmlCupom(r, i, n) : htmlEscaneado(r, i, n)).join(''));
+}
+
+function mostrarCupom(r){ mostrarLidos([r]); }
+
+/* o cartão de um cupom lido: o que o motor achou, o quanto confia, e o botão de lançar */
+function htmlCupom(r, i, n){
+  const L = I18n.atual, de = (a,b) => L === 'pt' ? a : b;
+  const cand = r.candidatos || [], cod = r.codigos || [], itens = r.itens || [];
+  const livre = r.tipoPapel === 'livre';
+  const titulo = (n > 1 ? '<span class="tiny muted">' + de('Papel ', 'Paper ') + (i + 1) + (r.nome ? ' · ' + esc(r.nome) : '') + '</span> ' : '') +
+    '<b class="small">🧾 ' + (livre ? de('Texto lido', 'Text read')
+      : r.maquininha ? de('Comprovante de cartão lido', 'Card receipt read') : de('Cupom lido', 'Receipt read')) + '</b>';
+
+  let valor;
+  if(r.valor)
+    valor = '<b>' + fmt(r.valor) + '</b>' +
+      (r.confirmado ? ' <span class="tiny up">' + de('✓ confirmado em 2 leituras', '✓ confirmed by 2 readings') + '</span>'
+       : r.escolhido ? ' <span class="tiny muted">' + de('(escolhido por você)', '(your pick)') + '</span>' : '');
+  else if(cand.length)
+    valor = '<span class="warn">' + de('não tenho certeza — toque no valor certo:', 'not sure — tap the right amount:') + '</span>' +
+      '<div class="esc-cand">' + cand.map(v => '<button class="btn sm" data-acao="esc-valor" data-idx="' + i + '" data-v="' + v + '">' + fmt(v) + '</button>').join('') + '</div>';
+  else
+    valor = '<span class="muted">' + (livre ? '—' : de('não achei o total — digite ao criar o lançamento', 'total not found — type it when creating the entry')) + '</span>';
+
+  let h = '<div class="card2-box esc-achado" style="margin-top:14px">' + titulo +
     '<table class="tbl tbl-mini"><tbody>' +
-      linhaEsc(de('Loja', 'Merchant'), r.loja ? esc(r.loja) : '<span class="muted">—</span>') +
-      linhaEsc(t('fin.valor'), r.valor ? '<b>' + fmt(r.valor) + '</b>'
-        : '<span class="muted">' + de('não achei o total', 'total not found') + '</span>') +
-      linhaEsc(t('fin.data'), r.data ? esc(I18n.data(r.data)) : '<span class="muted">—</span>') +
+      (livre ? '' : linhaEsc(de('Loja', 'Merchant'), r.loja ? esc(r.loja) : '<span class="muted">—</span>')) +
+      linhaEsc(t('fin.valor'), valor) +
+      linhaEsc(t('fin.data'), r.data ? esc(I18n.data(r.data)) + (r.hora ? ' · ' + esc(r.hora) : '') : '<span class="muted">—</span>') +
       (r.cnpj ? linhaEsc('CNPJ', esc(r.cnpj.fmt) +
-        (r.cnpj.valido ? '' : ' <span class="down">' + de('(não confere)','(invalid)') + '</span>')) : '') +
-      (r.itens.length ? linhaEsc(de('Itens', 'Items'), r.itens.length + ' · ' + fmt(r.somaItens)) : '') +
+        (r.cnpj.valido ? '' : ' <span class="down">' + de('(não confere)', '(invalid)') + '</span>')) : '') +
+      (r.nota ? linhaEsc(de('Nota nº', 'Invoice no.'), esc(r.nota)) : '') +
+      (itens.length ? linhaEsc(de('Itens', 'Items'), itens.length + ' · ' + fmt(r.somaItens)) : '') +
       /* o que o cupom disse sobre a forma de pagamento */
-      (r.formaId || r.pagamento && r.pagamento.fim
+      (r.formaId || (r.pagamento && r.pagamento.fim)
         ? linhaEsc(de('Como foi pago', 'Paid with'),
             (r.formaId && FORMA_POR_ID[r.formaId]
               ? FORMA_POR_ID[r.formaId].ico + ' ' + esc(FORMA_POR_ID[r.formaId].nome[L === 'en' ? 'en' : 'pt'])
@@ -18265,29 +18317,36 @@ function mostrarCupom(r){
               : (r.pagamento && r.pagamento.fim ? ' · ••' + esc(r.pagamento.fim) +
                   ' <span class="tiny muted">' + de('(cartão não cadastrado)', '(card not registered)') + '</span>' : '')) +
             (r.bancoId ? ' · ' + esc(Banco.curto(r.bancoId)) : ''))
-        : '') +
+        : (r.modalidade ? linhaEsc(de('Como foi pago', 'Paid with'), esc(r.modalidade) + (r.bandeira ? ' · ' + esc(r.bandeira) : '')) : '')) +
+      (cod.length ? linhaEsc(de('Código', 'Code'), cod.map(c =>
+        (c.formato === 'QR_CODE' ? 'QR' : esc(String(c.formato || '').replace(/_/g, ' '))) + ' <code class="tiny">' + esc(String(c.texto).slice(0, 60)) + (c.texto.length > 60 ? '…' : '') + '</code>').join('<br>')) : '') +
     '</tbody></table>';
 
-  h += '<div class="conf-barra"><div class="conf-fill" style="width:' + (r.confianca * 10) + '%;' +
+  h += '<div class="conf-barra"><div class="conf-fill" style="width:' + ((r.confianca || 0) * 10) + '%;' +
     'background:' + (r.confiavel ? 'var(--accent)' : 'var(--warn)') + '"></div></div>' +
     '<p class="tiny muted" style="margin:4px 0 0">' +
-    (r.confiavel
-      ? de('Leitura consistente — confira o valor mesmo assim.', 'Consistent reading — still check the amount.')
-      : de('Leitura fraca. Foto de papel amassado erra bastante: confira tudo antes de salvar.',
-           'Weak reading. Crumpled paper is hard: check everything before saving.')) + '</p>';
+    (livre ? de('Confira o texto abaixo.', 'Check the text below.')
+     : r.confirmado ? de('Leitura consistente — confira o valor mesmo assim.', 'Consistent reading — still check the amount.')
+     : r.escolhido ? de('Valor escolhido por você. Confira o resto antes de salvar.', 'Amount picked by you. Check the rest before saving.')
+     : de('Leitura fraca. Papel amassado ou foto escura erram bastante: confira tudo antes de salvar.',
+          'Weak reading. Crumpled paper or a dark photo miss a lot: check everything before saving.')) + '</p>';
+  if(r.longe) h += '<p class="tiny warn" style="margin:4px 0 0">' + de('O texto está pequeno na foto. Tire mais de perto.', 'The text is small in the photo. Get closer.') + '</p>';
+  if(r.dica && Leitor.TIPOS[r.dica]) h += '<p class="tiny muted" style="margin:4px 0 0">' + de('Parece ser: ', 'Looks like: ') + esc(Leitor.TIPOS[r.dica][L === 'en' ? 'en' : 'nome']) + '</p>';
+  if(r.mesmaCompra) h += '<p class="tiny muted" style="margin:4px 0 0">' + de('Parece a mesma compra do papel ', 'Looks like the same purchase as paper ') + r.mesmaCompra + '</p>';
 
-  if(r.itens.length)
-    h += '<details class="esc-itens"><summary class="small">' +
-      de('ver os itens lidos', 'see the items read') + '</summary>' +
-      '<table class="tbl tbl-mini"><tbody>' + r.itens.map(i =>
-        '<tr><td>' + esc(i.nome) + '</td><td class="num">' + fmt(i.valor) + '</td></tr>').join('') +
+  if(itens.length)
+    h += '<details class="esc-itens"><summary class="small">' + de('ver os itens lidos', 'see the items read') + '</summary>' +
+      '<table class="tbl tbl-mini"><tbody>' + itens.map(x =>
+        '<tr><td>' + esc(x.nome) + '</td><td class="num">' + fmt(x.valor) + '</td></tr>').join('') +
       '</tbody></table></details>';
+  if(r.textoCru)
+    h += '<details class="esc-itens"' + (livre ? ' open' : '') + '><summary class="small">' + de('ver o texto lido', 'see the text read') + '</summary>' +
+      '<pre class="esc-texto">' + esc(r.textoCru.trim().slice(0, 3000)) + '</pre></details>';
 
   h += '<div class="f-actions" style="margin-top:12px">' +
-    '<button class="btn" data-acao="esc-limpar">' + de('Ler outro', 'Read another') + '</button>' +
-    '<button class="btn primary" data-acao="esc-lancar">' +
-      de('Criar lançamento', 'Create entry') + '</button></div></div>';
-  $('#escResultado').innerHTML = Verter.html(h);
+    (i === n - 1 ? '<button class="btn" data-acao="esc-limpar">' + de('Ler outro', 'Read another') + '</button>' : '') +
+    '<button class="btn primary" data-acao="esc-lancar" data-idx="' + i + '">' + de('Criar lançamento', 'Create entry') + '</button></div></div>';
+  return h;
 }
 
 function lerTextoEscaneado(){
@@ -18308,13 +18367,14 @@ function lerTextoEscaneado(){
   mostrarEscaneado(r, null);
 }
 
-function mostrarEscaneado(r, bruto){
-  escaneado = r;
-  const alvo = $('#escResultado');
+function mostrarEscaneado(r){ mostrarLidos([r]); }
+
+function htmlEscaneado(r, i, n){
   let h = '<div class="card2-box esc-achado" style="margin-top:14px">';
+  const nome = n > 1 ? '<span class="tiny muted">' + (ptT() ? 'Papel ' : 'Paper ') + (i + 1) + (r.nome ? ' · ' + esc(r.nome) : '') + '</span> ' : '';
 
   if(r.tipo === 'nota'){
-    h += '<b class="small">🧾 Nota fiscal ' + esc(r.modelo) + '</b>' +
+    h += nome + '<b class="small">🧾 Nota fiscal ' + esc(r.modelo) + '</b>' +
       '<table class="tbl tbl-mini"><tbody>' +
         linhaEsc('Emitida em', r.data ? fmtData(r.data) : ('competência ' + r.competencia)) +
         linhaEsc('Loja (CNPJ)', r.cnpjFmt) +
@@ -18327,7 +18387,7 @@ function mostrarEscaneado(r, bruto){
         '<a href="' + urlSegura(r.url) + '" target="_blank" rel="noopener noreferrer">abrir a nota na Sefaz</a>' +
         ' para ver os itens</p>' : '');
   }else{
-    h += '<b class="small">💳 Boleto' + (r.arrecadacao ? ' de concessionária ou tributo' : '') + '</b>' +
+    h += nome + '<b class="small">💳 Boleto' + (r.arrecadacao ? ' de concessionária ou tributo' : '') + '</b>' +
       '<table class="tbl tbl-mini"><tbody>' +
         linhaEsc('Valor', r.valor ? '<b>' + fmt(r.valor) + '</b>'
           : '<span class="muted">sem valor no código — é boleto em aberto</span>') +
@@ -18339,12 +18399,12 @@ function mostrarEscaneado(r, bruto){
   }
 
   h += '<div class="f-actions" style="margin-top:12px">' +
-    '<button class="btn" data-acao="esc-limpar">Ler outro</button>' +
+    (i === n - 1 ? '<button class="btn" data-acao="esc-limpar">Ler outro</button>' : '') +
     (r.tipo === 'boleto' && r.venc
-      ? '<button class="btn" data-acao="esc-agendar">📌 Virar conta a pagar</button>' : '') +
-    '<button class="btn primary" data-acao="esc-lancar">Criar lançamento</button>' +
+      ? '<button class="btn" data-acao="esc-agendar" data-idx="' + i + '">📌 Virar conta a pagar</button>' : '') +
+    '<button class="btn primary" data-acao="esc-lancar" data-idx="' + i + '">Criar lançamento</button>' +
     '</div></div>';
-  alvo.innerHTML = Verter.html(h);
+  return h;
 }
 
 function linhaEsc(rot, val){
@@ -18420,6 +18480,8 @@ function agendarEscaneado(){
    A parte que interessa — entender o que está escrito num
    cupom brasileiro — está toda aqui e funciona com texto vindo
    de qualquer origem: do OCR, de um PDF ou colado na mão.
+   A leitura da FOTO em si (endireitar, recortar, ler várias
+   vezes, QR e código de barras) é do Leitor, o bloco seguinte.
    ========================================================= */
 
 const FONTES_OCR = [
@@ -18434,6 +18496,19 @@ const Ocr = {
   origem: null,
 
   disponivel(){ return !!(this.motor || window.Tesseract || window.TESSERACT_EMBUTIDO); },
+
+  /* onde o Tesseract procura o trabalhador, o núcleo e o idioma. Quando o
+     motor veio de assets/ocr/ (o normal, publicado junto com o app), tudo
+     vem de lá também — e fica guardado no aparelho pelo sw.js. Se veio da
+     CDN, usa os endereços padrão da biblioteca. Só o português está em
+     assets/ocr/; "por+eng" (documentos em inglês) busca o idioma na rede. */
+  opcoesTrabalhador(idioma){
+    if(this.origem !== 'local') return {};
+    const base = new URL('assets/ocr/', document.baseURI).href;
+    const o = {workerPath: base + 'worker.min.js', corePath: base};
+    if(idioma === 'por') o.langPath = base;
+    return o;
+  },
 
   /* traz o motor de onde houver, uma vez só */
   async carregar(aviso){
@@ -18487,9 +18562,9 @@ const Ocr = {
       try{
         if(!this.trab){
           if(aviso) aviso('Preparando o leitor de texto…');
-          this.trab = await T.createWorker('por+eng', 1, {logger: m => {
+          this.trab = await T.createWorker('por+eng', 1, Object.assign(this.opcoesTrabalhador('por+eng'), {logger: m => {
             if(this.avisoAtual && m.status === 'recognizing text') this.avisoAtual('Lendo… ' + Math.round((m.progress || 0) * 100) + '%');
-          }});
+          }}));
           this.trabPsm = null;
         }
         this.avisoAtual = aviso;
@@ -18513,77 +18588,6 @@ const Ocr = {
     const w = this.trab; this.trab = null; this.trabPsm = null;
     if(w){ try{ await w.terminate(); }catch(e){} }
   },
-
-  /* gira um canvas em múltiplos de 90° (foto tirada com o papel deitado) */
-  girar(c, graus){
-    const r = document.createElement('canvas');
-    const deitado = graus === 90 || graus === 270;
-    r.width = deitado ? c.height : c.width; r.height = deitado ? c.width : c.height;
-    const g = r.getContext('2d');
-    g.translate(r.width / 2, r.height / 2); g.rotate(graus * Math.PI / 180);
-    g.drawImage(c, -c.width / 2, -c.height / 2);
-    return r;
-  },
-
-  /* o caminho completo: foto -> texto -> lançamento pronto.
-     Uma foto só, várias leituras: primeiro com o preparo dos documentos
-     do IR (cinza, contraste, tamanho), depois a imagem como veio, o
-     modo de bloco, e por fim o papel de lado e de cabeça para
-     baixo. Para na primeira que acha o valor com confiança; senão
-     fica com a mais confiante e completa o que faltou (data, CNPJ,
-     loja, final do cartão) com o que as outras leram. Testado com
-     comprovantes de Cielo, Rede, Getnet e iFood Pago: o valor do
-     iFood só sai na imagem crua, o CNPJ só na preparada. */
-  async lerCupom(arquivo, aviso){
-    let cru = null, prep = null;
-    try{
-      if(typeof DocIR !== 'undefined' && DocIR.preparar && DocIR.canvasDaImagem){
-        cru = await DocIR.canvasDaImagem(arquivo);
-        prep = DocIR.preparar(cru);
-      }
-    }catch(e){ cru = prep = null; }
-    if(!prep){
-      const txt = await this.texto(arquivo, aviso);
-      const dados = CupomTexto.entender(txt);
-      dados.textoCru = txt;
-      return dados;
-    }
-    /* a preparada vai primeiro: é a que acerta mais; a crua entra
-       porque em papel muito claro o contraste esticado apaga o valor */
-    const passadas = [
-      {img: prep, psm: '3', nome: 0},
-      {img: cru,  psm: '3', nome: 0},
-      {img: prep, psm: '6', nome: 0},
-      {img: () => this.girar(prep, 90),  psm: '3', nome: 90},
-      {img: () => this.girar(prep, 270), psm: '3', nome: 270},
-      {img: () => this.girar(prep, 180), psm: '3', nome: 180}
-    ];
-    let melhor = null;
-    const lidas = [];
-    try{
-      for(let i = 0; i < passadas.length; i++){
-        const p = passadas[i];
-        if(i === 3 && aviso) aviso(I18n.atual === 'pt' ? 'A foto pode estar deitada: tentando de lado…' : 'The photo may be sideways: trying rotated…');
-        const txt = await this.texto(typeof p.img === 'function' ? p.img() : p.img, aviso, {psm: p.psm, lote: true});
-        const d = CupomTexto.entender(txt); d.textoCru = txt; d.rotacao = p.nome;
-        lidas.push(d);
-        if(!melhor || d.confianca > melhor.confianca) melhor = d;
-        if(d.valor && d.confianca >= 5) break;
-      }
-    }finally{ await this.fecharLote(); }
-    /* o que faltou na melhor, outra leitura pode ter achado */
-    lidas.forEach(d => {
-      if(d === melhor) return;
-      if(!melhor.valor && d.valor) melhor.valor = d.valor;
-      if(!melhor.data && d.data) melhor.data = d.data;
-      if((!melhor.cnpj || !melhor.cnpj.valido) && d.cnpj && d.cnpj.valido) melhor.cnpj = d.cnpj;
-      if(!melhor.loja && d.loja) melhor.loja = d.loja;
-      if(!melhor.pagamento.fim && d.pagamento.fim){ melhor.pagamento.fim = d.pagamento.fim; melhor.cartaoId = melhor.cartaoId || d.cartaoId; }
-      if(!melhor.formaId && d.formaId) melhor.formaId = d.formaId;
-      if(!melhor.pagamento.bandeira && d.pagamento.bandeira) melhor.pagamento.bandeira = d.pagamento.bandeira;
-    });
-    return melhor;
-  }
 };
 
 /* =========================================================
@@ -18815,6 +18819,1332 @@ const CupomTexto = {
   }
 };
 
+</script>
+<script>
+/* =========================================================
+   MoneyTRIO — Leitor: o motor de leitura de fotos
+   É o motor do app "Leitor OCR" (MarceloNeco/leitor-ocr, v0.6.0),
+   testado com dezenas de comprovantes reais e trazido para cá sem
+   mexer na lógica. É UM motor só para os três apps; o que muda é o
+   atalho que chega até ele: Escanear no BudgetONE, Ler comprovante
+   no InvestifyONE, Documentos do IR no TaxONE.
+
+   O caminho de uma foto:
+     1. mede a inclinação do papel e endireita (estimateAngles)
+     2. acha o papel — ou vários papéis — e recorta (findPapers)
+     3. lê com o Tesseract até 4 vezes, de jeitos diferentes
+     4. só aceita o VALOR quando duas leituras concordam (agreedValue);
+        senão oferece os candidatos para a pessoa tocar no certo
+     5. lê QR code e código de barras (ZXing + jsQR)
+
+   Os arquivos do motor (Tesseract, português, ZXing, jsQR) moram em
+   assets/ocr/, ao lado deste index.html, e ficam guardados no
+   aparelho pelo sw.js. Nenhuma foto sai do aparelho.
+   ========================================================= */
+const Leitor = (() => {
+  const BASE = new URL('assets/ocr/', document.baseURI).href;
+  const tx = (pt, en) => (typeof I18n !== 'undefined' && I18n.atual === 'en') ? en : pt;
+
+  const ORDERED_FIELD_KEYS = [
+    'Estabelecimento',
+    'CNPJ',
+    'Nota',
+    'Valor',
+    'Data',
+    'Hora',
+    'Bandeira',
+    'Modalidade',
+    'Terminal',
+    'NSU/DOC',
+    'Autorização',
+    'AID',
+    'Via'
+  ];
+
+  /* =========================================================
+     TIPOS DE DOCUMENTO
+     Cada tipo diz o que esperar do papel: quais campos são vitais (ficam
+     em vermelho quando não lidos), que palavras denunciam o tipo (sinais),
+     que palavras acompanham o valor (palavras) e que linhas nunca têm o
+     valor (ignorar: itens, tributos, gorjeta, troco...). Para ensinar um
+     tipo novo, basta uma entrada aqui.
+     ========================================================= */
+  const DOC_TYPES = {
+    auto: { nome: 'Não sei, descobrir', en: 'Not sure, detect', familia: 'Deixar o app decidir', vitais: [] },
+    cartao: {
+      nome: 'Comprovante de maquininha', en: 'Card machine receipt', familia: 'Dinheiro', vitais: ['Valor'],
+      sinais: /VIA CLIENTE|VIA DO CLIENTE|COMPROVANTE DE (?:VENDA|PAGAMENTO)|CART[AÃ]O|CR[EÉ]DITO|D[EÉ]BITO|MASTERCARD|\bVISA\b|\bELO\b|\bNSU\b|\bAUTH?[:=\s]|\bAID\b|GETNET|CIELO|\bSTONE\b|\bREDE\b|PAGSEGURO|INFINITEPAY|SENHA APROVADA|PARCELA|VALOR:|\bCARD\b|APPROVAL|AMOUNT/g,
+      palavras: /VALOR|[TIF1]OTAL|CR[EÉ]DITO|D[EÉ]BITO|COMPRA|VENDA|APROVAD|PAGO|PAGAR|AMOUNT/,
+      ignorar: /\d\s?X\s|PARCELA|POR PESSOA|TRIB|DESCONTO|TROCO|SALDO|TAXA|JUROS|LIMITE|SUB-?\s?TOTAL|\bTIP\b|SUGGEST/
+    },
+    nfce: {
+      nome: 'Nota fiscal / cupom', en: 'Invoice / receipt', familia: 'Dinheiro', vitais: ['Valor'],
+      sinais: /NFC-?E|NOTA FISCAL|CUPOM FISCAL|DANFE|CONSUMIDOR|CHAVE DE ACESSO|PROTOCOLO DE AUTORIZA|TRIBUT|\bSAT\b|ITENS|UN\s?X|VL\.?\s?ITEM|EMISS[AÃ]O|QTDE?\b/g,
+      palavras: /VALOR A PAGAR|VALOR PAGO|TOTAL A PAGAR|VALOR TOTAL|[TIF1]OTAL|A PAGAR|PAGO|VALOR/,
+      ignorar: /TRIB|DESCONTO|UN\s?X|VL\.?\s?ITEM|UNIT|ITE[MN]S|QTD|TROCO|DINHEIRO|SUB-?\s?TOTAL|ECONOMIZOU|\bTAX\b|CHANGE|CASH|ACESS[OÓ]RIO|PRODUTOS|SERVI[CÇ]O|\bTX\b|TAXA|\(\s?[+-]\s?\)/
+    },
+    conta: {
+      nome: 'Conta de restaurante', en: 'Restaurant bill', familia: 'Dinheiro', vitais: ['Valor'],
+      sinais: /CONFER[EÊ]NCIA|SUB-?\s?TOTAL|GORJETA|SERVI[CÇ]O|MESA|PESSOAS?|COUVERT|GAR[CÇ]OM|\bTIP\b|GRATUITY|\d\s?X\s|\bTAX\b|CHANGE|CASH/g,
+      palavras: /[TIF1]OTAL|A PAGAR|PAGO|VALOR/,
+      ignorar: /SUB-?\s?TOTAL|GORJETA|SERVI[CÇ]O|PESSOA|COUVERT|\d\s?X\s|TRIB|DESCONTO|TROCO|TAXA|\bTIP\b|CHANGE|CASH|SUGGEST|ITE[MN]S|\bTAX\b|\(\s?[+-]\s?\)/
+    },
+    livre: { nome: 'Outro (texto livre)', en: 'Other (free text)', familia: 'Outros', vitais: [] }
+  };
+
+  function loadImageFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('imagem inválida'));
+        img.src = e.target.result;
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // A paper cut out of the photo, in full resolution
+  function cropBox(img, box) {
+    const c = document.createElement('canvas');
+    c.width = box.cw; c.height = box.ch;
+    c.getContext('2d').drawImage(img, box.cx, box.cy, box.cw, box.ch, 0, 0, box.cw, box.ch);
+    return c;
+  }
+
+  // Reads the QR codes and barcodes in the photo: ZXing on the full frame,
+  // jsQR as a second try for QR codes, then ZXing on the frame turned
+  // sideways for barcodes printed up and down. Stops at the first find or
+  // after about two seconds.
+  async function readCodes(img) {
+    try {
+      if (!window.ZXing) await Ocr.script(BASE + 'zxing.min.js');
+      if (!window.jsQR) await Ocr.script(BASE + 'jsQR.js');
+    } catch (err) { console.warn(err); return []; }
+    const hints = new Map();
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+    const reader = new ZXing.MultiFormatReader();
+    reader.setHints(hints);
+    const draw = (maxW, rot) => {
+      const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+      const s = Math.min(1, maxW / w0);
+      const w = Math.round(w0 * s), h = Math.round(h0 * s);
+      const c = document.createElement('canvas');
+      c.width = rot ? h : w; c.height = rot ? w : h;
+      const x = c.getContext('2d');
+      x.translate(c.width / 2, c.height / 2);
+      x.rotate(rot * Math.PI / 180);
+      x.drawImage(img, -w / 2, -h / 2, w, h);
+      return c;
+    };
+    const found = [];
+    const started = Date.now();
+    for (const [maxW, rot, lib] of [[2000, 0, 'zxing'], [2000, 0, 'jsqr'], [1300, 0, 'zxing'], [1300, 90, 'zxing']]) {
+      const c = draw(maxW, rot);
+      try {
+        if (lib === 'zxing') {
+          const r = reader.decode(new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.HTMLCanvasElementLuminanceSource(c))));
+          found.push({ format: ZXing.BarcodeFormat[r.getBarcodeFormat()], text: r.getText() });
+        } else {
+          const d = c.getContext('2d').getImageData(0, 0, c.width, c.height);
+          const r = jsQR(d.data, c.width, c.height, { inversionAttempts: 'dontInvert' });
+          if (r && r.data) found.push({ format: 'QR_CODE', text: r.data });
+        }
+      } catch (err) { /* nothing found in this try */ }
+      if (found.length || Date.now() - started > 2500) break;
+    }
+    return found;
+  }
+
+  // Discovers how tilted the receipt is in the photo. Text lines make
+  // dark stripes; the angle where those stripes are sharpest is the right one.
+  function estimateAngles(img) {
+    const SIZE = 360;
+    const w0 = img.naturalWidth || img.width;
+    const h0 = img.naturalHeight || img.height;
+    const s = Math.min(1, SIZE / Math.max(w0, h0));
+    const w = Math.max(1, Math.round(w0 * s));
+    const h = Math.max(1, Math.round(h0 * s));
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    const d = ctx.getImageData(0, 0, w, h).data;
+
+    // Grayscale, then local threshold so only the printed ink stays
+    const g = new Float32Array(w * h);
+    for (let i = 0; i < g.length; i++) {
+      g[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+    }
+    const integ = new Float64Array((w + 1) * (h + 1));
+    for (let y = 0; y < h; y++) {
+      let row = 0;
+      for (let x = 0; x < w; x++) {
+        row += g[y * w + x];
+        integ[(y + 1) * (w + 1) + x + 1] = integ[y * (w + 1) + x + 1] + row;
+      }
+    }
+    const r = Math.max(6, Math.round(w / 12));
+    const ink = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) {
+      const ya = Math.max(0, y - r), yb = Math.min(h, y + r + 1);
+      for (let x = 0; x < w; x++) {
+        const xa = Math.max(0, x - r), xb = Math.min(w, x + r + 1);
+        const area = (xb - xa) * (yb - ya);
+        const sum = integ[yb * (w + 1) + xb] - integ[ya * (w + 1) + xb] - integ[yb * (w + 1) + xa] + integ[ya * (w + 1) + xa];
+        ink[y * w + x] = g[y * w + x] * area < sum * 0.9 ? 1 : 0;
+      }
+    }
+
+    // For each candidate angle, count ink per line and measure how much
+    // it jumps from line to line — many sharp jumps means the text is level
+    const cx = w / 2, cy = h / 2;
+    const diag = Math.ceil(Math.sqrt(w * w + h * h));
+    const scores = [];
+    for (let a = -87; a < 90; a += 3) {
+      const ar = (a * Math.PI) / 180;
+      const sa = Math.sin(ar), ca = Math.cos(ar);
+      const prof = new Float32Array(diag + 2);
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          if (!ink[y * w + x]) continue;
+          // spread each dot between the two nearest lines, otherwise
+          // diagonal angles produce a false striped pattern
+          const yy = -(x - cx) * sa + (y - cy) * ca + diag / 2;
+          const y0 = Math.floor(yy);
+          if (y0 < 0 || y0 >= diag) continue;
+          const f = yy - y0;
+          prof[y0] += 1 - f;
+          prof[y0 + 1] += f;
+        }
+      }
+      let score = 0;
+      for (let i = 1; i <= diag; i++) {
+        const dv = prof[i] - prof[i - 1];
+        score += dv * dv;
+      }
+      scores.push({ a, score });
+    }
+    scores.sort((p, q) => q.score - p.score);
+
+    // Keep the best angle plus one clearly different runner-up
+    const out = [scores[0].a];
+    for (const s2 of scores) {
+      if (Math.abs(s2.a - out[0]) > 12 && Math.abs(Math.abs(s2.a - out[0]) - 180) > 12) {
+        out.push(s2.a);
+        break;
+      }
+    }
+    return out;
+  }
+
+  // Builds a high-resolution image just for OCR: finds the receipt paper,
+  // crops it, enlarges the text and turns it into clean black-on-white.
+  function buildOcrCanvas(img, rotation = 0, binarize = false, targetW = 1000, region = null) {
+    const MAX_SRC = 3000;
+    let w = img.naturalWidth || img.width;
+    let h = img.naturalHeight || img.height;
+    const s = Math.min(1, MAX_SRC / Math.max(w, h));
+    w = Math.round(w * s);
+    h = Math.round(h * s);
+
+    // Rotation by any angle (not only 90°), enlarging the canvas so nothing is cut off
+    const rad = (rotation * Math.PI) / 180;
+    const cos = Math.abs(Math.cos(rad));
+    const sin = Math.abs(Math.sin(rad));
+    const src = document.createElement('canvas');
+    src.width = Math.round(w * cos + h * sin);
+    src.height = Math.round(w * sin + h * cos);
+    const sctx = src.getContext('2d');
+    sctx.fillStyle = '#808080';
+    sctx.fillRect(0, 0, src.width, src.height);
+    sctx.translate(src.width / 2, src.height / 2);
+    sctx.rotate(rad);
+    sctx.drawImage(img, -w / 2, -h / 2, w, h);
+
+    // Region to read: the one asked for (in the rotated frame), the block of
+    // small ink marks that looks like text ('ink'), else the paper
+    if (region === 'ink') region = findTextBox(src) || findPaperBox(src);
+    const { cx, cy, cw, ch } = region || findPaperBox(src);
+
+    // 2. Crop and resize so the receipt text has a size Tesseract reads well
+    const scale = Math.min(region ? 4 : 3, targetW / cw);
+    const out = document.createElement('canvas');
+    out.width = Math.round(cw * scale);
+    out.height = Math.round(ch * scale);
+    out.frame = { cx, cy, cw, ch, scale, width: src.width, height: src.height };   // to map word boxes back
+    const octx = out.getContext('2d');
+    octx.imageSmoothingEnabled = true;
+    octx.imageSmoothingQuality = 'high';
+    octx.drawImage(src, cx, cy, cw, ch, 0, 0, out.width, out.height);
+
+    // 3. Grayscale + local (adaptive) threshold: handles shadows and faded thermal print
+    const od = octx.getImageData(0, 0, out.width, out.height);
+    const d = od.data;
+    const W = out.width, H = out.height;
+    const g = new Float32Array(W * H);
+    for (let i = 0; i < g.length; i++) {
+      g[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+    }
+    // Local mean of the gray level: the paper and the table around it. In
+    // gray mode every pixel is measured against it, so a dark table or a
+    // blue background turns white and only the ink stays dark (Tesseract
+    // takes a big dark area for a picture and reads nothing). In black and
+    // white mode it is the adaptive threshold (Bradley).
+    const integ = new Float64Array((W + 1) * (H + 1));
+    for (let y = 0; y < H; y++) {
+      let row = 0;
+      for (let x = 0; x < W; x++) {
+        row += g[y * W + x];
+        integ[(y + 1) * (W + 1) + x + 1] = integ[y * (W + 1) + x + 1] + row;
+      }
+    }
+    const r = Math.max(8, Math.round(W / 32));
+    const T = 0.15;
+    for (let y = 0; y < H; y++) {
+      const ya = Math.max(0, y - r), yb = Math.min(H, y + r + 1);
+      for (let x = 0; x < W; x++) {
+        const xa = Math.max(0, x - r), xb = Math.min(W, x + r + 1);
+        const area = (xb - xa) * (yb - ya);
+        const mean = (integ[yb * (W + 1) + xb] - integ[ya * (W + 1) + xb] - integ[yb * (W + 1) + xa] + integ[ya * (W + 1) + xa]) / area;
+        const v = g[y * W + x];
+        if (binarize) {
+          g[y * W + x] = v < mean * (1 - T) ? 0 : 255;
+        } else {
+          const ratio = v / (mean + 1);
+          g[y * W + x] = ratio >= 1 ? 255 : Math.round(255 * ratio * ratio);
+        }
+      }
+    }
+    for (let i = 0; i < g.length; i++) {
+      d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = g[i];
+    }
+    octx.putImageData(od, 0, 0);
+    return out;
+  }
+
+  // Finds the paper in a photo (or canvas): the largest bright area on a
+  // small copy. Returns the box to crop, or the whole image when no paper
+  // stands out.
+  function findPaperBox(src) {
+    const SMALL = 300;
+    const k = Math.min(1, SMALL / Math.max(src.width, src.height));
+    const sw = Math.max(1, Math.round(src.width * k));
+    const sh = Math.max(1, Math.round(src.height * k));
+    const small = document.createElement('canvas');
+    small.width = sw;
+    small.height = sh;
+    const smctx = small.getContext('2d');
+    smctx.drawImage(src, 0, 0, sw, sh);
+    const sd = smctx.getImageData(0, 0, sw, sh).data;
+    const gray = new Uint8Array(sw * sh);
+    for (let i = 0; i < gray.length; i++) {
+      gray[i] = 0.299 * sd[i * 4] + 0.587 * sd[i * 4 + 1] + 0.114 * sd[i * 4 + 2];
+    }
+    const otsu = (from) => {
+      const hist = new Array(256).fill(0);
+      let n = 0;
+      for (const g of gray) if (g >= from) { hist[g]++; n++; }
+      let sum = 0;
+      for (let t = 0; t < 256; t++) sum += t * hist[t];
+      let sumB = 0, wB = 0, best = 0, thr = from;
+      for (let t = 0; t < 256; t++) {
+        wB += hist[t];
+        if (!wB || wB === n) continue;
+        sumB += t * hist[t];
+        const mB = sumB / wB, mF = (sum - sumB) / (n - wB);
+        const between = wB * (n - wB) * (mB - mF) * (mB - mF);
+        if (between > best) { best = between; thr = t; }
+      }
+      return thr;
+    };
+    const largestBlob = (thr) => {
+      const seen = new Uint8Array(sw * sh);
+      let bestBox = null, bestArea = 0;
+      const stack = [];
+      for (let start = 0; start < gray.length; start++) {
+        if (seen[start] || gray[start] <= thr) continue;
+        let area = 0, x0 = sw, y0 = sh, x1 = 0, y1 = 0;
+        seen[start] = 1;
+        stack.push(start);
+        while (stack.length) {
+          const p = stack.pop();
+          const x = p % sw, y = (p - x) / sw;
+          area++;
+          if (x < x0) x0 = x; if (x > x1) x1 = x;
+          if (y < y0) y0 = y; if (y > y1) y1 = y;
+          const nb = [x > 0 ? p - 1 : -1, x < sw - 1 ? p + 1 : -1, y > 0 ? p - sw : -1, y < sh - 1 ? p + sw : -1];
+          for (const q of nb) {
+            if (q >= 0 && !seen[q] && gray[q] > thr) { seen[q] = 1; stack.push(q); }
+          }
+        }
+        if (area > bestArea) { bestArea = area; bestBox = { x0, y0, x1, y1 }; }
+      }
+      return { box: bestBox, frac: bestArea / (sw * sh) };
+    };
+    // Try progressively brighter cut-offs until the paper separates from the table
+    let blob = largestBlob(otsu(0));
+    for (let i = 0; i < 3 && blob.frac > 0.6; i++) {
+      blob = largestBlob(otsu(otsu(0) + 1 + i * 8));
+    }
+    let cx = 0, cy = 0, cw = src.width, ch = src.height;
+    if (blob.box && blob.frac > 0.02 && blob.frac < 0.9) {
+      const pad = 0.02 * Math.max(sw, sh);
+      const bx0 = Math.max(0, blob.box.x0 - pad), by0 = Math.max(0, blob.box.y0 - pad);
+      const bx1 = Math.min(sw, blob.box.x1 + 1 + pad), by1 = Math.min(sh, blob.box.y1 + 1 + pad);
+      cx = Math.round(bx0 / k);
+      cy = Math.round(by0 / k);
+      cw = Math.round((bx1 - bx0) / k);
+      ch = Math.round((by1 - by0) / k);
+    }
+    return { cx, cy, cw, ch };
+  }
+
+  // Finds every paper in the photo: the bright blobs on a small copy, each
+  // big enough to be a receipt and with text on it. Papers lying against
+  // each other come out as one blob; when its text has a blank band across
+  // it (the margins of two papers), the blob is cut along the widest band,
+  // both ways, until none is left. Papers lying on top of each other stay
+  // together. Returns the boxes in the image's own pixels, top to bottom
+  // and left to right; the person confirms before they are read apart.
+  function findPapers(img) {
+    const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+    const SMALL = 400;
+    const k = Math.min(1, SMALL / Math.max(w0, h0));
+    const sw = Math.max(1, Math.round(w0 * k)), sh = Math.max(1, Math.round(h0 * k));
+    const small = document.createElement('canvas');
+    small.width = sw; small.height = sh;
+    const ctx = small.getContext('2d');
+    ctx.drawImage(img, 0, 0, sw, sh);
+    const d = ctx.getImageData(0, 0, sw, sh).data;
+    const gray = new Uint8Array(sw * sh);
+    for (let i = 0; i < gray.length; i++) gray[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+    const otsu = (from) => {
+      const hist = new Array(256).fill(0);
+      let n = 0;
+      for (const g of gray) if (g >= from) { hist[g]++; n++; }
+      let sum = 0;
+      for (let t = 0; t < 256; t++) sum += t * hist[t];
+      let sumB = 0, wB = 0, best = 0, thr = from;
+      for (let t = 0; t < 256; t++) {
+        wB += hist[t];
+        if (!wB || wB === n) continue;
+        sumB += t * hist[t];
+        const mB = sumB / wB, mF = (sum - sumB) / (n - wB);
+        const between = wB * (n - wB) * (mB - mF) * (mB - mF);
+        if (between > best) { best = between; thr = t; }
+      }
+      return thr;
+    };
+    const blobs = (thr) => {
+      const seen = new Uint8Array(sw * sh);
+      const out = [];
+      const stack = [];
+      for (let start = 0; start < gray.length; start++) {
+        if (seen[start] || gray[start] <= thr) continue;
+        let area = 0, x0 = sw, y0 = sh, x1 = 0, y1 = 0;
+        seen[start] = 1; stack.push(start);
+        while (stack.length) {
+          const p = stack.pop();
+          const x = p % sw, y = (p - x) / sw;
+          area++;
+          if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+          const nb = [x > 0 ? p - 1 : -1, x < sw - 1 ? p + 1 : -1, y > 0 ? p - sw : -1, y < sh - 1 ? p + sw : -1];
+          for (const q of nb) if (q >= 0 && !seen[q] && gray[q] > thr) { seen[q] = 1; stack.push(q); }
+        }
+        out.push({ area, x0, y0, x1, y1, frac: area / (sw * sh), fill: area / ((x1 - x0 + 1) * (y1 - y0 + 1)) });
+      }
+      return out.sort((a, b) => b.area - a.area);
+    };
+    // Brighter and brighter cut-offs until the biggest blob is a paper, not the whole table
+    let thr = otsu(0), found = blobs(thr);
+    for (let i = 0; i < 3 && found.length && found[0].frac > 0.6; i++) {
+      thr = otsu(otsu(0) + 1 + i * 8);
+      found = blobs(thr);
+    }
+    const papers = found.filter(b => b.frac >= 0.008 && b.frac < 0.9 && b.fill >= 0.35 && (b.x1 - b.x0) >= 0.06 * sw && (b.y1 - b.y0) >= 0.06 * sh);
+    // A small blob inside a bigger one is a bright patch of that paper, not another paper
+    const inside = (a, b) => a.x0 >= b.x0 - 2 && a.y0 >= b.y0 - 2 && a.x1 <= b.x1 + 2 && a.y1 <= b.y1 + 2;
+    const kept = papers.filter((a, i) => !papers.some((b, j) => j < i && inside(a, b)));
+
+    // Letters on a grid (same small size, so the cells line up with the blobs)
+    const { count, gw, gh, CELL } = letterGrid(small, SMALL);
+    const toCells = b => ({ x0: Math.floor(b.x0 / CELL), y0: Math.floor(b.y0 / CELL), x1: Math.floor(b.x1 / CELL), y1: Math.floor(b.y1 / CELL) });
+    const letters = c => { let n = 0; for (let y = c.y0; y <= c.y1; y++) for (let x = c.x0; x <= c.x1; x++) n += count[y * gw + x] || 0; return n; };
+    const rows = c => { let n = 0; for (let y = c.y0; y <= c.y1; y++) { let m = 0; for (let x = c.x0; x <= c.x1; x++) if ((count[y * gw + x] || 0) >= 2) m++; if (m >= 2) n++; } return n; };
+    const hasText = c => letters(c) >= 15 && rows(c) >= 3;   // a few lines of text, not a stripe of light or a loose corner
+    const trim = c => {
+      let x0 = gw, y0 = gh, x1 = -1, y1 = -1;
+      for (let y = c.y0; y <= c.y1; y++) for (let x = c.x0; x <= c.x1; x++) if ((count[y * gw + x] || 0) >= 2) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      return x1 < 0 ? null : { x0, y0, x1, y1 };
+    };
+    const G = Math.max(3, Math.round(0.06 * Math.max(gw, gh)));
+    const cut = (c, depth) => {
+      const t = trim(c);
+      if (!t || letters(t) < 15) return [];
+      if (depth >= 4) return [t];
+      const colHas = [], rowHas = [];
+      for (let x = t.x0; x <= t.x1; x++) { let h = false; for (let y = t.y0; y <= t.y1; y++) if ((count[y * gw + x] || 0) >= 2) { h = true; break; } colHas.push(h); }
+      for (let y = t.y0; y <= t.y1; y++) { let h = false; for (let x = t.x0; x <= t.x1; x++) if ((count[y * gw + x] || 0) >= 2) { h = true; break; } rowHas.push(h); }
+      const widest = (has) => {
+        let best = null, start = -1;
+        for (let i = 0; i <= has.length; i++) {
+          if (i < has.length && !has[i]) { if (start < 0) start = i; continue; }
+          if (start >= 0) { const len = i - start; if (start > 0 && i < has.length && len >= G && (!best || len > best.len)) best = { start, end: i - 1, len }; start = -1; }
+        }
+        return best;
+      };
+      const vc = widest(colHas), hc = widest(rowHas);
+      if (!vc && !hc) return [t];
+      if (vc && (!hc || vc.len >= hc.len)) {
+        const a = t.x0 + vc.start, b = t.x0 + vc.end;
+        return [...cut({ x0: t.x0, y0: t.y0, x1: a - 1, y1: t.y1 }, depth + 1), ...cut({ x0: b + 1, y0: t.y0, x1: t.x1, y1: t.y1 }, depth + 1)];
+      }
+      const a = t.y0 + hc.start, b = t.y0 + hc.end;
+      return [...cut({ x0: t.x0, y0: t.y0, x1: t.x1, y1: a - 1 }, depth + 1), ...cut({ x0: t.x0, y0: b + 1, x1: t.x1, y1: t.y1 }, depth + 1)];
+    };
+
+    const boxes = [];
+    kept.forEach(b => {
+      const c = toCells(b);
+      if (!hasText(c)) return;
+      const parts = (b.fill >= 0.85 ? [] : cut(c, 0)).filter(hasText);   // one neat paper is never cut
+      if (parts.length <= 1) { boxes.push({ x0: b.x0, y0: b.y0, x1: b.x1 + 1, y1: b.y1 + 1 }); return; }
+      parts.forEach(t => boxes.push({ x0: t.x0 * CELL - CELL, y0: t.y0 * CELL - CELL, x1: (t.x1 + 2) * CELL, y1: (t.y1 + 2) * CELL }));
+    });
+    // Dark bands printed across a bill split its paper into stacked strips: glue back
+    // pieces that nearly touch and line up on both sides
+    const near = 0.012 * Math.max(sw, sh);
+    for (let i = 0; i < boxes.length; i++) for (let j = boxes.length - 1; j > i; j--) {
+      const a = boxes[i], b = boxes[j];
+      const W = Math.max(a.x1 - a.x0, b.x1 - b.x0), H = Math.max(a.y1 - a.y0, b.y1 - b.y0);
+      const stacked = Math.max(a.y0 - b.y1, b.y0 - a.y1) <= near && Math.abs(a.x0 - b.x0) <= 0.1 * W && Math.abs(a.x1 - b.x1) <= 0.1 * W;
+      const beside = Math.max(a.x0 - b.x1, b.x0 - a.x1) <= near && Math.abs(a.y0 - b.y0) <= 0.1 * H && Math.abs(a.y1 - b.y1) <= 0.1 * H;
+      if (!stacked && !beside) continue;
+      boxes[i] = { x0: Math.min(a.x0, b.x0), y0: Math.min(a.y0, b.y0), x1: Math.max(a.x1, b.x1), y1: Math.max(a.y1, b.y1) };
+      boxes.splice(j, 1); j = boxes.length;   // the glued box may now touch another piece
+    }
+    const pad = 0.015 * Math.max(sw, sh);
+    const out = boxes.map(b => {
+      const bx0 = Math.max(0, b.x0 - pad), by0 = Math.max(0, b.y0 - pad);
+      const bx1 = Math.min(sw, b.x1 + pad), by1 = Math.min(sh, b.y1 + pad);
+      return { cx: Math.round(bx0 / k), cy: Math.round(by0 / k), cw: Math.round((bx1 - bx0) / k), ch: Math.round((by1 - by0) / k) };
+    });
+    out.sort((a, b) => (Math.abs(a.cy - b.cy) < 0.15 * h0 ? a.cx - b.cx : a.cy - b.cy));
+    return out;
+  }
+
+  // Letter-sized ink marks counted on a coarse grid: the raw material of
+  // findTextBox (where the text is) and findPapers (how many papers)
+  function letterGrid(src, SMALL = 400) {
+    const k = Math.min(1, SMALL / Math.max(src.width, src.height));
+    const sw = Math.max(1, Math.round(src.width * k)), sh = Math.max(1, Math.round(src.height * k));
+    const small = document.createElement('canvas');
+    small.width = sw; small.height = sh;
+    const ctx = small.getContext('2d');
+    ctx.drawImage(src, 0, 0, sw, sh);
+    const d = ctx.getImageData(0, 0, sw, sh).data;
+    const g = new Float32Array(sw * sh);
+    for (let i = 0; i < g.length; i++) g[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+    // ink = clearly darker than its neighborhood
+    const integ = new Float64Array((sw + 1) * (sh + 1));
+    for (let y = 0; y < sh; y++) {
+      let row = 0;
+      for (let x = 0; x < sw; x++) { row += g[y * sw + x]; integ[(y + 1) * (sw + 1) + x + 1] = integ[y * (sw + 1) + x + 1] + row; }
+    }
+    const r = Math.max(5, Math.round(sw / 30));
+    const ink = new Uint8Array(sw * sh);
+    for (let y = 0; y < sh; y++) {
+      const ya = Math.max(0, y - r), yb = Math.min(sh, y + r + 1);
+      for (let x = 0; x < sw; x++) {
+        const xa = Math.max(0, x - r), xb = Math.min(sw, x + r + 1);
+        const area = (xb - xa) * (yb - ya);
+        const sum = integ[yb * (sw + 1) + xb] - integ[ya * (sw + 1) + xb] - integ[yb * (sw + 1) + xa] + integ[ya * (sw + 1) + xa];
+        ink[y * sw + x] = g[y * sw + x] * area < sum * 0.82 ? 1 : 0;
+      }
+    }
+    // connected marks; keep the letter-sized ones
+    const label = new Int32Array(sw * sh).fill(-1);
+    const marks = [];
+    const stack = [];
+    for (let start = 0; start < ink.length; start++) {
+      if (!ink[start] || label[start] >= 0) continue;
+      const id = marks.length;
+      let area = 0, x0 = sw, y0 = sh, x1 = 0, y1 = 0;
+      label[start] = id; stack.push(start);
+      while (stack.length) {
+        const p = stack.pop();
+        const x = p % sw, y = (p - x) / sw;
+        area++;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+        const nb = [x > 0 ? p - 1 : -1, x < sw - 1 ? p + 1 : -1, y > 0 ? p - sw : -1, y < sh - 1 ? p + sw : -1];
+        for (const q of nb) if (q >= 0 && ink[q] && label[q] < 0) { label[q] = id; stack.push(q); }
+      }
+      marks.push({ area, x0, y0, x1, y1 });
+    }
+    const letterLike = marks.map(m => m.area >= 2 && m.area <= 400 && (m.x1 - m.x0) < 30 && (m.y1 - m.y0) < 30);
+    // coarse grid: cells with a few letter-sized marks are text
+    const CELL = 10;
+    const gw = Math.ceil(sw / CELL), gh = Math.ceil(sh / CELL);
+    const cells = new Uint8Array(gw * gh);
+    const count = new Uint16Array(gw * gh);
+    marks.forEach((m, i) => {
+      if (!letterLike[i]) return;
+      const gx = Math.floor((m.x0 + m.x1) / 2 / CELL), gy = Math.floor((m.y0 + m.y1) / 2 / CELL);
+      count[gy * gw + gx]++;
+    });
+    return { count, gw, gh, CELL, k, sw, sh };
+  }
+
+  function findTextBox(src, SMALL = 400) {
+    const { count, gw, gh, CELL, k } = letterGrid(src, SMALL);
+    const cells = new Uint8Array(gw * gh);
+    const text = [];
+    for (let i = 0; i < cells.length; i++) if (count[i] >= 2) text.push({ x: i % gw, y: Math.floor(i / gw), n: count[i] });
+    if (text.length < 4) return null;
+    // keep the cells near the middle of the text, drop stray ones far away
+    const med = a => { const b = a.slice().sort((p, q) => p - q); return b[Math.floor(b.length / 2)]; };
+    const mx = med(text.map(c => c.x)), my = med(text.map(c => c.y));
+    const dist = text.map(c => Math.hypot(c.x - mx, c.y - my));
+    const limit = Math.max(3 * med(dist), 4);
+    const kept = text.filter((c, i) => dist[i] <= limit);
+    const best = { letters: kept.reduce((a, c) => a + c.n, 0), x0: Math.min(...kept.map(c => c.x)), y0: Math.min(...kept.map(c => c.y)), x1: Math.max(...kept.map(c => c.x)), y1: Math.max(...kept.map(c => c.y)) };
+    if (best.letters < 15) return null;
+    const pad = CELL;
+    const cx = Math.max(0, Math.round((best.x0 * CELL - pad) / k)), cy = Math.max(0, Math.round((best.y0 * CELL - pad) / k));
+    const cw = Math.min(src.width - cx, Math.round(((best.x1 + 1) * CELL + pad) / k) - cx);
+    const ch = Math.min(src.height - cy, Math.round(((best.y1 + 1) * CELL + pad) / k) - cy);
+    return { cx, cy, cw, ch, letters: best.letters };
+  }
+
+  // The photo cut down to the paper, so the tilt is measured on the
+  // receipt's own text and not on the table around it
+  function cropPaper(img) {
+    const MAX = 1500;
+    let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+    const s = Math.min(1, MAX / Math.max(w, h));
+    w = Math.round(w * s); h = Math.round(h * s);
+    const src = document.createElement('canvas');
+    src.width = w; src.height = h;
+    src.getContext('2d').drawImage(img, 0, 0, w, h);
+    const { cx, cy, cw, ch } = findTextBox(src) || findPaperBox(src);
+    const out = document.createElement('canvas');
+    out.width = cw; out.height = ch;
+    out.getContext('2d').drawImage(src, cx, cy, cw, ch, 0, 0, cw, ch);
+    return out;
+  }
+
+  // The access key of a nota fiscal (NF-e/NFC-e): 44 digits in groups of 4,
+  // with a check digit (modulo 11) that tells a correct reading from a
+  // wrong one. It carries the issuer's CNPJ, the month of issue and the
+  // number of the nota.
+  function parseChave(text) {
+    const re = /(?:\d{4}[\s|.-]{0,3}){10}\d{4}/g;
+    let m;
+    while ((m = re.exec(text || '')) !== null) {
+      const digits = m[0].replace(/\D/g, '');
+      if (digits.length !== 44) continue;
+      let sum = 0, w = 2;
+      for (let i = 42; i >= 0; i--) { sum += +digits[i] * w; w = w === 9 ? 2 : w + 1; }
+      const dv = (11 - (sum % 11)) % 11;
+      if (dv > 9 || dv !== +digits[43]) continue;
+      const modelo = digits.slice(20, 22);
+      if (modelo !== '55' && modelo !== '65') continue;
+      const c = digits.slice(6, 20);
+      return {
+        chave: digits,
+        cnpj: `${c.slice(0, 2)}.${c.slice(2, 5)}.${c.slice(5, 8)}/${c.slice(8, 12)}-${c.slice(12)}`,
+        ano: '20' + digits.slice(2, 4), mes: digits.slice(4, 6),
+        numero: String(+digits.slice(25, 34)), modelo
+      };
+    }
+    return null;
+  }
+
+  // The establishment's name: among the lines of every reading, the one the
+  // engine read with confidence that looks like a business name (LTDA,
+  // RESTAURANTE, POSTO...), comes after "COMPRA" (Stone) or sits next to
+  // the CNPJ, and is not an address, a city, a card brand or a label.
+  const ESTAB_SKIP = /VIA\s?CLIENTE|VIA DO CLIENTE|COMPROVANTE|CUPOM|DANFE|NFC-?E|DOCU|AUXILIAR|NOTA FISCAL|FISCAL|ELETR[OÔ]NIC|PROTOCOLO|CONSUMIDOR|CONSULTE|CHAVE|\bCPF\b|\bCEP\b|TELEFONE|\bTEL\b|FONE|CR[EÉ]DITO|D[EÉ]BITO|MASTERCARD|\bVISA\b|\bELO\b|AMEX|HIPERCARD|CART[AÃ]O|\bAUT\b|\bNSU\b|\bDOC\b|TERMINAL|SERIAL|\bAID\b|ARQC|VALOR|TOTAL|SUBTOTAL|TROCO|DESCONTO|\bITE[MN]|\bQTD|\bDATA\b|HORA|EMISS|PARCELA|SENHA|APROVAD|OBRIGADO|VOLTE SEMPRE|EXTRATO|RESUMO|PEDIDO|\bMESA\b|ATENDENTE|OPERADOR|\bOPE\b|CAIXA|\bPDV\b|ORDER|CASHIER|SERVER|RECEIPT|SURVEY|CHECK|GUEST|WELCOME|THANK|CUSTOMER|MERCHANT|\b(?:RUA|R\.|AV\.?|AVENIDA|ALAMEDA|AL\.|PRA[CÇ]A|ROD\.?|RODOVIA|ESTRADA|TRAVESSA|TV\.|LARGO|PKWY|PARKWAY|STREET|SUITE)\b|^\d|\b[A-Z]{3,}\/[A-Z]{2}\b|\b(?:SP|RJ|MG|RS|PR|SC|BA|PE|CE|GO|DF|ES|MT|MS|PA|AM|MA|PB|RN|PI|AL|SE|RO|TO|AC|AP|RR)\b\s*$/;
+  const ESTAB_ACQUIRER = /^(?:STONE|GETNET|CIELO|REDE|PAGSEGURO|PAGBANK|INFINITEPAY|SUMUP|SAFRAPAY|MERCADO PAGO|VERO|BIN|ELAVON|GLOBAL PAYMENTS)\s*$/;
+  const ESTAB_CLUE = /LTDA|\bS\.?A\.?\b|\bS\/A\b|EIRELI|\bME\b|\bEPP\b|COM[EÉ]RCIO|RESTAURANTE|LANCHONETE|LANCHES|\bBAR\b|PIZZARIA|PADARIA|CAFE|CAF[EÉ]|POSTO|FARM[AÁ]CIA|DROGARIA|SUPERMERCADO|MERCADO|VAREJ[AÃ]O|LOJA|CL[IÍ]NICA|HOSPITAL|ESTACIONAMENTO|KITCHEN|GRILL|BURGER|HOTEL|ACADEMIA|PET|ATACAD/;
+  function pickEstablishment(readings) {
+    let best = null;
+    readings.forEach(r => {
+      const lines = r.lines || [];
+      lines.forEach((l, i) => {
+        let text = l.text.toUpperCase();
+        let score = l.conf / 25;                     // 0 a 4
+        if (/CNPJ|\d{2}\.?\d{3}\.?\d{3}\/\d{4}-?\d{2}/.test(text)) {
+          text = text.replace(/\s*[-:]*\s*CNPJ.*$/, '').replace(/\d{2}\.?\d{3}\.?\d{3}\/\d{4}-?\d{2}/, '');
+          score += 1.5;
+        }
+        text = text.replace(/^[^A-ZÀ-Ú0-9]+|[^A-ZÀ-Ú0-9.&)]+$/g, '').replace(/\s+[\d\s#\-]+$/, '');
+        if (/\d+[.,]\d{2}\b/.test(text)) return;   // a price: an item line, not a name
+        const m = text.match(/^(?:COMPRA|ESTABELECIMENTO|LOJA)\s*[:\-]?\s+(.{3,})$/);
+        if (m) { text = m[1]; score += 2; }
+        const letters = (text.match(/[A-ZÀ-Ú]/g) || []).length;
+        if (text.length < 4 || text.length > 48 || letters < 0.6 * text.length) return;
+        const tokens = text.split(/\s+/);
+        const wordy = tokens.filter(t => /^[A-ZÀ-Ú&.'-]{2,}$/.test(t) && /[AEIOUÀ-Ú]/.test(t)).length;
+        if (wordy < Math.max(1, Math.ceil(tokens.length * 0.6))) return;   // mostly garbage
+        if (ESTAB_SKIP.test(text) || ESTAB_ACQUIRER.test(text)) return;
+        if (ESTAB_CLUE.test(text)) score += 2;
+        const near = [lines[i + 1], lines[i + 2], lines[i - 1]].filter(Boolean).map(x => x.text.toUpperCase());
+        if (near.some(x => /CNPJ|\d{2}\.\d{3}\.\d{3}\/\d{4}/.test(x))) score += 1.5;
+        if (i < 8) score += 1;
+        if (tokens.length === 1 && text.length < 6) score -= 1;
+        if (!best || score > best.score) best = { text, score };
+      });
+    });
+    return best ? best.text : '';
+  }
+
+  // Guesses the document type from the words that give it away
+  function detectDocType(readings) {
+    const text = readings.map(r => r.text).join('\n').toUpperCase();
+    let best = 'livre', bestScore = 2;   // fewer than 3 signs: free text
+    ['nfce', 'cartao', 'conta'].forEach(key => {
+      const score = (text.match(DOC_TYPES[key].sinais) || []).length;
+      if (score > bestScore) { best = key; bestScore = score; }
+    });
+    return best;
+  }
+
+  // Among all readings, the value most often read for a field (Data, Hora)
+  function mostCommon(parsed, key, fallback) {
+    const counts = {};
+    parsed.forEach(p => { const f = p.fields.find(x => x.key === key); if (f) counts[f.val] = (counts[f.val] || 0) + 1; });
+    const keys = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+    return keys.length && (!fallback || counts[keys[0]] > counts[fallback]) ? keys[0] : fallback;
+  }
+
+  // The amount two differently processed readings agree on, or null. Two
+  // readings of the same crop at the same size and rotation make the same
+  // mistakes, so they do not confirm each other.
+  function agreedValue(readings, tipo) {
+    const bests = readings.map(r => { const c = parseDocument(r.text, tipo).candidatos[0]; return c ? c.num : null; });
+    for (let i = 0; i < readings.length; i++) {
+      if (bests[i] === null) continue;
+      for (let j = i + 1; j < readings.length; j++) {
+        if (bests[j] !== bests[i]) continue;
+        const a = readings[i], b = readings[j];
+        if (a.size !== b.size || a.bin !== b.bin || a.rot !== b.rot || a.size === undefined) return bests[i];
+      }
+    }
+    return null;
+  }
+
+  // Where the text is, from the word boxes of a reading: the box around the
+  // confident words, ignoring stray ones far from the rest, with a margin.
+  // Returned in the rotated frame of that reading, ready for buildOcrCanvas.
+  function textRegion(reading) {
+    const f = reading.frame;
+    let ws = (reading.words || []).filter(w => w.confidence >= 50 && w.text && w.text.replace(/[^0-9A-Za-zÀ-ÿ]/g, '').length >= 2 && w.bbox);
+    if (ws.length < 3) return null;
+    const cxs = ws.map(w => (w.bbox.x0 + w.bbox.x1) / 2), cys = ws.map(w => (w.bbox.y0 + w.bbox.y1) / 2);
+    const med = a => { const b = a.slice().sort((x, y) => x - y); return b[Math.floor(b.length / 2)]; };
+    const mx = med(cxs), my = med(cys);
+    const dist = ws.map((w, i) => Math.hypot(cxs[i] - mx, cys[i] - my));
+    const limit = Math.max(3 * med(dist), 80);
+    ws = ws.filter((w, i) => dist[i] <= limit);
+    let x0 = Math.min(...ws.map(w => w.bbox.x0)), y0 = Math.min(...ws.map(w => w.bbox.y0));
+    let x1 = Math.max(...ws.map(w => w.bbox.x1)), y1 = Math.max(...ws.map(w => w.bbox.y1));
+    const pad = Math.max(20, 0.08 * Math.max(x1 - x0, y1 - y0));
+    x0 -= pad; y0 -= pad; x1 += pad; y1 += pad;
+    // back to the rotated frame
+    const cx = Math.max(0, Math.round(f.cx + x0 / f.scale)), cy = Math.max(0, Math.round(f.cy + y0 / f.scale));
+    const cw = Math.min(f.width - cx, Math.round((x1 - x0) / f.scale)), ch = Math.min(f.height - cy, Math.round((y1 - y0) / f.scale));
+    if (cw < 40 || ch < 40) return null;
+    return { cx, cy, cw, ch };
+  }
+
+  // How many words the engine read with confidence: the measure of a
+  // reading being right side up
+  function goodWords(reading) {
+    return (reading.words || []).filter(w => w.confidence >= 60 && w.text && w.text.replace(/[^0-9A-Za-zÀ-ÿ]/g, '').length >= 3).length;
+  }
+
+  // Printed text comes out as confident, word-like tokens; handwriting
+  // comes out as low-confidence gibberish. This only labels the photo,
+  // the person confirms.
+  function classifyTextKind(words) {
+    const ws = (words || []).filter(w => w.text && w.text.replace(/[^0-9A-Za-zÀ-ÿ]/g, '').length >= 3);
+    if (ws.length < 5) return { label: 'Pouco texto', good: 0 };
+    const good = ws.filter(w => w.confidence >= 70).length / ws.length;
+    const pct = Math.round(good * 100);
+    if (good >= 0.6) return { label: 'Texto impresso', good: pct };
+    if (good <= 0.3) return { label: 'Parece escrito à mão ou apagado', good: pct };
+    return { label: 'Impresso com partes à mão ou apagadas', good: pct };
+  }
+
+  function formatBRL(num) {
+    return 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // Two papers with the same confirmed amount (and no different date) are
+  // the same purchase on two papers: the card receipt and the nota fiscal
+  function linkSamePurchase(list) {
+    const pairs = [];
+    for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+      const a = list[i].result, b = list[j].result;
+      if (a.valor === null || a.valor !== b.valor) continue;
+      const da = (a.fields.find(f => f.key === 'Data') || {}).val, db = (b.fields.find(f => f.key === 'Data') || {}).val;
+      if (da && db && da !== db) continue;
+      a.fields.push({ key: 'Mesma compra', val: `papel ${j + 1}` });
+      b.fields.push({ key: 'Mesma compra', val: `papel ${i + 1}` });
+      pairs.push([i + 1, j + 1]);
+    }
+    return pairs;
+  }
+
+  // Decides the final result from the readings of one photo: the amount
+  // only when two readings agree, otherwise the candidates are offered as
+  // buttons; every other field comes from the best reading.
+  // Decides the result of one paper from its readings: the amount only
+  // when two readings agree, otherwise the candidates are offered as
+  // buttons; every other field comes from the best reading. Returns the
+  // result object that renderFieldsEditor shows.
+  function buildResult(readings, tipo, codes, tilt) {
+    const def = DOC_TYPES[tipo] || DOC_TYPES.livre;
+    const expectsValue = def.vitais.includes('Valor');
+    const parsed = readings.map(r => parseDocument(r.text, tipo));
+    const valor = expectsValue ? agreedValue(readings, tipo) : null;
+    const candidates = expectsValue && valor === null
+      ? [...new Set(parsed.map(p => p.candidatos[0] ? p.candidatos[0].num : null).filter(n => n !== null))]
+      : [];
+
+    // The other fields come from the reading that found the agreed amount,
+    // or from the most confident one
+    let bestIdx = 0;
+    readings.forEach((r, i) => {
+      const has = valor !== null && parsed[i].candidatos.some(c => c.num === valor);
+      const bestHas = valor !== null && parsed[bestIdx].candidatos.some(c => c.num === valor);
+      if ((has && !bestHas) || (has === bestHas && r.conf > readings[bestIdx].conf)) bestIdx = i;
+    });
+    const fields = parsed[bestIdx].fields.slice();
+    (codes || []).forEach(c => {
+      fields.push(c.format === 'QR_CODE' ? { key: 'QR code', val: c.text } : { key: 'Código de barras', val: `${c.text} (${c.format.replace(/_/g, ' ')})` });
+    });
+    if (tipo !== 'livre') {
+      const chave = readings.map(r => parseChave(r.text)).find(Boolean) || (codes || []).map(c => parseChave(c.text)).find(Boolean);
+      if (chave) {
+        const set = (key, val) => { const f = fields.find(x => x.key === key); if (f) f.val = val; else fields.push({ key, val }); };
+        set('CNPJ', chave.cnpj);
+        set('Nota', chave.numero);
+        set('Chave', chave.chave);
+        // the key says the month of issue: keep a date only if it agrees
+        const ok = d => d && d.slice(3, 5) === chave.mes && d.slice(6) === chave.ano;
+        const f = fields.find(x => x.key === 'Data');
+        if (f && !ok(f.val)) {
+          const alt = parsed.flatMap(p => p.fields.filter(x => x.key === 'Data').map(x => x.val)).find(ok);
+          if (alt) f.val = alt; else fields.splice(fields.indexOf(f), 1);
+        }
+      }
+      const estab = pickEstablishment(readings);
+      const f = fields.find(x => x.key === 'Estabelecimento');
+      if (estab && f) f.val = estab;
+      else if (estab) fields.unshift({ key: 'Estabelecimento', val: estab });
+      else if (f) fields.splice(fields.indexOf(f), 1);
+    }
+    ['Data', 'Hora'].forEach(key => {
+      const f = fields.find(x => x.key === key);
+      const common = mostCommon(parsed, key, f ? f.val : null);
+      if (common && f) f.val = common;
+      else if (common) fields.push({ key, val: common });
+    });
+    if (valor !== null) {
+      const at = fields.findIndex(f => ORDERED_FIELD_KEYS.indexOf(f.key) > ORDERED_FIELD_KEYS.indexOf('Valor'));
+      fields.splice(at === -1 ? fields.length : at, 0, { key: 'Valor', val: formatBRL(valor) });
+    }
+
+    let status;
+    if (!expectsValue) status = { cls: 'neutral', text: 'Texto lido' };
+    else if (valor !== null) status = { cls: 'ok', text: 'Valor confirmado em 2 leituras' };
+    else if (candidates.length) status = { cls: 'warn', text: 'Valor incerto: confira' };
+    else status = { cls: 'bad', text: 'Valor não lido' };
+
+    // Suggest another type when the text looks like something else
+    const detected = detectDocType(readings);
+    const hint = (detected !== tipo && detected !== 'livre') ? detected : null;
+    const textKind = classifyTextKind(readings[bestIdx].words);
+    const far = readings.every(r => goodWords(r) < 8) && readings.some(r => r.region && r.frame && r.region.cw < 0.4 * r.frame.width);
+
+    // Debug info for the console and the test script (testes/medir.js)
+    const allText = readings.map(r => r.text).join('\n').toUpperCase();
+    const sinais = {};
+    ['nfce', 'cartao', 'conta'].forEach(k => { sinais[k] = (allText.match(DOC_TYPES[k].sinais) || []).length; });
+    const debug = {
+      tipo, detected, sinais, valor, candidates, textKind, tilt: tilt, codes: codes || [],
+      readings: readings.map((r, i) => ({ text: r.text, conf: r.conf, words: r.words.length, good: goodWords(r), rot: r.rot, bin: r.bin, size: r.size, region: r.region, candidatos: parsed[i].candidatos }))
+    };
+
+    return { fields, tipo, expectsValue, valor, candidates, status, hint, textKind, far, debug, melhor: bestIdx };
+  }
+
+  function parseDocument(rawText, tipo) {
+    const def = DOC_TYPES[tipo] || DOC_TYPES.livre;
+    const textUpper = (rawText || '').toUpperCase();
+    const lines = textUpper.split('\n').map(l => l.trim()).filter(Boolean);
+
+    const fieldsMap = {};
+
+    // 1. CNPJ: \d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2} -> 00.000.000/0000-00
+    const cnpjMatch = textUpper.match(/\b(\d{2})[\.\s]?(\d{3})[\.\s]?(\d{3})[\/\s]?(\d{4})[-\s]?(\d{2})\b/);
+    if (cnpjMatch) {
+      fieldsMap['CNPJ'] = `${cnpjMatch[1]}.${cnpjMatch[2]}.${cnpjMatch[3]}/${cnpjMatch[4]}-${cnpjMatch[5]}`;
+    }
+
+    // 2. Valor: candidates ranked by findMoney; which one is shown is
+    // decided by agreedValue, when two readings agree
+    const candidatos = def.vitais.includes('Valor') ? findMoney(lines, def) : [];
+
+    // 3. Data: dd/mm/aaaa ou dd/mm/aa, only real dates; the most repeated wins
+    const dates = {};
+    const dateRe = /\b(\d{2})[\/\.-](\d{2})[\/\.-](\d{2,4})\b/g;
+    let dm;
+    while ((dm = dateRe.exec(textUpper)) !== null) {
+      let yr = dm[3];
+      if (yr.length === 3) continue;
+      if (yr.length === 2) yr = '20' + yr;
+      const d = +dm[1], mo = +dm[2], y = +yr;
+      const minYear = def.vitais.includes('Valor') ? 2010 : 1900;
+      if (d < 1 || d > 31 || mo < 1 || mo > 12 || y < minYear || y > new Date().getFullYear() + 1) continue;
+      const key = `${dm[1]}/${dm[2]}/${yr}`;
+      const lineStart = textUpper.lastIndexOf('\n', dm.index) + 1;
+      const line = textUpper.slice(lineStart, textUpper.indexOf('\n', dm.index) === -1 ? undefined : textUpper.indexOf('\n', dm.index));
+      dates[key] = (dates[key] || 0) + (/EMISS|\bDATA\b|COMPRA|VENDA|PAGAMENTO/.test(line) ? 2 : 1);
+    }
+    const dateKeys = Object.keys(dates).sort((a, b) => dates[b] - dates[a]);
+    if (dateKeys.length) fieldsMap['Data'] = dateKeys[0];
+
+    // 4. Hora: hh:mm ou 14H26, preferably on the same line as the date
+    const timeRe = /\b([01]?\d|2[0-3])[:Hh]([0-5]\d)\b/;
+    const dateLine = fieldsMap['Data'] ? lines.find(l => l.includes(fieldsMap['Data'].slice(0, 5))) : null;
+    const timeMatch = (dateLine && dateLine.match(timeRe)) || textUpper.match(timeRe);
+    if (timeMatch) fieldsMap['Hora'] = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+
+    if (tipo === 'cartao') {
+      // 5. Bandeira: MASTERCARD, VISA, ELO, AMEX, AMERICAN EXPRESS, HIPERCARD, DINERS
+      const flags = [
+        ['AMERICAN EXPRESS', 'AMEX'],
+        ['AMEX', 'AMEX'],
+        ['MASTERCARD', 'MASTERCARD'],
+        ['VISA', 'VISA'],
+        ['ELO', 'ELO'],
+        ['HIPERCARD', 'HIPERCARD'],
+        ['DINERS', 'DINERS']
+      ];
+      for (const [pattern, label] of flags) {
+        if (textUpper.includes(pattern)) {
+          fieldsMap['Bandeira'] = label;
+          break;
+        }
+      }
+
+      // 6. Modalidade: Crédito / Débito / Pix / Parcelado
+      let mod = '';
+      if (textUpper.includes('PIX')) {
+        mod = 'Pix';
+      } else if (textUpper.includes('CREDITO') || textUpper.includes('CRÉDITO')) {
+        if (textUpper.includes('PARCELADO') || textUpper.includes('PARC')) {
+          mod = 'Crédito Parcelado';
+        } else {
+          mod = 'Crédito à Vista';
+        }
+      } else if (textUpper.includes('DEBITO') || textUpper.includes('DÉBITO')) {
+        mod = 'Débito';
+      }
+      if (mod) fieldsMap['Modalidade'] = mod;
+
+      // 7. Terminal: (TERMINAL|POS)\s*[:\.]?\s*([A-Z0-9]{4,12})
+      const termMatch = textUpper.match(/(?:TERMINAL|POS)\s*[:\.]?\s*([A-Z0-9]{4,12})/);
+      if (termMatch) fieldsMap['Terminal'] = termMatch[1];
+
+      // 8. NSU/DOC: (NSU|DOC\w*)\s*[:\.]?\s*(\d{4,})
+      const nsuMatch = textUpper.match(/(?:NSU|DOC\w*)\s*[:\.]?\s*(\d{4,})/);
+      if (nsuMatch) fieldsMap['NSU/DOC'] = nsuMatch[1];
+
+      // 9. Autorização: the number after AUT, AUTH or AUTORIZACAO (never "AUTO POSTO")
+      const authMatch = textUpper.match(/\bAUT(?:H|ORIZA[CÇ][AÃ]O)?\s*[:=.]?\s*(\d{5,})/);
+      if (authMatch) fieldsMap['Autorização'] = authMatch[1];
+
+      // 10. AID: \bA0000[0-9A-F]{10,12}\b
+      const aidMatch = textUpper.match(/\b(A0000[0-9A-F]{10,12})\b/);
+      if (aidMatch) fieldsMap['AID'] = aidMatch[1];
+
+      // 11. Via: VIA CLIENTE ou VIA ESTABELECIMENTO
+      if (textUpper.includes('VIA CLIENTE') || textUpper.includes('CLIENTE')) {
+        fieldsMap['Via'] = 'VIA CLIENTE';
+      } else if (textUpper.includes('VIA ESTABELECIMENTO')) {
+        fieldsMap['Via'] = 'VIA ESTABELECIMENTO';
+      } else {
+        fieldsMap['Via'] = 'VIA CLIENTE';
+      }
+    }
+
+    if (tipo !== 'livre') {
+      // 12. Estabelecimento: line after ESTABELECIMENTO, or first containing S.A./LTDA/COMERCIO/RESTAURANTE/POSTO/LOJA
+      let estab = '';
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].includes('ESTABELECIMENTO') && lines[i + 1]) {
+          estab = lines[i + 1];
+          break;
+        }
+      }
+      if (!estab) {
+        for (const line of lines) {
+          if (/(?:S\.A\.|LTDA|COMERCIO|COMÉRCIO|RESTAURANTE|POSTO|LOJA|DROGARIA|FARMACIA|PADARIA)/.test(line)) {
+            estab = line;
+            break;
+          }
+        }
+      }
+      if (!estab && lines.length > 0) {
+        estab = lines[0];
+      }
+      if (estab) {
+        fieldsMap['Estabelecimento'] = estab.replace(/CNPJ.*$/, '').trim();
+      }
+    } else {
+      // Free text: everything that was read, to be kept as is
+      fieldsMap['Texto'] = (rawText || '').trim();
+    }
+
+    // Order fields according to prompt specification
+    const orderedResult = [];
+    ORDERED_FIELD_KEYS.forEach(key => {
+      if (fieldsMap[key]) {
+        orderedResult.push({ key, val: fieldsMap[key] });
+      }
+    });
+
+    // Add any additional extracted fields not in standard order
+    Object.keys(fieldsMap).forEach(key => {
+      if (!ORDERED_FIELD_KEYS.includes(key)) {
+        orderedResult.push({ key, val: fieldsMap[key] });
+      }
+    });
+
+    return { fields: orderedResult, candidatos };
+  }
+
+  // Every money-looking number in the text, ranked. Lines that never hold
+  // the amount (items, taxes, tips, change...) are skipped; "R$" and words
+  // like TOTAL add points; a number seen on more than one line gets a
+  // bonus. Only numbers with "R$" or a keyword can win: a bare number is
+  // never shown as the amount.
+  function findMoney(lines, def) {
+    const seen = {};
+    let lineNo = 0;
+    const add = (num, score) => {
+      const k = num.toFixed(2);
+      if (!seen[k]) seen[k] = { num, score: 0, lines: new Set() };
+      seen[k].score = Math.max(seen[k].score, score);
+      seen[k].lines.add(lineNo);
+    };
+    lines.forEach(raw => {
+      lineNo++;
+      const line = raw.replace(/\b(?:R|H|K|P)\s?[$S5§&]{1,2}(?=\s*[:\d])/g, 'R$');   // R$ mal lido (RS, R5, H$...)
+      if (def.ignorar && def.ignorar.test(line)) return;
+      const clean = line
+        .replace(/\d{2}[.,\s]?\d{3}[.,\s]?\d{3}\s?\/\s?\d{4}\s?-?\s?\d{2}/g, ' ')   // CNPJ
+        .replace(/\d{1,2}\s?[\/-]\s?\d{1,2}\s?[\/-]\s?\d{2,4}/g, ' ')                // datas
+        .replace(/\b\d{1,2}\s?[:H]\s?\d{2}(?:\s?:\s?\d{2})?/g, ' ')                  // horas
+        .replace(/\*+\s?\d+/g, ' ');                                                 // cartão ****9458
+      // "1otal" and "T0TAL" still count as TOTAL
+      const keyword = def.palavras.test(clean.replace(/1/g, 'I').replace(/0/g, 'O'));
+      const re = /((?:R|US)?\$\s?)?(\d{1,3}(?:[.,\s]\d{3})*|\d+)\s?[.,]\s?(\d{2})(?![\d\/])/g;
+      let m, found = false;
+      while ((m = re.exec(clean)) !== null) {
+        const before = clean[m.index - 1];
+        if (!m[1] && before && /[\d.\/-]/.test(before)) continue;
+        const num = parseFloat(m[2].replace(/[.,\s]/g, '') + '.' + m[3]);
+        if (!(num > 0 && num < 100000)) continue;
+        found = true;
+        add(num, (m[1] ? 4 : 0) + (keyword ? 3 : 0));
+      }
+      // "R$35096" (vírgula perdida na leitura): só vale com palavra-chave
+      // na linha, e ainda precisa de outra leitura concordando
+      if (!found && keyword) {
+        const glued = clean.match(/R\$\s?(\d{3,7})(?![\d.,])/);
+        if (glued) add(parseInt(glued[1], 10) / 100, 3);
+      }
+    });
+    return Object.values(seen)
+      .map(c => ({ num: c.num, score: c.score + (c.lines.size > 1 ? 1 : 0) }))
+      .filter(c => c.score >= 3)
+      .sort((a, b) => b.score - a.score || b.num - a.num);
+  }
+
+  /* ---------- daqui para baixo é a costura com o MoneyTRIO ---------- */
+
+  /* Lê um papel (foto inteira ou um papel recortado dela): várias
+     leituras, a busca da posição certa quando a primeira sai ruim.
+     Devolve { readings, tipo, tilt }. É o readPaper do Leitor OCR, com
+     o aviso de progresso como função em vez de um elemento da tela. */
+  async function readPaper(img, worker, tipoPedido, aviso) {
+    let readings = [];
+    let tipo = tipoPedido;
+    const read = async (rot, bin, size, region = null) => {
+      const canvas = buildOcrCanvas(img, rot, bin, size, region);
+      const res = await worker.recognize(canvas);
+      const f = canvas.frame;
+      const lines = (res.data.lines || []).map(l => ({ text: (l.text || '').trim(), conf: l.confidence || 0 })).filter(l => l.text);
+      return { text: res.data.text || '', conf: res.data.confidence || 0, words: res.data.words || [], lines, rot, bin, size, region: { cx: f.cx, cy: f.cy, cw: f.cw, ch: f.ch }, frame: f };
+    };
+    const started = Date.now();
+
+    // (MoneyTRIO) Duas leituras do quadro inteiro antes do motor: a imagem
+    // como veio e a preparada como nos documentos do IR (cinza, contraste
+    // global esticado, ~1800 px). Nos comprovantes de maquininha testados
+    // aqui o valor em negrito só sai assim: o recorte e o ajuste local do
+    // Leitor OCR clareiam a linha do "R$". São leituras independentes
+    // (processamentos diferentes), então duas iguais já confirmam o valor
+    // — e a foto boa termina em poucos segundos.
+    const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+    const quadro = (c, scale) => ({ cx: 0, cy: 0, cw: w0, ch: h0, scale, width: w0, height: h0 });
+    const legado = async (bin) => {
+      let canvas = img;
+      if (bin === 'prep' && typeof DocIR !== 'undefined' && DocIR.preparar) {
+        if (!img.getContext) { canvas = document.createElement('canvas'); canvas.width = w0; canvas.height = h0; canvas.getContext('2d').drawImage(img, 0, 0); }
+        canvas = DocIR.preparar(canvas);
+      }
+      const res = await worker.recognize(canvas);
+      const f = quadro(canvas, canvas.width / w0);
+      const lines = (res.data.lines || []).map(l => ({ text: (l.text || '').trim(), conf: l.confidence || 0 })).filter(l => l.text);
+      return { text: res.data.text || '', conf: res.data.confidence || 0, words: res.data.words || [], lines, rot: 0, bin, size: canvas.width, region: { cx: 0, cy: 0, cw: w0, ch: h0 }, frame: f };
+    };
+    readings.push(await legado('prep'));
+    aviso(tx('Conferindo com outra leitura…', 'Checking with another reading…'));
+    readings.push(await legado('cru'));
+
+    const tipoDe = () => {
+      let t = tipoPedido === 'auto' ? detectDocType(readings) : tipoPedido;
+      // (MoneyTRIO) leitura ruidosa de maquininha dá poucos sinais, mas se tem
+      // "R$" ou cara de maquininha, é dinheiro: vale a regra das duas leituras
+      if (t === 'livre' && tipoPedido === 'auto') {
+        const txt = readings.map(r => r.text).join('\n');
+        if (typeof CupomTexto !== 'undefined' && CupomTexto.ehMaquininha(txt)) t = 'cartao';
+        else if (/R\s?\$\s?\d|TOTAL/i.test(txt)) t = 'nfce';
+      }
+      return t;
+    };
+    const resolvido = () => {
+      tipo = tipoDe();
+      if (DOC_TYPES[tipo].vitais.includes('Valor')) return agreedValue(readings, tipo) !== null;
+      return readings.some(r => goodWords(r) >= 8);   // texto livre: uma leitura legível basta
+    };
+    if (resolvido()) return { readings, tipo, tilt: 0 };
+
+    // Daqui em diante é o Leitor OCR como ele é.
+    // Endireita sozinho: mede a inclinação em vez de supor a foto reta
+    const tilt = estimateAngles(cropPaper(img));
+    let base = tilt[0];
+    aviso(tx('Lendo o papel endireitado…', 'Reading the straightened paper…'));
+    const primeira = await read(base, false, 1000);
+    readings.push(primeira);
+
+    // Foto de lado ou de cabeça para baixo: a leitura vira sopa de letras.
+    // Então lê o quadro inteiro em cada posição, fica com a que o motor lê
+    // com confiança e recorta onde estão as palavras.
+    let region = null;
+    if (goodWords(primeira) < 8) {
+      aviso(tx('Procurando a posição certa…', 'Looking for the right position…'));
+      let best = null;
+      const near = (a, b) => Math.abs(((a - b) % 360 + 540) % 360 - 180) < 6;
+      const probes = [base, base + 180, base + 90, base - 90, 0, 90, 180, 270]
+        .filter((r, i, all) => all.findIndex(q => near(q, r)) === i);
+      const probing = Date.now();
+      for (const rot of probes) {
+        const probe = await read(rot, false, 900, 'ink');
+        const q = goodWords(probe);
+        if (!best || q > best.q) best = { rot, q, probe };
+        if (q >= 12 || Date.now() - probing > 12000) break;
+      }
+      if (best && best.q > goodWords(primeira) + 2) {
+        base = best.rot;
+        region = textRegion(best.probe) || best.probe.region;
+        readings.splice(readings.indexOf(primeira), 1, region === best.probe.region ? best.probe : await read(base, false, 1000, region));
+      }
+    }
+
+    // Mais leituras da mesma foto: como veio, maior, com contraste
+    // reforçado. O valor só vale com duas leituras concordando.
+    const done = p => readings.some(r => r.rot === p[0] && r.bin === p[1] && r.size === p[2]);
+    const passes = [[0, false, 1000, null], [base, false, 1400, region], [base, true, 1000, region]].filter(p => !done(p));
+    let next = 0;
+    while (true) {
+      tipo = tipoDe();
+      const wantsValue = DOC_TYPES[tipo].vitais.includes('Valor');
+      if (!wantsValue && (tipoPedido !== 'auto' || readings.length >= 4)) break;
+      if (wantsValue && agreedValue(readings, tipo) !== null) break;
+      if (next >= passes.length) break;
+      if (Date.now() - started > 25000) break;   // não prender a pessoa
+      aviso(tx('Conferindo com outra leitura…', 'Checking with another reading…'));
+      readings.push(await read(...passes[next++]));
+    }
+    return { readings, tipo, tilt: tilt[0] };
+  }
+
+  const ehPdf = f => /pdf$/i.test(f.type || '') || /\.pdf$/i.test(f.name || '');
+  const ehImagem = f => !!(f && (f.getContext || f.naturalWidth !== undefined || f.width));
+
+  let trab = null;
+  /* o leitor do Tesseract: um só, reaproveitado entre as fotos de um
+     lote (abrir leva uns segundos); fecharLote() desliga */
+  async function trabalhador(aviso, progresso) {
+    if (trab) { trab.progresso = progresso; return trab; }
+    const T = await Ocr.carregar(aviso);
+    aviso(tx('Preparando o leitor de texto…', 'Getting the text reader ready…'));
+    const w = await T.createWorker('por', 1, Object.assign(Ocr.opcoesTrabalhador('por'), {
+      logger: m => { if (m.status === 'recognizing text' && trab && trab.progresso) trab.progresso(m.progress || 0); }
+    }));
+    trab = w; trab.progresso = progresso;
+    return trab;
+  }
+  async function fecharLote() {
+    const w = trab; trab = null;
+    if (w) { try { await w.terminate(); } catch (e) { /* já fechado */ } }
+  }
+
+  /* o texto da leitura que valeu (a que achou o valor, ou a mais confiante) */
+  function textoDe(p) {
+    if (!p || !p.readings || !p.readings.length) return '';
+    const i = p.result && p.result.melhor != null ? p.result.melhor : 0;
+    return (p.readings[i] || p.readings[0]).text || '';
+  }
+
+  /* Lê um papel já em imagem (canvas ou <img>): o caminho do TaxONE,
+     que só quer o texto. Fica com o leitor aberto; feche com fecharLote(). */
+  async function lerPapel(img, op) {
+    op = op || {};
+    const aviso = op.aviso || (() => {});
+    const w = await trabalhador(aviso, op.progresso);
+    const p = await readPaper(img, w, op.tipo || 'auto', aviso);
+    p.codes = [];
+    p.result = buildResult(p.readings, p.tipo, [], p.tilt);
+    return p;
+  }
+
+  /* O caminho inteiro, para a tela de escanear: arquivos (fotos ou PDF)
+     -> fontes (cada foto e cada página) -> papéis (um ou vários por
+     foto, se a pessoa confirmar) -> códigos -> leitura -> resultado.
+     op.codigos(codes) pode devolver um resultado pronto (QR da nota,
+     boleto): aí aquele papel nem passa pelo OCR. */
+  async function ler(arquivos, op) {
+    op = op || {};
+    const aviso = op.aviso || (() => {});
+    const tipoPedido = DOC_TYPES[op.tipo] ? op.tipo : 'auto';
+    const lista = Array.from(arquivos || []).filter(Boolean);
+    const fontes = [];
+    for (let i = 0; i < lista.length; i++) {
+      const f = lista[i];
+      if (ehImagem(f)) { fontes.push({ img: f, nome: lista.length > 1 ? tx('Foto ', 'Photo ') + (i + 1) : '' }); continue; }
+      if (ehPdf(f)) {
+        aviso(tx('Abrindo o PDF…', 'Opening the PDF…'));
+        if (typeof DocIR === 'undefined' || !DocIR.paginasPdf) throw new Error(tx('não consigo abrir PDF aqui', 'cannot open PDF here'));
+        const pags = await DocIR.paginasPdf(f, null, aviso, 10);
+        const prefixo = lista.length > 1 ? tx('Arquivo ', 'File ') + (i + 1) + ', ' : '';
+        pags.forEach((c, k) => fontes.push({ img: c, nome: pags.length > 1 || lista.length > 1 ? prefixo + tx('página ', 'page ') + (k + 1) : '' }));
+        continue;
+      }
+      fontes.push({ img: await loadImageFile(f), nome: lista.length > 1 ? tx('Foto ', 'Photo ') + (i + 1) : '' });
+    }
+
+    // Vários papéis numa foto? Mostra e pergunta antes de ler separado
+    for (const s of fontes) {
+      s.boxes = null;
+      if (tipoPedido === 'livre' || !op.perguntarPapeis) continue;
+      const boxes = findPapers(s.img);
+      if (boxes.length >= 2 && await op.perguntarPapeis(s.img, boxes, s.nome)) s.boxes = boxes;
+    }
+
+    const saida = [];
+    try {
+      for (const s of fontes) {
+        const boxes = s.boxes || [null];
+        for (let i = 0; i < boxes.length; i++) {
+          const nome = s.nome + (s.boxes ? (s.nome ? ' · ' : '') + tx('papel ', 'paper ') + (i + 1) : '');
+          const rot = nome ? nome + ': ' : '';
+          const img = boxes[i] ? cropBox(s.img, boxes[i]) : s.img;
+          aviso(rot + tx('Procurando QR code e código de barras…', 'Looking for QR code and barcode…'));
+          const codes = op.semCodigos ? [] : await readCodes(img);
+          const atalho = op.codigos ? op.codigos(codes) : null;
+          if (atalho) { saida.push({ nome, img, codes, atalho, readings: [], tipo: tipoPedido }); continue; }
+          const w = await trabalhador(aviso, op.progresso);
+          aviso(rot + tx('Lendo o texto…', 'Reading the text…'));
+          const p = await readPaper(img, w, tipoPedido, m => aviso(rot + m));
+          p.nome = nome; p.img = img; p.codes = codes;
+          p.result = buildResult(p.readings, p.tipo, codes, p.tilt);
+          saida.push(p);
+        }
+      }
+    } finally { if (!op.lote) await fecharLote(); }
+    linkSamePurchase(saida.filter(p => p.result).map(p => ({ result: p.result })));
+    return saida;
+  }
+
+  /* O resultado do motor no formato que a tela de escanear já entende
+     (o mesmo de CupomTexto.entender): valor, data ISO, loja, CNPJ,
+     chave, forma de pagamento e cartão lidos do texto, itens. O motor
+     manda no valor, na loja, na data e no CNPJ; o CupomTexto completa
+     com o que ele sabe de maquininha brasileira (cartão, bandeira,
+     banco) e com os itens do cupom. */
+  function paraCupom(p) {
+    const r = p.result;
+    const f = k => { const x = (r.fields || []).find(c => c.key === k); return x ? x.val : null; };
+    const texto = textoDe(p);
+    const base = (typeof CupomTexto !== 'undefined') ? CupomTexto.entender(texto) : { itens: [], somaItens: 0, pagamento: {} };
+    const dBR = f('Data');
+    const iso = dBR && /^\d{2}\/\d{2}\/\d{4}$/.test(dBR) ? dBR.slice(6) + '-' + dBR.slice(3, 5) + '-' + dBR.slice(0, 2) : null;
+    let cnpj = base.cnpj || null;
+    const cf = f('CNPJ');
+    if (cf) {
+      const cru = cf.replace(/\D/g, '');
+      if (!cnpj || cnpj.cru !== cru) cnpj = { cru, fmt: cf, valido: typeof CupomTexto !== 'undefined' ? CupomTexto.cnpjValido(cru) : false };
+    }
+    const chave = f('Chave') && typeof Camera !== 'undefined' ? Camera.lerChave(f('Chave')) : (base.chave || null);
+    const valor = r.valor != null ? r.valor : null;
+    const candidatos = (r.candidates || []).slice();
+    // o total que o CupomTexto achou entra como candidato, nunca como certeza
+    if (valor == null && base.valor && !candidatos.includes(base.valor)) candidatos.push(base.valor);
+    let conf = 0;
+    if (valor != null) conf += 6; else if (candidatos.length) conf += 3;
+    if (iso || base.data) conf += 1;
+    if (cnpj && cnpj.valido) conf += 1;
+    if (f('Estabelecimento') || base.loja) conf += 1;
+    if (base.formaId) conf += 1;
+    const mesma = f('Mesma compra');
+    return Object.assign(base, {
+      tipo: 'cupom',
+      tipoPapel: p.tipo,
+      maquininha: p.tipo === 'cartao' || !!base.maquininha,
+      valor, candidatos, confirmado: valor != null,
+      data: iso || base.data || null,
+      loja: f('Estabelecimento') || base.loja || null,
+      cnpj, chave,
+      hora: f('Hora'), bandeira: f('Bandeira'), modalidade: f('Modalidade'), nota: f('Nota'),
+      textoCru: texto, campos: r.fields || [],
+      codigos: (p.codes || []).map(c => ({ formato: c.format, texto: c.text })),
+      estado: r.status ? r.status.cls : 'neutral',
+      dica: r.hint || null, longe: !!r.far, textoTipo: r.textKind || null,
+      mesmaCompra: mesma ? Number(mesma.replace(/\D/g, '')) : null,
+      nome: p.nome || '',
+      confianca: Math.min(10, conf),
+      confiavel: valor != null || !r.expectsValue
+    });
+  }
+
+  return {
+    BASE, TIPOS: DOC_TYPES, CAMPOS: ORDERED_FIELD_KEYS,
+    ler, lerPapel, textoDe, paraCupom, fecharLote,
+    imagemDe: loadImageFile, findPapers, readCodes, parseDocument, findMoney, parseChave, buildResult, detectDocType
+  };
+})();
 </script>
 <script>
 /* =========================================================
@@ -21888,18 +23218,19 @@ const Assist = {
 
 /* atalhos por tela: ícone, rótulo PT/EN e a ação que já existe */
 const ATALHOS_TELA = {
-  'b-painel':   [{i:'🧾', pt:'Novo lançamento', en:'New entry', a:'b-novo'}, {i:'✨', pt:'Passo a passo', en:'Step-by-step', a:'as-wizard'}],
+  'b-painel':   [{i:'🧾', pt:'Novo lançamento', en:'New entry', a:'b-novo'}, {i:'📷', pt:'Ler comprovante', en:'Read receipt', a:'b-escanear'}, {i:'✨', pt:'Passo a passo', en:'Step-by-step', a:'as-wizard'}],
   'b-lanc':     [{i:'➕', pt:'Novo lançamento', en:'New entry', a:'b-novo'}, {i:'📷', pt:'Escanear', en:'Scan', a:'b-escanear'}, {i:'📄', pt:'Importar', en:'Import', a:'b-importar'}],
   'b-custos':   [{i:'📌', pt:'Novo compromisso', en:'New commitment', a:'rec-novo'}, {i:'✨', pt:'Passo a passo', en:'Step-by-step', a:'as-wizard'}],
   'b-renda':    [{i:'➕', pt:'Nova renda', en:'New income', a:'renda-nova'}, {i:'💰', pt:'Salário', en:'Salary', a:'sal-cad-novo'}, {i:'🛒', pt:'Benefício', en:'Benefit', a:'ben-novo'}],
   'b-desloc':   [{i:'📍', pt:'Novo lugar', en:'New place', a:'lug-novo'}, {i:'🧭', pt:'Novo trajeto', en:'New trip', a:'trj-novo'}],
   'b-precos':   [{i:'🏷️', pt:'Anotar preço', en:'Note a price', a:'b-novo-preco'}],
-  painel:       [{i:'➕', pt:'Novo investimento', en:'New investment', a:'nova'}, {i:'📄', pt:'Importar extrato', en:'Import statement', a:'as-importar'}],
-  carteira:     [{i:'➕', pt:'Novo investimento', en:'New investment', a:'nova'}, {i:'📄', pt:'Importar extrato', en:'Import statement', a:'as-importar'}],
-  movimentos:   [{i:'➕', pt:'Nova movimentação', en:'New transaction', a:'novo-mov'}, {i:'📄', pt:'Importar extrato', en:'Import statement', a:'as-importar'}],
+  painel:       [{i:'📷', pt:'Ler comprovante', en:'Read receipt', a:'as-camera'}, {i:'➕', pt:'Novo investimento', en:'New investment', a:'nova'}, {i:'📄', pt:'Importar extrato', en:'Import statement', a:'as-importar'}],
+  carteira:     [{i:'📷', pt:'Ler comprovante', en:'Read receipt', a:'as-camera'}, {i:'➕', pt:'Novo investimento', en:'New investment', a:'nova'}, {i:'📄', pt:'Importar extrato', en:'Import statement', a:'as-importar'}],
+  movimentos:   [{i:'📷', pt:'Ler comprovante', en:'Read receipt', a:'as-camera'}, {i:'➕', pt:'Nova movimentação', en:'New transaction', a:'novo-mov'}, {i:'📄', pt:'Importar extrato', en:'Import statement', a:'as-importar'}],
   mercado:      [{i:'🔑', pt:'Chaves gratuitas', en:'Free keys', a:'as-chaves'}],
   config:       [{i:'🔑', pt:'Chaves gratuitas', en:'Free keys', a:'as-chaves'}],
-  't-painel':   [{i:'💰', pt:'Cadastrar salário', en:'Add salary', a:'sal-cad-novo'}, {i:'📄', pt:'Importar declaração', en:'Import return', a:'tx-importar'}],
+  't-painel':   [{i:'💰', pt:'Cadastrar salário', en:'Add salary', a:'sal-cad-novo'}, {i:'📎', pt:'Ler documentos', en:'Read documents', a:'doc-ler'}, {i:'📄', pt:'Importar declaração', en:'Import return', a:'tx-importar'}],
+  't-docs':     [{i:'📎', pt:'Ler documentos', en:'Read documents', a:'doc-ler'}, {i:'📷', pt:'Ler comprovante', en:'Read receipt', a:'as-camera'}],
   't-imposto':  [{i:'💰', pt:'Cadastrar salário', en:'Add salary', a:'sal-cad-novo'}],
   't-declaracoes': [{i:'📄', pt:'Importar declaração', en:'Import return', a:'tx-importar'}],
   't-processos': [{i:'📁', pt:'Novo processo', en:'New case', a:'tx-proc-novo'}]
@@ -26570,7 +27901,10 @@ const DocIR = {
     }
     if(/^image\//.test(arquivo.type || '') || /\.(jpe?g|png|webp|heic|bmp|gif)$/i.test(arquivo.name || '')){
       const c = await this.canvasDaImagem(arquivo);
-      let t = await Ocr.texto(this.preparar(c), aviso, {psm: '3', lote: true});
+      /* o Leitor endireita a foto e recorta o papel antes de ler; se vier pouco, o caminho antigo completa */
+      let t = '';
+      if(typeof Leitor !== 'undefined'){ try{ t = Leitor.textoDe(await Leitor.lerPapel(c, {tipo: 'livre', aviso})); }catch(e){ t = ''; } }
+      if(!this.temTexto(t)){ const t1 = await Ocr.texto(this.preparar(c), aviso, {psm: '3', lote: true}); if(t1.length > t.length) t = t1; }
       /* foto de tabela: se veio pouco, tenta o modo de bloco */
       if(!this.temTexto(t)){ const t2 = await Ocr.texto(this.preparar(c), aviso, {psm: '6', lote: true}); if(t2.length > t.length) t = t2; }
       return {texto: t, ocr: true, foto: true};
@@ -26863,7 +28197,8 @@ function viewTDocs(){
   const A = anoDocs();
   const anos = Array.from(new Set([Number(hojeISO().slice(0, 4)) - 1, Number(hojeISO().slice(0, 4)) - 2].concat(DocIR.anos()))).sort((x, y) => y - x).slice(0, 5);
   let h = '<div class="card-head"><h1>' + (pt ? 'Documentos do IR' : 'Tax documents') + '</h1>' +
-    '<div class="f-actions" style="margin:0"><button class="btn primary sm" data-acao="doc-ler">📎 ' + (pt ? 'Ler documentos' : 'Read documents') + '</button></div></div>' +
+    '<div class="f-actions" style="margin:0"><button class="btn sm" data-acao="as-camera">📷 ' + (pt ? 'Ler comprovante' : 'Read receipt') + '</button>' +
+    '<button class="btn primary sm" data-acao="doc-ler">📎 ' + (pt ? 'Ler documentos' : 'Read documents') + '</button></div></div>' +
     '<input type="file" id="docArquivo" accept=".pdf,image/*" multiple class="hidden">' +
     '<div class="chips tx-anos">' + anos.map(a => '<button class="chip' + (a === A ? ' on' : '') + '" data-acao="doc-ano" data-ano="' + a + '">' +
       (pt ? 'Ano ' : 'Year ') + a + '</button>').join('') + '</div>';
@@ -27014,6 +28349,7 @@ async function lerDocumentosIR(arquivos, senhas){
     }
   }
   if(typeof Ocr !== 'undefined' && Ocr.fecharLote) await Ocr.fecharLote();
+  if(typeof Leitor !== 'undefined') await Leitor.fecharLote();
   Store.salvar();
   if(docLote.lidos.length){ const a = {}; docLote.lidos.forEach(d => { a[d.ano] = (a[d.ano] || 0) + 1; }); ST.config.docAno = Number(Object.keys(a).sort((x, y) => a[y] - a[x])[0]); Store.salvar(); }
   mostrarResultadoLote();
@@ -30759,6 +32095,7 @@ function nomeDoAtivo(id){
 function viewMovimentos(){
   const movs = Mov.ordenados();
   let h = '<div class="card-head"><h1>Movimentações</h1><div class="spacer"></div>' +
+    '<button class="btn sm" data-acao="as-camera">📷 Ler comprovante</button>' +
     '<button class="btn sm" data-acao="importar-extrato">📄 Importar extrato</button>' +
     '<button class="btn primary sm" data-acao="novo-mov">+ Novo lançamento</button></div>';
 
@@ -33414,9 +34751,11 @@ function ligarEventos(){
       case 'b-novo': abrirLancamento(null); break;
       case 'b-escanear': abrirEscanear(); break;
       case 'esc-ler-texto': lerTextoEscaneado(); break;
-      case 'esc-limpar': escaneado = null; $('#escResultado').innerHTML = ''; $('#escTexto').value = ''; break;
-      case 'esc-lancar': lancarEscaneado(); break;
-      case 'esc-agendar': agendarEscaneado(); break;
+      case 'esc-limpar': escaneado = null; escaneados = []; $('#escResultado').innerHTML = ''; if($('#escTexto')) $('#escTexto').value = ''; break;
+      case 'esc-lancar': if(d.idx != null && escaneados[d.idx]) escaneado = escaneados[d.idx]; lancarEscaneado(); break;
+      case 'esc-agendar': if(d.idx != null && escaneados[d.idx]) escaneado = escaneados[d.idx]; agendarEscaneado(); break;
+      /* o motor não teve certeza do valor: a pessoa toca no certo */
+      case 'esc-valor': { const r = escaneados[d.idx]; if(r){ r.valor = Number(d.v); r.confiavel = true; r.escolhido = true; r.confianca = Math.max(r.confianca || 0, 7); mostrarLidos(escaneados); } break; }
       case 'b-projetar': bProjetar(); break;
       case 'b-novo-preco': fechar('genModal'); abrirPreco(d.item || ''); break;
       case 'b-filtros': bFiltroAberto = !bFiltroAberto; render(); break;
