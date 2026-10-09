@@ -2,7 +2,7 @@
    Faz o site abrir sem internet e permite instalar como app.
    AO PUBLICAR UMA VERSÃO NOVA, troque o número abaixo (v1 -> v2).
    É o que avisa os celulares de que existe conteúdo novo. */
-var VERSAO = 'v23';
+var VERSAO = 'v24';
 var CACHE = 'moneytrio-' + VERSAO;
 /* O motor de leitura de fotos (assets/ocr: Tesseract, português, ZXing,
    jsQR — uns 10 MB) tem cache próprio, que NÃO muda a cada versão do app:
