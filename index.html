@@ -8,6 +8,8 @@
 <meta name="theme-color" content="#0d1117">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
 <link rel="manifest" href="manifest.json">
+<!-- interruptores do RootifyONE (Controle dos apps): antes do código do app -->
+<script src="recursos.js" data-app="moneytrio"></script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
@@ -2467,7 +2469,7 @@ html.sem-animacao .assistone-bt{animation:none; transition:none}
 </div>
 
 <!-- ======= ASSIST ONE: o personagem no canto ======= -->
-<div class="assistone" id="assistOne">
+<div class="assistone" id="assistOne" data-recurso="assistone">
   <div class="assistone-balao hidden" id="assistBalao" role="dialog" aria-label="AssistONE"></div>
   <button type="button" class="assistone-bt" id="assistFab" aria-label="AssistONE — ajuda e assistente"
           aria-haspopup="dialog" aria-expanded="false" aria-controls="assistBalao">
@@ -2480,6 +2482,9 @@ html.sem-animacao .assistone-bt{animation:none; transition:none}
 <button type="button" id="fundoPill" class="fundo-pill hidden" role="status" aria-live="polite"></button>
 
 <script>
+/* Interruptores do RootifyONE (Controle dos apps), lidos pelo recursos.js.
+   true quando o dono desligou o recurso; sem recursos.js ou sem arquivo, vale o normal. */
+function desligadoPelaAdm(id){ return !!(window.SolverRecursos && SolverRecursos.ligado(id, true) === false); }
 /* =========================================================
    MoneyTRIO — idioma, datas e números
    Um dicionário só, com as duas línguas lado a lado. Quem
@@ -2871,6 +2876,11 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.27 */
+  'Obedece aos interruptores do RootifyONE':'Follows the RootifyONE switches',
+  'O dono liga e desliga recursos de todos os apps no RootifyONE (Controle dos apps), e o MoneyTRIO agora obedece: o AssistONE (o personagem e o balão), as dicas de cada tela no balão, os anúncios (a faixa e o pop-up), a IA (o botão ✨ IA, a leitura de foto pela IA e a janela de perguntas) e a voz (ouvir e ditar). Desligado lá, some aqui; em ⚙ Configurações o AssistONE mostra "Desligado pela administração da SolverONE."':'The owner turns features of every app on and off in RootifyONE (App control), and MoneyTRIO now follows it: AssistONE (the character and the bubble), the tips for each screen in the bubble, the ads (the strip and the pop-up), the AI (the ✨ AI button, reading photos with the AI and the question window) and voice (listen and dictate). Turned off there, it disappears here; in ⚙ Settings, AssistONE shows "Turned off by the SolverONE administration."',
+  'A moeda base de quem começa do zero também vem de lá (BRL, USD ou EUR). Quem já escolheu a moeda ou já lançou alguma coisa continua com a sua.':'The base currency for someone starting from scratch also comes from there (BRL, USD or EUR). Whoever already picked a currency or already entered something keeps theirs.',
+  'Sem internet, vale a última escolha recebida; sem nenhuma, tudo fica como sempre foi. Nenhum dado seu é enviado: o app só lê dois arquivos públicos.':'Offline, the last choice received applies; with none, everything stays as it always was. None of your data is sent: the app only reads two public files.',
   /* 3.26 */
   'Leitura de foto que não morre ao sair da tela':'Photo reading that survives leaving the screen',
   'Enquanto o app lê uma foto, a tela do celular não apaga (Wake Lock) e o navegador pergunta antes de fechar ou recarregar a página. A janela diz: pode ir para outra tela, a leitura continua.':'While the app reads a photo, the phone screen stays on (Wake Lock) and the browser asks before closing or reloading the page. The window says: you can go to another screen, the reading continues.',
@@ -2928,6 +2938,7 @@ const FRASES_EN = {
   'Menu':'Menu',
   'Avisos legais e privacidade':'Legal notices and privacy',
   'O personagem de ajuda no canto da tela.':'The help character in the corner of the screen.',
+  'Desligado pela administração da SolverONE.':'Turned off by the SolverONE administration.',
   'Abrir o AssistONE':'Open AssistONE',
   'Recomeçar o passo a passo e as dicas':'Restart the walkthrough and tips',
   '% da carteira':'% of portfolio',
@@ -7520,12 +7531,18 @@ const CHAVE_CK   = 'ifm_bkp';
 const ARQ_DRIVE  = 'investifyone-carteira.json';
 
 /* ---------- estado padrão ---------- */
+/* moeda de quem começa do zero: o RootifyONE pode trocar (comportamento "moeda.padrao") */
+function moedaPadrao(){
+  const m = String(window.SolverRecursos ? SolverRecursos.valor('moeda.padrao', 'BRL') : 'BRL').toUpperCase();
+  return ['BRL','USD','EUR'].indexOf(m) >= 0 ? m : 'BRL';
+}
+
 function estadoPadrao(){
   return {
     v: 1,
     criadoEm: new Date().toISOString(),
     atualizadoEm: new Date().toISOString(),
-    moedaBase: 'BRL',
+    moedaBase: moedaPadrao(),
     nivel: 'iniciante',
     tema: 'dark',
     fundo: true,
@@ -10637,10 +10654,10 @@ const Voz = {
   aoOuvir: null,
 
   /* ---------- o que este aparelho consegue ---------- */
-  podeLer(){ return typeof window !== 'undefined' && 'speechSynthesis' in window; },
+  podeLer(){ return typeof window !== 'undefined' && 'speechSynthesis' in window && !desligadoPelaAdm('voz'); },
 
   podeOuvir(){
-    return typeof window !== 'undefined' &&
+    return typeof window !== 'undefined' && !desligadoPelaAdm('voz') &&
            !!(window.SpeechRecognition || window.webkitSpeechRecognition);
   },
 
@@ -13517,6 +13534,11 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.27', d:'2026-10-10', t:'Obedece aos interruptores do RootifyONE', itens:[
+    'O dono liga e desliga recursos de todos os apps no RootifyONE (Controle dos apps), e o MoneyTRIO agora obedece: o AssistONE (o personagem e o balão), as dicas de cada tela no balão, os anúncios (a faixa e o pop-up), a IA (o botão ✨ IA, a leitura de foto pela IA e a janela de perguntas) e a voz (ouvir e ditar). Desligado lá, some aqui; em ⚙ Configurações o AssistONE mostra "Desligado pela administração da SolverONE."',
+    'A moeda base de quem começa do zero também vem de lá (BRL, USD ou EUR). Quem já escolheu a moeda ou já lançou alguma coisa continua com a sua.',
+    'Sem internet, vale a última escolha recebida; sem nenhuma, tudo fica como sempre foi. Nenhum dado seu é enviado: o app só lê dois arquivos públicos.'
+  ]},
   {v:'3.26', d:'2026-10-09', t:'Leitura de foto que não morre ao sair da tela', itens:[
     'Enquanto o app lê uma foto, a tela do celular não apaga (Wake Lock) e o navegador pergunta antes de fechar ou recarregar a página. A janela diz: pode ir para outra tela, a leitura continua.',
     'Uma pílula fixa no canto ("⏳ Lendo comprovante… 40%") acompanha você pelo app; quando termina, vira "✓ Comprovante lido — toque para ver" e traz de volta a tela com o resultado. Fechar a janela no meio não cancela nada.',
@@ -20967,6 +20989,7 @@ const Acesso = {
   /* a UMA função por onde passa toda pergunta de permissão. Hoje responde
      com a tabela local; com servidor, pergunta a ele e nada mais muda. */
   pode(servico){
+    if(servico === 'ia' && desligadoPelaAdm('ia')) return false;   /* RootifyONE desligou a IA */
     const tabela = Object.assign({}, SERVICOS_PADRAO, (typeof ST !== 'undefined' && ST.config && ST.config.servicos) || {});
     const exigido = tabela[servico] || 'visitante';
     const meu = this.nivelEfetivo();
@@ -21096,7 +21119,7 @@ const Anuncio = {
     }catch(e){ /* sem arquivo, sem problema */ }
   },
 
-  mostrar(){ return Acesso.mostraAnuncio() && !this.fechadoNaSessao; },
+  mostrar(){ return Acesso.mostraAnuncio() && !this.fechadoNaSessao && !desligadoPelaAdm('anuncios'); },
 
   /* a campanha do anunciante local tem prioridade sobre a lista */
   atual(){
@@ -21124,9 +21147,9 @@ const Anuncio = {
     const podeIA = (typeof Acesso !== 'undefined') && Acesso.pode('ia');
     /* o PT|EN saiu daqui: idioma fica em 👤 → Configurações → Idioma e formatos (diretriz do topo) */
     return '<div class="faixa' + (comAnuncio ? ' com-anuncio' : '') + '">' +
-      '<button class="ia-bt' + (podeIA ? '' : ' ia-off') + '" data-acao="ia-abrir" title="' +
+      '<button class="ia-bt' + (podeIA ? '' : ' ia-off') + '" data-acao="ia-abrir" data-recurso="ia" title="' +
         esc(I18n.atual === 'pt' ? 'Perguntar à IA sobre o que está na tela' : 'Ask the AI about what is on screen') + '">✨ IA</button>' +
-      (comAnuncio ? '<div class="anuncio" id="anuncio">' + this.htmlAnuncio() +
+      (comAnuncio ? '<div class="anuncio" id="anuncio" data-recurso="anuncios">' + this.htmlAnuncio() +
         '<button class="anuncio-x" data-acao="fechar-anuncio" aria-label="' + esc(t('ad.fechar')) + '">×</button></div>' : '') +
       (Acesso.verComo ? '<span class="tarja-teste">' + esc(I18n.atual === 'pt' ? 'modo de teste: vendo como ' : 'test mode: viewing as ') +
         esc(t((ACESSOS[Acesso.verComo] || {}).t || 'ac.visitante')) + ' <button class="linkinho" data-acao="ver-como-sair">×</button></span>' : '') +
@@ -21162,7 +21185,7 @@ const Anuncio = {
      3, 2, 1 antes do × aparecer. Não repete o mesmo em seguida,
      não aparece sobre tela cheia nem sobre a tela de senha. */
   popup(quando){
-    if(!Acesso.mostraAnuncio()) return;
+    if(!Acesso.mostraAnuncio() || desligadoPelaAdm('anuncios')) return;
     const cheia = document.fullscreenElement || (document.querySelector('.lock-wrap') && !document.querySelector('.lock-wrap').classList.contains('hidden') && quando !== 'antes');
     if(cheia) return;
     const candidatos = this.lista.filter(a => a.id !== this.ultimoPopup);
@@ -21172,6 +21195,7 @@ const Anuncio = {
     const L = I18n.atual === 'en' ? 'en' : 'pt';
     const caixa = document.createElement('div');
     caixa.className = 'popup-an';
+    caixa.setAttribute('data-recurso', 'anuncios');
     caixa.innerHTML = '<div class="popup-an-c">' +
       '<span class="anuncio-tag">' + (L === 'pt' ? 'ANÚNCIO' : 'AD') + '</span>' +
       '<div class="popup-an-ico">' + esc(a.ico || '✨') + '</div>' +
@@ -23178,6 +23202,7 @@ const UX = {
       const mic = document.createElement('button');
       mic.type = 'button';
       mic.className = 'val-bt voz-mic mic-campo';
+      mic.setAttribute('data-recurso', 'voz');
       mic.title = pt ? 'falar o valor' : 'say the amount';
       mic.setAttribute('aria-label', mic.title);
       mic.textContent = '🎤';
@@ -23234,6 +23259,7 @@ const UX = {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'voz-ler';
+      b.setAttribute('data-recurso', 'voz');
       b.title = pt ? 'ouvir este texto' : 'listen to this text';
       b.setAttribute('aria-label', b.title);
       b.textContent = '🔊';
@@ -23637,7 +23663,7 @@ const ATALHOS_TELA = {
 const AssistOne = {
   aberto: false,
 
-  ligado(){ return !(typeof ST !== 'undefined' && ST.config && ST.config.assistOne === false); },
+  ligado(){ return !desligadoPelaAdm('assistone') && !(typeof ST !== 'undefined' && ST.config && ST.config.assistOne === false); },
 
   /* mostra ou esconde o personagem conforme a preferência */
   aplicar(){
@@ -23715,8 +23741,10 @@ const AssistOne = {
            '<p class="small muted" style="margin:0 2px 10px">' + de('Eu explico cada tela e abro os atalhos. Fico aqui no canto, sem atrapalhar.',
                                                                      'I explain each screen and open the shortcuts. I stay here in the corner, out of the way.') + '</p>';
     }
+    /* a dica desta tela some quando o RootifyONE desliga "assistone.dicas" */
+    const dicas = !(window.SolverRecursos && SolverRecursos.valor('assistone.dicas', true) === false);
     h += '<div class="aone-tela"><b>📍 ' + de('Você está em ', 'You are in ') + esc(titulo) + '</b>' +
-         (a ? '<p>' + esc(a.o) + '</p>' : '');
+         (a && dicas ? '<p>' + esc(a.o) + '</p>' : '');
     const atalhos = ATALHOS_TELA[v] || [];
     if(atalhos.length) h += '<div class="aone-atalhos">' + atalhos.map(x =>
       '<button class="btn sm" data-acao="' + x.a + '">' + x.i + ' ' + esc(x[L]) + '</button>').join('') + '</div>';
@@ -29167,6 +29195,7 @@ const IA = {
   },
   async lerFoto(fonte, aviso){
     const pt = I18n.atual === 'pt';
+    if(desligadoPelaAdm('ia')) throw new Error(pt ? 'Desligado pela administração da SolverONE.' : 'Turned off by the SolverONE administration.');
     const p0 = this.provedor();
     const fila = (p0 ? [p0] : []).concat(this.comChave().filter(k => k !== p0)).filter(k => PROVEDORES_IA[k].perguntarFoto);
     if(!fila.length) throw new Error(pt ? 'Cole uma chave primeiro.' : 'Paste a key first.');
@@ -29199,6 +29228,7 @@ const IA = {
   },
 
   async perguntar(texto){
+    if(desligadoPelaAdm('ia')) throw new Error(I18n.atual === 'pt' ? 'Desligado pela administração da SolverONE.' : 'Turned off by the SolverONE administration.');
     const p = this.provedor();
     if(!p || !this.chave()) throw new Error(I18n.atual === 'pt' ? 'Cole uma chave primeiro.' : 'Paste a key first.');
     const pergunta = (I18n.atual === 'pt' ? 'Contexto da tela:\n' : 'Screen context:\n') + this.contexto() +
@@ -29232,6 +29262,11 @@ const IA = {
     const p = this.provedor();
     let h = '';
 
+    if(desligadoPelaAdm('ia')){
+      $('#genTitle').textContent = '✨ IA';
+      $('#genBody').innerHTML = '<div class="aviso-box"><b>' + (pt ? 'Desligado pela administração da SolverONE.' : 'Turned off by the SolverONE administration.') + '</b></div>';
+      return;
+    }
     if(!Acesso.pode('ia')){
       h += '<div class="aviso-box"><b>' + (pt ? 'A IA é para membros.' : 'The AI is for members.') + '</b>' +
         '<p class="small" style="margin:6px 0 0">' + (pt
@@ -29276,7 +29311,7 @@ const IA = {
         : 'E.g.: what does this return in my pocket mean? Why did the month end negative?') + '"></textarea>' +
       /* falar a pergunta em vez de digitar */
       (typeof Voz !== 'undefined' && Voz.podeOuvir()
-        ? '<button class="btn voz-mic" id="iaMic" title="' +
+        ? '<button class="btn voz-mic" id="iaMic" data-recurso="voz" title="' +
           esc(pt ? 'falar a pergunta' : 'speak the question') + '" aria-label="' +
           esc(pt ? 'falar a pergunta' : 'speak the question') + '">🎤</button>' : '') +
       '<button class="btn primary" data-acao="ia-perguntar"' + (this.ocupado ? ' disabled' : '') + '>' +
@@ -32987,11 +33022,13 @@ function viewConfig(){
           null, 'Tira o balanço do AssistONE e os movimentos de abrir e fechar.') +
     campo('Fundo decorativo', selectHTML('cFundo', [['sim','Ligado'],['nao','Desligado']], ST.fundo === false ? 'nao' : 'sim'),
           null, 'A arte de gráficos atrás das telas.') +
-    campo('AssistONE', selectHTML('cAssist', [['sim','Ligado'],['nao','Desligado']], cfg.assistOne === false ? 'nao' : 'sim'),
+    (desligadoPelaAdm('assistone')
+      ? campo('AssistONE', '<p class="small muted aone-adm">Desligado pela administração da SolverONE.</p>', null, 'O personagem de ajuda no canto da tela.')
+      : campo('AssistONE', selectHTML('cAssist', [['sim','Ligado'],['nao','Desligado']], cfg.assistOne === false ? 'nao' : 'sim'),
           null, 'O personagem de ajuda no canto da tela.') +
     '<div class="row" style="margin-bottom:12px">' +
       '<button class="btn sm" data-acao="aone-abrir">Abrir o AssistONE</button>' +
-      '<button class="btn sm" data-acao="aone-recomecar">Recomeçar o passo a passo e as dicas</button></div>' +
+      '<button class="btn sm" data-acao="aone-recomecar">Recomeçar o passo a passo e as dicas</button></div>') +
     campo('Atualizar cotações a cada', selectHTML('cAuto', [[5,'5 minutos'],[10,'10 minutos'],[30,'30 minutos'],[0,'só quando eu clicar']], String(cfg.autoRefreshMin))) +
   '</div></div>';
 
@@ -34522,7 +34559,7 @@ function ligarCamposDaView(){
   }
   if(viewAtual === 'config'){
     const liga = (id, fn) => { const e = $('#' + id); if(e) e.addEventListener('change', () => fn(e)); };
-    liga('cMoeda', e => { ST.moedaBase = e.value; Store.salvar(); atualizarCotacoes(true); render(); });
+    liga('cMoeda', e => { ST.moedaBase = e.value; ST.config.moedaEscolhida = true; Store.salvar(); atualizarCotacoes(true); render(); });
     liga('cNivel', e => { ST.nivel = e.value; sincronizarNivel(); Store.salvar(); render(); });
     liga('cTema',  e => { ST.tema = e.value; aplicarTema(); Store.salvar(); });
     liga('cLetra', e => { ST.config.letra = e.value; aplicarTema(); Store.salvar(); });
@@ -35968,6 +36005,19 @@ function comecarApp(r){
   ligarIdioma();
   ligarAssist();
   AssistOne.ligar();
+  if(window.SolverRecursos) SolverRecursos.aoMudar(() => {
+    try{
+      AssistOne.aplicar();
+      if(desligadoPelaAdm('anuncios')) document.querySelectorAll('.popup-an').forEach(x => x.remove());
+      if(desligadoPelaAdm('ia') && $('#genModal') && !$('#genModal').classList.contains('hidden') && $('#iaPergunta')) IA.render();
+      /* quem ainda não lançou nada nem escolheu a moeda recebe a moeda padrão nova */
+      const m = moedaPadrao();
+      const trocaMoeda = !ST.config.moedaEscolhida && ST.moedaBase !== m && !ST.posicoes.length && !ST.gastos.length && !ST.movimentos.length;
+      if(trocaMoeda){ ST.moedaBase = m; Store.salvar(); }
+      Anuncio.render();
+      if(viewAtual === 'config' || trocaMoeda) render();
+    }catch(e){}
+  });
   PWA.preparar();
   ligarAvisos();
   Assist.primeiraVez();

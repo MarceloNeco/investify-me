@@ -1,6 +1,6 @@
 # MoneyTRIO — como o app é feito por dentro
 
-Versão do documento: 3.5 · Outubro de 2026
+Versão do documento: 3.6 · Outubro de 2026
 
 Este arquivo é para quem for mexer no código depois — inclusive uma IA
 a quem você peça "muda tal coisa no MoneyTRIO". Leia as três primeiras
@@ -35,8 +35,9 @@ internet (cotação, notícia, IA, Google Drive).
 | Não suba foto de comprovante, cupom ou documento (nem pasta de testes com fotos) | tem CNPJ, final de cartão, nome de loja, valor — dado pessoal; as fotos de teste ficam fora do repositório |
 | Não mande a foto de um comprovante para fora do aparelho sem a pessoa ligar isso | a IA só recebe a foto com a chavinha "Ler com a IA" ligada ou pelo botão "Tentar com a IA"; a busca pelo CNPJ manda só os 14 números |
 
-**Vão para o GitHub exatamente 5 arquivos e uma pasta:**
-`index.html`, `manifest.json`, `sw.js`, `icone-192.png`, `icone-512.png`
+**Vão para o GitHub exatamente 7 arquivos e uma pasta:**
+`index.html`, `manifest.json`, `sw.js`, `icone-192.png`, `icone-512.png`,
+`recursos.js` e `recursos-do-app.json` (os interruptores do RootifyONE, §15)
 e a pasta `assets/ocr/` (o motor de leitura de fotos: Tesseract, português,
 ZXing, jsQR — uns 10 MB, copiados do app Leitor OCR). Mais nada.
 
@@ -160,6 +161,7 @@ dele **depois** dos que ele usa e **antes** de `app.js`.
 | `assist.js` | a central de ajuda (`Assist`: ajuda desta tela, tutorial, "começar", busca) e o **AssistONE** (`AssistOne`): o personagem redondo no canto da tela, com o balão "Você está em…" + atalhos por tela (`ATALHOS_TELA`, só `data-acao` que já existem). Liga/desliga em `ST.config.assistOne` |
 | `ux.js` | sanfona das Configurações, dobra de texto longo, régua de somar/subtrair nos campos de dinheiro e botão de ouvir — tudo aplicado depois de cada render |
 | `versao.js` | número da versão e a lista de mudanças |
+| `recursos.js` (na raiz, fora do arquivo único) | os interruptores do RootifyONE (§15). Cópia avulsa: o master fica no repositório `rootify-one`; **não edite aqui**, copie de lá quando mudar. Carregado no `<head>` do `index.html`, antes de todo o código do app |
 
 ---
 
@@ -247,8 +249,9 @@ Acessos: `glosTexto(g, nivel)`, `glosTitulo(g)`, `coachTexto(m, nivel)`,
    Quem quiser liga em Configurações, avisado do que isso significa.
 
 O que o app busca na internet, e só isso: cotação, série histórica,
-manchete, e — se a pessoa configurar — a pergunta da IA e o backup no
-Drive. Não existe nenhuma telemetria, nenhum analytics, nenhum pixel.
+manchete, os dois arquivos públicos de interruptores do RootifyONE (§15,
+só leitura, nada da pessoa vai junto) e — se a pessoa configurar — a
+pergunta da IA e o backup no Drive. Não existe nenhuma telemetria, nenhum analytics, nenhum pixel.
 
 ---
 
@@ -277,6 +280,7 @@ app apagaria os dados do outro.
 | `moneytrio.cfg.abertos.v1` | quais blocos das Configurações ficam abertos |
 | (dentro de `investifyme.dados.v1`) | `bancos`, `cartoes`, `beneficios`, `lugares`, `trajetos` e `config.veiculo` moram no mesmo lugar da carteira, então entram no backup e no Drive junto com o resto |
 | `moneytrio.bfiltro.v1` | o período que a pessoa deixou no filtro do BudgetONE (padrão: últimos 12 meses) |
+| `dgo:moneytrio:central:recursos/…` | a última cópia dos interruptores do RootifyONE (gravada pelo `recursos.js`, §15) |
 | `dgo:global:ia` | **compartilhada de propósito** — a chave de IA vale para todos os apps da família |
 | `ifm_bkp` (cookie) | espelho da carteira, **desligado de fábrica** |
 
@@ -308,6 +312,7 @@ valer em todos os apps.
 | o topo padrão (☰, nome do sub-app ▾, 🔍 📥 👤) | `index.html` (`<header class="topbar">`) e `app.js` — `menuDeApps` (Início + outros sub-apps), `identidade`/`htmlPerfilMenu`/`acaoPerfil` (menu do 👤), `inboxItens`/`abrirInbox` (📥), `ligarTopoPadrao` |
 | o personagem do AssistONE (`ajuda-botao.png`, o mesmo em todos os apps) | `index.html` — `#assistFab` e o CSS `.assistone-bt` (fundo escuro sempre, anel dourado, balanço `aoneFlutua` 3,2 s); o arquivo entra no cache do `sw.js` |
 | a versão do cache do PWA | `pwa/sw.js`, linha `var VERSAO` |
+| o que o app obedece do RootifyONE (interruptores) | `data-recurso="id"` no elemento + `desligadoPelaAdm('id')` no código + o id em `recursos-do-app.json` (§15) |
 | a lista de bancos ou de bandeiras | `bancos.js` — `BANCOS_BR` e `BANDEIRAS` (cor, sigla, código, CNPJ) |
 | as formas de pagamento | `bancos.js` — `FORMAS_PGTO`; o campo `pede` diz se ela pergunta banco, cartão ou nada |
 | as pistas que o OCR usa para achar banco e bandeira | `bancos.js` — `PISTAS_BANCO`, dentro de `lerDoTexto` |
@@ -327,7 +332,7 @@ valer em todos os apps.
    o motor baixa na primeira leitura e fica. Só troque esse número se
    trocar os arquivos do motor.
 3. Rode `python3 gerar/gerar-arquivo-unico.py`.
-4. Suba **só** os 5 arquivos da §2.
+4. Suba **só** os arquivos e a pasta da §2.
 
 ---
 
@@ -417,3 +422,44 @@ node tfinal2.mjs
 ```
 
 Um teste que termina com `"erros": []` passou.
+
+---
+
+## 15. Interruptores do RootifyONE (Controle dos apps)
+
+Desde a 3.27 (10/Out/2026). No RootifyONE o dono liga e desliga recursos de cada app e publica
+dois arquivos públicos: `solverone-dados/recursos/global.json` (vale para todos) e
+`solverone-dados/recursos/moneytrio.json` (o app vence o global). O id de dados deste app é
+**`moneytrio`** (não o nome do repositório).
+
+- **Quem lê:** `recursos.js`, carregado no `<head>` com `data-app="moneytrio"`. Rede primeiro
+  (4 s), senão a última cópia guardada, senão o padrão do código (tudo ligado). Relê ao voltar
+  para o app, no máximo a cada 5 min. Nunca derruba o app. O `sw.js` guarda o `recursos.js` e
+  **não** guarda os arquivos de `solverone-dados/` (eles vão sempre à rede; a reserva sem
+  internet é a cópia do próprio `recursos.js`).
+- **Como obedecer:** o elemento ganha `data-recurso="id"` (some sozinho pelo CSS) e o código
+  pergunta `desligadoPelaAdm('id')` (função no primeiro `<script>` do app, em cima de
+  `SolverRecursos.ligado`). Comportamentos com valor: `SolverRecursos.valor('id', padrão)`.
+  Quando chega arquivo novo, o `SolverRecursos.aoMudar` registrado em `comecarApp()` redesenha.
+
+| Id | Tipo | O que acontece no MoneyTRIO |
+|---|---|---|
+| `assistone` | recurso | o personagem e o balão somem e não abrem (`AssistOne.ligado()`); em ⚙ → Preferências o seletor vira "Desligado pela administração da SolverONE." / "Turned off by the SolverONE administration." |
+| `assistone.dicas` | comportamento sim/não | `false` tira a dica da tela (o texto de `AJUDA_TELAS`) do balão; "Você está em…" e os atalhos ficam |
+| `anuncios` | recurso | a faixa de anúncio do topo e o pop-up somem (`Anuncio.mostrar()` e `Anuncio.popup()`); a tabela de níveis do administrador não muda |
+| `ia` | recurso | `Acesso.pode('ia')` responde não: some o ✨ IA, a chavinha "Ler com a IA" e o "Tentar com a IA"; a janela da IA, `IA.perguntar` e `IA.lerFoto` dizem "Desligado pela administração da SolverONE." |
+| `voz` | recurso | `Voz.podeLer()` / `Voz.podeOuvir()` respondem não: somem o 🔊 e os 🎤 |
+| `moeda.padrao` | comportamento `BRL`/`USD`/`EUR` | moeda base de quem começa do zero (`estadoPadrao()`); quem já escolheu a moeda em ⚙ (`config.moedaEscolhida`) ou já lançou algo fica com a sua |
+
+**Ficaram de fora (de propósito):** `open-finance` (o app não tem Open Finance), `ocr` (a
+leitura de foto tem entradas em muitas telas — BudgetONE, InvestifyONE, TaxONE — e precisa de um
+portão único antes), `offline` (desligar o modo sem internet mexe no service worker, não é
+simples nem seguro), `telemetria` (o app não tem telemetria nenhuma, §8).
+
+**Ligar um id novo** = `data-recurso`/`desligadoPelaAdm` no código **e** o id em
+`recursos-do-app.json` na mesma versão (o RootifyONE mostra "quem obedece" a partir dele).
+Interruptor não é trava de segurança: quem mexe no navegador religa no aparelho dele.
+
+**Pendências registradas aqui** (o app ainda não tem `PENDENCIAS.md`; a diretriz manda perguntar
+ao dono antes de criar): portão único para o `ocr`; decidir se `offline` deve existir neste app;
+`MoneyTRIO-local.html` (cópia local antiga) não recebeu o `recursos.js`.
