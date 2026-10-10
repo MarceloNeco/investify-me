@@ -2,7 +2,7 @@
    Faz o site abrir sem internet e permite instalar como app.
    AO PUBLICAR UMA VERSÃO NOVA, troque o número abaixo (v1 -> v2).
    É o que avisa os celulares de que existe conteúdo novo. */
-var VERSAO = 'v26';
+var VERSAO = 'v27';
 var CACHE = 'moneytrio-' + VERSAO;
 /* O motor de leitura de fotos (assets/ocr: Tesseract, português, ZXing,
    jsQR — uns 10 MB) tem cache próprio, que NÃO muda a cada versão do app:
@@ -12,7 +12,7 @@ var CACHE_OCR = 'moneytrio-ocr-1';
 self.addEventListener('install', function (e) {
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(function (c) {
-    return c.addAll(['./', './index.html', './manifest.json', './ajuda-botao.png', './icone-192.png']).catch(function () {});
+    return c.addAll(['./', './index.html', './manifest.json', './recursos.js', './ajuda-botao.png', './icone-192.png']).catch(function () {});
   }));
 });
 
@@ -33,6 +33,8 @@ self.addEventListener('fetch', function (e) {
   if (req.method !== 'GET') return;
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;   /* não encosta em cotação nem notícia */
+  /* os interruptores do RootifyONE vão sempre à rede; a reserva sem internet é do próprio recursos.js */
+  if (url.pathname.indexOf('/solverone-dados/') >= 0) return;
 
   /* o motor de leitura: cache primeiro e para sempre; só busca na rede o que ainda não tem */
   if (url.pathname.indexOf('/assets/ocr/') >= 0) {

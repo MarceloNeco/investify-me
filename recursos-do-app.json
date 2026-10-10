@@ -1,0 +1,20 @@
+{
+  "formato": 1,
+  "app": "moneytrio",
+  "versao": "3.27",
+  "atualizado": "2026-10-10",
+  "nota": {
+    "pt": "O que o MoneyTRIO lê do Controle dos apps do RootifyONE (recursos/global.json e recursos/moneytrio.json).",
+    "en": "What MoneyTRIO reads from RootifyONE's App control (recursos/global.json and recursos/moneytrio.json)."
+  },
+  "recursos": [
+    { "id": "assistone", "pt": "Personagem e balão do AssistONE; em ⚙ mostra \"Desligado pela administração da SolverONE.\"", "en": "AssistONE character and bubble; ⚙ shows \"Turned off by the SolverONE administration.\"" },
+    { "id": "anuncios", "pt": "Faixa de anúncio no topo e pop-up de anúncio", "en": "Ad strip at the top and ad pop-up" },
+    { "id": "ia", "pt": "Botão ✨ IA, janela de perguntas e leitura de foto pela IA", "en": "✨ AI button, question window and photo reading by the AI" },
+    { "id": "voz", "pt": "Ouvir em voz alta (🔊) e ditar (🎤)", "en": "Read aloud (🔊) and dictate (🎤)" }
+  ],
+  "comportamentos": [
+    { "id": "assistone.dicas", "pt": "Dica da tela no balão do AssistONE (sim/não)", "en": "Screen tip in the AssistONE bubble (yes/no)" },
+    { "id": "moeda.padrao", "pt": "Moeda base de quem começa do zero (BRL, USD ou EUR)", "en": "Base currency for someone starting from scratch (BRL, USD or EUR)" }
+  ]
+}
