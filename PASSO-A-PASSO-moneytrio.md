@@ -334,7 +334,7 @@ notícia precisam de rede.
 
 São **duas coisas diferentes**, e vale entender a separação:
 
-- **A senha da carteira** (`investify2026`) decifra os seus dados dentro do
+- **A senha da carteira** (só você sabe; nunca escreva a senha em arquivo nem no chat) decifra os seus dados dentro do
   `index.html`. Continua exatamente como era.
 - **A conta** (apelido + e-mail + senha) diz quem está usando o app naquele
   aparelho. Serve para outra pessoa usar sem ver a sua carteira, e para tirar o

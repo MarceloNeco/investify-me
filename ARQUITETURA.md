@@ -47,7 +47,7 @@ ZXing, jsQR — uns 10 MB, copiados do app Leitor OCR). Mais nada.
 
 | Arquivo | O que tem dentro | Onde vive |
 |---|---|---|
-| `index.html` | app inteiro + carteira **cifrada** (AES-GCM, senha `investify2026`, 210.000 voltas de PBKDF2) | vai para o GitHub, é o site |
+| `index.html` | app inteiro + carteira **cifrada** (AES-GCM, senha só do dono (nunca escrita em arquivo; a antiga vazou neste repositório em 18/Set/2026 e não vale mais), 210.000 voltas de PBKDF2) | vai para o GitHub, é o site |
 | `MoneyTRIO-local.html` | app inteiro + carteira **aberta** (gzip em base64), abre sem senha | fica só no computador dele |
 
 Os dois são gerados pelo mesmo script a partir da mesma pasta de código
