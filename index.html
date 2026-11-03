@@ -2948,6 +2948,9 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.40 */
+  'Caixa do robô com muitos itens de uma vez':'Robot inbox with many items at once',
+  'Quando o robô reenvia muitos lançamentos de uma vez (milhares), o app junta as transferências uma vez por lote, sem travar a tela.':'When the robot resends many entries at once (thousands), the app links transfers once per batch, without freezing the screen.',
   /* 3.39 */
   'Renda: conta de passagem, Rescisão e FGTS, e a correção do robô':'Income: pass-through account, severance and FGTS, and robot corrections',
   'Transferências entre contas que chegam do robô não somem mais: ficam em cinza em Lançamentos e não contam como renda nem como gasto. Salário que cai numa conta e passa para outra (ex.: BTG → Itaú) mostra "passou para outra conta"; ida e volta (PJ ↔ PF) vira uma linha só.':'Transfers between accounts from the robot no longer disappear: they show in grey in Entries and count as neither income nor spending. A salary that lands in one account and moves to another (e.g. BTG → Itaú) shows "moved to another account"; back and forth (company ↔ personal) becomes a single line.',
@@ -13676,6 +13679,9 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.40', d:'2026-11-03', t:'Caixa do robô com muitos itens de uma vez', itens:[
+    'Quando o robô reenvia muitos lançamentos de uma vez (milhares), o app junta as transferências uma vez por lote, sem travar a tela.'
+  ]},
   {v:'3.39', d:'2026-11-03', t:'Renda: conta de passagem, Rescisão e FGTS, e a correção do robô', itens:[
     'Transferências entre contas que chegam do robô não somem mais: ficam em cinza em Lançamentos e não contam como renda nem como gasto. Salário que cai numa conta e passa para outra (ex.: BTG → Itaú) mostra "passou para outra conta"; ida e volta (PJ ↔ PF) vira uma linha só.',
     'Renda ganhou as categorias Rescisão e FGTS (separado); o que vem do robô com "rescisão" ou "FGTS" já entra na categoria certa.',
@@ -23364,7 +23370,7 @@ const Transferencia = {
   perto(a, b){ return Math.abs(a - b) <= Math.max(1, Math.max(a, b) * 0.01); },
   dias(a, b){ return Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 86400000); },
   /* o que chegou do robô (tipo 'transferencia'); devolve 'nova', 'corrigida' ou '' */
-  receber(l){
+  receber(l, adiar){        /* adiar: quem chama faz o ligarTudo() uma vez no fim do lote */
     const id = 'tf_' + String(l.id).replace(/[^A-Za-z0-9_.:@-]/g, '_').slice(0, 70);
     const t = {id, data: /^\d{4}-\d{2}-\d{2}$/.test(String(l.data || '')) ? l.data : '', valor: Math.abs(Number(l.valor) || 0),
                banco: String(l.banco || '').trim(), desc: String(l.descricao || '').trim().slice(0, 140),
@@ -23374,9 +23380,9 @@ const Transferencia = {
     if(i >= 0){
       const a = l2[i], muda = ['data','valor','banco','desc','forma'].some(k => a[k] !== t[k]);
       if(!muda) return '';
-      l2[i] = Object.assign({}, a, t); this.ligarTudo(); return 'corrigida';
+      l2[i] = Object.assign({}, a, t); if(!adiar) this.ligarTudo(); return 'corrigida';
     }
-    l2.push(t); this.ligarTudo(); return 'nova';
+    l2.push(t); if(!adiar) this.ligarTudo(); return 'nova';
   },
   /* refaz as ligações (barato: só o que é transferência) */
   ligarTudo(){

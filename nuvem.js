@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.5.0 · 03/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.5.1 · 03/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -23,7 +23,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.5.0';
+  var VERSAO = '1.5.1';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -807,7 +807,7 @@
           var l;
           try { l = await Cifra.abrirPacote(this.sk, rows[i].pacote); } catch (e) { this.erros.add(rows[i].id); continue; }   /* não abre com esta chave: fica na caixa */
           if (l && String(l.tipo || '').toLowerCase() === 'transferencia' && typeof Transferencia !== 'undefined') {
-            var rt = Transferencia.receber(l); if (rt) { mudou = true; transf++; } else ignorados++;
+            var rt = Transferencia.receber(l, true); if (rt) { mudou = true; transf++; } else ignorados++;
             prontos.push(rows[i].id); continue;
           }
           var g; try { g = this.converter(l); } catch (e) { this.erros.add(rows[i].id); continue; }
@@ -821,7 +821,7 @@
           }
           prontos.push(rows[i].id);
         }
-        if (novos && typeof Transferencia !== 'undefined' && Transferencia.todas().length) Transferencia.ligarTudo();   /* a renda chegou depois da transferência */
+        if ((novos || transf) && typeof Transferencia !== 'undefined' && Transferencia.todas().length) Transferencia.ligarTudo();   /* uma vez por lote (3.40) */
         if (novos || mudou) { Store.salvar(); }
         await Sinc.registrar(); await Sinc.enviar();
         /* só marca o que já está guardado no banco */
