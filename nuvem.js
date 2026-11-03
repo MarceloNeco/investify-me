@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (versão de TESTE, usada só por teste-nuvem.html)       1.0.0-teste · 03/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (versão de TESTE, usada só por teste-nuvem.html)       1.0.1-teste · 03/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -23,7 +23,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.0.0-teste';
+  var VERSAO = '1.0.1-teste';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -743,6 +743,12 @@
   };
 
   /* ---------------- telas (portão de entrada e painel) ---------------- */
+  /* o "G" colorido oficial do Google (o mesmo do RootifyONE, RF.h.iconeLogin('google')) */
+  var G_GOOGLE = '<svg class="nv-g" viewBox="0 0 48 48" aria-hidden="true" focusable="false">' +
+    '<path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>' +
+    '<path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>' +
+    '<path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>' +
+    '<path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>';
   var CSS = '' +
     '.nv-portao{position:fixed;inset:0;z-index:99990;background:var(--bg,#0b0f14);color:var(--txt,#e7edf5);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}' +
     '.nv-card{width:100%;max-width:440px;background:var(--card,#151c26);border:1px solid var(--line,#243040);border-radius:16px;padding:20px;box-sizing:border-box;margin-top:4vh}' +
@@ -752,6 +758,8 @@
     '.nv-fld input{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid var(--line2,#2e3c4f);background:var(--bg2,#121821);color:inherit;font-size:16px}' +
     '.nv-btn{display:block;width:100%;box-sizing:border-box;margin:8px 0;padding:12px 14px;border-radius:10px;border:1px solid var(--line2,#2e3c4f);background:var(--card2,#1b2430);color:inherit;font-size:15px;cursor:pointer;text-align:center}' +
     '.nv-btn.pri{background:var(--accent,#3ddc97);border-color:var(--accent,#3ddc97);color:#06281a;font-weight:600}' +
+    '.nv-btn.google{background:#fff;color:#1f1f1f;border-color:#747775;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px}.nv-btn.google:hover{background:#f6f8fc}.nv-g{width:20px;height:20px;flex:none}' +
+    '.nv-ou{display:flex;align-items:center;gap:10px;color:var(--txt3,#6f8299);font-size:.85rem;margin:12px 0 4px}.nv-ou:before,.nv-ou:after{content:"";flex:1;border-top:1px solid var(--line,#243040)}' +
     '.nv-btn:disabled{opacity:.6;cursor:wait}.nv-lnk{background:none;border:0;color:var(--accent2,#2bb3ff);cursor:pointer;padding:6px 0;font-size:.9rem}' +
     '.nv-nota{border-radius:10px;padding:10px 12px;margin:10px 0;font-size:.92rem;background:var(--bg2,#121821);border:1px solid var(--line,#243040)}' +
     '.nv-nota.atencao{border-color:var(--warn,#ffb84d)}.nv-nota.erro{border-color:var(--down,#ff6b6b);color:var(--down,#ff6b6b)}.nv-nota.ok{border-color:var(--accent,#3ddc97)}' +
@@ -881,11 +889,12 @@
         '<p class="nv-muted">' + tt('Entre com a sua conta SolverONE (a mesma do OmniLifeONE). Os seus dados de finanças ficam guardados na nuvem, fechados com o cadeado da família: só quem tem o código ou o PIN abre.', 'Sign in with your SolverONE account (the same as OmniLifeONE). Your finance data is kept in the cloud, closed with the family lock: only someone with the code or the PIN can open it.') + '</p>' +
         (loc ? '<div class="nv-nota atencao">📦 ' + tt('Este aparelho tem dados do MoneyTRIO guardados só aqui. Depois de entrar e abrir o cadeado, você poderá levá-los para a nuvem. Nada é apagado deste aparelho.', 'This device has MoneyTRIO data kept only here. After signing in and opening the lock, you can move it to the cloud. Nothing is erased from this device.') + '</div>' : '') +
         (Conta._erroRetorno ? '<div class="nv-nota erro">' + esc(tt('Não deu para entrar: ', 'Could not sign in: ') + Conta._erroRetorno) + '</div>' : '') +
+        '<button class="nv-btn google" id="nvGo">' + G_GOOGLE + '<span>' + tt('Entrar com Google', 'Sign in with Google') + '</span></button>' +
+        '<div class="nv-ou">' + tt('ou com e-mail e senha', 'or with e-mail and password') + '</div>' +
         '<label class="nv-fld"><span>E-mail</span><input type="email" id="nvEm" autocomplete="username" inputmode="email"></label>' +
         '<label class="nv-fld"><span>' + tt('Senha', 'Password') + '</span><input type="password" id="nvPw" autocomplete="current-password"></label>' +
         '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div><div class="nv-nota ok nv-hidden" id="nvOk" role="status"></div>' +
-        '<button class="nv-btn pri" id="nvIn">' + tt('Entrar', 'Sign in') + '</button>' +
-        '<button class="nv-btn" id="nvGo"><b>G</b> ' + tt('Entrar com Google', 'Sign in with Google') + '</button>' +
+        '<button class="nv-btn" id="nvIn">' + tt('Entrar com e-mail', 'Sign in with e-mail') + '</button>' +
         '<div class="nv-row"><button class="nv-lnk" id="nvNova">' + tt('Criar conta', 'Create account') + '</button><button class="nv-lnk" id="nvEsq">' + tt('Esqueci a senha', 'Forgot password') + '</button></div>' +
         '<p class="nv-tiny"><a href="index.html">' + tt('Usar o MoneyTRIO só neste aparelho (sem nuvem)', 'Use MoneyTRIO only on this device (no cloud)') + '</a></p>');
       var $ = function (s) { return el.querySelector(s); };
