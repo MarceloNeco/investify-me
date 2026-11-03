@@ -2,7 +2,7 @@
    Faz o site abrir sem internet e permite instalar como app.
    AO PUBLICAR UMA VERSÃO NOVA, troque o número abaixo (v1 -> v2).
    É o que avisa os celulares de que existe conteúdo novo. */
-var VERSAO = 'v31';
+var VERSAO = 'v32';
 var CACHE = 'moneytrio-' + VERSAO;
 /* O motor de leitura de fotos (assets/ocr: Tesseract, português, ZXing,
    jsQR — uns 10 MB) tem cache próprio, que NÃO muda a cada versão do app:
@@ -12,7 +12,7 @@ var CACHE_OCR = 'moneytrio-ocr-1';
 self.addEventListener('install', function (e) {
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(function (c) {
-    return c.addAll(['./', './index.html', './manifest.json', './recursos.js', './nuvem.js?v=1.2.0', './ajuda-botao.png', './icone-192.png']).catch(function () {});
+    return c.addAll(['./', './index.html', './manifest.json', './recursos.js', './nuvem.js?v=1.3.0', './ajuda-botao.png', './icone-192.png']).catch(function () {});
   }));
 });
 

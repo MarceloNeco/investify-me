@@ -51,7 +51,7 @@ function servidor() {
 /* ---------------- Supabase de mentira ---------------- */
 const UID = '11111111-1111-1111-1111-111111111111', GID = '22222222-2222-2222-2222-222222222222';
 const CODIGO = 'KQ7PZ-3MXWD-H8RTA-2BCNE';
-const db = { money_docs: [], money_caixa_chave: [], money_entrada: [], money_robos: [], omni_chave_privada: [] };
+const db = { user_settings: [], money_docs: [], money_caixa_chave: [], money_entrada: [], money_robos: [], omni_chave_privada: [] };
 let relogio = Date.parse('2026-11-03T10:00:00Z'), CF_RAW = null, embrulhada = '';
 const agora = () => new Date(relogio += 7).toISOString();
 function jwt(sub, email) { const p = Buffer.from(JSON.stringify({ sub, email, exp: 9999999999 })).toString('base64url'); return 'h.' + p + '.s'; }
@@ -250,6 +250,7 @@ let BASE = '';
     await L.waitForFunction(() => typeof Store !== 'undefined' && Store.estado.gastos.length === 3);
     ok(/Entrar na nuvem/.test(await L.textContent('#nvSelo')), 'local: abre o app com os dados do aparelho e o botão "Entrar na nuvem"');
     ok(/Tudo fica guardado no seu navegador/.test(await L.textContent('.hub-pe')), 'local: o rodapé continua dizendo que fica no navegador');
+    ok(!/^dono$/i.test((await L.textContent('#perfilNome').catch(() => '')).trim()), 'local: o topo continua como era (sem o nome da conta)');
     await L.evaluate(() => { Store.estado.gastos[0].desc = 'mudado no modo local'; Store.salvar(); });
     ok(/mudado no modo local/.test(await L.evaluate(() => localStorage.getItem('investifyme.dados.v1'))), 'local: salvar grava no aparelho, como sempre');
     ok(!chamadas.some((c) => /money_docs/.test(c)), 'local: nada vai para a nuvem');
@@ -282,6 +283,12 @@ let BASE = '';
     ok(cfg && !('chaves' in (await abrirDoBanco(cfg.dados_cifrado)).v), 'as chaves de API nunca sobem');
     ok(JSON.parse(await A.evaluate(() => localStorage.getItem('investifyme.dados.v1'))).gastos.length === 3, 'o MoneyTRIO sem nuvem deste aparelho continua igual');
     ok(/Tudo guardado/.test(await A.textContent('#nvSelo')), 'A: selo "Tudo guardado"');
+    await A.waitForFunction(() => (document.querySelector('#perfilNome') || {}).textContent === 'dono', null, { timeout: 10000 }).catch(() => {});
+    ok((await A.textContent('#perfilNome')) === 'dono' && (await A.textContent('#perfilAv')) === 'D', 'A: sem nome no perfil nem no Google, o topo mostra a parte do e-mail antes do @ ("dono", iniciais "D")');
+    db.user_settings.push({ user_id: UID, display_name: 'Marcelo Freitas' });
+    await A.evaluate(() => MoneyNuvem.buscarNome());
+    ok((await A.textContent('#perfilNome')) === 'Marcelo Freitas' && (await A.textContent('#perfilAv')) === 'MF', 'A: com o nome do perfil SolverONE, o topo mostra "Marcelo Freitas" e as iniciais "MF"');
+    db.user_settings.length = 0;
     ok(/Fica guardado na nuvem/.test(await A.textContent('.hub-pe')), 'A: rodapé da tela inicial diz que fica na nuvem');
     await A.screenshot({ path: path.join(SAIDA, 'A-app.png') });
 
@@ -467,7 +474,7 @@ let BASE = '';
       await pg.click('#nvFechar');
       ok(pg.erros.length === 0, nm + ': nenhum erro de página (' + pg.erros.length + ')');
     }
-    const sem = chamadas.filter((c) => /\/rest\/v1\/(?!rpc|money_|omni_chave_privada)/.test(c));
+    const sem = chamadas.filter((c) => /\/rest\/v1\/(?!rpc|money_|omni_chave_privada|user_settings)/.test(c));
     ok(sem.length === 0, 'só chama as tabelas previstas (' + sem.slice(0, 3).join(', ') + ')');
   } catch (e) {
     falhas++; console.error('ERRO NO TESTE:', e);

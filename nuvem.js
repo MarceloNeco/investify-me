@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.2.0 · 03/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.3.0 · 03/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -23,7 +23,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.2.0';
+  var VERSAO = '1.3.0';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -1236,6 +1236,26 @@
   /* ---------------- o maestro ---------------- */
   var Nuvem = {
     iniciado: false, familia: null, podeLevar: false,
+    /* 3.32: o nome da pessoa no topo (no lugar de "Dono da carteira"): nome do perfil SolverONE (user_settings.display_name),
+       senão o nome do Google (user_metadata), senão a parte do e-mail antes do @. Sem nuvem: o app fica como sempre. */
+    _nome: '',
+    email: function () { return this.iniciado && !this.local ? Conta.email() : ''; },
+    nomePessoa: function () {
+      if (!this.iniciado || this.local || !Conta.on()) return '';
+      if (this._nome) return this._nome;
+      var s = Conta.ler() || {}, d = Conta.dados(s.access_token).user_metadata || {};
+      var n = String(s.nome || d.full_name || d.name || '').trim();
+      if (!n) n = String(Conta.email() || '').split('@')[0];
+      return n.slice(0, 60);
+    },
+    buscarNome: async function () {
+      try {
+        var r = await Conta.rest('GET', 'user_settings?user_id=eq.' + Conta.uid() + '&select=display_name');
+        var n = r && r[0] && String(r[0].display_name || '').trim();
+        if (n) this._nome = n.slice(0, 60);
+      } catch (e) {}
+      try { if (typeof renderPerfilTopo === 'function') renderPerfilTopo(); } catch (e) {}
+    },
     /* chamado no lugar do iniciar() do app (index.html) */
     portao: function (iniciarApp) {
       this.iniciarApp = iniciarApp;
@@ -1338,6 +1358,7 @@
       this.iniciado = true;
       try { await this.iniciarApp(); } catch (e) { console.error('app:', e); }
       Painel.montar(); Trava.ligar();
+      this.buscarNome();
       window.addEventListener('online', function () { Painel.atualizar(); Nuvem.buscarAgora(); });
       window.addEventListener('offline', function () { Painel.atualizar(); });
       if (levar) {
