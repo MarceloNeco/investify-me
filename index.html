@@ -247,6 +247,20 @@ input[type=range]{padding:0; border:none; background:transparent; accent-color:v
   .modal-wrap.larga .tbl-fixa{max-height:62vh; overflow:auto}
   .modal-wrap.larga .tbl-fixa th, .modal-wrap.larga .tbl-fixa td{white-space:normal}
 }
+/* 3.38 (N35): todas as tabelas que cabem inteiras (marcadas por UX.cabecalhoFixo) e telas de tabela mais largas */
+@media (min-width:1200px){
+  .card.card-topo{overflow:clip}
+  .tbl-wrap.tbl-cabe{overflow:visible}
+  table.tbl-topo thead th{position:sticky; top:var(--altura-topo, 64px); z-index:3; background:var(--card2)}
+}
+@media (min-width:1024px){
+  .modal .tbl-wrap.tbl-cabe{overflow:visible}
+  table.tbl-topo-j thead th{position:sticky; top:-16px; z-index:3; background:var(--card2)}
+}
+@media (min-width:1280px){
+  .content > #view-carteira, .content > #view-movimentos, .content > #view-b-lanc, .content > #view-b-custos,
+  .content > .view[id^="view-t-"]{max-width:min(1560px, 100%)}
+}
 /* tabelas da página (Lançamentos, Recorrentes): cabeçalho fixo logo abaixo do topo, em tela larga, onde elas cabem inteiras */
 @media (min-width:1200px){
   .card.sem-pad:has(table.tbl-lanc){overflow:clip}
@@ -1340,6 +1354,13 @@ details.imp-arq.repetido{border-color:var(--warn)}
 .rc-acoes2{display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 4px}
 .rc-rolar-barra{display:flex; justify-content:flex-end; margin:0 0 8px}
 .tag-conf,.tag-rep{font-size:.7rem; font-weight:700; color:var(--warn); white-space:nowrap}
+.abat > summary{cursor:pointer; color:var(--accent2); font-weight:600; padding:6px 0; list-style:none}
+.abat-linha{display:grid; grid-template-columns:1fr 1.4fr 1fr 1fr; gap:6px; margin-bottom:6px}
+@media (max-width:560px){ .abat-linha{grid-template-columns:1fr 1fr} }
+.abat-ast{background:none; border:0; color:var(--warn); font-weight:800; cursor:pointer; padding:0 2px; font-size:1em}
+.abat-econ{margin:-6px 0 14px}
+.rc-var{background:var(--card2); border-radius:10px; padding:10px; margin:-4px 0 10px}
+.oc-var{color:var(--accent2)}
 .rdet-sec{font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--txt3); margin:12px 0 2px}
 .aba-c{background:var(--card2); border:1px solid transparent; border-radius:20px; padding:7px 14px;
        cursor:pointer; color:var(--txt2); font-size:.83rem; white-space:nowrap}
@@ -2925,6 +2946,14 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.38 */
+  'Valor que varia, pontos e cashback, feriados de SP e o IR pela data do pagamento':'Varying amounts, points and cashback, São Paulo holidays and tax by payment date',
+  'Compromisso com valor que varia (condomínio, luz): marque "O valor varia" e o app mostra a média dos últimos 6 meses e a faixa, para usar como previsto (com ou sem a inflação do grupo). Quando o pagamento de verdade chega, ele substitui o previsto daquele mês e a diferença aparece.':'Commitments whose amount varies (utilities): tick "The amount varies" and the app shows the last 6 months\' average and range, to use as the forecast (with or without the group inflation). When the real payment arrives, it replaces that month\'s forecast and the difference shows.',
+  'Abatimento em lançamentos e compromissos: "+ Abatimento" para a parte paga com pontos, cashback, crédito ou desconto. O orçamento conta o que saiu de verdade; na lista o valor ganha um * que explica o preço cheio. Custos mostra quanto você economizou no ano.':'Offsets on entries and commitments: "+ Offset" for the part paid with points, cashback, credit or discount. Budgets count what actually left; in the list the amount gets a * that explains the full price. Costs shows how much you saved this year.',
+  'Feriados do estado e da cidade: em Configurações → BudgetONE → Feriados, escolha o estado e a cidade (já vem SP / São Paulo: 25/01 e 09/07) ou acrescente os seus. Eles mudam o dia de pagar e tiram o dia da diarista.':'State and city holidays: in Settings → BudgetONE → Holidays, pick the state and city (SP / São Paulo comes set: Jan 25 and Jul 9) or add your own. They move payment days and remove the cleaner\'s day.',
+  'Nos dias trabalhados do serviço por visita, "✕ não veio" com um toque.':'In the days worked of a per-visit service, "✕ did not come" with one tap.',
+  'TaxONE, Deduções: aviso de que o imposto conta pela data do PAGAMENTO (a matrícula do ano que vem paga agora entra na declaração do ano que vem, ano-base deste ano).':'TaxONE, Deductions: a note that tax counts by PAYMENT date (next year\'s enrolment paid now goes in next year\'s return, base year this year).',
+  'No computador, as telas de tabela (Carteira, Movimentações, Lançamentos, Custos e TaxONE) usam mais largura, e o cabeçalho das tabelas que cabem inteiras fica fixo ao rolar, também nas janelas.':'On the computer, table screens (Portfolio, Transactions, Entries, Costs and TaxONE) use more width, and the header of tables that fit stays fixed while scrolling, in windows too.',
   /* 3.37 */
   '"Novo compromisso" mais simples e campo de data que aceita digitar':'Simpler "New commitment" and a date field you can type in',
   'Novo compromisso: na frente só O quê, Valor e Dia; o resto fica em "Mais opções". Enquanto você digita o nome, o app sugere grupo, categoria, pessoa, IR, dia e valor pelo seu histórico (sem IA), e um toque aceita.':'New commitment: only What, Amount and Day up front; the rest is under "More options". While you type the name, the app suggests group, category, person, tax, day and amount from your history (no AI), and one tap accepts.',
@@ -13640,6 +13669,14 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.38', d:'2026-11-03', t:'Valor que varia, pontos e cashback, feriados de SP e o IR pela data do pagamento', itens:[
+    'Compromisso com valor que varia (condomínio, luz): marque "O valor varia" e o app mostra a média dos últimos 6 meses e a faixa, para usar como previsto (com ou sem a inflação do grupo). Quando o pagamento de verdade chega, ele substitui o previsto daquele mês e a diferença aparece.',
+    'Abatimento em lançamentos e compromissos: "+ Abatimento" para a parte paga com pontos, cashback, crédito ou desconto. O orçamento conta o que saiu de verdade; na lista o valor ganha um * que explica o preço cheio. Custos mostra quanto você economizou no ano.',
+    'Feriados do estado e da cidade: em Configurações → BudgetONE → Feriados, escolha o estado e a cidade (já vem SP / São Paulo: 25/01 e 09/07) ou acrescente os seus. Eles mudam o dia de pagar e tiram o dia da diarista.',
+    'Nos dias trabalhados do serviço por visita, "✕ não veio" com um toque.',
+    'TaxONE, Deduções: aviso de que o imposto conta pela data do PAGAMENTO (a matrícula do ano que vem paga agora entra na declaração do ano que vem, ano-base deste ano).',
+    'No computador, as telas de tabela (Carteira, Movimentações, Lançamentos, Custos e TaxONE) usam mais largura, e o cabeçalho das tabelas que cabem inteiras fica fixo ao rolar, também nas janelas.'
+  ]},
   {v:'3.37', d:'2026-11-03', t:'"Novo compromisso" mais simples e campo de data que aceita digitar', itens:[
     'Novo compromisso: na frente só O quê, Valor e Dia; o resto fica em "Mais opções". Enquanto você digita o nome, o app sugere grupo, categoria, pessoa, IR, dia e valor pelo seu histórico (sem IA), e um toque aceita.',
     '"Para quem é" (com "Casa (família toda)") e "Quem paga" separados; "Como paga" com opções claras: Eu pago, Débito automático, Agendado no banco.',
@@ -14092,6 +14129,7 @@ const Gasto = {
     r.conta = (r.conta || '').trim();
     r.irpf  = !!r.irpf;
     r.favorito = !!r.favorito;
+    if(typeof Abat !== 'undefined') Abat.arruma(r);
     r.revisar = !!r.revisar;
     r.fluxo = GRUPOS[r.grupo].fluxo;
     return r;
@@ -14431,7 +14469,9 @@ const GastoCodec = {
       g.ofxId || '',       /* identidade do lançamento no extrato do banco — é o que impede importar duas vezes */
       g.dataCobranca || '', /* compra no cartão: o dia em que a fatura cobra (a data da compra fica em g.data) */
       Math.round((Number(g.bruto) || 0) * 100),   /* salário: o bruto (o valor que entra no caixa é o líquido) */
-      idx('salBase', g.salBase)                   /* salário: o valor foi informado como 'bruto' ou 'liquido' */
+      idx('salBase', g.salBase),                  /* salário: o valor foi informado como 'bruto' ou 'liquido' */
+      (g.abat && g.abat.length) ? JSON.stringify(g.abat) : '',   /* 3.38: abatimento (pontos, cashback…) */
+      Math.round((Number(g.cheio) || 0) * 100)                   /* 3.38: o preço cheio, quando houve abatimento */
     ]);
     return {v:1, d: dic, l: linhas};
   },
@@ -14453,6 +14493,8 @@ const GastoCodec = {
       formaId: le('formaId', x[16]), bancoId: le('bancoId', x[17]), cartaoId: le('cartaoId', x[18]),
       ofxId: x[19] || '', dataCobranca: x[20] || '',
       bruto: (Number(x[21]) || 0) / 100, salBase: le('salBase', x[22]),
+      abat: (() => { try{ return x[23] ? JSON.parse(x[23]) : undefined; }catch(e){ return undefined; } })(),
+      cheio: (Number(x[24]) || 0) / 100 || undefined,
       fluxo: (GRUPOS[le('grupo', x[2])] || GRUPOS.OUTROS).fluxo
     }));
   },
@@ -14499,8 +14541,27 @@ const FERIADOS_FIXOS = [
   {md:'12-25', nome:{pt:'Natal',                      en:'Christmas'}}
 ];
 
+/* 3.38 (N33): feriados do estado e da cidade (só os que o app conhece com certeza;
+   o resto a pessoa acrescenta à mão em Configurações → BudgetONE → Feriados) */
+const FERIADOS_REGIONAIS = {
+  SP: {nome:'São Paulo', estado:[{md:'07-09', nome:{pt:'Revolução Constitucionalista (SP)', en:'Constitutionalist Revolution (SP)'}}],
+       cidades:{'São Paulo':[{md:'01-25', nome:{pt:'Aniversário de São Paulo', en:'São Paulo anniversary'}}]}},
+  RJ: {nome:'Rio de Janeiro', estado:[{md:'04-23', nome:{pt:'Dia de São Jorge (RJ)', en:'Saint George’s Day (RJ)'}}],
+       cidades:{'Rio de Janeiro':[{md:'01-20', nome:{pt:'Dia de São Sebastião (Rio)', en:'Saint Sebastian’s Day (Rio)'}}]}}
+};
+
 const Feriados = {
   cache: {},
+
+  /* de onde a família é; sem escolha, São Paulo (padrão desta família); {uf:''} = só nacionais */
+  regiao(){
+    try{ const r = ST.config && ST.config.regiao; if(r && typeof r === 'object') return {uf: r.uf || '', cidade: r.cidade || ''}; }catch(e){}
+    return {uf: 'SP', cidade: 'São Paulo'};
+  },
+  definirRegiao(uf, cidade){
+    ST.config.regiao = {uf: uf || '', cidade: uf ? (cidade || '') : ''};
+    this.cache = {};
+  },
 
   /* Páscoa pelo algoritmo de Meeus/Butcher */
   pascoa(ano){
@@ -14521,9 +14582,15 @@ const Feriados = {
 
   /* todos os feriados de um ano, como {iso: nome} */
   doAno(ano){
-    if(this.cache[ano]) return this.cache[ano];
+    const rg = this.regiao(), chave = ano + '|' + rg.uf + '|' + rg.cidade;
+    if(this.cache[chave]) return this.cache[chave];
     const mapa = {};
     FERIADOS_FIXOS.forEach(f => { mapa[ano + '-' + f.md] = f.nome; });
+    const R = FERIADOS_REGIONAIS[rg.uf];
+    if(R){
+      (R.estado || []).forEach(f => { mapa[ano + '-' + f.md] = mapa[ano + '-' + f.md] || f.nome; });
+      ((R.cidades || {})[rg.cidade] || []).forEach(f => { mapa[ano + '-' + f.md] = mapa[ano + '-' + f.md] || f.nome; });
+    }
 
     /* feriado nacional desde 2024 (Lei 14.759/2023) */
     if(ano >= 2024) mapa[ano + '-11-20'] = {pt:'Consciência Negra', en:'Black Awareness Day'};
@@ -14534,7 +14601,7 @@ const Feriados = {
     mapa[this.iso(this.maisDias(p, -2))]  = {pt:'Sexta-feira Santa',  en:'Good Friday'};
     mapa[this.iso(this.maisDias(p, 60))]  = {pt:'Corpus Christi',     en:'Corpus Christi'};
 
-    this.cache[ano] = mapa;
+    this.cache[chave] = mapa;
     return mapa;
   },
 
@@ -14719,6 +14786,8 @@ const Recorrente = {
     o.fora = Array.isArray(o.fora) ? o.fora.map(Number).filter(m => m >= 1 && m <= 12).filter((m, i, a) => a.indexOf(m) === i).sort((x,y) => x-y) : [];
     if(o.fora.length >= 12) o.fora = [];
     o.aConfirmar = !!o.aConfirmar;
+    o.varia = !!o.varia;                 /* 3.38 (N28): valor muda todo mês; o valor guardado é o PREVISTO */
+    if(typeof Abat !== 'undefined') Abat.arruma(o);
     o.ativo = o.ativo !== false;
     o.desde = o.desde || '';
     o.ate = o.ate || '';
@@ -15062,11 +15131,13 @@ const Recorrente = {
       valor = this.valorEm(r, iso);
     }
     /* o que você marcou à mão sempre ganha do que o app calculou */
+    const previsto = valor;
     if(reg && reg.valor != null) valor = reg.valor;
 
     return {
       r: r, data: iso, chave: r.id + '|' + iso,
       valor: valor, servico: extra,
+      previsto: previsto, realizado: !!(reg && reg.valor != null),
       estado: estado, registro: reg || null,
       emDias: Math.round((new Date(iso + 'T12:00:00') - new Date(hojeISO() + 'T12:00:00')) / 86400000)
     };
@@ -15164,6 +15235,25 @@ const Recorrente = {
     return out.sort((a,b) => (b.regular - a.regular) || (b.valor - a.valor));
   },
 
+  /* ---------- valor que varia (N28): o histórico dos últimos 6 meses ----------
+     Usa os lançamentos ligados a este compromisso; sem eles, os da mesma categoria. */
+  historico(r, base){
+    base = String(base || hojeISO()).slice(0,10);
+    if(typeof Gasto === 'undefined') return null;
+    const N = x => String(x || '').trim().toLowerCase();
+    let l = Gasto.todos().filter(g => g.data && g.data <= base && r.id && g.recorrenteId === r.id);
+    if(l.length < 2) l = Gasto.todos().filter(g => g.data && g.data <= base && g.grupo === r.grupo && N(g.sub) === N(r.sub) && N(r.sub));
+    const porMes = {};
+    l.forEach(g => { const m = g.data.slice(0,7); porMes[m] = (porMes[m] || 0) + g.valor; });
+    const meses = Object.keys(porMes).sort().slice(-6).map(m => ({mes: m, valor: Math.round(porMes[m] * 100) / 100}));
+    if(!meses.length) return null;
+    const v = meses.map(x => x.valor);
+    const media = Math.round(v.reduce((a2,b2) => a2 + b2, 0) / v.length * 100) / 100;
+    const tx = this.taxaProvisoria(r.grupo);
+    return {meses, media, min: Math.min.apply(null, v), max: Math.max.apply(null, v), n: v.length,
+            taxa: tx, comInflacao: tx != null ? Math.round(media * (1 + tx) * 100) / 100 : null};
+  },
+
   /* ---------- parece repetido? (N23n, N29c) ----------
      Outro compromisso ligado, com nome ou categoria parecidos, da mesma
      pessoa, e período que se cruza. Devolve [{r, cruza:'ago–dez/2026'}]. */
@@ -15218,9 +15308,9 @@ const Recorrente = {
   rolar(id){
     const r = this.achar(id); if(!r) return null;
     const c = JSON.parse(JSON.stringify(r));
-    ['id','criadoEm','valores'].forEach(k => delete c[k]);
+    ['id','criadoEm','valores','abat','cheio'].forEach(k => delete c[k]);
     const tx = this.taxaProvisoria(r.grupo);
-    c.valor = Math.round(this.valorEm(r, r.ate || hojeISO()) * (1 + (tx || 0)) * 100) / 100;
+    c.valor = Math.round((r.cheio || this.valorEm(r, r.ate || hojeISO())) * (1 + (tx || 0)) * 100) / 100;
     Object.assign(c, this.rolarDatas(r));
     c.nome = this.nomeDoAno(r.nome, 1);
     c.aConfirmar = true; c.rolouDe = r.id; c.origem = 'rolado';
@@ -15376,7 +15466,7 @@ const Pagamento = {
         const dd = Math.abs((new Date(g.data + 'T12:00:00') - new Date(o.data + 'T12:00:00')) / 86400000);
         if(dd > janela) return false;
         const dif = o.valor ? Math.abs(g.valor - o.valor) / o.valor : 1;
-        return dif <= 0.12;                       /* até 12% de diferença ainda é a mesma conta */
+        return dif <= (o.r.varia ? 0.30 : 0.12);  /* até 12% ainda é a mesma conta; 30% se o valor varia (N28) */
       });
       if(alvo){ this.conciliar(o.r.id, o.data, alvo.id, alvo.valor); alvo.recorrenteId = o.r.id; casados++; }
     });
@@ -16370,7 +16460,7 @@ function viewBLanc(){
         ((g.desc || '').length > 110 ? '…' : '') +
         (g.quem || g.forma ? '<div class="t-sub">' + esc([g.quem, g.forma].filter(Boolean).join(' · ')) +
           (g.irpf ? ' · <span class="badge-irpf">IRPF</span>' : '') + '</div>' : '') + '</td>' +
-      '<td class="num ' + sinal + '">' + (g.fluxo === 'entrada' ? '+' : '') + fmt(g.valor) + '</td></tr>';
+      '<td class="num ' + sinal + '">' + (g.fluxo === 'entrada' ? '+' : '') + fmt(g.valor) + Abat.marca(g) + '</td></tr>';
   });
   h += '</tbody></table></div>';
 
@@ -16651,12 +16741,15 @@ function abrirRecorrente(id, semente, op){
     '<div id="rcSug"></div>' +
     '<div class="grid g2 rc-frente">' +
       campo('<span id="rcValorRot">' + esc(r.porVisita ? de('Valor de um dia', 'Amount for one day') : t('fin.valor')) + '</span>',
-        '<input type="number" id="rcValor" step="0.01" min="0" inputmode="decimal" value="' + (r.valor || '') + '">') +
+        '<input type="number" id="rcValor" step="0.01" min="0" inputmode="decimal" value="' + (r.cheio || r.valor || '') + '">') +
       '<label class="f" id="rcDiaCaixa"><span class="lb" id="rcDiaRot"></span>' +
         '<input type="number" id="rcDia" min="1" max="31" inputmode="numeric" value="' + (r.dia || 10) + '"></label>' +
     '</div>' +
     '<p class="small muted rc-resumo" id="rcResumo"></p>' +
 
+    '<label class="linha-check"><input type="checkbox" id="rcVaria"' + (r.varia ? ' checked' : '') + '> ' +
+      de('O valor varia todo mês (condomínio, luz, água)', 'The amount varies every month (utilities)') + '</label>' +
+    '<div id="rcVariaInfo"></div>' +
     '<details class="rc-mais" id="rcMais"' + (op.abrirMais ? ' open' : '') + '><summary>' + de('Mais opções', 'More options') + '</summary>' +
     '<div class="grid g2">' +
       campo(t('fin.grupo'),
@@ -16709,6 +16802,7 @@ function abrirRecorrente(id, semente, op){
     campo(de('Observação', 'Note'), '<textarea id="rcObs" rows="2">' + esc(r.obs || '') + '</textarea>') +
     '<p class="tiny rc-senha">🔒 ' + de('Não escreva senha aqui. Senha vai no cofre Senhas da casa.', 'Do not write passwords here. Passwords go in the Home passwords vault.') + '</p>' +
 
+    Abat.bloco('rc', r) +
     '<label class="linha-check"><input type="checkbox" id="rcIrpf"' + (r.irpf ? ' checked' : '') + '> ' + de('Entra no imposto de renda', 'Counts for income tax') + '</label>' +
     '<label class="linha-check"><input type="checkbox" id="rcAvisar"' + (r.avisar === false ? '' : ' checked') + '> ' +
       de('Avisar na fita do topo quando estiver perto', 'Warn me in the top ticker when it is close') + '</label>' +
@@ -16737,10 +16831,32 @@ function abrirRecorrente(id, semente, op){
   });
   ['rcSub','rcQuem','rcDia','rcValor'].forEach(k => { const e = $('#' + k); if(e) e.addEventListener('input', recResumo); });
   $$('#assetModalBody input[name="rcEstadoR"]').forEach(e => e.addEventListener('change', recResumo));
+  $('#rcVaria').addEventListener('change', recVariaInfo);
+  ['rcGrupo','rcSub'].forEach(k => $('#' + k).addEventListener('change', recVariaInfo));
+  recVariaInfo();
   let tmr = null;
   $('#rcNome').addEventListener('input', () => { clearTimeout(tmr); tmr = setTimeout(recMostrarSugestao, 250); });
   recResumo();
   if(!id && !semente && !op.doRascunho) setTimeout(() => { const n = $('#rcNome'); if(n) n.focus({preventScroll: true}); }, 30);
+}
+
+/* N28: com "o valor varia", mostra a média dos últimos 6 meses e a faixa, e deixa usar como previsto */
+function recVariaInfo(){
+  const alvo = $('#rcVariaInfo'); if(!alvo) return;
+  if(!($('#rcVaria') || {}).checked){ alvo.innerHTML = ''; return; }
+  const pt = I18n.atual === 'pt';
+  const h = Recorrente.historico({id: recEditando, grupo: ($('#rcGrupo') || {}).value, sub: ($('#rcSub') || {}).value});
+  if(!h){ alvo.innerHTML = Verter.html('<p class="tiny muted" style="margin:-4px 0 10px">' + (pt
+    ? 'Ainda não há histórico desta categoria. Escreva em Valor o previsto; quando os pagamentos chegarem, cada mês mostra o realizado.'
+    : 'No history for this category yet. Type the forecast in Amount; as payments arrive, each month shows the actual.') + '</p>'); return; }
+  alvo.innerHTML = Verter.html('<div class="rc-var"><p class="small" style="margin:0 0 6px">' + (pt ? 'Últimos ' + h.n + ' meses: média ' : 'Last ' + h.n + ' months: average ') +
+    '<b>' + fmt(h.media) + '</b> (' + fmt(h.min) + ' – ' + fmt(h.max) + ')</p>' +
+    '<div class="row"><button type="button" class="btn sm" data-acao="rec-var-media" data-para="' + h.media + '">' + (pt ? 'Usar a média' : 'Use the average') + '</button>' +
+    (h.comInflacao != null ? '<button type="button" class="btn sm" data-acao="rec-var-media" data-para="' + h.comInflacao + '">' +
+      (pt ? 'Média + inflação do grupo (' : 'Average + group inflation (') + fmt(h.comInflacao) + ')</button>' : '') + '</div>' +
+    '<p class="tiny muted" style="margin:6px 0 0">' + (pt
+      ? 'O Valor vira o previsto de cada mês. Quando o pagamento de verdade chega (pelo robô, pela conferência ou marcado à mão), ele substitui o previsto daquele mês e a diferença aparece.'
+      : 'Amount becomes each month\'s forecast. When the real payment arrives, it replaces that month\'s forecast and the difference shows.') + '</p></div>');
 }
 
 /* a sugestão aparece à vista, embaixo do nome; um toque aceita */
@@ -16841,6 +16957,7 @@ function lerFormRecorrente(){
     conta: pega('rcConta'), cartao: pega('rcCartao'), obs: pega('rcObs'),
     irpf: !!($('#rcIrpf') || {}).checked,
     avisar: !!($('#rcAvisar') || {}).checked,
+    varia: !!($('#rcVaria') || {}).checked,
     porVisita: !!($('#rcPorVisita') || {}).checked,
     extraPct: Number(pega('rcExtraPct')) || 40,
     visita: { regra: 'semanal', diaSemana: Number(pega('rcVisitaDia')) || 0, soDiaUtil: !!($('#rcSoDiaUtil') || {}).checked }
@@ -16862,6 +16979,10 @@ function salvarRecorrente(op){
   if(!v || v <= 0){ toast(I18n.atual === 'pt' ? 'Informe um valor maior que zero.' : 'Enter an amount above zero.'); return; }
   if(dados.regra === 'diaUtil') dados.dia = Math.min(23, dados.dia);
   dados.aConfirmar = false;
+  if($('#rcAb0Val') && !Abat.aplicar(dados, v, Abat.ler('rc'))){
+    toast(I18n.atual === 'pt' ? 'O abatimento passou do preço cheio.' : 'The offset is larger than the full price.', 'warn'); return;
+  }
+  const vReal = dados.valor;
   /* aviso de repetido (sem IA): só pergunta uma vez por salvamento */
   if(!op.mesmoAssim){
     const rep = Recorrente.sobreposicoes(Object.assign({id: recEditando}, dados))[0];
@@ -16869,8 +16990,8 @@ function salvarRecorrente(op){
   }
   if(recEditando){
     const antes = Recorrente.achar(recEditando);
-    if(antes && antes.valor !== v && (antes.valores || []).length){
-      Recorrente.reajustar(recEditando, v, hojeISO());
+    if(antes && antes.valor !== vReal && (antes.valores || []).length){
+      Recorrente.reajustar(recEditando, vReal, hojeISO());
       delete dados.valor;
     }
   }
@@ -16885,7 +17006,7 @@ function salvarRecorrente(op){
                   : (I18n.atual === 'pt' ? 'Compromisso cadastrado.' : 'Commitment created.'));
   recEditando = null;
   if(op.copiar){
-    const c = Object.assign({}, dados); if(eraEdicao) c.valor = v;
+    const c = Object.assign({}, dados); c.valor = vReal; if(!(c.abat || []).length){ delete c.abat; delete c.cheio; }
     abrirRecorrente(null, c, {copia: true});
   }
 }
@@ -16934,6 +17055,32 @@ function abrirRolar(ids){
     '<div class="f-actions"><button class="btn" data-close="genModal">' + esc(t('ac.cancelar')) + '</button>' +
     '<button class="btn primary" data-acao="rec-rolar-ok">' + (pt ? 'Rolar os marcados' : 'Roll the ticked ones') + '</button></div>');
   abrir('genModal');
+}
+
+/* ---------- Configurações: feriados do estado, da cidade e os seus (N33) ---------- */
+function blocoFeriadosCfg(){
+  const pt = I18n.atual === 'pt', rg = Feriados.regiao(), R = FERIADOS_REGIONAIS[rg.uf];
+  const cidades = R ? Object.keys(R.cidades || {}) : [];
+  const ano = Number(hojeISO().slice(0,4));
+  const regionais = [];
+  if(R){ (R.estado || []).concat((R.cidades || {})[rg.cidade] || []).forEach(f => regionais.push(I18n.data(ano + '-' + f.md, {semAno:true}) + ' · ' + (f.nome[I18n.atual] || f.nome.pt))); }
+  const locais = Feriados.locais().slice().sort((a,b) => a.data.localeCompare(b.data));
+  return '<div class="card cfg-sec" data-sec="budget"><div class="card-head"><h3>' + (pt ? 'Feriados' : 'Holidays') + '</h3></div>' +
+    '<p class="small muted">' + (pt
+      ? 'Os nacionais o app já sabe. Escolha o estado e a cidade para somar os de lá. Feriado muda o dia de pagar e tira o dia do serviço por visita (diarista).'
+      : 'The app already knows national holidays. Pick the state and city to add theirs. A holiday moves payment days and removes the day from per-visit services.') + '</p>' +
+    '<div class="fgrid">' +
+      campo(pt ? 'Estado' : 'State', selectHTML('cFerUF', [['', pt ? 'Só os nacionais' : 'National only']].concat(Object.keys(FERIADOS_REGIONAIS).map(k => [k, k + ' · ' + FERIADOS_REGIONAIS[k].nome])), rg.uf)) +
+      campo(pt ? 'Cidade' : 'City', selectHTML('cFerCidade', [['', pt ? 'Outra (acrescente abaixo)' : 'Other (add below)']].concat(cidades.map(c => [c, c])), rg.cidade)) +
+    '</div>' +
+    (regionais.length ? '<p class="small">' + (pt ? 'Entram também: ' : 'Also included: ') + esc(regionais.join('; ')) + '</p>' : '') +
+    '<div class="sub-lbl" style="margin-top:10px">' + (pt ? 'Feriados que você acrescentou' : 'Holidays you added') + '</div>' +
+    (locais.length ? locais.map(f => '<div class="row small"><span>' + esc(I18n.data(f.data)) + ' · ' + esc(f.nome || '') + '</span><span class="spacer"></span>' +
+      '<button class="btn sm" data-acao="fer-tirar" data-para="' + esc(f.data) + '">' + (pt ? 'tirar' : 'remove') + '</button></div>').join('')
+      : '<p class="small muted">' + (pt ? 'Nenhum ainda.' : 'None yet.') + '</p>') +
+    '<div class="fgrid">' + campo(pt ? 'Dia' : 'Day', '<input type="date" id="cFerData">') +
+      campo(pt ? 'Nome' : 'Name', '<input id="cFerNome" placeholder="' + (pt ? 'ex.: Aniversário da cidade' : 'e.g. City anniversary') + '">') + '</div>' +
+    '<div class="f-actions" style="justify-content:flex-start"><button class="btn sm" data-acao="fer-add">+ ' + (pt ? 'Acrescentar feriado' : 'Add holiday') + '</button></div></div>';
 }
 
 /* ---------- criar uma categoria nova ---------- */
@@ -17194,7 +17341,7 @@ function abrirLancamento(id){
   $('#assetModalTitle').textContent = g ? 'Editar lançamento' : 'Novo lançamento';
   $('#assetModalBody').innerHTML = Verter.html('<div class="grid g2">' +
       campo('Valor', '<input type="number" inputmode="decimal" data-dinheiro="1" id="glValor" step="0.01" min="0" placeholder="0,00" value="' +
-            (g ? ((g.salBase === 'bruto' && g.bruto) ? g.bruto : g.valor) : '') + '">') +
+            (g ? ((g.salBase === 'bruto' && g.bruto) ? g.bruto : (g.cheio || g.valor)) : '') + '">') +
       campo('Data', '<input type="date" id="glData" value="' + (g ? (g.data || '') : hojeISO()) + '">') +
     '</div>' +
     campo('Grupo',
@@ -17231,6 +17378,7 @@ function abrirLancamento(id){
       campo('Observação da conta', '<input id="glConta" placeholder="opcional" value="' +
         (g ? esc(g.conta) : '') + '">') +
     '</div>' +
+    Abat.bloco('gl', g) +
     '<label class="linha-check"><input type="checkbox" id="glIrpf"' + (g && g.irpf ? ' checked' : '') + '> ' +
       (I18n.atual === 'pt' ? 'Entra no imposto de renda' : 'Counts for income tax') + '</label>' +
     '<label class="linha-check"><input type="checkbox" id="glFav"' + (g && g.favorito ? ' checked' : '') + '> ' +
@@ -17239,8 +17387,8 @@ function abrirLancamento(id){
       (I18n.atual === 'pt' ? '🚩 Marcar para conferir depois' : '🚩 Flag to check later') + '</label>' +
     '<p class="tiny muted" style="margin:6px 0 0">' +
       (I18n.atual === 'pt'
-        ? 'Saúde, educação e previdência costumam ser dedutíveis. O TaxONE vai usar essa marca.'
-        : 'Health, education and pension are usually deductible. TaxONE will use this flag.') + '</p>' +
+        ? 'Saúde, educação e previdência costumam ser dedutíveis. O TaxONE vai usar essa marca. Conta o ano em que foi PAGO: a matrícula do ano que vem paga agora entra no imposto deste ano.'
+        : 'Health, education and pension are usually deductible. TaxONE will use this flag. What counts is the year it was PAID: next year\'s enrolment paid now goes in this year\'s tax.') + '</p>' +
     '<div class="f-actions">' +
       (g ? '<button class="btn danger" data-acao="gl-excluir">Excluir</button>' : '') +
       '<button class="btn" data-close="assetModal">Cancelar</button>' +
@@ -17356,6 +17504,9 @@ function salvarLancamento(){
     conta: $('#glConta').value, irpf: $('#glIrpf').checked,
     favorito: !!($('#glFav') || {}).checked, revisar: !!($('#glRev') || {}).checked
   };
+  if(!Abat.aplicar(dados, dados.valor, Abat.ler('gl'))){
+    toast(I18n.atual === 'pt' ? 'O abatimento passou do preço cheio.' : 'The offset is larger than the full price.', 'warn'); return;
+  }
   let criado = null;
   if(bEditando) Gasto.atualizar(bEditando, dados);
   else criado = Gasto.add(dados);
@@ -23073,6 +23224,80 @@ const DataEsperta = {
 };
 if(document.body) DataEsperta.ligar(); else document.addEventListener('DOMContentLoaded', () => DataEsperta.ligar());
 
+/* =========================================================
+   Abatimento (3.38, N31): parte do preço pago com pontos,
+   cashback, crédito ou desconto. O que conta em todo lugar
+   (orçamento, fluxo, projeções) é o que SAIU de verdade:
+   valor = preço cheio − abatido. O preço cheio e o detalhe
+   ficam em obj.cheio e obj.abat = [{tipo, programa, pontos, valor}].
+   ========================================================= */
+const TIPOS_ABAT = {pontos:{pt:'Pontos', en:'Points'}, cashback:{pt:'Cashback', en:'Cashback'},
+                    credito:{pt:'Crédito', en:'Credit'}, desconto:{pt:'Desconto', en:'Discount'}};
+const Abat = {
+  arruma(o){
+    const l = Array.isArray(o.abat) ? o.abat.map(a => ({
+      tipo: TIPOS_ABAT[a && a.tipo] ? a.tipo : 'pontos',
+      programa: String((a && a.programa) || '').trim().slice(0, 60),
+      pontos: Math.max(0, Math.round(Number(a && a.pontos) || 0)),
+      valor: Math.round(Math.abs(Number(a && a.valor) || 0) * 100) / 100 })).filter(a => a.valor > 0).slice(0, 5) : [];
+    if(l.length){ o.abat = l; o.cheio = Math.round(Math.abs(Number(o.cheio) || 0) * 100) / 100; if(!o.cheio) o.cheio = (o.valor || 0) + this.total(o); }
+    else { delete o.abat; delete o.cheio; }
+    return o;
+  },
+  total(o){ return (o && Array.isArray(o.abat) ? o.abat : []).reduce((s2, a) => s2 + (Number(a.valor) || 0), 0); },
+  tem(o){ return !!(o && Array.isArray(o.abat) && o.abat.length); },
+  /* "preço cheio R$ 2.559,40; R$ 300,00 pagos com 17.000 pontos Porto" */
+  texto(o){
+    if(!this.tem(o)) return '';
+    const pt = I18n.atual === 'pt';
+    return (pt ? 'preço cheio ' : 'full price ') + fmt(o.cheio) + '; ' + o.abat.map(a =>
+      fmt(a.valor) + (pt ? ' pagos com ' : ' paid with ') +
+      (a.tipo === 'pontos' && a.pontos ? a.pontos.toLocaleString(I18n.locale()) + ' ' + (pt ? 'pontos' : 'points') : (TIPOS_ABAT[a.tipo][pt ? 'pt' : 'en']).toLowerCase()) +
+      (a.programa ? ' ' + a.programa : '')).join('; ') + '; ' + fmt(o.valor) + (pt ? ' em dinheiro' : ' in money');
+  },
+  marca(o){ return this.tem(o) ? '<button type="button" class="abat-ast" data-abatinfo="' + esc(this.texto(o)) + '" title="' + esc(this.texto(o)) + '">*</button>' : ''; },
+  /* o bloco do formulário: fica fechado, abre no "+ Abatimento" */
+  bloco(px, o){
+    const pt = I18n.atual === 'pt', l = (o && o.abat) || [];
+    const linha = i => { const a = l[i] || {};
+      return '<div class="abat-linha">' +
+        '<select id="' + px + 'Ab' + i + 'Tipo" aria-label="' + (pt ? 'tipo' : 'type') + '">' + Object.keys(TIPOS_ABAT).map(k =>
+          '<option value="' + k + '"' + ((a.tipo || 'pontos') === k ? ' selected' : '') + '>' + esc(TIPOS_ABAT[k][pt ? 'pt' : 'en']) + '</option>').join('') + '</select>' +
+        '<input id="' + px + 'Ab' + i + 'Prog" placeholder="' + (pt ? 'programa (ex.: Itaú Pontos)' : 'programme') + '" value="' + esc(a.programa || '') + '">' +
+        '<input id="' + px + 'Ab' + i + 'Pts" type="number" min="0" inputmode="numeric" placeholder="' + (pt ? 'pontos' : 'points') + '" value="' + (a.pontos || '') + '">' +
+        '<input id="' + px + 'Ab' + i + 'Val" type="number" min="0" step="0.01" inputmode="decimal" placeholder="R$" value="' + (a.valor || '') + '">' +
+      '</div>'; };
+    return '<details class="abat"' + (l.length ? ' open' : '') + '><summary>+ ' + (pt ? 'Abatimento (pontos, cashback, crédito)' : 'Offset (points, cashback, credit)') + '</summary>' +
+      '<p class="tiny muted" style="margin:4px 0 8px">' + (pt
+        ? 'Escreva em Valor o preço cheio. Aqui, o quanto foi pago com pontos, cashback ou crédito. O que conta no orçamento é o que saiu de verdade.'
+        : 'Type the full price in Amount. Here, how much was paid with points, cashback or credit. Budgets count what actually left.') + '</p>' +
+      linha(0) + linha(1) + linha(2) + '</details>';
+  },
+  ler(px){
+    const v = id => { const e = document.getElementById(id); return e ? e.value : ''; };
+    const out = [];
+    for(let i = 0; i < 3; i++){
+      const valor = Number(v(px + 'Ab' + i + 'Val')) || 0;
+      if(valor > 0) out.push({tipo: v(px + 'Ab' + i + 'Tipo') || 'pontos', programa: v(px + 'Ab' + i + 'Prog'), pontos: Number(v(px + 'Ab' + i + 'Pts')) || 0, valor: valor});
+    }
+    return out;
+  },
+  /* aplica no que vai ser salvo: valor vira o que saiu; null se o abatido passar do preço */
+  aplicar(dados, cheio, lista){
+    const tot = lista.reduce((s2, a) => s2 + a.valor, 0);
+    if(!lista.length){ dados.abat = []; dados.cheio = 0; dados.valor = cheio; return dados; }
+    if(tot > cheio + 0.001) return null;
+    dados.abat = lista; dados.cheio = cheio; dados.valor = Math.round((cheio - tot) * 100) / 100;
+    return dados;
+  },
+  /* quanto a família economizou no ano */
+  doAno(ano){
+    const pre = String(ano);
+    const gs = (typeof Gasto !== 'undefined' ? Gasto.todos() : []).filter(g => this.tem(g) && String(g.data || '').startsWith(pre));
+    return {n: gs.length, total: gs.reduce((s2, g) => s2 + this.total(g), 0)};
+  }
+};
+
 /* uma linha de ocorrência, usada no calendário, na agenda e na lista de custos */
 function linhaOcorrencia(o, op){
   op = op || {};
@@ -23090,6 +23315,9 @@ function linhaOcorrencia(o, op){
       /* com que frequência isso se repete: dito por extenso na
          própria linha, para não precisar abrir o compromisso */
       '<div class="oc-freq">🔁 ' + esc(Recorrente.explicar(o.r)) + '</div>' +
+      (o.r.varia ? '<div class="oc-freq oc-var">' + (o.realizado
+        ? esc((I18n.atual === 'pt' ? 'realizado · previsto ' : 'actual · forecast ') + fmt(o.previsto) + ' · ' + (o.valor - o.previsto >= 0 ? '+' : '−') + fmt(Math.abs(o.valor - o.previsto)))
+        : esc(I18n.atual === 'pt' ? 'previsto (o valor varia)' : 'forecast (amount varies)')) + '</div>' : '') +
     '</div>' +
     '<div class="oc-dir">' +
       '<div class="oc-valor ' + (ent ? 'up' : 'down') + '">' + (ent ? '+' : '−') + fmt(o.valor) + '</div>' +
@@ -23142,6 +23370,12 @@ function viewBCustos(){
          I18n.atual === 'pt' ? 'antes do gasto variável' : 'before variable spending',
          dec.sobra >= 0 ? 'up' : 'down') +
     '</div>';
+
+  const econ = Abat.doAno(hojeISO().slice(0,4));
+  if(econ.n)
+    h += '<p class="small abat-econ">🎁 ' + (I18n.atual === 'pt'
+      ? 'Em ' + hojeISO().slice(0,4) + ' você economizou <b>' + fmt(econ.total) + '</b> com pontos, cashback e créditos (' + econ.n + (econ.n === 1 ? ' vez' : ' vezes') + ').'
+      : 'In ' + hojeISO().slice(0,4) + ' you saved <b>' + fmt(econ.total) + '</b> with points, cashback and credits (' + econ.n + ' times).') + '</p>';
 
   if(typeof Desloc !== 'undefined' && Flags.ligada('deslocamentos')){
     const rd = Desloc.resumo(hojeISO());
@@ -23227,12 +23461,13 @@ function blocoRecorrentes(){
           (r.aConfirmar ? ' <span class="tag-conf" title="' + esc(I18n.atual === 'pt' ? 'criado ao rolar o ano: confira valor e nome' : 'created by rolling the year: check amount and name') + '">⚠ ' + (I18n.atual === 'pt' ? 'a confirmar' : 'to confirm') + '</span>' : '') +
           (r.ativo !== false && Recorrente.sobreposicoes(r).length ? ' <span class="tag-rep" title="' + esc((I18n.atual === 'pt' ? 'Parece repetido com: ' : 'Looks repeated with: ') + Recorrente.sobreposicoes(r).map(x => x.r.nome).join(', ')) + '">⚠ ' + (I18n.atual === 'pt' ? 'repetido?' : 'repeated?') + '</span>' : '') +
           '<div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) +
-          (r.quem ? ' · ' + esc(r.quem) : '') + '</div></td>' +
+          (r.quem ? ' · ' + esc(r.quem) : '') +
+          (r.varia ? ' · ' + esc(I18n.atual === 'pt' ? 'valor varia' : 'amount varies') : '') + '</div></td>' +
         '<td class="nowrap t-sub">' + esc(Recorrente.explicar(r)) +
           (Recorrente.periodoCurto(r) ? '<div class="t-sub rec-periodo">' + esc(Recorrente.periodoCurto(r)) + '</div>' : '') + '</td>' +
         '<td class="num ' + (r.fluxo === 'entrada' ? 'up' : '') + '">' +
           (r.fluxo === 'entrada' ? '+' : '') +
-          fmt(r.porVisita ? Recorrente.mediaDoServico(r) : Recorrente.valorEm(r, hojeISO())) +
+          fmt(r.porVisita ? Recorrente.mediaDoServico(r) : Recorrente.valorEm(r, hojeISO())) + Abat.marca(r) +
           (r.porVisita
             ? '<div class="t-sub">' + fmt(Recorrente.valorEm(r, hojeISO())) +
               (I18n.atual === 'pt' ? ' o dia' : ' a day') + '</div>'
@@ -23338,7 +23573,7 @@ function blocoTodos(){
     h += '<tr class="linha-click" data-bid="' + g.id + '"><td title="' + esc(t('per.pontuais')) + '">📍</td>' +
       '<td><span class="t-main">' + esc(g.sub) + '</span><div class="t-sub">' + (G.ico || '') + ' ' + esc((g.desc || '').slice(0,70)) + '</div></td>' +
       '<td class="nowrap t-sub">' + (g.data ? esc(I18n.data(g.data)) : '—') + '</td>' +
-      '<td class="num down">' + fmt(g.valor) + '</td></tr>';
+      '<td class="num down">' + fmt(g.valor) + Abat.marca(g) + '</td></tr>';
   });
   return h + '</tbody></table></div>';
 }
@@ -23377,7 +23612,7 @@ function blocoPontuais(){
       '<td><span class="t-main">' + esc(g.sub) + '</span>' +
         '<div class="t-sub">' + (G.ico || '') + ' ' + esc(G.nome || g.grupo) + '</div></td>' +
       '<td class="desc-cel">' + esc((g.desc || '').slice(0,90)) + '</td>' +
-      '<td class="num down">' + fmt(g.valor) + '</td></tr>';
+      '<td class="num down">' + fmt(g.valor) + Abat.marca(g) + '</td></tr>';
   });
   h += '</tbody></table></div>';
   if(lista.length > 80)
@@ -23520,8 +23755,8 @@ function blocoServico(r){
         (v.soDiaUtil === false ? '' : ' checked') + '> ' +
         de('Não vem em feriado', 'Does not come on a holiday') + '</label>' +
       '<p class="tiny muted" style="margin:-4px 0 0">' +
-        de('O app já conhece os feriados nacionais. Os da sua cidade você acrescenta em Configurações.',
-           'The app already knows the national holidays. Add your city’s in Settings.') + '</p>' +
+        de('O app conhece os feriados nacionais e os do estado e da cidade escolhidos em Configurações → BudgetONE → Feriados.',
+           'The app knows national holidays and those of the state and city chosen in Settings → BudgetONE → Holidays.') + '</p>' +
     '</div>' +
   '</div>';
 }
@@ -23591,6 +23826,10 @@ function renderVisitas(){
       '</span>' +
       '<span class="serv-valor">' + (x.vale ? fmt(x.valor) : '—') + '</span>' +
       '<span class="serv-acoes">' +
+        ((x.motivo === 'normal' || x.motivo === 'faltou') && x.combinado !== false
+          ? '<button class="btn sm' + (x.motivo === 'faltou' ? ' on' : '') + '" data-servfalta="' + x.data + '" title="' +
+            esc(x.motivo === 'faltou' ? de('voltar para "veio"', 'back to "came"') : de('marcar que não veio', 'mark as did not come')) + '">' +
+            (x.motivo === 'faltou' ? '↺ ' + esc(de('veio', 'came')) : '✕ ' + esc(de('não veio', 'did not come'))) + '</button> ' : '') +
         (x.motivo === 'feriado' ? '' :
           '<button class="btn sm" data-servaj="' + x.data + '|' +
             (x.original || x.data) + '">' + esc(t('ac.editar')) + '</button>') +
@@ -24149,6 +24388,21 @@ const UX = {
     });
   },
 
+  /* ---------- 3.38 (N35): no computador, cabeçalho de tabela fixo ao rolar ----------
+     Só nas tabelas que cabem inteiras na largura (as largas continuam rolando
+     para o lado). Na página, fica logo abaixo do topo; na janela, no alto dela. */
+  cabecalhoFixo(raiz, naJanela){
+    if(!raiz || window.innerWidth < (naJanela ? 1024 : 1200)) return;
+    raiz.querySelectorAll('.tbl-wrap > table').forEach(tb => {
+      if(!tb.tHead || tb.classList.contains('tbl-mini')) return;
+      const caixa = tb.parentElement;
+      if(caixa.classList.contains('tbl-fixa')) return;          /* já tem o seu (3.35, janela com rolagem própria) */
+      if(tb.scrollWidth > caixa.clientWidth + 2) return;
+      caixa.classList.add('tbl-cabe'); tb.classList.add(naJanela ? 'tbl-topo-j' : 'tbl-topo');
+      const card = caixa.closest('.card'); if(card && !naJanela) card.classList.add('card-topo');
+    });
+  },
+
   /* ---------- 5. ouvir o texto de um cartão ---------- */
   botoesDeVoz(raiz){
     if(!raiz || typeof Voz === 'undefined' || !Voz.podeLer()) return;
@@ -24211,6 +24465,7 @@ const UX = {
     try{
       this.envolverTabelas(el);          /* antes da sanfona, que remexe o conteúdo */
       this.empilharTabelas(el);
+      this.cabecalhoFixo(el);
       if(view === 'config') this.sanfona(el);
       this.dobrarExplicacoes(el);
       this.reguasDeValor(el);
@@ -28425,6 +28680,11 @@ function viewTDeducoes(){
     ? 'Vêm do BudgetONE: tudo que tem a marca "Entra no imposto de renda". Saúde não tem limite; educação tem limite de ' + fmt(TABELAS_SALARIO.anual.limiteEducacao) +
       ' por pessoa; previdência privada PGBL, até 12% dos rendimentos tributáveis. Remédio de farmácia, academia, material e transporte escolar não são dedutíveis.'
     : 'From BudgetONE entries flagged for income tax.') + '</p></div>';
+  /* N25: o que vale é o dia em que foi pago */
+  h += '<div class="aviso-box aviso-ir-data"><b>📅 ' + (pt ? 'Conta a data do PAGAMENTO, não a do serviço' : 'What counts is the PAYMENT date, not the service date') + '</b>' +
+    '<p class="small" style="margin:6px 0 0">' + (pt
+      ? 'Ex.: a matrícula da escola de ' + (A + 1) + ' paga em 30/10/' + A + ' entra na declaração de ' + (A + 1) + ' (ano-base ' + A + '), junto com o resto do que foi pago em ' + A + '. Por isso esta lista usa a data do lançamento.'
+      : 'E.g. the ' + (A + 1) + ' school enrolment paid on Oct/30/' + A + ' goes in the ' + (A + 1) + ' return (base year ' + A + '), with everything else paid in ' + A + '. That is why this list uses the entry date.') + '</p></div>';
   if(d.candidatos.length){
     h += '<div class="card"><div class="card-head"><h3>' + (pt ? 'Possíveis esquecidas' : 'Possibly missed') + '</h3><span class="badge down">' + d.candidatos.length + '</span></div>' +
       '<p class="tiny muted" style="margin:0 0 8px">' + (pt ? 'Parecem saúde ou educação e não estão marcadas. Marque as que forem de verdade.' : 'Look deductible but are not flagged.') + '</p>' +
@@ -32565,6 +32825,7 @@ function viewConfig(){
   /* bancos, cartões e a calculadora de salário */
   if(typeof blocoBancosCartoes === 'function') h += blocoBancosCartoes();
 
+  h += blocoFeriadosCfg();
   h += '<div class="card cfg-sec" data-sec="budget"><div class="card-head"><h3>' +
     (I18n.atual === 'pt' ? 'Salário' : 'Salary') + '</h3></div>' +
     '<p class="small muted">' + (I18n.atual === 'pt'
@@ -33265,7 +33526,8 @@ function sairDoWizard(idDoModal){
   return true;
 }
 
-function abrir(id){ const el = $('#' + id); el.classList.remove('hidden'); el.classList.remove('larga'); if(id === 'assetModal') delete el.dataset.fixo; }   /* larga: quem precisa põe depois de abrir */
+function abrir(id){ const el = $('#' + id); el.classList.remove('hidden'); el.classList.remove('larga'); if(id === 'assetModal') delete el.dataset.fixo;
+  setTimeout(() => { try{ if(typeof UX !== 'undefined'){ UX.envolverTabelas(el); UX.cabecalhoFixo(el, true); } }catch(e){} }, 0); }   /* larga: quem precisa põe depois de abrir */
 function fechar(id){ $('#' + id).classList.add('hidden'); }
 const MAX_TOASTS = 3;
 
@@ -33845,6 +34107,8 @@ function ligarCamposDaView(){
     liga('cMoeda', e => { ST.moedaBase = e.value; ST.config.moedaEscolhida = true; Store.salvar(); atualizarCotacoes(true); render(); });
     liga('cNivel', e => { ST.nivel = e.value; sincronizarNivel(); Store.salvar(); render(); });
     liga('cTema',  e => { ST.tema = e.value; aplicarTema(); Store.salvar(); });
+    liga('cFerUF', e => { const R = FERIADOS_REGIONAIS[e.value]; Feriados.definirRegiao(e.value, R ? Object.keys(R.cidades || {})[0] : ''); Store.salvar(); render(); });
+    liga('cFerCidade', e => { Feriados.definirRegiao(Feriados.regiao().uf, e.value); Store.salvar(); render(); });
     liga('cLetra', e => { ST.config.letra = e.value; aplicarTema(); Store.salvar(); });
     liga('cAnim',  e => { ST.config.semAnimacao = (e.value === 'sim'); aplicarTema(); Store.salvar(); });
     liga('cFundo', e => { ST.fundo = (e.value === 'sim'); aplicarTema(); Store.salvar(); });
@@ -34224,7 +34488,7 @@ function ligarEventos(){
 
   /* cliques gerais (delegação) */
   document.addEventListener('click', async (e) => {
-    const el = e.target.closest('[data-olho],[data-assunto],[data-mk-serie],[data-mk-per],[data-mk-ativo],[data-comp-per],[data-mov],[data-fmov],[data-resp],[data-graf-per],[data-grafico],[data-acoes-ativo],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del],[data-app],[data-bgrupo],[data-bsub],[data-bquem],[data-bforma],[data-bper],[data-bid],[data-bpag],[data-banos],[data-bpreco],[data-item],[data-recedit],[data-recoff],[data-recsug],[data-rcmes],[data-recclone],[data-recrolar],[data-cfgsec],[data-avisof],[data-bamove],[data-basai],[data-baentra],[data-app2],[data-custaba],[data-caldia],[data-calandar],[data-calhoje],[data-cdtabre],[data-calpular],[data-calmesir],[data-calanoir],[data-cdtatalho],[data-ocor],[data-ocestado],[data-pgest],[data-recfav],[data-gfav],[data-grev],[data-rcregra],[data-para],[data-idioma],[data-bmarca],[data-contaba],[data-porta],[data-avtipo],[data-campon],[data-campdel],[data-servmes],[data-servaj],[data-ajtipo],[data-rjpct],[data-servir],[data-reaj],[data-visitas],[data-asaba],[data-vercomo],[data-nivelconta],[data-bkdel],[data-ctedit],[data-ctdel],[data-salaba],[data-trocaapp],[data-irpara]');
+    const el = e.target.closest('[data-olho],[data-assunto],[data-mk-serie],[data-mk-per],[data-mk-ativo],[data-comp-per],[data-mov],[data-fmov],[data-resp],[data-graf-per],[data-grafico],[data-acoes-ativo],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del],[data-app],[data-bgrupo],[data-bsub],[data-bquem],[data-bforma],[data-bper],[data-bid],[data-bpag],[data-banos],[data-bpreco],[data-item],[data-recedit],[data-recoff],[data-recsug],[data-abatinfo],[data-servfalta],[data-rcmes],[data-recclone],[data-recrolar],[data-cfgsec],[data-avisof],[data-bamove],[data-basai],[data-baentra],[data-app2],[data-custaba],[data-caldia],[data-calandar],[data-calhoje],[data-cdtabre],[data-calpular],[data-calmesir],[data-calanoir],[data-cdtatalho],[data-ocor],[data-ocestado],[data-pgest],[data-recfav],[data-gfav],[data-grev],[data-rcregra],[data-para],[data-idioma],[data-bmarca],[data-contaba],[data-porta],[data-avtipo],[data-campon],[data-campdel],[data-servmes],[data-servaj],[data-ajtipo],[data-rjpct],[data-servir],[data-reaj],[data-visitas],[data-asaba],[data-vercomo],[data-nivelconta],[data-bkdel],[data-ctedit],[data-ctdel],[data-salaba],[data-trocaapp],[data-irpara]');
     if(!el) return;
     const d = el.dataset;
 
@@ -34343,7 +34607,13 @@ function ligarEventos(){
       el.classList.toggle('on', !fora.has(m)); el.setAttribute('aria-pressed', fora.has(m) ? 'false' : 'true');
       recResumo(); return;
     }
+    if(d.abatinfo){ toast(d.abatinfo); return; }
     if(d.recclone){ recClonar(d.recclone); return; }
+    if(d.servfalta){
+      const v = Visita.achar(servRid, d.servfalta);
+      if(v && v.tipo === 'faltou') Visita.limpar(servRid, d.servfalta); else Visita.marcar(servRid, d.servfalta, {tipo: 'faltou'});
+      Store.salvar(); renderVisitas(); renderFita(); return;
+    }
     if(d.recrolar){ abrirRolar([d.recrolar]); return; }
     if(d.rcregra){
       const campo2 = $('#rcRegra');
@@ -34731,7 +35001,15 @@ function ligarEventos(){
         break;
       }
       case 'rec-salvar': salvarRecorrente(); break;
+      case 'fer-add': {
+        const dia = ($('#cFerData') || {}).value, nome = (($('#cFerNome') || {}).value || '').trim();
+        if(!dia){ toast(I18n.atual === 'pt' ? 'Escolha o dia.' : 'Pick the day.', 'err'); break; }
+        Feriados.addLocal(dia, nome); Feriados.cache = {}; Store.salvar(); render();
+        toast(I18n.atual === 'pt' ? 'Feriado acrescentado.' : 'Holiday added.'); break;
+      }
+      case 'fer-tirar': Feriados.tiraLocal(el.dataset.para); Feriados.cache = {}; Store.salvar(); render(); break;
       case 'rec-salvar-copiar': salvarRecorrente({copiar: true}); break;
+      case 'rec-var-media': { const vv = $('#rcValor'); if(vv){ vv.value = el.dataset.para; recResumo(); } break; }
       case 'rec-sug-usar': recUsarSugestao(); break;
       case 'rec-rasc-usar': { const rs = recRascunho; if(rs) abrirRecorrente(rs.id, null, {doRascunho: true, abrirMais: true}); break; }
       case 'rec-rasc-fora': { recRascunho = null; const bx = document.querySelector('.rc-rasc'); if(bx) bx.parentNode.removeChild(bx); break; }

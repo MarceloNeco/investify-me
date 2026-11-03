@@ -502,3 +502,12 @@ e `Nuvem.destrancado` devolve a tela como estava), `Nuvem` (maestro).
 - `Recorrente.sobreposicoes(r)` (repetido), `paraRolar()`, `rolar(id)`, `rolarDatas(r)`, `nomeDoAno()`, `taxaProvisoria(grupo)` (IPCA guardado).
 - `DataEsperta`: todo `input[type=date]` vira texto + 📅 (MutationObserver); `Cal.campo(id, valor, {vazio, par, papel})`; `Cal.htmlCampo`, `Cal.atalho`.
 - Testes: `teste/teste-compromisso.js`, `teste/teste-data.js`.
+
+### Valor que varia, abatimento, feriados e tabelas (3.38)
+- N28: `r.varia`; `Recorrente.historico(r)`; `ocorrencia()` devolve `previsto` e `realizado`.
+- N31: `Abat` (arruma, bloco, ler, aplicar, texto, marca, doAno); `g.valor`/`r.valor` = o que saiu; `cheio` e `abat` ficam junto
+  (no aparelho, `GastoCodec` colunas 23 e 24).
+- N33: `FERIADOS_REGIONAIS`, `Feriados.regiao()/definirRegiao()` (`ST.config.regiao`, padrão SP/São Paulo), cache por ano+região;
+  `blocoFeriadosCfg()`; `[data-servfalta]` nos dias trabalhados.
+- N35: `UX.cabecalhoFixo(raiz, naJanela)` (também chamado por `abrir()`), classes `tbl-topo`/`tbl-topo-j`/`tbl-cabe`/`card-topo`.
+- Teste: `node teste/teste-parte3.js`.
