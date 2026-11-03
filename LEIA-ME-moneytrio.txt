@@ -1,0 +1,155 @@
+MONEY-TRIO v3.5 — LEIA-ME
+=========================
+
+ESTA ENTREGA SUBSTITUI TODAS AS ANTERIORES.
+Pode apagar os zips antigos do MoneyTRIO.
+
+ESTE ZIP E SO DO MONEYTRIO.
+Repositorio: investify-me  (github.com/MarceloNeco/investify-me)
+
+
+1) ANTES DE SUBIR — TESTE EM 1 MINUTO
+
+   Windows: dois cliques em  abrir-teste-moneytrio.bat
+   Mac:     dois cliques em  abrir-teste-moneytrio.command
+            (na primeira vez: botao direito > Abrir > Abrir)
+
+   Abre uma janela preta (o servidor, deixe aberta) e o navegador com a
+   pagina de teste. Ela confere sozinha se os 5 arquivos estao inteiros,
+   se a carteira saiu cifrada e se nao sobrou nenhuma chave de API.
+   Tem que ficar tudo com visto verde.
+
+   Para fechar: feche a janela preta.
+
+
+2) VAO PARA O GITHUB — 5 arquivos, na raiz do repositorio
+
+     index.html          <- o app inteiro (carteira cifrada dentro)
+     manifest.json       <- faz virar aplicativo no celular
+     sw.js               <- faz abrir sem internet (JA VEM COM v4)
+     icone-192.png       <- icone do app instalado
+     icone-512.png       <- icone do app instalado
+
+   Add file -> Upload files -> arraste os 5 -> Commit changes.
+   NAO precisa colar nenhuma linha em lugar nenhum, e desta vez NAO
+   precisa editar o sw.js: ele ja veio com o numero novo.
+
+
+3) NUNCA VAO PARA O GITHUB
+
+     MoneyTRIO-local.html                     <- carteira ABERTA
+     NAO-SUBIR-NO-GITHUB-backup-carteira.json <- carteira ABERTA
+
+   O repositorio e publico. Estes dois tem os seus dados em claro.
+
+
+4) SO PARA VOCE LER
+
+     PASSO-A-PASSO-moneytrio.md   <- o guia, com tudo o que mudou
+     LEIA-ME-moneytrio.txt        <- este arquivo
+     ARQUITETURA.md               <- tecnico: o que cada arquivo faz.
+                                     Nao precisa entender. Serve para
+                                     colar numa conversa quando voce
+                                     pedir uma mudanca a mim ou a outra
+                                     IA, para ninguem quebrar o que ja
+                                     funciona.
+
+
+5) UMA COISA MUDOU SOZINHA NO SEU APP
+
+   O espelho da carteira em cookie vinha ligado de fabrica e foi
+   desligado nesta versao. Motivo: um cookie sobe junto com todo pedido
+   feito ao endereco do site, entao a sua lista de ativos passava pelo
+   servidor a cada visita.
+
+   NADA FOI PERDIDO. A carteira continua no navegador, no arquivo de
+   backup e no Drive, se voce usar. O app avisa isso na tela de
+   Configuracoes, e da para religar ali mesmo se voce quiser.
+
+
+6) SE O GITHUB DER "AW, SNAP!" NA HORA DE SUBIR
+
+   Nesta versao eu ja corrigi a causa mais provavel: o index.html tinha
+   uma linha unica com 354 MIL caracteres (o bloco da carteira), e isso
+   derruba a aba do Chrome. Agora a maior linha tem 1.200. E o mesmo
+   arquivo, funcionando igual - so escrito em linhas curtas.
+
+   Se ainda assim travar, tente nesta ordem:
+
+   a) Feche as outras abas do Chrome e tente de novo. Voce estava com
+      mais de dez abertas; e memoria que falta, nao e o arquivo.
+
+   b) Abra uma janela anonima (Ctrl+Shift+N), entre no GitHub e suba
+      por ali.
+
+   c) Use o editor do proprio GitHub: na pagina do repositorio aperte
+      a tecla ponto (.). Abre um editor parecido com o VS Code dentro
+      do navegador. Arraste os arquivos para a coluna da esquerda, e
+      depois clique no icone de ramo (terceiro da barra lateral) para
+      confirmar o envio.
+
+   d) Tente por outro navegador (Edge ou Firefox).
+
+
+7) O QUE MUDOU NA 3.5 (correcoes do que voce reportou)
+
+   - Botao saindo para fora do cartao nas Configuracoes: corrigido.
+     Era tabela sem invólucro de rolagem; achei 12 no codigo e
+     corrigi todas de uma vez.
+   - Regua de valores numa linha so: negativos a esquerda, 0 em azul
+     no meio, positivos a direita. Cabe em tela de 320 px.
+   - Microfone que nao preenchia o valor: o erro estava sendo engolido
+     em silencio. Agora ele diz o que houve (sem permissao, nao
+     entendi, ou navegador sem o servico) e para sozinho depois de 12
+     segundos. O campo pisca em azul quando o valor chega pela voz.
+   - Lista de instituicoes do InvestifyONE: selo colorido, ordem
+     alfabetica, busca, favoritas com estrela no topo e cadastro de
+     instituicao nova.
+   - BudgetONE ficou azul, InvestifyONE verde, TaxONE ambar.
+   - O nome do app no topo virou menu de troca, com movimento.
+   - O hamburguer saiu do rodape (ja existe no topo). Agora cabem
+     cinco favoritos embaixo.
+   - A lupa de busca apareceu no topo.
+   - Microfone tambem na IA, para falar a pergunta.
+
+
+8) O QUE MUDOU NA 3.4
+
+   - Banco e cartao viraram cadastro de verdade, com lista pronta de
+     27 instituicoes (nome, codigo e CNPJ ja preenchidos). "Como pagou"
+     deixou de ser texto solto: agora e uma lista, e ele pergunta o
+     banco ou o cartao conforme o caso. O que voce ja tinha escrito foi
+     convertido sozinho.
+   - Do cartao guardo so os 4 ultimos digitos. O numero inteiro nao tem
+     campo no app e nao deve ser digitado em app nenhum.
+   - A foto do cupom agora le tambem como foi pago (forma, banco,
+     bandeira e final do cartao).
+   - Digitar valor no celular virou tocar: botoes de somar e subtrair
+     embaixo de cada campo de dinheiro, com passo escolhido pelo
+     tamanho do numero. Segurar repete.
+   - Voz: microfone para falar o valor (Chrome e Edge; o Safari do
+     iPhone nao tem, e la o botao nem aparece) e botao para ouvir o
+     texto das explicacoes (funciona em todo aparelho, inclusive
+     iPhone).
+   - Salario bruto -> liquido com as tabelas de 2026, e comparacao
+     PJ x CLT na mesma regua.
+   - No computador, o menu da esquerda passou a rolar quando nao cabe,
+     e o calendario continua aparecendo inteiro.
+   - A frequencia de cada compromisso agora esta escrita por extenso.
+   - Sair do passo a passo pergunta se quer salvar.
+   - A IA nao ve mais os nomes que voce escreveu nos lancamentos, a nao
+     ser que voce ligue a chavinha (que vem desligada).
+
+   O que da sua lista ficou de fora esta no item 10 do
+   PASSO-A-PASSO-moneytrio.md, com o motivo de cada um.
+
+
+9) EM UMA LINHA
+
+   A tela ficou mais calma (configuracoes fechadas, texto comprido
+   dobrado, filtros enxutos, avisos curtos), a ajuda virou um botao so
+   (o ? do topo, com tutorial e busca), o nivel das explicacoes so
+   aparece onde muda alguma coisa, e duas falhas de seguranca foram
+   corrigidas.
+
+   O detalhe esta no PASSO-A-PASSO-moneytrio.md.
