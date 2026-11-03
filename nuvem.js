@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (versão de TESTE, usada só por teste-nuvem.html)       1.0.2-teste · 03/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (versão de TESTE, usada só por teste-nuvem.html)       1.0.3-teste · 03/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -23,7 +23,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.0.2-teste';
+  var VERSAO = '1.0.3-teste';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -58,6 +58,20 @@
       return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
     }
     return c53(str, 1) + c53(str, 7);
+  }
+  /* data e hora no horário de Brasília: 03/Nov/2026 09:35 (PT) · Nov/03/2026 09:35 (EN) */
+  function dataHora(iso, semHora) {
+    var d = new Date(iso); if (isNaN(d)) return '';
+    var p = {}; new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: 'numeric', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(d).forEach(function (x) { p[x.type] = x.value; });
+    var M = lang() === 'en' ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    var mes = M[+p.month - 1], dia = lang() === 'en' ? mes + '/' + p.day + '/' + p.year : p.day + '/' + mes + '/' + p.year;
+    return semHora ? dia : dia + ' ' + (p.hour === '24' ? '00' : p.hour) + ':' + p.minute;
+  }
+  /* aviso de sucesso sempre por cima do painel e de qualquer janela, por ~6 s */
+  function avisoAlto(msg) {
+    var el = document.getElementById('nvAviso'); if (!el) { el = document.createElement('div'); el.id = 'nvAviso'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    el.textContent = msg; el.className = 'nv-aviso on alto';
+    clearTimeout(aviso._t); aviso._t = setTimeout(function () { el.className = 'nv-aviso'; }, 6000);
   }
   function aviso(msg, tipo) {
     if (Nuvem.iniciado && typeof toast === 'function') { try { return toast(msg, tipo); } catch (e) {} }
@@ -762,13 +776,14 @@
     '.nv-ou{display:flex;align-items:center;gap:10px;color:var(--txt3,#6f8299);font-size:.85rem;margin:12px 0 4px}.nv-ou:before,.nv-ou:after{content:"";flex:1;border-top:1px solid var(--line,#243040)}' +
     '.nv-btn:disabled{opacity:.6;cursor:wait}.nv-lnk{background:none;border:0;color:var(--accent2,#2bb3ff);cursor:pointer;padding:6px 0;font-size:.9rem}' +
     '.nv-nota{border-radius:10px;padding:10px 12px;margin:10px 0;font-size:.92rem;background:var(--bg2,#121821);border:1px solid var(--line,#243040)}' +
-    '.nv-nota.atencao{border-color:var(--warn,#ffb84d)}.nv-nota.erro{border-color:var(--down,#ff6b6b);color:var(--down,#ff6b6b)}.nv-nota.ok{border-color:var(--accent,#3ddc97)}' +
+    '.nv-nota.info{border-color:var(--accent2,#2bb3ff)}.nv-nota.atencao{border-color:var(--warn,#ffb84d)}.nv-nota.erro{border-color:var(--down,#ff6b6b);color:var(--down,#ff6b6b)}.nv-nota.ok{border-color:var(--accent,#3ddc97)}' +
     '.nv-pinc{-webkit-text-security:disc;text-security:disc;letter-spacing:.2em}' +
     '.nv-hidden{display:none!important}.nv-row{display:flex;gap:8px;flex-wrap:wrap}.nv-row .nv-btn{flex:1 1 140px}' +
     '.nv-selo{position:fixed;left:12px;bottom:84px;z-index:9990;border-radius:999px;padding:8px 12px;background:var(--card,#151c26);border:1px solid var(--line2,#2e3c4f);color:var(--txt,#e7edf5);font:13px system-ui,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:calc(100vw - 24px)}' +
     '@media(min-width:900px){.nv-selo{bottom:16px}}' +
     '.nv-aviso{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:99995;background:var(--card2,#1b2430);color:var(--txt,#e7edf5);border:1px solid var(--line2,#2e3c4f);border-radius:12px;padding:10px 14px;max-width:calc(100vw - 32px);display:none;font:14px system-ui,sans-serif}.nv-aviso.on{display:block}' +
     '.nv-painel{position:fixed;inset:0;z-index:99980;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 16px}' +
+    '.nv-aviso.alto{z-index:2147483000}.nv-nota.fixa{position:relative;padding-right:36px}.nv-x{position:absolute;top:6px;right:6px;background:none;border:0;color:inherit;font-size:16px;cursor:pointer;padding:4px 8px}.nv-sub{font-size:.95rem;margin:10px 0 4px}' +
     '.nv-lista button{margin:6px 0}.nv-cod{font-family:ui-monospace,monospace;letter-spacing:.04em}';
 
   var Tela = {
@@ -822,7 +837,7 @@
       this.aberto.onclick = function (e) { if (e.target === Painel.aberto) Painel.fechar(); };
       document.body.appendChild(this.aberto); this.desenhar();
     },
-    fechar: function () { if (this.aberto) { this.aberto.remove(); this.aberto = null; } },
+    fechar: function () { if (this.aberto) { this.aberto.remove(); this.aberto = null; } this._msg = null; this._conf = null; },
     desenhar: async function () {
       var el = this.aberto; if (!el) return;
       var fam = Nuvem.familia || {}, L = await Cadeado.local(), dig = await Cadeado.temDigital();
@@ -837,9 +852,7 @@
         '<div class="nv-nota"><span id="nvStatus">' + esc(this.texto()) + '</span><br><span class="nv-tiny">' + Sinc.vivos() + tt(' registros guardados (fechados com o cadeado).', ' records saved (locked).') + '</span></div>' +
         (Sinc.recusados ? '<button class="nv-btn" id="nvDeNovo">' + tt('Tentar de novo os não aceitos', 'Retry the ones not accepted') + '</button>' : '') +
         '<h2>🤖 ' + tt('Caixa do robô', 'Robot inbox') + '</h2>' + cx +
-        (Caixa.ligada !== false ? '<div class="nv-lista">' + robos.map(function (r) { return '<div class="nv-nota">' + esc(r.nome) + ' <span class="nv-tiny">' + (r.desligado_em ? tt('(desligado)', '(off)') : tt('(ligado)', '(on)')) + '</span>' + (r.desligado_em ? '' : ' <button class="nv-lnk" data-desligar="' + esc(r.user_id) + '">' + tt('desligar', 'turn off') + '</button>') + '</div>'; }).join('') +
-          '<label class="nv-fld"><span>' + tt('E-mail da conta do robô (para autorizar)', 'Robot account e-mail (to authorize)') + '</span><input type="email" id="nvRoboEmail" autocomplete="off"></label>' +
-          '<button class="nv-btn" id="nvRoboOk">' + tt('Autorizar o robô nesta família', 'Authorize the robot in this family') + '</button><button class="nv-btn" id="nvCaixaJa">' + tt('Ver se chegou algo agora', 'Check for new entries now') + '</button></div>' : '') +
+        (Caixa.ligada !== false ? this.htmlRobo() : '') +
         '<h2>🔒 ' + tt('Cadeado', 'Lock') + '</h2>' +
         '<div class="nv-row"><button class="nv-btn" id="nvTrancar">🔒 ' + tt('Fechar agora', 'Lock now') + '</button><button class="nv-btn" id="nvPin">' + tt('Trocar o PIN', 'Change PIN') + '</button></div>' +
         (dig ? (L && L.prf ? '<button class="nv-btn" id="nvDigOff">' + tt('Não abrir mais com a digital', 'Stop opening with fingerprint') + '</button>' : '<button class="nv-btn" id="nvDigOn">👆 ' + tt('Abrir também com a digital', 'Also open with fingerprint') + '</button>') : '') +
@@ -860,16 +873,73 @@
       if ($('#nvDigOff')) $('#nvDigOff').onclick = async function () { await Cadeado.desligarDigital(); Painel.desenhar(); };
       if ($('#nvLevar')) $('#nvLevar').onclick = function () { Painel.fechar(); Nuvem.levarDeNovo(); };
       if ($('#nvCaixaJa')) $('#nvCaixaJa').onclick = function () { Caixa.esvaziar(); };
-      if ($('#nvRoboOk')) $('#nvRoboOk').onclick = async function () {
-        var em = $('#nvRoboEmail').value.trim(); if (!em) return;
-        try { await Conta.rpc('money_robo_autorizar', { p_grupo: Sinc.gid, p_email: em }); aviso('✓ ' + tt('Robô autorizado.', 'Robot authorized.')); Painel.robos(); }
-        catch (e) { aviso(/P0002|e-mail/i.test(e.code + e.message) ? tt('Não há conta SolverONE com esse e-mail.', 'There is no SolverONE account with that e-mail.') : Conta.explicar(e), 'err'); }
-      };
-      el.querySelectorAll('[data-desligar]').forEach(function (b) { b.onclick = async function () { try { await Conta.rpc('money_robo_desligar', { p_grupo: Sinc.gid, p_user: b.dataset.desligar }); Painel.robos(); } catch (e) { aviso(Conta.explicar(e), 'err'); } }; });
+      this.ligarRobo(el);
       if (!this._pediuRobos) { this._pediuRobos = true; this.robos(); }
     },
-    robos: async function () {
-      try { this._robos = (await Conta.rest('GET', 'money_robos?grupo_id=eq.' + Sinc.gid + '&select=user_id,nome,desligado_em')) || []; } catch (e) { this._robos = []; }
+    /* ---- robôs autorizados (aprovado pelo dono, 03/Nov/2026): confirmação antes, mensagem fixa depois ---- */
+    _msg: null, _rascunho: '', _conf: null,
+    htmlRobo: function () {
+      var ativos = (this._robos || []).filter(function (r) { return !r.desligado_em; });
+      var m = this._msg, c = this._conf;
+      return '<div class="nv-lista" id="nvRobo">' +
+        (m ? '<div class="nv-nota fixa ' + m.tipo + '" role="' + (m.tipo === 'erro' ? 'alert' : 'status') + '"><button class="nv-x" id="nvMsgX" aria-label="' + tt('Fechar a mensagem', 'Close message') + '">✕</button>' + m.html + '</div>' : '') +
+        '<h3 class="nv-sub">' + tt('Robôs autorizados', 'Authorized robots') + '</h3>' +
+        (ativos.length ? ativos.map(function (r) {
+          var nome = /@/.test(r.nome || '') ? esc(r.nome) : esc(r.nome || tt('robô', 'robot')) + ' <span class="nv-tiny">' + tt('(e-mail não registrado)', '(e-mail not recorded)') + '</span>';
+          return '<div class="nv-nota"><b>' + nome + '</b><br><span class="nv-tiny">' + tt('autorizado em ', 'authorized on ') + esc(dataHora(r.criado_em)) + '</span>' +
+            '<br><button class="nv-btn" data-remover="' + esc(r.user_id) + '">' + tt('Remover acesso', 'Remove access') + '</button></div>';
+        }).join('') : '<p class="nv-tiny">' + tt('Nenhum robô autorizado ainda.', 'No robot authorized yet.') + '</p>') +
+        (c ? '<div class="nv-nota atencao" role="alertdialog"><p>' + c.html + '</p><div class="nv-row"><button class="nv-btn" id="nvConfNao">' + tt('Cancelar', 'Cancel') + '</button><button class="nv-btn pri" id="nvConfSim">' + c.sim + '</button></div></div>' : '') +
+        '<label class="nv-fld"><span>' + tt('E-mail da conta do robô (para autorizar)', 'Robot account e-mail (to authorize)') + '</span><input type="email" id="nvRoboEmail" autocomplete="off" value="' + esc(this._rascunho) + '"></label>' +
+        '<button class="nv-btn" id="nvRoboOk">' + tt('Autorizar o robô nesta família', 'Authorize the robot in this family') + '</button><button class="nv-btn" id="nvCaixaJa">' + tt('Ver se chegou algo agora', 'Check for new entries now') + '</button></div>';
+    },
+    mensagem: function (tipo, html) { this._msg = { tipo: tipo, html: html }; this._conf = null; this.desenhar(); },
+    ligarRobo: function (el) {
+      var self = this, $ = function (s) { return el.querySelector(s); }, fam = esc((Nuvem.familia || {}).nome || '');
+      var campo = $('#nvRoboEmail'); if (!campo) return;
+      campo.oninput = function () { self._rascunho = campo.value; };
+      if ($('#nvMsgX')) $('#nvMsgX').onclick = function () { self._msg = null; self.desenhar(); };
+      if ($('#nvCaixaJa')) $('#nvCaixaJa').onclick = function () { Caixa.esvaziar(); };
+      if ($('#nvConfNao')) $('#nvConfNao').onclick = function () { self._conf = null; self.desenhar(); };
+      if ($('#nvConfSim')) $('#nvConfSim').onclick = function () { var c = self._conf; self._conf = null; $('#nvConfSim').disabled = true; c.acao(); };
+      $('#nvRoboOk').onclick = function () {
+        var em = campo.value.trim().toLowerCase(); self._rascunho = campo.value;
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) return self.mensagem('erro', '❌ ' + tt('Escreva o e-mail completo da conta do robô (ex.: robo@exemplo.com).', 'Write the full e-mail of the robot account (e.g. robot@example.com).'));
+        var ja = (self._robos || []).find(function (r) { return !r.desligado_em && String(r.nome || '').toLowerCase() === em; });
+        if (ja) return self.mensagem('info', 'ℹ️ <b>' + esc(em) + '</b>' + tt(' já está autorizado desde ', ' is already authorized since ') + esc(dataHora(ja.criado_em, true)) + tt('. Nada mudou.', '. Nothing changed.'));
+        self._msg = null;
+        self._conf = { sim: tt('Sim, autorizar', 'Yes, authorize'),
+          html: tt('Autorizar <b>', 'Authorize <b>') + esc(em) + tt('</b>? Ele poderá <b>entregar</b> lançamentos dos seus bancos para a família <b>', '</b>? It will be able to <b>deliver</b> entries from your banks to the family <b>') + fam + tt('</b>. Ele não consegue ler nada do que está guardado. Você pode remover o acesso quando quiser.', '</b>. It cannot read anything that is stored. You can remove access whenever you want.'),
+          acao: async function () {
+            try {
+              await Conta.rpc('money_robo_autorizar', { p_grupo: Sinc.gid, p_email: em, p_nome: em.slice(0, 60) });
+              self._rascunho = '';
+              await self.robos(true);
+              var r = (self._robos || []).find(function (x) { return !x.desligado_em && String(x.nome || '').toLowerCase() === em.slice(0, 60); });
+              self.mensagem('ok', '✅ <b>' + esc(em) + '</b>' + tt(' autorizado em ', ' authorized on ') + esc(dataHora(r ? r.criado_em : new Date().toISOString())) + '.<br>' + tt('Próximo passo: nada para você fazer. Os lançamentos dos bancos chegam sozinhos todo dia às 7h15.', 'Next step: nothing for you to do. Bank entries arrive by themselves every day at 7:15 am.'));
+              avisoAlto('✓ ' + tt('Robô autorizado.', 'Robot authorized.'));
+            } catch (e) {
+              self.mensagem('erro', '❌ ' + (/P0002|não há conta|e-mail/i.test((e.code || '') + ' ' + (e.message || '')) ? tt('Não existe conta SolverONE com esse e-mail. Confira e tente de novo.', 'There is no SolverONE account with that e-mail. Check it and try again.') : esc(Conta.explicar(e))));
+            }
+          } };
+        self.desenhar();
+      };
+      el.querySelectorAll('[data-remover]').forEach(function (b) { b.onclick = function () {
+        var r = (self._robos || []).find(function (x) { return x.user_id === b.dataset.remover; }) || {};
+        var nome = /@/.test(r.nome || '') ? r.nome : tt('o robô', 'the robot');
+        self._msg = null;
+        self._conf = { sim: tt('Sim, remover', 'Yes, remove'),
+          html: tt('Remover o acesso de <b>', 'Remove access for <b>') + esc(nome) + tt('</b>? Ele para de entregar lançamentos. O que já chegou continua guardado.', '</b>? It stops delivering entries. What already arrived stays stored.'),
+          acao: async function () {
+            try { await Conta.rpc('money_robo_desligar', { p_grupo: Sinc.gid, p_user: r.user_id }); await self.robos(true); self.mensagem('ok', '✅ ' + tt('Acesso removido: ', 'Access removed: ') + '<b>' + esc(nome) + '</b>.'); avisoAlto('✓ ' + tt('Acesso removido.', 'Access removed.')); }
+            catch (e) { self.mensagem('erro', '❌ ' + esc(Conta.explicar(e))); }
+          } };
+        self.desenhar();
+      }; });
+    },
+    robos: async function (quieto) {
+      try { this._robos = (await Conta.rest('GET', 'money_robos?grupo_id=eq.' + Sinc.gid + '&select=user_id,nome,criado_em,desligado_em&order=criado_em.asc')) || []; } catch (e) { this._robos = this._robos || []; }
+      if (quieto) return;
       this._pediuRobos = false; if (this.aberto) { this._pediuRobos = true; this.desenhar(); }
     }
   };
