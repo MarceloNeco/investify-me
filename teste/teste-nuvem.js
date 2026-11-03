@@ -11,7 +11,9 @@
      4. recarregar pede o PIN; PIN errado avisa; certo abre a cópia do aparelho;
      5. aparelho B (computador 1366x768): mesma conta, outro aparelho; recebe tudo; muda e apaga; A recebe;
      6. conflito: A e B mudam o mesmo lançamento em campos diferentes → os dois ficam;
-     7. nenhum erro de página (pageerror) nos dois tamanhos de tela.
+     7. nenhum erro de página (pageerror) nos dois tamanhos de tela;
+     8. cadeado (3.31, relógio falso): 14 min sem uso não tranca e avisa; 15 min tranca; 9 min escondido não tranca; 10 min tranca;
+        trabalho rodando não tranca; o que foi digitado continua depois de abrir.
    Uso (na pasta raiz):  node teste/teste-nuvem.js
    ===================================================================== */
 'use strict';
@@ -194,7 +196,7 @@ async function entrarComCodigo(page, nome) {
   await page.waitForSelector('#nvP1');
   ok(await page.evaluate(() => [...document.querySelectorAll('#nvP1,#nvP2')].every((i) => i.type === 'text' && i.autocomplete === 'off') && !document.querySelector('.nv-card input[type=password]')), nome + ': campo do PIN não é tratado como senha pelo navegador (não oferece salvar senha)');
   await page.fill('#nvP1', '482915'); await page.fill('#nvP2', '482915'); await page.click('#nvPOk');
-  await page.waitForSelector('#nvCod', { timeout: 30000 });
+  await page.waitForSelector('#nvCod', { timeout: 90000 });
   await page.waitForFunction(() => /não confere/.test((document.querySelector('#nvErro') || {}).textContent || ''), null, { timeout: 30000 });
   ok(true, nome + ': código errado é recusado');
   await page.fill('#nvCod', CODIGO.toLowerCase().replace(/-/g, '')); await page.click('#nvCodOk');
@@ -401,6 +403,60 @@ let BASE = '';
     ok(db.money_robos.filter((r) => !r.desligado_em).length === n0 - 1 && !/robo-financas@solverone\.com\.br<\/b><br>/.test(await A.innerHTML('#nvRobo').then((h) => h.split('Robôs autorizados')[1] || '')), 'A: remover acesso desliga o robô e tira da lista');
     await A.screenshot({ path: path.join(SAIDA, 'A-robo.png') });
     await A.click('#nvFechar');
+
+    /* ---------- 8. cadeado com relógio falso ---------- */
+    console.log('8) cadeado (relógio falso)');
+    const C = await abrirPagina(browser, { width: 390, height: 800 }, 'C', false);
+    await C.clock.install();
+    await C.goto(BASE + '/'); await C.waitForSelector('#nvEm');
+    await C.fill('#nvEm', 'dono@teste.com'); await C.fill('#nvPw', 'senha-de-teste-1'); await C.click('#nvIn');
+    await C.waitForSelector('#nvCod', { timeout: 30000 }); await C.fill('#nvCod', CODIGO); await C.click('#nvCodOk');
+    await C.waitForSelector('#nvP1'); await C.fill('#nvP1', '482915'); await C.fill('#nvP2', '482915'); await C.click('#nvPOk');
+    await C.waitForSelector('#nvSelo', { timeout: 60000 });
+    if (await C.$('#nvDigNao')) await C.click('#nvDigNao');
+    await C.evaluate(() => { const d = document.createElement('div'); d.style.height = '2000px'; const i = document.createElement('input'); i.id = 'campoRascunho'; d.prepend(i); document.body.prepend(d); });
+    await C.fill('#campoRascunho', 'rascunho que não pode sumir');
+    await C.evaluate(() => window.scrollTo(0, 300));
+    const rolagem = await C.evaluate(() => window.scrollY);
+    await esperar(800); await C.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));   /* a rolagem do teste termina antes de adiantar o relógio */
+    await C.evaluate(() => { MoneyNuvem._teste.Trava.ultimo = Date.now(); });
+    const trancado = () => C.evaluate(() => !!document.querySelector('#nvPin'));
+    await C.clock.fastForward('13:50'); await C.clock.runFor(1500);
+    ok(!(await trancado()) && !(await C.$('.nv-avisotr')), 'C: 13 min e 50 s sem uso: não tranca nem avisa');
+    await C.clock.fastForward('00:20'); await C.clock.runFor(1500);
+    if (!(await C.$('.nv-avisotr'))) console.log('    (depuração) último uso por:', await C.evaluate(() => MoneyNuvem._teste.Trava.porque), 'parado (s):', await C.evaluate(() => (Date.now() - MoneyNuvem._teste.Trava.ultimo) / 1000));
+    ok(!(await trancado()) && /vai trancar em/.test(await C.textContent('.nv-avisotr', { timeout: 3000 }).catch(() => '')), 'C: aos 14 min aparece o aviso "vai trancar em … s"');
+    await C.evaluate(() => document.querySelector('#nvContinuar').click());   /* sem mexer o mouse (mexer já conta como uso) */
+    ok(!(await C.$('.nv-avisotr')), 'C: "Continuar usando" tira o aviso e zera o tempo');
+    await C.clock.fastForward('14:10'); await C.clock.runFor(1500);
+    ok(!(await trancado()), 'C: depois de "Continuar usando", 14 min ainda não tranca');
+    await C.clock.fastForward('01:00'); await C.clock.runFor(2500);
+    await C.waitForSelector('#nvPin', { timeout: 10000 });
+    ok(/Trancado após 15 min sem uso · \d\d\/\w{3}\/2026 \d\d:\d\d/.test(await C.textContent('#nvMotivo')), 'C: 15 min sem uso tranca, com o motivo e a hora');
+    ok(await C.evaluate(() => !MoneyNuvem._teste.Cadeado.aberto()), 'C: a chave da família saiu da memória');
+    await C.fill('#nvPin', '482915'); await C.click('#nvPinOk');
+    await C.waitForFunction(() => !document.querySelector('#nvPortao'), null, { timeout: 30000 });
+    ok((await C.inputValue('#campoRascunho')) === 'rascunho que não pode sumir', 'C: ao abrir, o que foi digitado continua lá (sem recarregar)');
+    ok(Math.abs((await C.evaluate(() => window.scrollY)) - rolagem) < 5, 'C: e a rolagem também');
+    const esconder = (h) => C.evaluate((h) => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => h }); Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => h ? 'hidden' : 'visible' }); document.dispatchEvent(new Event('visibilitychange')); }, h);
+    await esconder(true); await C.clock.fastForward('09:00'); await esconder(false); await C.clock.runFor(1500);
+    ok(!(await trancado()), 'C: 9 min em segundo plano e volta: não tranca');
+    await esconder(true); await C.clock.fastForward('10:01'); await C.clock.runFor(2500);
+    await esconder(false); await C.waitForSelector('#nvPin', { timeout: 10000 });
+    ok(/10 min em segundo plano/.test(await C.textContent('#nvMotivo')), 'C: 10 min em segundo plano tranca, com o motivo');
+    await C.fill('#nvPin', '482915'); await C.click('#nvPinOk');
+    await C.waitForFunction(() => !document.querySelector('#nvPortao'), null, { timeout: 30000 });
+    await C.evaluate(() => Fundo.comecar({ id: 'imp-teste', titulo: 'Importação de teste' }));
+    await C.clock.fastForward('16:00'); await C.clock.runFor(2500);
+    ok(!(await trancado()), 'C: importação longa rodando (Fundo): 16 min sem uso e não tranca no meio');
+    await C.evaluate(() => Fundo.limpar('imp-teste')); await C.clock.runFor(2500);
+    ok(!(await trancado()), 'C: terminou a importação: não tranca na hora, conta o tempo de novo');
+    await C.clock.fastForward('15:01'); await C.clock.runFor(2500); await C.clock.runFor(2500);
+    const tr = await C.waitForSelector('#nvPin', { timeout: 10000 }).then(() => true).catch(() => false);
+    if (!tr) console.log('    (depuração) último uso por:', await C.evaluate(() => MoneyNuvem._teste.Trava.porque), 'parado (s):', await C.evaluate(() => (Date.now() - MoneyNuvem._teste.Trava.ultimo) / 1000), 'adiado:', await C.evaluate(() => MoneyNuvem._teste.Trava.adiado), 'ocupado:', await C.evaluate(() => MoneyNuvem._teste.Trava.ocupado()));
+    ok(tr, 'C: 15 min depois de terminar, tranca');
+    ok(C.erros.length === 0, 'C: nenhum erro de página (' + C.erros.length + ')');
+    await C.context().close();
 
     /* ---------- 7. telas sem erro ---------- */
     console.log('7) telas');

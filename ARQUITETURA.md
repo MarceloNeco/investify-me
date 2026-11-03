@@ -467,11 +467,13 @@ ao dono antes de criar): portão único para o `ocr`; decidir se `offline` deve 
 ## Nuvem (desde a 3.30, 03/Nov/2026 — etapa 2 do PLANO-SUPABASE-MoneyTRIO.md)
 
 O `index.html` começa pelo portão da nuvem: `MoneyNuvem.portao(iniciar)` (no fim do arquivo, no lugar do `iniciar` direto) e
-carrega `nuvem.js?v=1.1.0`. Sem o `nuvem.js` (ou se ele falhar ao carregar), o app abre como antes (`iniciar()`).
+carrega `nuvem.js?v=1.2.0`. Sem o `nuvem.js` (ou se ele falhar ao carregar), o app abre como antes (`iniciar()`).
 No `nuvem.js` (procure pelos nomes): `Conta` (conta SolverONE, copiada do OmniLifeONE), `Cadeado` (código de recuperação, PIN,
 digital; chaves abertas só na memória), `Sinc` (cópia fechada no IndexedDB `moneytrio-nuvem`, fila, trava otimista, busca),
 `mapear`/`reconstruir` (Store ↔ registros de `money_docs`), `Caixa` (caixa do robô), `Portao` (telas antes do app), `Painel`
-(botão ☁️, inclusive robôs autorizados), `Trava` (fecha sozinho), `Nuvem` (maestro).
+(botão ☁️, inclusive robôs autorizados), `Trava` (fecha sozinho, 3.31: 15 min sem uso com aviso 1 min antes, 10 min fora do app,
+espera trabalho "pesado" — Fundo, levar para a nuvem — e a sincronia; `Nuvem.trancar` cobre o app com a tela do PIN sem recarregar
+e `Nuvem.destrancado` devolve a tela como estava), `Nuvem` (maestro).
 - **Com a nuvem**: `Store.salvar` não grava finanças no `localStorage` (o `investifyme.dados.v1` só é lido, para "levar para
   a nuvem"); `Store.limparTudo` não apaga nada (aviso).
 - **Só neste aparelho** (`moneytrio.soNesteAparelho` = 1, botão na tela de entrada ou no painel ☁️): o app de sempre, sem
@@ -479,5 +481,5 @@ digital; chaves abertas só na memória), `Sinc` (cópia fechada no IndexedDB `m
   sessão no endereço também tira a marca.
 - O rodapé da tela inicial (`viewHub`) diz onde os dados ficam conforme o modo.
 - `teste-nuvem.html` é só um redirecionamento para `./` (mantém atalhos antigos).
-- Teste: `node teste/teste-nuvem.js` (Chromium, Supabase de mentira, 77 verificações). Detalhes: PLANO-SUPABASE-MoneyTRIO.md;
+- Teste: `node teste/teste-nuvem.js` (Chromium, Supabase de mentira, 91 verificações, inclusive o cadeado com relógio falso). Detalhes: PLANO-SUPABASE-MoneyTRIO.md;
   o que falta: PENDENCIAS.md.

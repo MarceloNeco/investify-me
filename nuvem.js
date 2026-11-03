@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.1.0 · 03/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.2.0 · 03/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -13,7 +13,7 @@
       linha). Cópia local fechada no IndexedDB, fila de envio, trava otimista por versao, busca a cada 20 s.
    5. Caixa do robô (money_entrada): pacotes fechados para a chave pública da caixa; o app abre, transforma em
       lançamento do BudgetONE, grava fechado e marca como aproveitado.
-   6. Trava sozinho: 5 min sem uso, 30 s fora do app.
+   6. Tranca sozinho: 15 min sem uso (avisa 1 min antes) ou 10 min fora do app; nunca no meio de um trabalho; sem recarregar.
    Nunca grava nada de finanças em claro: o localStorage 'investifyme.dados.v1' (do app principal) só é LIDO, para
    oferecer "levar para a nuvem". Só a URL e a publishable key do Supabase ficam aqui (públicas por desenho).
    ===================================================================== */
@@ -23,7 +23,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.1.0';
+  var VERSAO = '1.2.0';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -32,7 +32,7 @@
   var RX_ID = /^[A-Za-z0-9_.:@-]{1,80}$/;
   var PRF_INFO = 'moneytrio-cadeado-prf';
   var ESPERAS = [0, 0, 0, 0, 30, 60, 300, 900, 1800, 3600];   /* segundos depois do n-ésimo erro de PIN; no 10º bloqueia */
-  var BUSCA_MS = 20000, OCIOSO_MS = 5 * 60000, FORA_MS = 30000;
+  var BUSCA_MS = 20000, OCIOSO_MS = 15 * 60000, FORA_MS = 10 * 60000, AVISO_MS = 60000;
 
   /* ---------------- pequenas ajudas ---------------- */
   function lang() { try { return localStorage.getItem('investifyme.idioma.v1') === 'en' ? 'en' : 'pt'; } catch (e) { return 'pt'; } }
@@ -500,7 +500,7 @@
       if (apaga > 20 && apaga > vivos * 0.3 && !confirmar(tt('Isto vai apagar ', 'This will erase ') + apaga + tt(' registros da nuvem desta família, e não dá para desfazer. Continuar?', ' records from this family\'s cloud, and it cannot be undone. Continue?'))) {
         this._recusou = true;
         aviso(tt('Tudo bem: nada foi apagado. Recarregando o que está na nuvem…', 'OK: nothing was erased. Reloading what is in the cloud…'), 'warn');
-        setTimeout(function () { Nuvem.trancar('manual'); }, 1500);
+        setTimeout(function () { Cadeado.trancar(); ssSet(K_TRANCOU, 'manual'); location.reload(); }, 1500);
         return 0;
       }
       this.ultimo = agora;
@@ -1036,7 +1036,7 @@
         '<button class="nv-lnk" id="nvSairC">' + tt('Sair da conta', 'Sign out') + '</button>');
       var $ = function (s) { return el.querySelector(s); };
       $('#nvSairC').onclick = function () { Nuvem.sair(false); };
-      if ($('#nvCodVolta')) $('#nvCodVolta').onclick = function () { Portao.pin(fam); };
+      if ($('#nvCodVolta')) $('#nvCodVolta').onclick = function () { Portao.pin(fam, Nuvem.motivoTranca); };
       $('#nvCodSem').onclick = function () {
         Portao.mensagem(tt('Sem o código', 'Without the code'), tt('O MoneyTRIO usa o mesmo cadeado do OmniLifeONE. Se você não tem o papel com o código, abra o OmniLifeONE num aparelho onde as Senhas da casa já abrem e faça um código novo lá (Casa → Senhas da casa). Depois volte aqui e use o código novo.', 'MoneyTRIO uses the same lock as OmniLifeONE. If you do not have the paper with the code, open OmniLifeONE on a device where the home passwords already open and make a new code there. Then come back here and use the new code.'),
           [[tt('Voltar', 'Back'), function () { Portao.primeiraVez(fam, esqueci); }]]);
@@ -1047,7 +1047,7 @@
         Portao.novoPin(async function (pin) {
           Portao.carregando(tt('Conferindo o código e preparando o cadeado… (leva alguns segundos)', 'Checking the code and preparing the lock… (takes a few seconds)'));
           var r; try { r = await Cadeado.pelaPrimeiraVez(cod, pin, fam.grupo_id); } catch (e) { r = { erro: 'rede', e: e }; }
-          if (r.ok) { IDB.set('kv', 'digitalPerguntada|' + Conta.uid(), Date.now()).catch(function () {}); return Portao.oferecerDigital(function () { Nuvem.depoisDoCadeado(true); }); }
+          if (r.ok) { IDB.set('kv', 'digitalPerguntada|' + Conta.uid(), Date.now()).catch(function () {}); return Portao.oferecerDigital(function () { if (Nuvem.iniciado) Nuvem.destrancado(); else Nuvem.depoisDoCadeado(true); }); }
           var msg = r.erro === 'codigo' ? tt('Esse código não confere. Confira as letras e os números no papel.', "That code doesn't match. Check the letters and numbers on the paper.")
             : r.erro === 'semchave' ? tt('Esta conta ainda não tem cadeado. Abra antes as Senhas da casa no OmniLifeONE (com esta mesma conta) e volte aqui.', 'This account has no lock yet. First open the home passwords in OmniLifeONE (with this same account) and come back.')
             : r.erro === 'semliberar' ? tt('O código está certo, mas o cadeado desta família ainda não foi liberado para você. Peça para outro responsável abrir as Senhas da casa no OmniLifeONE, com internet, e tente de novo.', 'The code is right, but this family lock has not been released to you yet. Ask another guardian to open the home passwords in OmniLifeONE, online, and try again.')
@@ -1088,12 +1088,16 @@
         Tela.erro(r.erro === 'semprf' ? tt('Neste ' + apN() + ' (ou neste navegador) a digital ainda não consegue abrir com segurança. Continue com o PIN. Dica: no Chrome atualizado costuma funcionar.', 'On this ' + apN() + ' (or browser) the fingerprint cannot open securely yet. Keep using the PIN. Tip: an up-to-date Chrome usually works.') : tt('A digital não foi ligada. Pode tentar de novo ou tocar em "Agora não".', 'Fingerprint was not turned on. Try again or tap "Not now".'));
       }); };
     },
-    pin: async function (fam) {
-      var L = await Cadeado.local(), dig = L && L.prf, trancou = ssGet(K_TRANCOU);
+    pin: async function (fam, motivo) {
+      var L = await Cadeado.local(), dig = L && L.prf, trancou = motivo || ssGet(K_TRANCOU);
       ssSet(K_TRANCOU, null);
+      var hora = dataHora(new Date().toISOString());
       var el = Tela.mostrar(Tela.topo() +
         '<h2>🔒 ' + tt('MoneyTRIO fechado', 'MoneyTRIO is locked') + '</h2>' +
-        (trancou ? '<div class="nv-nota">' + (trancou === 'manual' ? tt('Você fechou o cadeado.', 'You locked it.') : tt('Fechado sozinho por segurança (ficou um tempo sem uso).', 'Locked by itself for safety (it was idle for a while).')) + '</div>' : '') +
+        (trancou ? '<div class="nv-nota" id="nvMotivo">' + (trancou === 'manual' ? tt('Você fechou o cadeado.', 'You locked it.')
+          : trancou === 'fora' ? tt('Trancado porque o app ficou 10 min em segundo plano', 'Locked because the app was in the background for 10 min')
+          : trancou === 'ocioso' ? tt('Trancado após 15 min sem uso', 'Locked after 15 min without use')
+          : tt('Fechado sozinho por segurança.', 'Locked by itself for safety.')) + (trancou === 'manual' ? '' : ' · ' + esc(hora)) + '</div>' : '') +
         '<p class="nv-muted">' + tt('Família ', 'Family ') + '<b>' + esc(fam.nome) + '</b> · ' + esc(Conta.email()) + '</p>' +
         (L && L.bloqueado ? '<div class="nv-nota erro">' + tt('O PIN errou muitas vezes e ficou bloqueado neste ' + apN() + '. Use o código de recuperação (ou saia e entre de novo na conta).', 'The PIN failed too many times and is blocked on this ' + apN() + '. Use the recovery code (or sign out and sign in again).') + '</div>'
           : '<label class="nv-fld"><span>PIN</span><input type="text" class="nv-pinc" id="nvPin" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label><button class="nv-btn pri" id="nvPinOk">' + tt('Abrir', 'Open') + '</button>' +
@@ -1107,10 +1111,11 @@
         if (r.ok) return (async function () {
           /* quem já tinha PIN e ainda não usa a digital: oferece uma vez */
           var L2 = await Cadeado.local(), k = 'digitalPerguntada|' + Conta.uid();
-          if (L2 && !L2.prf && !(await IDB.get('kv', k).catch(function () { return 1; }))) { await IDB.set('kv', k, Date.now()).catch(function () {}); return Portao.oferecerDigital(function () { Nuvem.depoisDoCadeado(false); }); }
-          Nuvem.depoisDoCadeado(false);
+          var seguir = function () { if (Nuvem.iniciado) Nuvem.destrancado(); else Nuvem.depoisDoCadeado(false); };
+          if (L2 && !L2.prf && !(await IDB.get('kv', k).catch(function () { return 1; }))) { await IDB.set('kv', k, Date.now()).catch(function () {}); return Portao.oferecerDigital(seguir); }
+          seguir();
         })();
-        if (r.erro === 'bloqueado') return Portao.pin(fam);
+        if (r.erro === 'bloqueado') return Portao.pin(fam, motivo);
         if (r.erro === 'espera') return Tela.erro(tt('Espere ', 'Wait ') + Math.ceil((r.ate - Date.now()) / 1000) + tt(' segundos para tentar de novo.', ' seconds to try again.'));
         if (r.erro === 'pin') return Tela.erro(tt('PIN errado. ', 'Wrong PIN. ') + (r.erros >= 4 ? tt('Tentativas erradas: ', 'Wrong attempts: ') + r.erros + tt(' de 10. Na 10ª o PIN fica bloqueado.', ' of 10. On the 10th the PIN is blocked.') : ''));
         if (r.erro === 'offline') return Tela.erro(tt('Para abrir esta família pela primeira vez neste ' + apN() + ', ligue a internet.', 'To open this family for the first time on this ' + apN() + ', connect to the internet.'));
@@ -1153,26 +1158,79 @@
     }
   };
 
-  /* ---------------- trava sozinho ---------------- */
+  /* ---------------- tranca sozinho (3.31, aprovado pelo dono em 03/Nov/2026) ----------------
+     15 min sem uso (aviso com contagem 1 min antes) ou 10 min com o app em segundo plano. Nunca no meio de um trabalho
+     (sincronia, levar para a nuvem, caixa do robô, tarefa do Fundo): espera terminar e conta o tempo de novo dali.
+     Tranca sem recarregar: a tela do cadeado cobre o app e, ao abrir, tudo volta como estava (campos e rolagem). */
   var Trava = {
-    ultimo: Date.now(), foraDesde: 0,
+    ultimo: Date.now(), foraDesde: 0, _mov: 0, adiado: null, aviso: null,
+    usou: function () { this.ultimo = Date.now(); if (this.aviso) this.tirarAviso(); },
+    /* 'pesado' = trabalho da pessoa (importação no Fundo, levar para a nuvem): espera e conta o tempo de novo.
+       'leve' = a sincronia de rotina e a caixa do robô: só espera terminar (segundos) e tranca. */
+    ocupado: function () {
+      var fundo = false; try { fundo = typeof Fundo !== 'undefined' && Fundo.ativa && Fundo.ativa(); } catch (e) {}
+      if (fundo || Nuvem.levando) return 'pesado';
+      if (Sinc._env || Caixa._rodando || Nuvem._buscando) return 'leve';
+      return '';
+    },
     ligar: function () {
       var self = this;
-      ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach(function (ev) { document.addEventListener(ev, function () { self.ultimo = Date.now(); }, { passive: true, capture: true }); });
+      ['pointerdown', 'keydown', 'touchstart', 'wheel', 'input', 'scroll'].forEach(function (ev) {
+        document.addEventListener(ev, function (e) {
+          if (!Cadeado.aberto()) return;
+          if (!e.isTrusted) return;   /* evento de mentira (de script) não é a pessoa usando */
+          /* rolagem só conta se veio de um gesto da pessoa (toque, roda, tecla nos últimos 3 s): a rolagem que o próprio app
+             causa ao redesenhar ou mudar de tamanho não é uso */
+          if (ev === 'scroll') { if (Date.now() - (self._gesto || 0) > 3000) return; }
+          else if (ev !== 'input') self._gesto = Date.now();
+          self.porque = ev; self.usou();
+        }, { passive: true, capture: true });
+      });
+      document.addEventListener('mousemove', function () { var t = Date.now(); if (t - self._mov < 5000) return; self._mov = t; if (Cadeado.aberto()) self.usou(); }, { passive: true, capture: true });
       document.addEventListener('visibilitychange', function () {
         if (document.hidden) {
           self.foraDesde = Date.now(); Sinc.registrar();
-          clearTimeout(self._t); self._t = setTimeout(function () { if (document.hidden) Nuvem.trancar('sozinho'); }, FORA_MS);
+          clearTimeout(self._t); self._t = setTimeout(function () { if (document.hidden) self.pedir('fora'); }, FORA_MS);
         } else {
           clearTimeout(self._t);
-          if (self.foraDesde && Date.now() - self.foraDesde > FORA_MS) return Nuvem.trancar('sozinho');
-          self.foraDesde = 0; self.ultimo = Date.now(); Nuvem.buscarAgora();
+          var fora = self.foraDesde && Date.now() - self.foraDesde >= FORA_MS;
+          self.foraDesde = 0;
+          if (fora && Cadeado.aberto()) return self.pedir('fora');
+          self.usou(); Nuvem.buscarAgora();
         }
       });
-      setInterval(function () { if (Cadeado.aberto() && Date.now() - self.ultimo > OCIOSO_MS) Nuvem.trancar('sozinho'); }, 15000);
+      setInterval(function () { self.conferir(); }, 1000);
       window.addEventListener('pagehide', function () { Sinc.registrar(); });
       window.addEventListener('beforeunload', function (e) { if (Sinc._sujo || Nuvem.levando) { Sinc.registrar(); e.preventDefault(); e.returnValue = ''; } });
-    }
+    },
+    conferir: function () {
+      if (!Cadeado.aberto()) return;
+      if (this.adiado) { if (this.ocupado() === 'pesado') return; var m = this.adiado; this.adiado = null; this.ultimo = Date.now(); if (m === 'fora' && document.hidden) { this.foraDesde = Date.now(); var self = this; clearTimeout(this._t); this._t = setTimeout(function () { if (document.hidden) self.pedir('fora'); }, FORA_MS); } return; }
+      if (document.hidden) return;
+      var parado = Date.now() - this.ultimo;
+      if (parado >= OCIOSO_MS) return this.pedir('ocioso');
+      if (parado >= OCIOSO_MS - AVISO_MS) this.mostrarAviso(Math.ceil((OCIOSO_MS - parado) / 1000));
+      else if (this.aviso) this.tirarAviso();
+    },
+    pedir: function (motivo) {
+      var oc = this.ocupado();
+      if (oc === 'pesado') { this.adiado = motivo; this.tirarAviso(); return; }
+      if (oc === 'leve') { var self = this; clearTimeout(this._tLeve); this._tLeve = setTimeout(function () { if (Cadeado.aberto()) self.pedir(motivo); }, 1000); return; }
+      this.tirarAviso(); Nuvem.trancar(motivo);
+    },
+    mostrarAviso: function (seg) {
+      if (this.ocupado() === 'pesado') { this.ultimo = Date.now(); return; }   /* trabalho da pessoa rodando: conta de novo */
+      if (!this.aviso) {
+        var d = document.createElement('div'); d.className = 'nv-painel nv-avisotr'; d.setAttribute('role', 'alertdialog');
+        d.innerHTML = '<div class="nv-card" style="margin-top:20vh;text-align:center"><h2>🔒 ' + tt('Por segurança, o MoneyTRIO vai trancar em ', 'For safety, MoneyTRIO will lock in ') + '<span id="nvConta">60</span> s</h2>' +
+          '<p class="nv-muted">' + tt('Ficou 14 minutos sem uso.', 'It has been idle for 14 minutes.') + '</p>' +
+          '<button class="nv-btn pri" id="nvContinuar" style="font-size:18px;padding:16px">' + tt('Continuar usando', 'Keep using') + '</button></div>';
+        document.body.appendChild(d); this.aviso = d;
+        var self = this; d.querySelector('#nvContinuar').onclick = function () { self.usou(); };
+      }
+      var c = this.aviso.querySelector('#nvConta'); if (c) c.textContent = String(Math.max(0, seg));
+    },
+    tirarAviso: function () { if (this.aviso) { this.aviso.remove(); this.aviso = null; } }
   };
 
   /* ---------------- o maestro ---------------- */
@@ -1356,7 +1414,7 @@
         var ae = document.activeElement, digitando = ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName);
         var janela = document.querySelector('.modal-wrap:not(.hidden)');
         if (digitando || janela) return self.redesenhar();   /* não atrapalha quem está escrevendo: espera */
-        try { if (typeof render === 'function') render(); } catch (e) { console.warn('nuvem: redesenhar', e); }
+        try { Nuvem._redesenhouEm = Date.now(); if (typeof render === 'function') render(); } catch (e) { console.warn('nuvem: redesenhar', e); }
       }, 400);
     },
     /* a pessoa saiu da família ou deixou de ser chefe/responsável: a cópia deste aparelho sai */
@@ -1370,9 +1428,23 @@
       alertaERecarrega(tt('Você não é mais chefe ou responsável desta família. A cópia deste aparelho foi apagada.', 'You are no longer head or guardian of this family. The copy on this device was erased.'));
     },
     trancar: async function (motivo) {
+      if (!Cadeado.aberto()) return;
       try { await Promise.race([Sinc.registrar(), dorme(4000)]); } catch (e) {}
-      Cadeado.trancar(); ssSet(K_TRANCOU, motivo || 'sozinho');
-      location.reload();
+      Trava.tirarAviso(); Painel.fechar();
+      this._rolagem = [window.scrollX, window.scrollY];
+      this._foco = document.activeElement && document.activeElement !== document.body ? document.activeElement : null;
+      this.motivoTranca = motivo || 'manual';
+      Cadeado.trancar();   /* a chave da família sai da memória */
+      var app = document.getElementById('app'); if (app) app.setAttribute('aria-hidden', 'true');
+      Portao.pin(this.familia, this.motivoTranca);
+    },
+    /* abriu de novo com o PIN/digital: tira a tela do cadeado; o app continua exatamente como estava */
+    destrancado: function () {
+      Tela.fechar(); this.motivoTranca = null;
+      var app = document.getElementById('app'); if (app) app.removeAttribute('aria-hidden');
+      if (this._rolagem) window.scrollTo(this._rolagem[0], this._rolagem[1]);
+      try { if (this._foco && this._foco.isConnected) this._foco.focus({ preventScroll: true }); } catch (e) {}
+      Trava.usou(); this.buscarAgora();
     },
     sair: async function (desconectar) {
       var n = 0; Sinc.fila.forEach(function () { n++; });
@@ -1392,7 +1464,7 @@
       lsDel(K_FAM);
     },
     /* para os testes automáticos (teste/nuvem.js): as peças, sem estado aberto */
-    _teste: { Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao }
+    _teste: { Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao }
   };
   function confirmar(t) { try { return window.confirm(t); } catch (e) { return false; } }
   function alertaERecarrega(t) { try { window.alert(t); } catch (e) {} location.reload(); }

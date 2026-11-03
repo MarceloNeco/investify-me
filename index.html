@@ -2878,6 +2878,10 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.31 */
+  'Cadeado mais tranquilo':'A calmer lock',
+  'Cadeado mais tranquilo: tranca depois de 15 minutos sem uso ou 10 minutos fora do app, avisa 1 minuto antes e, ao destravar, você volta para onde estava sem perder o que digitou.':'A calmer lock: it locks after 15 minutes without use or 10 minutes away from the app, warns 1 minute before and, when you unlock, you are back where you were without losing what you typed.',
+  'Nunca tranca no meio de um trabalho (importação, envio para a nuvem, lançamentos chegando do banco): espera terminar e conta o tempo de novo. A tela do cadeado diz por que trancou e a hora.':'It never locks in the middle of a job (import, upload to the cloud, entries arriving from the bank): it waits for it to finish and counts the time again. The lock screen says why it locked and when.',
   /* 3.30 */
   'MoneyTRIO na nuvem':'MoneyTRIO in the cloud',
   'MoneyTRIO na nuvem: entrar com a conta SolverONE (Google ou e-mail), cadeado da família (código de recuperação na primeira vez, depois PIN ou digital), dados guardados fechados na nuvem e lançamentos dos bancos chegando sozinhos.':'MoneyTRIO in the cloud: sign in with your SolverONE account (Google or e-mail), family lock (recovery code the first time, then PIN or fingerprint), data kept locked in the cloud and bank entries arriving by themselves.',
@@ -13550,6 +13554,10 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.31', d:'2026-11-03', t:'Cadeado mais tranquilo', itens:[
+    'Cadeado mais tranquilo: tranca depois de 15 minutos sem uso ou 10 minutos fora do app, avisa 1 minuto antes e, ao destravar, você volta para onde estava sem perder o que digitou.',
+    'Nunca tranca no meio de um trabalho (importação, envio para a nuvem, lançamentos chegando do banco): espera terminar e conta o tempo de novo. A tela do cadeado diz por que trancou e a hora.'
+  ]},
   {v:'3.30', d:'2026-11-03', t:'MoneyTRIO na nuvem', itens:[
     'MoneyTRIO na nuvem: entrar com a conta SolverONE (Google ou e-mail), cadeado da família (código de recuperação na primeira vez, depois PIN ou digital), dados guardados fechados na nuvem e lançamentos dos bancos chegando sozinhos.',
     'Quem não quer conta continua usando só neste aparelho: na tela de entrada, "Usar o MoneyTRIO só neste aparelho". Para passar para a nuvem depois, o botão ☁️ no canto da tela; o app oferece levar os dados deste aparelho (com cópia de segurança antes).',
@@ -34659,6 +34667,6 @@ function mostrarBloqueio(){
 document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuvem) MoneyNuvem.portao(iniciar); else iniciar(); });
 
 </script>
-<script src="nuvem.js?v=1.1.0"></script>
+<script src="nuvem.js?v=1.2.0"></script>
 </body>
 </html>

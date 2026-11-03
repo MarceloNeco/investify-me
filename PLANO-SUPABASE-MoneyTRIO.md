@@ -55,8 +55,9 @@ responsável de uma família), igual às `omni_sou_*`. O aviso de `spatial_ref_s
 - **Cadeado:** o mesmo par de chaves e a mesma chave da família (CF) do OmniLifeONE. Primeira vez: código de recuperação →
   `omni_chave_privada` (PBKDF2 600 mil) → chave privada → `sol_minha_chave_grupo` → CF. Depois: PIN (PBKDF2 600 mil) e digital
   (WebAuthn PRF) abrem a chave do aparelho, que guarda as outras fechadas no IndexedDB `moneytrio-nuvem` (store `kv`,
-  `cadeado|<conta>`). Chaves abertas só na memória. 10 erros de PIN bloqueiam (espera a partir do 4º). Fecha sozinho com
-  5 min sem uso ou 30 s fora do app (recarrega a página, a memória some).
+  `cadeado|<conta>`). Chaves abertas só na memória. 10 erros de PIN bloqueiam (espera a partir do 4º). Fecha sozinho (3.31) com
+  15 min sem uso (avisa 1 min antes) ou 10 min fora do app, nunca no meio de um trabalho; sem recarregar: a tela do cadeado
+  cobre o app e a chave da família sai da memória.
 - **Registros:** `money_docs`, um por item. `colecao` = nome da lista do Store (`gastos`, `recorrentes`, `posicoes`,
   `movimentos`, `cartoes`, `bancos`, `pagamentos`, `precos`, `extratos`, `agenda`, `metas`, `beneficios`, `lugares`,
   `trajetos`, `tax_declaracoes`, `tax_processos`, `tax_docs`); o resto do estado vai em `colecao = 'config'`, `id` = nome do
