@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (versão de TESTE, usada só por teste-nuvem.html)       1.0.1-teste · 03/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (versão de TESTE, usada só por teste-nuvem.html)       1.0.2-teste · 03/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -23,7 +23,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.0.1-teste';
+  var VERSAO = '1.0.2-teste';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -763,6 +763,7 @@
     '.nv-btn:disabled{opacity:.6;cursor:wait}.nv-lnk{background:none;border:0;color:var(--accent2,#2bb3ff);cursor:pointer;padding:6px 0;font-size:.9rem}' +
     '.nv-nota{border-radius:10px;padding:10px 12px;margin:10px 0;font-size:.92rem;background:var(--bg2,#121821);border:1px solid var(--line,#243040)}' +
     '.nv-nota.atencao{border-color:var(--warn,#ffb84d)}.nv-nota.erro{border-color:var(--down,#ff6b6b);color:var(--down,#ff6b6b)}.nv-nota.ok{border-color:var(--accent,#3ddc97)}' +
+    '.nv-pinc{-webkit-text-security:disc;text-security:disc;letter-spacing:.2em}' +
     '.nv-hidden{display:none!important}.nv-row{display:flex;gap:8px;flex-wrap:wrap}.nv-row .nv-btn{flex:1 1 140px}' +
     '.nv-selo{position:fixed;left:12px;bottom:84px;z-index:9990;border-radius:999px;padding:8px 12px;background:var(--card,#151c26);border:1px solid var(--line2,#2e3c4f);color:var(--txt,#e7edf5);font:13px system-ui,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:calc(100vw - 24px)}' +
     '@media(min-width:900px){.nv-selo{bottom:16px}}' +
@@ -973,7 +974,7 @@
         Portao.novoPin(async function (pin) {
           Portao.carregando(tt('Conferindo o código e preparando o cadeado… (leva alguns segundos)', 'Checking the code and preparing the lock… (takes a few seconds)'));
           var r; try { r = await Cadeado.pelaPrimeiraVez(cod, pin, fam.grupo_id); } catch (e) { r = { erro: 'rede', e: e }; }
-          if (r.ok) return Nuvem.depoisDoCadeado(true);
+          if (r.ok) { IDB.set('kv', 'digitalPerguntada|' + Conta.uid(), Date.now()).catch(function () {}); return Portao.oferecerDigital(function () { Nuvem.depoisDoCadeado(true); }); }
           var msg = r.erro === 'codigo' ? tt('Esse código não confere. Confira as letras e os números no papel.', "That code doesn't match. Check the letters and numbers on the paper.")
             : r.erro === 'semchave' ? tt('Esta conta ainda não tem cadeado. Abra antes as Senhas da casa no OmniLifeONE (com esta mesma conta) e volte aqui.', 'This account has no lock yet. First open the home passwords in OmniLifeONE (with this same account) and come back.')
             : r.erro === 'semliberar' ? tt('O código está certo, mas o cadeado desta família ainda não foi liberado para você. Peça para outro responsável abrir as Senhas da casa no OmniLifeONE, com internet, e tente de novo.', 'The code is right, but this family lock has not been released to you yet. Ask another guardian to open the home passwords in OmniLifeONE, online, and try again.')
@@ -985,8 +986,8 @@
     novoPin: function (aoSalvar, podeVoltar) {
       var el = Tela.mostrar(Tela.topo() + '<h2>🔢 ' + tt('Escolha o seu PIN', 'Choose your PIN') + '</h2>' +
         '<p>' + tt('O PIN abre o MoneyTRIO neste ' + apN() + ', até sem internet. Escolha <b>6 números</b> fáceis para você lembrar e difíceis para os outros — não use data de aniversário nem 123456. Não é a senha do e-mail.', 'The PIN opens MoneyTRIO on this ' + apN() + ', even offline. Choose <b>6 digits</b> easy for you and hard for others — not a birthday or 123456. It is not your e-mail password.') + '</p>' +
-        '<label class="nv-fld"><span>' + tt('PIN (6 números ou mais)', 'PIN (6 digits or more)') + '</span><input type="password" id="nvP1" inputmode="numeric" autocomplete="new-password"></label>' +
-        '<label class="nv-fld"><span>' + tt('Digite o mesmo PIN de novo', 'Type the same PIN again') + '</span><input type="password" id="nvP2" inputmode="numeric" autocomplete="new-password"></label>' +
+        '<label class="nv-fld"><span>' + tt('PIN (6 números ou mais)', 'PIN (6 digits or more)') + '</span><input type="text" class="nv-pinc" id="nvP1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label>' +
+        '<label class="nv-fld"><span>' + tt('Digite o mesmo PIN de novo', 'Type the same PIN again') + '</span><input type="text" class="nv-pinc" id="nvP2" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label>' +
         '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div>' +
         '<button class="nv-btn pri" id="nvPOk">' + tt('Salvar o PIN', 'Save PIN') + '</button>' + (podeVoltar ? '<button class="nv-btn" id="nvPVolta">' + tt('Cancelar', 'Cancel') + '</button>' : ''));
       var $ = function (s) { return el.querySelector(s); };
@@ -1000,6 +1001,20 @@
         aoSalvar(a);
       };
     },
+    /* logo depois do PIN: abrir com a digital (mais fácil que digitar o PIN) */
+    oferecerDigital: async function (seguir) {
+      if (!(await Cadeado.temDigital())) return seguir();
+      var el = Tela.mostrar(Tela.topo() + '<h2>👆 ' + tt('Usar a digital neste ' + apN() + '?', 'Use your fingerprint on this ' + apN() + '?') + '</h2>' +
+        '<p>' + tt('Fica mais fácil: o MoneyTRIO abre com a digital (ou o rosto), sem digitar o PIN. O PIN continua valendo, caso a digital não funcione.', 'Easier: MoneyTRIO opens with your fingerprint (or face), without typing the PIN. The PIN still works if the fingerprint fails.') + '</p>' +
+        '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div>' +
+        '<button class="nv-btn pri" id="nvDigSim">👆 ' + tt('Usar a digital', 'Use fingerprint') + '</button><button class="nv-btn" id="nvDigNao">' + tt('Agora não', 'Not now') + '</button>');
+      el.querySelector('#nvDigNao').onclick = function () { seguir(); };
+      el.querySelector('#nvDigSim').onclick = function () { Tela.ocupar(el.querySelector('#nvDigSim'), async function () {
+        var r = await Cadeado.ligarDigital();
+        if (r.ok) { aviso('✓ ' + tt('Pronto: abre com a digital neste ' + apN() + '.', 'Done: opens with your fingerprint on this ' + apN() + '.')); return seguir(); }
+        Tela.erro(r.erro === 'semprf' ? tt('Neste ' + apN() + ' (ou neste navegador) a digital ainda não consegue abrir com segurança. Continue com o PIN. Dica: no Chrome atualizado costuma funcionar.', 'On this ' + apN() + ' (or browser) the fingerprint cannot open securely yet. Keep using the PIN. Tip: an up-to-date Chrome usually works.') : tt('A digital não foi ligada. Pode tentar de novo ou tocar em "Agora não".', 'Fingerprint was not turned on. Try again or tap "Not now".'));
+      }); };
+    },
     pin: async function (fam) {
       var L = await Cadeado.local(), dig = L && L.prf, trancou = ssGet(K_TRANCOU);
       ssSet(K_TRANCOU, null);
@@ -1008,7 +1023,7 @@
         (trancou ? '<div class="nv-nota">' + (trancou === 'manual' ? tt('Você fechou o cadeado.', 'You locked it.') : tt('Fechado sozinho por segurança (ficou um tempo sem uso).', 'Locked by itself for safety (it was idle for a while).')) + '</div>' : '') +
         '<p class="nv-muted">' + tt('Família ', 'Family ') + '<b>' + esc(fam.nome) + '</b> · ' + esc(Conta.email()) + '</p>' +
         (L && L.bloqueado ? '<div class="nv-nota erro">' + tt('O PIN errou muitas vezes e ficou bloqueado neste ' + apN() + '. Use o código de recuperação (ou saia e entre de novo na conta).', 'The PIN failed too many times and is blocked on this ' + apN() + '. Use the recovery code (or sign out and sign in again).') + '</div>'
-          : '<label class="nv-fld"><span>PIN</span><input type="password" id="nvPin" inputmode="numeric" autocomplete="current-password"></label><button class="nv-btn pri" id="nvPinOk">' + tt('Abrir', 'Open') + '</button>' +
+          : '<label class="nv-fld"><span>PIN</span><input type="text" class="nv-pinc" id="nvPin" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label><button class="nv-btn pri" id="nvPinOk">' + tt('Abrir', 'Open') + '</button>' +
             (dig ? '<button class="nv-btn" id="nvDig">👆 ' + tt('Abrir com a digital', 'Open with fingerprint') + '</button>' : '')) +
         '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div>' +
         '<div class="nv-row"><button class="nv-lnk" id="nvEsqPin">' + tt('Esqueci o PIN', 'I forgot the PIN') + '</button><button class="nv-lnk" id="nvSairP">' + tt('Sair da conta', 'Sign out') + '</button></div>');
@@ -1016,7 +1031,12 @@
       $('#nvSairP').onclick = function () { Nuvem.sair(false); };
       $('#nvEsqPin').onclick = function () { Portao.primeiraVez(fam, true); };
       var tratar = function (r) {
-        if (r.ok) return Nuvem.depoisDoCadeado(false);
+        if (r.ok) return (async function () {
+          /* quem já tinha PIN e ainda não usa a digital: oferece uma vez */
+          var L2 = await Cadeado.local(), k = 'digitalPerguntada|' + Conta.uid();
+          if (L2 && !L2.prf && !(await IDB.get('kv', k).catch(function () { return 1; }))) { await IDB.set('kv', k, Date.now()).catch(function () {}); return Portao.oferecerDigital(function () { Nuvem.depoisDoCadeado(false); }); }
+          Nuvem.depoisDoCadeado(false);
+        })();
         if (r.erro === 'bloqueado') return Portao.pin(fam);
         if (r.erro === 'espera') return Tela.erro(tt('Espere ', 'Wait ') + Math.ceil((r.ate - Date.now()) / 1000) + tt(' segundos para tentar de novo.', ' seconds to try again.'));
         if (r.erro === 'pin') return Tela.erro(tt('PIN errado. ', 'Wrong PIN. ') + (r.erros >= 4 ? tt('Tentativas erradas: ', 'Wrong attempts: ') + r.erros + tt(' de 10. Na 10ª o PIN fica bloqueado.', ' of 10. On the 10th the PIN is blocked.') : ''));
@@ -1158,7 +1178,6 @@
           if (querLevar) { this.podeLevar = false; return this.comecar(Store.migrar(JSON.parse(loc.texto)), true); }
         }
         this.comecar(reconstruir(regs), false);
-        if (primeira && (await Cadeado.temDigital())) setTimeout(function () { aviso('👆 ' + tt('Dica: no botão ☁️ (canto da tela) dá para abrir também com a digital.', 'Tip: in the ☁️ button (screen corner) you can also open with your fingerprint.')); }, 2500);
         if (Sinc.falhasAbrir) aviso('⚠️ ' + Sinc.falhasAbrir + tt(' registros não abriram com este cadeado.', ' records did not open with this lock.'), 'warn');
       } catch (e) {
         console.error('nuvem:', e);
@@ -1285,7 +1304,7 @@
       lsDel(K_FAM);
     },
     /* para os testes automáticos (teste/nuvem.js): as peças, sem estado aberto */
-    _teste: { Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado }
+    _teste: { Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao }
   };
   function confirmar(t) { try { return window.confirm(t); } catch (e) { return false; } }
   function alertaERecarrega(t) { try { window.alert(t); } catch (e) {} location.reload(); }
