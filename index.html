@@ -2879,6 +2879,8 @@ const t = (k, v) => I18n.t(k, v);
 
 const FRASES_EN = {
   /* 3.27 */
+  'Ajuda mais curta, sem obviedades':'Shorter help, without the obvious',
+  'Textos de ajuda mais curtos: a ajuda de cada tela e o balão do AssistONE deixaram de explicar o óbvio ("toque para entrar", "toque na linha para editar") e ficaram só com o que ajuda de verdade. O balão mostra "📍" e o nome da tela, sem o "Você está em".':'Shorter help texts: each screen’s help and the AssistONE bubble no longer explain the obvious ("tap to enter", "tap the row to edit") and keep only what actually helps. The bubble shows "📍" and the screen name, without "You are in".',
   'Carteira tirada do site e tela de entrada que rola':'Portfolio removed from the site and a sign-in screen that scrolls',
   'Tirada do site a carteira que vinha guardada dentro dele. A senha dela tinha ficado escrita num documento público do projeto, e quem a encontrasse conseguia abrir. Agora cada pessoa começa do zero no próprio aparelho; a seguir os dados vão para a nuvem, trancados com a conta SolverONE.':'The portfolio that used to be stored inside the site was removed. Its password had been written in a public project document, and anyone who found it could open it. Now each person starts from scratch on their own device; next, the data goes to the cloud, locked with the SolverONE account.',
   'A tela de entrada rola quando não cabe na tela (notebook com tela baixa): antes, a parte de baixo ficava escondida e não dava para chegar nela.':'The sign-in screen scrolls when it does not fit (laptops with short screens): before, the bottom part was hidden and could not be reached.',
@@ -13539,6 +13541,9 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.29', d:'2026-11-03', t:'Ajuda mais curta, sem obviedades', itens:[
+    'Textos de ajuda mais curtos: a ajuda de cada tela e o balão do AssistONE deixaram de explicar o óbvio ("toque para entrar", "toque na linha para editar") e ficaram só com o que ajuda de verdade. O balão mostra "📍" e o nome da tela, sem o "Você está em".'
+  ]},
   {v:'3.28', d:'2026-11-03', t:'Carteira tirada do site e tela de entrada que rola', itens:[
     'Tirada do site a carteira que vinha guardada dentro dele. A senha dela tinha ficado escrita num documento público do projeto, e quem a encontrasse conseguia abrir. Agora cada pessoa começa do zero no próprio aparelho; a seguir os dados vão para a nuvem, trancados com a conta SolverONE.',
     'A tela de entrada rola quando não cabe na tela (notebook com tela baixa): antes, a parte de baixo ficava escondida e não dava para chegar nela.'
@@ -23351,154 +23356,154 @@ const CHAVE_TUTORIAL = 'moneytrio.tutorial.v1';
 /* ---------- a ajuda de cada tela ---------- */
 const AJUDA_TELAS = {
   hub: {
-    pt: {t:'Escolher o app', o:'Três ferramentas, um dinheiro só. Toque numa para entrar; o nome lá em cima troca de app a qualquer momento.',
-         f:['BudgetONE cuida do que entra e sai todo mês.','InvestifyONE cuida do que está investido e do quanto rendeu.','TaxONE reúne o que vai para o imposto de renda.']},
-    en: {t:'Choosing the app', o:'Three tools, one set of money. Tap one to enter; the name at the top switches apps at any time.',
-         f:['BudgetONE handles what comes in and goes out every month.','InvestifyONE handles what is invested and how much it earned.','TaxONE gathers what goes into the tax return.']}
+    pt: {t:'Início', o:'O mesmo dinheiro visto de três jeitos.',
+         f:['BudgetONE: o que entra e sai no mês.','InvestifyONE: o que está investido e quanto rendeu.','TaxONE: o que vai para o imposto de renda.']},
+    en: {t:'Home', o:'The same money, seen three ways.',
+         f:['BudgetONE: what comes in and goes out each month.','InvestifyONE: what is invested and what it earned.','TaxONE: what goes into the tax return.']}
   },
   'b-painel': {
-    pt: {t:'Painel do BudgetONE', o:'O resumo do mês: quanto entrou, quanto saiu, quanto sobrou e para onde o dinheiro foi.',
-         f:['Os quatro números do topo são a média dos últimos 12 meses.','Mude o período nos botões acima dos números; os anos ficam no seletor.','Toque num ⓘ para entender o que cada número quer dizer.']},
-    en: {t:'BudgetONE dashboard', o:'The month in one look: what came in, what went out, what was left and where the money went.',
-         f:['The four numbers at the top are the average of the last 12 months.','Change the period with the buttons above the numbers; years are in the selector.','Tap an ⓘ to understand what each number means.']}
+    pt: {t:'Painel do BudgetONE', o:'Quanto entrou, quanto saiu, quanto sobrou e para onde foi.',
+         f:['Os quatro números do topo são a média dos últimos 12 meses.','O período muda nos botões acima dos números; o ano, no seletor.']},
+    en: {t:'BudgetONE dashboard', o:'What came in, what went out, what was left and where it went.',
+         f:['The four numbers at the top are the 12-month average.','Change the period with the buttons above the numbers; the year, in the selector.']}
   },
   'b-lanc': {
-    pt: {t:'Lançamentos', o:'Cada gasto e cada entrada, um por linha. É a base de tudo que o BudgetONE calcula.',
-         f:['Toque numa linha para editar ou excluir.','Filtre por período, grupo, categoria, quem pagou e como pagou.','Importe extratos ou fotografe um cupom para lançar sem digitar.']},
-    en: {t:'Entries', o:'Every expense and every income, one per line. It is the base of everything BudgetONE computes.',
-         f:['Tap a row to edit or delete it.','Filter by period, group, category, who paid and how.','Import statements or photograph a receipt to record without typing.']}
+    pt: {t:'Lançamentos', o:'Cada gasto e cada entrada numa linha. Tudo que o BudgetONE calcula sai daqui.',
+         f:['Os filtros separam por período, grupo, categoria, quem pagou e como.','Extrato importado ou foto de cupom lançam sem digitar.']},
+    en: {t:'Entries', o:'Every expense and every income on its own line. Everything BudgetONE computes comes from here.',
+         f:['Filters split by period, group, category, who paid and how.','An imported statement or a receipt photo records without typing.']}
   },
   'b-custos': {
-    pt: {t:'Custos', o:'O que se repete (aluguel, salário, diarista) e o que foi pontual, com o dia em que cada um cai.',
-         f:['Recorrentes: cadastre com o dia certo e o app avisa antes de vencer.','Calendário: os pontinhos mostram o que cai em cada dia; toque para abrir.','Revisar: o que venceu sem você marcar e o que parece conta fixa nova.']},
-    en: {t:'Costs', o:'What repeats (rent, salary, cleaner) and what was one-off, with the day each one falls due.',
-         f:['Recurring: set them up with the right day and the app warns before they are due.','Calendar: the dots show what falls on each day; tap to open.','Review: what went unmarked past its date and what looks like a new fixed bill.']}
+    pt: {t:'Custos', o:'O que se repete (aluguel, diarista) e o que foi pontual, com o dia de cada um.',
+         f:['Conta recorrente com o dia certo ganha aviso antes de vencer.','Revisar mostra o que venceu sem marcar e o que parece conta fixa nova.']},
+    en: {t:'Costs', o:'What repeats (rent, cleaner) and what was one-off, with the day of each.',
+         f:['A recurring bill with the right day gets a reminder before it is due.','Review shows what passed its date unmarked and what looks like a new fixed bill.']}
   },
   'b-renda': {
-    pt: {t:'Renda', o:'Tudo que entra: salário (com benefícios pendurados), aluguel recebido, pró-labore, freelance, aposentadoria, pensão, dividendos, restituição. "+ Nova renda" cadastra com o dia em que cai e o banco.',
-         f:['O passo a passo cadastra a renda com o dia em que cai — inclusive lendo o holerite.','Trocou de emprego? Desligue a renda antiga em vez de apagar: o histórico fica.']},
-    en: {t:'Income', o:'Everything that comes in: salary, rent received, benefits, tax refund.',
-         f:['The step-by-step sets up income with the day it lands — including reading the payslip.','Changed jobs? Turn the old income off instead of deleting it: the history stays.']}
+    pt: {t:'Renda', o:'Tudo que entra: salário com benefícios, aluguel recebido, pró-labore, freelance, aposentadoria, pensão, dividendos, restituição. "+ Nova renda" cadastra com o dia em que cai e o banco.',
+         f:['O passo a passo lê o holerite e cadastra o dia em que a renda cai.','Trocou de emprego? Desligue a renda antiga em vez de apagar, e o histórico fica.']},
+    en: {t:'Income', o:'Everything that comes in: salary with benefits, rent received, pro-labore, freelance, pension, dividends, tax refund. "+ New income" records it with the day it lands and the bank.',
+         f:['The step-by-step reads the payslip and records the day the income lands.','Changed jobs? Turn the old income off instead of deleting it, and the history stays.']}
   },
   'b-fluxo': {
-    pt: {t:'Fluxo', o:'Entradas e saídas mês a mês, o que sobrou e o acumulado — ao lado do patrimônio do InvestifyONE.',
-         f:['Os dois gráficos dividem o mesmo eixo do tempo: o de cima é o acumulado, o de baixo é o mês.','Se a renda começa depois das despesas, o app avisa e começa o gráfico no mês certo.']},
-    en: {t:'Cash flow', o:'Money in and out month by month, what was left and the running total — next to InvestifyONE’s net worth.',
-         f:['The two charts share the same time axis: the top one is the running total, the bottom one is the month.','If income starts after expenses, the app warns and starts the chart on the right month.']}
+    pt: {t:'Fluxo', o:'Entradas, saídas e sobra mês a mês, com o acumulado e o patrimônio do InvestifyONE ao lado.',
+         f:['Os dois gráficos usam o mesmo eixo de tempo: em cima o acumulado, embaixo o mês.','Se a renda começa depois das despesas, o gráfico começa no mês da renda e o app avisa.']},
+    en: {t:'Cash flow', o:'Money in, money out and what was left each month, with the running total and InvestifyONE’s net worth alongside.',
+         f:['Both charts share one time axis: the running total on top, the month below.','If income starts after expenses, the chart starts at the first income month and the app says so.']}
   },
   'b-desloc': {
-    pt: {t:'Deslocamentos', o:'Lugares e trajetos da família, e quanto custa ir e vir por mês: combustível, pedágio, app e transporte público.',
-         f:['Cadastre casa, trabalho, escola e a família; com o endereço o app acha as coordenadas.','Cada trajeto diz como vai, quem vai e quantas vezes; duas pessoas no mesmo carro contam uma vez.','Lance a estimativa como custo fixo para entrar no custo de viver.']},
-    en: {t:'Commutes', o:'The family’s places and trips, and what going back and forth costs per month: fuel, tolls, ride-hailing and public transport.',
-         f:['Add home, work, school and family; from the address the app finds coordinates.','Each trip says how, who and how often; two people in one car count once.','Post the estimate as a fixed cost so it enters the cost of living.']}
+    pt: {t:'Deslocamentos', o:'Quanto a família gasta por mês para ir e vir: combustível, pedágio, app e transporte público.',
+         f:['Pelo endereço o app acha o lugar no mapa.','Duas pessoas no mesmo carro contam uma vez só.','Lance a estimativa como custo fixo para ela entrar no custo de vida.']},
+    en: {t:'Commutes', o:'What the family spends each month getting around: fuel, tolls, ride-hailing and public transport.',
+         f:['The app finds each place on the map from its address.','Two people in the same car count once.','Post the estimate as a fixed cost so it counts in the cost of living.']}
   },
   'b-futuro': {
-    pt: {t:'Futuro', o:'Quanto a vida vai custar daqui a alguns anos, projetando cada grupo pela sua própria inflação (IPCA por grupo).',
-         f:['Saúde e educação sobem mais que a média; transporte e comunicação, menos.','Use para saber quanto a renda precisa crescer só para ficar no lugar.']},
-    en: {t:'Future', o:'What life will cost a few years from now, projecting each group by its own inflation (IPCA per group).',
-         f:['Health and education rise more than average; transport and communication, less.','Use it to know how much income has to grow just to stand still.']}
+    pt: {t:'Futuro', o:'Quanto a vida vai custar daqui a alguns anos, com a inflação de cada grupo (IPCA por grupo).',
+         f:['Saúde e educação sobem mais que a média; transporte e comunicação, menos.','Mostra quanto a renda precisa crescer só para ficar no lugar.']},
+    en: {t:'Future', o:'What life will cost a few years ahead, using each group’s own inflation (IPCA by group).',
+         f:['Health and education rise faster than average; transport and communication, slower.','Shows how much income must grow just to stand still.']}
   },
   'b-precos': {
-    pt: {t:'Preços', o:'O que você paga por cada coisa ao longo do tempo — o seu próprio índice de inflação.',
-         f:['Compare o preço de hoje com o de um ano atrás na mesma categoria.']},
-    en: {t:'Prices', o:'What you pay for each thing over time — your own inflation index.',
-         f:['Compare today’s price with a year ago in the same category.']}
+    pt: {t:'Preços', o:'Quanto você paga por cada coisa ao longo do tempo: a sua inflação de verdade.',
+         f:['Compara o preço de hoje com o de um ano atrás.']},
+    en: {t:'Prices', o:'What you pay for each thing over time: your own inflation.',
+         f:['Compares today’s price with a year ago.']}
   },
   painel: {
-    pt: {t:'Painel do InvestifyONE', o:'Quanto você tem investido, quanto rendeu de verdade e como o dinheiro está dividido.',
-         f:['Patrimônio total é tudo somado na sua moeda base; investido é o que saiu do bolso.','Retorno do bolso (XIRR) considera quando você aportou; o da estratégia (TWR) ignora isso.','Toque em Atualizar no topo para buscar as cotações.']},
-    en: {t:'InvestifyONE dashboard', o:'How much you have invested, what it really earned and how the money is split.',
-         f:['Total net worth is everything added up in your base currency; invested is what left your pocket.','Return in your pocket (XIRR) accounts for when you contributed; the strategy’s (TWR) ignores that.','Tap Refresh at the top to fetch quotes.']}
+    pt: {t:'Painel do InvestifyONE', o:'Quanto está investido, quanto rendeu e como está dividido.',
+         f:['Patrimônio é tudo somado na moeda base; investido é o que saiu do seu bolso.','Retorno do bolso (XIRR) leva em conta quando você aportou; o da estratégia (TWR), não.','Atualizar, no topo, busca as cotações.']},
+    en: {t:'InvestifyONE dashboard', o:'How much is invested, what it earned and how it is split.',
+         f:['Net worth is everything added up in your base currency; invested is what left your pocket.','Pocket return (XIRR) accounts for when you contributed; strategy return (TWR) does not.','Refresh, at the top, fetches quotes.']}
   },
   carteira: {
     pt: {t:'Carteira', o:'Cada investimento numa linha, com preço, quantidade, valor e resultado.',
-         f:['Toque na linha para editar, aportar, atualizar valor ou excluir.','Etiquetas: auto é cotação buscada; estimado é cálculo do app; manual é o que você informou.','Importe extratos da Avenue, do BTG e do Itaú para preencher o histórico.']},
+         f:['Etiquetas: auto é cotação buscada, estimado é conta do app, manual é o que você informou.','Extratos da Avenue, do BTG e do Itaú preenchem o histórico.']},
     en: {t:'Portfolio', o:'Each investment on one line, with price, quantity, value and result.',
-         f:['Tap the row to edit, contribute, update the value or delete.','Labels: auto is a fetched quote; estimated is the app’s calculation; manual is what you entered.','Import statements from Avenue, BTG and Itaú to fill in the history.']}
+         f:['Labels: auto is a fetched quote, estimated is the app’s calculation, manual is what you entered.','Statements from Avenue, BTG and Itaú fill in the history.']}
   },
   movimentos: {
-    pt: {t:'Movimentações', o:'Aportes, compras, vendas, resgates e proventos com data — é o que permite calcular a rentabilidade de verdade.',
-         f:['Reimportar o mesmo extrato não duplica nada.','Informar desde quando cada posição existe é o que destrava o cálculo de retorno.']},
-    en: {t:'Transactions', o:'Contributions, purchases, sales, withdrawals and income with dates — what makes real return possible to compute.',
-         f:['Re-importing the same statement duplicates nothing.','Telling the app how long each position has existed is what unlocks the return calculation.']}
+    pt: {t:'Movimentações', o:'Aportes, compras, vendas, resgates e proventos, com data. Sem eles não dá para calcular a rentabilidade.',
+         f:['Importar o mesmo extrato de novo não duplica nada.','O retorno só aparece quando cada posição tem a data de início.']},
+    en: {t:'Transactions', o:'Contributions, purchases, sales, withdrawals and income, with dates. Without them there is no real return.',
+         f:['Importing the same statement again duplicates nothing.','Return only shows once each position has a start date.']}
   },
   mercado: {
-    pt: {t:'Mercado', o:'Cotações e gráficos de qualquer ativo, mesmo os que você não tem.',
-         f:['Digite o código (PETR4, AAPL, BTC) e veja o gráfico.','Ações e ETFs dos EUA precisam de uma chave gratuita, em Configurações.']},
-    en: {t:'Market', o:'Quotes and charts for any asset, even the ones you do not own.',
-         f:['Type the code (PETR4, AAPL, BTC) and see the chart.','US stocks and ETFs need a free key, in Settings.']}
+    pt: {t:'Mercado', o:'Cotação e gráfico de qualquer ativo, inclusive dos que você não tem.',
+         f:['Digite o código: PETR4, AAPL, BTC.','Ações e ETFs dos EUA precisam de uma chave gratuita, em Configurações.']},
+    en: {t:'Market', o:'Quote and chart for any asset, including ones you do not own.',
+         f:['Type the code: PETR4, AAPL, BTC.','US stocks and ETFs need a free key, in Settings.']}
   },
   noticias: {
-    pt: {t:'Notícias', o:'Manchetes de economia, filtradas por assunto e por fonte.',
-         f:['O app marca as notícias que falam dos ativos que você tem.']},
-    en: {t:'News', o:'Business headlines, filtered by topic and source.',
-         f:['The app flags the news that mention the assets you hold.']}
+    pt: {t:'Notícias', o:'Manchetes de economia, por assunto e por fonte.',
+         f:['As notícias sobre ativos que você tem vêm marcadas.']},
+    en: {t:'News', o:'Business headlines, by topic and source.',
+         f:['News about assets you hold is flagged.']}
   },
   prognostico: {
-    pt: {t:'Prognóstico', o:'Para onde a carteira vai se continuar assim, e o que mudar para chegar onde você quer.',
-         f:['Defina alvos de alocação e o app diz quanto do próximo aporte vai para onde.','O perfil de risco compara o teste com o risco real da sua carteira.']},
-    en: {t:'Outlook', o:'Where the portfolio is heading if it continues like this, and what to change to get where you want.',
-         f:['Set allocation targets and the app tells you how much of the next contribution goes where.','The risk profile compares the test with the real risk of your portfolio.']}
+    pt: {t:'Prognóstico', o:'Para onde a carteira vai se nada mudar, e o que mudar para chegar onde você quer.',
+         f:['Com alvos de alocação, o app diz para onde vai cada parte do próximo aporte.','O perfil de risco compara o seu teste com o risco real da carteira.']},
+    en: {t:'Outlook', o:'Where the portfolio is heading if nothing changes, and what to change to get where you want.',
+         f:['With allocation targets, the app splits your next contribution for you.','The risk profile compares your test with the portfolio’s real risk.']}
   },
   coach: {
-    pt: {t:'Coach', o:'Dezoito aulas curtas, do porquê investir até o imposto de renda. O texto muda com o nível que você escolhe.',
-         f:['Comece no Iniciante e suba quando o assunto ficar fácil.','Marque como lida para acompanhar o progresso.']},
-    en: {t:'Coach', o:'Eighteen short lessons, from why invest to income tax. The text changes with the level you choose.',
-         f:['Start on Beginner and move up when the subject gets easy.','Mark as read to track progress.']}
+    pt: {t:'Coach', o:'Dezoito aulas curtas, de por que investir até o imposto de renda, em três níveis.',
+         f:['Comece no Iniciante e suba quando ficar fácil.']},
+    en: {t:'Coach', o:'Eighteen short lessons, from why invest to income tax, at three levels.',
+         f:['Start at Beginner and move up when it gets easy.']}
   },
   glossario: {
-    pt: {t:'Glossário', o:'137 termos explicados em três níveis. Os mesmos textos abrem nos ⓘ espalhados pelo app.',
-         f:['Busque por palavra ou navegue pela letra.','O nível no pé do menu troca o texto de todos os verbetes.']},
-    en: {t:'Glossary', o:'137 terms explained at three levels. The same texts open in the ⓘ scattered around the app.',
-         f:['Search by word or browse by letter.','The level at the bottom of the menu switches the text of every entry.']}
+    pt: {t:'Glossário', o:'137 termos em três níveis. São os mesmos textos dos ⓘ do app.',
+         f:['O nível no pé do menu troca o texto de todos os termos.']},
+    en: {t:'Glossary', o:'137 terms at three levels. The same texts open from the ⓘ across the app.',
+         f:['The level at the bottom of the menu changes the text of every term.']}
   },
   't-painel': {
-    pt: {t:'Painel do TaxONE', o:'O imposto de renda do ano num olhar: previsão do ajuste, o que já foi retido, deduções e processos.',
-         f:['Cadastre o salário para a previsão sair certa.','Importe a última declaração para conferir tudo.']},
-    en: {t:'TaxONE dashboard', o:'The year’s income tax at a glance: expected balance, what was withheld, deductions and cases.',
-         f:['Register the salary so the forecast is right.','Import the last return to check everything.']}
+    pt: {t:'Painel do TaxONE', o:'O imposto de renda do ano: previsão do ajuste, o que já foi retido, deduções e processos.',
+         f:['Sem o salário cadastrado, a previsão sai errada.','A última declaração importada serve de conferência.']},
+    en: {t:'TaxONE dashboard', o:'The year’s income tax: expected balance, tax withheld, deductions and cases.',
+         f:['Without the salary on file, the forecast is wrong.','Importing last year’s return gives you something to check against.']}
   },
   't-imposto': {
-    pt: {t:'Imposto do ano', o:'Quanto de imposto o salário gera mês a mês, com as tabelas de INSS e IRRF em vigor.',
-         f:['As tabelas trazem a data em que valem.','Bruto ou líquido: o app calcula o outro.']},
-    en: {t:'Tax for the year', o:'How much tax the salary generates month by month, with the current INSS and IRRF tables.',
-         f:['The tables show the date they apply from.','Gross or net: the app computes the other.']}
+    pt: {t:'Imposto do ano', o:'Quanto imposto o salário gera mês a mês, pelas tabelas de INSS e IRRF em vigor.',
+         f:['Cada tabela mostra a data em que passou a valer.','Informe o bruto ou o líquido; o app calcula o outro.']},
+    en: {t:'Tax for the year', o:'How much tax the salary generates each month, using the current INSS and IRRF tables.',
+         f:['Each table shows the date it took effect.','Enter gross or net; the app works out the other.']}
   },
   't-pjclt': {
-    pt: {t:'PJ × CLT', o:'Compara o que sobra no bolso como CLT e como PJ, com Simples, Fator R e pró-labore.',
+    pt: {t:'PJ × CLT', o:'Quanto sobra no bolso como CLT e como PJ, com Simples, Fator R e pró-labore.',
          f:['Mude a alíquota ou deixe o app calcular.','Não é aconselhamento contábil: confira com um contador.']},
-    en: {t:'PJ × CLT', o:'Compares take-home pay as an employee and as a contractor, with Simples, R factor and pro-labore.',
+    en: {t:'PJ × CLT', o:'Take-home pay as an employee and as a contractor, with Simples, R factor and pro-labore.',
          f:['Change the rate or let the app compute it.','Not accounting advice: check with an accountant.']}
   },
   't-declaracoes': {
-    pt: {t:'Declarações', o:'As declarações entregues, lidas do PDF da Receita, com todos os números conferidos.',
-         f:['Importe a declaração e o recibo de uma vez.','Nenhum CPF por extenso fica guardado.']},
-    en: {t:'Tax returns', o:'The returns you filed, read from the Receita PDF, with every number checked.',
-         f:['Import the return and the receipt together.','No full CPF is ever stored.']}
+    pt: {t:'Declarações', o:'As declarações entregues, lidas do PDF da Receita e conferidas número a número.',
+         f:['Importe a declaração e o recibo de uma vez.','O CPF completo nunca fica guardado.']},
+    en: {t:'Tax returns', o:'The returns you filed, read from the Receita PDF and checked number by number.',
+         f:['Import the return and its receipt together.','The full CPF is never stored.']}
   },
   't-processos': {
     pt: {t:'Restituição e processos', o:'Restituição retida, malha fina e processos do e-Processo, com o prazo legal contado.',
          f:['Cole a lista do e-Processo e o app lê tudo.','O cartão fica vermelho quando o prazo passa.']},
-    en: {t:'Refund and cases', o:'Withheld refund, audit and e-Processo cases, with the legal deadline counted.',
+    en: {t:'Refund and cases', o:'Withheld refund, tax audit and e-Processo cases, with the legal deadline counted.',
          f:['Paste the e-Processo list and the app reads it all.','The card turns red when the deadline passes.']}
   },
   't-docs': {
-    pt: {t:'Documentos do IR', o:'Todos os papéis do ano de uma vez: informes, recibos, holerites. O app lê e junta os repetidos.',
-         f:['Escolha vários arquivos de uma vez.','Nada é gravado antes de você conferir.']},
-    en: {t:'Tax documents', o:'All the year’s papers at once: statements, receipts, payslips. The app reads and merges duplicates.',
-         f:['Pick several files at once.','Nothing is saved before you check it.']}
+    pt: {t:'Documentos do IR', o:'Os papéis do ano de uma vez: informes, recibos, holerites. O app lê e junta os repetidos.',
+         f:['Nada é gravado antes de você conferir.']},
+    en: {t:'Tax documents', o:'The year’s papers in one go: statements, receipts, payslips. The app reads them and merges duplicates.',
+         f:['Nothing is saved until you check it.']}
   },
   't-deducoes': {
-    pt: {t:'Deduções', o:'Saúde, educação e dependentes que abatem o imposto — o que já está marcado e o que pode ter sido esquecido.',
+    pt: {t:'Deduções', o:'Saúde, educação e dependentes que abatem o imposto: o que já está marcado e o que pode ter ficado de fora.',
          f:['Os lançamentos do BudgetONE já entram aqui.']},
-    en: {t:'Deductions', o:'Health, education and dependants that reduce tax — what is already marked and what may have been missed.',
-         f:['BudgetONE entries already show up here.']}
+    en: {t:'Deductions', o:'Health, education and dependants that lower the tax: what is already marked and what may have been missed.',
+         f:['BudgetONE entries show up here automatically.']}
   },
   config: {
-    pt: {t:'Configurações', o:'Compartilhadas valem para os dois apps; as outras abas têm só o que é de cada um. Toque num título para abrir.',
-         f:['Chaves gratuitas destravam cotações dos EUA e mais manchetes.','Exporte um backup de vez em quando — é o seu seguro.','Instalar na tela de início faz o app abrir sem internet.']},
-    en: {t:'Settings', o:'Shared applies to both apps; the other tabs hold only what belongs to each. Tap a title to open it.',
-         f:['Free keys unlock US quotes and more headlines.','Export a backup now and then — it is your insurance.','Installing to the home screen makes the app open offline.']}
+    pt: {t:'Configurações', o:'Compartilhadas vale para os apps todos; as outras abas, só para cada um.',
+         f:['Chaves gratuitas liberam cotações dos EUA e mais manchetes.','Baixe um backup de vez em quando.','Instalado na tela de início, o app abre sem internet.']},
+    en: {t:'Settings', o:'Shared applies to all the apps; the other tabs, to each one alone.',
+         f:['Free keys unlock US quotes and more headlines.','Download a backup now and then.','Installed on the home screen, the app opens offline.']}
   }
 };
 
@@ -23752,7 +23757,7 @@ const AssistOne = {
     }
     /* a dica desta tela some quando o RootifyONE desliga "assistone.dicas" */
     const dicas = !(window.SolverRecursos && SolverRecursos.valor('assistone.dicas', true) === false);
-    h += '<div class="aone-tela"><b>📍 ' + de('Você está em ', 'You are in ') + esc(titulo) + '</b>' +
+    h += '<div class="aone-tela"><b>📍 ' + esc(titulo) + '</b>' +
          (a && dicas ? '<p>' + esc(a.o) + '</p>' : '');
     const atalhos = ATALHOS_TELA[v] || [];
     if(atalhos.length) h += '<div class="aone-atalhos">' + atalhos.map(x =>
