@@ -481,5 +481,6 @@ e `Nuvem.destrancado` devolve a tela como estava), `Nuvem` (maestro).
   sessão no endereço também tira a marca.
 - O rodapé da tela inicial (`viewHub`) diz onde os dados ficam conforme o modo.
 - `teste-nuvem.html` é só um redirecionamento para `./` (mantém atalhos antigos).
+- **Vale (3.35)**: recarregar dentro dos 15 min não pede PIN — a chave da família (CryptoKey não extraível) fica no IndexedDB `kv`, `vale|<conta>` = `{ cf, kv, fk, gid, ate }`; some ao trancar, sair ou trocar de conta.
 - Teste: `node teste/teste-nuvem.js` (Chromium, Supabase de mentira, 91 verificações, inclusive o cadeado com relógio falso). Detalhes: PLANO-SUPABASE-MoneyTRIO.md;
   o que falta: PENDENCIAS.md.

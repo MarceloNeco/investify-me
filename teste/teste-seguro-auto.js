@@ -29,7 +29,7 @@ const LOCAL = { v: 1, posicoes: [], config: {},
       ok(e.g[2][0] === 'IPVA' && !e.g[2][1], 'outras categorias de Veículo não mudam');
       ok(e.r[0][0] === 'Seguro Auto', 'o compromisso antigo também vira "Seguro Auto"');
       ok(e.c.indexOf('Seguro Auto') >= 0 && !e.c.some((x) => /Neco|Beta/.test(x)) && e.c.indexOf('IPVA') >= 0, 'lista de categorias de Veículo: "Seguro Auto" no lugar das antigas, o resto igual');
-      ok(e.v === '3.34', 'versão 3.34');
+      ok(parseFloat(e.v) >= 3.34, 'versão 3.34 ou mais nova (' + e.v + ')');
       const cat = await p.evaluate(() => document.documentElement.innerHTML.indexOf("sub:'Seguro Auto Neco'") < 0);
       ok(cat, 'o catálogo de sugestões não tem mais "Seguro Auto Neco"');
       await p.evaluate(() => { abrirApp('budget'); irPara('b-lanc'); }); await p.waitForTimeout(500);

@@ -240,6 +240,19 @@ input[type=range]{padding:0; border:none; background:transparent; accent-color:v
 .modal-body{padding:16px; overflow-y:auto}
 .modal-foot{padding:12px 16px; border-top:1px solid var(--line); display:flex; gap:10px; justify-content:flex-end}
 .modal-info .modal-body{font-size:.92rem}
+/* 3.35 — no computador, a janela grande usa a largura e o cabeçalho da tabela fica fixo ao rolar (no celular, igual a antes) */
+.tbl-fixa thead th{position:sticky; top:0; z-index:2}
+@media (min-width:1024px){
+  .modal-wrap.larga .modal{max-width:min(1100px, 92vw)}
+  .modal-wrap.larga .tbl-fixa{max-height:62vh; overflow:auto}
+  .modal-wrap.larga .tbl-fixa th, .modal-wrap.larga .tbl-fixa td{white-space:normal}
+}
+/* tabelas da página (Lançamentos, Recorrentes): cabeçalho fixo logo abaixo do topo, em tela larga, onde elas cabem inteiras */
+@media (min-width:1200px){
+  .card.sem-pad:has(table.tbl-lanc){overflow:clip}
+  .card.sem-pad .tbl-wrap:has(> table.tbl-lanc){overflow:visible}
+  table.tbl-lanc thead th{position:sticky; top:var(--altura-topo, 64px); z-index:3}
+}
 .lvl-tag{font-size:.7rem; color:var(--txt3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px}
 
 /* toasts */
@@ -2878,6 +2891,10 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.35 */
+  'Recarregar sem pedir o PIN e telas largas no computador':'Reload without asking for the PIN, and wide screens on the computer',
+  'Recarregar a página (ou abrir de novo) dentro de 15 minutos de uso não pede o PIN nem a digital de novo. Passou disso, ou se você fechar o cadeado, pede. A tela do cadeado avisa: "Você continua conectado… Só falta destravar."':'Reloading the page (or opening it again) within 15 minutes of use does not ask for the PIN or fingerprint again. After that, or if you lock it, it asks. The lock screen says: "You are still signed in… You only need to unlock."',
+  'No computador, a prévia de "Importar compromissos" usa a largura da tela e mostra todas as colunas; o cabeçalho das tabelas (prévia, Lançamentos e Recorrentes) fica fixo ao rolar. No celular, tudo igual.':'On the computer, the "Import commitments" preview uses the screen width and shows every column; table headers (preview, Entries and Recurring) stay fixed while scrolling. On the phone, nothing changes.',
   /* 3.34 */
   'Seguro do carro numa categoria só':'Car insurance in a single category',
   'Seguro do carro numa categoria só: Veículo · Seguro Auto.':'Car insurance in a single category: Vehicle · Car insurance.',
@@ -13574,6 +13591,10 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.35', d:'2026-11-03', t:'Recarregar sem pedir o PIN e telas largas no computador', itens:[
+    'Recarregar a página (ou abrir de novo) dentro de 15 minutos de uso não pede o PIN nem a digital de novo. Passou disso, ou se você fechar o cadeado, pede. A tela do cadeado avisa: "Você continua conectado… Só falta destravar."',
+    'No computador, a prévia de "Importar compromissos" usa a largura da tela e mostra todas as colunas; o cabeçalho das tabelas (prévia, Lançamentos e Recorrentes) fica fixo ao rolar. No celular, tudo igual.'
+  ]},
   {v:'3.34', d:'2026-11-03', t:'Seguro do carro numa categoria só', itens:[
     'Seguro do carro numa categoria só: Veículo · Seguro Auto.'
   ]},
@@ -16234,7 +16255,7 @@ const ImportRec = {
     $('#genBody').innerHTML =
       '<p class="small muted">' + (pt ? 'Confira antes de importar. Os marcados entram como compromissos novos; nada do que já existe é trocado ou apagado.' : 'Check before importing. Ticked lines become new commitments; nothing that already exists is changed or erased.') + '</p>' +
       (nRuim ? '<p class="small" style="color:var(--warn)">' + nRuim + (pt ? ' linha(s) vieram desmarcadas: com problema ou parecidas com um compromisso que já existe. Marque se quiser importar assim mesmo.' : ' line(s) came unticked: with a problem or similar to an existing commitment. Tick them to import anyway.') + '</p>' : '') +
-      '<div class="tbl-wrap" style="overflow-x:auto;max-width:100%"><table class="tbl imp-tbl"><thead><tr><th></th>' +
+      '<div class="tbl-wrap tbl-fixa" style="overflow-x:auto;max-width:100%"><table class="tbl imp-tbl"><thead><tr><th></th>' +
       '<th>' + (pt ? 'Nome' : 'Name') + '</th><th class="num">' + (pt ? 'Valor' : 'Amount') + '</th><th>' + (pt ? 'Quando cai' : 'When') + '</th>' +
       '<th>' + (pt ? 'Período' : 'Period') + '</th><th>' + (pt ? 'Grupo · categoria' : 'Group · category') + '</th><th>' + (pt ? 'Quem' : 'Who') + '</th><th>IR</th></tr></thead>' +
       '<tbody>' + linhas + '</tbody></table></div>' +
@@ -16247,6 +16268,7 @@ const ImportRec = {
     }));
     if(!nOk) $('#impOk').disabled = true;
     abrir('genModal');
+    $('#genModal').classList.add('larga');
   },
   rotulo(n){ return I18n.atual === 'pt' ? 'Importar ' + n + ' marcado' + (n === 1 ? '' : 's') : 'Import ' + n + ' ticked'; },
   importar(){
@@ -32553,7 +32575,7 @@ function sairDoWizard(idDoModal){
   return true;
 }
 
-function abrir(id){ $('#' + id).classList.remove('hidden'); }
+function abrir(id){ const el = $('#' + id); el.classList.remove('hidden'); el.classList.remove('larga'); }   /* larga: quem precisa põe depois de abrir */
 function fechar(id){ $('#' + id).classList.add('hidden'); }
 const MAX_TOASTS = 3;
 
@@ -34814,10 +34836,14 @@ function mostrarBloqueio(){
     });
   }
 }
+/* 3.35: a altura do topo, para o cabeçalho fixo das tabelas ficar logo abaixo dele */
+function medirTopo(){ const tp = document.querySelector('.topbar'); if(tp && tp.offsetHeight) document.documentElement.style.setProperty('--altura-topo', tp.offsetHeight + 'px'); }
+window.addEventListener('resize', medirTopo);
+document.addEventListener('DOMContentLoaded', function () { setTimeout(medirTopo, 600); setTimeout(medirTopo, 3000); });
 /* 3.30: o app começa pelo portão da nuvem (conta → família → cadeado) ou abre só neste aparelho — nuvem.js */
 document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuvem) MoneyNuvem.portao(iniciar); else iniciar(); });
 
 </script>
-<script src="nuvem.js?v=1.3.0"></script>
+<script src="nuvem.js?v=1.4.0"></script>
 </body>
 </html>

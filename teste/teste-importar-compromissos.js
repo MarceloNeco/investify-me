@@ -63,6 +63,13 @@ const ARQ = { tipo: 'moneytrio-compromissos', versao: 1, criado_em: '2026-11-03'
       ok(!linhas[4].ck && /valor zero/.test(linhas[4].txt), 'valor zero: desmarcado e avisado');
       ok(/01\/Jan\/2027|01\/01\/2027/.test(linhas[1].txt) && /Ana/.test(linhas[1].txt) && /✓/.test(linhas[1].txt), 'a prévia mostra período, quem e IR');
       ok((await p.textContent('#impOk')).trim() === 'Importar 2 marcados', 'botão "Importar 2 marcados"');
+      const lay = await p.evaluate(() => { const m = document.querySelector('#genModal .modal'), w = document.querySelector('#genModal .tbl-fixa'); return { modal: m.getBoundingClientRect().width, cabe: w.scrollWidth <= w.clientWidth + 1 }; });
+      if (vp.width >= 1024) {
+        ok(lay.modal > 900 && lay.cabe, '1366 px: a janela usa a largura (' + Math.round(lay.modal) + ' px) e todas as colunas cabem, sem rolagem para o lado');
+        const fixo = await p.evaluate(() => { const w = document.querySelector('#genModal .tbl-fixa'); w.style.maxHeight = '120px'; w.scrollTop = 80; const th = w.querySelector('thead th'); return Math.abs(th.getBoundingClientRect().top - w.getBoundingClientRect().top) < 3 && w.scrollTop > 0; });
+        ok(fixo, '1366 px: o cabeçalho da tabela fica fixo ao rolar');
+        await p.evaluate(() => { document.querySelector('#genModal .tbl-fixa').style.maxHeight = ''; });
+      } else ok(lay.modal <= vp.width, '390 px: a janela continua do tamanho da tela, como antes (' + Math.round(lay.modal) + ' px)');
       const sobra = await p.evaluate(() => document.scrollingElement.scrollWidth - window.innerWidth);
       ok(sobra <= 1, 'a página não rola para o lado (a tabela rola dentro da janela)');
       await p.click('#impOk');
@@ -71,6 +78,17 @@ const ARQ = { tipo: 'moneytrio-compromissos', versao: 1, criado_em: '2026-11-03'
       ok(recs[0].id === 'r-ja' && recs.some((r) => r.nome === 'Escola Ana 2027' && r.grupo === 'DEPENDENTES' && r.irpf && r.desde === '2027-01-01') && recs.some((r) => r.nome === 'YouTube Premium'), 'importou só os 2 marcados; o que já existia ficou igual');
       ok(/2 compromissos importados\. Você pode editar cada um em Recorrentes\./.test(await p.textContent('#toasts')), 'mensagem final "2 compromissos importados…"');
       ok(JSON.parse(await p.evaluate(() => localStorage.getItem('investifyme.dados.v1'))).recorrentes.length === 3, 'modo só neste aparelho: gravado no aparelho');
+      /* janela pequena depois da grande: não fica larga */
+      await p.evaluate(() => { abrir('genModal'); }); 
+      ok(!(await p.evaluate(() => document.getElementById('genModal').classList.contains('larga'))), 'outra janela aberta depois volta ao tamanho normal');
+      await p.evaluate(() => fechar('genModal'));
+      if (vp.width >= 1024) {
+        await p.evaluate(() => { for (let i = 0; i < 40; i++) Gasto.add({ data: '2026-10-0' + (1 + i % 9), valor: 10 + i, grupo: 'LAZER', sub: 'Cinema', desc: 'teste ' + i }); Store.salvar(); irPara('b-lanc'); });
+        await p.waitForTimeout(500);
+        const fixoPag = await p.evaluate(() => { const th = document.querySelector('#view-b-lanc table.tbl-lanc thead th'); if (!th) return 'sem tabela'; window.scrollTo(0, 900); const tp = document.querySelector('.topbar').getBoundingClientRect().bottom; return Math.abs(th.getBoundingClientRect().top - tp) < 4 ? true : th.getBoundingClientRect().top + ' vs ' + tp; });
+        ok(fixoPag === true, '1366 px: em Lançamentos o cabeçalho da tabela fica fixo logo abaixo do topo (' + fixoPag + ')');
+        await p.evaluate(() => window.scrollTo(0, 0));
+      }
       await p.evaluate(() => irPara('config')); await p.waitForTimeout(300);
       ok(!!(await p.$('#view-config [data-acao="rec-importar"]')) || /Importar compromissos/.test(await p.textContent('#view-config')), 'Configurações também tem "Importar compromissos" (perto do backup)');
       ok(erros.length === 0, 'nenhum erro de página (' + erros.length + ')' + (erros[0] ? ': ' + erros[0] : ''));

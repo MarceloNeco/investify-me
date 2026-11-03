@@ -323,11 +323,22 @@ let BASE = '';
     await A.evaluate(() => MoneyNuvem._teste.Caixa.esvaziar()); await esperar(1500);
     ok((await estado(A)).gastos.filter((g) => g.id === 'rb_pluggy-e2e-1').length === 1, 'o mesmo lançamento do robô duas vezes não duplica');
 
-    /* ---------- 4. recarregar pede o PIN ---------- */
+    /* ---------- 4. recarregar: dentro dos 15 min não pede o PIN (3.35); trancado, pede ---------- */
     console.log('4) recarregar: PIN');
+    const vale = (pg) => pg.evaluate(async () => { const v = await MoneyNuvem._teste.IDB.get('kv', MoneyNuvem._teste.Vale.K()); return v ? { extraivel: v.cf.extractable, ehChave: v.cf instanceof CryptoKey, falta: v.ate - Date.now() } : null; });
+    const v0 = await vale(A);
+    ok(v0 && v0.ehChave && v0.extraivel === false && v0.falta > 13 * 60000 && v0.falta <= 15 * 60000, 'A: a chave guardada para recarregar é do navegador, NÃO extraível, e vale 15 min');
+    const guardado = await A.evaluate(() => { let t = ''; for (const st of [localStorage, sessionStorage]) for (let i = 0; i < st.length; i++) t += st.key(i) + '=' + st.getItem(st.key(i)); return t; });
+    ok(!/vale|"cf"|fk-teste/.test(guardado), 'A: nada da chave em localStorage/sessionStorage');
+    await A.reload(); await A.waitForSelector('#nvSelo', { timeout: 30000 });
+    ok(!(await A.$('#nvPin')) && (await estado(A)).gastos.length === 4, 'A: recarregar dentro dos 15 min abre direto, sem pedir PIN');
     await A.evaluate(() => MoneyNuvem.trancar('manual'));
     await A.waitForSelector('#nvPin', { timeout: 20000 });
     ok(/Você fechou o cadeado/.test(await A.textContent('.nv-card')), 'A: "Fechar agora" tranca e pede o PIN');
+    ok(/Você continua conectado como .*dono.*Só falta destravar/.test(await A.textContent('#nvConectado')) && /Entrar com outra conta/.test(await A.textContent('#nvSairP')), 'A: a tela do cadeado diz "Você continua conectado… Só falta destravar" e tem "Entrar com outra conta"');
+    ok((await vale(A)) === null, 'A: trancar apaga a chave guardada');
+    await A.reload(); await A.waitForSelector('#nvPin', { timeout: 30000 });
+    ok(true, 'A: trancado e recarregado: pede o PIN');
     ok(await A.evaluate(() => document.querySelector('#nvPin').type === 'text' && !document.querySelector('.nv-card input[type=password]')), 'A: o PIN de abrir também não é campo de senha');
     await A.fill('#nvPin', '999111'); await A.click('#nvPinOk');
     await A.waitForFunction(() => /PIN errado/.test((document.querySelector('#nvErro') || {}).textContent || ''), null, { timeout: 20000 });
@@ -336,6 +347,10 @@ let BASE = '';
     await A.waitForSelector('#nvSelo', { timeout: 30000 });
     const ea = await estado(A);
     ok(ea.gastos.length === 4 && ea.posicoes === 1, 'A: abriu com a cópia do aparelho (4 lançamentos, 1 investimento)');
+    await A.evaluate(async () => { const T = MoneyNuvem._teste, v = await T.IDB.get('kv', T.Vale.K()); v.ate = Date.now() - 1000; await T.IDB.set('kv', T.Vale.K(), v); });
+    await A.reload(); await A.waitForSelector('#nvPin', { timeout: 30000 });
+    ok((await vale(A)) === null, 'A: depois dos 15 min, recarregar pede o PIN (e o vale vencido é apagado)');
+    await A.fill('#nvPin', '482915'); await A.click('#nvPinOk'); await A.waitForSelector('#nvSelo', { timeout: 30000 });
     const ls = await A.evaluate(() => { let t = ''; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k !== 'investifyme.dados.v1') t += localStorage.getItem(k); } return t; });
     ok(!/Posto teste|Combustível/.test(ls), 'nada do que veio da nuvem foi parar aberto no localStorage');
 
@@ -447,6 +462,7 @@ let BASE = '';
     await C.waitForSelector('#nvPin', { timeout: 10000 });
     ok(/Trancado após 15 min sem uso · \d\d\/\w{3}\/2026 \d\d:\d\d/.test(await C.textContent('#nvMotivo')), 'C: 15 min sem uso tranca, com o motivo e a hora');
     ok(await C.evaluate(() => !MoneyNuvem._teste.Cadeado.aberto()), 'C: a chave da família saiu da memória');
+    ok(await C.evaluate(async () => !(await MoneyNuvem._teste.IDB.get('kv', MoneyNuvem._teste.Vale.K()))), 'C: trancar por tempo apaga a chave guardada para recarregar');
     await C.fill('#nvPin', '482915'); await C.click('#nvPinOk');
     await C.waitForFunction(() => !document.querySelector('#nvPortao'), null, { timeout: 30000 });
     ok((await C.inputValue('#campoRascunho')) === 'rascunho que não pode sumir', 'C: ao abrir, o que foi digitado continua lá (sem recarregar)');

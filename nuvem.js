@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.3.0 · 03/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.4.0 · 03/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -23,7 +23,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.3.0';
+  var VERSAO = '1.4.0';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -275,6 +275,45 @@
     }
   };
 
+  /* ---------------- Vale (3.35): recarregar dentro dos 15 min não pede o PIN de novo ----------------
+     Ao abrir o cadeado, a chave da família (CryptoKey NÃO extraível) fica no IndexedDB deste aparelho com um "vale até"
+     (agora + 15 min, renovado pelo uso; no máximo 10 min depois de sair do app). Ao carregar a página, se o vale ainda vale,
+     usa sem pedir PIN/digital. Some ao trancar (tempo, 10 min fora, manual), ao sair da conta e ao entrar com outra conta.
+     Nunca em formato exportável, nunca em localStorage/sessionStorage. */
+  var Vale = {
+    K: function (uid) { return 'vale|' + (uid || Conta.uid()); },
+    guardar: async function () {
+      if (!Cadeado.cf || Cadeado.cf.extractable) return;
+      this._o = { cf: Cadeado.cf, kv: Cadeado.kv, fk: Cadeado.fk, gid: Cadeado.gid, ate: Date.now() + OCIOSO_MS };
+      this._gravou = Date.now();
+      try { await IDB.set('kv', this.K(), this._o); } catch (e) {}
+    },
+    renovar: function () {
+      if (!this._o || !Cadeado.aberto()) return;
+      this._o.ate = Date.now() + OCIOSO_MS;
+      if (Date.now() - (this._gravou || 0) < 20000) return;   /* no máximo uma gravação a cada 20 s */
+      this._gravou = Date.now(); IDB.set('kv', this.K(), this._o).catch(function () {});
+    },
+    limitar: function (ate) {
+      if (!this._o || !Cadeado.aberto()) return;
+      this._o.ate = Math.min(this._o.ate, ate); this._gravou = Date.now();
+      IDB.set('kv', this.K(), this._o).catch(function () {});
+    },
+    usar: async function (gid) {
+      var v = null; try { v = await IDB.get('kv', this.K()); } catch (e) {}
+      if (!v) return false;
+      var bom = v.gid === gid && v.ate > Date.now() && v.cf && typeof CryptoKey !== 'undefined' && v.cf instanceof CryptoKey && !v.cf.extractable;
+      if (!bom) { await this.apagar(); return false; }
+      Cadeado.usarChave(v.cf, v.kv, v.fk, gid);
+      this._o = v; this.renovar();
+      return true;
+    },
+    apagar: function (uid) { this._o = null; return IDB.del('kv', this.K(uid)).catch(function () {}); },
+    apagarOutros: async function (uid) {
+      try { var l = await IDB.prefixo('kv', 'vale|'); for (var i = 0; i < l.length; i++) if (l[i][0] !== this.K(uid)) await IDB.del('kv', l[i][0]); } catch (e) {}
+    }
+  };
+
   /* ---------------- Cadeado: PIN, digital, código de recuperação ---------------- */
   var Cadeado = {
     cf: null, cfRaw: null, kv: 0, fk: '', gid: null, dukRaw: null,
@@ -345,11 +384,15 @@
     },
     usar: async function (raw, kv, fk, gid) {
       this.cfRaw = new Uint8Array(raw); this.kv = kv; this.fk = fk; this.gid = gid;
-      this.cf = await Cifra.aes(this.cfRaw);
+      this.cf = await Cifra.aes(this.cfRaw);   /* não extraível: o navegador nunca devolve os bytes desta chave */
+      await Vale.guardar();
     },
+    /* 3.35: abrir com a chave guardada pelo Vale (recarregou dentro dos 15 min) — sem os bytes, só a chave do navegador */
+    usarChave: function (cf, kv, fk, gid) { this.cf = cf; this.cfRaw = null; this.dukRaw = null; this.kv = kv; this.fk = fk; this.gid = gid; },
     trancar: function () {
       if (this.cfRaw) this.cfRaw.fill(0); if (this.dukRaw) this.dukRaw.fill(0);
       this.cf = null; this.cfRaw = null; this.dukRaw = null; this.kv = 0; this.fk = ''; this.gid = null;
+      return Vale.apagar();
     },
     /* um registro (texto JSON) ↔ pacote fechado com a CF, no mesmo formato do cofre do OmniLifeONE */
     selar: async function (txt) {
@@ -500,7 +543,7 @@
       if (apaga > 20 && apaga > vivos * 0.3 && !confirmar(tt('Isto vai apagar ', 'This will erase ') + apaga + tt(' registros da nuvem desta família, e não dá para desfazer. Continuar?', ' records from this family\'s cloud, and it cannot be undone. Continue?'))) {
         this._recusou = true;
         aviso(tt('Tudo bem: nada foi apagado. Recarregando o que está na nuvem…', 'OK: nothing was erased. Reloading what is in the cloud…'), 'warn');
-        setTimeout(function () { Cadeado.trancar(); ssSet(K_TRANCOU, 'manual'); location.reload(); }, 1500);
+        setTimeout(function () { Promise.resolve(Cadeado.trancar()).then(function () { ssSet(K_TRANCOU, 'manual'); location.reload(); }); }, 1500);
         return 0;
       }
       this.ultimo = agora;
@@ -865,13 +908,13 @@
         '<button class="nv-btn" id="nvFechar">' + tt('Fechar', 'Close') + '</button></div>';
       var $ = function (s) { return el.querySelector(s); };
       $('#nvFechar').onclick = function () { Painel.fechar(); };
-      $('#nvIrLocal').onclick = async function () { try { await Promise.race([Sinc.registrar().then(function () { return Sinc.enviar(); }), dorme(5000)]); } catch (e) {} Cadeado.trancar(); lsSet(K_SO_AQUI, 1); location.reload(); };
+      $('#nvIrLocal').onclick = async function () { try { await Promise.race([Sinc.registrar().then(function () { return Sinc.enviar(); }), dorme(5000)]); } catch (e) {} await Cadeado.trancar(); lsSet(K_SO_AQUI, 1); location.reload(); };
       $('#nvTrancar').onclick = function () { Nuvem.trancar('manual'); };
       $('#nvSair').onclick = function () { Nuvem.sair(false); };
       $('#nvDesc').onclick = function () { Nuvem.sair(true); };
-      $('#nvPin').onclick = function () { Painel.fechar(); Portao.novoPin(async function (pin) { await Cadeado.trocarPin(pin); aviso('✓ ' + tt('PIN trocado.', 'PIN changed.')); Tela.fechar(); }, true); };
+      $('#nvPin').onclick = function () { if (!Cadeado.dukRaw) return aviso(tt('Para trocar o PIN, feche o cadeado (🔒 Fechar agora) e abra de novo com o PIN.', 'To change the PIN, lock (🔒 Lock now) and open again with the PIN.')); Painel.fechar(); Portao.novoPin(async function (pin) { await Cadeado.trocarPin(pin); aviso('✓ ' + tt('PIN trocado.', 'PIN changed.')); Tela.fechar(); }, true); };
       if ($('#nvDeNovo')) $('#nvDeNovo').onclick = function () { Sinc.tentarDeNovo(); };
-      if ($('#nvDigOn')) $('#nvDigOn').onclick = async function () { var r = await Cadeado.ligarDigital(); aviso(r.ok ? '✓ ' + tt('Pronto: abre com a digital neste ' + apN() + '.', 'Done: opens with your fingerprint on this ' + apN() + '.') : tt('A digital não foi ligada. Continue usando o PIN.', 'Fingerprint was not turned on. Keep using the PIN.')); Painel.desenhar(); };
+      if ($('#nvDigOn')) $('#nvDigOn').onclick = async function () { if (!Cadeado.dukRaw) return aviso(tt('Para ligar a digital, feche o cadeado (🔒 Fechar agora) e abra de novo com o PIN.', 'To turn on the fingerprint, lock (🔒 Lock now) and open again with the PIN.')); var r = await Cadeado.ligarDigital(); aviso(r.ok ? '✓ ' + tt('Pronto: abre com a digital neste ' + apN() + '.', 'Done: opens with your fingerprint on this ' + apN() + '.') : tt('A digital não foi ligada. Continue usando o PIN.', 'Fingerprint was not turned on. Keep using the PIN.')); Painel.desenhar(); };
       if ($('#nvDigOff')) $('#nvDigOff').onclick = async function () { await Cadeado.desligarDigital(); Painel.desenhar(); };
       if ($('#nvLevar')) $('#nvLevar').onclick = function () { Painel.fechar(); Nuvem.levarDeNovo(); };
       if ($('#nvCaixaJa')) $('#nvCaixaJa').onclick = function () { Caixa.esvaziar(); };
@@ -1098,12 +1141,12 @@
           : trancou === 'fora' ? tt('Trancado porque o app ficou 10 min em segundo plano', 'Locked because the app was in the background for 10 min')
           : trancou === 'ocioso' ? tt('Trancado após 15 min sem uso', 'Locked after 15 min without use')
           : tt('Fechado sozinho por segurança.', 'Locked by itself for safety.')) + (trancou === 'manual' ? '' : ' · ' + esc(hora)) + '</div>' : '') +
-        '<p class="nv-muted">' + tt('Família ', 'Family ') + '<b>' + esc(fam.nome) + '</b> · ' + esc(Conta.email()) + '</p>' +
+        '<p class="nv-muted" id="nvConectado">' + tt('Você continua conectado como ', 'You are still signed in as ') + '<b>' + esc(nomeConta()) + '</b>. ' + tt('Só falta destravar.', 'You only need to unlock.') + '<br>' + tt('Família ', 'Family ') + '<b>' + esc(fam.nome) + '</b></p>' +
         (L && L.bloqueado ? '<div class="nv-nota erro">' + tt('O PIN errou muitas vezes e ficou bloqueado neste ' + apN() + '. Use o código de recuperação (ou saia e entre de novo na conta).', 'The PIN failed too many times and is blocked on this ' + apN() + '. Use the recovery code (or sign out and sign in again).') + '</div>'
           : '<label class="nv-fld"><span>PIN</span><input type="text" class="nv-pinc" id="nvPin" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label><button class="nv-btn pri" id="nvPinOk">' + tt('Abrir', 'Open') + '</button>' +
             (dig ? '<button class="nv-btn" id="nvDig">👆 ' + tt('Abrir com a digital', 'Open with fingerprint') + '</button>' : '')) +
         '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div>' +
-        '<div class="nv-row"><button class="nv-lnk" id="nvEsqPin">' + tt('Esqueci o PIN', 'I forgot the PIN') + '</button><button class="nv-lnk" id="nvSairP">' + tt('Sair da conta', 'Sign out') + '</button></div>');
+        '<div class="nv-row"><button class="nv-lnk" id="nvEsqPin">' + tt('Esqueci o PIN', 'I forgot the PIN') + '</button><button class="nv-lnk" id="nvSairP">' + tt('Entrar com outra conta', 'Sign in with another account') + '</button></div>');
       var $ = function (s) { return el.querySelector(s); };
       $('#nvSairP').onclick = function () { Nuvem.sair(false); };
       $('#nvEsqPin').onclick = function () { Portao.primeiraVez(fam, true); };
@@ -1164,7 +1207,7 @@
      Tranca sem recarregar: a tela do cadeado cobre o app e, ao abrir, tudo volta como estava (campos e rolagem). */
   var Trava = {
     ultimo: Date.now(), foraDesde: 0, _mov: 0, adiado: null, aviso: null,
-    usou: function () { this.ultimo = Date.now(); if (this.aviso) this.tirarAviso(); },
+    usou: function () { this.ultimo = Date.now(); if (this.aviso) this.tirarAviso(); Vale.renovar(); },
     /* 'pesado' = trabalho da pessoa (importação no Fundo, levar para a nuvem): espera e conta o tempo de novo.
        'leve' = a sincronia de rotina e a caixa do robô: só espera terminar (segundos) e tranca. */
     ocupado: function () {
@@ -1189,7 +1232,7 @@
       document.addEventListener('mousemove', function () { var t = Date.now(); if (t - self._mov < 5000) return; self._mov = t; if (Cadeado.aberto()) self.usou(); }, { passive: true, capture: true });
       document.addEventListener('visibilitychange', function () {
         if (document.hidden) {
-          self.foraDesde = Date.now(); Sinc.registrar();
+          self.foraDesde = Date.now(); Sinc.registrar(); Vale.limitar(Date.now() + FORA_MS);
           clearTimeout(self._t); self._t = setTimeout(function () { if (document.hidden) self.pedir('fora'); }, FORA_MS);
         } else {
           clearTimeout(self._t);
@@ -1200,7 +1243,7 @@
         }
       });
       setInterval(function () { self.conferir(); }, 1000);
-      window.addEventListener('pagehide', function () { Sinc.registrar(); });
+      window.addEventListener('pagehide', function () { Sinc.registrar(); Vale.limitar(Date.now() + FORA_MS); });
       window.addEventListener('beforeunload', function (e) { if (Sinc._sujo || Nuvem.levando) { Sinc.registrar(); e.preventDefault(); e.returnValue = ''; } });
     },
     conferir: function () {
@@ -1301,6 +1344,7 @@
     depoisDaConta: async function () {
       Portao.carregando(tt('Procurando as suas famílias…', 'Looking for your families…'));
       var uid = Conta.uid(), lista = null;
+      await Vale.apagarOutros(uid);   /* entrou com outra conta: o vale de quem estava antes sai */
       try {
         if ((await Conta.rpc('minha_conta_encerrada')) === true) {
           await this.apagarDoAparelho(uid); await Conta.sair();
@@ -1326,6 +1370,7 @@
       this.familia = fam; lsSet(K_FAM, fam.grupo_id);
       var L = await Cadeado.local();
       if (!L) return Portao.primeiraVez(fam, false);
+      if (!L.bloqueado && (await Vale.usar(fam.grupo_id))) return this.depoisDoCadeado(false);   /* recarregou dentro dos 15 min */
       Portao.pin(fam);
     },
     /* cadeado aberto: carrega a cópia fechada do aparelho, busca o que mudou e liga o app */
@@ -1445,7 +1490,7 @@
       if (g && (g.meu_papel === 'chefe' || g.meu_papel === 'responsavel')) return;
       await Sinc.apagarFamilia(Sinc.gid);
       var L = await Cadeado.local(); if (L && L.fam) { delete L.fam[Sinc.gid]; await Cadeado.gravar(L); }
-      Cadeado.trancar(); lsDel(K_FAM);
+      await Cadeado.trancar(); lsDel(K_FAM);
       alertaERecarrega(tt('Você não é mais chefe ou responsável desta família. A cópia deste aparelho foi apagada.', 'You are no longer head or guardian of this family. The copy on this device was erased.'));
     },
     trancar: async function (motivo) {
@@ -1455,7 +1500,7 @@
       this._rolagem = [window.scrollX, window.scrollY];
       this._foco = document.activeElement && document.activeElement !== document.body ? document.activeElement : null;
       this.motivoTranca = motivo || 'manual';
-      Cadeado.trancar();   /* a chave da família sai da memória */
+      await Cadeado.trancar();   /* a chave da família sai da memória (e o vale deste aparelho também) */
       var app = document.getElementById('app'); if (app) app.setAttribute('aria-hidden', 'true');
       Portao.pin(this.familia, this.motivoTranca);
     },
@@ -1473,7 +1518,7 @@
       if (!desconectar) { try { await Promise.race([Sinc.registrar().then(function () { return Sinc.enviar(); }), dorme(5000)]); } catch (e) {} }
       var uid = Conta.uid();
       if (desconectar) await this.apagarDoAparelho(uid);
-      Cadeado.trancar(); await Conta.sair();
+      await Cadeado.trancar(); await Conta.sair();
       location.href = location.pathname;
     },
     /* "Desconectar este aparelho", conta encerrada ou banida: a cópia fechada e o cadeado saem deste aparelho */
@@ -1485,8 +1530,9 @@
       lsDel(K_FAM);
     },
     /* para os testes automáticos (teste/nuvem.js): as peças, sem estado aberto */
-    _teste: { Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao }
+    _teste: { IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao }
   };
+  function nomeConta() { var s = Conta.ler() || {}, d = Conta.dados(s.access_token).user_metadata || {}; return String(s.nome || d.full_name || d.name || '').trim() || String(Conta.email() || '').split('@')[0]; }
   function confirmar(t) { try { return window.confirm(t); } catch (e) { return false; } }
   function alertaERecarrega(t) { try { window.alert(t); } catch (e) {} location.reload(); }
 
