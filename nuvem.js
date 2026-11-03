@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.4.0 · 03/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.5.0 · 03/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -23,7 +23,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.4.0';
+  var VERSAO = '1.5.0';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -442,7 +442,7 @@
      Listas de itens: um registro por item (colecao = nome da lista no Store; tax.* vira tax_*).
      O resto do estado (config sem as chaves de API, categorias, vistos, moeda…): colecao 'config', id = nome do campo,
      dados = { v: valor }. 'config/caixa_robo' é a chave secreta da caixa do robô (não é do Store). */
-  var ITENS = ['posicoes', 'movimentos', 'gastos', 'recorrentes', 'pagamentos', 'precos', 'extratos', 'agenda', 'metas', 'bancos', 'cartoes', 'beneficios', 'lugares', 'trajetos'];
+  var ITENS = ['posicoes', 'movimentos', 'gastos', 'recorrentes', 'pagamentos', 'precos', 'extratos', 'agenda', 'metas', 'bancos', 'cartoes', 'beneficios', 'lugares', 'trajetos', 'transferencias'];
   var TAX_ITENS = ['declaracoes', 'processos', 'docs'];
   var FORA = { atualizadoEm: 1, gastosZ: 1 };
   var RESERVADOS = { caixa_robo: 1 };
@@ -733,6 +733,12 @@
       };
       if (l.cat_pluggy) g.catPluggy = String(l.cat_pluggy).slice(0, 80);
       if (tipo === 'receita') g.grupo = 'RENDA';
+      /* 3.39 (N24): Renda · Rescisão e Renda · FGTS (separado) */
+      if (g.grupo === 'RENDA' && valor > 0) {
+        var txt = (g.sub + ' ' + g.desc + ' ' + String(l.cat_pluggy || ''));
+        if (/\bfgts\b/i.test(txt)) g.sub = 'FGTS';
+        else if (/rescis/i.test(txt)) g.sub = 'Rescisão';
+      }
       else if (tipo === 'despesa' && g.grupo === 'RENDA') g.grupo = 'OUTROS';
       /* estorno (valor negativo): entra como dinheiro que voltou, marcado para revisar (o app não tem "estorno") */
       if (valor < 0) { g.desc = '↩ ' + tt('Estorno', 'Refund') + (g.sub ? ' · ' + g.sub : '') + (g.desc ? ' · ' + g.desc : ''); g.sub = tt('Estorno', 'Refund'); g.grupo = 'RENDA'; g.revisar = true; }
@@ -743,6 +749,25 @@
       if (l.cartao) g.cartaoNome = String(l.cartao).slice(0, 60);
       try { if (g.forma && typeof Banco !== 'undefined' && Banco.formaDoTextoAntigo) g.formaId = Banco.formaDoTextoAntigo(g.forma); } catch (e) {}
       return g;
+    },
+    /* o robô mandou de novo um lançamento que já existe (correção).
+       A pessoa não mexeu nele: atualiza. A pessoa editou: a edição dela vence; guarda o que o robô
+       sugeriu (roboSugeriu) e marca para conferir, para ela decidir. Devolve 'corrigido', 'sugerido' ou ''. */
+    CAMPOS_ROBO: ['data', 'valor', 'grupo', 'sub', 'desc', 'quem', 'forma', 'conta', 'irpf', 'per', 'cartaoId', 'cartaoNome', 'formaId', 'catPluggy', 'origemRobo'],
+    corrigir: function (ja, g) {
+      var muda = {}, n = 0;
+      this.CAMPOS_ROBO.forEach(function (k) {
+        var a = ja[k] == null ? '' : ja[k], b = g[k] == null ? '' : g[k];
+        if (JSON.stringify(a) !== JSON.stringify(b)) { muda[k] = g[k]; n++; }
+      });
+      if (!n) { if (ja.roboSugeriu) { delete ja.roboSugeriu; return 'corrigido'; } return ''; }
+      if (ja.editadoPessoa) {
+        var antes = JSON.stringify(ja.roboSugeriu || null);
+        ja.roboSugeriu = muda; ja.revisar = true;
+        return antes === JSON.stringify(muda) ? '' : 'sugerido';
+      }
+      Gasto.atualizar(ja.id, Object.assign({}, muda, { revisar: !!(ja.revisar || g.revisar), corrigidoRoboEm: new Date().toISOString() }));
+      return 'corrigido';
     },
     /* a chave da caixa: lê a pública; a privada está no money_docs (config/caixa_robo), fechada com a CF */
     preparar: async function () {
@@ -776,24 +801,39 @@
         if (!(await this.preparar())) return;
         var rows = await Conta.rest('GET', 'money_entrada?grupo_id=eq.' + Sinc.gid + '&consumido_em=is.null&select=id,pacote,origem&order=criado_em.asc&limit=200');
         if (!rows || !rows.length) return;
-        var ST = Store.estado, ids = {}, novos = 0, ignorados = 0, prontos = [];
-        (ST.gastos || []).forEach(function (g) { ids[g.id] = 1; if (g.idRobo) ids['rb_' + g.idRobo] = 1; });
+        var ST = Store.estado, ids = {}, novos = 0, ignorados = 0, corrigidos = 0, sugeridos = 0, transf = 0, prontos = [], mudou = false;
+        (ST.gastos || []).forEach(function (g) { ids[g.id] = g; if (g.idRobo) ids['rb_' + g.idRobo] = g; });
         for (var i = 0; i < rows.length; i++) {
           var l;
           try { l = await Cifra.abrirPacote(this.sk, rows[i].pacote); } catch (e) { this.erros.add(rows[i].id); continue; }   /* não abre com esta chave: fica na caixa */
+          if (l && String(l.tipo || '').toLowerCase() === 'transferencia' && typeof Transferencia !== 'undefined') {
+            var rt = Transferencia.receber(l); if (rt) { mudou = true; transf++; } else ignorados++;
+            prontos.push(rows[i].id); continue;
+          }
           var g; try { g = this.converter(l); } catch (e) { this.erros.add(rows[i].id); continue; }
           if (g === null) { ignorados++; prontos.push(rows[i].id); continue; }
-          if (!ids[g.id]) { Gasto.add(g); ids[g.id] = 1; novos++; }
+          var ja = ids[g.id];
+          if (!ja) { ids[g.id] = Gasto.add(g); novos++; }
+          else {                                  /* 3.39 (N24): o robô corrigiu um lançamento que já existe */
+            var r = this.corrigir(ja, g);
+            if (r === 'corrigido') corrigidos++; else if (r === 'sugerido') sugeridos++;
+            if (r) mudou = true;
+          }
           prontos.push(rows[i].id);
         }
-        if (novos) { Store.salvar(); }
+        if (novos && typeof Transferencia !== 'undefined' && Transferencia.todas().length) Transferencia.ligarTudo();   /* a renda chegou depois da transferência */
+        if (novos || mudou) { Store.salvar(); }
         await Sinc.registrar(); await Sinc.enviar();
         /* só marca o que já está guardado no banco */
-        var pend = false; Sinc.fila.forEach(function (f, k) { if (k.indexOf('gastos|rb_') === 0) pend = true; });
+        var pend = false; Sinc.fila.forEach(function (f, k) { if (k.indexOf('gastos|rb_') === 0 || k.indexOf('transferencias|tf_') === 0) pend = true; });
         if (pend || !prontos.length) return;
         await Conta.rpc('money_entrada_consumir', { p_grupo: Sinc.gid, p_ids: prontos });
         this.ultimos = { quando: Date.now(), novos: novos, ignorados: ignorados };
-        if (novos) { aviso('🤖 ' + novos + tt(' lançamento(s) novo(s) chegaram do robô.', ' new entr(ies) arrived from the robot.')); Nuvem.redesenhar(); }
+        this.ultimos.corrigidos = corrigidos; this.ultimos.sugeridos = sugeridos; this.ultimos.transferencias = transf;
+        if (novos) { aviso('🤖 ' + novos + tt(' lançamento(s) novo(s) chegaram do robô.', ' new entr(ies) arrived from the robot.')); }
+        if (corrigidos) aviso('🤖 ' + corrigidos + tt(' lançamento(s) corrigido(s) pelo robô.', ' entr(ies) corrected by the robot.'));
+        if (sugeridos) aviso('🤖 ' + sugeridos + tt(' lançamento(s) que você editou: o robô sugeriu outra coisa (veja em Custos → Revisar).', ' entr(ies) you edited: the robot suggested something else (see Costs → Review).'));
+        if (novos || mudou) Nuvem.redesenhar();
         if (rows.length === 200) setTimeout(function () { Caixa.esvaziar(); }, 1500);
       } catch (e) { console.warn('nuvem: caixa do robô', e); }
       finally { this._rodando = false; Painel.atualizar(); }

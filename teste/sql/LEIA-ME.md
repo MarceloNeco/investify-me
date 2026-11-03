@@ -18,8 +18,13 @@ psql -d lab -v ON_ERROR_STOP=1 -f omnilife-one/supabase/omnilife-one-v1.sql > /d
 psql -d lab -v ON_ERROR_STOP=1 -f investify-me/supabase/2026-11-03-moneytrio-v1.sql > /dev/null
 for i in 1 2; do psql -d lab -v ON_ERROR_STOP=1 -f investify-me/supabase/2026-11-03b-moneytrio-caixa-robo.sql; done
 psql -d lab -f investify-me/teste/sql/teste-moneytrio-caixa.sql 2>&1 | grep -E "ok:|FALHOU"
+for i in 1 2; do psql -d lab -v ON_ERROR_STOP=1 -f investify-me/supabase/2026-11-03c-moneytrio-robo-correcao.sql; done
+psql -d lab -f investify-me/teste/sql/teste-moneytrio-correcao.sql 2>&1 | grep -E "ok:|FALHOU"
 node investify-me/teste/sql-grants.js investify-me/supabase
 ```
 
 Resultado em 03/Nov/2026 (Postgres 16.15): o v2 rodou duas vezes sem erro, conferência 5/5 "sim",
 51 verificações "ok", nenhuma falha; `sql-grants.js`: OK (10 objetos, todos com GRANT).
+
+v3 (correção do robô), 03/Nov/2026 (Postgres 16): rodou duas vezes sem erro, conferência 4/4 "sim"; com o v3 aplicado o
+teste do v2 continua com 51 "ok", e `teste-moneytrio-correcao.sql` deu 23 "ok"; `sql-grants.js`: OK (3 scripts).

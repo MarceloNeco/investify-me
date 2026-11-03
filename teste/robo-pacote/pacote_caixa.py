@@ -14,6 +14,8 @@ Texto aberto = JSON UTF-8 de UM lançamento:
 A chave pública da caixa vem de money_caixa_chave.chave_publica (JWK: kty RSA, alg RSA-OAEP-256, n e e em base64url).
 Uma chave AES e um iv NOVOS para cada pacote. Depósito: rpc money_robo_depositar(p_grupo, p_itens) com
 p_itens = [{"id": <mesmo id do lançamento>, "pacote": <texto acima>, "origem": "pluggy"}] (até 500 por chamada).
+A partir do SQL v3 (2026-11-03c): mandar também "impressao": impressao(lancamento) em cada item. Mudou a impressão de
+um id que já está na caixa = correção: a caixa reabre o item e o app atualiza o lançamento (a edição da pessoa vence).
 """
 import base64
 import json
@@ -78,3 +80,13 @@ def abrir(priv: rsa.RSAPrivateKey, pacote: str) -> dict:
     if len(chave) != 32 or len(iv) != 12:
         raise ValueError("tamanho da chave ou do iv")
     return json.loads(AESGCM(chave).decrypt(iv, base64.b64decode(o["ct"]), None).decode("utf-8"))
+
+
+def impressao(lancamento: dict) -> str:
+    """3.39 (N24): a "impressão digital" do lançamento ABERTO, mandada junto no depósito
+    (money_robo_depositar: {"id", "pacote", "origem", "impressao"}). O banco só compara se mudou:
+    mudou = o robô corrigiu o lançamento → a caixa reabre e o app atualiza.
+    sha256 do JSON com as chaves em ordem, sem espaços, em base64url sem "=" (43 letras)."""
+    import hashlib
+    texto = json.dumps(lancamento, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return base64.urlsafe_b64encode(hashlib.sha256(texto).digest()).decode().rstrip("=")

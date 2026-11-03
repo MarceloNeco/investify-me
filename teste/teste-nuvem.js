@@ -322,6 +322,32 @@ let BASE = '';
     db.money_entrada[0].consumido_em = null;   /* o robô reenviou o mesmo: não duplica */
     await A.evaluate(() => MoneyNuvem._teste.Caixa.esvaziar()); await esperar(1500);
     ok((await estado(A)).gastos.filter((g) => g.id === 'rb_pluggy-e2e-1').length === 1, 'o mesmo lançamento do robô duas vezes não duplica');
+    /* 3.39 (N24): correção do robô atualiza; se a pessoa editou, a edição dela vence */
+    const selarPy = (l) => execFileSync('python3', ['-I', '-c', 'import sys,json; sys.path.insert(0, sys.argv[1]); import pacote_caixa as pc; print(pc.selar(json.loads(sys.argv[2]), json.loads(sys.argv[3])))', path.join(__dirname, 'robo-pacote'), JSON.stringify(cx.chave_publica), JSON.stringify(l)]).toString().trim();
+    const reenviar = async (l) => { db.money_entrada[0].pacote = selarPy(l); db.money_entrada[0].consumido_em = null; await A.evaluate(() => MoneyNuvem._teste.Caixa.esvaziar()); for (let i = 0; i < 40 && !db.money_entrada[0].consumido_em; i++) await esperar(250); };
+    await reenviar(Object.assign({}, lanc, { categoria: 'Pedágio', valor: 90 }));
+    let gc = (await estado(A)).gastos.find((g) => g.id === 'rb_pluggy-e2e-1');
+    ok(gc && gc.sub === 'Pedágio' && gc.valor === 90 && !gc.roboSugeriu && (await estado(A)).gastos.filter((g) => g.id === 'rb_pluggy-e2e-1').length === 1, 'correção do robô (categoria e valor) atualiza o lançamento que a pessoa não mexeu');
+    ok(!!db.money_entrada[0].consumido_em, 'a correção também é marcada como aproveitada');
+    await A.evaluate(() => { Gasto.atualizar('rb_pluggy-e2e-1', { desc: 'Pedágio da viagem (meu)', editadoPessoa: true }); Store.salvar(); });
+    await reenviar(Object.assign({}, lanc, { categoria: 'Pedágio', valor: 95 }));
+    gc = await A.evaluate(() => JSON.parse(JSON.stringify(Store.estado.gastos.find((g) => g.id === 'rb_pluggy-e2e-1'))));
+    ok(gc && gc.valor === 90 && gc.desc === 'Pedágio da viagem (meu)' && gc.roboSugeriu && gc.roboSugeriu.valor === 95 && gc.revisar, 'a pessoa editou: a edição dela vence e fica "o robô sugeriu outra coisa" (valor 95) para decidir');
+    await A.evaluate(() => { abrirApp('budget'); abrirLancamento('rb_pluggy-e2e-1'); });
+    await A.waitForSelector('#assetModal:not(.hidden) .robo-sug');
+    ok(/O robô sugeriu outra coisa/.test(await A.textContent('.robo-sug')) && /Valor:/.test(await A.textContent('.robo-sug')), 'o formulário mostra o que o robô sugeriu, com [Usar o do robô] [Manter o meu]');
+    await A.click('[data-acao="robo-aceitar"]');
+    gc = await A.evaluate(() => JSON.parse(JSON.stringify(Store.estado.gastos.find((g) => g.id === 'rb_pluggy-e2e-1'))));
+    ok(gc && gc.valor === 95 && !gc.roboSugeriu && !gc.editadoPessoa && !gc.revisar, '"Usar o do robô" aplica e limpa a marca');
+    /* 3.39 (N24): transferência do robô não some: fica guardada (em cinza) e não vira lançamento */
+    const tf = { id: 'pluggy-tf-1', data: '2026-11-03', valor: 95, tipo: 'transferencia', grupo: '', categoria: '', descricao: 'TED para Itaú', quem: '', forma: 'Pix', cartao: '', final: '', banco: 'BTG', ir: false, freq: 'Pontual', origem: 'pluggy', cat_pluggy: 'Transfer' };
+    db.money_entrada.push({ grupo_id: GID, id: 'pluggy-tf-1', pacote: selarPy(tf), origem: 'pluggy', criado_em: agora(), consumido_em: null });
+    await A.evaluate(() => MoneyNuvem._teste.Caixa.esvaziar());
+    const linhaTf = () => db.money_entrada.find((e) => e.id === 'pluggy-tf-1');
+    for (let i = 0; i < 40 && !linhaTf().consumido_em; i++) await esperar(250);
+    const tfs = await A.evaluate(() => JSON.parse(JSON.stringify(Store.estado.transferencias || [])));
+    ok(tfs.length === 1 && tfs[0].id === 'tf_pluggy-tf-1' && tfs[0].valor === 95 && tfs[0].banco === 'BTG' && (await estado(A)).gastos.length === 4, 'transferência do robô fica guardada (não vira lançamento, não some)');
+    ok(!!linhaTf().consumido_em && db.money_docs.some((r) => r.colecao === 'transferencias' && r.id === 'tf_pluggy-tf-1'), 'e vai para o money_docs fechada, e é marcada como aproveitada');
 
     /* ---------- 4. recarregar: dentro dos 15 min não pede o PIN (3.35); trancado, pede ---------- */
     console.log('4) recarregar: PIN');

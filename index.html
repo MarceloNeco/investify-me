@@ -1361,6 +1361,8 @@ details.imp-arq.repetido{border-color:var(--warn)}
 .abat-econ{margin:-6px 0 14px}
 .rc-var{background:var(--card2); border-radius:10px; padding:10px; margin:-4px 0 10px}
 .oc-var{color:var(--accent2)}
+.tf-cinza, .tf-cinza .t-main, .tf-cinza td{color:var(--txt3) !important}
+.tf-card{opacity:.85}
 .rdet-sec{font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--txt3); margin:12px 0 2px}
 .aba-c{background:var(--card2); border:1px solid transparent; border-radius:20px; padding:7px 14px;
        cursor:pointer; color:var(--txt2); font-size:.83rem; white-space:nowrap}
@@ -2946,6 +2948,11 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.39 */
+  'Renda: conta de passagem, Rescisão e FGTS, e a correção do robô':'Income: pass-through account, severance and FGTS, and robot corrections',
+  'Transferências entre contas que chegam do robô não somem mais: ficam em cinza em Lançamentos e não contam como renda nem como gasto. Salário que cai numa conta e passa para outra (ex.: BTG → Itaú) mostra "passou para outra conta"; ida e volta (PJ ↔ PF) vira uma linha só.':'Transfers between accounts from the robot no longer disappear: they show in grey in Entries and count as neither income nor spending. A salary that lands in one account and moves to another (e.g. BTG → Itaú) shows "moved to another account"; back and forth (company ↔ personal) becomes a single line.',
+  'Renda ganhou as categorias Rescisão e FGTS (separado); o que vem do robô com "rescisão" ou "FGTS" já entra na categoria certa.':'Income has new categories Severance and FGTS (separate); robot entries mentioning them land in the right category.',
+  'Quando o robô corrige um lançamento que já chegou, o app atualiza. Se você já tinha editado esse lançamento, a sua versão fica e aparece "🤖 O robô sugeriu outra coisa", com [Usar o do robô] e [Manter o meu]. (Precisa da atualização do banco de dados, que o administrador aplica.)':'When the robot corrects an entry that already arrived, the app updates it. If you had already edited that entry, your version stays and "🤖 The robot suggested something else" appears, with [Use the robot\'s] and [Keep mine]. (Needs the database update the administrator applies.)',
   /* 3.38 */
   'Valor que varia, pontos e cashback, feriados de SP e o IR pela data do pagamento':'Varying amounts, points and cashback, São Paulo holidays and tax by payment date',
   'Compromisso com valor que varia (condomínio, luz): marque "O valor varia" e o app mostra a média dos últimos 6 meses e a faixa, para usar como previsto (com ou sem a inflação do grupo). Quando o pagamento de verdade chega, ele substitui o previsto daquele mês e a diferença aparece.':'Commitments whose amount varies (utilities): tick "The amount varies" and the app shows the last 6 months\' average and range, to use as the forecast (with or without the group inflation). When the real payment arrives, it replaces that month\'s forecast and the difference shows.',
@@ -13669,6 +13676,11 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.39', d:'2026-11-03', t:'Renda: conta de passagem, Rescisão e FGTS, e a correção do robô', itens:[
+    'Transferências entre contas que chegam do robô não somem mais: ficam em cinza em Lançamentos e não contam como renda nem como gasto. Salário que cai numa conta e passa para outra (ex.: BTG → Itaú) mostra "passou para outra conta"; ida e volta (PJ ↔ PF) vira uma linha só.',
+    'Renda ganhou as categorias Rescisão e FGTS (separado); o que vem do robô com "rescisão" ou "FGTS" já entra na categoria certa.',
+    'Quando o robô corrige um lançamento que já chegou, o app atualiza. Se você já tinha editado esse lançamento, a sua versão fica e aparece "🤖 O robô sugeriu outra coisa", com [Usar o do robô] e [Manter o meu]. (Precisa da atualização do banco de dados, que o administrador aplica.)'
+  ]},
   {v:'3.38', d:'2026-11-03', t:'Valor que varia, pontos e cashback, feriados de SP e o IR pela data do pagamento', itens:[
     'Compromisso com valor que varia (condomínio, luz): marque "O valor varia" e o app mostra a média dos últimos 6 meses e a faixa, para usar como previsto (com ou sem a inflação do grupo). Quando o pagamento de verdade chega, ele substitui o previsto daquele mês e a diferença aparece.',
     'Abatimento em lançamentos e compromissos: "+ Abatimento" para a parte paga com pontos, cashback, crédito ou desconto. O orçamento conta o que saiu de verdade; na lista o valor ganha um * que explica o preço cheio. Custos mostra quanto você economizou no ano.',
@@ -14130,6 +14142,8 @@ const Gasto = {
     r.irpf  = !!r.irpf;
     r.favorito = !!r.favorito;
     if(typeof Abat !== 'undefined') Abat.arruma(r);
+    if(!r.roboSugeriu || typeof r.roboSugeriu !== 'object' || !Object.keys(r.roboSugeriu).length) delete r.roboSugeriu;
+    if(!r.editadoPessoa) delete r.editadoPessoa;
     r.revisar = !!r.revisar;
     r.fluxo = GRUPOS[r.grupo].fluxo;
     return r;
@@ -14424,6 +14438,8 @@ const Gasto = {
       m[r.grupo] = m[r.grupo] || new Set();
       m[r.grupo].add(r.sub);
     });
+    /* 3.39 (N24): Renda · Rescisão e Renda · FGTS (separado) existem mesmo sem lançamento */
+    m.RENDA = m.RENDA || new Set(); ['Rescisão', 'FGTS'].forEach(x => m.RENDA.add(x));
     const out = {};
     Object.keys(m).forEach(k => { out[k] = Array.from(m[k]).sort((a,b) => a.localeCompare(b,'pt')); });
     return out;
@@ -16458,6 +16474,8 @@ function viewBLanc(){
         (g.per && g.per !== 'Pontual' ? ' · ' + PERIODICIDADES[g.per].nome.toLowerCase() : '') + '</div></td>' +
       '<td class="desc-cel">' + esc((g.desc || '').slice(0,110)) +
         ((g.desc || '').length > 110 ? '…' : '') +
+        (g.grupo === 'RENDA' && Transferencia.daRenda(g.id).length ? '<div class="t-sub tf-cinza">↪ ' + esc((I18n.atual === 'pt' ? 'passou para outra conta em ' : 'moved to another account on ') +
+          Transferencia.daRenda(g.id).map(t => I18n.data(t.data) + (t.banco ? ' (' + t.banco + ')' : '')).join(', ') + (I18n.atual === 'pt' ? ' — transferência, não conta de novo' : ' — transfer, not counted again')) + '</div>' : '') +
         (g.quem || g.forma ? '<div class="t-sub">' + esc([g.quem, g.forma].filter(Boolean).join(' · ')) +
           (g.irpf ? ' · <span class="badge-irpf">IRPF</span>' : '') + '</div>' : '') + '</td>' +
       '<td class="num ' + sinal + '">' + (g.fluxo === 'entrada' ? '+' : '') + fmt(g.valor) + Abat.marca(g) + '</td></tr>';
@@ -16471,7 +16489,22 @@ function viewBLanc(){
       '<button class="btn sm" data-bpag="' + Math.min(totalPag-1, bPagina+1) + '"' +
         (bPagina >= totalPag-1 ? ' disabled' : '') + '>próxima ›</button></div>';
   }
+  h += blocoTransferencias();
   return h;
+}
+
+/* 3.39 (N24): as transferências entre contas, em cinza, que não entram em conta nenhuma */
+function blocoTransferencias(){
+  if(typeof Transferencia === 'undefined' || !Transferencia.todas().length) return '';
+  const pt = I18n.atual === 'pt';
+  const grs = Transferencia.grupos(bFiltro.de || '', bFiltro.ate || '');
+  if(!grs.length) return '';
+  return '<div class="card sem-pad tf-card"><div class="card-head" style="padding:14px 16px 0"><h3>↔ ' + (pt ? 'Transferências entre contas' : 'Transfers between accounts') + '</h3>' +
+    '<span class="small muted">' + (pt ? 'não contam como renda nem como gasto' : 'not counted as income or spending') + '</span></div>' +
+    '<table class="tbl tf-tbl"><tbody>' + grs.slice(0, 60).map(gr => { const x = Transferencia.texto(gr);
+      return '<tr class="tf-cinza"><td class="nowrap">' + esc(x.quando) + '</td><td><span class="t-main">' + esc(x.tipo) + '</span>' +
+        '<div class="t-sub">' + esc([x.bancos, x.n > 1 ? x.n + (pt ? ' movimentos' : ' moves') : ''].filter(Boolean).join(' · ')) + '</div></td>' +
+        '<td class="num">' + fmt(gr.valor) + '</td></tr>'; }).join('') + '</tbody></table></div>';
 }
 
 /* =========================================================
@@ -17339,7 +17372,7 @@ function abrirLancamento(id){
     '<option value="' + esc(s) + '"></option>').join('');
 
   $('#assetModalTitle').textContent = g ? 'Editar lançamento' : 'Novo lançamento';
-  $('#assetModalBody').innerHTML = Verter.html('<div class="grid g2">' +
+  $('#assetModalBody').innerHTML = Verter.html(blocoRoboSugeriu(g) + '<div class="grid g2">' +
       campo('Valor', '<input type="number" inputmode="decimal" data-dinheiro="1" id="glValor" step="0.01" min="0" placeholder="0,00" value="' +
             (g ? ((g.salBase === 'bruto' && g.bruto) ? g.bruto : (g.cheio || g.valor)) : '') + '">') +
       campo('Data', '<input type="date" id="glData" value="' + (g ? (g.data || '') : hojeISO()) + '">') +
@@ -17476,6 +17509,22 @@ function campoOndePagou(g){
   return '';
 }
 
+/* 3.39 (N24): o robô mandou outra versão de um lançamento que a pessoa já tinha editado */
+const ROTULOS_ROBO = {data:'Data', valor:'Valor', grupo:'Grupo', sub:'Categoria', desc:'Descrição', quem:'Quem', forma:'Forma',
+  conta:'Conta', irpf:'IR', per:'Frequência', cartaoId:'Cartão', cartaoNome:'Cartão', formaId:'Forma', catPluggy:'Categoria do banco', origemRobo:'Origem'};
+function blocoRoboSugeriu(g){
+  if(!g || !g.roboSugeriu || !Object.keys(g.roboSugeriu).length) return '';
+  const pt = I18n.atual === 'pt';
+  const mostra = (k, v) => k === 'valor' ? fmt(v) : k === 'data' ? I18n.data(v) : k === 'grupo' ? ((GRUPOS[v] || {}).nome || v) : k === 'irpf' ? (v ? (pt ? 'sim' : 'yes') : (pt ? 'não' : 'no')) : String(v == null || v === '' ? '—' : v);
+  const linhas = Object.keys(g.roboSugeriu).filter(k => !/^(cartaoId|formaId|origemRobo|catPluggy)$/.test(k)).map(k =>
+    '<li><b>' + esc(ROTULOS_ROBO[k] || k) + ':</b> ' + esc(mostra(k, g[k])) + ' → ' + esc(mostra(k, g.roboSugeriu[k])) + '</li>').join('');
+  return '<div class="aviso-box robo-sug"><b>🤖 ' + (pt ? 'O robô sugeriu outra coisa' : 'The robot suggested something else') + '</b>' +
+    '<p class="small" style="margin:6px 0 4px">' + (pt ? 'Você editou este lançamento, então a sua versão ficou. O banco mandou isto:' : 'You edited this entry, so your version stays. The bank sent this:') + '</p>' +
+    (linhas ? '<ul class="small" style="margin:0 0 8px 18px;padding:0">' + linhas + '</ul>' : '') +
+    '<div class="row"><button type="button" class="btn sm primary" data-acao="robo-aceitar">' + (pt ? 'Usar o do robô' : 'Use the robot\'s') + '</button>' +
+    '<button type="button" class="btn sm" data-acao="robo-manter">' + (pt ? 'Manter o meu' : 'Keep mine') + '</button></div></div>';
+}
+
 function salvarLancamento(){
   const v = Number($('#glValor').value);
   if(!v || v <= 0){ toast('Informe um valor maior que zero.'); return; }
@@ -17507,6 +17556,8 @@ function salvarLancamento(){
   if(!Abat.aplicar(dados, dados.valor, Abat.ler('gl'))){
     toast(I18n.atual === 'pt' ? 'O abatimento passou do preço cheio.' : 'The offset is larger than the full price.', 'warn'); return;
   }
+  /* 3.39 (N24): a pessoa editou um lançamento do robô — daqui em diante a edição dela vence a do robô */
+  if(bEditando){ const antes = Gasto.todos().find(x => x.id === bEditando); if(antes && antes.origem === 'robo') dados.editadoPessoa = true; }
   let criado = null;
   if(bEditando) Gasto.atualizar(bEditando, dados);
   else criado = Gasto.add(dados);
@@ -23298,6 +23349,72 @@ const Abat = {
   }
 };
 
+/* =========================================================
+   Transferências entre contas (3.39, N24) — nunca contam como
+   renda nem como gasto; aparecem em cinza, ligadas:
+   · conta de passagem: o salário cai no BTG e vai para o Itaú →
+     a transferência fica pendurada na renda ("passou adiante");
+   · ida e volta (PJ ↔ PF, ou entre as suas contas): os movimentos
+     do mesmo valor em poucos dias viram uma linha só.
+   O robô manda a transferência sem dizer o sentido; o app liga
+   pelo valor (até 1% ou R$ 1), pelo banco e pela data.
+   ========================================================= */
+const Transferencia = {
+  todas(){ return (ST.transferencias = Array.isArray(ST.transferencias) ? ST.transferencias : []); },
+  perto(a, b){ return Math.abs(a - b) <= Math.max(1, Math.max(a, b) * 0.01); },
+  dias(a, b){ return Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 86400000); },
+  /* o que chegou do robô (tipo 'transferencia'); devolve 'nova', 'corrigida' ou '' */
+  receber(l){
+    const id = 'tf_' + String(l.id).replace(/[^A-Za-z0-9_.:@-]/g, '_').slice(0, 70);
+    const t = {id, data: /^\d{4}-\d{2}-\d{2}$/.test(String(l.data || '')) ? l.data : '', valor: Math.abs(Number(l.valor) || 0),
+               banco: String(l.banco || '').trim(), desc: String(l.descricao || '').trim().slice(0, 140),
+               forma: String(l.forma || '').trim(), origem: 'robo', idRobo: String(l.id)};
+    if(!t.valor) return '';
+    const l2 = this.todas(), i = l2.findIndex(x => x.id === id);
+    if(i >= 0){
+      const a = l2[i], muda = ['data','valor','banco','desc','forma'].some(k => a[k] !== t[k]);
+      if(!muda) return '';
+      l2[i] = Object.assign({}, a, t); this.ligarTudo(); return 'corrigida';
+    }
+    l2.push(t); this.ligarTudo(); return 'nova';
+  },
+  /* refaz as ligações (barato: só o que é transferência) */
+  ligarTudo(){
+    const l2 = this.todas();
+    l2.forEach(t => { delete t.renda; });
+    const gs = (typeof Gasto !== 'undefined' ? Gasto.todos() : []).filter(g => g.grupo === 'RENDA' && g.data && !/^(estorno|refund)$/i.test(g.sub));
+    const usadas = new Set();
+    l2.slice().sort((a,b) => (a.data || '').localeCompare(b.data || '')).forEach(t => {
+      if(!t.data) return;
+      const g = gs.find(x => !usadas.has(x.id) && this.perto(x.valor, t.valor) && (!x.conta || !t.banco || x.conta === t.banco) &&
+                             this.dias(x.data, t.data) >= 0 && this.dias(x.data, t.data) <= 7);
+      if(g){ t.renda = g.id; usadas.add(g.id); }
+    });
+  },
+  /* grupos de movimentos do mesmo valor em até 7 dias (ida e volta / os dois lados da mesma transferência) */
+  grupos(de, ate){
+    const l2 = this.todas().filter(t => t.data && (!de || t.data >= de) && (!ate || t.data <= ate))
+      .sort((a,b) => a.data.localeCompare(b.data));
+    const out = [];
+    l2.forEach(t => {
+      const g = out.find(x => this.perto(x.valor, t.valor) && this.dias(x.ate, t.data) <= 7);
+      if(g){ g.itens.push(t); g.ate = t.data; if(t.renda) g.renda = t.renda; }
+      else out.push({valor: t.valor, de: t.data, ate: t.data, itens: [t], renda: t.renda || null});
+    });
+    return out.reverse();
+  },
+  daRenda(gid){ return this.todas().filter(t => t.renda === gid); },
+  /* a linha cinza da tabela de Lançamentos */
+  texto(gr){
+    const pt = I18n.atual === 'pt';
+    const bancos = Array.from(new Set(gr.itens.map(t => t.banco).filter(Boolean)));
+    const quando = gr.de === gr.ate ? I18n.data(gr.de) : I18n.data(gr.de) + (pt ? ' a ' : ' to ') + I18n.data(gr.ate);
+    const tipo = gr.renda ? (pt ? 'conta de passagem (a renda já contou)' : 'pass-through account (income already counted)')
+      : gr.itens.length >= 2 ? (pt ? 'ida e volta entre contas' : 'back and forth between accounts') : (pt ? 'transferência entre contas' : 'transfer between accounts');
+    return {quando, tipo, bancos: bancos.join(' ↔ '), n: gr.itens.length};
+  }
+};
+
 /* uma linha de ocorrência, usada no calendário, na agenda e na lista de custos */
 function linhaOcorrencia(o, op){
   op = op || {};
@@ -23638,7 +23755,7 @@ function blocoRevisar(paraRevisar, atrasados){
       '<table class="tbl"><tbody>' + paraRevisar.slice(0,40).map(g =>
         '<tr class="linha-click" data-bid="' + g.id + '">' +
         '<td class="nowrap">' + (g.data ? esc(I18n.data(g.data)) : '—') + '</td>' +
-        '<td><span class="t-main">' + esc(g.sub) + '</span>' +
+        '<td><span class="t-main">' + esc(g.sub) + '</span>' + (g.roboSugeriu ? ' <span class="tag-rep" title="' + esc(I18n.atual === 'pt' ? 'o robô sugeriu outra coisa: abra para decidir' : 'the robot suggested something else: open to decide') + '">🤖 ' + (I18n.atual === 'pt' ? 'robô sugeriu outra coisa' : 'robot suggests') + '</span>' : '') +
           '<div class="t-sub">' + esc((g.desc || '').slice(0,70)) + '</div></td>' +
         '<td class="num">' + fmt(g.valor) + '</td>' +
         '<td class="num"><button class="btn sm" data-grev="' + g.id + '">' +
@@ -35183,6 +35300,17 @@ function ligarEventos(){
         bFiltro = {busca:'', grupos:[], subs:[], quem:[], formas:[], de:'', ate:'', fluxo:'', periodo:'12m', favoritos:false, revisar:false, irpf:false};
         bAplicarPeriodo('12m'); render(); break;
       case 'gl-salvar': salvarLancamento(); break;
+      case 'robo-aceitar': case 'robo-manter': {
+        const g = bEditando ? Gasto.todos().find(x => x.id === bEditando) : null;
+        if(!g || !g.roboSugeriu) break;
+        const dados = d.acao === 'robo-aceitar' ? Object.assign({}, g.roboSugeriu, {editadoPessoa: false}) : {};
+        dados.roboSugeriu = null; dados.revisar = false;
+        Gasto.atualizar(g.id, dados); Gasto._idx = null;
+        Store.salvar(); fechar('assetModal'); render();
+        toast(d.acao === 'robo-aceitar' ? (I18n.atual === 'pt' ? 'Atualizado com o que o robô mandou.' : 'Updated with what the robot sent.')
+                                       : (I18n.atual === 'pt' ? 'Ficou a sua versão.' : 'Your version stays.'));
+        bEditando = null; break;
+      }
       case 'banco-novo':    abrirBanco(); break;
       case 'banco-salvar':  salvarBanco(); break;
       case 'cartao-novo':   abrirCartao(); break;

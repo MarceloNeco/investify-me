@@ -511,3 +511,12 @@ e `Nuvem.destrancado` devolve a tela como estava), `Nuvem` (maestro).
   `blocoFeriadosCfg()`; `[data-servfalta]` nos dias trabalhados.
 - N35: `UX.cabecalhoFixo(raiz, naJanela)` (também chamado por `abrir()`), classes `tbl-topo`/`tbl-topo-j`/`tbl-cabe`/`card-topo`.
 - Teste: `node teste/teste-parte3.js`.
+
+### Renda e correção do robô (3.39)
+- `Transferencia` (index.html): `ST.transferencias` (coleção `transferencias` no money_docs, `nuvem.js` ITENS); `receber(l)`, `ligarTudo()`,
+  `grupos(de, ate)`, `daRenda(gid)`. Nunca entra em total. `blocoTransferencias()` em Lançamentos.
+- `nuvem.js` 1.5.0: `Caixa.converter` põe Rescisão/FGTS; `Caixa.corrigir(ja, g)` (campos `CAMPOS_ROBO`); `editadoPessoa` (marcado em
+  `salvarLancamento` para lançamento do robô) e `roboSugeriu`.
+- SQL v3 `supabase/2026-11-03c-moneytrio-robo-correcao.sql`: `money_entrada.impressao`/`versao`; `money_robo_depositar` reabre quando a impressão
+  muda (linha antiga sem impressão só aprende; LGPD não volta). Teste local: `teste/sql/teste-moneytrio-correcao.sql`.
+- Testes: `teste/teste-renda.js`, `teste/teste-nuvem.js` (parte 3, correção e transferência).

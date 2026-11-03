@@ -77,7 +77,7 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       await p.evaluate(() => { bFiltro.periodo = 'tudo'; bFiltro.de = ''; bFiltro.ate = ''; render(); });
       const ast = await p.$('#view-b-lanc .abat-ast');
       ok(!!ast, 'na lista o valor aparece com asterisco');
-      if (ast) { await ast.click(); await p.waitForTimeout(150); ok(/preço cheio R\$\s?2\.559,40; R\$\s?300,00 pagos com 17\.000 pontos Porto/.test(await p.textContent('#toasts')), 'tocar no * explica: preço cheio; R$ 300 com 17.000 pontos Porto'); }
+      if (ast) { await ast.evaluate((e) => e.click()); await p.waitForTimeout(150); ok(/preço cheio R\$\s?2\.559,40; R\$\s?300,00 pagos com 17\.000 pontos Porto/.test(await p.textContent('#toasts')), 'tocar no * explica: preço cheio; R$ 300 com 17.000 pontos Porto'); }
       await p.reload(); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.gastos || []).length > 30);
       g = await p.evaluate(() => Store.estado.gastos.find((x) => x.sub === 'Seguro Auto'));
       ok(g && g.abat && g.abat.length === 2 && Math.abs(g.cheio - 2559.40) < 0.001 && g.abat[1].pontos === 104000, 'depois de recarregar, o abatimento continua (guardado no aparelho)');
