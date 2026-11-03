@@ -28,6 +28,15 @@ const ARQ = { tipo: 'moneytrio-compromissos', versao: 1, criado_em: '2026-11-03'
   const quebrado = path.join(tmp, 'quebrado.json'); fs.writeFileSync(quebrado, '{isto não é json');
   const b = await chromium.launch();
   try {
+    { /* quem ainda não tem nenhum compromisso também vê o botão (a tela vazia de Custos) */
+      const ctx = await b.newContext({ viewport: { width: 390, height: 800 }, serviceWorkers: 'block' });
+      await ctx.route('**/*', (r) => r.request().url().startsWith(BASE) ? r.continue() : r.abort());
+      await ctx.addInitScript(() => { localStorage.setItem('moneytrio.soNesteAparelho', '1'); });
+      const p = await ctx.newPage(); await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado);
+      await p.evaluate(() => { abrirApp('budget'); irPara('b-custos'); });
+      ok(await p.waitForSelector('#view-b-custos [data-acao="rec-importar"]', { timeout: 10000 }).then(() => true).catch(() => false), 'Custos sem nenhum compromisso (tela vazia) também tem "Importar compromissos"');
+      await ctx.close();
+    }
     for (const vp of [{ width: 390, height: 800 }, { width: 1366, height: 768 }]) {
       console.log('tela ' + vp.width + 'x' + vp.height);
       const ctx = await b.newContext({ viewport: vp, serviceWorkers: 'block' });
