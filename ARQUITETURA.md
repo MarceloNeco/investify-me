@@ -484,3 +484,12 @@ e `Nuvem.destrancado` devolve a tela como estava), `Nuvem` (maestro).
 - **Vale (3.35)**: recarregar dentro dos 15 min não pede PIN — a chave da família (CryptoKey não extraível) fica no IndexedDB `kv`, `vale|<conta>` = `{ cf, kv, fk, gid, ate }`; some ao trancar, sair ou trocar de conta.
 - Teste: `node teste/teste-nuvem.js` (Chromium, Supabase de mentira, 91 verificações, inclusive o cadeado com relógio falso). Detalhes: PLANO-SUPABASE-MoneyTRIO.md;
   o que falta: PENDENCIAS.md.
+
+### Custos (3.36)
+- Abas: Todos · Recorrentes · Pontuais · Agenda · Revisar (`custosAba`), cada uma com uma linha explicando.
+- `Recorrente.detectar()`: o que se repete no último ano (histórico + `per` que o robô traz: Mensal/Semanal/Trimestral/Anual);
+  sem a dica do robô precisa de 4 meses com valor regular; parou (2 meses sem aparecer, 4 no trimestral, 13 no anual,
+  contados a partir do último lançamento) fica de fora; renda e custo separados; "já existe" se já está em Recorrentes.
+  `Recorrente.cadastrarDetectados()` cadastra os marcados com `desde` = hoje.
+- `Recorrente.porMes(quando)` só soma o que vale naquele mês (vale desde/até). `Recorrente.periodoCurto(r)` = 2ª linha de "Quando cai".
+- Teste: `node teste/teste-custos.js`.

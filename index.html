@@ -1307,6 +1307,13 @@ details.imp-arq.repetido{border-color:var(--warn)}
 
 /* abas internas de Custos */
 .abas-c{display:flex; gap:6px; margin-bottom:16px; overflow-x:auto; padding-bottom:2px}
+/* "Encontrei N que se repetem": uma linha por item, caixinha grande para o dedo */
+.rdet{display:flex; align-items:center; gap:10px; padding:9px 2px; border-top:1px solid var(--line, rgba(127,127,127,.15)); cursor:pointer}
+.rdet input{width:20px; height:20px; flex:none}
+.rdet-txt{flex:1; min-width:0; display:flex; flex-direction:column}
+.rdet .num{white-space:nowrap; font-weight:600}
+.rdet-ja{opacity:.6; cursor:default}
+.rdet-sec{font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--txt3); margin:12px 0 2px}
 .aba-c{background:var(--card2); border:1px solid transparent; border-radius:20px; padding:7px 14px;
        cursor:pointer; color:var(--txt2); font-size:.83rem; white-space:nowrap}
 .aba-c:hover{color:var(--txt)}
@@ -2891,6 +2898,12 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.36 */
+  'Custos: a aba "Todos", a lista do que se repete e a conta do mês certa':'Costs: the "All" tab, the list of what repeats and the right monthly total',
+  'Custos ganhou a aba "Todos" (o que se repete e o que foi pontual, juntos) e uma linha explicando o que é cada aba.':'Costs has a new "All" tab (recurring and one-off together) and a line explaining each tab.',
+  'No lugar dos botõezinhos "O histórico sugere", a lista "Encontrei N que se repetem", com caixinhas já marcadas e o botão "Cadastrar os marcados". Usa o histórico e a frequência que o robô dos bancos manda, separa renda de custo, não mostra o que parou há 2 meses ou mais e marca "já existe" o que já está em Recorrentes.':'Instead of the small "Your history suggests" buttons, the list "Found N that repeat", with boxes already ticked and an "Add the ticked ones" button. It uses your history and the frequency the bank robot sends, splits income from costs, leaves out anything that stopped 2 or more months ago and marks "already there" what is already in Recurring.',
+  '"Sai todo mês" e "Entra todo mês" contam só os compromissos que valem neste mês: um que começa em 2027 não pesa em 2026.':'"Out every month" and "In every month" only count commitments that apply this month: one that starts in 2027 does not weigh on 2026.',
+  'Em Recorrentes, "Quando cai" mostra o período inteiro na segunda linha: "01/Fev a 30/Jun/2027", "desde 01/Fev/2027" ou "até 31/Dez/2027".':'In Recurring, "When it happens" shows the whole period on the second line: "Feb/01 to Jun/30/2027", "from Feb/01/2027" or "until Dec/31/2027".',
   /* 3.35 */
   'Recarregar sem pedir o PIN e telas largas no computador':'Reload without asking for the PIN, and wide screens on the computer',
   'Recarregar a página (ou abrir de novo) dentro de 15 minutos de uso não pede o PIN nem a digital de novo. Passou disso, ou se você fechar o cadeado, pede. A tela do cadeado avisa: "Você continua conectado… Só falta destravar."':'Reloading the page (or opening it again) within 15 minutes of use does not ask for the PIN or fingerprint again. After that, or if you lock it, it asks. The lock screen says: "You are still signed in… You only need to unlock."',
@@ -13591,6 +13604,12 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.36', d:'2026-11-03', t:'Custos: a aba "Todos", a lista do que se repete e a conta do mês certa', itens:[
+    'Custos ganhou a aba "Todos" (o que se repete e o que foi pontual, juntos) e uma linha explicando o que é cada aba.',
+    'No lugar dos botõezinhos "O histórico sugere", a lista "Encontrei N que se repetem", com caixinhas já marcadas e o botão "Cadastrar os marcados". Usa o histórico e a frequência que o robô dos bancos manda, separa renda de custo, não mostra o que parou há 2 meses ou mais e marca "já existe" o que já está em Recorrentes.',
+    '"Sai todo mês" e "Entra todo mês" contam só os compromissos que valem neste mês: um que começa em 2027 não pesa em 2026.',
+    'Em Recorrentes, "Quando cai" mostra o período inteiro na segunda linha: "01/Fev a 30/Jun/2027", "desde 01/Fev/2027" ou "até 31/Dez/2027".'
+  ]},
   {v:'3.35', d:'2026-11-03', t:'Recarregar sem pedir o PIN e telas largas no computador', itens:[
     'Recarregar a página (ou abrir de novo) dentro de 15 minutos de uso não pede o PIN nem a digital de novo. Passou disso, ou se você fechar o cadeado, pede. A tela do cadeado avisa: "Você continua conectado… Só falta destravar."',
     'No computador, a prévia de "Importar compromissos" usa a largura da tela e mostra todas as colunas; o cabeçalho das tabelas (prévia, Lançamentos e Recorrentes) fica fixo ao rolar. No celular, tudo igual.'
@@ -15027,7 +15046,10 @@ const Recorrente = {
         default:        return 12 / (r.cada || 1);
       }
     };
-    this.ativos().forEach(r => {
+    /* só o que vale naquele mês (vale desde / até): "Escola 2027" não pesa em 2026 */
+    const ini = base.slice(0,7) + '-01';
+    const fim = this.iso(new Date(Number(base.slice(0,4)), Number(base.slice(5,7)), 0));
+    this.ativos().filter(r => (!r.desde || r.desde <= fim) && (!r.ate || r.ate >= ini)).forEach(r => {
       let mensal;
       if(r.porVisita){
         /* a diarista custa o que ela trabalha: tira feriado e conta
@@ -15086,6 +15108,88 @@ const Recorrente = {
                 meses:a.meses.size, regular: desvio < 0.25, fluxo:a.fluxo, regra:'dia'});
     });
     return out.sort((a,b) => (b.regular - a.regular) || (b.valor - a.valor));
+  },
+
+  /* o período de um compromisso, curto, para a 2ª linha de "Quando cai":
+     "01/Fev a 30/Jun/2027", "30/Jan/2026 a 14/Ago/2027", "desde 01/Fev/2027", "até 31/Dez/2027" ou '' */
+  periodoCurto(r){
+    const pt = I18n.atual === 'pt', d = r.desde || '', a = r.ate || '';
+    if(d && a) return (d.slice(0,4) === a.slice(0,4) ? I18n.data(d, {semAno:true}) : I18n.data(d)) +
+                      (pt ? ' a ' : ' to ') + I18n.data(a);
+    if(d) return (pt ? 'desde ' : 'from ') + I18n.data(d);
+    if(a) return (pt ? 'até ' : 'until ') + I18n.data(a);
+    return '';
+  },
+
+  /* ---------- "Encontrei N custos que se repetem" ----------
+     Olha o último ano de lançamentos (os da planilha e os do robô, que já
+     trazem a frequência em per: Mensal, Semanal, Trimestral, Anual) e
+     devolve o que se repete. O que parou (2 meses ou mais sem aparecer,
+     como um contrato que acabou) não entra. O que já está em Recorrentes
+     volta marcado como "já existe". Renda e custo vêm separados (fluxo). */
+  detectar(hoje){
+    if(typeof Gasto === 'undefined') return [];
+    hoje = String(hoje || hojeISO()).slice(0,10);
+    const doAno = Gasto.todos().filter(g => g && g.data && g.valor > 0 && g.data <= hoje && g.data >= Gasto.recuar(hoje, 400));
+    if(!doAno.length) return [];
+    /* referência = o último lançamento que chegou (sem passar de hoje), para não
+       dar como "parou" o que só ainda não foi importado */
+    const ref = doAno.reduce((m, g) => g.data > m ? g.data : m, '');
+    const nMes = iso => Number(iso.slice(0,4)) * 12 + Number(iso.slice(5,7));
+    const moda = arr => { const c = new Map(); let best = null, n = 0;
+      arr.forEach(x => { const k = (c.get(x) || 0) + 1; c.set(x, k); if(k > n){ n = k; best = x; } }); return best; };
+    const med = arr => { const v = arr.slice().sort((x,y) => x-y); return v.length ? v[Math.floor(v.length/2)] : 0; };
+    const norm = x => String(x || '').trim().toLowerCase();
+
+    const porSub = new Map();
+    doAno.forEach(g => {
+      if(/^(estorno|refund)$/i.test(g.sub)) return;
+      const k = g.grupo + '|' + norm(g.sub);
+      const a = porSub.get(k) || {grupo:g.grupo, sub:g.sub, itens:[]};
+      a.itens.push(g); porSub.set(k, a);
+    });
+
+    const out = [];
+    porSub.forEach((a, chave) => {
+      const it = a.itens.sort((x,y) => x.data.localeCompare(y.data));
+      const meses = new Set(it.map(g => g.data.slice(0,7)));
+      const freqs = it.map(g => g.per).filter(p => p === 'Mensal' || p === 'Semanal' || p === 'Trimestral' || p === 'Anual');
+      const freq = freqs.length * 2 >= it.length ? moda(freqs) : null;     /* a maioria diz a frequência */
+      const ult = it[it.length - 1].data;
+      const recentes = it.slice(-6).map(g => g.valor);
+      const valor = Math.round(med(recentes) * 100) / 100;
+      const v = it.map(g => g.valor).sort((x,y) => x-y);
+      const desvio = v.length > 1 ? Math.abs(v[Math.floor(v.length*0.75)] - v[Math.floor(v.length*0.25)]) / (med(v) || 1) : 0;
+
+      let regra = 'dia', cada = 1, limite = 2, se = false;
+      if(freq === 'Semanal'){ regra = 'semanal'; se = it.length >= 3; }
+      else if(freq === 'Anual'){ regra = 'anual'; limite = 13; se = true; }
+      else if(freq === 'Trimestral'){ cada = 3; limite = 4; se = it.length >= 2; }
+      else if(freq === 'Mensal'){ se = meses.size >= 2; }
+      else { se = meses.size >= 4 && desvio < 0.35; }       /* sem a dica do robô: precisa ser regular */
+      if(!se) return;
+      if(nMes(ref) - nMes(ult) >= limite) return;           /* parou */
+
+      const dias = it.map(g => Number(g.data.slice(8,10)));
+      const quem = moda(it.map(g => g.quem).filter(Boolean)) || '';
+      const r = {grupo: a.grupo, sub: a.sub, nome: a.sub, valor: valor, regra: regra, cada: cada,
+                 dia: regra === 'anual' ? Number(ult.slice(8,10)) : med(dias),
+                 mes: regra === 'anual' ? Number(ult.slice(5,7)) : 0,
+                 diaSemana: regra === 'semanal' ? moda(it.map(g => new Date(g.data + 'T12:00:00').getDay())) : 1,
+                 quem: quem, irpf: it.filter(g => g.irpf).length * 2 > it.length};
+      const ja = this.todos().find(x => (x.grupo === a.grupo && norm(x.sub) === norm(a.sub)) || norm(x.nome) === norm(a.sub));
+      out.push({chave: chave, r: r, fluxo: (GRUPOS[a.grupo] || {}).fluxo || 'saida', freq: freq,
+                vezes: it.length, meses: meses.size, ultima: ult, jaExiste: ja ? ja.nome : ''});
+    });
+    return out.sort((x,y) => (!!x.jaExiste - !!y.jaExiste) || (y.r.valor - x.r.valor));
+  },
+
+  /* cadastra os que a pessoa deixou marcados; começa a valer hoje, para o passado não virar "atrasado" */
+  cadastrarDetectados(chaves, hoje){
+    const quero = new Set(chaves || []);
+    const novos = this.detectar(hoje).filter(x => quero.has(x.chave) && !x.jaExiste);
+    novos.forEach(x => this.add(Object.assign({}, x.r, {desde: String(hoje || hojeISO()).slice(0,10), origem: 'historico'})));
+    return novos.length;
   },
 
   /* este lançamento novo parece ser de uma categoria que se repete? */
@@ -22501,7 +22605,7 @@ function linhaOcorrencia(o, op){
    foi pontual. E o calendário do mês por cima de tudo.
    ========================================================= */
 
-let custosAba = 'recorrentes';    /* recorrentes | pontuais | calendario | revisar */
+let custosAba = 'recorrentes';    /* todos | recorrentes | pontuais | calendario | revisar */
 
 function viewBCustos(){
   if(!Gasto.todos().length && !Recorrente.todos().length) return bVazio('b-custos');
@@ -22511,6 +22615,7 @@ function viewBCustos(){
   const paraRevisar = Gasto.todos().filter(g => g.revisar);
 
   const ABAS_C = [
+    {id:'todos',       ico:'📋', nome: I18n.atual === 'pt' ? 'Todos' : 'All'},
     {id:'recorrentes', ico:'🔁', nome: t('per.recorrentes'), n: Recorrente.ativos().length},
     {id:'pontuais',    ico:'📍', nome: t('per.pontuais')},
     {id:'calendario',  ico:'📅', nome: t('nav.agenda')},
@@ -22553,7 +22658,19 @@ function viewBCustos(){
     '<button class="aba-c' + (custosAba === a.id ? ' on' : '') + '" data-custaba="' + a.id + '">' +
     a.ico + ' ' + esc(a.nome) + (a.n ? ' <b>' + a.n + '</b>' : '') + '</button>').join('') + '</div>';
 
-  if(custosAba === 'calendario')      h += blocoCalendario();
+  /* uma linha dizendo o que é a aba aberta */
+  const pt = I18n.atual === 'pt';
+  const EXPLICA_C = {
+    todos:       pt ? 'Tudo junto: os compromissos que se repetem e os gastos pontuais mais recentes.' : 'Everything together: recurring commitments and the latest one-off costs.',
+    recorrentes: pt ? 'O que se repete (aluguel, escola, assinaturas), com o dia em que cai e o período em que vale.' : 'What repeats (rent, school, subscriptions), with the day it falls and the period it applies.',
+    pontuais:    pt ? 'Gastos que aconteceram uma vez e acabaram.' : 'Costs that happened once and ended.',
+    calendario:  pt ? 'O mês no calendário: o que entra e o que sai em cada dia.' : 'The month on a calendar: what comes in and goes out each day.',
+    revisar:     pt ? 'Lançamentos marcados para conferir e vencimentos que passaram sem ninguém marcar.' : 'Entries flagged to check and due dates that went by unmarked.'
+  };
+  h += '<p class="small muted aba-explica" style="margin:-8px 0 14px">' + esc(EXPLICA_C[custosAba] || EXPLICA_C.recorrentes) + '</p>';
+
+  if(custosAba === 'todos')           h += blocoTodos();
+  else if(custosAba === 'calendario') h += blocoCalendario();
   else if(custosAba === 'pontuais')   h += blocoPontuais();
   else if(custosAba === 'revisar')    h += blocoRevisar(paraRevisar, atrasados);
   else                                h += blocoRecorrentes();
@@ -22607,8 +22724,7 @@ function blocoRecorrentes(){
           '<div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) +
           (r.quem ? ' · ' + esc(r.quem) : '') + '</div></td>' +
         '<td class="nowrap t-sub">' + esc(Recorrente.explicar(r)) +
-          (r.ate && r.ativo !== false ? '<div class="t-sub">' +
-            (I18n.atual === 'pt' ? 'até ' : 'until ') + I18n.data(r.ate) + '</div>' : '') + '</td>' +
+          (Recorrente.periodoCurto(r) ? '<div class="t-sub rec-periodo">' + esc(Recorrente.periodoCurto(r)) + '</div>' : '') + '</td>' +
         '<td class="num ' + (r.fluxo === 'entrada' ? 'up' : '') + '">' +
           (r.fluxo === 'entrada' ? '+' : '') +
           fmt(r.porVisita ? Recorrente.mediaDoServico(r) : Recorrente.valorEm(r, hojeISO())) +
@@ -22641,20 +22757,80 @@ function blocoRecorrentes(){
       '</tbody></table></div>';
   }
 
-  const sug = Recorrente.sugestoes().filter(x => x.regular).slice(0, 8);
-  if(sug.length){
-    h += '<div class="card"><div class="card-head"><h3>' +
-      (I18n.atual === 'pt' ? 'O histórico sugere' : 'Your history suggests') + '</h3></div>' +
-      '<p class="small muted" style="margin:0 0 12px">' +
-      (I18n.atual === 'pt'
-        ? 'Estas categorias apareceram em quase todos os meses, com valor parecido. Clique para cadastrar com o dia certo.'
-        : 'These showed up almost every month with a similar amount. Tap to set one up with the right day.') + '</p>' +
-      '<div class="chips">' + sug.map(x =>
-        '<button class="chip click" data-recsug="' + esc(x.grupo + '|' + x.sub) + '">' +
-        (GRUPOS[x.grupo] || {}).ico + ' ' + esc(x.sub) + ' · ' + fmt(x.valor) + '</button>').join('') +
-      '</div></div>';
-  }
+  h += blocoDetectados();
   return h;
+}
+
+/* ---------- "Encontrei N custos que se repetem": caixinhas e um botão só ---------- */
+function blocoDetectados(){
+  const pt = I18n.atual === 'pt';
+  const det = Recorrente.detectar();
+  if(!det.length) return '';
+  const novos = det.filter(x => !x.jaExiste);
+  const linha = x => {
+    const G = GRUPOS[x.r.grupo] || {};
+    const ent = x.fluxo === 'entrada';
+    return '<label class="rdet' + (x.jaExiste ? ' rdet-ja' : '') + '">' +
+      '<input type="checkbox" class="rdet-ck" value="' + esc(x.chave) + '"' + (x.jaExiste ? ' disabled' : ' checked') + '>' +
+      '<span class="rdet-txt"><span class="t-main">' + esc(x.r.nome) + '</span>' +
+        '<span class="t-sub">' + (G.ico || '') + ' ' + esc(G.nome || x.r.grupo) + ' · ' + esc(x.r.sub) +
+        ' · ' + esc(Recorrente.explicarRegra(Recorrente.arruma(x.r))) +
+        (x.r.irpf ? ' · IR' : '') +
+        (x.jaExiste ? ' · <b>' + esc(pt ? 'já existe: ' : 'already there: ') + esc(x.jaExiste) + '</b>' : '') + '</span></span>' +
+      '<span class="num ' + (ent ? 'up' : 'down') + '">' + (ent ? '+' : '') + fmt(x.r.valor) + '</span></label>';
+  };
+  const parte = (lista, tit) => lista.length
+    ? '<div class="rdet-sec">' + esc(tit) + '</div>' + lista.map(linha).join('') : '';
+  const custos = det.filter(x => x.fluxo !== 'entrada'), renda = det.filter(x => x.fluxo === 'entrada');
+  return '<div class="card" id="recDetectados"><div class="card-head"><h3>' +
+      (pt ? 'Encontrei ' + det.length + (det.length === 1 ? ' que se repete' : ' que se repetem')
+          : 'Found ' + det.length + ' that repeat') + '</h3></div>' +
+    '<p class="small muted" style="margin:0 0 10px">' + (pt
+      ? 'Saiu do seu histórico (e da frequência que o robô dos bancos manda). O que parou há 2 meses ou mais não aparece. Desmarque o que não quiser e cadastre tudo de uma vez; cada um começa a valer hoje e dá para editar depois.'
+      : 'Taken from your history (and the frequency the bank robot sends). Anything that stopped 2 or more months ago is left out. Untick what you do not want and add them all at once; each starts today and can be edited later.') + '</p>' +
+    parte(custos, pt ? 'Custos (saem)' : 'Costs (out)') +
+    parte(renda, pt ? 'Renda (entra)' : 'Income (in)') +
+    '<div class="f-actions"><button class="btn primary" data-acao="rec-detectar-ok" id="recDetOk"' + (novos.length ? '' : ' disabled') + '>' +
+      rotuloDetectados(novos.length) + '</button></div></div>';
+}
+function rotuloDetectados(n){
+  return I18n.atual === 'pt' ? 'Cadastrar os marcados (' + n + ')' : 'Add the ticked ones (' + n + ')';
+}
+document.addEventListener('change', e => {
+  if(!e.target.classList || !e.target.classList.contains('rdet-ck')) return;
+  const n = document.querySelectorAll('#recDetectados .rdet-ck:checked').length, b = document.getElementById('recDetOk');
+  if(b){ b.textContent = rotuloDetectados(n); b.disabled = !n; }
+});
+
+/* ---------- todos juntos: o que se repete e o que foi pontual ---------- */
+function blocoTodos(){
+  const pt = I18n.atual === 'pt';
+  const rec = Recorrente.ativos();
+  const pont = bLista({fluxo:'saida'})
+    .filter(g => !g.recorrenteId && (!g.per || g.per === 'Pontual' || g.per === 'Frequente'))
+    .sort((a,b) => (b.data || '').localeCompare(a.data || '')).slice(0, 80);
+  if(!rec.length && !pont.length)
+    return '<div class="card"><p class="muted small" style="margin:0">' + (pt ? 'Nada cadastrado ainda.' : 'Nothing here yet.') + '</p></div>';
+  let h = '<div class="card sem-pad"><table class="tbl tbl-todos"><thead><tr><th></th>' +
+    '<th>' + (pt ? 'O quê' : 'What') + '</th><th>' + (pt ? 'Quando' : 'When') + '</th>' +
+    '<th class="num">' + esc(t('fin.valor')) + '</th></tr></thead><tbody>';
+  rec.forEach(r => {
+    const G = GRUPOS[r.grupo] || {}, per = Recorrente.periodoCurto(r);
+    h += '<tr class="linha-click" data-recedit="' + r.id + '"><td title="' + esc(t('per.recorrentes')) + '">🔁</td>' +
+      '<td><span class="t-main">' + esc(r.nome) + '</span><div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) + (r.quem ? ' · ' + esc(r.quem) : '') + '</div></td>' +
+      '<td class="t-sub">' + esc(Recorrente.explicar(r)) + (per ? '<div class="t-sub rec-periodo">' + esc(per) + '</div>' : '') + '</td>' +
+      '<td class="num ' + (r.fluxo === 'entrada' ? 'up' : '') + '">' + (r.fluxo === 'entrada' ? '+' : '') +
+        fmt(r.porVisita ? Recorrente.mediaDoServico(r) : Recorrente.valorEm(r, hojeISO())) + '</td></tr>';
+  });
+  if(pont.length) h += '<tr class="tr-sep"><td colspan="4">' + esc(pt ? 'Pontuais (os 80 mais recentes)' : 'One-offs (80 most recent)') + '</td></tr>';
+  pont.forEach(g => {
+    const G = GRUPOS[g.grupo] || {};
+    h += '<tr class="linha-click" data-bid="' + g.id + '"><td title="' + esc(t('per.pontuais')) + '">📍</td>' +
+      '<td><span class="t-main">' + esc(g.sub) + '</span><div class="t-sub">' + (G.ico || '') + ' ' + esc((g.desc || '').slice(0,70)) + '</div></td>' +
+      '<td class="nowrap t-sub">' + (g.data ? esc(I18n.data(g.data)) : '—') + '</td>' +
+      '<td class="num down">' + fmt(g.valor) + '</td></tr>';
+  });
+  return h + '</tbody></table></div>';
 }
 
 /* ---------- o que foi pontual ---------- */
@@ -22735,6 +22911,10 @@ function blocoRevisar(paraRevisar, atrasados){
     const s = Recorrente.pareceRecorrente(g);
     if(s) candidatos.push(s);
   });
+  /* o que parou (ex.: um contrato que acabou) não é conta fixa */
+  const vivos = new Set(Recorrente.detectar().map(x => x.chave));
+  for(let i = candidatos.length - 1; i >= 0; i--)
+    if(!vivos.has(candidatos[i].grupo + '|' + String(candidatos[i].sub).trim().toLowerCase())) candidatos.splice(i, 1);
   if(candidatos.length){
     h += '<div class="card"><div class="card-head"><h3>' +
       (I18n.atual === 'pt' ? 'Isto parece ser conta fixa' : 'These look like fixed bills') + '</h3></div>' +
@@ -34016,6 +34196,14 @@ function ligarEventos(){
       case 'rec-novo': abrirRecorrente(null); break;
       case 'rec-importar': ImportRec.escolher(); break;
       case 'rec-importar-ok': ImportRec.importar(); break;
+      case 'rec-detectar-ok': {
+        const ch = Array.from(document.querySelectorAll('#recDetectados .rdet-ck:checked')).map(c => c.value);
+        const n = Recorrente.cadastrarDetectados(ch);
+        if(n){ Store.salvar(); render(); renderFita();
+          toast(I18n.atual === 'pt' ? n + (n === 1 ? ' compromisso cadastrado.' : ' compromissos cadastrados.') + ' Dá para editar cada um em Recorrentes.'
+                                    : n + ' commitment(s) added. You can edit each one in Recurring.'); }
+        break;
+      }
       case 'rec-salvar': salvarRecorrente(); break;
 
       /* ---- serviço por visita e reajuste ---- */
