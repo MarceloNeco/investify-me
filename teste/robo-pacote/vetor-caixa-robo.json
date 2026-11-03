@@ -1,0 +1,110 @@
+{
+ "aviso": "VETOR DE TESTE. A chave privada abaixo foi criada só para este teste e não protege nada.",
+ "formato": "ver pacote_caixa.py",
+ "chave_publica": {
+  "kty": "RSA",
+  "alg": "RSA-OAEP-256",
+  "kid": "cx-teste",
+  "n": "yAoy8XYkaCuG463qQZfK-e10dR3j8uqMs9yQ0QehE4NmANUgMlUUXQxi4H_pfF1tP7VjFeKflW-eie0o-bul_90zrWd56-ljamrsDD3qgOm5QBi9TsargXzQU9q5EgqUiSQ15vVsEjM8Z_59t9l9_ewyfNMpLHjZXkLudvKQesLbiEEh9O4TMi0bUM7zx-q-0KjBs0EwFIqTTJihGacwJyYxcfB7j-ZgTEqvh7D3OpzOYybeNW7KnPdXiOkx3YbdZSS7s5T0MqxcvNTBQqFzE7eXZ9Ny0fskKVm63fmvHplc8BWdFiG4BZzNP-aQy_L_zelvxw79kRurbpdW_uzPL_ispAFsu_lG5yq9UmfzXJEEw6_OKNUCr4CUbtnUP8FwcjNBIlpzCZDtmU2J8XDrtl81c776LM5nZjB4wCceUXZ0SVO5cKe4X6rTRkHJxg0_801bhkfeyMgFgT9qWObd7OO_Iuh36b7rLdVQsApCNo6Gkc7mJ_zF6EWTTPHNzbxV",
+  "e": "AQAB"
+ },
+ "chave_privada_teste": {
+  "kty": "RSA",
+  "alg": "RSA-OAEP-256",
+  "kid": "cx-teste",
+  "n": "yAoy8XYkaCuG463qQZfK-e10dR3j8uqMs9yQ0QehE4NmANUgMlUUXQxi4H_pfF1tP7VjFeKflW-eie0o-bul_90zrWd56-ljamrsDD3qgOm5QBi9TsargXzQU9q5EgqUiSQ15vVsEjM8Z_59t9l9_ewyfNMpLHjZXkLudvKQesLbiEEh9O4TMi0bUM7zx-q-0KjBs0EwFIqTTJihGacwJyYxcfB7j-ZgTEqvh7D3OpzOYybeNW7KnPdXiOkx3YbdZSS7s5T0MqxcvNTBQqFzE7eXZ9Ny0fskKVm63fmvHplc8BWdFiG4BZzNP-aQy_L_zelvxw79kRurbpdW_uzPL_ispAFsu_lG5yq9UmfzXJEEw6_OKNUCr4CUbtnUP8FwcjNBIlpzCZDtmU2J8XDrtl81c776LM5nZjB4wCceUXZ0SVO5cKe4X6rTRkHJxg0_801bhkfeyMgFgT9qWObd7OO_Iuh36b7rLdVQsApCNo6Gkc7mJ_zF6EWTTPHNzbxV",
+  "e": "AQAB",
+  "d": "EBAE7K93ohdiqVwWRsY9Rx8lKN_--osRGW0xLLO1Naz-pGZOA59MzLbupp0RdB9yuGOkgptJWgAV5c3caocslRR07pbelaNOjLrsBtn0P1M6gUDV90zLyeXqOt2B2wbB9sF-BDRkmpEw0nSUhuN-MtpD6JLdHW7RHM5OOdC66hHvplZ9N0lkUwpdBTqvnQ0xXW27lgelPcpYeb_6FFEA3xfkRFmoK6h28ZFVXGreQz-C8WJrg99drMfN_dakdCe8xtGFy4voFXZ0cwfrDabcFGH_n1S_iKBRT9Qv1rXPwS4u4Sz_20e-9lUf_X6qr938n1g4g8b5A9_Db0OWPfpxN0idJE7DaxNHlKxfMWmvjpxGYeB_q-2a9DPnWMjjUaUwztz_J1o8IIjIUGwHmn7RxgN_ZlegmKgLDG2v0P2FMvCIjC8G4uLY7EfWg--uBbVD_AV9gE8kiayKOCzW1bQzLSxVqJOThO8f4fzp1ex-JVpVIqNXQF6arSIfMr-0BCGh",
+  "p": "5OLF1oSyBpZK0mHF_dcRQPXUqTxDjgxy5ZJws4kMfBfhyiKinMbNIhgnNm5UDdQwu3m-3M3y41eqj4ELMUrQwxIhWha1tW7eogJy6vP_PrnOSDSpCO_pDRpB9yz0ysVIkxt0nLEk0N9brPL7wNSA2vATs1rLTxe8qPfU5mBOBCSb7JUN1dHWRocnFQpHO8_TlcKhR-fuZytQ35i0rxrCrxQycnJ8XWsE2OGrFPxUQz-VPnfKLbX12-rEQ2HkpA71",
+  "q": "37yjYBidh3zaV27B3sEDszjIeQxO-iBKeZYEvVR3Z4MpFn5RULnaK7GVI3fEK3dJLPsUSdufhXGxsoV_mtxfbrRotnb6Jlu087iG5hpRtPEhOXHVu4Cy4qYalmBRZgBUWShMJ4sQfeHISMYtX5I1cWQcA9KaLOIxHYOsi7oEuZq6FMrgleHlZmPX_ENrEscTkBVJ8ra7f7mM3UXvMKxNHmaKlvNM46VY93uREYOHpT9YBT4zCcYK0HOu_14I7dvh",
+  "dp": "BHsYCmoQniZlEpdNa_nA4beuUR3X6Lj_qtTiFfGx5-AD0JQ7ALy3mVpFskAYryifR5xLi0EQ5zh5I1QQZwei7J63Pm9BYWrpOty3aTgboBu9GRbG1GD1_Aaukes0Y5_XGuInt0WUhe5JeipLmWvPlfmrORCm-EZrsBch-NybymL5FnmYir4P5tOQhU3tNRONfdoQlDrLJQPpEmeH6gGpHApWLn1lR-LndmN8mO2TrLla750ivSBZztNawkLxWfDd",
+  "dq": "pVF0gqgNljRJ_TrIo7iI7F-zucW_gZBkl0yjOeZ0yBahQI6btQNu0sRHx8pSOC_O8R6hEiXmzCqDO77q19mn5lwF13U4RymSHlglzVZ7MzDM9O5JGF_zTgegM6b93lm1-Z8ODlXyHKG9ZRCSLEETnjJzhNuTskB8PCu0ThZoMWDDyGNT6UvePnbd-_cw4dIZgWhJmL8u8iR_kmx_Xb6iySjJlNo34SmnAE7clU1T6GVSu6UG_1zHVtlz4Btyi5bh",
+  "qi": "HWAirgyrYriZi2ZF8MdURwGEsqv-KZHLkjfoDgKSVO28XgmGtqOXP6b3lWAtToG9LK8_s5mWKWKTM0KE_rsM4tokodY3YOsO7HdS1sN0yyPReZQkVy6voLK6lIQSJxMwpmSI00wfnhv4WUIf_9-HegBRhI92-83DhQBHE8DiMHStVH3OkObl-Vv-XNcI1bOlCZl4NacUH6aQC7gSyxzJIP0MjHCC1QYn_HH2pLMukuPQK_Tfwjz4951-kKQ8jnl9"
+ },
+ "itens": [
+  {
+   "lancamento": {
+    "id": "pluggy-teste-0001",
+    "data": "2026-11-02",
+    "valor": 123.45,
+    "tipo": "despesa",
+    "grupo": "HABITACAO",
+    "categoria": "Supermercado",
+    "descricao": "PÃO DE AÇÚCAR — compra teste",
+    "quem": "Neco",
+    "forma": "Crédito",
+    "cartao": "Visa teste",
+    "final": "1234",
+    "banco": "Banco Teste",
+    "ir": false,
+    "freq": "Pontual",
+    "origem": "pluggy",
+    "cat_pluggy": "Groceries"
+   },
+   "pacote": "{\"v\":1,\"k\":\"k2z9S7AGHn7R4IMKD4UnyM1XD7+auVbBpHroq67ZrV+fZKAOxAW9ifoUxR96xQOGz9f6zmLnIB9fLZe+RYYj+dENGclSqrF1CtYu75gRZ1Sp+UY6B5FhexnRwA16hGPPWw7wGm+RmEztwt59Bx5SNQrVtQVeLMV/RI16hnbDSkGQXzisCl9ka5nXrpCsvFMHo5j2i0uFNN1rWtrxC+0Z3nu2D6Sm9nGPn4HhV3zYq/CIs6fTTjFJWiy8LBYsep7WNqnqxf4iMv3JKQ/LjsJ5UkoWzsq9L/1jte5LvYxRAV26G8aIZh3Nf2IJyQFjvTvvdvxqqx83560AH5Sx3OZbBXmCab/dx+jFZiLsHzRkvLqRKxov2TmJeiH3xKmhtMenldKRIhcPQAY58tSdADEZFSwDVcd3ecAIR3hqx2jdRsvVaHG2iXZRfqOEJCrb5v0l4VbnzPe+x33hoIYdEm2sCwBOUqOQ15HfldNkHwjJOCsDxvTb9QuKINXnbzYsZJbJ\",\"iv\":\"ZGVmZ2hpamtsbW5v\",\"ct\":\"Mzm3AlvTdO5SFziPo0gemDG2Yye7XMNDhf2OLJrXxGquy3LwfiS2NczeSA3fbui5ejf3lQJwcBrJ35jjw6PR43jj+TT0L152+wqeIjOmE4EWDW9bhf+vjp6zf5A6UA8erF2wHQo53RnciLekgDeau1db5W2sHMtX0x38k/aWbKJB/OrBClMtCfNrBsYKz3zG0+e8hdeIHNFww16vYIWFmf9cVy7x/JWFGCzE1cBW0rvznO+TFf03rBcjPWqk722jqw08yOtnt6gmFh8MZxbQayE64mPoejafpHFxtcyRdJg6QoDXgONCUHvAfuuKZLLiZPQriZGlg6io0iBJYF+U+BhT3uUOXfH0kSq/9tqceHHE+CgGh1kCAKhhfHA/FSoHppV5SVRH0poJ/zPx0c3022tkPI4wJ2L6ebgaRaa8GU7HKM/LOU9jg+G9cVz/CkVYHRibgs4+1yBTAcYl8qm/zQ==\"}"
+  },
+  {
+   "lancamento": {
+    "id": "pluggy-teste-0002",
+    "data": "2026-11-01",
+    "valor": 5000,
+    "tipo": "receita",
+    "grupo": "RENDA",
+    "categoria": "Salário",
+    "descricao": "Salário teste",
+    "quem": "Neco",
+    "forma": "Pix",
+    "cartao": "",
+    "final": "",
+    "banco": "Banco Teste",
+    "ir": true,
+    "freq": "Mensal",
+    "origem": "pluggy",
+    "cat_pluggy": "Salary"
+   },
+   "pacote": "{\"v\":1,\"k\":\"DBMEldGglq8bIHWbSMk5fbWgt1lB5jp/AHAOCR21vwxGby4B0yha71BYLSz6Cmqq9YsuFUSsy+X5Z7VECnDvN0J7Z5YxZre4FrU2PYP0IhwtSvisXZXyQHp4eooh6CyUQ/nOZEMHPbzs3BUjyGTZPX3iBJg6Kl7QD5m98eAxruIJVayNK5ax6nH940Qng6bhwZAqCEC8xT7IaRCk3kL2pxICEkJ48kHBVPTP/h5Zu81PRXTZ4QUR7A/QUIkKt9HzeYSu0TSmAN7gUCDkSEpCdCU0kOsvAgmZulXDjZ1LVkH+QQN0I7fAQ/95uPfXV6HNH48nwV7bm8h2SUkiVQTAvo4UXc1uWVKaqzAjn87H1YZp1FvPbUH+AaiP9cvCiv6ZCIVXn5KVEqp3nT8vUdvGLYr1t0qRGYaShR5Y5kPMWDdtfKCEf9dit4bxxlwA5/8MVYfkifalTADPFnW6sG27jOHkYT7bVwgSriwdXvzZOCgKf/f75x/rk8JaDMcgmmwe\",\"iv\":\"ZWZnaGlqa2xtbm9w\",\"ct\":\"PUc1mz69z9s2BHTRhA86kTpPpn8U2jROq/KsmUKTtnj2/0qAq0v8/cY2U2u6mk4PemnqKUdgd/Sxe91KrzOUeN9YCIV/RulaTF8v4TUVlXcJ9GOGdaLpmsU2r62B97e6SyLRablQ5LwgZZOEw+L4wsb6JJ5LbYZjgvaDTQRfFR1CAT03IwsMFn32/EI0PCRljQ55/7porICG8K4lBbFb3nkcyzh89nSUK60sWWd3hRf829v4SaaXMQXHKVfNBqy0ed4DVkwE1c+D7YiSM4Y2zroBhCt5Dr5+bATaa9sT6CT+OdPVfLIYeHCKhxdhNIQrTTH+MhgmKE8T9sPBbt7k3m0eBCym9Ct6bZaCVdvmf2T41HI5PTPcdViTCPkQnCNVFAmiF/lELPtJUWA=\"}"
+  },
+  {
+   "lancamento": {
+    "id": "pluggy-teste-0003",
+    "data": "2026-11-02",
+    "valor": -40.0,
+    "tipo": "despesa",
+    "grupo": "LAZER",
+    "categoria": "Restaurante",
+    "descricao": "Estorno teste",
+    "quem": "",
+    "forma": "Crédito",
+    "cartao": "",
+    "final": "1234",
+    "banco": "Banco Teste",
+    "ir": false,
+    "freq": "Pontual",
+    "origem": "pluggy",
+    "cat_pluggy": "Restaurants"
+   },
+   "pacote": "{\"v\":1,\"k\":\"UQLvlu7zXSKjKrMtU7C0mN+IASgpWS5lC7uNy0JiJis8sPpsSH75Ct2z2yKldC3JDAq1xfGT9fGy2CN3J4q9VOg8KGj29ReYe3jNXFqI1mRVSqYlhvY8jkLtYAhU7efK9SOIghbc7zK3Z2BUt7X/hKcirPlG5vUcKDneu1TWpCy/qLU9+n1NomUC28ZoYL8F2Y2ixJ85ViEE9tr/vUyf/WFy9TMhtlJKsY4tNcL/cXrR/3OV+c28xmCTQU4qdBp0TIIk6hlJcLoBXWNjQuhQCdxuWFbZMZNdTp9r9HHYgJg+v5aZA5LtZmRiaPvat5YE98bSoFR9OORBb0KnCNBH2UMThJasSV3kgbSKVKbiufzdoSKPff7pOkoL2fE5OYCXUyEWvYjhugKdJlq2kkMqSMhj7Zf8/Za9NryoVoUW740g7EnABoE/Q71aSE0+A5Sox0X6DlBFyIFnAEi2dNR3Rw+CziEYDWNI7h54gmWx6QGAwUzvqnKXfN+Bu0v3+jaK\",\"iv\":\"ZmdoaWprbG1ub3Bx\",\"ct\":\"Wt98NtBdHhmh3jn0xFxPq94uv+C4Lu7gXDibV9B/cLLcAm3p8QXYlitwRXi0+IwMISlXGjVpVrPNejBlWvrtsonewyqxx1DGQ9irTHNm8KPL0MLmG5FCkFmtn35ceVG0wbUxDxUIv9ctECgPZCkL/GznYtR9EIT4wshdlSFK7UQaFj9vgSI+20nIrh/CBCS4voFna9vd9YzWK2xQH40JxOJZg2HfW0jIqsN+iap9yLFS5WmYMwH7StW2ijYpNF57RTeosgU6pjqLRDpc/SfxJoF+7ZHCG1NX5+sAhinT4Pw5JfrH8KZEeZBfwdn4KSm9FJMpzVbiuJNJf1p+H51lXVbgNkqhvB46IO30MDVJzQmVZsmHazFvOEf3SlHaL8E0Ai4ycqA0WQWm7HqaR3z1BQasKOmzlVjbXuQ=\"}"
+  },
+  {
+   "lancamento": {
+    "id": "pluggy-teste-0004",
+    "data": "2026-11-03",
+    "valor": 800,
+    "tipo": "transferencia",
+    "grupo": "",
+    "categoria": "",
+    "descricao": "Transferência entre contas teste",
+    "quem": "",
+    "forma": "Pix",
+    "cartao": "",
+    "final": "",
+    "banco": "Banco Teste",
+    "ir": false,
+    "freq": "Pontual",
+    "origem": "pluggy",
+    "cat_pluggy": "Transfer"
+   },
+   "pacote": "{\"v\":1,\"k\":\"RV/r5/yHaBuAd/brO6vK0mWEkcadpMVfETu7PLJpRlOvWchHvlfeXnUYd5jA8JGxQO1KpWhvp0gpbMzavvWPBqMFCyaAH8truKqCLBUwjXsuxeqkwsc73X752Wc+lpy6Kq6YlQ/3soR2oiNySaPJgeE7QgVwJ1OQ8XeU1Foeq/HMpsipMhS+gq83Z/Cggs251XeAYcgcYLl8TBiy4wpKtrrTMp2J3VZI2twfpG77SExVjHlhhQ5bHxBrDWf5l9RhTEyzS0zXAQjDepssctjkVGZ3q79Mo8eus8mPpYH1/5I6lT63beqtQf+TdPBQWWZIcch/FxaaCQ8pYlCfj2l9HsZsVT1QF/cRuWuGeZL7wdkhpp4Ziez1TIl49levUsLBbdm3kzveL79Lf3cNN0LqplXWLc9281RoKCF4cuC0mrA62lW5CFtH2ORXHInX8u2mnhq2QDB85JEwmMrCxQfYDR2ZmqLUYGavJ5iyUSw+WqZdwbQVt1y+r64OjgPf4Vto\",\"iv\":\"Z2hpamtsbW5vcHFy\",\"ct\":\"3dBFgjKUV9VrVbOe6XzO5qX8eBJ/EeOOkpfIgIpPozrTRxirdZwfTUO/vpcTbk8M0CtN9Cm8jl29fDWzKvvA82YEuws6HWbkfoQwGMrZ4Zv11p4qbATkWsG5kjzEYPl0COevND3IO6DLCuHljh3ky98lbOc305DCSMlq+qgycdhdf8kGynGvD1CHEEi1+NDILJNAINDTisQpHgLNmlQull9Dyea0XLQUvaATmoQyVA+LugyK941bi7jPaILOdfs8mlnAziR11AduQ7qbgLBf08Nm4Ih/hP8CHPPHGnSBDh5JMcKPtzhNmldqFPbizXzCeDh+W0PkrkUXYs3Jl/mqLgu1G4NSz96lKGKYGQgbCHj0we2QOO6OxvcRWK2H3hhmfAnA8YVM2BPOlDH+cKXMJWh93HRsbA==\"}"
+  }
+ ]
+}

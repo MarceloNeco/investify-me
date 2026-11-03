@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (versão de TESTE, usada só por teste-nuvem.html)       1.0.3-teste · 03/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.1.0 · 03/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -23,11 +23,12 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.0.3-teste';
+  var VERSAO = '1.1.0';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
   var K_LOCAL = 'investifyme.dados.v1';
+  var K_SO_AQUI = 'moneytrio.soNesteAparelho';   /* escolheu usar sem conta: o app de sempre, só neste aparelho */
   var RX_ID = /^[A-Za-z0-9_.:@-]{1,80}$/;
   var PRF_INFO = 'moneytrio-cadeado-prf';
   var ESPERAS = [0, 0, 0, 0, 30, 60, 300, 900, 1800, 3600];   /* segundos depois do n-ésimo erro de PIN; no 10º bloqueia */
@@ -808,7 +809,7 @@
       try { await fn(); } catch (e) { Tela.erro(Conta.explicar(e)); } finally { if (botao.isConnected) { botao.disabled = false; botao.innerHTML = h; } }
     },
     topo: function () {
-      return '<h1>☁️ MoneyTRIO · ' + tt('na nuvem', 'in the cloud') + ' <span class="nv-tiny">(' + tt('página de teste', 'test page') + ')</span></h1>';
+      return '<h1>☁️ MoneyTRIO</h1>';
     }
   };
 
@@ -860,10 +861,11 @@
         (Nuvem.podeLevar ? '<button class="nv-btn" id="nvLevar">' + tt('Levar para a nuvem os dados guardados só neste aparelho', 'Move the data kept only on this device to the cloud') + '</button>' : '') +
         '<div class="nv-row"><button class="nv-btn" id="nvSair">' + tt('Sair da conta', 'Sign out') + '</button><button class="nv-btn" id="nvDesc">📴 ' + tt('Desconectar este aparelho', 'Disconnect this device') + '</button></div>' +
         '<p class="nv-tiny">' + tt('Sair: fecha o cadeado e sai da conta. Desconectar: também apaga deste aparelho a cópia guardada aqui (na nuvem continua tudo).', 'Sign out: locks and signs out. Disconnect: also erases the copy kept on this device (everything stays in the cloud).') + '</p>' +
-        '<p class="nv-tiny"><a href="index.html">' + tt('Ir para o MoneyTRIO deste aparelho (sem nuvem)', 'Go to MoneyTRIO on this device (no cloud)') + '</a> · nuvem ' + VERSAO + '</p>' +
+        '<p class="nv-tiny"><button class="nv-lnk" id="nvIrLocal">' + tt('Usar o MoneyTRIO só neste aparelho (sem nuvem)', 'Use MoneyTRIO only on this device (no cloud)') + '</button> · nuvem ' + VERSAO + '</p>' +
         '<button class="nv-btn" id="nvFechar">' + tt('Fechar', 'Close') + '</button></div>';
       var $ = function (s) { return el.querySelector(s); };
       $('#nvFechar').onclick = function () { Painel.fechar(); };
+      $('#nvIrLocal').onclick = async function () { try { await Promise.race([Sinc.registrar().then(function () { return Sinc.enviar(); }), dorme(5000)]); } catch (e) {} Cadeado.trancar(); lsSet(K_SO_AQUI, 1); location.reload(); };
       $('#nvTrancar').onclick = function () { Nuvem.trancar('manual'); };
       $('#nvSair').onclick = function () { Nuvem.sair(false); };
       $('#nvDesc').onclick = function () { Nuvem.sair(true); };
@@ -967,7 +969,7 @@
         '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div><div class="nv-nota ok nv-hidden" id="nvOk" role="status"></div>' +
         '<button class="nv-btn" id="nvIn">' + tt('Entrar com e-mail', 'Sign in with e-mail') + '</button>' +
         '<div class="nv-row"><button class="nv-lnk" id="nvNova">' + tt('Criar conta', 'Create account') + '</button><button class="nv-lnk" id="nvEsq">' + tt('Esqueci a senha', 'Forgot password') + '</button></div>' +
-        '<p class="nv-tiny"><a href="index.html">' + tt('Usar o MoneyTRIO só neste aparelho (sem nuvem)', 'Use MoneyTRIO only on this device (no cloud)') + '</a></p>');
+        '<button class="nv-lnk" id="nvSoAqui">' + tt('Usar o MoneyTRIO só neste aparelho (sem conta, sem nuvem)', 'Use MoneyTRIO only on this device (no account, no cloud)') + '</button>');
       var $ = function (s) { return el.querySelector(s); };
       var dd = function () { return { email: $('#nvEm').value.trim().toLowerCase(), senha: $('#nvPw').value }; };
       var ok = function (t) { Tela.erro(''); var o = $('#nvOk'); o.textContent = t; o.classList.remove('nv-hidden'); };
@@ -978,6 +980,7 @@
       }); };
       $('#nvPw').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('#nvIn').click(); });
       $('#nvGo').onclick = function () { Conta.google(); };
+      $('#nvSoAqui').onclick = function () { Nuvem.soNesteAparelho(); };
       $('#nvNova').onclick = function () { Tela.ocupar($('#nvNova'), async function () {
         var d = dd(); if (!d.email || d.senha.length < 8) return Tela.erro(tt('Para criar a conta: e-mail e uma senha de pelo menos 8 caracteres.', 'To create the account: e-mail and a password of at least 8 characters.'));
         Conta.marcarPedido();
@@ -1175,12 +1178,15 @@
   /* ---------------- o maestro ---------------- */
   var Nuvem = {
     iniciado: false, familia: null, podeLevar: false,
-    /* chamado no lugar do iniciar() do app (teste-nuvem.html) */
+    /* chamado no lugar do iniciar() do app (index.html) */
     portao: function (iniciarApp) {
       this.iniciarApp = iniciarApp;
+      /* voltou do Google / e-mail com a sessão no endereço: é para a nuvem, mesmo quem usava só no aparelho */
+      if (/access_token=|error_description=/.test(location.hash || '')) lsDel(K_SO_AQUI);
+      if (lsGet(K_SO_AQUI, 0)) return this.modoLocal();
       this.ligarStore();
       if (!(window.crypto && crypto.subtle && window.indexedDB)) {
-        return Portao.mensagem(tt('Este navegador não serve', 'This browser cannot be used'), tt('Para a nuvem, use o Chrome, o Edge ou o Safari atualizados, pelo endereço https.', 'For the cloud, use an up-to-date Chrome, Edge or Safari, over https.'), [[tt('Usar sem nuvem', 'Use without cloud'), function () { location.href = 'index.html'; }]]);
+        return Portao.mensagem(tt('Este navegador não serve para a nuvem', 'This browser cannot use the cloud'), tt('Para a nuvem, use o Chrome, o Edge ou o Safari atualizados, pelo endereço https.', 'For the cloud, use an up-to-date Chrome, Edge or Safari, over https.'), [[tt('Usar só neste aparelho', 'Use only on this device'), function () { Nuvem.soNesteAparelho(); }]]);
       }
       var ret = Conta.lerRetorno();
       if (ret === 'confirmar') return Portao.confirmarLink();
@@ -1188,6 +1194,18 @@
       if (ret === 'recovery') return Portao.novaSenha();
       if (!Conta.on()) return Portao.entrar();
       this.depoisDaConta();
+    },
+    /* sem conta: o MoneyTRIO de sempre, guardado só neste aparelho (nada da nuvem é carregado) */
+    soNesteAparelho: function () { lsSet(K_SO_AQUI, 1); location.reload(); },   /* recarrega: o Store volta a ser o de sempre */
+    modoLocal: function () {
+      this.local = true;
+      Tela.montar(); Tela.fechar();
+      try { this.iniciarApp(); } catch (e) { console.error('app:', e); }
+      var b = document.createElement('button'); b.className = 'nv-selo'; b.id = 'nvSelo'; b.type = 'button';
+      b.textContent = '☁️ ' + tt('Entrar na nuvem', 'Use the cloud');
+      b.title = tt('Guardar na nuvem com a conta SolverONE', 'Save in the cloud with your SolverONE account');
+      b.onclick = function () { lsDel(K_SO_AQUI); location.reload(); };
+      document.body.appendChild(b);
     },
     /* o Store do app passa a guardar na nuvem (nada de finanças em claro no localStorage) */
     ligarStore: function () {
@@ -1199,8 +1217,8 @@
         Sinc.marcar();
         return true;
       };
-      /* "Apagar tudo" na página de teste não apaga nada: nem a nuvem da família, nem o MoneyTRIO sem nuvem deste aparelho */
-      S.limparTudo = function () { aviso(tt('Na página de teste, "apagar tudo" não apaga a nuvem. Para tirar os dados deste aparelho: ☁️ → Desconectar este aparelho.', 'On the test page, "erase all" does not erase the cloud. To remove the data from this device: ☁️ → Disconnect this device.'), 'warn'); };
+      /* "Apagar tudo" com a nuvem não apaga nada: nem a nuvem da família, nem o MoneyTRIO sem nuvem deste aparelho */
+      S.limparTudo = function () { aviso(tt('Com a nuvem, "apagar tudo" não apaga os dados da família. Para tirar os dados deste aparelho: ☁️ → Desconectar este aparelho.', 'With the cloud, "erase all" does not erase the family data. To remove the data from this device: ☁️ → Disconnect this device.'), 'warn'); };
     },
     depoisDaConta: async function () {
       Portao.carregando(tt('Procurando as suas famílias…', 'Looking for your families…'));

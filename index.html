@@ -2878,6 +2878,15 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.30 */
+  'MoneyTRIO na nuvem':'MoneyTRIO in the cloud',
+  'MoneyTRIO na nuvem: entrar com a conta SolverONE (Google ou e-mail), cadeado da família (código de recuperação na primeira vez, depois PIN ou digital), dados guardados fechados na nuvem e lançamentos dos bancos chegando sozinhos.':'MoneyTRIO in the cloud: sign in with your SolverONE account (Google or e-mail), family lock (recovery code the first time, then PIN or fingerprint), data kept locked in the cloud and bank entries arriving by themselves.',
+  'Quem não quer conta continua usando só neste aparelho: na tela de entrada, "Usar o MoneyTRIO só neste aparelho". Para passar para a nuvem depois, o botão ☁️ no canto da tela; o app oferece levar os dados deste aparelho (com cópia de segurança antes).':'Those who do not want an account keep using it only on this device: on the sign-in screen, "Use MoneyTRIO only on this device". To move to the cloud later, the ☁️ button in the screen corner; the app offers to move this device\'s data (with a backup copy first).',
+  'Caixa do robô (botão ☁️): antes de autorizar, o app confirma que o robô só entrega lançamentos e não consegue ler nada do que está guardado; depois mostra uma mensagem fixa com a data e o próximo passo.':'Robot inbox (☁️ button): before authorizing, the app confirms that the robot only delivers entries and cannot read anything stored; then it shows a fixed message with the date and the next step.',
+  'Lista dos robôs autorizados, com a data e o botão "Remover acesso" (com confirmação). Se o e-mail já está autorizado, o app avisa e não muda nada; os erros ficam em vermelho no painel, sem apagar o que foi digitado.':'List of authorized robots, with the date and a "Remove access" button (with confirmation). If the e-mail is already authorized, the app says so and changes nothing; errors stay in red in the panel, without erasing what was typed.',
+  'O PIN não é mais tratado como senha pelo navegador, e logo depois de criar o PIN o app oferece abrir com a digital.':'The PIN is no longer treated as a password by the browser, and right after creating the PIN the app offers to open with the fingerprint.',
+  /* 3.30: rodapé com a nuvem */
+  'Fica guardado na nuvem, fechado com o cadeado da família, e uma cópia fechada neste aparelho.':'Kept in the cloud, closed with the family lock, plus a closed copy on this device.',
   /* 3.27 */
   'Ajuda mais curta, sem obviedades':'Shorter help, without the obvious',
   'Textos de ajuda mais curtos: a ajuda de cada tela e o balão do AssistONE deixaram de explicar o óbvio ("toque para entrar", "toque na linha para editar") e ficaram só com o que ajuda de verdade. O balão mostra "📍" e o nome da tela, sem o "Você está em".':'Shorter help texts: each screen’s help and the AssistONE bubble no longer explain the obvious ("tap to enter", "tap the row to edit") and keep only what actually helps. The bubble shows "📍" and the screen name, without "You are in".',
@@ -13541,6 +13550,13 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.30', d:'2026-11-03', t:'MoneyTRIO na nuvem', itens:[
+    'MoneyTRIO na nuvem: entrar com a conta SolverONE (Google ou e-mail), cadeado da família (código de recuperação na primeira vez, depois PIN ou digital), dados guardados fechados na nuvem e lançamentos dos bancos chegando sozinhos.',
+    'Quem não quer conta continua usando só neste aparelho: na tela de entrada, "Usar o MoneyTRIO só neste aparelho". Para passar para a nuvem depois, o botão ☁️ no canto da tela; o app oferece levar os dados deste aparelho (com cópia de segurança antes).',
+    'Caixa do robô (botão ☁️): antes de autorizar, o app confirma que o robô só entrega lançamentos e não consegue ler nada do que está guardado; depois mostra uma mensagem fixa com a data e o próximo passo.',
+    'Lista dos robôs autorizados, com a data e o botão "Remover acesso" (com confirmação). Se o e-mail já está autorizado, o app avisa e não muda nada; os erros ficam em vermelho no painel, sem apagar o que foi digitado.',
+    'O PIN não é mais tratado como senha pelo navegador, e logo depois de criar o PIN o app oferece abrir com a digital.'
+  ]},
   {v:'3.29', d:'2026-11-03', t:'Ajuda mais curta, sem obviedades', itens:[
     'Textos de ajuda mais curtos: a ajuda de cada tela e o balão do AssistONE deixaram de explicar o óbvio ("toque para entrar", "toque na linha para editar") e ficaram só com o que ajuda de verdade. O balão mostra "📍" e o nome da tela, sem o "Você está em".'
   ]},
@@ -15743,9 +15759,13 @@ function viewHub(){
   });
 
   h += '</div>' +
-    '<p class="hub-pe tiny muted">' + (I18n.atual === 'pt'
-      ? 'Tudo fica guardado no seu navegador e no arquivo que você baixa. Nada sai daqui sem você mandar.'
-      : 'Everything stays in your browser and in the file you download. Nothing leaves without you.') +
+    '<p class="hub-pe tiny muted">' + ((window.MoneyNuvem && MoneyNuvem.iniciado && !MoneyNuvem.local)
+      ? (I18n.atual === 'pt'
+        ? 'Fica guardado na nuvem, fechado com o cadeado da família, e uma cópia fechada neste aparelho.'
+        : 'Kept in the cloud, closed with the family lock, plus a closed copy on this device.')
+      : (I18n.atual === 'pt'
+        ? 'Tudo fica guardado no seu navegador e no arquivo que você baixa. Nada sai daqui sem você mandar.'
+        : 'Everything stays in your browser and in the file you download. Nothing leaves without you.')) +
     '</p></div>';
   return h;
 }
@@ -34635,8 +34655,10 @@ function mostrarBloqueio(){
     });
   }
 }
-document.addEventListener('DOMContentLoaded', iniciar);
+/* 3.30: o app começa pelo portão da nuvem (conta → família → cadeado) ou abre só neste aparelho — nuvem.js */
+document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuvem) MoneyNuvem.portao(iniciar); else iniciar(); });
 
 </script>
+<script src="nuvem.js?v=1.1.0"></script>
 </body>
 </html>

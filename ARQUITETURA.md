@@ -463,3 +463,21 @@ Interruptor não é trava de segurança: quem mexe no navegador religa no aparel
 **Pendências registradas aqui** (o app ainda não tem `PENDENCIAS.md`; a diretriz manda perguntar
 ao dono antes de criar): portão único para o `ocr`; decidir se `offline` deve existir neste app;
 `MoneyTRIO-local.html` (cópia local antiga) não recebeu o `recursos.js`.
+
+## Nuvem (desde a 3.30, 03/Nov/2026 — etapa 2 do PLANO-SUPABASE-MoneyTRIO.md)
+
+O `index.html` começa pelo portão da nuvem: `MoneyNuvem.portao(iniciar)` (no fim do arquivo, no lugar do `iniciar` direto) e
+carrega `nuvem.js?v=1.1.0`. Sem o `nuvem.js` (ou se ele falhar ao carregar), o app abre como antes (`iniciar()`).
+No `nuvem.js` (procure pelos nomes): `Conta` (conta SolverONE, copiada do OmniLifeONE), `Cadeado` (código de recuperação, PIN,
+digital; chaves abertas só na memória), `Sinc` (cópia fechada no IndexedDB `moneytrio-nuvem`, fila, trava otimista, busca),
+`mapear`/`reconstruir` (Store ↔ registros de `money_docs`), `Caixa` (caixa do robô), `Portao` (telas antes do app), `Painel`
+(botão ☁️, inclusive robôs autorizados), `Trava` (fecha sozinho), `Nuvem` (maestro).
+- **Com a nuvem**: `Store.salvar` não grava finanças no `localStorage` (o `investifyme.dados.v1` só é lido, para "levar para
+  a nuvem"); `Store.limparTudo` não apaga nada (aviso).
+- **Só neste aparelho** (`moneytrio.soNesteAparelho` = 1, botão na tela de entrada ou no painel ☁️): o app de sempre, sem
+  conta, com o Store original (localStorage); o botão "☁️ Entrar na nuvem" tira a marca e recarrega. Voltar do Google com a
+  sessão no endereço também tira a marca.
+- O rodapé da tela inicial (`viewHub`) diz onde os dados ficam conforme o modo.
+- `teste-nuvem.html` é só um redirecionamento para `./` (mantém atalhos antigos).
+- Teste: `node teste/teste-nuvem.js` (Chromium, Supabase de mentira, 77 verificações). Detalhes: PLANO-SUPABASE-MoneyTRIO.md;
+  o que falta: PENDENCIAS.md.
