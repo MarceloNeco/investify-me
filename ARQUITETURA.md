@@ -493,3 +493,12 @@ e `Nuvem.destrancado` devolve a tela como estava), `Nuvem` (maestro).
   `Recorrente.cadastrarDetectados()` cadastra os marcados com `desde` = hoje.
 - `Recorrente.porMes(quando)` só soma o que vale naquele mês (vale desde/até). `Recorrente.periodoCurto(r)` = 2ª linha de "Quando cai".
 - Teste: `node teste/teste-custos.js`.
+
+### Novo compromisso e campo de data (3.37)
+- `abrirRecorrente(id, semente, op)`: frente (O quê, Valor, Dia) + `<details id="rcMais">`; `lerFormRecorrente()` lê tudo;
+  `Sugestor.para(nome)` sugere sem IA; `recRascunho` (memória) ao fechar sem salvar; `#assetModal[data-fixo]` não fecha ao tocar fora.
+- Campos novos do compromisso: `pagador`, `conta` (conta de acesso, nunca senha), `cartao`, `fora` (meses sem cobrança, 1–12),
+  `aConfirmar`, `rolouDe`. `Recorrente.datasNoMes` pula os meses de `fora`; `porMes` desconta.
+- `Recorrente.sobreposicoes(r)` (repetido), `paraRolar()`, `rolar(id)`, `rolarDatas(r)`, `nomeDoAno()`, `taxaProvisoria(grupo)` (IPCA guardado).
+- `DataEsperta`: todo `input[type=date]` vira texto + 📅 (MutationObserver); `Cal.campo(id, valor, {vazio, par, papel})`; `Cal.htmlCampo`, `Cal.atalho`.
+- Testes: `teste/teste-compromisso.js`, `teste/teste-data.js`.

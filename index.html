@@ -1278,6 +1278,18 @@ details.imp-arq.repetido{border-color:var(--warn)}
 .cdt-bt:hover{border-color:var(--accent)}
 .cdt-ico{opacity:.7}
 .cdt-nativo{position:absolute; opacity:0; pointer-events:none; width:1px; height:1px}
+/* 3.37: campo de data esperto (digita 30/12/27, 3012, 30122027; 📅 abre o mês) */
+.cdt-linha{display:flex; gap:6px; align-items:stretch}
+.cdt-in{flex:1; min-width:0}
+.cdt-in.cdt-erro{border-color:var(--down) !important}
+.cdt-bt2{background:var(--card2); border:1px solid var(--line); border-radius:9px; padding:0 10px; cursor:pointer; font-size:1rem}
+.cdt-bt2:hover{border-color:var(--accent)}
+.cdt-atalhos{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px}
+.cdt-atalhos .chip{font-size:.74rem; padding:5px 10px}
+.cal-pulabt{background:none; border:0; color:var(--txt); cursor:pointer; padding:4px; border-radius:7px}
+.cal-pulabt:hover{background:var(--chip)}
+.cal-meses{display:grid; grid-template-columns:repeat(4,1fr); gap:6px}
+.cal-meses .chip{justify-content:center; text-transform:capitalize}
 .cdt-pop{position:absolute; z-index:40; top:calc(100% + 5px); left:0; background:var(--card);
          border:1px solid var(--line); border-radius:12px; padding:12px; box-shadow:var(--shadow); min-width:260px}
 
@@ -1313,6 +1325,21 @@ details.imp-arq.repetido{border-color:var(--warn)}
 .rdet-txt{flex:1; min-width:0; display:flex; flex-direction:column}
 .rdet .num{white-space:nowrap; font-weight:600}
 .rdet-ja{opacity:.6; cursor:default}
+.rc-sug{display:flex; gap:8px; align-items:center; justify-content:space-between; background:var(--card2); border:1px dashed var(--accent); border-radius:10px; padding:8px 10px; margin:-4px 0 10px; font-size:.82rem}
+.rc-resumo{margin:-4px 0 10px}
+.grid.g2.rc-frente{grid-template-columns:1fr 1fr}   /* Valor e Dia lado a lado também no celular */
+.rc-mais{border-top:1px solid var(--line); padding-top:8px; margin-top:4px}
+.rc-mais > summary{cursor:pointer; font-weight:600; color:var(--accent2); padding:6px 0; list-style:none}
+.rc-mais > summary::before{content:'▸ '} .rc-mais[open] > summary::before{content:'▾ '}
+.rc-meses{display:grid; grid-template-columns:repeat(12,1fr); gap:4px}
+.rc-mes{min-height:36px; border-radius:8px; border:1px solid var(--line); background:var(--card2); color:var(--txt3); cursor:pointer; font-weight:700; padding:0}
+.rc-mes.on{background:var(--accent); color:#04150e; border-color:var(--accent)}
+.rc-radio{display:flex; gap:8px; align-items:flex-start; padding:6px 0; cursor:pointer}
+.rc-radio input{margin-top:3px}
+.rc-senha{color:var(--warn); margin:-6px 0 10px}
+.rc-acoes2{display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 4px}
+.rc-rolar-barra{display:flex; justify-content:flex-end; margin:0 0 8px}
+.tag-conf,.tag-rep{font-size:.7rem; font-weight:700; color:var(--warn); white-space:nowrap}
 .rdet-sec{font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--txt3); margin:12px 0 2px}
 .aba-c{background:var(--card2); border:1px solid transparent; border-radius:20px; padding:7px 14px;
        cursor:pointer; color:var(--txt2); font-size:.83rem; white-space:nowrap}
@@ -2898,6 +2925,15 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.37 */
+  '"Novo compromisso" mais simples e campo de data que aceita digitar':'Simpler "New commitment" and a date field you can type in',
+  'Novo compromisso: na frente só O quê, Valor e Dia; o resto fica em "Mais opções". Enquanto você digita o nome, o app sugere grupo, categoria, pessoa, IR, dia e valor pelo seu histórico (sem IA), e um toque aceita.':'New commitment: only What, Amount and Day up front; the rest is under "More options". While you type the name, the app suggests group, category, person, tax, day and amount from your history (no AI), and one tap accepts.',
+  '"Para quem é" (com "Casa (família toda)") e "Quem paga" separados; "Como paga" com opções claras: Eu pago, Débito automático, Agendado no banco.':'"Who it is for" (with "Home (whole family)") and "Who pays" are separate; "How it is paid" has clear options: I pay it, Automatic debit, Scheduled at the bank.',
+  'Fileira de 12 meses para tirar os meses sem cobrança (ex.: julho), "Salvar e copiar", e o formulário não fecha mais ao tocar fora; se fechar sem salvar, ao abrir de novo aparece "Continuar de onde parou".':'A row of 12 months to remove months with no charge (e.g. July), "Save and copy", and the form no longer closes when you tap outside; if you close it without saving, opening again offers "Pick up where you left".',
+  'Ao salvar, o app avisa quando parece repetido (mesmo nome ou categoria, mesma pessoa, período que se cruza), inclusive assinatura duplicada; a lista marca "⚠ repetido?".':'When saving, the app warns when it looks repeated (same name or category, same person, overlapping period), including a duplicate subscription; the list marks "⚠ repeated?".',
+  'Clonar e "Rolar para o próximo ano": cria o do ano que vem com as datas 1 ano à frente e o valor provisório pela inflação do grupo, marcado "a confirmar".':'Clone and "Roll to next year": creates next year\'s with dates 1 year ahead and a provisional amount from the group inflation, marked "to confirm".',
+  'Campos "Conta de acesso", "Cartão ou forma de pagamento" e "Observação", com o aviso de não escrever senha.':'Fields "Login account", "Card or payment method" and "Note", with the reminder not to write passwords.',
+  'Campo de data em todo o app: dá para digitar 30/12/2027, 30/12/27, 3012 ou 30122027; no calendário, toque no mês para pular direto para outro mês e ano; atalhos Hoje, Fim do mês, Fim do ano e Ano que vem inteiro.':'Date field across the app: type 12/30/2027, 12/30/27, 1230 or 12302027; on the calendar, tap the month to jump straight to another month and year; shortcuts Today, End of month, End of year and All of next year.',
   /* 3.36 */
   'Custos: a aba "Todos", a lista do que se repete e a conta do mês certa':'Costs: the "All" tab, the list of what repeats and the right monthly total',
   'Custos ganhou a aba "Todos" (o que se repete e o que foi pontual, juntos) e uma linha explicando o que é cada aba.':'Costs has a new "All" tab (recurring and one-off together) and a line explaining each tab.',
@@ -13604,6 +13640,15 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.37', d:'2026-11-03', t:'"Novo compromisso" mais simples e campo de data que aceita digitar', itens:[
+    'Novo compromisso: na frente só O quê, Valor e Dia; o resto fica em "Mais opções". Enquanto você digita o nome, o app sugere grupo, categoria, pessoa, IR, dia e valor pelo seu histórico (sem IA), e um toque aceita.',
+    '"Para quem é" (com "Casa (família toda)") e "Quem paga" separados; "Como paga" com opções claras: Eu pago, Débito automático, Agendado no banco.',
+    'Fileira de 12 meses para tirar os meses sem cobrança (ex.: julho), "Salvar e copiar", e o formulário não fecha mais ao tocar fora; se fechar sem salvar, ao abrir de novo aparece "Continuar de onde parou".',
+    'Ao salvar, o app avisa quando parece repetido (mesmo nome ou categoria, mesma pessoa, período que se cruza), inclusive assinatura duplicada; a lista marca "⚠ repetido?".',
+    'Clonar e "Rolar para o próximo ano": cria o do ano que vem com as datas 1 ano à frente e o valor provisório pela inflação do grupo, marcado "a confirmar".',
+    'Campos "Conta de acesso", "Cartão ou forma de pagamento" e "Observação", com o aviso de não escrever senha.',
+    'Campo de data em todo o app: dá para digitar 30/12/2027, 30/12/27, 3012 ou 30122027; no calendário, toque no mês para pular direto para outro mês e ano; atalhos Hoje, Fim do mês, Fim do ano e Ano que vem inteiro.'
+  ]},
   {v:'3.36', d:'2026-11-03', t:'Custos: a aba "Todos", a lista do que se repete e a conta do mês certa', itens:[
     'Custos ganhou a aba "Todos" (o que se repete e o que foi pontual, juntos) e uma linha explicando o que é cada aba.',
     'No lugar dos botõezinhos "O histórico sugere", a lista "Encontrei N que se repetem", com caixinhas já marcadas e o botão "Cadastrar os marcados". Usa o histórico e a frequência que o robô dos bancos manda, separa renda de custo, não mostra o que parou há 2 meses ou mais e marca "já existe" o que já está em Recorrentes.',
@@ -14667,6 +14712,13 @@ const Recorrente = {
     o.quem = (o.quem || '').trim();
     o.forma = (o.forma || '').trim();
     o.obs = (o.obs || '').trim();
+    /* 3.37: quem paga, conta de acesso e cartão (nunca senha), meses de fora, "a confirmar" */
+    o.pagador = String(o.pagador || '').trim();
+    o.conta = String(o.conta || '').trim().slice(0, 120);
+    o.cartao = String(o.cartao || '').trim().slice(0, 120);
+    o.fora = Array.isArray(o.fora) ? o.fora.map(Number).filter(m => m >= 1 && m <= 12).filter((m, i, a) => a.indexOf(m) === i).sort((x,y) => x-y) : [];
+    if(o.fora.length >= 12) o.fora = [];
+    o.aConfirmar = !!o.aConfirmar;
     o.ativo = o.ativo !== false;
     o.desde = o.desde || '';
     o.ate = o.ate || '';
@@ -14805,6 +14857,7 @@ const Recorrente = {
   /* todas as datas em que esta regra cai dentro de um mês */
   datasNoMes(r, ano, mes){
     const out = [];
+    if(r.regra !== 'anual' && (r.fora || []).indexOf(Number(mes)) >= 0) return out;   /* mês de fora (ex.: julho sem escola) */
     const dentro = iso => {
       if(r.desde && iso < r.desde) return false;
       if(r.ate && iso > r.ate) return false;
@@ -15057,6 +15110,7 @@ const Recorrente = {
         mensal = this.mediaDoServico(r, base);
       }else{
         mensal = this.valorEm(r, base) * vezesAno(r) / 12;
+        if(r.regra !== 'anual' && (r.fora || []).length) mensal = mensal * (12 - r.fora.length) / 12;
       }
       if(r.fluxo === 'entrada') entra += mensal; else sai += mensal;
     });
@@ -15108,6 +15162,69 @@ const Recorrente = {
                 meses:a.meses.size, regular: desvio < 0.25, fluxo:a.fluxo, regra:'dia'});
     });
     return out.sort((a,b) => (b.regular - a.regular) || (b.valor - a.valor));
+  },
+
+  /* ---------- parece repetido? (N23n, N29c) ----------
+     Outro compromisso ligado, com nome ou categoria parecidos, da mesma
+     pessoa, e período que se cruza. Devolve [{r, cruza:'ago–dez/2026'}]. */
+  sobreposicoes(x){
+    const N = s2 => String(s2 || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const pal = s2 => N(s2).split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !/^\d+$/.test(w) && !/^(sem|semestre|ano|mensal|anual|plano)$/.test(w));
+    const px = pal(x.nome);
+    const ini = r => r.desde || '0000-01-01', fim = r => r.ate || '9999-12-31';
+    const out = [];
+    this.ativos().forEach(r => {
+      if(r.id === x.id || r.fluxo === 'entrada' && (GRUPOS[x.grupo] || {}).fluxo !== 'entrada') return;
+      const pr = pal(r.nome), comuns = pr.filter(w => px.indexOf(w) >= 0).length;
+      const nomeParecido = comuns && comuns >= Math.min(px.length, pr.length, 2);
+      const mesmaCat = r.grupo === x.grupo && N(r.sub) === N(x.sub) && comuns > 0;
+      if(!nomeParecido && !mesmaCat) return;
+      if(N(r.quem) && N(x.quem) && N(r.quem) !== N(x.quem)) return;
+      const de = ini(r) > ini(x) ? ini(r) : ini(x), ate = fim(r) < fim(x) ? fim(r) : fim(x);
+      if(de > ate) return;
+      const mostra = iso => iso.startsWith('0000') || iso.startsWith('9999') ? '' : iso;
+      const cruza = this.periodoCurto({desde: mostra(de), ate: mostra(ate)}) || (I18n.atual === 'pt' ? 'o mesmo período' : 'the same period');
+      out.push({r, cruza});
+    });
+    return out;
+  },
+
+  /* ---------- rolar para o próximo ano (N26) ---------- */
+  rolarDatas(r){
+    const mais = iso => iso ? (Number(iso.slice(0,4)) + 1) + iso.slice(4) : '';
+    const ajeita = iso => iso && iso.slice(5) === '02-29' ? iso.slice(0,5) + '02-28' : iso;
+    return {desde: ajeita(mais(r.desde)), ate: ajeita(mais(r.ate))};
+  },
+  nomeDoAno(nome, passo){
+    return String(nome || '').replace(/\b(20\d\d)\b/g, a => String(Number(a) + passo));
+  },
+  /* os que acabam neste ano (ou no ano passado, em jan/fev) e ainda não foram rolados */
+  paraRolar(hoje){
+    hoje = hoje || hojeISO();
+    const ano = Number(hoje.slice(0,4)), mes = Number(hoje.slice(5,7));
+    const rolados = new Set(this.todos().map(r => r.rolouDe).filter(Boolean));
+    return this.ativos().filter(r => r.ate && !rolados.has(r.id) &&
+      (Number(r.ate.slice(0,4)) === ano || (mes <= 2 && Number(r.ate.slice(0,4)) === ano - 1)));
+  },
+  /* a inflação de 12 meses do grupo que o app já guardou (null se nunca buscou) */
+  taxaProvisoria(grupo){
+    try{
+      if(typeof Orcamento === 'undefined') return null;
+      const c = Orcamento.carregar() || {}, series = {};
+      Object.keys(c).forEach(k => { if(/^s\d+$/.test(k) && c[k] && typeof c[k].ano === 'number') series[k.slice(1)] = c[k]; });
+      return Orcamento.taxaDoGrupo(grupo, series);
+    }catch(e){ return null; }
+  },
+  rolar(id){
+    const r = this.achar(id); if(!r) return null;
+    const c = JSON.parse(JSON.stringify(r));
+    ['id','criadoEm','valores'].forEach(k => delete c[k]);
+    const tx = this.taxaProvisoria(r.grupo);
+    c.valor = Math.round(this.valorEm(r, r.ate || hojeISO()) * (1 + (tx || 0)) * 100) / 100;
+    Object.assign(c, this.rolarDatas(r));
+    c.nome = this.nomeDoAno(r.nome, 1);
+    c.aConfirmar = true; c.rolouDe = r.id; c.origem = 'rolado';
+    return this.add(c);
   },
 
   /* o período de um compromisso, curto, para a 2ª linha de "Quando cai":
@@ -16388,100 +16505,285 @@ const ImportRec = {
   }
 };
 
-function abrirRecorrente(id, semente){
+/* =========================================================
+   O formulário do compromisso (3.37, N23/N26/N29)
+   Na frente só O quê, Valor e Dia; o resto em "Mais opções".
+   Sugestões enquanto digita (sem IA), "Salvar e copiar", rascunho
+   ao fechar sem salvar (só na memória: não grava finança solta no
+   aparelho), aviso de repetido, meses de fora, clonar e rolar ano.
+   ========================================================= */
+let recRascunho = null;        /* {id, dados} do formulário fechado sem salvar */
+let recSalvando = false;
+
+const ESTADOS_COMO_PAGA = {
+  pendente:   {pt:['Eu pago (boleto ou Pix)', 'Fica em aberto até você marcar como pago.'],
+               en:['I pay it (bill or Pix)', 'Stays open until you mark it paid.']},
+  automatico: {pt:['Débito automático', 'Já nasce marcado como pago no dia.'],
+               en:['Automatic debit', 'Starts already marked as paid on the day.']},
+  agendado:   {pt:['Agendado no banco', 'Você já agendou; o app só confere depois.'],
+               en:['Scheduled at the bank', 'You already scheduled it; the app just checks later.']}
+};
+const CASA_TODA = {pt:'Casa (família toda)', en:'Home (whole family)'};
+
+/* as pessoas que já apareceram (lançamentos e compromissos), para escolher com um toque */
+function recPessoas(){
+  const c = new Map();
+  const soma = q => { q = String(q || '').trim(); if(q && !/^casa\b|^home\b/i.test(q)) c.set(q, (c.get(q) || 0) + 1); };
+  (typeof Gasto !== 'undefined' ? Gasto.todos() : []).forEach(g => soma(g.quem));
+  Recorrente.todos().forEach(r => { soma(r.quem); soma(r.pagador); });
+  return Array.from(c.entries()).sort((a,b) => b[1] - a[1]).map(x => x[0]).slice(0, 12);
+}
+
+/* ---------- sugestões enquanto digita o nome (sem IA) ---------- */
+const DICIO_REC = [
+  [/escola|col[eé]gio|faculdade|universidade|curso|ingl[eê]s|ballet|nata[cç][aã]o|ampliado|material escolar/i, 'DEPENDENTES', 'Escola', {irpf:true, anual:true}],
+  [/aluguel/i, 'HABITACAO', 'Aluguel'], [/condom[ií]nio/i, 'HABITACAO', 'Condomínio'],
+  [/\b(luz|energia|enel|cemig|light|copel)\b/i, 'HABITACAO', 'Energia'], [/\b(água|agua|sabesp|copasa)\b/i, 'HABITACAO', 'Água'],
+  [/\b(g[aá]s|comg[aá]s)\b/i, 'HABITACAO', 'Gás'], [/internet|fibra|\bvivo\b|\bclaro\b|\btim\b|\boi\b|celular/i, 'HABITACAO', 'Internet e telefone'],
+  [/diarista|faxina|empregada|bab[aá]|jardineiro/i, 'HABITACAO', 'Diarista'], [/\biptu\b/i, 'HABITACAO', 'IPTU'],
+  [/netflix|spotify|youtube|disney|prime video|amazon prime|\bmax\b|hbo|globoplay|deezer|apple|icloud|google one|paramount|assinatura/i, 'LAZER', 'Assinaturas'],
+  [/plano de sa[uú]de|unimed|amil|bradesco sa[uú]de|sulam[eé]rica|hapvida|notredame|porto sa[uú]de/i, 'SAUDE', 'Plano de saúde', {irpf:true}],
+  [/terapia|psic[oó]log|psiquiatr|fono|fisioterap/i, 'SAUDE', 'Terapia', {irpf:true}], [/dentista|odonto/i, 'SAUDE', 'Dentista', {irpf:true}],
+  [/m[eé]dico|consulta|exame/i, 'SAUDE', 'Consultas e exames', {irpf:true}], [/academia|smart ?fit|crossfit|pilates|personal/i, 'PESSOAL', 'Academia'],
+  [/seguro (do )?(auto|carro)|seguro auto/i, 'VEICULO', 'Seguro Auto', {anual:true}], [/\bipva\b|licenciamento/i, 'VEICULO', 'IPVA'],
+  [/seguro de vida|seguro vida/i, 'PESSOAL', 'Seguro de vida'], [/sal[aá]rio|holerite|pr[oó]-labore/i, 'RENDA', 'Salário'],
+  [/previd[eê]ncia|\bpgbl\b|\bvgbl\b/i, 'INVESTIMENTO', 'Previdência', {irpf:true}]
+];
+const Sugestor = {
+  norm(x){ return String(x || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim(); },
+  palavras(x){ return this.norm(x).split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !/^\d+$/.test(w)); },
+  /* nome → {grupo, sub, quem, irpf, dia, valor, desde, ate, porque} ou null */
+  para(nome, hoje){
+    hoje = hoje || hojeISO();
+    const ws = this.palavras(nome);
+    if(!ws.length) return null;
+    const out = {}; const porque = [];
+    const pessoas = recPessoas();
+    const pessoa = pessoas.find(q => ws.indexOf(this.norm(q)) >= 0 || this.palavras(q).some(w => ws.indexOf(w) >= 0));
+    /* 1) um compromisso parecido que já existe */
+    /* só conta como parecido se todas as palavras do nome mais curto batem */
+    const igual = Recorrente.todos().map(r => { const pr = this.palavras(r.nome);
+        return {r, n: pr.filter(w => ws.indexOf(w) >= 0).length, min: Math.min(pr.length, ws.length)}; })
+      .filter(x => x.n && x.n >= x.min).sort((a,b) => b.n - a.n)[0];
+    if(igual){ Object.assign(out, {grupo: igual.r.grupo, sub: igual.r.sub, irpf: igual.r.irpf, dia: igual.r.dia}); porque.push('compromisso parecido'); }
+    /* 2) dicionário de palavras */
+    const d = DICIO_REC.find(x => x[0].test(this.norm(nome)) || x[0].test(nome));
+    if(d && !out.grupo){
+      const arv = (Gasto.arvore()[d[1]] || []);
+      out.grupo = d[1];
+      out.sub = arv.find(x => this.norm(x) === this.norm(d[2])) || arv.find(x => this.norm(x).indexOf(this.norm(d[2]).slice(0,5)) >= 0) || d[2];
+      if(d[3] && d[3].irpf) out.irpf = true;
+      porque.push('dicionário');
+    }
+    /* 3) histórico de lançamentos com essas palavras */
+    if(typeof Gasto !== 'undefined'){
+      const hist = Gasto.todos().filter(g => g.data && g.valor > 0 && (this.palavras(g.sub + ' ' + g.desc).filter(w => ws.indexOf(w) >= 0).length >= Math.min(2, ws.length)))
+        .sort((a,b) => a.data.localeCompare(b.data));
+      if(hist.length){
+        const conta = {}; hist.forEach(g => { const k = g.grupo + '|' + g.sub; conta[k] = (conta[k] || 0) + 1; });
+        const [gr, sb] = Object.keys(conta).sort((a,b) => conta[b] - conta[a])[0].split('|');
+        if(!out.grupo){ out.grupo = gr; out.sub = sb; }
+        const dias = hist.map(g => Number(g.data.slice(8,10))).sort((a,b) => a-b);
+        out.dia = out.dia || dias[Math.floor(dias.length/2)];
+        out.valor = hist[hist.length - 1].valor;
+        if(out.irpf == null) out.irpf = hist.filter(g => g.irpf).length * 2 > hist.length;
+        porque.push('histórico');
+      }
+    }
+    if(!out.grupo) return null;
+    /* para quem é: a pessoa do nome; Habitação é da casa */
+    if(pessoa) out.quem = pessoa;
+    else if(out.grupo === 'HABITACAO') out.quem = CASA_TODA[I18n.atual] || CASA_TODA.pt;
+    /* escola, seguro: contrato do ano — o ano que vem a partir de julho */
+    if(d && d[3] && d[3].anual && d[1] === out.grupo){
+      const y = Number(hoje.slice(0,4)) + (Number(hoje.slice(5,7)) >= 7 ? 1 : 0);
+      out.desde = y + '-01-01'; out.ate = y + '-12-31';
+    }
+    out.porque = porque;
+    return out;
+  },
+  texto(x){
+    const G = GRUPOS[x.grupo] || {};
+    const pt = I18n.atual === 'pt';
+    return [(G.ico || '') + ' ' + (G.nome || x.grupo) + ' · ' + x.sub, x.quem, x.irpf ? 'IR' : '',
+            x.dia ? (pt ? 'dia ' : 'day ') + x.dia : '', x.valor ? fmt(x.valor) : '',
+            (x.desde || x.ate) ? Recorrente.periodoCurto(x) : ''].filter(Boolean).join(' · ');
+  }
+};
+
+function recOpcoesPessoa(listaId){
+  return '<datalist id="' + listaId + '">' + [CASA_TODA[I18n.atual] || CASA_TODA.pt].concat(recPessoas())
+    .map(q => '<option value="' + esc(q) + '"></option>').join('') + '</datalist>';
+}
+
+function abrirRecorrente(id, semente, op){
+  op = op || {};
   recEditando = id || null;
-  const r = id ? (Recorrente.achar(id) || {}) : (semente || {});
+  let r = id ? (Recorrente.achar(id) || {}) : (semente || {});
+  const L = I18n.atual;
+  const de = (a,b) => L === 'pt' ? a : b;
+  /* rascunho do mesmo formulário: oferecer continuar */
+  const temRasc = !op.doRascunho && recRascunho && (recRascunho.id || null) === (id || null) && !semente;
+  if(op.doRascunho && recRascunho){ r = Object.assign({}, r, recRascunho.dados); }
   const arv = Gasto.arvore();
   const grupo = r.grupo || 'HABITACAO';
   const regra = r.regra || (r.diaUtil ? 'diaUtil' : 'dia');
-  const L = I18n.atual;
-  const de = (a,b) => L === 'pt' ? a : b;
+  const estado = r.estadoPadrao || 'pendente';
+  const fora = Array.isArray(r.fora) ? r.fora : [];
 
-  $('#assetModalTitle').textContent = id
-    ? de('Editar compromisso', 'Edit commitment')
-    : de('Novo compromisso', 'New commitment');
+  $('#assetModalTitle').textContent = id ? de('Editar compromisso', 'Edit commitment')
+    : (op.copia ? de('Novo compromisso (cópia)', 'New commitment (copy)') : de('Novo compromisso', 'New commitment'));
 
-  $('#assetModalBody').innerHTML = Verter.html(campo(de('Como você chama isso', 'What do you call it'),
-      '<input id="rcNome" placeholder="' + de('Salário, Aluguel Rua das Flores, Netflix…',
-        'Salary, rent, Netflix…') + '" value="' + esc(r.nome || '') + '">') +
+  const radio = kk => '<label class="rc-radio"><input type="radio" name="rcEstadoR" value="' + kk + '"' + (estado === kk ? ' checked' : '') + '> ' +
+    '<span><b>' + esc(ESTADOS_COMO_PAGA[kk][L === 'pt' ? 'pt' : 'en'][0]) + '</b><span class="tiny muted"> — ' +
+    esc(ESTADOS_COMO_PAGA[kk][L === 'pt' ? 'pt' : 'en'][1]) + '</span></span></label>';
 
+  $('#assetModalBody').innerHTML = Verter.html(
+    (temRasc ? '<div class="aviso-box rc-rasc"><b>' + de('Você tinha começado este compromisso.', 'You had started this commitment.') + '</b> ' +
+      '<button type="button" class="btn sm primary" data-acao="rec-rasc-usar">' + de('Continuar de onde parou', 'Pick up where you left') + '</button> ' +
+      '<button type="button" class="btn sm" data-acao="rec-rasc-fora">' + de('Começar do zero', 'Start fresh') + '</button></div>' : '') +
+    (r.aConfirmar ? '<div class="aviso-box"><b>⚠ ' + de('A confirmar', 'To confirm') + '</b><p class="small" style="margin:6px 0 0">' +
+      de('Criado ao rolar para o próximo ano. Confira o valor (reajuste) e o nome (ex.: série) e salve.',
+         'Created when rolling to next year. Check the amount (increase) and the name (e.g. grade) and save.') + '</p></div>' : '') +
+
+    campo(de('O quê', 'What'),
+      '<input id="rcNome" autocomplete="off" placeholder="' + de('Aluguel, Escola Ana, Netflix…', 'Rent, school, Netflix…') + '" value="' + esc(r.nome || '') + '">') +
+    '<div id="rcSug"></div>' +
+    '<div class="grid g2 rc-frente">' +
+      campo('<span id="rcValorRot">' + esc(r.porVisita ? de('Valor de um dia', 'Amount for one day') : t('fin.valor')) + '</span>',
+        '<input type="number" id="rcValor" step="0.01" min="0" inputmode="decimal" value="' + (r.valor || '') + '">') +
+      '<label class="f" id="rcDiaCaixa"><span class="lb" id="rcDiaRot"></span>' +
+        '<input type="number" id="rcDia" min="1" max="31" inputmode="numeric" value="' + (r.dia || 10) + '"></label>' +
+    '</div>' +
+    '<p class="small muted rc-resumo" id="rcResumo"></p>' +
+
+    '<details class="rc-mais" id="rcMais"' + (op.abrirMais ? ' open' : '') + '><summary>' + de('Mais opções', 'More options') + '</summary>' +
     '<div class="grid g2">' +
-      campo('<span id="rcValorRot">' + esc(r.porVisita
-              ? de('Valor de um dia', 'Amount for one day') : t('fin.valor')) + '</span>',
-            '<input type="number" id="rcValor" step="0.01" min="0" value="' +
-            (r.valor || '') + '">') +
       campo(t('fin.grupo'),
         '<select id="rcGrupo">' + ORDEM_GRUPOS.map(kk =>
           '<option value="' + kk + '"' + (kk === grupo ? ' selected' : '') + '>' +
           GRUPOS[kk].ico + ' ' + esc(GRUPOS[kk].nome) + '</option>').join('') + '</select>',
-        null, de('Renda para o que entra; os outros para o que sai.',
-                 'Income for money in; the rest for money out.')) +
+        null, de('Renda para o que entra; os outros para o que sai.', 'Income for money in; the rest for money out.')) +
+      campo(t('fin.categoria'),
+        '<div class="cat-linha">' +
+          '<input id="rcSub" list="rcSubLista" value="' + esc(r.sub || '') + '" placeholder="' + de('escolha ou escreva uma nova', 'pick one or type a new one') + '">' +
+          '<datalist id="rcSubLista">' + (arv[grupo] || []).map(x => '<option value="' + esc(x) + '"></option>').join('') + '</datalist>' +
+          '<button type="button" class="btn sm" data-acao="cat-nova" data-para="rcSub">+ ' + de('nova', 'new') + '</button>' +
+        '</div>') +
     '</div>' +
 
-    campo(t('fin.categoria'),
-      '<div class="cat-linha">' +
-        '<input id="rcSub" list="rcSubLista" value="' + esc(r.sub || '') + '" placeholder="' +
-          de('escolha ou escreva uma nova', 'pick one or type a new one') + '">' +
-        '<datalist id="rcSubLista">' + (arv[grupo] || []).map(x =>
-          '<option value="' + esc(x) + '"></option>').join('') + '</datalist>' +
-        '<button type="button" class="btn sm" data-acao="cat-nova" data-para="rcSub">+ ' +
-          de('nova', 'new') + '</button>' +
-      '</div>',
-      null, de('Escrever um nome que não existe já cria a categoria.',
-               'Typing a name that does not exist creates the category.')) +
-
-    /* ---- a regra de quando cai ---- */
     '<div class="bloco-regra">' +
       '<span class="bf-tit">' + de('Quando cai', 'When it happens') + '</span>' +
       '<div class="chips">' + Object.keys(REGRAS_REC).map(kk =>
-        '<button type="button" class="chip click' + (kk === regra ? ' on' : '') +
-        '" data-rcregra="' + kk + '">' + esc(REGRAS_REC[kk].nome[L]) + '</button>').join('') + '</div>' +
+        '<button type="button" class="chip click' + (kk === regra ? ' on' : '') + '" data-rcregra="' + kk + '">' + esc(REGRAS_REC[kk].nome[L]) + '</button>').join('') + '</div>' +
       '<input type="hidden" id="rcRegra" value="' + regra + '">' +
       '<div id="rcCampos"></div>' +
+      '<div class="bf-tit" style="margin-top:10px">' + de('Meses em que cai (toque para tirar)', 'Months it falls (tap to remove)') + '</div>' +
+      '<div class="rc-meses">' + [1,2,3,4,5,6,7,8,9,10,11,12].map(m =>
+        '<button type="button" class="rc-mes' + (fora.indexOf(m) >= 0 ? '' : ' on') + '" data-rcmes="' + m + '" aria-pressed="' + (fora.indexOf(m) >= 0 ? 'false' : 'true') + '" title="' + esc(I18n.mesLongo(m)) + '">' +
+        esc(I18n.mesCurto(m).slice(0,1).toUpperCase()) + '</button>').join('') + '</div>' +
+      '<input type="hidden" id="rcFora" value="' + fora.join(',') + '">' +
     '</div>' +
 
     blocoServico(r) +
 
     '<div class="grid g2">' +
-      campo(de('Quem', 'Who'), '<input id="rcQuem" value="' + esc(r.quem || '') + '" placeholder="' +
-        de('opcional', 'optional') + '">') +
-      campo(de('Como paga', 'How it is paid'),
-        '<select id="rcEstado">' + ['pendente','automatico','agendado'].map(kk =>
-          '<option value="' + kk + '"' + ((r.estadoPadrao || 'pendente') === kk ? ' selected' : '') + '>' +
-          ESTADOS_PG[kk].ico + ' ' + esc(t(ESTADOS_PG[kk].t)) + '</option>').join('') + '</select>',
-        null, de('Débito automático já nasce marcado como pago.',
-                 'Auto-debit starts already marked as paid.')) +
-    '</div>' +
-
-    '<div class="grid g2">' +
-      campo(de('Vale desde', 'Starts on'), Cal.campo('rcDesde', r.desde || '', {vazio: de('sempre','always')})) +
-      campo(de('Vale até', 'Ends on'), Cal.campo('rcAte', r.ate || '', {vazio: de('sem fim','no end')}),
+      campo(de('Vale desde', 'Starts on'), Cal.campo('rcDesde', r.desde || '', {vazio: de('sempre','always'), par: 'rcAte', papel: 'desde'})) +
+      campo(de('Vale até', 'Ends on'), Cal.campo('rcAte', r.ate || '', {vazio: de('sem fim','no end'), par: 'rcDesde', papel: 'ate'}),
         null, de('Deixe em branco se não tem data para acabar.', 'Leave blank if it has no end.')) +
     '</div>' +
 
-    '<label class="linha-check"><input type="checkbox" id="rcIrpf"' + (r.irpf ? ' checked' : '') + '> ' +
-      de('Entra no imposto de renda', 'Counts for income tax') + '</label>' +
-    '<label class="linha-check"><input type="checkbox" id="rcAvisar"' +
-      (r.avisar === false ? '' : ' checked') + '> ' +
+    '<div class="grid g2">' +
+      campo(de('Para quem é', 'Who it is for'), '<input id="rcQuem" list="rcQuemLista" autocomplete="off" value="' + esc(r.quem || '') + '" placeholder="' + de('a pessoa, ou a casa', 'the person, or the home') + '">' + recOpcoesPessoa('rcQuemLista'),
+        null, de('Quem usa. O nome de quem recebe (a escola, a diarista) fica no nome do compromisso.', 'Who uses it. Whoever gets paid (school, cleaner) goes in the name.')) +
+      campo(de('Quem paga', 'Who pays'), '<input id="rcPagador" list="rcPagaLista" autocomplete="off" value="' + esc(r.pagador || '') + '" placeholder="' + de('opcional', 'optional') + '">' + recOpcoesPessoa('rcPagaLista').replace('rcQuemLista', 'rcPagaLista')) +
+    '</div>' +
+
+    '<div class="bloco-regra"><span class="bf-tit">' + de('Como paga', 'How it is paid') + '</span>' +
+      ['pendente','automatico','agendado'].map(radio).join('') + '</div>' +
+
+    '<div class="grid g2">' +
+      campo(de('Conta de acesso', 'Login account'), '<input id="rcConta" autocomplete="off" value="' + esc(r.conta || '') + '" placeholder="' + de('ex.: o e-mail usado no serviço', 'e.g. the e-mail used on the service') + '">') +
+      campo(de('Cartão ou forma de pagamento', 'Card or payment method'), '<input id="rcCartao" autocomplete="off" value="' + esc(r.cartao || '') + '" placeholder="' + de('ex.: Itaú Black final 6514', 'e.g. Visa ending 6514') + '">') +
+    '</div>' +
+    campo(de('Observação', 'Note'), '<textarea id="rcObs" rows="2">' + esc(r.obs || '') + '</textarea>') +
+    '<p class="tiny rc-senha">🔒 ' + de('Não escreva senha aqui. Senha vai no cofre Senhas da casa.', 'Do not write passwords here. Passwords go in the Home passwords vault.') + '</p>' +
+
+    '<label class="linha-check"><input type="checkbox" id="rcIrpf"' + (r.irpf ? ' checked' : '') + '> ' + de('Entra no imposto de renda', 'Counts for income tax') + '</label>' +
+    '<label class="linha-check"><input type="checkbox" id="rcAvisar"' + (r.avisar === false ? '' : ' checked') + '> ' +
       de('Avisar na fita do topo quando estiver perto', 'Warn me in the top ticker when it is close') + '</label>' +
+    (id ? '<div class="rc-acoes2"><button type="button" class="btn sm" data-acao="rec-clonar">⧉ ' + de('Clonar', 'Clone') + '</button> ' +
+      '<button type="button" class="btn sm" data-acao="rec-rolar-um">⏭ ' + de('Rolar para o próximo ano', 'Roll to next year') + '</button></div>' : '') +
+    '</details>' +
 
     '<div class="f-actions">' +
       (id ? '<button class="btn danger" data-acao="rec-excluir">' + esc(t('ac.excluir')) + '</button>' : '') +
       '<button class="btn" data-close="assetModal">' + esc(t('ac.cancelar')) + '</button>' +
+      '<button class="btn" data-acao="rec-salvar-copiar">' + de('Salvar e copiar', 'Save and copy') + '</button>' +
       '<button class="btn primary" data-acao="rec-salvar">' + esc(t('ac.salvar')) + '</button>' +
     '</div>');
 
   desenharCamposRegra(regra, r);
   ligarBlocoServico();
   abrir('assetModal');
+  $('#assetModal').dataset.fixo = 'rec';            /* não fecha ao tocar fora */
+  /* sempre no topo */
+  const corpo = $('#assetModalBody'); if(corpo) corpo.scrollTop = 0;
+  const caixa = $('#assetModal .modal'); if(caixa) caixa.scrollTop = 0;
 
   $('#rcGrupo').addEventListener('change', e => {
-    $('#rcSubLista').innerHTML = Verter.html((Gasto.arvore()[e.target.value] || []).map(x =>
-      '<option value="' + esc(x) + '"></option>').join(''));
+    $('#rcSubLista').innerHTML = Verter.html((Gasto.arvore()[e.target.value] || []).map(x => '<option value="' + esc(x) + '"></option>').join(''));
+    recResumo();
   });
+  ['rcSub','rcQuem','rcDia','rcValor'].forEach(k => { const e = $('#' + k); if(e) e.addEventListener('input', recResumo); });
+  $$('#assetModalBody input[name="rcEstadoR"]').forEach(e => e.addEventListener('change', recResumo));
+  let tmr = null;
+  $('#rcNome').addEventListener('input', () => { clearTimeout(tmr); tmr = setTimeout(recMostrarSugestao, 250); });
+  recResumo();
+  if(!id && !semente && !op.doRascunho) setTimeout(() => { const n = $('#rcNome'); if(n) n.focus({preventScroll: true}); }, 30);
 }
 
-/* os campos mudam conforme a regra escolhida */
+/* a sugestão aparece à vista, embaixo do nome; um toque aceita */
+let recSugAtual = null;
+function recMostrarSugestao(){
+  const alvo = $('#rcSug'); if(!alvo) return;
+  const x = Sugestor.para(($('#rcNome') || {}).value || '');
+  recSugAtual = x;
+  if(!x){ alvo.innerHTML = ''; return; }
+  alvo.innerHTML = Verter.html('<div class="rc-sug"><span>✨ <b>' + (I18n.atual === 'pt' ? 'Sugestão' : 'Suggestion') + ':</b> ' + esc(Sugestor.texto(x)) + '</span>' +
+    '<button type="button" class="btn sm primary" data-acao="rec-sug-usar">' + (I18n.atual === 'pt' ? 'Usar' : 'Use') + '</button></div>');
+}
+function recUsarSugestao(){
+  const x = recSugAtual; if(!x) return;
+  const pon = (id, v) => { const e = $('#' + id); if(e && v != null && v !== '') e.value = v; };
+  if(x.grupo){ pon('rcGrupo', x.grupo); $('#rcGrupo').dispatchEvent(new Event('change')); }
+  pon('rcSub', x.sub); pon('rcQuem', x.quem); pon('rcDia', x.dia);
+  if(!Number(($('#rcValor') || {}).value)) pon('rcValor', x.valor);
+  if(!($('#rcDesde') || {}).value) pon('rcDesde', x.desde);
+  if(!($('#rcAte') || {}).value) pon('rcAte', x.ate);
+  if(x.irpf != null) $('#rcIrpf').checked = !!x.irpf;
+  $('#rcSug').innerHTML = Verter.html('<p class="tiny muted" style="margin:-4px 0 8px">✓ ' + (I18n.atual === 'pt' ? 'Sugestão usada. Confira em Mais opções.' : 'Suggestion applied. Check More options.') + '</p>');
+  recSugAtual = null;
+  recResumo();
+}
+
+/* a linha embaixo de Valor e Dia: o que o resto do formulário diz */
+function recResumo(){
+  const el = $('#rcResumo'); if(!el) return;
+  const d = lerFormRecorrente();
+  const G = GRUPOS[d.grupo] || {};
+  const rr = Recorrente.arruma(Object.assign({}, d, {valor: d.valor || 0}));
+  const L = I18n.atual === 'pt' ? 'pt' : 'en';
+  const per = Recorrente.periodoCurto(rr);
+  el.textContent = [(G.ico || '') + ' ' + (G.nome || '') + (d.sub ? ' · ' + d.sub : ''), d.quem,
+    Recorrente.explicar(rr) + (rr.fora.length ? ' (' + (L === 'pt' ? 'menos ' : 'except ') + rr.fora.map(m => I18n.mesCurto(m)).join(', ') + ')' : ''),
+    per, ESTADOS_COMO_PAGA[d.estadoPadrao] ? ESTADOS_COMO_PAGA[d.estadoPadrao][L][0] : ''].filter(Boolean).join(' · ');
+  const rot = $('#rcDiaRot'), cx = $('#rcDiaCaixa');
+  if(rot) rot.textContent = d.regra === 'diaUtil' ? (L === 'pt' ? 'Qual dia útil' : 'Which business day') : (L === 'pt' ? 'Dia' : 'Day');
+  if(cx) cx.classList.toggle('hidden', d.regra === 'semana' || d.regra === 'semanal');
+}
+
+/* os campos mudam conforme a regra escolhida (o Dia fica na frente) */
 function desenharCamposRegra(regra, r){
   r = r || {};
   const L = I18n.atual;
@@ -16489,57 +16791,42 @@ function desenharCamposRegra(regra, r){
   const alvo = $('#rcCampos');
   if(!alvo) return;
   let h = '';
-
   if(regra === 'dia'){
-    h = '<div class="grid g2">' +
-      campo(de('Dia do mês', 'Day of month'),
-        '<input type="number" id="rcDia" min="1" max="31" value="' + (r.dia || 10) + '">',
-        null, de('31 cai no último dia dos meses curtos.', '31 falls on the last day of short months.')) +
-      campo(de('A cada quantos meses', 'Every how many months'),
+    h = campo(de('A cada quantos meses', 'Every how many months'),
         '<input type="number" id="rcCada" min="1" max="12" value="' + (r.cada || 1) + '">',
-        null, de('1 é todo mês. 3 é de três em três.', '1 is monthly. 3 is quarterly.')) +
-      '</div>';
+        null, de('1 é todo mês. 3 é de três em três. Dia 31 cai no último dia dos meses curtos.', '1 is monthly. 3 is quarterly. Day 31 falls on the last day of short months.'));
   }else if(regra === 'diaUtil'){
-    h = campo(de('Qual dia útil', 'Which business day'),
-      '<input type="number" id="rcDia" min="1" max="23" value="' + (r.dia || 5) + '">',
-      null, de('O salário costuma cair no 5º dia útil.', 'Salaries usually land on the 5th business day.'));
+    h = '<p class="tiny muted" style="margin:6px 0 0">' + de('O salário costuma cair no 5º dia útil.', 'Salaries usually land on the 5th business day.') + '</p>';
   }else if(regra === 'semana'){
     h = '<div class="grid g2">' +
       campo(de('Qual semana', 'Which week'),
         '<select id="rcSemana">' + [1,2,3,4,-1].map(n =>
-          '<option value="' + n + '"' + (Number(r.semana || 1) === n ? ' selected' : '') + '>' +
-          esc(ORDINAIS[String(n)][L]) + '</option>').join('') + '</select>') +
+          '<option value="' + n + '"' + (Number(r.semana || 1) === n ? ' selected' : '') + '>' + esc(ORDINAIS[String(n)][L]) + '</option>').join('') + '</select>') +
       campo(de('Qual dia', 'Which day'),
         '<select id="rcDiaSemana">' + [0,1,2,3,4,5,6].map(n =>
-          '<option value="' + n + '"' + (Number(r.diaSemana || 1) === n ? ' selected' : '') + '>' +
-          esc(I18n.diaSemana(n, 'longo')) + '</option>').join('') + '</select>') +
+          '<option value="' + n + '"' + (Number(r.diaSemana || 1) === n ? ' selected' : '') + '>' + esc(I18n.diaSemana(n, 'longo')) + '</option>').join('') + '</select>') +
       '</div>' +
-      '<p class="tiny muted" style="margin:-6px 0 12px">' +
-      de('Por exemplo: a última segunda-feira do mês, para pagar a diarista.',
-         'For example: the last Monday of the month.') + '</p>';
+      '<p class="tiny muted" style="margin:-6px 0 12px">' + de('Por exemplo: a última segunda-feira do mês, para pagar a diarista.', 'For example: the last Monday of the month.') + '</p>';
   }else if(regra === 'semanal'){
     h = campo(de('Dia da semana', 'Day of the week'),
       '<select id="rcDiaSemana">' + [0,1,2,3,4,5,6].map(n =>
-        '<option value="' + n + '"' + (Number(r.diaSemana || 1) === n ? ' selected' : '') + '>' +
-        esc(I18n.diaSemana(n, 'longo')) + '</option>').join('') + '</select>');
+        '<option value="' + n + '"' + (Number(r.diaSemana || 1) === n ? ' selected' : '') + '>' + esc(I18n.diaSemana(n, 'longo')) + '</option>').join('') + '</select>');
   }else if(regra === 'anual'){
-    h = '<div class="grid g2">' +
-      campo(de('Mês', 'Month'),
+    h = campo(de('Mês', 'Month'),
         '<select id="rcMes">' + [1,2,3,4,5,6,7,8,9,10,11,12].map(n =>
-          '<option value="' + n + '"' + (Number(r.mes || 1) === n ? ' selected' : '') + '>' +
-          esc(I18n.mesLongo(n)) + '</option>').join('') + '</select>') +
-      campo(de('Dia', 'Day'), '<input type="number" id="rcDia" min="1" max="31" value="' + (r.dia || 10) + '">') +
-      '</div>';
+          '<option value="' + n + '"' + (Number(r.mes || 1) === n ? ' selected' : '') + '>' + esc(I18n.mesLongo(n)) + '</option>').join('') + '</select>');
   }
   alvo.innerHTML = Verter.html(h);
+  $$('#rcCampos select, #rcCampos input').forEach(e => e.addEventListener('change', recResumo));
+  recResumo();
 }
 
-function salvarRecorrente(){
-  const v = Number($('#rcValor').value);
-  if(!v || v <= 0){ toast(I18n.atual === 'pt' ? 'Informe um valor maior que zero.' : 'Enter an amount above zero.'); return; }
+/* lê o formulário inteiro (para salvar, para o rascunho e para o resumo) */
+function lerFormRecorrente(){
   const pega = id => { const e = $('#' + id); return e ? e.value : ''; };
-  const dados = {
-    nome: pega('rcNome'), valor: v,
+  const est = document.querySelector('#assetModalBody input[name="rcEstadoR"]:checked');
+  return {
+    nome: pega('rcNome'), valor: Number(pega('rcValor')) || 0,
     regra: pega('rcRegra') || 'dia',
     grupo: pega('rcGrupo'), sub: pega('rcSub'),
     dia: Number(pega('rcDia')) || 1,
@@ -16547,21 +16834,39 @@ function salvarRecorrente(){
     mes: Number(pega('rcMes')) || 0,
     semana: Number(pega('rcSemana')) || 1,
     diaSemana: Number(pega('rcDiaSemana')) || 0,
-    quem: pega('rcQuem'),
-    estadoPadrao: pega('rcEstado') || 'pendente',
+    quem: pega('rcQuem'), pagador: pega('rcPagador'),
+    estadoPadrao: est ? est.value : 'pendente',
     desde: pega('rcDesde'), ate: pega('rcAte'),
+    fora: pega('rcFora').split(',').map(Number).filter(Boolean),
+    conta: pega('rcConta'), cartao: pega('rcCartao'), obs: pega('rcObs'),
     irpf: !!($('#rcIrpf') || {}).checked,
     avisar: !!($('#rcAvisar') || {}).checked,
     porVisita: !!($('#rcPorVisita') || {}).checked,
     extraPct: Number(pega('rcExtraPct')) || 40,
-    visita: {
-      regra: 'semanal',
-      diaSemana: Number(pega('rcVisitaDia')) || 0,
-      soDiaUtil: !!($('#rcSoDiaUtil') || {}).checked
-    }
+    visita: { regra: 'semanal', diaSemana: Number(pega('rcVisitaDia')) || 0, soDiaUtil: !!($('#rcSoDiaUtil') || {}).checked }
   };
-  /* mexer no valor pela mão, sem passar pelo reajuste, vira uma
-     vigência que começa hoje — senão o passado seria reescrito */
+}
+
+/* fechou sem salvar: guarda o rascunho (na memória) */
+function recGuardarRascunho(){
+  if(recSalvando || !$('#rcNome') || $('#assetModal').dataset.fixo !== 'rec') return;
+  const d = lerFormRecorrente();
+  if(!d.nome.trim() && !d.valor) { return; }
+  recRascunho = {id: recEditando || null, dados: d};
+}
+
+function salvarRecorrente(op){
+  op = op || {};
+  const dados = lerFormRecorrente();
+  const v = dados.valor;
+  if(!v || v <= 0){ toast(I18n.atual === 'pt' ? 'Informe um valor maior que zero.' : 'Enter an amount above zero.'); return; }
+  if(dados.regra === 'diaUtil') dados.dia = Math.min(23, dados.dia);
+  dados.aConfirmar = false;
+  /* aviso de repetido (sem IA): só pergunta uma vez por salvamento */
+  if(!op.mesmoAssim){
+    const rep = Recorrente.sobreposicoes(Object.assign({id: recEditando}, dados))[0];
+    if(rep){ avisarRepetido(rep, op); return; }
+  }
   if(recEditando){
     const antes = Recorrente.achar(recEditando);
     if(antes && antes.valor !== v && (antes.valores || []).length){
@@ -16569,13 +16874,66 @@ function salvarRecorrente(){
       delete dados.valor;
     }
   }
+  const eraEdicao = !!recEditando;
   if(recEditando) Recorrente.atualizar(recEditando, dados);
   else Recorrente.add(dados);
-  Store.salvar(); fechar('assetModal'); render(); renderFita();
-  toast(recEditando
-    ? (I18n.atual === 'pt' ? 'Compromisso atualizado.' : 'Commitment updated.')
-    : (I18n.atual === 'pt' ? 'Compromisso cadastrado.' : 'Commitment created.'));
+  if(recRascunho && (recRascunho.id || null) === (recEditando || null)) recRascunho = null;
+  Store.salvar();
+  recSalvando = true; fechar('assetModal'); recSalvando = false;
+  render(); renderFita();
+  toast(eraEdicao ? (I18n.atual === 'pt' ? 'Compromisso atualizado.' : 'Commitment updated.')
+                  : (I18n.atual === 'pt' ? 'Compromisso cadastrado.' : 'Commitment created.'));
   recEditando = null;
+  if(op.copiar){
+    const c = Object.assign({}, dados); if(eraEdicao) c.valor = v;
+    abrirRecorrente(null, c, {copia: true});
+  }
+}
+
+function avisarRepetido(rep, op){
+  const pt = I18n.atual === 'pt';
+  const o = rep.r, per = Recorrente.periodoCurto(o) || (pt ? 'sem data para acabar' : 'with no end date');
+  const ass = /assinatura|streaming|subscription/i.test(o.sub);
+  recPendente = op;
+  $('#genTitle').textContent = Verter.txt(ass ? (pt ? 'Assinatura duplicada?' : 'Duplicate subscription?') : (pt ? 'Parece repetido' : 'Looks repeated'));
+  $('#genBody').innerHTML = Verter.html('<p class="small">' + (pt ? 'Parece repetido: ' : 'Looks repeated: ') + '<b>' + esc(o.nome) + '</b> (' + esc(per) + ') ' +
+      (pt ? 'já cobre ' : 'already covers ') + '<b>' + esc(rep.cruza) + '</b>. ' + (pt ? 'Quer ajustar?' : 'Want to adjust?') + '</p>' +
+    '<div class="f-actions"><button class="btn" data-acao="rec-rep-outro" data-para="' + esc(o.id) + '">' + (pt ? 'Ajustar o outro' : 'Adjust the other') + '</button>' +
+    '<button class="btn primary" data-acao="rec-rep-salvar">' + (pt ? 'Salvar assim mesmo' : 'Save anyway') + '</button></div>');
+  abrir('genModal');
+}
+let recPendente = null;
+
+/* ---------- clonar e rolar para o próximo ano (N26) ---------- */
+function recClonar(id){
+  const r = Recorrente.achar(id); if(!r) return;
+  const c = JSON.parse(JSON.stringify(r));
+  ['id','criadoEm','valores','rolouDe','aConfirmar','origem'].forEach(k => delete c[k]);
+  c.valor = Recorrente.valorEm(r, hojeISO());
+  recSalvando = true; fechar('assetModal'); recSalvando = false;
+  abrirRecorrente(null, c, {copia: true});
+}
+function abrirRolar(ids){
+  const pt = I18n.atual === 'pt';
+  const lista = ids ? ids.map(i => Recorrente.achar(i)).filter(Boolean) : Recorrente.paraRolar();
+  $('#genTitle').textContent = Verter.txt(pt ? 'Rolar para o próximo ano' : 'Roll to next year');
+  if(!lista.length){
+    $('#genBody').innerHTML = Verter.html('<p class="small muted">' + (pt ? 'Nenhum compromisso deste ano para rolar (só os que têm data para acabar entram aqui).' : 'No commitment from this year to roll (only those with an end date).') + '</p>' +
+      '<div class="f-actions"><button class="btn" data-close="genModal">OK</button></div>');
+    abrir('genModal'); return;
+  }
+  const tx = Recorrente.taxaProvisoria;
+  $('#genBody').innerHTML = Verter.html('<p class="small muted">' + (pt
+      ? 'Cria a cópia de cada marcado com as datas 1 ano à frente, marcada "a confirmar". O valor novo é provisório: o de hoje mais a inflação do grupo (IPCA, quando o app já buscou). Depois é só conferir o valor e o nome.'
+      : 'Creates a copy of each ticked one with dates 1 year ahead, marked "to confirm". The new amount is provisional: today\'s plus the group inflation (IPCA, when the app has fetched it). Then check the amount and the name.') + '</p>' +
+    lista.map(r => { const t2 = tx(r.grupo); const nv = Recorrente.valorEm(r, hojeISO()) * (1 + (t2 || 0));
+      return '<label class="rdet"><input type="checkbox" class="rolar-ck" value="' + esc(r.id) + '" checked>' +
+        '<span class="rdet-txt"><span class="t-main">' + esc(r.nome) + ' → ' + esc(Recorrente.nomeDoAno(r.nome, 1)) + '</span>' +
+        '<span class="t-sub">' + esc(Recorrente.periodoCurto(Recorrente.rolarDatas(r))) + (t2 != null ? ' · IPCA ' + pnum(t2 * 100, 1) + '%' : '') + '</span></span>' +
+        '<span class="num">' + fmt(Math.round(nv * 100) / 100) + '</span></label>'; }).join('') +
+    '<div class="f-actions"><button class="btn" data-close="genModal">' + esc(t('ac.cancelar')) + '</button>' +
+    '<button class="btn primary" data-acao="rec-rolar-ok">' + (pt ? 'Rolar os marcados' : 'Roll the ticked ones') + '</button></div>');
+  abrir('genModal');
 }
 
 /* ---------- criar uma categoria nova ---------- */
@@ -22369,6 +22727,7 @@ function painelAdmin(){
 
 let calMes = null;          /* 'AAAA-MM' sendo mostrado */
 let calCampoAberto = null;  /* id do campo que abriu o seletor */
+let calPular = false;       /* o seletor mostra a escolha de mês e ano */
 
 const Cal = {
   hojeMes(){ return hojeISO().slice(0,7); },
@@ -22439,7 +22798,9 @@ const Cal = {
 
     h += '<div class="cal-topo">' +
       '<button class="cal-nav" data-calandar="-1" aria-label="' + esc(t('cal.mesanterior')) + '">‹</button>' +
-      '<div class="cal-titulo">' + esc(I18n.mesLongo(mes)) + ' <span>' + ano + '</span></div>' +
+      (compacto
+        ? '<button type="button" class="cal-titulo cal-pulabt" data-calpular="1" title="' + esc(I18n.atual === 'pt' ? 'escolher mês e ano' : 'pick month and year') + '">' + esc(I18n.mesLongo(mes)) + ' <span>' + ano + '</span> ▾</button>'
+        : '<div class="cal-titulo">' + esc(I18n.mesLongo(mes)) + ' <span>' + ano + '</span></div>') +
       '<button class="cal-nav" data-calandar="1" aria-label="' + esc(t('cal.proximomes')) + '">›</button>' +
       (mesAno !== this.hojeMes()
         ? '<button class="cal-hoje" data-calhoje="1">' + esc(t('cal.hoje')) + '</button>' : '') +
@@ -22511,27 +22872,66 @@ const Cal = {
      para quem prefere digitar e para o teclado do celular. */
   campo(id, valor, op){
     op = op || {};
-    return '<div class="cdt" data-cdt="' + id + '">' +
-      '<button type="button" class="cdt-bt" data-cdtabre="' + id + '">' +
-        '<span class="cdt-ico">📅</span>' +
-        '<span class="cdt-txt" id="' + id + 'Txt">' +
-          (valor ? esc(I18n.data(valor)) : '<span class="muted">' + esc(op.vazio || t('fin.data')) + '</span>') +
-        '</span>' +
-      '</button>' +
-      '<input type="date" id="' + id + '" value="' + esc(valor || '') + '" class="cdt-nativo"' +
-        (op.min ? ' min="' + op.min + '"' : '') + (op.max ? ' max="' + op.max + '"' : '') + '>' +
-      '<div class="cdt-pop hidden" id="' + id + 'Pop"></div>' +
-      '</div>';
+    return '<input type="date" id="' + id + '" value="' + esc(valor || '') + '"' +
+      (op.vazio ? ' data-vazio="' + esc(op.vazio) + '"' : '') +
+      (op.par ? ' data-par="' + esc(op.par) + '" data-papel="' + esc(op.papel || 'desde') + '"' : '') +
+      (op.min ? ' min="' + op.min + '"' : '') + (op.max ? ' max="' + op.max + '"' : '') + '>';
+  },
+
+  /* o calendário pequeno do campo, com o título que pula mês/ano e os atalhos */
+  htmlCampo(id){
+    const campo = $('#' + id) || {};
+    const ds = campo.dataset || {};
+    const L = I18n.atual, de = (a,b) => L === 'pt' ? a : b;
+    const [ano, mes] = this.mesAtual().split('-').map(Number);
+    let h;
+    if(calPular){
+      h = '<div class="cal cal-min"><div class="cal-topo">' +
+          '<button type="button" class="cal-nav" data-calanoir="-1" aria-label="' + esc(de('ano anterior','previous year')) + '">‹</button>' +
+          '<button type="button" class="cal-titulo cal-pulabt" data-calpular="0">' + ano + '</button>' +
+          '<button type="button" class="cal-nav" data-calanoir="1" aria-label="' + esc(de('próximo ano','next year')) + '">›</button></div>' +
+        '<div class="cal-meses">' + [1,2,3,4,5,6,7,8,9,10,11,12].map(m =>
+          '<button type="button" class="chip click' + (m === mes ? ' on' : '') + '" data-calmesir="' + ano + '-' + ('0'+m).slice(-2) + '">' +
+          esc(I18n.mesCurto(m)) + '</button>').join('') + '</div></div>';
+    }else{
+      h = this.html({mes: this.mesAtual(), selecionado: campo.value || '', semEventos:true, semLista:true, compacto:true});
+    }
+    const at = [['hoje', de('Hoje','Today')], ['fimmes', de('Fim do mês','End of month')], ['fimano', de('Fim do ano','End of year')]];
+    if(ds.par) at.push(['anoquevem', de('Ano que vem inteiro','All of next year')]);
+    if(ds.vazio) at.push(['limpar', ds.vazio]);
+    return h + '<div class="cdt-atalhos">' + at.map(a =>
+      '<button type="button" class="chip click" data-cdtatalho="' + a[0] + '">' + esc(a[1]) + '</button>').join('') + '</div>';
+  },
+
+  atalho(tipo){
+    const id = calCampoAberto;
+    const campo = id ? $('#' + id) : null;
+    if(!campo) return;
+    const [ano, mes] = this.mesAtual().split('-').map(Number);
+    const por = (el, iso) => { el.value = iso; el.dispatchEvent(new Event('input', {bubbles:true})); el.dispatchEvent(new Event('change', {bubbles:true})); };
+    if(tipo === 'hoje') por(campo, hojeISO());
+    else if(tipo === 'fimmes') por(campo, Recorrente.iso(new Date(ano, mes, 0)));
+    else if(tipo === 'fimano') por(campo, ano + '-12-31');
+    else if(tipo === 'limpar') por(campo, '');
+    else if(tipo === 'anoquevem'){
+      const y = Number(hojeISO().slice(0,4)) + 1;
+      const par = $('#' + campo.dataset.par);
+      const ini = y + '-01-01', fim = y + '-12-31';
+      if(campo.dataset.papel === 'ate'){ por(campo, fim); if(par) por(par, ini); }
+      else { por(campo, ini); if(par) por(par, fim); }
+    }
+    this.fecharCampo();
   },
 
   abrirCampo(id){
     const pop = $('#' + id + 'Pop');
     if(!pop) return;
     if(!pop.classList.contains('hidden') && calCampoAberto === id){ this.fecharCampo(); return; }
-    calCampoAberto = id;
+    if(calCampoAberto && calCampoAberto !== id) this.fecharCampo();
+    calCampoAberto = id; calPular = false;
     const atual = ($('#' + id) || {}).value || hojeISO();
     calMes = atual.slice(0,7);
-    pop.innerHTML = Verter.html(this.html({mes: calMes, selecionado: atual, semEventos: true, semLista: true, compacto: true}));
+    pop.innerHTML = Verter.html(this.htmlCampo(id));
     pop.classList.remove('hidden');
   },
 
@@ -22545,12 +22945,11 @@ const Cal = {
   escolher(iso){
     if(!calCampoAberto) return false;
     const campo = $('#' + calCampoAberto);
-    const txt = $('#' + calCampoAberto + 'Txt');
     if(campo){
       campo.value = iso;
+      campo.dispatchEvent(new Event('input', {bubbles:true}));
       campo.dispatchEvent(new Event('change', {bubbles:true}));
     }
-    if(txt) txt.textContent = I18n.data(iso);
     this.fecharCampo();
     return true;
   },
@@ -22559,9 +22958,7 @@ const Cal = {
   redesenhar(){
     if(calCampoAberto){
       const pop = $('#' + calCampoAberto + 'Pop');
-      const campo = $('#' + calCampoAberto);
-      if(pop) pop.innerHTML = Verter.html(this.html({mes: this.mesAtual(),
-        selecionado: campo ? campo.value : '', semEventos:true, semLista:true, compacto:true}));
+      if(pop) pop.innerHTML = Verter.html(this.htmlCampo(calCampoAberto));
       return true;
     }
     const alvo = $('#calPrincipal');
@@ -22569,6 +22966,112 @@ const Cal = {
     return false;
   }
 };
+
+/* =========================================================
+   DataEsperta (3.37, N22) — todo <input type="date"> do app vira um
+   campo onde dá para DIGITAR (30/12/2027, 30/12/27, 3012, 30122027,
+   "hoje") e um 📅 que abre o mês (tocar no título pula mês e ano;
+   atalhos hoje / fim do mês / fim do ano / ano que vem inteiro).
+   O input de verdade continua lá, escondido, com o mesmo id e o
+   valor AAAA-MM-DD: o resto do app não muda nada.
+   ========================================================= */
+const DataEsperta = {
+  formato(){ return I18n.atual === 'pt' ? 'dd/mm/aaaa' : 'mm/dd/yyyy'; },
+  mostrar(iso){
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+    if(!m) return '';
+    return I18n.atual === 'pt' ? m[3] + '/' + m[2] + '/' + m[1] : m[2] + '/' + m[3] + '/' + m[1];
+  },
+  /* texto → 'AAAA-MM-DD', '' (vazio) ou null (não entendi) */
+  ler(txt, lang, hoje){
+    lang = lang || I18n.atual; hoje = hoje || hojeISO();
+    const s = String(txt || '').trim().toLowerCase();
+    if(!s) return '';
+    if(/^(hoje|today)$/.test(s)) return hoje;
+    let d, m, a;
+    const partes = s.split(/[^0-9]+/).filter(Boolean);
+    if(partes.length >= 2){ [d, m, a] = partes; }
+    else if(partes.length === 1){
+      const x = partes[0];
+      if(x.length <= 2){ d = x; m = hoje.slice(5,7); }
+      else if(x.length === 4){ d = x.slice(0,2); m = x.slice(2,4); }
+      else if(x.length === 6){ d = x.slice(0,2); m = x.slice(2,4); a = x.slice(4); }
+      else if(x.length === 8){ d = x.slice(0,2); m = x.slice(2,4); a = x.slice(4); }
+      else return null;
+    }else return null;
+    if(lang !== 'pt'){ const t2 = d; d = m; m = t2; }
+    d = Number(d); m = Number(m);
+    a = a == null ? Number(hoje.slice(0,4)) : Number(a);
+    if(String(a).length <= 2) a += 2000;
+    if(!(a >= 1900 && a <= 2200) || !(m >= 1 && m <= 12) || !(d >= 1 && d <= 31)) return null;
+    const dt = new Date(a, m - 1, d);
+    if(dt.getMonth() !== m - 1) return null;               /* 31/02 não existe */
+    return a + '-' + ('0'+m).slice(-2) + '-' + ('0'+d).slice(-2);
+  },
+  n: 0,
+  montar(inp){
+    if(!inp || inp.dataset.esperto || inp.type !== 'date') return;
+    inp.dataset.esperto = '1';
+    if(!inp.id) inp.id = 'cdt' + (++this.n);
+    const id = inp.id;
+    const caixa = document.createElement('div'); caixa.className = 'cdt'; caixa.dataset.cdt = id;
+    const linha = document.createElement('div'); linha.className = 'cdt-linha';
+    const txt = document.createElement('input');
+    txt.type = 'text'; txt.className = 'cdt-in'; txt.id = id + 'Txt'; txt.inputMode = 'numeric'; txt.autocomplete = 'off';
+    txt.placeholder = (inp.dataset.vazio ? inp.dataset.vazio + ' · ' : '') + this.formato();
+    txt.setAttribute('aria-label', (inp.dataset.vazio ? inp.dataset.vazio + ' · ' : '') + this.formato());
+    const bt = document.createElement('button');
+    bt.type = 'button'; bt.className = 'cdt-bt2'; bt.dataset.cdtabre = id; bt.textContent = '📅';
+    bt.setAttribute('aria-label', I18n.atual === 'pt' ? 'abrir o calendário' : 'open the calendar');
+    const pop = document.createElement('div'); pop.className = 'cdt-pop hidden'; pop.id = id + 'Pop';
+    inp.parentNode.insertBefore(caixa, inp);
+    linha.appendChild(txt); linha.appendChild(bt);
+    caixa.appendChild(linha); caixa.appendChild(inp); caixa.appendChild(pop);
+    inp.classList.add('cdt-nativo'); inp.tabIndex = -1; inp.setAttribute('aria-hidden', 'true');
+
+    /* quem mexer em inp.value pelo código também atualiza o que aparece */
+    const desc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    Object.defineProperty(inp, 'value', {configurable: true,
+      get(){ return desc.get.call(this); },
+      set(v){ desc.set.call(this, v); txt.value = DataEsperta.mostrar(desc.get.call(this)); txt.classList.remove('cdt-erro'); }});
+    txt.value = this.mostrar(inp.value);
+    const espelho = () => { txt.disabled = inp.disabled; bt.disabled = inp.disabled; };
+    espelho();
+    new MutationObserver(espelho).observe(inp, {attributes: true, attributeFilter: ['disabled']});
+
+    const gravar = () => {
+      const iso = this.ler(txt.value);
+      if(iso === null){
+        txt.classList.add('cdt-erro');
+        txt.title = I18n.atual === 'pt' ? 'Não entendi a data. Use ' + this.formato() + '.' : 'Could not read the date. Use ' + this.formato() + '.';
+        return;
+      }
+      txt.classList.remove('cdt-erro'); txt.title = '';
+      if(iso === inp.value){ txt.value = this.mostrar(iso); return; }
+      inp.value = iso;
+      inp.dispatchEvent(new Event('input', {bubbles: true}));
+      inp.dispatchEvent(new Event('change', {bubbles: true}));
+    };
+    txt.addEventListener('blur', gravar);
+    txt.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); gravar(); } });
+    txt.addEventListener('input', () => txt.classList.remove('cdt-erro'));
+    inp.addEventListener('change', () => { txt.value = this.mostrar(inp.value); });
+  },
+  montarTudo(raiz){
+    (raiz || document).querySelectorAll('input[type="date"]:not([data-esperto])').forEach(i => this.montar(i));
+  },
+  ligar(){
+    this.montarTudo(document);
+    new MutationObserver(lista => {
+      for(const m of lista) for(const n of m.addedNodes){
+        if(n.nodeType !== 1) continue;
+        if(n.matches && n.matches('input[type="date"]')) this.montar(n);
+        else if(n.querySelector && n.querySelector('input[type="date"]')) this.montarTudo(n);
+      }
+    }).observe(document.body, {childList: true, subtree: true});
+  }
+};
+if(document.body) DataEsperta.ligar(); else document.addEventListener('DOMContentLoaded', () => DataEsperta.ligar());
 
 /* uma linha de ocorrência, usada no calendário, na agenda e na lista de custos */
 function linhaOcorrencia(o, op){
@@ -22721,6 +23224,8 @@ function blocoRecorrentes(){
         '<td><button class="fav" data-recfav="' + r.id + '" title="favorito">' +
             (r.favorito ? '<i class="fav-on">★</i>' : '☆') + '</button></td>' +
         '<td><span class="t-main">' + esc(r.nome) + '</span>' +
+          (r.aConfirmar ? ' <span class="tag-conf" title="' + esc(I18n.atual === 'pt' ? 'criado ao rolar o ano: confira valor e nome' : 'created by rolling the year: check amount and name') + '">⚠ ' + (I18n.atual === 'pt' ? 'a confirmar' : 'to confirm') + '</span>' : '') +
+          (r.ativo !== false && Recorrente.sobreposicoes(r).length ? ' <span class="tag-rep" title="' + esc((I18n.atual === 'pt' ? 'Parece repetido com: ' : 'Looks repeated with: ') + Recorrente.sobreposicoes(r).map(x => x.r.nome).join(', ')) + '">⚠ ' + (I18n.atual === 'pt' ? 'repetido?' : 'repeated?') + '</span>' : '') +
           '<div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) +
           (r.quem ? ' · ' + esc(r.quem) : '') + '</div></td>' +
         '<td class="nowrap t-sub">' + esc(Recorrente.explicar(r)) +
@@ -22738,12 +23243,17 @@ function blocoRecorrentes(){
               esc(I18n.atual === 'pt' ? 'dias trabalhados' : 'days worked') + '">📋</button> ' : '') +
           '<button class="btn sm" data-reaj="' + r.id + '" title="' +
             esc(I18n.atual === 'pt' ? 'reajustar' : 'adjust amount') + '">↗</button> ' +
+          '<button class="btn sm" data-recclone="' + r.id + '" title="' + esc(I18n.atual === 'pt' ? 'clonar' : 'clone') + '">⧉</button> ' +
+          (r.ate ? '<button class="btn sm" data-recrolar="' + r.id + '" title="' + esc(I18n.atual === 'pt' ? 'rolar para o próximo ano' : 'roll to next year') + '">⏭</button> ' : '') +
           '<button class="btn sm" data-recedit="' + r.id + '">' + esc(t('ac.editar')) + '</button> ' +
           '<button class="btn sm" data-recoff="' + r.id + '">' +
             (r.ativo === false
               ? (I18n.atual === 'pt' ? 'reativar' : 'turn on')
               : (I18n.atual === 'pt' ? 'desligar' : 'turn off')) + '</button></td></tr>';
     };
+    if(Recorrente.paraRolar().length)
+      h += '<div class="rc-rolar-barra"><button class="btn sm" data-acao="rec-rolar">⏭ ' +
+        (I18n.atual === 'pt' ? 'Rolar para o próximo ano (' + Recorrente.paraRolar().length + ')' : 'Roll to next year (' + Recorrente.paraRolar().length + ')') + '</button></div>';
     h += '<div class="card sem-pad"><table class="tbl"><thead><tr><th></th>' +
       '<th>' + (I18n.atual === 'pt' ? 'Compromisso' : 'Commitment') + '</th>' +
       '<th>' + (I18n.atual === 'pt' ? 'Quando cai' : 'When') + '</th>' +
@@ -32755,7 +33265,7 @@ function sairDoWizard(idDoModal){
   return true;
 }
 
-function abrir(id){ const el = $('#' + id); el.classList.remove('hidden'); el.classList.remove('larga'); }   /* larga: quem precisa põe depois de abrir */
+function abrir(id){ const el = $('#' + id); el.classList.remove('hidden'); el.classList.remove('larga'); if(id === 'assetModal') delete el.dataset.fixo; }   /* larga: quem precisa põe depois de abrir */
 function fechar(id){ $('#' + id).classList.add('hidden'); }
 const MAX_TOASTS = 3;
 
@@ -33656,15 +34166,16 @@ function ligarEventos(){
   /* modais: fechar */
   document.addEventListener('click', e => {
     const c = e.target.closest('[data-close]');
-    if(c){ if(!sairDoWizard(c.dataset.close)) return; fechar(c.dataset.close); return; }
+    if(c){ if(!sairDoWizard(c.dataset.close)) return; if(c.dataset.close === 'assetModal') recGuardarRascunho(); fechar(c.dataset.close); return; }
     if(e.target.classList.contains('modal-wrap')){
+      if(e.target.dataset.fixo) return;            /* compromisso: só fecha no X ou no Cancelar */
       if(!sairDoWizard(e.target.id)) return;
       e.target.classList.add('hidden');
     }
   });
   document.addEventListener('keydown', e => {
     if(e.key === 'Escape'){
-      $$('.modal-wrap:not(.hidden)').forEach(m => { if(sairDoWizard(m.id)) m.classList.add('hidden'); });
+      $$('.modal-wrap:not(.hidden)').forEach(m => { if(sairDoWizard(m.id)){ if(m.id === 'assetModal') recGuardarRascunho(); m.classList.add('hidden'); } });
       return;
     }
     if(e.key !== 'Enter') return;
@@ -33698,7 +34209,7 @@ function ligarEventos(){
   /* clicar fora fecha o calendário que estiver aberto */
   document.addEventListener('click', e => {
     if(!calCampoAberto) return;
-    if(e.target.closest('.cdt')) return;
+    if(e.target.closest('.cdt') || !e.target.isConnected) return;   /* o clique redesenhou o próprio calendário */
     Cal.fecharCampo();
   });
 
@@ -33713,7 +34224,7 @@ function ligarEventos(){
 
   /* cliques gerais (delegação) */
   document.addEventListener('click', async (e) => {
-    const el = e.target.closest('[data-olho],[data-assunto],[data-mk-serie],[data-mk-per],[data-mk-ativo],[data-comp-per],[data-mov],[data-fmov],[data-resp],[data-graf-per],[data-grafico],[data-acoes-ativo],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del],[data-app],[data-bgrupo],[data-bsub],[data-bquem],[data-bforma],[data-bper],[data-bid],[data-bpag],[data-banos],[data-bpreco],[data-item],[data-recedit],[data-recoff],[data-recsug],[data-cfgsec],[data-avisof],[data-bamove],[data-basai],[data-baentra],[data-app2],[data-custaba],[data-caldia],[data-calandar],[data-calhoje],[data-cdtabre],[data-ocor],[data-ocestado],[data-pgest],[data-recfav],[data-gfav],[data-grev],[data-rcregra],[data-para],[data-idioma],[data-bmarca],[data-contaba],[data-porta],[data-avtipo],[data-campon],[data-campdel],[data-servmes],[data-servaj],[data-ajtipo],[data-rjpct],[data-servir],[data-reaj],[data-visitas],[data-asaba],[data-vercomo],[data-nivelconta],[data-bkdel],[data-ctedit],[data-ctdel],[data-salaba],[data-trocaapp],[data-irpara]');
+    const el = e.target.closest('[data-olho],[data-assunto],[data-mk-serie],[data-mk-per],[data-mk-ativo],[data-comp-per],[data-mov],[data-fmov],[data-resp],[data-graf-per],[data-grafico],[data-acoes-ativo],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del],[data-app],[data-bgrupo],[data-bsub],[data-bquem],[data-bforma],[data-bper],[data-bid],[data-bpag],[data-banos],[data-bpreco],[data-item],[data-recedit],[data-recoff],[data-recsug],[data-rcmes],[data-recclone],[data-recrolar],[data-cfgsec],[data-avisof],[data-bamove],[data-basai],[data-baentra],[data-app2],[data-custaba],[data-caldia],[data-calandar],[data-calhoje],[data-cdtabre],[data-calpular],[data-calmesir],[data-calanoir],[data-cdtatalho],[data-ocor],[data-ocestado],[data-pgest],[data-recfav],[data-gfav],[data-grev],[data-rcregra],[data-para],[data-idioma],[data-bmarca],[data-contaba],[data-porta],[data-avtipo],[data-campon],[data-campdel],[data-servmes],[data-servaj],[data-ajtipo],[data-rjpct],[data-servir],[data-reaj],[data-visitas],[data-asaba],[data-vercomo],[data-nivelconta],[data-bkdel],[data-ctedit],[data-ctdel],[data-salaba],[data-trocaapp],[data-irpara]');
     if(!el) return;
     const d = el.dataset;
 
@@ -33791,6 +34302,10 @@ function ligarEventos(){
     if(d.calandar){ Cal.andar(Number(d.calandar)); if(!Cal.redesenhar()) render(); return; }
     if(d.calhoje){ calMes = Cal.hojeMes(); if(!Cal.redesenhar()) render(); return; }
     if(d.cdtabre){ Cal.abrirCampo(d.cdtabre); return; }
+    if(d.calpular != null){ calPular = d.calpular === '1'; Cal.redesenhar(); return; }
+    if(d.calmesir){ calMes = d.calmesir; calPular = false; Cal.redesenhar(); return; }
+    if(d.calanoir){ const [a2, m2] = Cal.mesAtual().split('-'); calMes = (Number(a2) + Number(d.calanoir)) + '-' + m2; Cal.redesenhar(); return; }
+    if(d.cdtatalho){ Cal.atalho(d.cdtatalho); return; }
     if(d.caldia){
       if(Cal.escolher(d.caldia)) return;
       abrirDia(d.caldia); return;
@@ -33819,11 +34334,22 @@ function ligarEventos(){
         toast(I18n.atual === 'pt' ? 'Tirado da lista de revisão.' : 'Removed from the review list.'); }
       return;
     }
+    if(d.rcmes){
+      const fora = new Set(($('#rcFora').value || '').split(',').map(Number).filter(Boolean));
+      const m = Number(d.rcmes);
+      if(fora.has(m)) fora.delete(m); else fora.add(m);
+      if(fora.size >= 12){ toast(I18n.atual === 'pt' ? 'Deixe pelo menos um mês.' : 'Keep at least one month.'); return; }
+      $('#rcFora').value = Array.from(fora).sort((a,b) => a-b).join(',');
+      el.classList.toggle('on', !fora.has(m)); el.setAttribute('aria-pressed', fora.has(m) ? 'false' : 'true');
+      recResumo(); return;
+    }
+    if(d.recclone){ recClonar(d.recclone); return; }
+    if(d.recrolar){ abrirRolar([d.recrolar]); return; }
     if(d.rcregra){
       const campo2 = $('#rcRegra');
       if(campo2) campo2.value = d.rcregra;
       $$('[data-rcregra]').forEach(b2 => b2.classList.toggle('on', b2.dataset.rcregra === d.rcregra));
-      desenharCamposRegra(d.rcregra, {});
+      desenharCamposRegra(d.rcregra, {dia: Number(($('#rcDia') || {}).value) || undefined});
       return;
     }
     if(d.cfgsec){ cfgSecao = d.cfgsec; render(); return; }
@@ -34205,6 +34731,25 @@ function ligarEventos(){
         break;
       }
       case 'rec-salvar': salvarRecorrente(); break;
+      case 'rec-salvar-copiar': salvarRecorrente({copiar: true}); break;
+      case 'rec-sug-usar': recUsarSugestao(); break;
+      case 'rec-rasc-usar': { const rs = recRascunho; if(rs) abrirRecorrente(rs.id, null, {doRascunho: true, abrirMais: true}); break; }
+      case 'rec-rasc-fora': { recRascunho = null; const bx = document.querySelector('.rc-rasc'); if(bx) bx.parentNode.removeChild(bx); break; }
+      case 'rec-rep-salvar': fechar('genModal'); salvarRecorrente(Object.assign({}, recPendente || {}, {mesmoAssim: true})); break;
+      case 'rec-rep-outro': { fechar('genModal'); recGuardarRascunho(); fechar('assetModal');
+        toast(I18n.atual === 'pt' ? 'O que você digitou ficou guardado: ao abrir "Novo compromisso" de novo, toque em "Continuar de onde parou".' : 'What you typed was kept: open "New commitment" again and tap "Pick up where you left".');
+        abrirRecorrente(el.dataset.para); break; }
+      case 'rec-clonar': if(recEditando) recClonar(recEditando); break;
+      case 'rec-rolar-um': if(recEditando){ const rid = recEditando; recSalvando = true; fechar('assetModal'); recSalvando = false; abrirRolar([rid]); } break;
+      case 'rec-rolar': abrirRolar(); break;
+      case 'rec-rolar-ok': {
+        const ids = Array.from(document.querySelectorAll('#genBody .rolar-ck:checked')).map(c => c.value);
+        ids.forEach(i => Recorrente.rolar(i));
+        fechar('genModal');
+        if(ids.length){ Store.salvar(); render(); renderFita();
+          toast(I18n.atual === 'pt' ? ids.length + (ids.length === 1 ? ' compromisso rolado' : ' compromissos rolados') + ' para o próximo ano, marcados "a confirmar".' : ids.length + ' rolled to next year, marked "to confirm".'); }
+        break;
+      }
 
       /* ---- serviço por visita e reajuste ---- */
       case 'serv-extra': abrirDiaExtra(); break;
