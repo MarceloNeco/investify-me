@@ -2878,6 +2878,10 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.33 */
+  'Importar compromissos':'Import commitments',
+  'Importar compromissos de um arquivo: o app mostra a prévia, avisa o que já existe e importa só o que você marcar.':'Import commitments from a file: the app shows a preview, flags what already exists and imports only what you tick.',
+  '⬆ Importar compromissos':'⬆ Import commitments',
   /* 3.32 */
   'Seu nome no topo':'Your name at the top',
   'Seu nome aparece no topo no lugar de \'Dono da carteira\'.':'Your name appears at the top instead of \'Wallet owner\'.',
@@ -13557,6 +13561,9 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.33', d:'2026-11-03', t:'Importar compromissos', itens:[
+    'Importar compromissos de um arquivo: o app mostra a prévia, avisa o que já existe e importa só o que você marcar.'
+  ]},
   {v:'3.32', d:'2026-11-03', t:'Seu nome no topo', itens:[
     'Seu nome aparece no topo no lugar de \'Dono da carteira\'.'
   ]},
@@ -16124,6 +16131,120 @@ function viewBLanc(){
    ========================================================= */
 /* ---------- cadastrar um compromisso que se repete ---------- */
 let recEditando = null;
+
+/* =========================================================
+   3.33 — Importar compromissos de um arquivo (formato "moneytrio-compromissos")
+   {"tipo":"moneytrio-compromissos","versao":1,"itens":[{ campos do Recorrente }]}
+   Mostra a prévia, avisa problema e o que parece repetido (vem desmarcado),
+   e importa só o marcado, pelo caminho normal (Recorrente.add + Store.salvar).
+   Nada é substituído nem apagado.
+   ========================================================= */
+const ImportRec = {
+  lista: [],
+  escolher(){
+    let i = document.getElementById('arqRecImport');
+    if(!i){
+      i = document.createElement('input'); i.type = 'file'; i.id = 'arqRecImport';
+      i.accept = 'application/json,.json'; i.className = 'hidden';
+      i.addEventListener('change', () => {
+        const f = i.files[0]; if(!f) return;
+        const rd = new FileReader();
+        rd.onload = () => { i.value = ''; ImportRec.abrir(String(rd.result || '')); };
+        rd.readAsText(f);
+      });
+      document.body.appendChild(i);
+    }
+    i.click();
+  },
+  ler(txt){
+    const pt = I18n.atual === 'pt';
+    let o = null;
+    try{ o = JSON.parse(txt); }catch(e){ return {erro: pt ? 'O arquivo não é um JSON válido.' : 'The file is not valid JSON.'}; }
+    if(!o || o.tipo !== 'moneytrio-compromissos' || !Array.isArray(o.itens))
+      return {erro: pt ? 'Este arquivo não é uma lista de compromissos do MoneyTRIO (falta "tipo": "moneytrio-compromissos").' : 'This file is not a MoneyTRIO commitments list ("tipo": "moneytrio-compromissos" is missing).'};
+    if(!o.itens.length) return {erro: pt ? 'O arquivo não tem nenhum compromisso.' : 'The file has no commitments.'};
+    return {itens: o.itens};
+  },
+  analisar(itens){
+    const pt = I18n.atual === 'pt';
+    const norm = x => String(x || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const existentes = Recorrente.todos();
+    const vistos = [];
+    return itens.map((bruto, i) => {
+      const b = (bruto && typeof bruto === 'object') ? bruto : {};
+      const avisos = [];
+      if(!GRUPOS[String(b.grupo || '').toUpperCase()]) avisos.push(pt ? 'grupo inválido' : 'invalid group');
+      if(!(Math.abs(Number(b.valor)) > 0)) avisos.push(pt ? 'valor zero' : 'zero amount');
+      if(b.regra && !REGRAS_REC[b.regra]) avisos.push(pt ? 'regra de data inválida' : 'invalid date rule');
+      const semId = Object.assign({}, b, {grupo: String(b.grupo || '').toUpperCase()}); delete semId.id; delete semId.criadoEm;
+      const r = Recorrente.arruma(semId);
+      const parecido = e => norm(e.nome) === norm(r.nome) ||
+        (e.sub === r.sub && norm(e.quem) === norm(r.quem) && Math.abs((e.valor || 0) - r.valor) <= Math.max(1, r.valor * 0.1));
+      const ja = existentes.find(parecido);
+      const noArquivo = vistos.find(parecido);
+      vistos.push(r);
+      return {i, r, avisos, ja: ja || null, repetidoNoArquivo: !!noArquivo, marcado: !avisos.length && !ja && !noArquivo};
+    });
+  },
+  abrir(txt){
+    const pt = I18n.atual === 'pt';
+    const lido = this.ler(txt);
+    $('#genTitle').textContent = pt ? '⬆ Importar compromissos' : '⬆ Import commitments';
+    if(lido.erro){
+      $('#genBody').innerHTML = '<p class="imp-erro" role="alert" style="color:var(--down)">❌ ' + esc(lido.erro) + '</p>' +
+        '<div class="f-actions"><button class="btn" data-close="genModal">' + (pt ? 'Fechar' : 'Close') + '</button></div>';
+      abrir('genModal'); return;
+    }
+    this.lista = this.analisar(lido.itens);
+    const per = r => r.desde && r.ate ? fmtData(r.desde) + ' → ' + fmtData(r.ate)
+      : r.desde ? (pt ? 'desde ' : 'from ') + fmtData(r.desde)
+      : r.ate ? (pt ? 'até ' : 'until ') + fmtData(r.ate) : (pt ? 'sempre' : 'always');
+    const linhas = this.lista.map(x => {
+      const r = x.r, g = GRUPOS[r.grupo] || {};
+      const aviso = x.avisos.length ? '⚠️ ' + x.avisos.join(', ')
+        : x.ja ? (pt ? 'já existe: ' : 'already exists: ') + esc(x.ja.nome)
+        : x.repetidoNoArquivo ? (pt ? 'repetido neste arquivo' : 'repeated in this file') : '';
+      return '<tr class="' + (aviso ? 'imp-aviso' : '') + '"><td><input type="checkbox" class="imp-ck" data-i="' + x.i + '"' + (x.marcado ? ' checked' : '') + ' aria-label="' + esc(r.nome) + '"></td>' +
+        '<td><b>' + esc(r.nome) + '</b>' + (aviso ? '<br><span class="tiny" style="color:var(--warn)">' + aviso + '</span>' : '') + '</td>' +
+        '<td class="num">' + fmt(r.valor) + '</td>' +
+        '<td>' + esc(Recorrente.explicar(r)) + '</td>' +
+        '<td>' + esc(per(r)) + '</td>' +
+        '<td>' + esc((g.ico || '') + ' ' + (g.nome || r.grupo)) + ' · ' + esc(r.sub) + '</td>' +
+        '<td>' + esc(r.quem || '—') + '</td>' +
+        '<td>' + (r.irpf ? '✓' : '') + '</td></tr>';
+    }).join('');
+    const nOk = this.lista.filter(x => x.marcado).length;
+    const nRuim = this.lista.filter(x => !x.marcado).length;
+    $('#genBody').innerHTML =
+      '<p class="small muted">' + (pt ? 'Confira antes de importar. Os marcados entram como compromissos novos; nada do que já existe é trocado ou apagado.' : 'Check before importing. Ticked lines become new commitments; nothing that already exists is changed or erased.') + '</p>' +
+      (nRuim ? '<p class="small" style="color:var(--warn)">' + nRuim + (pt ? ' linha(s) vieram desmarcadas: com problema ou parecidas com um compromisso que já existe. Marque se quiser importar assim mesmo.' : ' line(s) came unticked: with a problem or similar to an existing commitment. Tick them to import anyway.') + '</p>' : '') +
+      '<div class="tbl-wrap" style="overflow-x:auto;max-width:100%"><table class="tbl imp-tbl"><thead><tr><th></th>' +
+      '<th>' + (pt ? 'Nome' : 'Name') + '</th><th class="num">' + (pt ? 'Valor' : 'Amount') + '</th><th>' + (pt ? 'Quando cai' : 'When') + '</th>' +
+      '<th>' + (pt ? 'Período' : 'Period') + '</th><th>' + (pt ? 'Grupo · categoria' : 'Group · category') + '</th><th>' + (pt ? 'Quem' : 'Who') + '</th><th>IR</th></tr></thead>' +
+      '<tbody>' + linhas + '</tbody></table></div>' +
+      '<div class="f-actions"><button class="btn" data-close="genModal">' + esc(t('ac.cancelar')) + '</button>' +
+      '<button class="btn primary" data-acao="rec-importar-ok" id="impOk">' + this.rotulo(nOk) + '</button></div>';
+    $('#genBody').querySelectorAll('.imp-ck').forEach(c => c.addEventListener('change', () => {
+      const x = this.lista[+c.dataset.i]; if(x) x.marcado = c.checked;
+      const n = this.lista.filter(y => y.marcado).length, b = $('#impOk');
+      if(b){ b.textContent = this.rotulo(n); b.disabled = !n; }
+    }));
+    if(!nOk) $('#impOk').disabled = true;
+    abrir('genModal');
+  },
+  rotulo(n){ return I18n.atual === 'pt' ? 'Importar ' + n + ' marcado' + (n === 1 ? '' : 's') : 'Import ' + n + ' ticked'; },
+  importar(){
+    const pt = I18n.atual === 'pt';
+    const marcados = this.lista.filter(x => x.marcado);
+    if(!marcados.length) return;
+    marcados.forEach(x => Recorrente.add(Object.assign({}, x.r, {id: undefined, criadoEm: undefined, origem: 'importado'})));
+    Store.salvar();
+    this.lista = [];
+    fechar('genModal'); render();
+    toast(pt ? marcados.length + ' compromisso' + (marcados.length === 1 ? ' importado' : 's importados') + '. Você pode editar cada um em Recorrentes.'
+             : marcados.length + ' commitment(s) imported. You can edit each one in Recurring.');
+  }
+};
 
 function abrirRecorrente(id, semente){
   recEditando = id || null;
@@ -22362,6 +22483,8 @@ function viewBCustos(){
     '<div class="head-acoes">' +
       '<button class="btn sm" data-acao="wz-abrir">✨ ' +
         (I18n.atual === 'pt' ? 'Passo a passo' : 'Step by step') + '</button>' +
+      '<button class="btn sm" data-acao="rec-importar">⬆ ' +
+        (I18n.atual === 'pt' ? 'Importar compromissos' : 'Import commitments') + '</button>' +
       '<button class="btn primary sm" data-acao="rec-novo">+ ' +
         (I18n.atual === 'pt' ? 'Novo compromisso' : 'New commitment') + '</button>' +
     '</div></div>';
@@ -31570,6 +31693,7 @@ function viewConfig(){
     '<div class="f-actions" style="justify-content:flex-start;margin-top:12px">' +
       '<button class="btn" data-acao="exportar">⬇ Baixar backup</button>' +
       '<button class="btn" data-acao="importar">⬆ Restaurar de arquivo</button>' +
+      '<button class="btn" data-acao="rec-importar">⬆ Importar compromissos</button>' +
       '<button class="btn danger" data-acao="limpar">Apagar tudo</button>' +
       '<input type="file" id="arqImport" accept="application/json,.json" class="hidden">' +
     '</div>' +
@@ -33852,6 +33976,8 @@ function ligarEventos(){
         break;
       }
       case 'rec-novo': abrirRecorrente(null); break;
+      case 'rec-importar': ImportRec.escolher(); break;
+      case 'rec-importar-ok': ImportRec.importar(); break;
       case 'rec-salvar': salvarRecorrente(); break;
 
       /* ---- serviço por visita e reajuste ---- */

@@ -292,6 +292,12 @@ let BASE = '';
     ok(/Fica guardado na nuvem/.test(await A.textContent('.hub-pe')), 'A: rodapé da tela inicial diz que fica na nuvem');
     await A.screenshot({ path: path.join(SAIDA, 'A-app.png') });
 
+    /* 3.33: importar compromissos com a nuvem: grava pelo caminho normal (fechado) */
+    await A.evaluate(() => { ImportRec.abrir(JSON.stringify({ tipo: 'moneytrio-compromissos', versao: 1, itens: [{ nome: 'Escola Ana 2027', valor: 3100, grupo: 'DEPENDENTES', sub: 'Escola', regra: 'dia', dia: 5, quem: 'Ana', irpf: true }] })); ImportRec.importar(); });
+    await esperar(1200); await filaVazia(A);
+    const recNuvem = db.money_docs.filter((r) => r.colecao === 'recorrentes' && !r.apagado_em);
+    ok(recNuvem.length === 1 && (await abrirDoBanco(recNuvem[0].dados_cifrado)).nome === 'Escola Ana 2027' && !/Escola Ana/.test(recNuvem[0].dados_cifrado), 'importar compromissos com a nuvem: sobe fechado para money_docs (recorrentes)');
+
     /* ---------- 3. caixa do robô ---------- */
     console.log('3) caixa do robô');
     await A.evaluate(() => MoneyNuvem.buscarAgora());
