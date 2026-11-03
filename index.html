@@ -2878,6 +2878,9 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.34 */
+  'Seguro do carro numa categoria só':'Car insurance in a single category',
+  'Seguro do carro numa categoria só: Veículo · Seguro Auto.':'Car insurance in a single category: Vehicle · Car insurance.',
   /* 3.33 */
   'Importar compromissos':'Import commitments',
   'Importar compromissos de um arquivo: o app mostra a prévia, avisa o que já existe e importa só o que você marcar.':'Import commitments from a file: the app shows a preview, flags what already exists and imports only what you tick.',
@@ -7814,6 +7817,16 @@ const Store = {
       });
       st.config.salarioUnificadoN = n;
     }
+    /* 3.34 — o seguro do carro é uma categoria só: "Seguro Auto". Lançamentos e compromissos antigos com
+       "Seguro Auto Neco"/"Seguro Auto Beta" passam a aparecer assim (o nome antigo fica em subAntes; nada é apagado). */
+    const SEG_ANTIGO = /^seguro auto (neco|beta)$/i;
+    const seg = x => { if(x && SEG_ANTIGO.test(String(x.sub || '').trim())){ x.subAntes = x.subAntes || x.sub; x.sub = 'Seguro Auto'; } };
+    st.gastos.forEach(seg); st.recorrentes.forEach(seg);
+    Object.keys(st.categorias || {}).forEach(k => {
+      const l = st.categorias[k]; if(!Array.isArray(l) || !l.some(x => SEG_ANTIGO.test(String(x).trim()))) return;
+      st.categorias[k] = l.filter(x => !SEG_ANTIGO.test(String(x).trim()));
+      if(st.categorias[k].indexOf('Seguro Auto') < 0) st.categorias[k].push('Seguro Auto');
+    });
     st.config.perfilRespostas = (o.config || {}).perfilRespostas || {};
     st.metas = Array.isArray(o.metas) ? o.metas : [];
     st.vistos = o.vistos || {};
@@ -13561,6 +13574,9 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.34', d:'2026-11-03', t:'Seguro do carro numa categoria só', itens:[
+    'Seguro do carro numa categoria só: Veículo · Seguro Auto.'
+  ]},
   {v:'3.33', d:'2026-11-03', t:'Importar compromissos', itens:[
     'Importar compromissos de um arquivo: o app mostra a prévia, avisa o que já existe e importa só o que você marcar.'
   ]},
@@ -17812,7 +17828,7 @@ const SUGESTOES_WZ = {
   ],
   veiculos: [
     {nome:{pt:'Prestação do carro',     en:'Car payment'},       grupo:'VEICULO', sub:'Prestação Auto',   dia:10},
-    {nome:{pt:'Seguro do carro',        en:'Car insurance'},     grupo:'VEICULO', sub:'Seguro Auto Neco', dia:10},
+    {nome:{pt:'Seguro do carro',        en:'Car insurance'},     grupo:'VEICULO', sub:'Seguro Auto', dia:10},
     {nome:{pt:'IPVA e licenciamento',   en:'Road tax'},          grupo:'VEICULO', sub:'IPVA / Inspecao / Licenciamento', dia:15, regra:'anual', mes:1},
     {nome:{pt:'Estacionamento mensal',  en:'Monthly parking'},   grupo:'VEICULO', sub:'Estacionamento',   dia:5},
     {nome:{pt:'Pedágio e tag',          en:'Tolls'},             grupo:'VEICULO', sub:'Sem Parar / Pedagio', dia:20},
