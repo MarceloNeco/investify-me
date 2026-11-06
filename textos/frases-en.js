@@ -1,10 +1,15 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.58 · 06/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.59 · 06/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.59 */
+  'Boleto certo e a tela de conferir refeita':'Right bill amount and a redone check screen',
+  'Boleto da matrícula: o app lê o valor a pagar e o vencimento do PDF de verdade (antes, nesse PDF, caía no valor do contrato) e acha o pagamento que já está no livro.':'Enrolment bill: the app reads the amount due and the due date from the real PDF (before, with this PDF, it fell back to the contract value) and finds the payment already in your book.',
+  '"Já existe": só compara o que é do mesmo tipo (mensalidade com mensalidade, período ampliado com período ampliado; lanche, cantina e uniforme nunca). Dois cadastros iguais aparecem juntos ("2 iguais"), com "Apagar o repetido".':'"Already exists": only compares things of the same kind (monthly fee with monthly fee, extended day with extended day; snacks, canteen and uniform never). Two identical entries show together ("2 identical"), with "Delete the duplicate".',
+  'A tela "Conferir o que foi lido" ficou mais larga no computador, com as partes lado a lado, títulos claros e os botões Manter · Atualizar este · Criar novo.':'The "Check what was read" screen is wider on the computer, with the parts side by side, clear titles and the Keep · Update this · Create new buttons.',
   /* 3.58 */
   'Celular: o selo da nuvem não cobre o calendário':'Phone: the cloud badge no longer covers the calendar',
   'No celular, com o menu ☰ aberto, o botão "Entrar na nuvem" fica ao lado do menu e não cobre mais o calendário.':'On the phone, with the ☰ menu open, the "Use the cloud" button sits beside the menu and no longer covers the calendar.',

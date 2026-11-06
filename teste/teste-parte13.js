@@ -142,7 +142,7 @@ const LOCAL = { v: 1, config: {}, posicoes: [], gastos, recorrentes: [
       await p.waitForSelector('#genModal:not(.hidden) .cdl-item');
       const prev = await p.evaluate(() => ({ itens: Array.from(document.querySelectorAll('#genBody .cdl-item')).map((el) => ({ ck: el.querySelector('.cdl-criar').checked, ja: (el.querySelector('.cdl-ja') || {}).textContent || '' })),
         g: document.getElementById('cdlGasto').checked, gl: (document.querySelector('.cdl-jalancado') || {}).textContent || '', desc: document.getElementById('cdlGDesc').value }));
-      ok(prev.itens.every((i) => !i.ck) && /Já existe: Escola Ana 2027/.test(prev.itens[0].ja) && /Ampliado Ana 1º sem.*Ampliado Ana 2º sem/.test(prev.itens[1].ja), 'prévia: os dois vêm DESMARCADOS com "Já existe: …"');
+      ok(prev.itens.every((i) => !i.ck) && /^Já existeEscola Ana 2027 · /.test(prev.itens[0].ja) && /Ampliado Ana 1º sem.*Ampliado Ana 2º sem/.test(prev.itens[1].ja), 'prévia: os dois vêm DESMARCADOS com "Já existe" (3.59: uma linha por existente)');
       ok(!prev.g && /Já está no livro: .*ASSOCIACAO EDU EXEMPLO/.test(prev.gl) && prev.desc === 'Matrícula 2027 (1ª parcela da anuidade)', 'prévia: a 1ª parcela vem desmarcada, mostrando o lançamento do robô; o nome do lançamento é editável');
       /* escola: atualizar o existente; ampliado: manter; e lançar a parcela mesmo assim, com outro nome */
       await p.check('#genBody input[name="cdlJa0"][value="r-esc"]');
