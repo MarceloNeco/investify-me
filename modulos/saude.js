@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saude.js — plano de saúde, reembolso estimado e IR (N38)   1.0.0 · 06/Nov/2026
+   modulos/saude.js — plano de saúde, reembolso estimado e IR (N38)   1.1.0 · 06/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · Cadastro do plano de saúde: operadora, titular PF ou PJ, quem o plano cobre, coparticipação,
@@ -17,6 +17,9 @@
      estimar(g)                        → {volta, ir, tipo, esp, plano} | null (só gasto de Saúde)
      doAno(ano)                        → {gasto, volta, ir, n}
      lerApolice(texto)                 → {operadora, reembolso, copart, tabela, esp, linhas}
+     juntarDaPonte([{operadora, membros}]) → {novos, juntados}  (1.1.0: o que vem do OmniLifeONE; só acrescenta
+                                         operadora e quem o plano cobre, nunca mexe em reembolso, tabela ou PF/PJ;
+                                         plano sem membros = cobre todos, e continua assim)
    DADOS
      Store.estado.saude_planos = [{id, operadora, titular: 'PF'|'PJ', membros: [quem], copart, reembolso,
                                    tabela: {consulta, exame, terapia, odonto}, esp: {pediatra: 200, …}, apolice, ativo}]
@@ -50,6 +53,26 @@
       var q = sa(quem).trim(), ps = API.planos();
       return ps.find(function (p) { return (p.membros || []).some(function (m) { return sa(m).trim() === q && q; }); }) ||
              ps.find(function (p) { return !(p.membros || []).length; }) || null;
+    },
+    juntarDaPonte: function (lst) {
+      var nov = 0, jun = 0;
+      (lst || []).forEach(function (x) {
+        var op = String(x && x.operadora || '').trim().slice(0, 60); if (!op) return;
+        var canon = (OPERADORAS.find(function (o) { return o[1].test(sa(op)); }) || [op])[0];
+        var p = lista().find(function (y) { return sa(y.operadora).trim() === sa(canon).trim() || sa(y.operadora).trim() === sa(op).trim(); });
+        if (!p) {
+          p = { id: 'sp' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), ativo: true, operadora: canon, titular: 'PF', membros: [],
+                copart: false, reembolso: false, tabela: {}, esp: {}, origem: 'omnilife' };
+          lista().push(p); nov++;
+          (x.membros || []).forEach(function (m) { m = String(m || '').trim(); if (m && p.membros.indexOf(m) < 0) p.membros.push(m); });
+          return;
+        }
+        if (!(p.membros || []).length) return;                     /* "cobre todos": não estreita */
+        var antes = p.membros.length;
+        (x.membros || []).forEach(function (m) { m = String(m || '').trim(); if (m && !p.membros.some(function (z) { return sa(z).trim() === sa(m).trim(); })) p.membros.push(m); });
+        if (p.membros.length > antes) jun++;
+      });
+      return { novos: nov, juntados: jun };
     },
     tipoDe: function (g) {
       var t = sa([g.sub, g.desc].join(' '));
@@ -152,7 +175,7 @@
 
   MoneyModulos.registrar({
     id: 'saude',
-    versao: '1.0.0',
+    versao: '1.1.0',
     colecoes: [COL],
     pontos: {
       'lancamento.linha': function (ctx) {

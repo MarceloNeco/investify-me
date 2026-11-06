@@ -611,6 +611,38 @@ arquivo diz a versão (`teste-modulos.js` confere, agora também o `<link rel="s
 Teste de fumaça para arrumação interna: `teste/teste-fumaca-telas.js <pasta de antes>` (10 telas × 390/1366 px × PT/EN: mesma foto,
 mesmo HTML, sem erro de página; o número da versão e a lista "O que há de novo" ficam de fora da comparação).
 
+### Ligação com o OmniLifeONE (3.50) — especificação
+Decidido pelo dono em 06/Nov/2026 (respostas "sim" às perguntas a e b): o OmniLifeONE manda um resumo mínimo da saúde da família e o
+MoneyTRIO usa para (a) preencher o plano de saúde (operadora e quem ele cobre) e (b) transformar o médico de referência em profissional conhecido.
+
+**Caminho:** a ponte da plataforma (contrato C5, `sol_ponte`), que já existe na base. Nenhum SQL novo. Um app nunca lê a tabela do outro (C3):
+o OmniLifeONE não lê `money_docs`, o MoneyTRIO não lê `omni_docs`.
+
+**O que o OmniLifeONE faz (lado dele; o MoneyTRIO não mexe naquele repositório):**
+1. Quem manda: um aparelho de **chefe ou responsável** com o cofre aberto (tem a CF). Quando muda o plano (`health.plan.operator`) ou o
+   médico de referência (`health.doctor`) de alguém, e uma vez ao ligar a integração, chama:
+   `sol_ponte_enviar(p_de := 'omnilife-one', p_para := 'moneytrio', p_tipo := 'saude-resumo', p_dados := <abaixo>, p_grupo := <id da família>)`.
+   Se a pessoa desligou a integração (`sol_ponte_config`), a função devolve NULL e nada é mandado.
+2. `p_dados` = `{"v": 1, "cif": "<texto>"}`. O `cif` é o MESMO formato do cofre e do `money_docs`:
+   `JSON.stringify({c: 1, kv, fk, iv, ct})`, AES-GCM 256 com a **CF** (a chave que só chefe e responsável recebem embrulhada), iv de 12 bytes
+   novo a cada envio, `ct` = texto + tag, tudo em base64. Nada de saúde vai em claro no `dados`.
+3. O texto aberto (UTF-8, JSON) é sempre o **resumo inteiro** (não só o que mudou):
+   `{"v": 1, "enviado_em": "<ISO>", "pessoas": [{"perfil_id": "<id da pessoa no OmniLife>", "apelido": "<nome curto, o mesmo da família>",
+   "operadora": "<health.plan.operator ou vazio>", "validade": "<AAAA-MM-DD ou vazio>", "medico": "<health.doctor, texto livre, ou vazio>"}]}`.
+   **Fica de fora, sempre:** número da carteirinha, cartão SUS, tipo sanguíneo, alergias, remédios, condições, telefone de emergência.
+4. Quem lê: membros do grupo conseguem ver a linha da ponte (regra da base), mas só quem tem a CF (chefe e responsável) abre o `cif`.
+
+**O que o MoneyTRIO faz (3.50):**
+- `nuvem.js` 1.8.0: a cada 3 buscas (≈ 1 min) chama `sol_ponte_minha_caixa('moneytrio', true)`, abre o `cif` com a CF (registro com outro `fk`
+  não abre e fica na caixa) e entrega aos módulos pelo evento `ponte.recebida` `[{id, de_app, tipo, criado_em, conteudo|null}]`.
+- `modulos/ponte-omnilife.js` (`PonteOmni`): pega só o `saude-resumo` mais novo; mais velho que o último aplicado é só marcado como lido.
+  Plano: `Saude.juntarDaPonte` (`saude` 1.1.0) junta pela operadora (nome conhecido: "amil" → "Amil"), cria o plano se não existir
+  (PF, sem reembolso, `origem: 'omnilife'`) e acrescenta quem ele cobre; nunca troca reembolso, tabela ou PF/PJ, e plano "cobre todos" continua assim.
+  Médico: o nome sai do texto livre até o primeiro "(", "-", "," ou número ("Dra. Ana Lima (pediatra) 11 9…" → "Dra. Ana Lima") e vira profissional
+  conhecido (Saúde, categoria de consulta, a pessoa quando é de uma só, IR). Já conhecido: só ganha o apelido. "Não é profissional": fica assim.
+  Depois marca cada mensagem como lida (`sol_ponte_marcar_lido`); o que foi aplicado sobe fechado no `money_docs` (`ponte_omnilife` guarda o último).
+- Teste: `teste/teste-nuvem.js` (mensagem fechada com a CF; só a mais nova vale; outra chave fica na caixa; nada em claro no banco).
+
 ### Profissionais conhecidos (3.43)
 - `modulos/profissionais.js` (`Profissionais`, N39): `Store.estado.profissionais` = [{id, nome, apelidos (nomes normalizados), grupo, sub, quem,
   irpf} | {id:'prign', ignorar: true, apelidos}]. Normaliza sem IA (acentos, PIX/TED/PAGAMENTO, DR/DRA, LTDA/ME/S/A, números) e compara

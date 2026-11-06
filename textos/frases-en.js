@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.49 · 06/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.50 · 06/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.50 */
+  'Ligação com o OmniLifeONE (saúde)':'OmniLifeONE link (health)',
+  'Ligação com o OmniLifeONE: quando o OmniLifeONE mandar o resumo da saúde da família (fechado, só chefe e responsável abrem), o plano de saúde ganha a operadora e quem ele cobre, e o médico de referência vira profissional conhecido: o PIX para ele já entra como Saúde, da pessoa certa, com IR.':'OmniLifeONE link: when OmniLifeONE sends the family health summary (encrypted, only heads and guardians can open it), the health plan gets the insurer and who it covers, and the main doctor becomes a known professional: payments to them are classified as Health, for the right person, with the tax flag.',
   /* 3.49 */
   'Contrato da escola lido certo':'School contract read correctly',
   'Contrato da escola: o app agora lê certo o texto real do contrato. Cada opção fica com o nome dela (ex.: Fundamental 1º ao 5º × 6º ao 9º; período ampliado 5x × 3x), o aluno vem da parte do aluno (nunca do pai ou da mãe), o dia de vencimento é lido e só aparecem as linhas da etapa marcada, já com a série certa escolhida.':'School contract: the app now reads the real contract text correctly. Each option keeps its own name (e.g. grades 1–5 × 6–9; extended day 5x × 3x), the pupil comes from the pupil section (never the parents), the due day is read and only the marked stage rows show, with the right grade preselected.',

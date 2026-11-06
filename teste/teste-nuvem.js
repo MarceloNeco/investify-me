@@ -52,6 +52,7 @@ function servidor() {
 const UID = '11111111-1111-1111-1111-111111111111', GID = '22222222-2222-2222-2222-222222222222';
 const CODIGO = 'KQ7PZ-3MXWD-H8RTA-2BCNE';
 const db = { user_settings: [], money_docs: [], money_caixa_chave: [], money_entrada: [], money_robos: [], omni_chave_privada: [] };
+const ponte = [];   /* sol_ponte (só pelas funções, como no banco) */
 let relogio = Date.parse('2026-11-03T10:00:00Z'), CF_RAW = null, embrulhada = '';
 const agora = () => new Date(relogio += 7).toISOString();
 function jwt(sub, email) { const p = Buffer.from(JSON.stringify({ sub, email, exp: 9999999999 })).toString('base64url'); return 'h.' + p + '.s'; }
@@ -107,6 +108,8 @@ async function supabase(route) {
     if (n === 'sol_registrar_uso') return json(200, true);
     if (n === 'sol_meus_grupos') return json(200, [{ grupo_id: GID, tipo: 'familia', nome: 'Família Teste', meu_papel: 'chefe', membros: 2, governanca: 'omnilife-one', sou_dono: true }]);
     if (n === 'sol_minha_chave_grupo') return json(200, [{ versao: 1, chave_embrulhada: embrulhada }]);
+    if (n === 'sol_ponte_minha_caixa') return json(200, ponte.filter((m) => m.para_app === corpo.p_app && (!corpo.p_so_nao_lidas || !m.lido_em)));
+    if (n === 'sol_ponte_marcar_lido') { const m = ponte.find((x) => x.id === corpo.p_id && x.para_app === corpo.p_app && !x.lido_em); if (m) m.lido_em = agora(); return json(200, !!m); }
     if (n === 'money_entrada_consumir') { let c = 0; db.money_entrada.forEach((e) => { if (corpo.p_ids.includes(e.id) && !e.consumido_em) { e.consumido_em = agora(); c++; } }); return json(200, c); }
     if (n === 'money_robo_autorizar') {
       if (!/^robo-financas@solverone\.com\.br$/i.test(String(corpo.p_email).trim())) return json(404, { code: 'P0002', message: 'Não há conta SolverONE com esse e-mail.' });
@@ -156,6 +159,11 @@ async function prepararChaves() {
   db.omni_chave_privada.push({ user_id: UID, privada_cifrado: JSON.stringify({ v: 1, kid: 'k1', iv: b64(iv), ct: b64(await subtle.encrypt({ name: 'AES-GCM', iv }, k, pkcs8)) }), sal, iteracoes: 600000 });
   CF_RAW = webcrypto.getRandomValues(new Uint8Array(32));
   embrulhada = '1.' + b64(await subtle.encrypt({ name: 'RSA-OAEP' }, par.publicKey, new TextEncoder().encode(JSON.stringify({ v: 1, kv: 1, fk: 'fk-teste', k: b64(CF_RAW) }))));
+}
+/* o OmniLifeONE fecha a mensagem da ponte com a CF, no formato do cofre: {c:1, kv, fk, iv, ct} */
+async function selarCF(obj, fk) {
+  const k = await subtle.importKey('raw', CF_RAW, 'AES-GCM', false, ['encrypt']), iv = webcrypto.getRandomValues(new Uint8Array(12));
+  return JSON.stringify({ c: 1, kv: 1, fk: fk || 'fk-teste', iv: b64(iv), ct: b64(await subtle.encrypt({ name: 'AES-GCM', iv }, k, new TextEncoder().encode(JSON.stringify(obj)))) });
 }
 async function abrirDoBanco(cif) {
   const o = JSON.parse(cif), k = await subtle.importKey('raw', CF_RAW, 'AES-GCM', false, ['decrypt']);
@@ -306,6 +314,24 @@ let BASE = '';
     await esperar(1200); await filaVazia(A);
     const recNuvem = db.money_docs.filter((r) => r.colecao === 'recorrentes' && !r.apagado_em);
     ok(recNuvem.length === 1 && (await abrirDoBanco(recNuvem[0].dados_cifrado)).nome === 'Escola Bia 2027' && !/Escola Bia/.test(recNuvem[0].dados_cifrado), 'importar compromissos com a nuvem: sobe fechado para money_docs (recorrentes)');
+
+    /* 3.50: ponte do OmniLifeONE (sol_ponte): resumo da saúde fechado com a CF; só o mais novo vale */
+    const msg = async (id, quando, conteudo, fk) => ponte.push({ id, de_app: 'omnilife-one', para_app: 'moneytrio', tipo: 'saude-resumo', grupo_id: GID, user_id: UID, criado_em: quando, lido_em: null,
+      dados: { v: 1, cif: await selarCF(conteudo, fk) } });
+    await msg('p1', '2026-11-05T10:00:00Z', { v: 1, pessoas: [{ apelido: 'Bia', operadora: 'Plano Antigo', medico: '' }] });
+    await msg('p2', '2026-11-06T10:00:00Z', { v: 1, pessoas: [{ apelido: 'Bia', operadora: 'Amil', medico: 'Dra. Carla Mendes (pediatra) 11 98888-0000' }, { apelido: 'Alex', operadora: 'Amil', medico: '' }] });
+    await msg('p3', '2026-11-06T11:00:00Z', { v: 1, pessoas: [{ apelido: 'Zé', operadora: 'Outra', medico: '' }] }, 'fk-de-outra-chave');
+    await A.evaluate(() => MoneyNuvem._teste.Ponte.buscar());
+    await A.waitForFunction(() => (Store.estado.ponte_omnilife || []).length === 1, null, { timeout: 5000 }).catch(() => {});
+    for (let i = 0; i < 20 && !ponte[1].lido_em; i++) await esperar(100);
+    const sd = await A.evaluate(() => ({ pl: (Store.estado.saude_planos || []).map((x) => x.operadora + ':' + x.membros.join('+')), pr: (Store.estado.profissionais || []).map((x) => [x.nome, x.grupo, x.quem, x.irpf].join('|')) }));
+    ok(sd.pl.join() === 'Amil:Bia+Alex' && sd.pr.join() === 'Dra. Carla Mendes|SAUDE|Bia|true', 'ponte: o resumo mais novo do OmniLifeONE preenche o plano (Amil: Bia+Alex) e o médico vira profissional conhecido (' + JSON.stringify(sd) + ')');
+    ok(ponte[0].lido_em && ponte[1].lido_em && !ponte[2].lido_em, 'ponte: as duas mensagens abertas ficam lidas; a que não abre com a chave desta família fica na caixa, sem aplicar');
+    await esperar(1200); await filaVazia(A);
+    const sdNuvem = db.money_docs.filter((r) => r.colecao === 'saude_planos' || r.colecao === 'profissionais' || r.colecao === 'ponte_omnilife');
+    ok(sdNuvem.length >= 3 && sdNuvem.every((r) => !/Amil|Carla|Bia/.test(r.dados_cifrado || '')), 'ponte: o que veio do OmniLifeONE sobe para o money_docs fechado (' + sdNuvem.length + ' registros)');
+    await A.evaluate(() => MoneyNuvem._teste.Ponte.buscar());
+    ok(await A.evaluate(() => (Store.estado.saude_planos || []).length === 1 && (Store.estado.profissionais || []).length === 1), 'ponte: buscar de novo não repete nada');
 
     /* ---------- 3. caixa do robô ---------- */
     console.log('3) caixa do robô');

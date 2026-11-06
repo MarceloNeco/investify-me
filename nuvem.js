@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.7.0 · 06/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.8.0 · 06/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -13,6 +13,10 @@
       linha). Cópia local fechada no IndexedDB, fila de envio, trava otimista por versao, busca a cada 20 s.
    5. Caixa do robô (money_entrada): pacotes fechados para a chave pública da caixa; o app abre, transforma em
       lançamento do BudgetONE, grava fechado e marca como aproveitado.
+   7. 1.8.0 — Ponte entre apps (contrato C5, sol_ponte): a cada 3 buscas lê a caixa do MoneyTRIO
+      (sol_ponte_minha_caixa), abre o pacote "cif" de cada mensagem com a CF (o mesmo formato do cofre) e entrega
+      aos módulos pelo evento 'ponte.recebida' [{id, de_app, tipo, criado_em, conteudo|null}]. Quem usou chama
+      MoneyNuvem.ponte.marcarLido(id). Um app nunca lê a tabela do outro (C3): só a ponte.
    6. Tranca sozinho: 15 min sem uso (avisa 1 min antes) ou 10 min fora do app; nunca no meio de um trabalho; sem recarregar.
    Nunca grava nada de finanças em claro: o localStorage 'investifyme.dados.v1' (do app principal) só é LIDO, para
    oferecer "levar para a nuvem". Só a URL e a publishable key do Supabase ficam aqui (públicas por desenho).
@@ -1370,7 +1374,27 @@
     }
   };
 
+  /* 1.8.0 — mensagens de outros apps da família (sol_ponte), fechadas com a CF */
+  var Ponte = {
+    vistos: new Set(),
+    buscar: async function () {
+      if (!window.MoneyModulos || !Cadeado.aberto()) return [];
+      var rows; try { rows = await Conta.rpc('sol_ponte_minha_caixa', { p_app: APP, p_so_nao_lidas: true, p_limite: 50 }); } catch (e) { return []; }
+      var out = [];
+      for (var i = 0; i < (rows || []).length; i++) {
+        var r = rows[i]; if (this.vistos.has(r.id) || (r.grupo_id && r.grupo_id !== Cadeado.gid)) continue;
+        this.vistos.add(r.id);
+        var d = r.dados || {}, cif = d.cif == null ? null : (typeof d.cif === 'string' ? d.cif : JSON.stringify(d.cif));
+        out.push({ id: r.id, de_app: r.de_app, tipo: r.tipo, criado_em: r.criado_em, conteudo: cif ? await Cadeado.abrir(cif) : null });
+      }
+      if (out.length) MoneyModulos.emitir('ponte.recebida', out);
+      return out;
+    },
+    marcarLido: function (id) { return Conta.rpc('sol_ponte_marcar_lido', { p_id: id, p_app: APP }); }
+  };
+
   var Nuvem = {
+    ponte: { marcarLido: function (id) { return Ponte.marcarLido(id); } },
     arquivos: Arquivos,
     iniciado: false, familia: null, podeLevar: false,
     /* 3.32: o nome da pessoa no topo (no lugar de "Dono da carteira"): nome do perfil SolverONE (user_settings.display_name),
@@ -1535,7 +1559,7 @@
           this.aplicar(abertos);
         }
         this._voltas = (this._voltas || 0) + 1;
-        if (this._voltas % 3 === 1) await this.conferirPapel();
+        if (this._voltas % 3 === 1) { await this.conferirPapel(); await Ponte.buscar(); }
         Caixa.esvaziar();
       } catch (e) { console.warn('nuvem: busca', e); }
       finally { this._buscando = false; Painel.atualizar(); }
@@ -1624,7 +1648,7 @@
       lsDel(K_FAM);
     },
     /* para os testes automáticos (teste/nuvem.js): as peças, sem estado aberto */
-    _teste: { IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao }
+    _teste: { Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao }
   };
   function nomeConta() { var s = Conta.ler() || {}, d = Conta.dados(s.access_token).user_metadata || {}; return String(s.nome || d.full_name || d.name || '').trim() || String(Conta.email() || '').split('@')[0]; }
   function confirmar(t) { try { return window.confirm(t); } catch (e) { return false; } }

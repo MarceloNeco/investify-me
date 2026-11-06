@@ -77,3 +77,13 @@ responsável de uma família), igual às `omni_sou_*`. O aviso de `spatial_ref_s
   conflito, robô, PIN, trava de apagar em massa, sem erro de página em 390x800 e 1366x768). SQL: `teste/sql/LEIA-ME.md`.
   No Supabase real (só leitura, 03/Nov): formato de `omni_chave_privada` (600 mil, `iv/ct/kid`) e de `sol_grupo_chaves`
   (`1.`) confere; visitante recebe 401 em `money_docs`; `money_docs` vazio. Depois de aplicar o v2: `money_robo_depositar(p_grupo uuid, p_itens jsonb) → integer` como no contrato do robô; a chave da caixa da família já foi criada pelo app (1 linha em `money_caixa_chave`); nenhum robô autorizado ainda.
+
+## Arquivos fechados no Storage (v4) — aplicado em 06/11/2026
+`supabase/2026-11-06-moneytrio-arquivos.sql` aplicado pela sessão principal (`moneytrio_v4_arquivos_2026_11_06`): bucket
+`money-arquivos` privado, regras em `storage.objects` só para chefe/responsável (ler e subir; ninguém muda nem apaga), anon sem acesso.
+O app (`nuvem.js` 1.7.0, `MoneyNuvem.arquivos`) sobe cada PDF já fechado com a chave da família. Falta o dono conferir no app que um
+arquivo sobe e volta.
+
+## Ponte com o OmniLifeONE (3.50) — sem SQL novo
+Usa só o que a base já tem (contrato C5): `sol_ponte_minha_caixa('moneytrio')` e `sol_ponte_marcar_lido`. O MoneyTRIO não lê
+nenhuma tabela `omni_*` (C3). Especificação em ARQUITETURA.md, "Ligação com o OmniLifeONE".
