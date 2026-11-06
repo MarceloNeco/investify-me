@@ -2954,6 +2954,11 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.44 */
+  'Plano de saúde: reembolso estimado e o que fica para o IR':'Health plan: estimated refund and what is left for tax',
+  'Nova tela "Plano de saúde" (BudgetONE): operadora, PF ou PJ, quem o plano cobre, coparticipação, reembolso e a tabela de reembolso por tipo (consulta, exame, terapia, dentista) e por especialidade.':'New "Health plan" screen (BudgetONE): insurer, individual or company, who is covered, co-payment, refund and the refund table by type (visit, test, therapy, dentist) and specialty.',
+  'Cada gasto de Saúde mostra "↩ volta ~R$ X · IR R$ Y (estimado)"; TaxONE → Deduções mostra o total do ano: gasto, quanto volta e quanto fica para o IR.':'Each health expense shows "↩ refund ~R$ X · tax R$ Y (estimate)"; TaxONE → Deductions shows the year total: spent, refunded and left for tax.',
+  '"Ler a apólice (PDF)": o app acha a operadora, se há reembolso e coparticipação e os valores da tabela, sem IA; você confere e salva. A apólice fica guardada fechada.':'"Read the policy (PDF)": the app finds the insurer, whether there is refund and co-payment, and the table values, without AI; you check and save. The policy is stored encrypted.',
   /* 3.43 */
   'Profissionais conhecidos':'Known professionals',
   'Em Custos → Revisar, "Profissionais para confirmar": o app junta os lançamentos de cada médico, dentista ou escola pelo nome (mesmo com PIX, DRA., LTDA ou uma letra diferente) e pergunta uma vez só. Confirmado, todo lançamento com esse nome, antigo e novo, já entra com a categoria, a pessoa e o IR certos.':'In Costs → Review, "Professionals to confirm": the app groups each doctor, dentist or school by name (even with PIX, DR., LTDA or one letter off) and asks only once. Once confirmed, every entry with that name, old and new, is classified with the right category, person and tax flag.',
@@ -13698,6 +13703,11 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.44', d:'2026-11-06', t:'Plano de saúde: reembolso estimado e o que fica para o IR', itens:[
+    'Nova tela "Plano de saúde" (BudgetONE): operadora, PF ou PJ, quem o plano cobre, coparticipação, reembolso e a tabela de reembolso por tipo (consulta, exame, terapia, dentista) e por especialidade.',
+    'Cada gasto de Saúde mostra "↩ volta ~R$ X · IR R$ Y (estimado)"; TaxONE → Deduções mostra o total do ano: gasto, quanto volta e quanto fica para o IR.',
+    '"Ler a apólice (PDF)": o app acha a operadora, se há reembolso e coparticipação e os valores da tabela, sem IA; você confere e salva. A apólice fica guardada fechada.'
+  ]},
   {v:'3.43', d:'2026-11-06', t:'Profissionais conhecidos', itens:[
     'Em Custos → Revisar, "Profissionais para confirmar": o app junta os lançamentos de cada médico, dentista ou escola pelo nome (mesmo com PIX, DRA., LTDA ou uma letra diferente) e pergunta uma vez só. Confirmado, todo lançamento com esse nome, antigo e novo, já entra com a categoria, a pessoa e o IR certos.',
     'Nome meio parecido com um conhecido aparece com a sugestão ("parece Dra. …"), e só é classificado depois de confirmar. "Não é profissional" para de perguntar. Lançamento que você editou à mão nunca é mexido.'
@@ -36047,6 +36057,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/agendamentos.js?v=1.0.0"></script>
 <script src="modulos/nf-ir.js?v=1.0.0"></script>
 <script src="modulos/profissionais.js?v=1.0.0"></script>
+<script src="modulos/saude.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.7.0"></script>
 </body>
 </html>

@@ -603,3 +603,28 @@ o TaxONE e os leitores só depois de terem testes próprios.
   com sugestão; nome novo de saúde/educação = pergunta. Ouve `gasto.novo`; cartão em `custos.revisar`; tela `b-profissionais`.
   Muda o lançamento no próprio objeto (quem chamou `Gasto.add` continua com a referência) e nunca mexe em `editadoPessoa`.
 - Teste: `teste/teste-parte7.js`.
+
+### Plano de saúde e reembolso (3.44)
+- `modulos/saude.js` (`Saude`, N38): `Store.estado.saude_planos`. Tipo e especialidade do gasto por palavras (sem IA); reembolso estimado =
+  menor entre o gasto e a tabela (especialidade ganha do tipo); "fica para o IR" = gasto − reembolso (só gasto com IR). Leitor de apólice
+  "por modelo": lista de operadoras, frases de "sem reembolso"/"coparticipação" e linhas "tipo … R$ valor"; a pessoa confere antes de salvar.
+  A apólice vai para `ArquivosFamilia` (tipo `apolice`). Pontos: `lancamento.linha`, `tax.deducoes.topo`, `custos.topo`; tela `b-saude`.
+- Teste: `teste/teste-parte8.js`.
+
+### Integração com o OmniLifeONE (relatório, 06/Nov/2026; nada foi mexido no OmniLife)
+**O que existe**
+- Na tela Saúde do OmniLifeONE, por pessoa: operadora do plano, nº da carteirinha, validade, cartão SUS, médico de referência,
+  alergias e remédios. Fica **só no aparelho** (`NUVEM_LOCAL = ["health","docs","files"]` no index.html do OmniLife), de propósito,
+  por ser dado sensível. Os outros dados vão para `omni_docs`, cifrados com a mesma chave da família que o MoneyTRIO usa.
+- O `para-o-chat-do-MoneyTrio-integracao-OmniLifeONE.txt` descreve uma ponte antiga por `localStorage` (`ecossistema.ponte.v1`:
+  gastos e preços do OmniLife para o BudgetONE). O MoneyTRIO nunca leu essa ponte; com a nuvem e o domínio próprio de cada app ela não
+  funciona mais (cada app tem a sua origem).
+
+**O que proponho** (decisão do dono e do chat do OmniLife)
+1. Fonte de cada dado: a **identidade do plano** (operadora, carteirinha, quem é coberto) mora no OmniLife; a **parte financeira**
+   (reembolso, coparticipação, tabela, PF/PJ) mora no MoneyTRIO. Nenhum app escreve no outro.
+2. Para o MoneyTRIO preencher sozinho "operadora" e "quem é coberto", o OmniLife precisaria subir uma visão mínima da Saúde
+   (só operadora e pessoas; sem alergias, remédios ou carteirinha) numa coleção própria do `omni_docs`, por exemplo `health_plan`.
+   Leitura só de chefe/responsável, cifrada com a chave da família. Contrato escrito no `PLATAFORMA-DADOS.md`.
+3. O "médico de referência" do OmniLife pode virar um profissional conhecido (N39), para o extrato reconhecê-lo desde o primeiro PIX.
+4. A ponte por `localStorage` deve ser registrada como obsoleta nos dois repositórios.
