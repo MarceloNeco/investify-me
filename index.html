@@ -2957,6 +2957,10 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.47 */
+  'Contrato da escola pelo modelo e extrato do FGTS':'School contract by template and FGTS statement',
+  '"📄 Compromisso de um contrato (PDF)" agora reconhece o contrato escolar, o do período ampliado e o boleto da matrícula (pode escolher os três de uma vez): mostra uma prévia e cria os compromissos "a confirmar", com os meses certos (ex.: sem julho) e o IR, e lança a 1ª parcela como gasto pontual. Se o contrato não marcou a opção, o app pergunta.':'"📄 Commitment from a contract (PDF)" now recognises the school contract, the extended-day contract and the enrolment bill (pick all three at once): it shows a preview and creates the commitments "to confirm", with the right months (e.g. no July) and the tax flag, and adds the 1st instalment as a one-off expense. If the option is not marked, the app asks.',
+  'Sem liquidez → "📄 Ler extrato do FGTS (PDF)": lê o extrato de cada conta (empregador, admissão, afastamento, saldo e lançamentos) e atualiza a conta certa depois da sua confirmação. Entre um extrato e outro, o saldo é estimado pelo JAM ("estimado desde …"); em agosto o app lembra de atualizar; conta zerada fica guardada e escondida.':'Not liquid → "📄 Read FGTS statement (PDF)": reads each account statement (employer, hire and leave dates, balance and entries) and updates the right account after you confirm. Between statements the balance is estimated from the monthly interest ("estimated since …"); in August the app reminds you to update; empty accounts are kept and hidden.',
   /* 3.46 */
   'Assinaturas, compromisso de um contrato, época do ano e boleto':'Subscriptions, commitments from a contract, seasonality and bills',
   'Assinaturas: plano mensal ou anual, data de renovação, aviso antes de renovar (7 dias no mensal, 30 no anual) e a comparação "anual × mensal" quando há os dois preços.':'Subscriptions: monthly or yearly plan, renewal date, a reminder before renewing (7 days monthly, 30 yearly) and the "yearly × monthly" comparison when both prices are known.',
@@ -3026,6 +3030,7 @@ const FRASES_EN = {
   'Importar compromissos':'Import commitments',
   'Importar compromissos de um arquivo: o app mostra a prévia, avisa o que já existe e importa só o que você marcar.':'Import commitments from a file: the app shows a preview, flags what already exists and imports only what you tick.',
   '⬆ Importar compromissos':'⬆ Import commitments',
+  '📄 Compromisso de um contrato (PDF)':'📄 Commitment from a contract (PDF)',
   /* 3.32 */
   'Seu nome no topo':'Your name at the top',
   'Seu nome aparece no topo no lugar de \'Dono da carteira\'.':'Your name appears at the top instead of \'Wallet owner\'.',
@@ -13715,6 +13720,10 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.47', d:'2026-11-06', t:'Contrato da escola pelo modelo e extrato do FGTS', itens:[
+    '"📄 Compromisso de um contrato (PDF)" agora reconhece o contrato escolar, o do período ampliado e o boleto da matrícula (pode escolher os três de uma vez): mostra uma prévia e cria os compromissos "a confirmar", com os meses certos (ex.: sem julho) e o IR, e lança a 1ª parcela como gasto pontual. Se o contrato não marcou a opção, o app pergunta.',
+    'Sem liquidez → "📄 Ler extrato do FGTS (PDF)": lê o extrato de cada conta (empregador, admissão, afastamento, saldo e lançamentos) e atualiza a conta certa depois da sua confirmação. Entre um extrato e outro, o saldo é estimado pelo JAM ("estimado desde …"); em agosto o app lembra de atualizar; conta zerada fica guardada e escondida.'
+  ]},
   {v:'3.46', d:'2026-11-06', t:'Assinaturas, compromisso de um contrato, época do ano e boleto', itens:[
     'Assinaturas: plano mensal ou anual, data de renovação, aviso antes de renovar (7 dias no mensal, 30 no anual) e a comparação "anual × mensal" quando há os dois preços.',
     '"📌 Virar compromisso" no lançamento e "📄 Compromisso de um contrato (PDF)" em Custos: o app lê o contrato da escola sem IA (escola, aluno, ano, parcelas, valor, vencimento) e abre o formulário preenchido para você conferir.',
@@ -16457,7 +16466,7 @@ const B_VAZIO = {
                p:'Cada compra, conta ou recebimento vira uma linha nesta lista. Comece por uma foto, pela planilha ou na mão.'},
   'b-custos': {h:'Custos',      ico:'📌', t:'Nenhum custo fixo ainda',
                p:'Aluguel, luz, internet, escola: o que se repete todo mês entra aqui e vira aviso antes de vencer.',
-               acoes:[['rec-novo','📌 Novo compromisso',true],['rec-importar','⬆ Importar compromissos'],['b-escanear','📷 Ler comprovante'],['b-novo','+ Novo lançamento']]},
+               acoes:[['rec-novo','📌 Novo compromisso',true],['rec-importar','⬆ Importar compromissos'],['cdl-contrato','📄 Compromisso de um contrato (PDF)'],['b-escanear','📷 Ler comprovante'],['b-novo','+ Novo lançamento']]},
   'b-fluxo':  {h:'Fluxo',       ico:'📈', t:'O fluxo aparece com o primeiro lançamento',
                p:'Entradas e saídas mês a mês, e quanto sobra. Precisa de pelo menos um gasto ou uma renda.'},
   'b-renda':  {h:'Renda',       ico:'💰', t:'Cadastre o que entra',
@@ -16844,8 +16853,10 @@ function abrirRecorrente(id, semente, op){
       '<button type="button" class="btn sm primary" data-acao="rec-rasc-usar">' + de('Continuar de onde parou', 'Pick up where you left') + '</button> ' +
       '<button type="button" class="btn sm" data-acao="rec-rasc-fora">' + de('Começar do zero', 'Start fresh') + '</button></div>' : '') +
     (r.aConfirmar ? '<div class="aviso-box"><b>⚠ ' + de('A confirmar', 'To confirm') + '</b><p class="small" style="margin:6px 0 0">' +
-      de('Criado ao rolar para o próximo ano. Confira o valor (reajuste) e o nome (ex.: série) e salve.',
-         'Created when rolling to next year. Check the amount (increase) and the name (e.g. grade) and save.') + '</p></div>' : '') +
+      (r.origem === 'contrato' ? de('Criado a partir do contrato. Confira o valor, o dia de vencimento e os meses e salve.',
+         'Created from the contract. Check the amount, the due day and the months and save.')
+       : de('Criado ao rolar para o próximo ano. Confira o valor (reajuste) e o nome (ex.: série) e salve.',
+         'Created when rolling to next year. Check the amount (increase) and the name (e.g. grade) and save.')) + '</p></div>' : '') +
 
     campo(de('O quê', 'What'),
       '<input id="rcNome" autocomplete="off" placeholder="' + de('Aluguel, Escola Ana, Netflix…', 'Rent, school, Netflix…') + '" value="' + esc(r.nome || '') + '">') +
@@ -23663,7 +23674,7 @@ function blocoRecorrentes(){
         '<td><button class="fav" data-recfav="' + r.id + '" title="favorito">' +
             (r.favorito ? '<i class="fav-on">★</i>' : '☆') + '</button></td>' +
         '<td><span class="t-main">' + esc(r.nome) + '</span>' +
-          (r.aConfirmar ? ' <span class="tag-conf" title="' + esc(I18n.atual === 'pt' ? 'criado ao rolar o ano: confira valor e nome' : 'created by rolling the year: check amount and name') + '">⚠ ' + (I18n.atual === 'pt' ? 'a confirmar' : 'to confirm') + '</span>' : '') +
+          (r.aConfirmar ? ' <span class="tag-conf" title="' + esc(r.origem === 'contrato' ? (I18n.atual === 'pt' ? 'criado a partir do contrato: confira valor e dia' : 'created from the contract: check amount and day') : (I18n.atual === 'pt' ? 'criado ao rolar o ano: confira valor e nome' : 'created by rolling the year: check amount and name')) + '">⚠ ' + (I18n.atual === 'pt' ? 'a confirmar' : 'to confirm') + '</span>' : '') +
           (r.ativo !== false && Recorrente.sobreposicoes(r).length ? ' <span class="tag-rep" title="' + esc((I18n.atual === 'pt' ? 'Parece repetido com: ' : 'Looks repeated with: ') + Recorrente.sobreposicoes(r).map(x => x.r.nome).join(', ')) + '">⚠ ' + (I18n.atual === 'pt' ? 'repetido?' : 'repeated?') + '</span>' : '') +
           '<div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) +
           (r.quem ? ' · ' + esc(r.quem) : '') +
@@ -36094,10 +36105,11 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/nf-ir.js?v=1.0.0"></script>
 <script src="modulos/profissionais.js?v=1.0.0"></script>
 <script src="modulos/saude.js?v=1.0.0"></script>
-<script src="modulos/patrimonio-iliquido.js?v=1.0.0"></script>
+<script src="modulos/patrimonio-iliquido.js?v=1.1.0"></script>
+<script src="modulos/fgts.js?v=1.0.0"></script>
 <script src="modulos/importar-posicoes.js?v=1.0.0"></script>
 <script src="modulos/assinaturas.js?v=1.0.0"></script>
-<script src="modulos/compromisso-de.js?v=1.0.0"></script>
+<script src="modulos/compromisso-de.js?v=1.1.0"></script>
 <script src="modulos/previsto.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.7.0"></script>
 </body>

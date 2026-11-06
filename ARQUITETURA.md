@@ -571,6 +571,8 @@ Desde a 3.41, **toda função nova é um módulo**: um arquivo em `modulos/`, co
 - itens: `patrimonio.extra` → `[{valor, rotulo}]`: o Painel soma ao "Patrimônio total" e mostra separado do líquido — 3.45
 - html: `compromisso.detalhes` {r} (fim de "Mais opções"), `compromisso.varia` {r} (embaixo de "O valor varia") — 3.46
 - itens: `recorrente.previsto` {r, iso, valor} → `[{valor, fonte}]`: ajusta o previsto de uma ocorrência (o último vale; o valor marcado à mão ainda ganha) — 3.46
+- pontos que um MÓDULO oferece a outro (3.47, `patrimonio-iliquido` 1.1.0): itens `iliquido.valor` {item} → `[{valor, nota}]` (valor de hoje de um
+  item sem liquidez; o último vale) e html `iliquido.topo` (botões e avisos no cartão 🔒 Sem liquidez)
 - telas aceitam `ajuda: {pt: {t, o, f}, en: {…}}` (título e ajuda do AssistONE); `appDaView` usa o `app` da tela
 - nome global de módulo não pode repetir um `const`/`function` do index.html (o do app esconde o do módulo;
   `teste-modulos.js` confere). Ex.: o cofre de arquivos é `window.ArquivosFamilia` porque `Arquivos` já existia.
@@ -655,3 +657,21 @@ o TaxONE e os leitores só depois de terem testes próprios.
   últimos números; fator de vencimento com a base nova de 22/02/2025). Ajusta o previsto pelo ponto `recorrente.previsto`
   (`Recorrente.ocorrencia` → `previstoFonte` 'sazonal' | 'boleto'); o valor marcado/conciliado ainda ganha.
 - Teste: `teste/teste-parte10.js`.
+
+### Contrato da escola pelo modelo e extrato do FGTS (3.47)
+- `modulos/compromisso-de.js` 1.1.0: `lerModelo(texto)` reconhece 3 modelos (texto do pdftotext): **contrato escolar** ("educação escolar - AAAA":
+  curso/turno marcados com `( X )`, tabela "Curso/Etapa | Anuidade | 1ª Parcela Antecipada | Restante | Nº | Parcela" com o nome da etapa
+  quebrado em até 2 linhas acima do valor, "N mensais … de <mês> a <mês> … vencíveis no dia D"); **período ampliado** (tabela "Modalidade |
+  Horário | Anuidade | Nº | Parcela", opção com `( X )` ou −1 = perguntar; "vencimento nos meses de fev a jun e de ago a dez" → `fora` [7]);
+  **boleto da matrícula** ("1ª Parcela da Anuidade": os 3 últimos valores = bruto, desconto, a pagar; "Vencimento dd/mm/aaaa").
+  `planoModelo(docs)` → compromissos `aConfirmar`, `origem: 'contrato'`, IR, Dependentes/escola + 1ª parcela como gasto pontual
+  (`jaLancado` = mesmo valor ±15 dias → vem desmarcado). Prévia no `genModal`; leitura no `Fundo`. Texto sem modelo → leitor genérico (1.0.0).
+  O aviso "A confirmar" do compromisso diz "Criado a partir do contrato" quando `origem === 'contrato'`.
+- `modulos/fgts.js` (`Fgts`): `lerExtrato` (empregador, CNPJ, admissão, afastamento, saldo, data, lançamentos com saque negativo, taxa do último
+  CREDITO DE JAM = crédito ÷ saldo antes dele); `estimar(item)` = saldo × (1 + taxa)^n, n = dias 21 desde a data do extrato (sem JAM no extrato:
+  3% a.a. sem TR); distribuição de resultado fica "a confirmar" (fora da estimativa). Sem coleção própria: grava em `patrimonio_iliquido`
+  (`tipo: 'fgts'`, `fgts: {empregador, admissao, afastamento, taxaJam, lancs (últimos 60)}`); acha a conta pelo 1º nome significativo do empregador.
+  Aviso em agosto enquanto houver conta com saldo lida antes de 1º/ago. Extrato vai para `ArquivosFamilia` (tipo `fgts`).
+- `modulos/patrimonio-iliquido.js` 1.1.0: `valorHoje(item)` (ponto `iliquido.valor`), `total()` pelo valor de hoje; FGTS pode ter valor 0
+  (conta sacada: guardada e escondida, "N contas zeradas guardadas — mostrar").
+- Teste: `teste/teste-contrato-fgts.js` (textos sintéticos, sem dado real).
