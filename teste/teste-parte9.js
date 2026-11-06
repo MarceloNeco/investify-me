@@ -19,7 +19,7 @@ const ARQ = { tipo: 'moneytrio-posicoes', versao: 1, itens: [
   { ticker: 'CDB BANCO X', tipo: 'fundo', inst: 'Banco X', pm: 10000 },
   { ticker: 'XYZ', tipo: 'nao-existe', qtd: 1, pm: 1 } ] };
 (async () => {
-  const srv = http.createServer((q, s) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404); return s.end(); } s.writeHead(200, { 'Content-Type': p.endsWith('.html') ? 'text/html; charset=utf-8' : p.endsWith('.js') ? 'text/javascript' : 'application/octet-stream' }); fs.createReadStream(p).pipe(s); });
+  const srv = http.createServer((q, s) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404); return s.end(); } s.writeHead(200, { 'Content-Type': p.endsWith('.html') ? 'text/html; charset=utf-8' : p.endsWith('.js') ? 'text/javascript' : p.endsWith('.css') ? 'text/css' : 'application/octet-stream' }); fs.createReadStream(p).pipe(s); });
   await new Promise((r) => srv.listen(0, '127.0.0.1', r));
   const BASE = 'http://127.0.0.1:' + srv.address().port;
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pos-'));

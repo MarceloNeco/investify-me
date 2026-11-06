@@ -19,7 +19,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, recorrentes: [], gastos: [
   G('c1', 12, 'PIX CLINICA ODONTO SORRISO LTDA', 300, 'SAUDE', 'Dentista'),
   G('x1', 3, 'MERCADO BOM PRECO', 120, 'PESSOAL', 'Mercado') ] };
 (async () => {
-  const srv = http.createServer((q, s) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404); return s.end(); } s.writeHead(200, { 'Content-Type': p.endsWith('.html') ? 'text/html; charset=utf-8' : p.endsWith('.js') ? 'text/javascript' : 'application/octet-stream' }); fs.createReadStream(p).pipe(s); });
+  const srv = http.createServer((q, s) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404); return s.end(); } s.writeHead(200, { 'Content-Type': p.endsWith('.html') ? 'text/html; charset=utf-8' : p.endsWith('.js') ? 'text/javascript' : p.endsWith('.css') ? 'text/css' : 'application/octet-stream' }); fs.createReadStream(p).pipe(s); });
   await new Promise((r) => srv.listen(0, '127.0.0.1', r));
   const BASE = 'http://127.0.0.1:' + srv.address().port;
   const b = await chromium.launch();

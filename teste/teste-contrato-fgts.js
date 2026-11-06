@@ -51,7 +51,7 @@ const FGTS2 = ['EXTRATO DO FGTS', 'Empregador: OUTRA FIRMA COMERCIO SA', 'Data d
 const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [], recorrentes: [],
   patrimonio_iliquido: [{ id: 'il1', nome: 'FGTS — Exemplo', tipo: 'fgts', inst: 'Empresa Exemplo', valor: 90000, data: '2025-08-01', obs: '' }] };
 (async () => {
-  const srv = http.createServer((q, s) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404); return s.end(); } s.writeHead(200, { 'Content-Type': p.endsWith('.html') ? 'text/html; charset=utf-8' : p.endsWith('.js') ? 'text/javascript' : 'application/octet-stream' }); fs.createReadStream(p).pipe(s); });
+  const srv = http.createServer((q, s) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404); return s.end(); } s.writeHead(200, { 'Content-Type': p.endsWith('.html') ? 'text/html; charset=utf-8' : p.endsWith('.js') ? 'text/javascript' : p.endsWith('.css') ? 'text/css' : 'application/octet-stream' }); fs.createReadStream(p).pipe(s); });
   await new Promise((r) => srv.listen(0, '127.0.0.1', r));
   const BASE = 'http://127.0.0.1:' + srv.address().port;
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cf-'));

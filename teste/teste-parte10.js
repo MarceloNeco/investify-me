@@ -33,7 +33,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos, recorrentes: [
   { id: 'r-yt', nome: 'YouTube Premium', valor: 26.9, grupo: 'LAZER', sub: 'Assinaturas', regra: 'dia', dia: 3 },
   { id: 'r-luz', nome: 'Conta de luz', valor: 430, grupo: 'HABITACAO', sub: 'Energia', regra: 'dia', dia: 15, varia: true } ] };
 (async () => {
-  const srv = http.createServer((q, s) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404); return s.end(); } s.writeHead(200, { 'Content-Type': p.endsWith('.html') ? 'text/html; charset=utf-8' : p.endsWith('.js') ? 'text/javascript' : 'application/octet-stream' }); fs.createReadStream(p).pipe(s); });
+  const srv = http.createServer((q, s) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404); return s.end(); } s.writeHead(200, { 'Content-Type': p.endsWith('.html') ? 'text/html; charset=utf-8' : p.endsWith('.js') ? 'text/javascript' : p.endsWith('.css') ? 'text/css' : 'application/octet-stream' }); fs.createReadStream(p).pipe(s); });
   await new Promise((r) => srv.listen(0, '127.0.0.1', r));
   const BASE = 'http://127.0.0.1:' + srv.address().port;
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'p10-'));

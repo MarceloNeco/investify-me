@@ -173,7 +173,7 @@ Não existe arquivo de tradução por tela. Funciona assim:
 2. `Verter.html(h)` — **a peça central.** Toda tela é montada como texto
    HTML em português e passa por essa função antes de entrar na página.
    Ela procura cada pedaço de texto entre `>` e `<`, mais os atributos
-   `title` e `placeholder`, no dicionário `FRASES_EN` de `frases.js`.
+   `title` e `placeholder`, no dicionário `FRASES_EN` (desde a 3.48 em `textos/frases-en.js`).
    Em português a função devolve o mesmo texto e não custa nada.
 3. `Verter.no(elemento)` — para pedaços que já vêm prontos no
    `index.html` e nunca passam por `render()` (a tela de senha, por
@@ -589,7 +589,7 @@ Desde a 3.41, **toda função nova é um módulo**: um arquivo em `modulos/`, co
   ninguém muda nem apaga). Teste local: `teste/sql/teste-moneytrio-arquivos.sql`.
 - Testes: `teste/teste-parte6.js`, `teste/teste-nuvem.js` (arquivo fechado indo e voltando), `teste/teste-modulos.js`.
 
-### Proposta (não feita): tirar partes antigas do index.html
+### Proposta: tirar partes antigas do index.html (aprovada em 06/Nov/2026 pela sessão principal, em partes)
 
 | O quê | Ganho | Risco |
 |---|---|---|
@@ -599,8 +599,17 @@ Desde a 3.41, **toda função nova é um módulo**: um arquivo em `modulos/`, co
 | Leitores de extrato/planilha/OCR para `modulos/leitores.js` | isola o código mais frágil | médio: muitos formatos de banco; precisa de amostras para testar |
 | O CSS (~150 KB) para `estilo.css` | o navegador guarda o estilo separado | baixo: mais um arquivo no `sw.js` |
 
-Sugestão de ordem, se o dono aprovar: `FRASES_EN`/`MUDANCAS` e o CSS (risco baixo), depois o glossário e o coach (maior ganho);
-o TaxONE e os leitores só depois de terem testes próprios.
+Ordem aprovada: (1) Parte 11 — `FRASES_EN`/`MUDANCAS` e o CSS; (2) Parte 12 — glossário e coach, com teste de fumaça antes/depois;
+(3) TaxONE e leitores só depois de terem testes próprios, numa parte aprovada de novo.
+
+**Feito na 3.48 (Parte 11):** `estilo.css` (o `<style>` inteiro, ~2.300 linhas), `textos/frases-en.js` (`const FRASES_EN`) e
+`textos/mudancas.js` (`const MUDANCAS`; `VERSAO = MUDANCAS[0].v` continua no `index.html`). São scripts comuns (não módulos):
+carregam antes do bloco que usa cada um, e a `const` vale para todo o app. Os três vão no `sw.js` com `?v=` e o cabeçalho de cada
+arquivo diz a versão (`teste-modulos.js` confere, agora também o `<link rel="stylesheet">`). O `index.html` caiu de 36 mil para 32,6 mil linhas.
+**A cada versão nova:** a entrada nova vai em `textos/mudancas.js`, o inglês em `textos/frases-en.js` e o `?v=` dos dois (e do
+`estilo.css`, se mudou) no `index.html` e no `sw.js`.
+Teste de fumaça para arrumação interna: `teste/teste-fumaca-telas.js <pasta de antes>` (10 telas × 390/1366 px × PT/EN: mesma foto,
+mesmo HTML, sem erro de página; o número da versão e a lista "O que há de novo" ficam de fora da comparação).
 
 ### Profissionais conhecidos (3.43)
 - `modulos/profissionais.js` (`Profissionais`, N39): `Store.estado.profissionais` = [{id, nome, apelidos (nomes normalizados), grupo, sub, quem,

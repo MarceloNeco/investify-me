@@ -19,7 +19,7 @@ console.log('1) coerência index.html × sw.js × arquivos');
 const idx = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
 const sw = fs.readFileSync(path.join(RAIZ, 'sw.js'), 'utf8');
 const arquivos = (sw.match(/var ARQUIVOS = \[([\s\S]*?)\];/) || [])[1] || '';
-const scripts = [...idx.matchAll(/<script src="([^"]+)"/g)].map((m) => m[1]).filter((s) => !/^recursos\.js/.test(s));
+const scripts = [...idx.matchAll(/<script src="([^"]+)"/g), ...idx.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map((m) => m[1]).filter((s) => !/^recursos\.js/.test(s));   /* 3.48: o estilo.css também */
 ok(scripts.length >= 2, 'index.html carrega ' + scripts.length + ' arquivos com versão');
 scripts.forEach((s) => {
   const [arq, q] = s.split('?v=');
@@ -39,10 +39,12 @@ fs.readdirSync(path.join(RAIZ, 'modulos')).filter((f) => f.endsWith('.js') && !f
   });
 });
 const pos = (s) => idx.indexOf('<script src="' + s);
+ok(idx.indexOf('<style') < 0 && /^const FRASES_EN = \{/m.test(fs.readFileSync(path.join(RAIZ, 'textos/frases-en.js'), 'utf8')) && /^const MUDANCAS = \[/m.test(fs.readFileSync(path.join(RAIZ, 'textos/mudancas.js'), 'utf8')) && !/^const (?:FRASES_EN|MUDANCAS)\b/m.test(idx), '3.48: CSS, FRASES_EN e MUDANCAS moram fora do index.html');
+ok(pos('textos/frases-en.js') > 0 && pos('textos/frases-en.js') < idx.indexOf('const Verter') && pos('textos/mudancas.js') > 0 && pos('textos/mudancas.js') < idx.indexOf('const VERSAO = MUDANCAS[0].v'), 'ordem: frases-en antes do Verter; mudancas antes da VERSAO');
 ok(pos('modulos/base.js') > 0 && pos('modulos/base.js') < pos('nuvem.js') && scripts.filter((s) => s.startsWith('modulos/') && !s.startsWith('modulos/base.js')).every((s) => pos(s) > pos('modulos/base.js') && pos(s) < pos('nuvem.js')), 'ordem: base, módulos, nuvem');
 
 (async () => {
-  const srv = http.createServer((q, s) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404); return s.end(); } s.writeHead(200, { 'Content-Type': p.endsWith('.html') ? 'text/html; charset=utf-8' : p.endsWith('.js') ? 'text/javascript' : 'application/octet-stream' }); fs.createReadStream(p).pipe(s); });
+  const srv = http.createServer((q, s) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404); return s.end(); } s.writeHead(200, { 'Content-Type': p.endsWith('.html') ? 'text/html; charset=utf-8' : p.endsWith('.js') ? 'text/javascript' : p.endsWith('.css') ? 'text/css' : 'application/octet-stream' }); fs.createReadStream(p).pipe(s); });
   await new Promise((r) => srv.listen(0, '127.0.0.1', r));
   const BASE = 'http://127.0.0.1:' + srv.address().port;
   const b = await chromium.launch();

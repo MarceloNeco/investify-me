@@ -97,6 +97,9 @@ var ARQUIVOS = [
   {n:'index.html',     d:{pt:'o app inteiro, com a carteira cifrada dentro', en:'the whole app, with the encrypted wallet inside'}, min:400000},
   {n:'manifest.json',  d:{pt:'faz virar aplicativo no celular',             en:'makes it an app on the phone'},                    min:200},
   {n:'sw.js',          d:{pt:'faz abrir sem internet',                       en:'makes it open without internet'},                  min:200},
+  {n:'estilo.css',     d:{pt:'o visual do app',                              en:'the app styling'},                                 min:20000},
+  {n:'textos/mudancas.js', d:{pt:'a versão e o que mudou',                   en:'the version and what changed'},                    min:5000},
+  {n:'textos/frases-en.js', d:{pt:'a tradução para o inglês',                en:'the English translation'},                         min:20000},
   {n:'icone-192.png',  d:{pt:'ícone do app instalado',                       en:'icon of the installed app'},                       min:500},
   {n:'icone-512.png',  d:{pt:'ícone do app instalado',                       en:'icon of the installed app'},                       min:500}
 ];
@@ -195,7 +198,9 @@ async function conferirApp(){
       : li('aviso', PT ? 'Não achei a versão dentro do sw.js' : 'I did not find the version inside sw.js', ''));
 
     /* 5. o número da versão do app */
-    var mvv = /MUDANCAS\s*=\s*\[\s*\{\s*v:\s*'([^']+)'/.exec(txt);
+    /* desde a 3.48 a lista MUDANCAS mora em textos/mudancas.js */
+    var txtM = txt; try{ txtM += await (await fetch('textos/mudancas.js', {cache:'no-store'})).text(); }catch(e2){}
+    var mvv = /MUDANCAS\s*=\s*\[\s*\{\s*v:\s*'([^']+)'/.exec(txtM);
     if(mvv) linhas.push(li('ok', PT ? 'Versão do app: ' + mvv[1] : 'App version: ' + mvv[1], ''));
 
   }catch(e){

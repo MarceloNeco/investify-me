@@ -21,7 +21,7 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
   { id: 'r-cond', nome: 'Condomínio Jardim', valor: 2600, grupo: 'HABITACAO', sub: 'Condomínio', regra: 'dia', dia: 10, varia: true },
   { id: 'r-dia', nome: 'Diarista Rita', valor: 250, grupo: 'HABITACAO', sub: 'Diarista', regra: 'dia', dia: 31, porVisita: true, visita: { regra: 'semanal', diaSemana: 1, soDiaUtil: true } } ] };
 (async () => {
-  const srv = http.createServer((q, s) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404); return s.end(); } s.writeHead(200, { 'Content-Type': p.endsWith('.html') ? 'text/html; charset=utf-8' : p.endsWith('.js') ? 'text/javascript' : 'application/octet-stream' }); fs.createReadStream(p).pipe(s); });
+  const srv = http.createServer((q, s) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404); return s.end(); } s.writeHead(200, { 'Content-Type': p.endsWith('.html') ? 'text/html; charset=utf-8' : p.endsWith('.js') ? 'text/javascript' : p.endsWith('.css') ? 'text/css' : 'application/octet-stream' }); fs.createReadStream(p).pipe(s); });
   await new Promise((r) => srv.listen(0, '127.0.0.1', r));
   const BASE = 'http://127.0.0.1:' + srv.address().port;
   const b = await chromium.launch();
