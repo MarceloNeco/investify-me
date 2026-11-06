@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.54">
+<link rel="stylesheet" href="estilo.css?v=3.57">
 </head>
 <body>
 
@@ -628,7 +628,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.56"></script>
+<script src="textos/frases-en.js?v=3.57"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7368,7 +7368,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.56"></script>
+<script src="textos/mudancas.js?v=3.57"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -27293,7 +27293,7 @@ function renderCalendarioMenu(){
   const alvo = $('#navCal');
   if(alvo){
     if(app !== 'budget' || typeof Cal === 'undefined') alvo.innerHTML = '';
-    else alvo.innerHTML = Verter.html(Cal.html({mes: Cal.mesAtual(), compacto: true, semLista: true}));
+    else{ alvo.innerHTML = Verter.html(Cal.html({mes: Cal.mesAtual(), compacto: true, semLista: true})); if(window.CalendarioMenu) CalendarioMenu.aplicar(alvo); }   /* 3.57: recolher/abrir */
   }
   /* o seletor de nível só aparece onde o nível muda alguma coisa:
      no Coach, no Glossário e em qualquer tela que tenha um ⓘ (as
@@ -29424,7 +29424,7 @@ document.addEventListener('DOMContentLoaded', function () {
   medirTopo(); ajustarLateral(); setTimeout(medirTopo, 600); setTimeout(medirTopo, 3000); setTimeout(pedirLateral, 600);
   /* 3.54 (N35): o topo e o anúncio mudam de altura sozinhos (fita, aviso, quebra de linha): a barra lateral acompanha */
   const tp = document.querySelector('.topbar'), an = document.getElementById('anuncioCaixa');
-  if(window.ResizeObserver){ const ro = new ResizeObserver(() => { medirTopo(); pedirLateral(); }); if(tp) ro.observe(tp); if(an) ro.observe(an); }
+  if(window.ResizeObserver){ const ro = new ResizeObserver(() => { medirTopo(); pedirLateral(); }); if(tp) ro.observe(tp); if(an) ro.observe(an); const nc = document.getElementById('navCal'); if(nc) ro.observe(nc); }   /* 3.57: o calendário recolhe e abre */
   /* passou de celular para computador (ou o contrário) com a página aberta: fecha o menu de celular e mede de novo */
   const mq = window.matchMedia ? matchMedia('(min-width:761px)') : null;
   const trocou = () => { if(mq && mq.matches){ const sn = document.getElementById('sidenav'), bd = document.getElementById('navBackdrop'); if(sn) sn.classList.remove('open'); if(bd) bd.classList.remove('on'); } medirTopo(); ajustarLateral(); };
@@ -29450,6 +29450,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/compromisso-de.js?v=1.4.1"></script>
 <script src="modulos/previsto.js?v=1.0.0"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
+<script src="modulos/calendario-menu.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.8.1"></script>
 </body>
 </html>

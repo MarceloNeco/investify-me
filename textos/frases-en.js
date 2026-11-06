@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.56 · 06/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.57 · 06/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.57 */
+  'Calendário do menu recolhe':'Menu calendar collapses',
+  'Calendário do menu (computador e celular): a setinha no cabeçalho recolhe o calendário numa etiqueta com o mês; tocar na etiqueta abre de novo. O app lembra a sua escolha neste aparelho.':'Menu calendar (computer and phone): the small arrow in its header collapses the calendar into a label with the month; tap the label to open it again. The app remembers your choice on this device.',
   /* 3.56 */
   'Entrar e PIN sem trocar de campo':'Sign-in and PIN without jumping fields',
   'Telas de entrar e do PIN da nuvem: o app não tira mais o cursor do campo em que você está (com o preenchimento automático de senha, o texto podia ir para o campo errado).':'Cloud sign-in and PIN screens: the app no longer moves the cursor away from the field you are in (with password autofill, the text could end up in the wrong field).',

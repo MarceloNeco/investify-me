@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.54 · 06/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.57 · 06/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2326,3 +2326,14 @@ html.sem-animacao .assistone-bt{animation:none; transition:none}
   /* o selo "Entrar na nuvem" (nuvem.js) fica ao lado da barra, nunca em cima do calendário */
   body .nv-selo{left:calc(212px + 16px)}
 }
+
+/* 3.57 — calendário do menu recolhe e abre (modulos/calendario-menu.js): botão discreto no cabeçalho e etiqueta do mês */
+.cal-topo .calm-rec{flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; padding:0;
+  background:transparent; border:1px solid transparent; border-radius:6px; color:var(--txt3); cursor:pointer}
+.cal-topo .calm-rec:hover{color:var(--txt); border-color:var(--line)}
+.calm-etq{display:flex; align-items:center; gap:6px; width:100%; padding:8px 7px; background:var(--card2); border:1px solid var(--line);
+  border-radius:8px; color:var(--txt2); font:inherit; font-size:.82rem; cursor:pointer; text-align:left}
+.calm-etq .calm-mes{flex:1; min-width:0; color:var(--txt); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.calm-etq svg{flex:0 0 auto}
+.calm-etq:hover{border-color:var(--line2); color:var(--txt)}
+.calm-rec:focus-visible, .calm-etq:focus-visible{outline:2px solid var(--accent2); outline-offset:2px}
