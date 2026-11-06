@@ -12,6 +12,7 @@
      5. aparelho B (computador 1366x768): mesma conta, outro aparelho; recebe tudo; muda e apaga; A recebe;
      6. conflito: A e B mudam o mesmo lançamento em campos diferentes → os dois ficam;
      7. nenhum erro de página (pageerror) nos dois tamanhos de tela;
+     7b. 3.56: o cursor automático das telas da nuvem não rouba o campo onde a pessoa já está;
      8. cadeado (3.31, relógio falso): 14 min sem uso não tranca e avisa; 15 min tranca; 9 min escondido não tranca; 10 min tranca;
         trabalho rodando não tranca; o que foi digitado continua depois de abrir.
    Uso (na pasta raiz):  node teste/teste-nuvem.js
@@ -203,6 +204,10 @@ async function entrarComCodigo(page, nome) {
   await page.goto(BASE + '/');
   await page.waitForSelector('#nvEm');
   ok(true, nome + ': tela de entrar aparece');
+  /* 3.56 (N43): o cursor automático da tela (60 ms depois de abrir) não rouba o campo onde a pessoa já está
+     (era a causa do teste instável: o texto ia para o campo errado no meio do preenchimento) */
+  await page.focus('#nvPw'); await page.waitForTimeout(150);
+  ok(await page.evaluate(() => document.activeElement && document.activeElement.id === 'nvPw'), nome + ': cursor não é roubado do campo onde a pessoa já está');
   await page.fill('#nvEm', 'dono@teste.com'); await page.fill('#nvPw', 'errada-123'); await page.click('#nvIn');
   await page.waitForFunction(() => { const e = document.querySelector('#nvErro'); return e && !e.classList.contains('nv-hidden'); });
   ok(/incorretos/.test(await page.textContent('#nvErro')), nome + ': senha errada avisa');

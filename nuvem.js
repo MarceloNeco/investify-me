@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.8.0 · 06/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.8.1 · 06/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -17,6 +17,7 @@
       (sol_ponte_minha_caixa), abre o pacote "cif" de cada mensagem com a CF (o mesmo formato do cofre) e entrega
       aos módulos pelo evento 'ponte.recebida' [{id, de_app, tipo, criado_em, conteudo|null}]. Quem usou chama
       MoneyNuvem.ponte.marcarLido(id). Um app nunca lê a tabela do outro (C3): só a ponte.
+   8. 1.8.1 — o cursor automático (1º campo, 60 ms depois de abrir a tela) não sai do campo onde a pessoa já está.
    6. Tranca sozinho: 15 min sem uso (avisa 1 min antes) ou 10 min fora do app; nunca no meio de um trabalho; sem recarregar.
    Nunca grava nada de finanças em claro: o localStorage 'investifyme.dados.v1' (do app principal) só é LIDO, para
    oferecer "levar para a nuvem". Só a URL e a publishable key do Supabase ficam aqui (públicas por desenho).
