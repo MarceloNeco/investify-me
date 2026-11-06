@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.5.1 · 03/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.6.0 · 06/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -23,7 +23,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.5.1';
+  var VERSAO = '1.6.0';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -444,6 +444,12 @@
      dados = { v: valor }. 'config/caixa_robo' é a chave secreta da caixa do robô (não é do Store). */
   var ITENS = ['posicoes', 'movimentos', 'gastos', 'recorrentes', 'pagamentos', 'precos', 'extratos', 'agenda', 'metas', 'bancos', 'cartoes', 'beneficios', 'lugares', 'trajetos', 'transferencias'];
   var TAX_ITENS = ['declaracoes', 'processos', 'docs'];
+  /* 1.6.0: as coleções dos módulos (modulos/*.js, MoneyModulos.colecoes()) entram na mesma conta: um registro por item */
+  function itens() {
+    if (!window.MoneyModulos) return ITENS;
+    var extra = MoneyModulos.colecoes().filter(function (c) { return ITENS.indexOf(c) < 0 && c !== 'tax' && c !== 'config'; });
+    return extra.length ? ITENS.concat(extra) : ITENS;
+  }
   var FORA = { atualizadoEm: 1, gastosZ: 1 };
   var RESERVADOS = { caixa_robo: 1 };
   function chaveItem(x) {
@@ -469,13 +475,13 @@
   }
   function mapear(est) {
     var out = new Map();
-    ITENS.forEach(function (c) { idsDaLista(Array.isArray(est[c]) ? est[c] : []).forEach(function (p) { out.set(c + '|' + p[0], p[1]); }); });
+    itens().forEach(function (c) { idsDaLista(Array.isArray(est[c]) ? est[c] : []).forEach(function (p) { out.set(c + '|' + p[0], p[1]); }); });
     var tax = est.tax && typeof est.tax === 'object' ? est.tax : {}, resto = {};
     TAX_ITENS.forEach(function (c) { idsDaLista(Array.isArray(tax[c]) ? tax[c] : []).forEach(function (p) { out.set('tax_' + c + '|' + p[0], p[1]); }); });
     Object.keys(tax).forEach(function (k) { if (TAX_ITENS.indexOf(k) < 0) resto[k] = tax[k]; });
     out.set('config|tax', JSON.stringify({ v: resto }));
     Object.keys(est).forEach(function (k) {
-      if (ITENS.indexOf(k) >= 0 || k === 'tax' || FORA[k] || RESERVADOS[k] || est[k] === undefined) return;
+      if (itens().indexOf(k) >= 0 || k === 'tax' || FORA[k] || RESERVADOS[k] || est[k] === undefined) return;
       if (!RX_ID.test(k)) return;
       var v = est[k];
       if (k === 'config' && v && typeof v === 'object') { v = Object.assign({}, v); delete v.chaves; }   /* chaves de API nunca sobem */
@@ -486,13 +492,13 @@
   /* registros abertos → estado do Store (o Store.migrar completa o que faltar) */
   function reconstruir(regs) {
     var est = {}, tax = { declaracoes: [], processos: [], docs: [] }, resto = {};
-    ITENS.forEach(function (c) { est[c] = []; });
+    itens().forEach(function (c) { est[c] = []; });
     regs.forEach(function (r) {
       var col = r[0], id = r[1], o = r[2]; if (!o) return;
       if (col === 'config') {
         if (RESERVADOS[id]) return;
         if (id === 'tax') Object.assign(resto, o.v || {}); else est[id] = o.v;
-      } else if (ITENS.indexOf(col) >= 0) est[col].push(o);
+      } else if (itens().indexOf(col) >= 0) est[col].push(o);
       else if (col.indexOf('tax_') === 0 && tax[col.slice(4)]) tax[col.slice(4)].push(o);
     });
     est.tax = Object.assign(resto, tax);
@@ -1499,7 +1505,7 @@
         }
         var lista2 = listaDe(est, col);
         if (!lista2) {
-          if (ITENS.indexOf(col) >= 0) { est[col] = []; lista2 = est[col]; }
+          if (itens().indexOf(col) >= 0) { est[col] = []; lista2 = est[col]; }
           else if (col.indexOf('tax_') === 0 && TAX_ITENS.indexOf(col.slice(4)) >= 0) { est.tax = est.tax || {}; est.tax[col.slice(4)] = []; lista2 = est.tax[col.slice(4)]; }
           else return;   /* coleção que esta versão não conhece: fica guardada, não aparece */
         }

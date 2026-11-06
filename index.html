@@ -2948,6 +2948,9 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.41 */
+  'Base para as funções novas (módulos)':'Groundwork for new features (modules)',
+  'Por dentro: as funções novas passam a vir em arquivos separados (módulos), cada uma com o próprio teste. O app fica mais fácil de manter e não muda nada na tela.':'Under the hood: new features now come in separate files (modules), each with its own test. The app is easier to maintain and nothing changes on screen.',
   /* 3.40 */
   'Caixa do robô com muitos itens de uma vez':'Robot inbox with many items at once',
   'Quando o robô reenvia muitos lançamentos de uma vez (milhares), o app junta as transferências uma vez por lote, sem travar a tela.':'When the robot resends many entries at once (thousands), the app links transfers once per batch, without freezing the screen.',
@@ -13679,6 +13682,9 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.41', d:'2026-11-06', t:'Base para as funções novas (módulos)', itens:[
+    'Por dentro: as funções novas passam a vir em arquivos separados (módulos), cada uma com o próprio teste. O app fica mais fácil de manter e não muda nada na tela.'
+  ]},
   {v:'3.40', d:'2026-11-03', t:'Caixa do robô com muitos itens de uma vez', itens:[
     'Quando o robô reenvia muitos lançamentos de uma vez (milhares), o app junta as transferências uma vez por lote, sem travar a tela.'
   ]},
@@ -33702,8 +33708,12 @@ function render(){
                  'b-fluxo':viewBFluxo, 'b-custos':viewBCustos,
                  't-painel':viewTPainel, 't-imposto':viewTImposto, 't-pjclt':viewTPjClt,
                  't-declaracoes':viewTDeclaracoes, 't-processos':viewTProcessos, 't-deducoes':viewTDeducoes, 't-docs':viewTDocs};
+  /* 3.41: telas que moram num módulo (modulos/*.js) */
+  if(!views[viewAtual] && window.MoneyModulos && MoneyModulos.tela(viewAtual)) views[viewAtual] = MoneyModulos.tela(viewAtual);
+  if(!views[viewAtual]) viewAtual = 'painel';
   $$('.view').forEach(s => s.classList.add('hidden'));
-  const el = $('#view-' + viewAtual);
+  let el = $('#view-' + viewAtual);
+  if(!el){ el = document.createElement('section'); el.className = 'view hidden'; el.id = 'view-' + viewAtual; $('#view-painel').parentNode.appendChild(el); }
   /* a tradução acontece aqui, no último instante: a tela já é HTML,
      e em português esta linha não faz nada */
   el.innerHTML = Verter.html(views[viewAtual]());
@@ -35652,6 +35662,9 @@ function ligarEventos(){
       case 'drive-sair':
         Drive.desconectar(); ST.config.usarDrive = false; Store.salvar(); render();
         break;
+      default:
+        /* 3.41: botões dos módulos (modulos/*.js) */
+        if(window.MoneyModulos) MoneyModulos.acao(d.acao, el, d);
     }
   });
 
@@ -35718,6 +35731,7 @@ async function iniciar(){
 }
 
 function comecarApp(r){
+  if(window.MoneyModulos) MoneyModulos.iniciarTodos();     /* 3.41: módulos, uma vez, com o Store já carregado */
   /* sementes criadas antes de existir a marca de data presumida */
   (ST.movimentos || []).forEach(m => {
     if(m.origem === 'saldo-inicial' && m.presumida === undefined){
@@ -35989,6 +36003,9 @@ document.addEventListener('DOMContentLoaded', function () { setTimeout(medirTopo
 document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuvem) MoneyNuvem.portao(iniciar); else iniciar(); });
 
 </script>
-<script src="nuvem.js?v=1.4.0"></script>
+<!-- 3.41: módulos (um arquivo por função nova; guia em ARQUITETURA.md). A ordem importa: base, módulos, nuvem.
+     O ?v= de cada arquivo é a versão dele e tem de ser igual no sw.js (teste/teste-modulos.js confere). -->
+<script src="modulos/base.js?v=1.0.0"></script>
+<script src="nuvem.js?v=1.6.0"></script>
 </body>
 </html>

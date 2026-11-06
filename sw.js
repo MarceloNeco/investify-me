@@ -2,8 +2,13 @@
    Faz o site abrir sem internet e permite instalar como app.
    AO PUBLICAR UMA VERSÃO NOVA, troque o número abaixo (v1 -> v2).
    É o que avisa os celulares de que existe conteúdo novo. */
-var VERSAO = 'v40';
+var VERSAO = 'v41';
 var CACHE = 'moneytrio-' + VERSAO;
+/* O que fica guardado para abrir sem internet. Cada <script src> do index.html entra aqui com o MESMO ?v=
+   (teste/teste-modulos.js confere). Módulo novo = uma linha aqui + uma no index.html. */
+var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './ajuda-botao.png', './icone-192.png',
+  './modulos/base.js?v=1.0.0',
+  './nuvem.js?v=1.6.0'];
 /* O motor de leitura de fotos (assets/ocr: Tesseract, português, ZXing,
    jsQR — uns 10 MB) tem cache próprio, que NÃO muda a cada versão do app:
    baixa na primeira leitura e fica. Para trocar o motor, troque o número. */
@@ -12,7 +17,7 @@ var CACHE_OCR = 'moneytrio-ocr-1';
 self.addEventListener('install', function (e) {
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(function (c) {
-    return c.addAll(['./', './index.html', './manifest.json', './recursos.js', './nuvem.js?v=1.4.0', './ajuda-botao.png', './icone-192.png']).catch(function () {});
+    return c.addAll(ARQUIVOS).catch(function () {});
   }));
 });
 

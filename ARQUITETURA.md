@@ -520,3 +520,58 @@ e `Nuvem.destrancado` devolve a tela como estava), `Nuvem` (maestro).
 - SQL v3 `supabase/2026-11-03c-moneytrio-robo-correcao.sql`: `money_entrada.impressao`/`versao`; `money_robo_depositar` reabre quando a impressão
   muda (linha antiga sem impressão só aprende; LGPD não volta). Teste local: `teste/sql/teste-moneytrio-correcao.sql`.
 - Testes: `teste/teste-renda.js`, `teste/teste-nuvem.js` (parte 3, correção e transferência).
+
+## Guia de módulos (3.41)
+
+Desde a 3.41, **toda função nova é um módulo**: um arquivo em `modulos/`, com teste próprio, ligado ao app por
+`modulos/base.js` (`window.MoneyModulos`). O `index.html` (mais de 2 MB) só ganha a ligação.
+
+**Como criar**
+1. Copie `modulos/_modelo.js` para `modulos/<nome>.js`. No cabeçalho: o que faz, a API pública e os dados
+   (coleções), e a versão (`1.0.0`), que também vai no `registrar({versao})`.
+2. Dados: uma ou mais **coleções** próprias (`colecoes: ['nome_da_lista']`, letras minúsculas e `_`). Elas moram em
+   `Store.estado.<colecao>` (lista de objetos com `id`). Sem conta, ficam no aparelho; com a nuvem, cada item vira um
+   registro fechado no `money_docs` (o `nuvem.js` soma as coleções dos módulos às dele). Nada de `localStorage` próprio
+   para finanças.
+3. Tela e botões, sem mexer no que já funciona:
+   - `pontos: {'custos.topo': ctx => html}`: o `index.html` chama `MoneyModulos.html('custos.topo', ctx)` no lugar
+     onde o pedaço aparece (uma linha por ponto novo; o ponto fica listado abaixo);
+   - `acoes: {'meu-botao': (el, dados) => …}` para `data-acao="meu-botao"`, que cai no `default` do switch do app;
+   - `telas: {'b-minha-tela': {app: 'budget', render: () => html}}`: `irPara('b-minha-tela')` abre a tela,
+     e a seção é criada sozinha (o item no menu é uma linha no `index.html`);
+   - `ouvir: {'gasto.salvo': fn}` para eventos que o app emite com `MoneyModulos.emitir(evento, dados)`.
+4. Ligar: uma linha `<script src="modulos/<nome>.js?v=1.0.0">` no fim do `index.html`, **entre** `modulos/base.js` e
+   `nuvem.js`, e a mesma URL no `ARQUIVOS` do `sw.js`.
+5. Banco: se precisar de tabela ou Storage, o SQL vai em `supabase/AAAA-MM-DD…sql`: idempotente, com porteiro,
+   conferência e GRANTs, passando no `teste/sql-grants.js`. Quem aplica é a sessão principal, depois de revisar.
+
+**Como testar**
+- `teste/teste-<nome>.js` (Playwright, modo "só neste aparelho", telas de 390 e 1366 px, sem erro de página),
+  no padrão dos outros testes.
+- `node teste/teste-modulos.js` confere que o `index.html`, o `sw.js` e as versões dos arquivos combinam, e a base.
+- Antes do PR, rodar os testes de `teste/` que tocam no que o módulo usa (no mínimo `teste-modulos` e `teste-nuvem`).
+
+**Como versionar**
+- Mudou o módulo: sobe a versão dele (cabeçalho, `registrar`, `?v=` no `index.html` e no `sw.js`; o teste confere).
+- Toda entrega sobe a versão do app (`MUDANCAS` em PT/EN no `index.html`) e o `VERSAO` do `sw.js`.
+
+**Regras**
+- Um módulo nunca derruba o app: a base pega o erro e escreve um aviso no console.
+- Pode chamar as funções globais do app (`ST`, `Store`, `render`, `toast`, `fmt`, `esc`, `I18n`, `$`), mas não as reescreve.
+- Módulo que usa outro módulo: só pela API do cabeçalho (`window.<Nome>`).
+
+**Pontos de encaixe e eventos que existem** (cresce a cada módulo; manter esta lista atualizada)
+- (nenhum ainda: a Parte 6 cria os primeiros)
+
+### Proposta (não feita): tirar partes antigas do index.html
+
+| O quê | Ganho | Risco |
+|---|---|---|
+| Os textos didáticos (`GLOSSARIO` ~370 KB e `COACH` ~115 KB, em PT/EN) para `dados/glossario.js` e `dados/coach.js`, carregados só quando a pessoa abre uma explicação | o `index.html` (2,3 MB) perde cerca de 0,5 MB (~20%); abre mais rápido no celular | médio: o glossário passa a precisar de um arquivo a mais sem internet (vai no `sw.js`); as buscas que leem o glossário precisam esperar ele carregar |
+| `FRASES_EN` (tradução, ~75 KB) e `MUDANCAS` (~50 KB) para `dados/` | arquivo menor; textos num lugar só | baixo: carrega antes do app; o `Verter` só lê |
+| TaxONE (telas e cálculos) para `modulos/taxone.js` | o código do imposto fica isolado e testável | alto: muitas ligações com BudgetONE (deduções, salário); fazer só com os testes do TaxONE escritos antes |
+| Leitores de extrato/planilha/OCR para `modulos/leitores.js` | isola o código mais frágil | médio: muitos formatos de banco; precisa de amostras para testar |
+| O CSS (~150 KB) para `estilo.css` | o navegador guarda o estilo separado | baixo: mais um arquivo no `sw.js` |
+
+Sugestão de ordem, se o dono aprovar: `FRASES_EN`/`MUDANCAS` e o CSS (risco baixo), depois o glossário e o coach (maior ganho);
+o TaxONE e os leitores só depois de terem testes próprios.
