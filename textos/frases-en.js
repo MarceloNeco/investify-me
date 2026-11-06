@@ -1,10 +1,15 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.60 · 06/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.61 · 06/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.61 */
+  'Entrar num aparelho novo sem código de recuperação':'Sign in on a new device without a recovery code',
+  'Primeira vez num celular ou computador: em vez do código de recuperação, aprove pelo outro aparelho onde você já entra (os dois mostram os mesmos 6 números; confira e digite o seu PIN) ou peça para alguém responsável da família aprovar.':'First time on a phone or computer: instead of the recovery code, approve from your other device where you are already in (both show the same 6 numbers; check them and type your PIN) or ask a family guardian to approve.',
+  'Nuvem → Aparelhos: a lista dos seus aparelhos, com quem aprovou cada um, e "Tirar" (o aparelho tirado perde o acesso na próxima vez que abrir). Se alguém da família aprovar um aparelho seu, os outros avisam.':'Cloud → Devices: the list of your devices, who approved each one, and "Remove" (the removed device loses access the next time it opens). If someone in the family approves a device of yours, the others warn you.',
+  'O PIN vale só no aparelho em que você criou; se quiser, use o mesmo nos outros. Quem ainda tem o código antigo pode usar pelo link "Tenho o código de recuperação antigo".':'The PIN works only on the device where you created it; if you like, use the same one on the others. Whoever still has the old code can use it through the "I have the old recovery code" link.',
   /* 3.60 */
   'Conferir o que foi lido: direto ao ponto':'Check what was read: straight to the point',
   'No topo, um resumo do que vai acontecer (ex.: "Mensalidades ✓ já cadastrado", "Matrícula ✓ já paga em 30/10"). Só vem aberto o que precisa da sua decisão; o resto fica em "ver detalhes".':'At the top, a summary of what will happen (e.g. "Monthly fees ✓ already registered", "Enrolment ✓ already paid on 10/30"). Only what needs your decision comes open; the rest is under "see details".',

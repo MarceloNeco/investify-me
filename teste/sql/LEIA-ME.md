@@ -33,7 +33,7 @@ v4 (arquivos no Storage), 06/Nov/2026: depois do v1–v3, `for i in 1 2; do psql
 e `psql -d lab -f investify-me/teste/sql/teste-moneytrio-arquivos.sql 2>&1 | grep -E "ok:|FALHOU"` → rodou duas vezes, conferência 3/3 "sim",
 14 "ok" (o stub do Supabase tem storage.buckets e storage.objects com RLS).
 
-**Aparelhos sem código de recuperação (plataforma, 07/Nov/2026)** — `supabase/2026-11-07-sol-aparelhos.sql` e
+**Aparelhos sem código de recuperação (plataforma, 06/Nov/2026)** — `supabase/2026-11-07-sol-aparelhos.sql` e
 `teste/sql/teste-sol-aparelhos.sql`. Só precisa da base (não do OmniLife nem do MoneyTRIO). O stub não tem
 `auth.users.raw_user_meta_data` (o Supabase tem): crie antes com
 `psql -d lab -c "ALTER TABLE auth.users ADD COLUMN IF NOT EXISTS raw_user_meta_data jsonb DEFAULT '{}'"`.
