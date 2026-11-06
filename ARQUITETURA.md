@@ -637,6 +637,10 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.58 (N44, estilo.css): no celular (≤ 760 px), com o menu ☰ aberto (`body:has(.sidenav.open)`), o selo da nuvem (`.nv-selo`, de
+  nuvem.js) vai para o lado do menu (`left: 248px + 12px`, quebra em duas linhas se precisar), como o computador faz com a barra lateral;
+  em tela com menos de 360 px não cabe ao lado e ele sai enquanto o menu está aberto (o mesmo da pílula do Fundo e do AssistONE).
+  Sem z-index. Teste: `teste/teste-desktop.js`, celular 390×800, calendário aberto e recolhido, e de volta ao canto ao fechar o menu.
 - 3.57 `modulos/calendario-menu.js` (`CalendarioMenu.recolhido/alternar/aplicar`): o calendário do pé do menu (barra lateral no
   computador, menu ☰ no celular; o mesmo `#navCal`) ganha no cabeçalho um botão discreto (seta, `aria-expanded`, `aria-controls`) que o
   recolhe numa etiqueta "📅 Novembro de 2026 ⌄" (botão de verdade; tocar abre). Padrão aberto; a escolha fica em localStorage

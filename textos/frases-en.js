@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.57 · 06/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.58 · 06/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.58 */
+  'Celular: o selo da nuvem não cobre o calendário':'Phone: the cloud badge no longer covers the calendar',
+  'No celular, com o menu ☰ aberto, o botão "Entrar na nuvem" fica ao lado do menu e não cobre mais o calendário.':'On the phone, with the ☰ menu open, the "Use the cloud" button sits beside the menu and no longer covers the calendar.',
   /* 3.57 */
   'Calendário do menu recolhe':'Menu calendar collapses',
   'Calendário do menu (computador e celular): a setinha no cabeçalho recolhe o calendário numa etiqueta com o mês; tocar na etiqueta abre de novo. O app lembra a sua escolha neste aparelho.':'Menu calendar (computer and phone): the small arrow in its header collapses the calendar into a label with the month; tap the label to open it again. The app remembers your choice on this device.',

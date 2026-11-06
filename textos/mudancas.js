@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.57 · 06/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.58 · 06/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.58', d:'2026-11-06', t:'Celular: o selo da nuvem não cobre o calendário', itens:[
+    'No celular, com o menu ☰ aberto, o botão "Entrar na nuvem" fica ao lado do menu e não cobre mais o calendário.'
+  ]},
   {v:'3.57', d:'2026-11-06', t:'Calendário do menu recolhe', itens:[
     'Calendário do menu (computador e celular): a setinha no cabeçalho recolhe o calendário numa etiqueta com o mês; tocar na etiqueta abre de novo. O app lembra a sua escolha neste aparelho.'
   ]},

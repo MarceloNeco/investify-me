@@ -1,5 +1,5 @@
 /* =====================================================================
-   teste/teste-desktop.js — layout no computador (N35, regra da plataforma)   3.57
+   teste/teste-desktop.js — layout no computador (N35, regra da plataforma)   3.58
    ---------------------------------------------------------------------
    Em 1280×720, 1366×768, 1920×1080 e 2560×1440 (e trocando a largura com a página aberta):
    · a barra lateral fica colada à esquerda da tela, ocupa a altura toda abaixo do topo e não passa do fim da tela;
@@ -8,7 +8,8 @@
    · o conteúdo usa a largura que sobra (sem faixa vazia grande dos lados);
    · sem rolagem para o lado e sem erro de página;
    · 3.57: o calendário do menu recolhe numa etiqueta (teclado e toque), fica lembrado ao recarregar e abre de novo;
-     o mesmo no celular (390×800, dentro do menu ☰).
+     o mesmo no celular (390×800, dentro do menu ☰);
+   · 3.58: no celular, com o menu ☰ aberto, o selo "Entrar na nuvem" fica ao lado do menu (nunca em cima do calendário).
    Uso (na pasta raiz): node teste/teste-desktop.js
    ===================================================================== */
 'use strict';
@@ -115,6 +116,20 @@ async function recolherAbrir(p, nome, antesDeMedir) {
       await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.recorrentes || []).length === 1);
       const abrirMenu = async () => { await p.evaluate(() => { I18n.atual = 'pt'; abrirApp('budget'); irPara('b-custos'); }); await p.click('#btnMenu'); await p.waitForTimeout(350); };
       await abrirMenu();
+      /* 3.58 (N44): com o menu ☰ aberto, o selo "Entrar na nuvem" fica ao lado do menu, nunca em cima do calendário; texto inteiro */
+      const selo = () => p.evaluate(() => { const e = document.getElementById('nvSelo'), n = document.getElementById('sidenav'), c = document.getElementById('navCal');
+        if (!e) return null; const a = e.getBoundingClientRect(), b = n.getBoundingClientRect(), k = c.getBoundingClientRect();
+        const cobre = (r) => !(a.left >= r.right - 1 || a.right <= r.left + 1 || a.bottom <= r.top + 1 || a.top >= r.bottom - 1);
+        return { menu: cobre(b), cal: cobre(k), dentro: a.left >= 0 && a.right <= innerWidth && a.bottom <= innerHeight, inteiro: e.scrollWidth <= e.clientWidth + 1, left: Math.round(a.left) }; });
+      const s1 = await selo();
+      ok(s1 && !s1.menu && !s1.cal && s1.dentro && s1.inteiro, 'celular, menu aberto com o calendário aberto: o selo fica ao lado do menu, sem cobrir o calendário (' + JSON.stringify(s1) + ')');
+      await p.click('#navCal .calm-rec'); await p.waitForTimeout(150);
+      const s2 = await selo();
+      ok(s2 && !s2.menu && !s2.cal && s2.dentro && s2.inteiro, 'celular, menu aberto com o calendário recolhido: o selo também não cobre (' + JSON.stringify(s2) + ')');
+      await p.click('#navCal .calm-etq'); await p.waitForTimeout(150);
+      await p.click('#navBackdrop', { position: { x: 360, y: 300 } }); await p.waitForTimeout(350);   /* toca no escuro, fora do menu */
+      const s3 = await selo();
+      ok(s3 && s3.left <= 16, 'celular, menu fechado: o selo volta ao canto de sempre (left ' + (s3 && s3.left) + ')');
       await recolherAbrir(p, 'celular', abrirMenu);
       const en = await p.evaluate(() => { I18n.atual = 'en'; renderCalendarioMenu(); const b1 = document.querySelector('#navCal .calm-rec').getAttribute('aria-label');
         CalendarioMenu.alternar(true); const e = document.querySelector('#navCal .calm-etq'); const r = [b1, e.textContent, e.title]; CalendarioMenu.alternar(false); I18n.atual = 'pt'; return r; });
