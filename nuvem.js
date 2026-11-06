@@ -550,10 +550,12 @@
             : '<div class="nv-nota" id="nvEsperando">⏳ ' + tt('Esperando o outro aparelho abrir o pedido…', 'Waiting for the other device to open the request…') + '</div>') +
           (extra || '') + '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div>' +
           '<button class="nv-btn" id="nvApCancelar">' + tt('Cancelar', 'Cancel') + '</button>');
-        el.querySelector('#nvApCancelar').onclick = function () { fim = true; IDB.del('kv', 'pedido|' + ped.uid).catch(function () {}); Portao.primeiraVez(fam, false); };
+        el.querySelector('#nvApCancelar').onclick = function () { fim = true; esquecer(); Portao.primeiraVez(fam, false); };
       };
+      /* o par efêmero (não extraível) sai do IndexedDB e da memória: nada dele fica depois do pedido */
+      var esquecer = function () { IDB.del('kv', 'pedido|' + ped.uid).catch(function () {}); ped.priv = null; };
       var acabou = function (titulo, txt) {
-        fim = true; IDB.del('kv', 'pedido|' + ped.uid).catch(function () {});
+        fim = true; esquecer();
         Portao.mensagem(titulo, txt, [[tt('Pedir de novo', 'Ask again'), function () { self.pedir(fam, ped.modo); }], [tt('Voltar', 'Back'), function () { Portao.primeiraVez(fam, false); }]]);
       };
       tela();
@@ -570,9 +572,9 @@
           sas = await self.sas(ped.id, r.pub_a, ped.pub, r.n_a, ped.nB); tela();
         }
         if (r.estado === 'aprovado' && r.resposta) {
-          fim = true; IDB.del('kv', 'pedido|' + ped.uid).catch(function () {});
-          var o;
-          try { o = await self.abrirResp(await self.chave(ped.priv, r.pub_a || ped.pubA, ped.id, ped.uid, r.n_a || ped.nA, ped.nB), ped.id, r.resposta); }
+          fim = true;
+          var o, priv = ped.priv; esquecer();
+          try { o = await self.abrirResp(await self.chave(priv, r.pub_a || ped.pubA, ped.id, ped.uid, r.n_a || ped.nA, ped.nB), ped.id, r.resposta); }
           catch (e) { return acabou(tt('Não abriu', 'Did not open'), tt('A resposta não abriu neste aparelho. Peça de novo.', 'The answer did not open on this device. Ask again.')); }
           return self.receber(fam, o, r.aparelho);
         }
@@ -606,7 +608,8 @@
       this._olhando = true;
       try {
         var lista = (await this.rpc('sol_pedidos_para_mim')) || [], self = this;
-        this.pendentes = lista.filter(function (p) { return !self._vistos[p.id]; });
+        var meu = await IDB.get('kv', 'pedido|' + Conta.uid()).catch(function () { return null; });   /* o pedido que ESTE aparelho criou não é para ele aprovar */
+        this.pendentes = lista.filter(function (p) { return !self._vistos[p.id] && !(meu && meu.id === p.id); });
         this.avisarPedido();
       } catch (e) {} finally { this._olhando = false; }
     },
@@ -629,7 +632,7 @@
             '<div class="nv-nota atencao">' + tt('Só aprove se a pessoa está com você (ou ao telefone) e lê o mesmo número.', 'Only approve if the person is with you (or on the phone) and reads the same number.') + '</div>'
           : '<p>' + tt('Pedido de acesso de: ', 'Access request from: ') + '<b>' + esc(p.nome) + '</b> · ' + esc(dataHora(p.criado_em)) + '</p>' +
             '<div class="nv-nota atencao">' + tt('Só aprove se este pedido é do aparelho que você está segurando agora.', 'Only approve if this request comes from the device you are holding now.') + '</div>');
-      var sair = function (msg) { fim = true; Tela.fechar(); if (msg) aviso(msg); };
+      var sair = function (msg) { fim = true; delete self._apr[p.id]; eu = null; Tela.fechar(); if (msg) aviso(msg); };
       var recusar = function () { fim = true; self.rpc('sol_pedido_recusar', { p_id: p.id }).catch(function () {}); sair(tt('Pedido recusado.', 'Request declined.')); };
       var botoes = function () { return '<div class="nv-row"><button class="nv-btn" id="nvApRecusar">' + tt('Recusar', 'Decline') + '</button><button class="nv-btn" id="nvApDepois">' + tt('Agora não', 'Not now') + '</button></div>'; };
       var ligar = function (el) { el.querySelector('#nvApRecusar').onclick = recusar; el.querySelector('#nvApDepois').onclick = function () { sair(); }; };

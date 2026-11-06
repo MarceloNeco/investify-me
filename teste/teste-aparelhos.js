@@ -232,6 +232,7 @@ const sasDe = (pg) => pg.waitForSelector('#nvSas', { timeout: 30000 }).then(() =
     const apB = db.sol_aparelhos.find((a) => a.user_id === ANA && a.como === 'aparelho');
     ok(apB && apB.aprovado_por === ANA && apB.aprovado_por_ap === apA.id, 'a lista registra quem aprovou e de qual aparelho');
     ok(p1.estado === 'usado' && p1.resposta === null, 'a resposta saiu do banco depois de lida (pedido "usado")');
+    ok(!(await B.evaluate(() => MoneyNuvem._teste.IDB.get('kv', 'pedido|11111111-1111-1111-1111-111111111111'))), 'o par efêmero do pedido saiu do aparelho novo ao terminar');
     const Lb = await B.evaluate(() => MoneyNuvem._teste.Cadeado.local());
     ok(Lb && Lb.sk && Lb.ap === apB.id && Lb.como === 'aparelho', 'B guarda a chave pessoal fechada pelo cadeado do aparelho e sabe quem é na lista');
 
@@ -243,6 +244,11 @@ const sasDe = (pg) => pg.waitForSelector('#nvSas', { timeout: 30000 }).then(() =
     console.log('3) recusar e vencer');
     const C = await aparelho(browser, { width: 390, height: 800 }, 'C');
     await entrar(C, ANA); await C.click('#nvApOutro'); await C.waitForSelector('#nvEsperando');
+    /* (a) um aparelho aberto que tem um pedido próprio guardado nunca vê esse pedido na lista "para aprovar" */
+    const proprio = await A.evaluate(async (id) => { const T = MoneyNuvem._teste; await T.IDB.set('kv', 'pedido|11111111-1111-1111-1111-111111111111', { id: id, gid: 'x', criado: Date.now() });
+      T.Aparelhos._vistos = {}; await T.Aparelhos.olharPedidos(); const r = (T.Aparelhos.pendentes || []).some((x) => x.id === id) || !!document.getElementById('nvPedido');
+      await T.IDB.del('kv', 'pedido|11111111-1111-1111-1111-111111111111'); return r; }, ultimoPedido(ANA).id);
+    ok(!proprio, 'o pedido que o próprio aparelho criou não aparece para ele aprovar');
     await verPedido(A); await A.waitForSelector('#nvApRecusar'); await A.click('#nvApRecusar');
     await C.waitForFunction(() => /Pedido recusado/.test(document.body.innerText), null, { timeout: 15000 });
     ok(ultimoPedido(ANA).estado === 'recusado', 'A recusa e C mostra "Pedido recusado"');
