@@ -49,7 +49,10 @@ const ESCOLAR = ['ASSOCIAÇÃO EDUCACIONAL EXEMPLO', 'CONTRATO DE SERVIÇOS DE E
   '  (2ª e 3ª série)'];
 const AMPLIADO = ['CONTRATO DE SERVIÇO DO PERÍODO AMPLIADO - 2027', 'Informações do Pai', 'Nome Completo:    PEDRO TESTE EXEMPLO',
   'Informações do(a) Educando (a)', 'Nome do Aluno:    ANA TESTE EXEMPLO          Ano/Série: 3º Ano',
-  'Modalidade            Horário                       Valor da Anuidade    Nº de Parcelas    Valor da Parcela',
+  /* o cabeçalho real, em 3 linhas (pdftotext -layout) */
+  '                                                         Valor da       Nº de      Valor da',
+  '    Modalidade                         Horário',
+  '                                                         Anuidade      Parcelas    Parcela',
   /* literal do pdftotext -layout */
   '    Período Ampliado                      8h30 às 13h',
   '                                                         R$ 11.040,00     10       R$ 1.104,00',

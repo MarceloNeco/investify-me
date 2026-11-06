@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.52 · 06/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.53 · 06/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.53', d:'2026-11-06', t:'Correção no contrato do período ampliado', itens:[
+    'Contrato do período ampliado: o nome da 1ª opção não leva mais o fim do cabeçalho da tabela ("Anuidade Parcelas Parcela").'
+  ]},
   {v:'3.52', d:'2026-11-06', t:'Tabela do contrato lida certo', itens:[
     'Contrato da escola: a tabela de preços agora é lida no formato exato do PDF real. Cada opção sai com o nome certo (ex.: "Ens. Fundamental (1º ao 5º ano)", "Período Ampliado (3x na semana)", "Horário Estendido (5x na semana)"), com o horário à parte. Os exemplos das telas usam nomes genéricos.'
   ]},

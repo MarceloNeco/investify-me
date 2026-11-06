@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.52 · 06/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.53 · 06/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.53 */
+  'Correção no contrato do período ampliado':'Fix in the extended-day contract',
+  'Contrato do período ampliado: o nome da 1ª opção não leva mais o fim do cabeçalho da tabela ("Anuidade Parcelas Parcela").':'Extended-day contract: the 1st option name no longer picks up the end of the table header.',
   /* 3.52 */
   'Tabela do contrato lida certo':'Contract table read correctly',
   'Contrato da escola: a tabela de preços agora é lida no formato exato do PDF real. Cada opção sai com o nome certo (ex.: "Ens. Fundamental (1º ao 5º ano)", "Período Ampliado (3x na semana)", "Horário Estendido (5x na semana)"), com o horário à parte. Os exemplos das telas usam nomes genéricos.':'School contract: the price table is now read in the exact layout of the real PDF. Each option gets the right name (e.g. "Ens. Fundamental (1º ao 5º ano)", "Período Ampliado (3x na semana)"), with the schedule kept apart. Screen examples use generic names.',

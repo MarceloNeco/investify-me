@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.3.0 · 06/Nov/2026
+   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.3.1 · 06/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · No formulário de um lançamento: "📌 Virar compromisso" abre o "Novo compromisso" já preenchido
@@ -19,6 +19,7 @@
        Etapa marcada com X: só as linhas dela; a série ("Ano/Série" ou "3º Ano" no outro contrato) pré-seleciona.
      · 1.3.0: a tabela é lida em BLOCOS (layout exato do texto real): o nome vem nas linhas ACIMA dos valores, com horários e
        "Opcional" no meio, e o complemento "(…)" na linha de baixo. Fixture literal em teste/teste-contrato-fgts.js.
+     · 1.3.1: linha só com palavras de cabeçalho ("Anuidade   Parcelas   Parcela") não entra no nome.
    API (window.CompromissoDe)
      doLancamento(g)        → semente do compromisso
      lerContrato(texto)     → {escola, aluno, ano, parcela, parcelas, dia, matricula, anuidade, primeiroMes, achados:[…]}
@@ -92,6 +93,10 @@
      → "Horário Estendido (5x na semana)". Os horários (8h30 às 13h…) saem do nome e ficam em `horario`. Linha de valores sem
      nome nenhum herda o nome-base de cima. Linha com "R$" que não é de valores completos (ex.: "Diária Avulsa - - R$ 110") é ignorada. */
   var RX_HORA = /\b\d{1,2}h\d{0,2}\s*(?:às|as|a)\s*\d{1,2}h\d{0,2}\b/gi;
+  /* linha que só tem palavras de cabeçalho ("Valor da   Nº de   Valor da", "Anuidade   Parcelas   Parcela"): não é nome */
+  var PALAVRAS_CAB = { valor: 1, da: 1, de: 1, do: 1, anuidade: 1, 'nº': 1, 'n°': 1, no: 1, n: 1, numero: 1, parcelas: 1, parcela: 1, modalidade: 1, horario: 1,
+    curso: 1, etapa: 1, antecipada: 1, restante: 1, cada: 1, '1ª': 1, '1a': 1, '/': 1, '|': 1 };
+  function soCabecalho(sl) { var w = sl.replace(/[|]/g, ' ').trim().split(/\s+/); return !!w[0] && w.every(function (x) { return PALAVRAS_CAB[x]; }); }
   function semHoras(t) { return String(t || '').replace(RX_HORA, ' ').replace(/\s+/g, ' ').trim(); }
   function horasDe(t) { return (String(t || '').match(RX_HORA) || []); }
   function limparBase(t) { return semHoras(t).replace(/\(\s*[xX]?\s*\)/g, ' ').replace(/\s*[–—-]?\s*\bopcional\b/gi, ' ').replace(/\s*[–—-]\s*$/, '').replace(/\s+/g, ' ').trim(); }
@@ -100,7 +105,7 @@
     for (var i = 0; i < ls.length; i++) {
       var l = ls[i], sl = sa(l), m = sl.match(rx);
       if (!m) {
-        if (/r\$/i.test(l) || /:/.test(l) || RX_CABECALHO.test(sl) || l.length > 60) { pend = []; marcPend = false; continue; }
+        if (/r\$/i.test(l) || /:/.test(l) || RX_CABECALHO.test(sl) || soCabecalho(sl) || l.length > 60) { pend = []; marcPend = false; continue; }
         if (/^\(/.test(l) && !MARCA.test(sl.slice(0, 5))) { pend = []; marcPend = false; continue; }   /* "(…)" solto: não é começo de bloco */
         pend.push(l); if (pend.length > 4) pend.shift(); marcPend = marcPend || MARCA.test(sl);
         continue;
@@ -314,7 +319,7 @@
 
   MoneyModulos.registrar({
     id: 'compromisso-de',
-    versao: '1.3.0',
+    versao: '1.3.1',
     pontos: {
       'lancamento.form': function (ctx) {
         if (!ctx.g || ctx.g.fluxo === 'entrada' && ctx.g.grupo !== 'RENDA') return '';
