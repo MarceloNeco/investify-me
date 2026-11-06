@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.59 · 06/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.60 · 06/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2350,7 +2350,7 @@ html.sem-animacao .assistone-bt{animation:none; transition:none}
 
 /* 3.59 — "Conferir o que foi lido" (modulos/compromisso-de.js): usa a largura no computador, seções lado a lado quando cabem,
    cabeçalho de verdade com checkbox, "já existe" compacto com botões segmentados; no celular, espaçamento enxuto */
-#genModal:has(.cdl-tela) .modal{max-width:min(960px, 92vw)}
+#genModal:has(.cdl-tela) .modal{max-width:min(1200px, 94vw)}
 .cdl-tela .cdl-topo{margin:0 0 10px}
 .cdl-grade{display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px; align-items:start}
 .cdl-sec{border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--card2); min-width:0; display:flex; flex-direction:column; gap:8px}
@@ -2387,3 +2387,27 @@ html.sem-animacao .assistone-bt{animation:none; transition:none}
 }
 /* 3.59: com uma janela aberta, o selo da nuvem (nuvem.js) sai, como a pílula do Fundo (no celular ele cobria os campos da janela) */
 body:has(.modal-wrap:not(.hidden)) .nv-selo{display:none}
+
+/* 3.60 — "Conferir o que foi lido" orientada a decisão: chips no topo, faixa dos repetidos, seções recolhidas com "ver detalhes" */
+.cdl-tela [hidden]{display:none !important}
+.cdl-chips{display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px}
+.cdl-chip{display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; border:1px solid var(--line2); background:var(--card2);
+  color:var(--txt); font:inherit; font-size:.85rem; cursor:pointer}
+.cdl-chip b{font-weight:650}
+.cdl-chip-est{color:var(--txt2)}
+.cdl-chip-ok .cdl-chip-est{color:var(--up)}
+.cdl-chip-decidir{border-color:var(--warn)}
+.cdl-chip-decidir .cdl-chip-est{color:var(--warn); font-weight:650}
+.cdl-chip-novo .cdl-chip-est, .cdl-chip-muda .cdl-chip-est{color:var(--accent2)}
+.cdl-chip:focus-visible, .cdl-det:focus-visible, .cdl-mudar:focus-visible, .cdl-i:focus-visible, .cdl-alerta:focus-visible{outline:2px solid var(--accent2); outline-offset:2px}
+.cdl-faixa{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; padding:8px 12px; margin:0 0 10px; border-radius:10px; border:1px solid var(--warn); background:var(--card2); font-size:.88rem}
+.cdl-faixa span{flex:1 1 220px}
+.cdl-cab{display:flex; align-items:flex-start; gap:8px}
+.cdl-cab .cdl-cab-l{flex:1; min-width:0}
+.cdl-cab h4.cdl-tit{margin:0; font-size:.95rem; font-weight:650}
+.cdl-det, .cdl-mudar{flex:0 0 auto; background:none; border:none; padding:2px 4px; color:var(--accent2); font:inherit; font-size:.8rem; cursor:pointer; text-decoration:underline; text-underline-offset:2px}
+.cdl-ja-um{flex-direction:row; flex-wrap:wrap; align-items:center; font-size:.85rem; gap:6px 10px}
+.cdl-ja-um .cdl-ja-txt{flex:1 1 180px; min-width:0}
+.cdl-corpo{display:flex; flex-direction:column; gap:8px}
+.cdl-i, .cdl-alerta{display:inline-block; font-size:.85rem; cursor:help; color:var(--txt3)}
+.cdl-alerta{color:var(--warn)}

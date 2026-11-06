@@ -1,6 +1,6 @@
 /* =====================================================================
    teste/teste-parte14.js — 3.59: boleto lido como o app lê (PdfTexto/pdf.js), "já existe" só do mesmo tipo,
-   iguais entre si ("2 iguais" + apagar o repetido) e a tela "Conferir o que foi lido" (390, 1366, 1920, com fotos)
+   iguais entre si ("2 iguais" + apagar o repetido) e a tela "Conferir o que foi lido" (3.60: chips, faixa dos repetidos, recolhido; 390, 1366, 1920, com fotos)
    ---------------------------------------------------------------------
    Amostras: teste/amostras/boleto-matricula-pdfjs.txt (o texto EXATO do PdfTexto.extrair, dados fictícios) e
    teste/amostras/boleto-matricula-layout.txt (pdftotext -layout). As duas têm de dar 1.413 em 30/10/2026.
@@ -66,57 +66,75 @@ const LOCAL = { v: 1, config: {}, posicoes: [],
     ok(await p.evaluate(() => ['Calu Café (lanche da escola)', 'Cantina', 'Uniforme escolar'].every((n) => CompromissoDe.tipoComp(n) === 'outro') && CompromissoDe.tipoComp('Escola Ana 2027') === 'escolar' && CompromissoDe.tipoComp('Período ampliado Ana 2027') === 'ampliado'), 'lanche, cantina e uniforme são de outro tipo');
     await ctx.close();
 
-    console.log('3) a tela "Conferir o que foi lido"');
+    console.log('3) a tela "Conferir o que foi lido" (3.60: orientada a decisão)');
     for (const vp of [{ width: 390, height: 800 }, { width: 1366, height: 768 }, { width: 1920, height: 1080 }]) {
       const { ctx: c2, p: q } = await abrirApp(vp);
-      const abrirTela = () => q.evaluate((ts) => { CompromissoDe.mostrarPlano(CompromissoDe.planoModelo(ts.map((t) => CompromissoDe.lerModelo(t)))); }, [ESCOLAR.join('\n'), AMPLIADO.join('\n'), PDFJS]);
-      await abrirTela(); await q.waitForSelector('#genModal:not(.hidden) .cdl-tela');
-      const t = await q.evaluate(() => {
-        const corpo = document.getElementById('genBody'), m = { width: document.querySelector('#genModal .modal').offsetWidth };   /* offsetWidth: sem a animação de abrir */
+      const abrirTela = (semAmpliado) => q.evaluate((a) => {
+        if (a.semAmpliado) ST.recorrentes = ST.recorrentes.filter((r) => !/^r-a/.test(r.id));
+        CompromissoDe.mostrarPlano(CompromissoDe.planoModelo(a.ts.map((t) => CompromissoDe.lerModelo(t)))); }, { ts: [ESCOLAR.join('\n'), AMPLIADO.join('\n'), PDFJS], semAmpliado: !!semAmpliado });
+      const ler = () => q.evaluate(() => {
+        const corpo = document.getElementById('genBody'), vis = (e) => !!e && !e.closest('[hidden]') && e.offsetParent !== null;
         const secs = [...corpo.querySelectorAll('.cdl-sec')].map((e) => e.getBoundingClientRect());
-        const linhas = [...corpo.querySelectorAll('.cdl-ja-linha')].map((li) => li.closest('.cdl-item').dataset.k + ':' + li.querySelector('.cdl-ja-txt').textContent + (li.querySelector('.cdl-iguais') ? ' [' + li.querySelector('.cdl-iguais').textContent + ']' : ''));
-        return { titulo: document.getElementById('genTitle').textContent, tits: [...corpo.querySelectorAll('.cdl-tit')].map((e) => e.textContent), ps: corpo.querySelectorAll('p').length,
-          W: innerWidth, mw: Math.round(m.width), ladoALado: secs.some((r, i) => secs.some((o, j) => j !== i && Math.abs(o.top - r.top) < 2)), sobra: corpo.scrollWidth - corpo.clientWidth,
-          linhas, apagar: corpo.querySelectorAll('.cdl-apagar').length, seg: [...corpo.querySelectorAll('.cdl-item[data-k="0"] .cdl-pil span')].map((e) => e.textContent).join('|'),
-          cks: [...corpo.querySelectorAll('.cdl-cab input[type=checkbox]')].map((e) => e.checked), radioGrande: [...corpo.querySelectorAll('.cdl-pil')].some((e) => e.offsetHeight > 40), cortado: [...corpo.querySelectorAll('.cdl-pil span')].some((e) => e.scrollWidth > e.clientWidth + 1) };
+        return { titulo: document.getElementById('genTitle').textContent, chips: [...corpo.querySelectorAll('.cdl-chip')].map((e) => e.textContent.replace(/\s+/g, ' ').trim()),
+          faixa: (corpo.querySelector('.cdl-faixa') || {}).textContent || '', ps: corpo.querySelectorAll('p').length,
+          miudo: /Lido pelo modelo|valor do documento|o contrato não diz o dia/i.test(corpo.innerText),
+          dica: !!corpo.querySelector('.cdl-i[title*="valor do documento"]'), alerta: !!corpo.querySelector('.cdl-alerta[title*="não diz o dia"]'),
+          abertos: [...corpo.querySelectorAll('.cdl-sec')].map((e) => !e.querySelector('.cdl-corpo').hidden),
+          segVisivel: vis(corpo.querySelector('.cdl-item[data-k="0"] .cdl-seg')), manter: (corpo.querySelector('input[name="cdlJa0"]:checked') || {}).value,
+          linha0: (corpo.querySelector('.cdl-item[data-k="0"] .cdl-ja-txt') || {}).textContent || '',
+          W: innerWidth, mw: document.querySelector('#genModal .modal').offsetWidth, ladoALado: secs.some((r, i) => secs.some((o, j) => j !== i && Math.abs(o.top - r.top) < 2)),
+          umaColuna: secs.every((r) => Math.abs(r.left - secs[0].left) < 2), sobra: corpo.scrollWidth - corpo.clientWidth };
       });
-      const nome = vp.width + 'px';
-      ok(t.titulo === 'Conferir o que foi lido' && t.ps <= 1, nome + ': título "Conferir o que foi lido" e no máximo uma linha de texto no topo (' + t.ps + ' parágrafo)');
-      ok(/^Mensalidades 2027 · \d+ × R\$ [\d.,]+ · dia \d+$/.test(t.tits[0]) && t.tits[1] === 'Período ampliado 2027' && /^Matrícula 2027 \(1ª parcela\) · R\$ 1\.413,00 · 30\/10$/.test(t.tits[2]), nome + ': cabeçalhos claros com checkbox: ' + t.tits.join(' | '));
-      ok(t.linhas.length === 3 && /^0:Escola Ana 2027 · R\$ 3\.067,00 · dia 10 · ativo \[2 iguais\]$/.test(t.linhas[0]) && t.linhas.filter((x) => /^1:Ampliado Ana [12]º sem/.test(x)).length === 2 && !t.linhas.some((x) => /lanche|Café/i.test(x)),
-        nome + ': "já existe" compacto, uma linha por existente, cada um uma vez, sem o lanche (' + t.linhas.join(' | ') + ')');
-      ok(t.apagar === 1 && t.seg === 'Manter|Atualizar este|Criar novo|Apagar o repetido' && !t.radioGrande && !t.cortado, nome + ': botões segmentados (sem cortar o texto) Manter · Atualizar este · Criar novo, e "Apagar o repetido" nas 2 iguais (' + t.seg + ')');
-      ok(t.cks.join() === 'false,false,false', nome + ': o que já existe (ou já está no livro) vem desmarcado');
+      await abrirTela(); await q.waitForSelector('#genModal:not(.hidden) .cdl-tela');
+      const t = await ler(), nome = vp.width + 'px';
+      ok(t.titulo === 'Conferir o que foi lido' && t.ps === 0 && !t.miudo, nome + ': sem texto miúdo ("Lido pelo modelo", "valor do documento…", "o contrato não diz o dia")');
+      ok(t.chips.join(' | ') === 'Mensalidades ✓ já cadastrado | Período ampliado ✓ já cadastrado | Matrícula ✓ já paga em 30/10', nome + ': resumo em chips: ' + t.chips.join(' | '));
+      ok(/^2 cadastros repetidos encontrados \(Escola Ana 2027\)Limpar$/.test(t.faixa), nome + ': faixa separada "2 cadastros repetidos encontrados · Limpar" (' + t.faixa + ')');
+      ok(t.abertos.join() === 'false,false,false', nome + ': nada pede decisão, então tudo vem recolhido com "ver detalhes"');
+      ok(t.manter === '' && !t.segVisivel && /^Já cadastrado: Escola Ana 2027 · R\$ 3\.067,00 · dia 10 · ativo$/.test(t.linha0), nome + ': um cadastro só: "Manter" escolhido e o resto escondido em "mudar" (' + t.linha0 + ')');
+      ok(t.dica && t.alerta, nome + ': "valor do documento…" virou ⓘ e "o contrato não diz o dia" virou ⚠ no campo');
       ok(t.sobra <= 1, nome + ': sem rolagem para o lado dentro da janela');
-      if (vp.width >= 1024) ok(t.mw >= Math.min(960, t.W * 0.92) - 2 && t.ladoALado, nome + ': usa a largura (' + t.mw + ' px) com seções lado a lado');
+      if (vp.width >= 1024) ok(t.mw >= Math.min(1200, t.W * 0.94) - 2 && t.ladoALado, nome + ': mais largura (' + t.mw + ' px), seções lado a lado');
+      else ok(t.umaColuna, nome + ': uma coluna no celular');
       await q.screenshot({ path: path.join(SAIDA, 'parte14-' + vp.width + '.png') });
-      if (vp.width === 1366) {
-        /* teclado: "Criar novo" pelo espaço marca a seção; "Manter" desmarca */
-        await q.focus('#genBody input[name="cdlJa0"][value="criar"]'); await q.keyboard.press('Space');
-        ok(await q.evaluate(() => document.querySelector('.cdl-item[data-k="0"] .cdl-criar').checked), 'teclado: "Criar novo" (espaço) marca a seção');
-        await q.check('#genBody input[name="cdlJa0"][value=""]');
-        ok(await q.evaluate(() => !document.querySelector('.cdl-item[data-k="0"] .cdl-criar').checked), '"Manter" desmarca a seção');
-        /* apagar o repetido e manter o resto */
-        await q.check('#genBody .cdl-apagar'); await q.selectOption('#genBody .cdl-item[data-k="1"] .cdl-op', '1'); await q.check('#genBody input[name="cdlJa1"][value=""]');
-        const n0 = await q.evaluate(() => Store.estado.recorrentes.length);
-        await q.click('#genBody [data-acao="cdl-criar"]'); await q.waitForFunction(() => document.getElementById('genModal').classList.contains('hidden'));
-        const d1 = await q.evaluate(() => ({ n: Store.estado.recorrentes.length, fica: !!Recorrente.achar('r-esc'), saiu: !Recorrente.achar('r-esc2'), g: Store.estado.gastos.length }));
-        ok(d1.n === n0 - 1 && d1.fica && d1.saiu && d1.g === 2, 'Criar com "Apagar o repetido": sai a escola "a confirmar", fica a outra; nada mais muda (' + JSON.stringify(d1) + ')');
-        await q.click('#toasts .cdl-desfazer button');
-        ok(await q.evaluate((n) => Store.estado.recorrentes.length === n && !!Recorrente.achar('r-esc2'), n0), 'Desfazer devolve o repetido apagado');
-        /* atualizar este */
-        await abrirTela(); await q.waitForSelector('#genModal:not(.hidden) .cdl-tela');
-        await q.check('#genBody input[name="cdlJa0"][value="r-esc"]'); await q.selectOption('#genBody .cdl-item[data-k="1"] .cdl-op', 'nao');
-        await q.click('#genBody [data-acao="cdl-criar"]'); await q.waitForFunction(() => document.getElementById('genModal').classList.contains('hidden'));
-        ok(await q.evaluate((n) => Store.estado.recorrentes.length === n && Recorrente.achar('r-esc').aConfirmar === true, n0), '"Atualizar este": atualiza a escola existente (a confirmar), sem criar outra');
-        /* inglês */
-        await q.evaluate(() => { I18n.atual = 'en'; }); await abrirTela(); await q.waitForSelector('#genModal:not(.hidden) .cdl-tela');
-        const en = await q.evaluate(() => [document.getElementById('genTitle').textContent, ...[...document.querySelectorAll('#genBody .cdl-tit')].map((e) => e.textContent), [...document.querySelectorAll('#genBody .cdl-item[data-k="0"] .cdl-pil span')].map((e) => e.textContent).join('|')]);
-        ok(en[0] === 'Check what was read' && /^Monthly fees 2027/.test(en[1]) && en[2] === 'Extended day 2027' && /^Enrolment 2027 \(1st instalment\)/.test(en[3]) && /^Keep\|Update this\|Create new/.test(en[4]), 'em inglês: ' + en.join(' | '));
-        await q.screenshot({ path: path.join(SAIDA, 'parte14-1366-en.png') });
-      }
-      ok(q.erros.length === 0, nome + ': sem erro de página' + (q.erros.length ? ': ' + q.erros.join(' | ') : ''));
+      /* sem os cadastros do ampliado: ele pede decisão (⚠ escolha a opção) e vem aberto */
+      await abrirTela(true); await q.waitForSelector('#genModal:not(.hidden) .cdl-tela');
+      const t2 = await ler();
+      ok(t2.chips[1] === 'Período ampliado ⚠ escolha a opção' && t2.abertos.join() === 'false,true,false', nome + ': o que pede decisão vem aberto, com "⚠ escolha a opção" (' + t2.chips[1] + ')');
+      await q.selectOption('#genBody .cdl-item[data-k="1"] .cdl-op', '1');
+      ok((await ler()).chips[1] === 'Período ampliado + será criado', nome + ': escolheu a opção, o chip muda para "+ será criado"');
+      await q.screenshot({ path: path.join(SAIDA, 'parte14-' + vp.width + '-decidir.png') });
       await c2.close();
+      if (vp.width !== 1366) continue;
+      /* ações (1366): "mudar" e o teclado; Limpar + Desfazer; "Atualizar este"; inglês */
+      const { ctx: c3, p: r } = await abrirApp(vp);
+      const abrir3 = () => r.evaluate((ts) => CompromissoDe.mostrarPlano(CompromissoDe.planoModelo(ts.map((x) => CompromissoDe.lerModelo(x)))), [ESCOLAR.join('\n'), AMPLIADO.join('\n'), PDFJS]);
+      await abrir3(); await r.waitForSelector('#genModal:not(.hidden) .cdl-tela');
+      await r.focus('#genBody .cdl-item[data-k="0"] .cdl-mudar'); await r.keyboard.press('Enter');
+      ok(await r.evaluate(() => { const s = document.querySelector('.cdl-item[data-k="0"] .cdl-seg'); return !s.hidden && document.activeElement.name === 'cdlJa0' && document.querySelector('.cdl-item[data-k="0"] .cdl-mudar').getAttribute('aria-expanded') === 'true'; }), 'teclado: "mudar" (Enter) mostra Manter · Atualizar este · Criar novo e põe o foco na escolha');
+      await r.keyboard.press('ArrowRight'); await r.keyboard.press('ArrowRight');
+      ok(await r.evaluate(() => document.querySelector('input[name="cdlJa0"]:checked').value === 'criar' && document.querySelector('.cdl-item[data-k="0"] .cdl-criar').checked && /\+ será criado/.test(document.querySelector('.cdl-chip').textContent)), 'teclado: setas escolhem "Criar novo", a seção fica marcada e o chip vira "+ será criado"');
+      await r.check('#genBody input[name="cdlJa0"][value=""]');
+      await r.click('#genBody .cdl-chip[data-cdlir="g"]');
+      ok(await r.evaluate(() => !document.getElementById('cdlDG').hidden), 'tocar no chip "Matrícula" abre os detalhes dela');
+      await r.click('#genBody .cdl-limpar');
+      ok(await r.evaluate(() => document.querySelector('.cdl-limpar').getAttribute('aria-pressed') === 'true'), '"Limpar" fica marcado (aria-pressed)');
+      const n0 = await r.evaluate(() => Store.estado.recorrentes.length);
+      await r.click('#genBody [data-acao="cdl-criar"]'); await r.waitForFunction(() => document.getElementById('genModal').classList.contains('hidden'));
+      const d1 = await r.evaluate(() => ({ n: Store.estado.recorrentes.length, fica: !!Recorrente.achar('r-esc'), saiu: !Recorrente.achar('r-esc2'), g: Store.estado.gastos.length }));
+      ok(d1.n === n0 - 1 && d1.fica && d1.saiu && d1.g === 2, 'Criar com "Limpar": sai a escola "a confirmar", fica a outra; nada mais muda (' + JSON.stringify(d1) + ')');
+      await r.click('#toasts .cdl-desfazer button');
+      ok(await r.evaluate((n) => Store.estado.recorrentes.length === n && !!Recorrente.achar('r-esc2'), n0), 'Desfazer devolve o repetido apagado');
+      await abrir3(); await r.waitForSelector('#genModal:not(.hidden) .cdl-tela');
+      await r.click('#genBody .cdl-item[data-k="0"] .cdl-mudar'); await r.check('#genBody input[name="cdlJa0"][value="r-esc"]');
+      await r.click('#genBody [data-acao="cdl-criar"]'); await r.waitForFunction(() => document.getElementById('genModal').classList.contains('hidden'));
+      ok(await r.evaluate((n) => Store.estado.recorrentes.length === n && Recorrente.achar('r-esc').aConfirmar === true, n0), '"Atualizar este": atualiza a escola existente (a confirmar), sem criar outra');
+      await r.evaluate(() => { I18n.atual = 'en'; }); await abrir3(); await r.waitForSelector('#genModal:not(.hidden) .cdl-tela');
+      const en = await r.evaluate(() => [document.getElementById('genTitle').textContent, ...[...document.querySelectorAll('#genBody .cdl-chip')].map((e) => e.textContent.replace(/\s+/g, ' ').trim()), (document.querySelector('.cdl-faixa') || {}).textContent]);
+      ok(en[0] === 'Check what was read' && en[1] === 'Monthly fees ✓ already registered' && /^Enrolment ✓ already paid on 10\/30$/.test(en[3]) && /duplicate entries found/.test(en[4] || ''), 'em inglês: ' + en.join(' | '));
+      await r.screenshot({ path: path.join(SAIDA, 'parte14-1366-en.png') });
+      ok(r.erros.length === 0 && q.erros.length === 0, 'sem erro de página' + (r.erros.length ? ': ' + r.erros.join(' | ') : ''));
+      await c3.close();
     }
   } catch (e) { falhas++; console.error('ERRO NO TESTE:', e); }
   finally { await b.close(); srv.close(); }

@@ -644,6 +644,13 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.60 (`compromisso-de` 1.6.0): "Conferir o que foi lido" orientada a decisão. Chips no topo (`.cdl-chip`, um por seção, estado
+  recalculado a cada escolha: ✓ já cadastrado / ⚠ escolha a opção / ✓ já paga em dd/mm / + será criado / ↻ vai atualizar). Seção aberta
+  só quando pede decisão (opção não marcada e nada cadastrado; boleto sem valor claro); o resto com "ver detalhes" (`aria-expanded`).
+  Com cadastro existente e "Manter", a opção não importa (nada é criado): o chip fica ✓. Repetidos numa faixa (`.cdl-faixa`, "Limpar"
+  `aria-pressed`, apaga ao Criar, Desfazer devolve). Um cadastro só: "Manter" escolhido e Manter · Atualizar este · Criar novo em
+  "mudar". "valor do documento…" vira ⓘ (title) no Valor; "o contrato não diz o dia" vira ⚠ no Vence. Janela até `min(1200px, 94vw)`;
+  celular em uma coluna. Teste: `teste/teste-parte14.js` (390, 1366, 1920, com fotos, teclado, inglês).
 - 3.59 (`compromisso-de` 1.5.0): boleto lido como o app lê (PdfTexto): a linha com os 3 valores (bruto, descontos, a pagar)
   pode vir SOZINHA logo abaixo de "1ª Parcela da Anuidade" ou do cabeçalho "Valor Bruto Descontos Valor a Pagar"; o rótulo nunca
   pega um percentual ("multa de 2,00%"). "Já existe" (`jaExistem`) compara só o MESMO tipo (`tipoComp`: escolar × escolar,

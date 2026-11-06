@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.5.0 · 06/Nov/2026
+   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.6.0 · 06/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · No formulário de um lançamento: "📌 Virar compromisso" abre o "Novo compromisso" já preenchido
@@ -32,6 +32,9 @@
        MESMO tipo (tipoComp: escolar, ampliado; lanche/cantina/uniforme nunca); existentes iguais entre si agrupados ("2 iguais",
        "Apagar o repetido", que o Desfazer devolve); cada existente uma vez só. Tela "Conferir o que foi lido" refeita (larga,
        seções lado a lado, cabeçalhos com checkbox, botões segmentados Manter · Atualizar este · Criar novo).
+     · 1.6.0: a tela orientada a decisão: chips no topo com o estado de cada seção (✓ já cadastrado, ⚠ escolha a opção,
+       ✓ já paga em…, + será criado); só o que pede decisão vem aberto ("ver detalhes"); repetidos numa faixa só ("Limpar");
+       com um cadastro só, "Manter" escolhido e o resto em "mudar"; sem texto miúdo (ⓘ e ⚠ com o texto no title); até 1200 px.
    API (window.CompromissoDe)
      doLancamento(g)        → semente do compromisso
      lerContrato(texto)     → {escola, aluno, ano, parcela, parcelas, dia, matricula, anuidade, primeiroMes, achados:[…]}
@@ -353,63 +356,134 @@
   function pilula(tipo, nome, valor, rotulo, marcado, extra) {
     return '<label class="cdl-pil"><input type="' + tipo + '" name="' + nome + '" value="' + esc(valor) + '"' + (marcado ? ' checked' : '') + (extra || '') + '><span>' + esc(rotulo) + '</span></label>';
   }
+  /* 1.6.0 — a tela orientada a decisão: no topo, um chip por seção com o estado; só o que pede decisão vem aberto;
+     os cadastros repetidos numa faixa só ("Limpar"); "já existe" com um cadastro só = "Manter", e o resto em "mudar" */
+  function estadoItem(it, k, corpo) {
+    var el = corpo.querySelector('.cdl-item[data-k="' + k + '"]'), ja = el.querySelector('input[name="cdlJa' + k + '"]:checked');
+    var sel = el.querySelector('.cdl-op'), v = sel ? sel.value : String(it.escolhida >= 0 ? it.escolhida : 0), ck = el.querySelector('.cdl-criar').checked;
+    if (v === 'nao') return ['nada', pt() ? '— não contratado' : '— not signed up'];
+    if (ja && ja.value === '') return ['ok', pt() ? '✓ já cadastrado' : '✓ already registered'];
+    if (v === '' && (ck || ja)) return ['decidir', pt() ? '⚠ escolha a opção' : '⚠ choose the option'];
+    if (ja && ja.value !== 'criar') return ['muda', pt() ? '↻ vai atualizar' : '↻ will update'];
+    return ck || (ja && ja.value === 'criar') ? ['novo', pt() ? '+ será criado' : '+ will be created'] : ['nada', pt() ? '— não vai criar' : '— will not create'];
+  }
+  function estadoGasto(corpo) {
+    var g = plano.gasto, ck = corpo.querySelector('#cdlGasto').checked;
+    if (g.confira && ck) return ['decidir', pt() ? '⚠ confira o valor' : '⚠ check the amount'];
+    if (ck) return ['novo', pt() ? '+ será lançada' : '+ will be added'];
+    if (g.jaLancado) return ['ok', (pt() ? '✓ já paga em ' : '✓ already paid on ') + ddmm(g.jaLancado.data)];
+    return ['nada', pt() ? '— não vai lançar' : '— will not add'];
+  }
+  function nomeChip(it) { return it.chave === 'ampliado' ? (pt() ? 'Período ampliado' : 'Extended day') : (pt() ? 'Mensalidades' : 'Monthly fees'); }
+  function botaoDetalhe(id, aberto) {
+    return '<button type="button" class="cdl-det" aria-expanded="' + aberto + '" aria-controls="' + id + '">' + esc(aberto ? (pt() ? 'esconder' : 'hide') : (pt() ? 'ver detalhes' : 'see details')) + '</button>';
+  }
+  function dicaI(txt) { return '<span class="cdl-i" role="img" tabindex="0" title="' + esc(txt) + '" aria-label="' + esc(txt) + '">ⓘ</span>'; }
+  function alerta(txt) { return '<span class="cdl-alerta" role="img" tabindex="0" title="' + esc(txt) + '" aria-label="' + esc(txt) + '">⚠</span>'; }
   function mostrarPlano() {
     if (!plano) return;
-    var usados = {};
-    var h = '<div class="cdl-tela"><p class="cdl-topo small muted">' + esc(pt() ? 'Lido pelo modelo, sem IA. Tudo entra "a confirmar".' : 'Read by template, no AI. Everything is added "to confirm".') + '</p><div class="cdl-grade">';
+    var usados = {}, repetidos = [], h = '', secoes = '';
     plano.itens.forEach(function (it, k) {
       var i0 = it.escolhida >= 0 ? it.escolhida : 0, s0 = it.semente(i0);
-      /* cada existente aparece uma vez só (no 1º item do mesmo tipo) */
+      /* cada existente aparece uma vez só (no 1º item do mesmo tipo); os iguais entre si vão para a faixa "repetidos" */
       var grupos = API.agrupar(API.jaExistem(s0).filter(function (r) { return !usados[r.id]; }));
-      grupos.forEach(function (g) { usados[g.r.id] = 1; g.iguais.forEach(function (x) { usados[x.id] = 1; }); });
-      var nome = 'cdlJa' + k;
-      h += '<section class="cdl-sec cdl-item" data-k="' + k + '" aria-labelledby="cdlT' + k + '"><h4 class="cdl-cab"><label class="cdl-cab-l"><input type="checkbox" class="cdl-criar"' + (grupos.length ? '' : ' checked') + '>' +
-        '<span class="cdl-tit" id="cdlT' + k + '">' + esc(titItem(it, it.escolhida, s0.dia)) + '</span></label></h4>';
+      grupos.forEach(function (g) { usados[g.r.id] = 1; g.iguais.forEach(function (x) { usados[x.id] = 1; }); if (g.iguais.length) repetidos.push(g); });
+      var nome = 'cdlJa' + k, aberto = it.escolhida < 0 && !grupos.length, corpoId = 'cdlD' + k;   /* só o que pede decisão vem aberto */
+      secoes += '<section class="cdl-sec cdl-item" data-k="' + k + '" aria-labelledby="cdlT' + k + '">' +
+        '<div class="cdl-cab"><label class="cdl-cab-l"><input type="checkbox" class="cdl-criar"' + (grupos.length ? '' : ' checked') + '>' +
+        '<h4 class="cdl-tit" id="cdlT' + k + '">' + esc(titItem(it, it.escolhida, s0.dia)) + '</h4></label>' + botaoDetalhe(corpoId, aberto) + '</div>';
+      if (grupos.length === 1) {
+        var r1 = grupos[0].r;
+        secoes += '<div class="cdl-ja cdl-ja-um"><span class="cdl-ja-txt">' + esc((pt() ? 'Já cadastrado: ' : 'Already registered: ') + [r1.nome, fmt(r1.valor), (pt() ? 'dia ' : 'day ') + r1.dia, situacao(r1)].join(' · ')) + '</span>' +
+          '<button type="button" class="cdl-mudar" aria-expanded="false" aria-controls="cdlM' + k + '">' + esc(pt() ? 'mudar' : 'change') + '</button>' +
+          '<span class="cdl-seg" id="cdlM' + k + '" role="radiogroup" aria-label="' + esc(pt() ? 'O que fazer' : 'What to do') + '" hidden>' +
+          pilula('radio', nome, '', pt() ? 'Manter' : 'Keep', true) + pilula('radio', nome, r1.id, pt() ? 'Atualizar este' : 'Update this', false) +
+          pilula('radio', nome, 'criar', pt() ? 'Criar novo' : 'Create new', false) + '</span></div>';
+      } else if (grupos.length > 1) {   /* vários já cadastrados (ex.: 1º e 2º semestre): uma linha; "mudar" abre os detalhes */
+        secoes += '<div class="cdl-ja cdl-ja-um"><span class="cdl-ja-txt">' + esc((pt() ? 'Já cadastrado: ' : 'Already registered: ') + grupos.map(function (g) { return g.r.nome + ' · ' + fmt(g.r.valor); }).join(' e ')) + '</span>' +
+          '<button type="button" class="cdl-mudar cdl-mudar-det" aria-expanded="false" aria-controls="' + corpoId + '">' + esc(pt() ? 'mudar' : 'change') + '</button></div>';
+      }
+      secoes += '<div class="cdl-corpo" id="' + corpoId + '"' + (aberto ? '' : ' hidden') + '>';
       if (it.opcoes.length > 1 || it.escolhida < 0) {
-        h += '<label class="cdl-lin"><span class="cdl-rot">' + esc(it.escolhida < 0 ? (pt() ? 'Qual opção vocês contrataram? (o contrato não marcou)' : 'Which option did you sign up for? (not marked)') : (pt() ? 'Opção' : 'Option')) + '</span>' +
+        secoes += '<label class="cdl-lin"><span class="cdl-rot">' + esc(it.escolhida < 0 ? (pt() ? 'Qual opção vocês contrataram?' : 'Which option did you sign up for?') : (pt() ? 'Opção' : 'Option')) + '</span>' +
           '<select class="cdl-op"><option value="">' + (pt() ? '— escolha —' : '— choose —') + '</option>' + it.opcoes.map(function (o, i) {
             return '<option value="' + i + '"' + (i === it.escolhida ? ' selected' : '') + '>' + esc(o.nome + ' · ' + o.parcelas + ' × ' + fmt(o.parcela)) + '</option>'; }).join('') +
           '<option value="nao">' + (pt() ? 'Não contratamos' : 'We did not sign up') + '</option></select></label>';
-      } else if (it.opcoes[0]) h += '<div class="cdl-meta small">' + esc(it.opcoes[0].nome) + '</div>';
+      } else if (it.opcoes[0]) secoes += '<div class="cdl-meta small">' + esc(it.opcoes[0].nome) + '</div>';
       var mesesTxt = s0.fora.length ? (pt() ? 'sem parcela em ' : 'no instalment in ') + s0.fora.map(function (m) { return I18n.mesCurto(m); }).join(', ') : '';
-      h += '<div class="cdl-meta small muted">' + esc([I18n.mesCurto(Number(s0.desde.slice(5, 7))) + '–' + I18n.mesCurto(Number(s0.ate.slice(5, 7))), mesesTxt].filter(Boolean).join(' · ')) + '</div>';
-      if (grupos.length) {
-        h += '<div class="cdl-ja" role="radiogroup" aria-label="' + esc(pt() ? 'Já existe' : 'Already exists') + '"><div class="cdl-ja-tit">' + esc(pt() ? 'Já existe' : 'Already exists') + '</div><ul class="cdl-ja-lista">';
+      secoes += '<div class="cdl-meta small muted">' + esc([I18n.mesCurto(Number(s0.desde.slice(5, 7))) + '–' + I18n.mesCurto(Number(s0.ate.slice(5, 7))), mesesTxt].filter(Boolean).join(' · ')) + '</div>';
+      if (grupos.length > 1) {
+        secoes += '<div class="cdl-ja" role="radiogroup" aria-label="' + esc(pt() ? 'Já existe' : 'Already exists') + '"><div class="cdl-ja-tit">' + esc(pt() ? 'Já existe' : 'Already exists') + '</div><ul class="cdl-ja-lista">';
         grupos.forEach(function (g) {
           var r = g.r;
-          h += '<li class="cdl-ja-linha"><span class="cdl-ja-txt">' + esc([r.nome, fmt(r.valor), (pt() ? 'dia ' : 'day ') + r.dia, situacao(r)].join(' · ')) + '</span>' +
-            (g.iguais.length ? '<span class="cdl-iguais">' + (g.iguais.length + 1) + (pt() ? ' iguais' : ' identical') + '</span>' : '') +
-            '<span class="cdl-seg">' + (grupos.length === 1 ? pilula('radio', nome, '', pt() ? 'Manter' : 'Keep', true) : '') +
-            pilula('radio', nome, r.id, pt() ? 'Atualizar este' : 'Update this', false) +
-            (grupos.length === 1 ? pilula('radio', nome, 'criar', pt() ? 'Criar novo' : 'Create new', false) : '') + '</span>' +
-            (g.iguais.length ? '<span class="cdl-seg">' + pilula('checkbox', 'cdlApagar' + k, g.iguais.map(function (x) { return x.id; }).join(','), pt() ? 'Apagar o repetido' : 'Delete the duplicate', false, ' class="cdl-apagar"') + '</span>' : '') + '</li>';
+          secoes += '<li class="cdl-ja-linha"><span class="cdl-ja-txt">' + esc([r.nome, fmt(r.valor), (pt() ? 'dia ' : 'day ') + r.dia, situacao(r)].join(' · ')) + '</span>' +
+            '<span class="cdl-seg">' + pilula('radio', nome, r.id, pt() ? 'Atualizar este' : 'Update this', false) + '</span></li>';
         });
-        h += '</ul>' + (grupos.length > 1 ? '<span class="cdl-seg">' + pilula('radio', nome, '', pt() ? 'Manter' : 'Keep', true) + pilula('radio', nome, 'criar', pt() ? 'Criar novo' : 'Create new', false) + '</span>' : '') + '</div>';
+        secoes += '</ul><span class="cdl-seg">' + pilula('radio', nome, '', pt() ? 'Manter' : 'Keep', true) + pilula('radio', nome, 'criar', pt() ? 'Criar novo' : 'Create new', false) + '</span></div>';
       }
-      h += '<div class="cdl-campos"><label class="cdl-lin cdl-dia-l"><span class="cdl-rot">' + esc(pt() ? 'Vence todo dia' : 'Due every') + '</span><input type="number" class="cdl-dia" min="1" max="31" value="' + s0.dia + '"></label>' +
-        '<label class="linha-check"><input type="checkbox" class="cdl-ir" checked> ' + esc(pt() ? 'Entra no imposto de renda' : 'Tax deductible') + '</label></div>' +
-        (it.diaInformado ? '' : '<div class="tiny muted">' + esc(pt() ? 'o contrato não diz o dia: confira' : 'not in the contract: check') + '</div>') + '</section>';
+      var semDia = pt() ? 'O contrato não diz o dia: confira' : 'Not in the contract: check';
+      secoes += '<div class="cdl-campos"><label class="cdl-lin cdl-dia-l"><span class="cdl-rot">' + esc(pt() ? 'Vence todo dia' : 'Due every') + (it.diaInformado ? '' : ' ' + alerta(semDia)) + '</span>' +
+        '<input type="number" class="cdl-dia" min="1" max="31" value="' + s0.dia + '"></label>' +
+        '<label class="linha-check"><input type="checkbox" class="cdl-ir" checked> ' + esc(pt() ? 'Entra no imposto de renda' : 'Tax deductible') + '</label></div></div></section>';
     });
     if (plano.gasto) {
-      var g = plano.gasto, jl = g.jaLancado;
-      h += '<section class="cdl-sec cdl-gasto" aria-labelledby="cdlTG"><h4 class="cdl-cab"><label class="cdl-cab-l"><input type="checkbox" id="cdlGasto"' + (jl ? '' : ' checked') + '>' +
-        '<span class="cdl-tit" id="cdlTG">' + esc(titGasto(g.valor, g.data)) + '</span></label></h4>' +
-        (jl ? '<div class="cdl-nota cdl-jalancado small">' + esc((pt() ? 'Já está no livro: ' : 'Already in your book: ') + I18n.data(jl.data) + ' · ' + (jl.desc || jl.sub) + ' · ' + fmt(jl.valor)) + '</div>' : '') +
-        (g.confira ? '<div class="cdl-nota cdl-confira small">' + esc(pt() ? 'Confira o valor: o boleto não deixou claro o valor a pagar.' : 'Check the amount: the bill did not make the amount due clear.') + '</div>' : '') +
+      var g = plano.gasto, jl = g.jaLancado, abertoG = !!g.confira;
+      secoes += '<section class="cdl-sec cdl-gasto" aria-labelledby="cdlTG"><div class="cdl-cab"><label class="cdl-cab-l"><input type="checkbox" id="cdlGasto"' + (jl ? '' : ' checked') + '>' +
+        '<h4 class="cdl-tit" id="cdlTG">' + esc(titGasto(g.valor, g.data)) + '</h4></label>' + botaoDetalhe('cdlDG', abertoG) + '</div>' +
+        (jl ? '<div class="cdl-ja cdl-ja-um cdl-jalancado"><span class="cdl-ja-txt">' + esc((pt() ? 'Já está no livro: ' : 'Already in your book: ') + I18n.data(jl.data) + ' · ' + (jl.desc || jl.sub) + ' · ' + fmt(jl.valor)) + '</span></div>' : '') +
+        '<div class="cdl-corpo" id="cdlDG"' + (abertoG ? '' : ' hidden') + '>' +
+        (g.confira ? '<div class="cdl-nota cdl-confira small">' + esc(pt() ? '⚠ O boleto não deixou claro o valor a pagar: confira.' : '⚠ The bill did not make the amount due clear: check it.') + '</div>' : '') +
         '<label class="cdl-lin"><span class="cdl-rot">' + esc(pt() ? 'Nome do lançamento' : 'Entry name') + '</span><input id="cdlGDesc" maxlength="80" value="' + esc(g.desc) + '"></label>' +
         '<div class="cdl-campos"><div class="cdl-lin"><span class="cdl-rot">' + esc(pt() ? 'Data' : 'Date') + '</span>' + Cal.campo('cdlGData', g.data, {}) + '</div>' +
-        '<label class="cdl-lin"><span class="cdl-rot">' + esc(pt() ? 'Valor (R$)' : 'Amount (R$)') + '</span><input type="number" id="cdlGValor" min="0" step="0.01" value="' + g.valor + '"></label></div>' +
-        (g.obs ? '<div class="cdl-meta small muted">' + esc(g.obs) + '</div>' : '') + '</section>';
+        '<label class="cdl-lin"><span class="cdl-rot">' + esc(pt() ? 'Valor (R$)' : 'Amount (R$)') + (g.obs ? ' ' + dicaI(g.obs) : '') + '</span><input type="number" id="cdlGValor" min="0" step="0.01" value="' + g.valor + '"></label></div></div></section>';
     }
-    h += '</div><div class="f-actions"><button class="btn" data-close="genModal">' + esc(t('ac.cancelar')) + '</button><button class="btn primary" data-acao="cdl-criar">' + (pt() ? 'Criar' : 'Create') + '</button></div></div>';
+    /* topo: os chips (um por seção) e a faixa dos repetidos */
+    h += '<div class="cdl-tela"><div class="cdl-chips" role="list">' + plano.itens.map(function (it, k) {
+      return '<button type="button" role="listitem" class="cdl-chip" data-cdlir="' + k + '"><b>' + esc(nomeChip(it)) + '</b> <span class="cdl-chip-est"></span></button>'; }).join('') +
+      (plano.gasto ? '<button type="button" role="listitem" class="cdl-chip" data-cdlir="g"><b>' + esc(pt() ? 'Matrícula' : 'Enrolment') + '</b> <span class="cdl-chip-est"></span></button>' : '') + '</div>';
+    var nRep = repetidos.reduce(function (n, g) { return n + g.iguais.length + 1; }, 0);
+    plano._limpar = repetidos.reduce(function (a, g) { return a.concat(g.iguais.map(function (x) { return x.id; })); }, []);
+    if (nRep) h += '<div class="cdl-faixa" role="status"><span>' + esc(nRep + (pt() ? ' cadastros repetidos encontrados' : ' duplicate entries found') + ' (' + repetidos.map(function (g) { return g.r.nome; }).join(', ') + ')') + '</span>' +
+      '<button type="button" class="btn sm cdl-limpar" aria-pressed="false">' + esc(pt() ? 'Limpar' : 'Clean up') + '</button></div>';
+    h += '<div class="cdl-grade">' + secoes + '</div>' +
+      '<div class="f-actions"><button class="btn" data-close="genModal">' + esc(t('ac.cancelar')) + '</button><button class="btn primary" data-acao="cdl-criar">' + (pt() ? 'Criar' : 'Create') + '</button></div></div>';
     $('#genTitle').textContent = pt() ? 'Conferir o que foi lido' : 'Check what was read';
     var corpo = $('#genBody');
     corpo.innerHTML = Verter.html(h);
     ligarTela(corpo);
     abrir('genModal');
   }
-  /* o cabeçalho acompanha o que a pessoa escolhe; "Atualizar este"/"Criar novo" marcam a seção, "Manter" desmarca */
+  /* liga a tela: chips acompanham as escolhas; "ver detalhes", "mudar" e "Limpar"; cabeçalho acompanha opção e dia */
   function ligarTela(corpo) {
+    var chips = function () {
+      corpo.querySelectorAll('.cdl-chip').forEach(function (c) {
+        var k = c.getAttribute('data-cdlir'), e = k === 'g' ? estadoGasto(corpo) : estadoItem(plano.itens[Number(k)], Number(k), corpo);
+        c.className = 'cdl-chip cdl-chip-' + e[0]; c.querySelector('.cdl-chip-est').textContent = e[1];
+      });
+    };
+    var abrirDet = function (bt, sim) {
+      var alvo = document.getElementById(bt.getAttribute('aria-controls')); if (!alvo) return;
+      alvo.hidden = !sim; bt.setAttribute('aria-expanded', String(sim)); bt.textContent = sim ? (pt() ? 'esconder' : 'hide') : (pt() ? 'ver detalhes' : 'see details');
+    };
+    corpo.querySelectorAll('.cdl-det').forEach(function (bt) { bt.addEventListener('click', function () { abrirDet(bt, bt.getAttribute('aria-expanded') !== 'true'); }); });
+    corpo.querySelectorAll('.cdl-mudar-det').forEach(function (bt) { bt.addEventListener('click', function () {
+      var det = bt.closest('.cdl-sec').querySelector('.cdl-det'), sim = bt.getAttribute('aria-expanded') !== 'true';
+      abrirDet(det, sim); bt.setAttribute('aria-expanded', String(sim));
+    }); });
+    corpo.querySelectorAll('.cdl-mudar:not(.cdl-mudar-det)').forEach(function (bt) { bt.addEventListener('click', function () {
+      var alvo = document.getElementById(bt.getAttribute('aria-controls')), sim = alvo.hidden; alvo.hidden = !sim; bt.setAttribute('aria-expanded', String(sim));
+      if (sim) { var m = alvo.querySelector('input:checked'); if (m) m.focus(); }
+    }); });
+    corpo.querySelectorAll('.cdl-chip').forEach(function (c) { c.addEventListener('click', function () {
+      var k = c.getAttribute('data-cdlir'), sec = k === 'g' ? corpo.querySelector('.cdl-gasto') : corpo.querySelector('.cdl-item[data-k="' + k + '"]');
+      var bt = sec.querySelector('.cdl-det'); if (bt) abrirDet(bt, true);
+      sec.scrollIntoView({ block: 'nearest' }); var tt0 = sec.querySelector('.cdl-cab input'); if (tt0) tt0.focus();
+    }); });
+    var lp = corpo.querySelector('.cdl-limpar');
+    if (lp) lp.addEventListener('click', function () {
+      var on = lp.getAttribute('aria-pressed') !== 'true'; lp.setAttribute('aria-pressed', String(on));
+      lp.textContent = on ? (pt() ? '✓ sai ao criar · desfazer' : '✓ removed on create · undo') : (pt() ? 'Limpar' : 'Clean up');
+    });
     corpo.querySelectorAll('.cdl-item').forEach(function (el) {
       var it = plano.itens[Number(el.dataset.k)], tit = el.querySelector('.cdl-tit'), sel = el.querySelector('.cdl-op'), dia = el.querySelector('.cdl-dia'), ck = el.querySelector('.cdl-criar');
       var refaz = function () { var i = sel ? Number(sel.value) : (it.escolhida >= 0 ? it.escolhida : 0); tit.textContent = titItem(it, sel && (sel.value === '' || sel.value === 'nao') ? -1 : i, Number(dia.value) || 0); };
@@ -423,13 +497,14 @@
     var tg = corpo.querySelector('#cdlTG');
     if (tg) { var rg = function () { tg.textContent = titGasto(Number(corpo.querySelector('#cdlGValor').value) || 0, (corpo.querySelector('#cdlGData') || {}).value); };
       corpo.querySelector('#cdlGValor').addEventListener('input', rg); var gd = corpo.querySelector('#cdlGData'); if (gd) gd.addEventListener('change', rg); }
+    corpo.addEventListener('change', chips); corpo.addEventListener('input', chips);
+    chips();
   }
   async function criarPlano() {
     if (!plano) return;
     var criados = [], atualizar = [], apagar = [], falta = '';
     document.querySelectorAll('#genBody .cdl-item').forEach(function (el) {
       var it = plano.itens[Number(el.dataset.k)], ja = el.querySelector('input[name="cdlJa' + el.dataset.k + '"]:checked'), modo = ja ? ja.value : null;
-      el.querySelectorAll('.cdl-apagar:checked').forEach(function (c) { apagar = apagar.concat(c.value.split(',')); });
       if (modo === '' || (modo === null && !el.querySelector('.cdl-criar').checked)) return;
       var sel = el.querySelector('.cdl-op'), i = sel ? sel.value : String(it.escolhida >= 0 ? it.escolhida : 0);
       if (i === 'nao') return;
@@ -440,6 +515,7 @@
       if (modo && modo !== 'criar') atualizar.push({ id: modo, s: s, diaInformado: it.diaInformado });
       else criados.push(s);
     });
+    var lp = document.querySelector('#genBody .cdl-limpar'); if (lp && lp.getAttribute('aria-pressed') === 'true') apagar = (plano._limpar || []).slice();
     if (falta) { toast((pt() ? 'Escolha a opção de "' : 'Choose the option for "') + falta + (pt() ? '" (ou "Não contratamos").' : '" (or "We did not sign up").'), 'warn'); return; }
     /* para "Desfazer": o que existia antes de mexer, o que nasceu agora e o repetido apagado (com os pagamentos dele) */
     var desfazer = { recorrentes: [], antes: [], gastos: [], apagados: [] };
