@@ -552,6 +552,13 @@ Desde a 3.41, **toda função nova é um módulo**: um arquivo em `modulos/`, co
   linha digitável reais também não entram: em fixtures, use X ou zeros. Texto real de documento só entra como fixture com os dados
   trocados (o layout e os valores públicos, como a tabela de preços da escola, podem ficar).
 
+**Amostra de PDF (regra permanente, 06/Nov/2026)**
+- A amostra de um PDF no teste é SEMPRE o texto que o próprio app gera com `PdfTexto.extrair` (pdf.js: espaços colapsados,
+  linhas quebradas de outro jeito), nunca o do `pdftotext -layout`. O leitor tem de passar com a amostra do PdfTexto; a do
+  `-layout` pode ficar ao lado, como segunda prova. Ex.: `teste/amostras/boleto-matricula-pdfjs.txt` (o que o app lê) e
+  `teste/amostras/boleto-matricula-layout.txt`, as duas em `teste/teste-parte14.js`. (A 3.55 errou o boleto real no app por
+  testar só com o `-layout`.)
+
 **Como testar**
 - `teste/teste-<nome>.js` (Playwright, modo "só neste aparelho", telas de 390 e 1366 px, sem erro de página),
   no padrão dos outros testes.
@@ -637,6 +644,16 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.59 (`compromisso-de` 1.5.0): boleto lido como o app lê (PdfTexto): a linha com os 3 valores (bruto, descontos, a pagar)
+  pode vir SOZINHA logo abaixo de "1ª Parcela da Anuidade" ou do cabeçalho "Valor Bruto Descontos Valor a Pagar"; o rótulo nunca
+  pega um percentual ("multa de 2,00%"). "Já existe" (`jaExistem`) compara só o MESMO tipo (`tipoComp`: escolar × escolar,
+  ampliado × ampliado; lanche, cantina, uniforme, material, transporte nunca) e `agrupar` junta os existentes iguais entre si
+  (`Recorrente.parecemRepetidos`): fica o que não está "a confirmar" (ou o mais antigo) e o outro é "o repetido", que dá para
+  apagar (o Desfazer devolve, com os pagamentos dele). Cada existente aparece uma vez só. Tela "Conferir o que foi lido": janela
+  `min(960px, 92vw)` (`#genModal:has(.cdl-tela)`), seções em grade `auto-fit minmax(280px,1fr)`, cabeçalho com checkbox e nome
+  claro ("Mensalidades 2027 · 12 × R$ … · dia 10", "Período ampliado 2027", "Matrícula 2027 (1ª parcela) · R$ … · 30/10"),
+  "já existe" em uma linha por existente com botões segmentados (rádios de verdade: Manter · Atualizar este · Criar novo; "Apagar
+  o repetido"). Com uma janela aberta o selo da nuvem sai (como a pílula do Fundo). Teste: `teste/teste-parte14.js`.
 - 3.58 (N44, estilo.css): no celular (≤ 760 px), com o menu ☰ aberto (`body:has(.sidenav.open)`), o selo da nuvem (`.nv-selo`, de
   nuvem.js) vai para o lado do menu (`left: 248px + 12px`, quebra em duas linhas se precisar), como o computador faz com a barra lateral;
   em tela com menos de 360 px não cabe ao lado e ele sai enquanto o menu está aberto (o mesmo da pílula do Fundo e do AssistONE).

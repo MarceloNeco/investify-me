@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.4.1 · 06/Nov/2026
+   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.5.0 · 06/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · No formulário de um lançamento: "📌 Virar compromisso" abre o "Novo compromisso" já preenchido
@@ -27,6 +27,11 @@
        "Já existe" (jaExistem): compromisso do mesmo aluno e nome parecido no mesmo período → vem desmarcado, com
        "manter como está", "atualizar <o existente>" (valor, dia informado, IR, a confirmar) ou "criar mesmo assim".
        Depois de Criar, "↩ Desfazer" por 5 minutos.
+     · 1.5.0: boleto como o app lê (PdfTexto/pdf.js): a linha dos 3 valores pode vir sozinha abaixo de "1ª Parcela da Anuidade"
+       ou do cabeçalho "Valor Bruto Descontos Valor a Pagar" (amostra teste/amostras/boleto-matricula-pdfjs.txt). "Já existe" só do
+       MESMO tipo (tipoComp: escolar, ampliado; lanche/cantina/uniforme nunca); existentes iguais entre si agrupados ("2 iguais",
+       "Apagar o repetido", que o Desfazer devolve); cada existente uma vez só. Tela "Conferir o que foi lido" refeita (larga,
+       seções lado a lado, cabeçalhos com checkbox, botões segmentados Manter · Atualizar este · Criar novo).
    API (window.CompromissoDe)
      doLancamento(g)        → semente do compromisso
      lerContrato(texto)     → {escola, aluno, ano, parcela, parcelas, dia, matricula, anuidade, primeiroMes, achados:[…]}
@@ -34,7 +39,8 @@
      lerModelo(texto)       → null | {tipo:'escolar'|'ampliado'|'boleto', ano, aluno, escola, opcoes:[{nome, anuidade, parcelas, parcela…}],
                               escolhida (-1 = perguntar), meses:[1..12], dia, primeiroVenc | bruto, desconto, pagar, venc}
      planoModelo([docs])    → {ano, aluno, escola, itens:[{chave, rotulo, opcoes, escolhida, semente(i)}], gasto|null}
-     jaLancado(valor, data, nomes) → lançamento | null · jaExistem(semente) → [compromisso] · desfazer({recorrentes, antes, gastos})
+     jaLancado(valor, data, nomes) → lançamento | null · jaExistem(semente) → [compromisso do mesmo tipo] · tipoComp(nome) → 'escolar'|'ampliado'|'outro'|''
+     agrupar([compromisso]) → [{r, iguais:[repetidos]}] · desfazer({recorrentes, antes, gastos, apagados})
      mostrarPlano(plano)    → abre a prévia de um plano já lido
    PONTOS QUE USA
      lancamento.form · custos.topo · ações cdl-* · genModal (prévia) · Fundo (leitura dos PDFs)
@@ -162,7 +168,7 @@
     return '';
   }
   /* o primeiro valor "1.413,00" depois do rótulo (na mesma linha ou nas de baixo, como no -layout) */
-  function valorDepois(s, rx) { var m = s.match(new RegExp(rx.source + '[^\\d]{0,80}?(\\d{1,3}(?:\\.\\d{3})*,\\d{2})')); return m ? num(m[1]) : 0; }
+  function valorDepois(s, rx) { var m = s.match(new RegExp(rx.source + '[^\\d]{0,80}?(\\d{1,3}(?:\\.\\d{3})*,\\d{2})(?!\\s*%)')); return m ? num(m[1]) : 0; }   /* nunca "2,00%" */
 
   API.lerModelo = function (texto) {
     var t = String(texto || ''), s = sa(t).replace(/[ \t]+/g, ' '), ls = linhasDe(t), tipo = tipoDoTexto(s), m;
@@ -171,7 +177,16 @@
     if ((m = s.match(/contrato de serv[a-z ]*?-\s*(20\d\d)/)) || (m = s.match(/ano letivo de [a-z]+ a [a-z]+ de (20\d\d)/)) || (m = s.match(/ano letivo[^\n]*?(20\d\d)/))) o.ano = Number(m[1]);
     o.aluno = acharAluno(t) || API.lerContrato(t).aluno;
     if (tipo === 'boleto') {
-      var lb = ls.find(function (l) { return /parcela da anuidade/.test(sa(l)) && /\d,\d{2}/.test(l); }) || '', vs = lb.match(/\d{1,3}(?:\.\d{3})*,\d{2}/g) || [];
+      /* a linha da tabela com os 3 valores (bruto, descontos, a pagar). No pdftotext -layout ela vem junto com "1ª Parcela da
+         Anuidade"; no PdfTexto (pdf.js, o que o app usa de verdade) vem SOZINHA, logo abaixo: "1 1.534,00 121,00 1.413,00" */
+      var RX_V = /\d{1,3}(?:\.\d{3})*,\d{2}/g, tres = function (l) { return (l.match(RX_V) || []).length >= 3; };
+      var lb = ls.find(function (l) { return /parcela da anuidade/.test(sa(l)) && tres(l); }) || '';
+      for (var ib = 0; ib < ls.length && !lb; ib++) {
+        var sb = sa(ls[ib]);
+        if (!/parcela da anuidade/.test(sb) && !/valor bruto.*desconto.*valor a pagar/.test(sb)) continue;
+        for (var jb = ib + 1; jb <= ib + 3 && jb < ls.length; jb++) if (tres(ls[jb])) { lb = ls[jb]; break; }
+      }
+      var vs = lb.match(RX_V) || [];
       o.bruto = vs.length >= 3 ? num(vs[vs.length - 3]) : vs.length ? num(vs[0]) : 0;
       o.desconto = vs.length >= 3 ? num(vs[vs.length - 2]) : 0;
       o.pagar = vs.length ? num(vs[vs.length - 1]) : 0;
@@ -287,78 +302,152 @@
       return dd <= 45 && alvo.some(function (x) { return w.indexOf(x) >= 0; });
     }) || null;
   };
-  /* o compromisso já existe? mesmo grupo, período que se cruza e nome parecido (uma palavra de 4+ letras em comum,
-     sem contar o ano e o nome do aluno) com o mesmo aluno no nome ou em "para quem é" */
+  /* 1.5.0: o tipo do compromisso, para comparar só o mesmo tipo (mensalidade × mensalidade, ampliado × ampliado).
+     Lanche, cantina, uniforme, material, transporte… nunca entram, mesmo com "escola" no nome. */
+  var RX_NUNCA = /lanche|cantina|uniforme|material|\bcafe\b|transporte|\bvan\b|excurs|passeio|apostila|livro/;
+  function tipoComp(nome) {
+    var n = sa(nome);
+    if (RX_NUNCA.test(n)) return 'outro';
+    if (/ampliad|integral|estendid|contraturno|extended/.test(n)) return 'ampliado';
+    if (/escola|colegio|mensalidade|anuidade|faculdade|school/.test(n)) return 'escolar';
+    return '';
+  }
+  API.tipoComp = tipoComp;
+  /* o compromisso já existe? o MESMO tipo, mesmo grupo, período que se cruza e o mesmo aluno (no nome ou em "para quem é") */
   API.jaExistem = function (sem) {
-    var alunoW = palavrasNome(sem.quem), w0 = palavrasNome(sem.nome).filter(function (x) { return alunoW.indexOf(x) < 0; });
+    var tipo = tipoComp(sem.nome), alunoW = palavrasNome(sem.quem);
+    if (!tipo || tipo === 'outro') return [];
     return Recorrente.todos().filter(function (r) {
-      if (r.ativo === false || r.grupo !== sem.grupo) return false;
+      if (r.ativo === false || r.grupo !== sem.grupo || tipoComp(r.nome) !== tipo) return false;
       if ((r.desde && r.desde > sem.ate) || (r.ate && r.ate < sem.desde)) return false;
-      var w = palavrasNome(r.nome), mesmoAluno = !alunoW.length || alunoW.some(function (x) { return w.indexOf(x) >= 0; }) || sa(r.quem).trim() === sa(sem.quem).trim();
-      return mesmoAluno && w0.some(function (x) { return w.indexOf(x) >= 0; });
+      var w = palavrasNome(r.nome);
+      return !alunoW.length || alunoW.some(function (x) { return w.indexOf(x) >= 0; }) || sa(r.quem).trim() === sa(sem.quem).trim();
+    });
+  };
+  /* os existentes agrupados: os que são iguais entre si (Recorrente.parecemRepetidos) viram um grupo; fica o que NÃO está
+     "a confirmar" (ou o mais antigo) e os outros são "o repetido" (que dá para apagar) → [{r, iguais: [repetidos]}] */
+  API.agrupar = function (lista) {
+    var grupos = [];
+    lista.forEach(function (r) {
+      var g = grupos.find(function (x) { return Recorrente.parecemRepetidos(x.r, r); });
+      if (g) g.todos.push(r); else grupos.push({ r: r, todos: [r] });
+    });
+    return grupos.map(function (g) {
+      var ord = g.todos.slice().sort(function (a, b) { return (a.aConfirmar ? 1 : 0) - (b.aConfirmar ? 1 : 0) || String(a.criadoEm || '').localeCompare(String(b.criadoEm || '')); });
+      return { r: ord[0], iguais: ord.slice(1) };
     });
   };
 
   /* ---------- prévia: confere e cria (compromissos "a confirmar" + 1ª parcela como gasto pontual) ---------- */
   var plano = null, guardar = [];
+  /* 1.5.0 — tela "Conferir o que foi lido": uma linha curta no topo; cada seção com cabeçalho de verdade e checkbox;
+     "já existe" como lista compacta (nome · valor · dia · situação) e a ação em botões segmentados */
+  function ddmm(iso) { var p = String(iso || '').split('-'); return p.length < 3 ? '' : (pt() ? p[2] + '/' + p[1] : p[1] + '/' + p[2]); }
+  function titItem(it, i, dia) {
+    if (it.chave === 'ampliado') return (pt() ? 'Período ampliado ' : 'Extended day ') + plano.ano;
+    var op = it.opcoes[i];
+    return (pt() ? 'Mensalidades ' : 'Monthly fees ') + plano.ano + (op ? ' · ' + op.parcelas + ' × ' + fmt(op.parcela) : '') + (dia ? ' · ' + (pt() ? 'dia ' : 'day ') + dia : '');
+  }
+  function titGasto(valor, data) { return (pt() ? 'Matrícula ' + plano.ano + ' (1ª parcela)' : 'Enrolment ' + plano.ano + ' (1st instalment)') + (valor ? ' · ' + fmt(valor) : '') + (data ? ' · ' + ddmm(data) : ''); }
+  function situacao(r) { return r.ativo === false ? (pt() ? 'desligado' : 'off') : r.aConfirmar ? (pt() ? 'a confirmar' : 'to confirm') : (pt() ? 'ativo' : 'active'); }
+  function pilula(tipo, nome, valor, rotulo, marcado, extra) {
+    return '<label class="cdl-pil"><input type="' + tipo + '" name="' + nome + '" value="' + esc(valor) + '"' + (marcado ? ' checked' : '') + (extra || '') + '><span>' + esc(rotulo) + '</span></label>';
+  }
   function mostrarPlano() {
     if (!plano) return;
-    var h = '<p class="small muted">' + esc(pt() ? 'O app leu o contrato pelo modelo, sem IA. Confira: os compromissos entram marcados "a confirmar", com os meses certos e "Entra no imposto de renda".'
-      : 'Read by template, no AI. Check: commitments are created marked "to confirm", with the right months and the tax flag.') + '</p>';
+    var usados = {};
+    var h = '<div class="cdl-tela"><p class="cdl-topo small muted">' + esc(pt() ? 'Lido pelo modelo, sem IA. Tudo entra "a confirmar".' : 'Read by template, no AI. Everything is added "to confirm".') + '</p><div class="cdl-grade">';
     plano.itens.forEach(function (it, k) {
-      var s0 = it.semente(it.escolhida >= 0 ? it.escolhida : 0), ja = API.jaExistem(s0);
-      h += '<div class="cdl-item card" data-k="' + k + '"><label class="linha-check"><input type="checkbox" class="cdl-criar"' + (ja.length ? '' : ' checked') + '> <b>' + esc(it.rotulo) + '</b></label>';
-      if (ja.length) h += '<div class="aviso-box small cdl-ja"><b>' + esc(pt() ? 'Já existe: ' : 'Already exists: ') + esc(ja.map(function (r) { return r.nome + ' (' + fmt(r.valor) + ', ' + (pt() ? 'dia ' : 'day ') + r.dia + ')'; }).join(' · ')) + '</b>' +
-        '<div class="row" style="gap:12px;flex-wrap:wrap;margin-top:6px">' +
-        '<label class="linha-check"><input type="radio" name="cdlJa' + k + '" value="" checked> ' + (pt() ? 'manter como está' : 'keep as is') + '</label>' +
-        ja.map(function (r) { return '<label class="linha-check"><input type="radio" name="cdlJa' + k + '" value="' + esc(r.id) + '"> ' + esc((pt() ? 'atualizar "' : 'update "') + r.nome + '"') + '</label>'; }).join('') +
-        '<label class="linha-check"><input type="radio" name="cdlJa' + k + '" value="criar"> ' + (pt() ? 'criar mesmo assim' : 'create anyway') + '</label></div></div>';
+      var i0 = it.escolhida >= 0 ? it.escolhida : 0, s0 = it.semente(i0);
+      /* cada existente aparece uma vez só (no 1º item do mesmo tipo) */
+      var grupos = API.agrupar(API.jaExistem(s0).filter(function (r) { return !usados[r.id]; }));
+      grupos.forEach(function (g) { usados[g.r.id] = 1; g.iguais.forEach(function (x) { usados[x.id] = 1; }); });
+      var nome = 'cdlJa' + k;
+      h += '<section class="cdl-sec cdl-item" data-k="' + k + '" aria-labelledby="cdlT' + k + '"><h4 class="cdl-cab"><label class="cdl-cab-l"><input type="checkbox" class="cdl-criar"' + (grupos.length ? '' : ' checked') + '>' +
+        '<span class="cdl-tit" id="cdlT' + k + '">' + esc(titItem(it, it.escolhida, s0.dia)) + '</span></label></h4>';
       if (it.opcoes.length > 1 || it.escolhida < 0) {
-        h += campo(it.escolhida < 0 ? (pt() ? 'Qual opção vocês contrataram? (o contrato não marcou)' : 'Which option did you sign up for? (not marked)') : (pt() ? 'Opção' : 'Option'),
+        h += '<label class="cdl-lin"><span class="cdl-rot">' + esc(it.escolhida < 0 ? (pt() ? 'Qual opção vocês contrataram? (o contrato não marcou)' : 'Which option did you sign up for? (not marked)') : (pt() ? 'Opção' : 'Option')) + '</span>' +
           '<select class="cdl-op"><option value="">' + (pt() ? '— escolha —' : '— choose —') + '</option>' + it.opcoes.map(function (o, i) {
             return '<option value="' + i + '"' + (i === it.escolhida ? ' selected' : '') + '>' + esc(o.nome + ' · ' + o.parcelas + ' × ' + fmt(o.parcela)) + '</option>'; }).join('') +
-          '<option value="nao">' + (pt() ? 'Não contratamos' : 'We did not sign up') + '</option></select>');
-      } else h += '<div class="small">' + esc(it.opcoes[0] ? it.opcoes[0].nome + ' · ' + it.opcoes[0].parcelas + ' × ' + fmt(it.opcoes[0].parcela) : '') + '</div>';
+          '<option value="nao">' + (pt() ? 'Não contratamos' : 'We did not sign up') + '</option></select></label>';
+      } else if (it.opcoes[0]) h += '<div class="cdl-meta small">' + esc(it.opcoes[0].nome) + '</div>';
       var mesesTxt = s0.fora.length ? (pt() ? 'sem parcela em ' : 'no instalment in ') + s0.fora.map(function (m) { return I18n.mesCurto(m); }).join(', ') : '';
-      h += '<div class="small muted">' + esc([s0.nome, I18n.data(s0.desde) + (pt() ? ' a ' : ' to ') + I18n.data(s0.ate), mesesTxt].filter(Boolean).join(' · ')) + '</div>' +
-        '<div class="grid g2">' + campo(pt() ? 'Vence todo dia' : 'Due every', '<input type="number" class="cdl-dia" min="1" max="31" value="' + s0.dia + '">' +
-          (it.diaInformado ? '' : '<div class="tiny muted">' + (pt() ? 'o contrato não diz o dia: confira' : 'not in the contract: check') + '</div>')) +
-        '<label class="linha-check"><input type="checkbox" class="cdl-ir" checked> ' + (pt() ? 'Entra no imposto de renda' : 'Tax deductible') + '</label></div></div>';
+      h += '<div class="cdl-meta small muted">' + esc([I18n.mesCurto(Number(s0.desde.slice(5, 7))) + '–' + I18n.mesCurto(Number(s0.ate.slice(5, 7))), mesesTxt].filter(Boolean).join(' · ')) + '</div>';
+      if (grupos.length) {
+        h += '<div class="cdl-ja" role="radiogroup" aria-label="' + esc(pt() ? 'Já existe' : 'Already exists') + '"><div class="cdl-ja-tit">' + esc(pt() ? 'Já existe' : 'Already exists') + '</div><ul class="cdl-ja-lista">';
+        grupos.forEach(function (g) {
+          var r = g.r;
+          h += '<li class="cdl-ja-linha"><span class="cdl-ja-txt">' + esc([r.nome, fmt(r.valor), (pt() ? 'dia ' : 'day ') + r.dia, situacao(r)].join(' · ')) + '</span>' +
+            (g.iguais.length ? '<span class="cdl-iguais">' + (g.iguais.length + 1) + (pt() ? ' iguais' : ' identical') + '</span>' : '') +
+            '<span class="cdl-seg">' + (grupos.length === 1 ? pilula('radio', nome, '', pt() ? 'Manter' : 'Keep', true) : '') +
+            pilula('radio', nome, r.id, pt() ? 'Atualizar este' : 'Update this', false) +
+            (grupos.length === 1 ? pilula('radio', nome, 'criar', pt() ? 'Criar novo' : 'Create new', false) : '') + '</span>' +
+            (g.iguais.length ? '<span class="cdl-seg">' + pilula('checkbox', 'cdlApagar' + k, g.iguais.map(function (x) { return x.id; }).join(','), pt() ? 'Apagar o repetido' : 'Delete the duplicate', false, ' class="cdl-apagar"') + '</span>' : '') + '</li>';
+        });
+        h += '</ul>' + (grupos.length > 1 ? '<span class="cdl-seg">' + pilula('radio', nome, '', pt() ? 'Manter' : 'Keep', true) + pilula('radio', nome, 'criar', pt() ? 'Criar novo' : 'Create new', false) + '</span>' : '') + '</div>';
+      }
+      h += '<div class="cdl-campos"><label class="cdl-lin cdl-dia-l"><span class="cdl-rot">' + esc(pt() ? 'Vence todo dia' : 'Due every') + '</span><input type="number" class="cdl-dia" min="1" max="31" value="' + s0.dia + '"></label>' +
+        '<label class="linha-check"><input type="checkbox" class="cdl-ir" checked> ' + esc(pt() ? 'Entra no imposto de renda' : 'Tax deductible') + '</label></div>' +
+        (it.diaInformado ? '' : '<div class="tiny muted">' + esc(pt() ? 'o contrato não diz o dia: confira' : 'not in the contract: check') + '</div>') + '</section>';
     });
     if (plano.gasto) {
-      var g = plano.gasto;
-      var jl = g.jaLancado;
-      h += '<div class="cdl-gasto card"><label class="linha-check"><input type="checkbox" id="cdlGasto"' + (jl ? '' : ' checked') + '> <b>' + esc(pt() ? 'Lançar a 1ª parcela (gasto pontual)' : 'Add the 1st instalment (one-off)') + '</b></label>' +
-        (jl ? '<div class="aviso-box small cdl-jalancado">' + esc((pt() ? 'Já está no livro: ' : 'Already in your book: ') + I18n.data(jl.data) + ' · ' + (jl.desc || jl.sub) + ' · ' + fmt(jl.valor) + (pt() ? '. Por isso veio desmarcado.' : '. That is why it is unticked.')) + '</div>' : '') +
-        (g.confira ? '<div class="aviso-box small">' + esc(pt() ? 'Confira o valor: o boleto não deixou claro quanto é a pagar (usei o valor do contrato).' : 'Check the amount: the bill did not make the amount due clear (contract value used).') + '</div>' : '') +
-        campo(pt() ? 'Nome do lançamento' : 'Entry name', '<input id="cdlGDesc" maxlength="80" value="' + esc(g.desc) + '">') +
-        '<div class="grid g2">' + campo(pt() ? 'Data' : 'Date', Cal.campo('cdlGData', g.data, {})) +
-        campo(pt() ? 'Valor (R$)' : 'Amount (R$)', '<input type="number" id="cdlGValor" min="0" step="0.01" value="' + g.valor + '">') + '</div>' +
-        (g.obs ? '<div class="small muted">' + esc(g.obs) + '</div>' : '') + '</div>';
+      var g = plano.gasto, jl = g.jaLancado;
+      h += '<section class="cdl-sec cdl-gasto" aria-labelledby="cdlTG"><h4 class="cdl-cab"><label class="cdl-cab-l"><input type="checkbox" id="cdlGasto"' + (jl ? '' : ' checked') + '>' +
+        '<span class="cdl-tit" id="cdlTG">' + esc(titGasto(g.valor, g.data)) + '</span></label></h4>' +
+        (jl ? '<div class="cdl-nota cdl-jalancado small">' + esc((pt() ? 'Já está no livro: ' : 'Already in your book: ') + I18n.data(jl.data) + ' · ' + (jl.desc || jl.sub) + ' · ' + fmt(jl.valor)) + '</div>' : '') +
+        (g.confira ? '<div class="cdl-nota cdl-confira small">' + esc(pt() ? 'Confira o valor: o boleto não deixou claro o valor a pagar.' : 'Check the amount: the bill did not make the amount due clear.') + '</div>' : '') +
+        '<label class="cdl-lin"><span class="cdl-rot">' + esc(pt() ? 'Nome do lançamento' : 'Entry name') + '</span><input id="cdlGDesc" maxlength="80" value="' + esc(g.desc) + '"></label>' +
+        '<div class="cdl-campos"><div class="cdl-lin"><span class="cdl-rot">' + esc(pt() ? 'Data' : 'Date') + '</span>' + Cal.campo('cdlGData', g.data, {}) + '</div>' +
+        '<label class="cdl-lin"><span class="cdl-rot">' + esc(pt() ? 'Valor (R$)' : 'Amount (R$)') + '</span><input type="number" id="cdlGValor" min="0" step="0.01" value="' + g.valor + '"></label></div>' +
+        (g.obs ? '<div class="cdl-meta small muted">' + esc(g.obs) + '</div>' : '') + '</section>';
     }
-    h += '<div class="f-actions"><button class="btn" data-close="genModal">' + esc(t('ac.cancelar')) + '</button><button class="btn primary" data-acao="cdl-criar">' + (pt() ? 'Criar' : 'Create') + '</button></div>';
-    $('#genTitle').textContent = pt() ? 'Conferir o contrato' : 'Check the contract';
-    $('#genBody').innerHTML = Verter.html(h);
+    h += '</div><div class="f-actions"><button class="btn" data-close="genModal">' + esc(t('ac.cancelar')) + '</button><button class="btn primary" data-acao="cdl-criar">' + (pt() ? 'Criar' : 'Create') + '</button></div></div>';
+    $('#genTitle').textContent = pt() ? 'Conferir o que foi lido' : 'Check what was read';
+    var corpo = $('#genBody');
+    corpo.innerHTML = Verter.html(h);
+    ligarTela(corpo);
     abrir('genModal');
+  }
+  /* o cabeçalho acompanha o que a pessoa escolhe; "Atualizar este"/"Criar novo" marcam a seção, "Manter" desmarca */
+  function ligarTela(corpo) {
+    corpo.querySelectorAll('.cdl-item').forEach(function (el) {
+      var it = plano.itens[Number(el.dataset.k)], tit = el.querySelector('.cdl-tit'), sel = el.querySelector('.cdl-op'), dia = el.querySelector('.cdl-dia'), ck = el.querySelector('.cdl-criar');
+      var refaz = function () { var i = sel ? Number(sel.value) : (it.escolhida >= 0 ? it.escolhida : 0); tit.textContent = titItem(it, sel && (sel.value === '' || sel.value === 'nao') ? -1 : i, Number(dia.value) || 0); };
+      if (sel) sel.addEventListener('change', refaz); dia.addEventListener('input', refaz);
+      el.querySelectorAll('input[name="cdlJa' + el.dataset.k + '"]').forEach(function (r) { r.addEventListener('change', function () { ck.checked = r.value !== ''; }); });
+      ck.addEventListener('change', function () {
+        var ja = el.querySelectorAll('input[name="cdlJa' + el.dataset.k + '"]'); if (!ja.length) return;
+        var alvo = Array.prototype.find.call(ja, function (r) { return r.value === (ck.checked ? 'criar' : ''); }); if (alvo) alvo.checked = true;
+      });
+    });
+    var tg = corpo.querySelector('#cdlTG');
+    if (tg) { var rg = function () { tg.textContent = titGasto(Number(corpo.querySelector('#cdlGValor').value) || 0, (corpo.querySelector('#cdlGData') || {}).value); };
+      corpo.querySelector('#cdlGValor').addEventListener('input', rg); var gd = corpo.querySelector('#cdlGData'); if (gd) gd.addEventListener('change', rg); }
   }
   async function criarPlano() {
     if (!plano) return;
-    var criados = [], atualizar = [], falta = '';
+    var criados = [], atualizar = [], apagar = [], falta = '';
     document.querySelectorAll('#genBody .cdl-item').forEach(function (el) {
-      var it = plano.itens[Number(el.dataset.k)], ja = el.querySelector('input[name="cdlJa' + el.dataset.k + '"]:checked'), modo = ja ? ja.value : '';
-      if (!el.querySelector('.cdl-criar').checked && !(ja && modo)) return;
+      var it = plano.itens[Number(el.dataset.k)], ja = el.querySelector('input[name="cdlJa' + el.dataset.k + '"]:checked'), modo = ja ? ja.value : null;
+      el.querySelectorAll('.cdl-apagar:checked').forEach(function (c) { apagar = apagar.concat(c.value.split(',')); });
+      if (modo === '' || (modo === null && !el.querySelector('.cdl-criar').checked)) return;
       var sel = el.querySelector('.cdl-op'), i = sel ? sel.value : String(it.escolhida >= 0 ? it.escolhida : 0);
       if (i === 'nao') return;
-      if (i === '') { falta = it.rotulo; return; }
+      if (i === '') { falta = el.querySelector('.cdl-tit').textContent; return; }
       var s = it.semente(Number(i));
       s.dia = Math.min(31, Math.max(1, Number(el.querySelector('.cdl-dia').value) || s.dia));
       s.irpf = el.querySelector('.cdl-ir').checked;
-      if (ja && modo && modo !== 'criar') atualizar.push({ id: modo, s: s, diaInformado: it.diaInformado });
+      if (modo && modo !== 'criar') atualizar.push({ id: modo, s: s, diaInformado: it.diaInformado });
       else criados.push(s);
     });
     if (falta) { toast((pt() ? 'Escolha a opção de "' : 'Choose the option for "') + falta + (pt() ? '" (ou "Não contratamos").' : '" (or "We did not sign up").'), 'warn'); return; }
-    /* para "Desfazer": o que existia antes de mexer e o que nasceu agora */
-    var desfazer = { recorrentes: [], antes: [], gastos: [] };
+    /* para "Desfazer": o que existia antes de mexer, o que nasceu agora e o repetido apagado (com os pagamentos dele) */
+    var desfazer = { recorrentes: [], antes: [], gastos: [], apagados: [] };
+    apagar.forEach(function (id) {
+      var r = Recorrente.achar(id); if (!r) return;
+      desfazer.apagados.push({ r: JSON.parse(JSON.stringify(r)), pags: JSON.parse(JSON.stringify((ST.pagamentos || []).filter(function (x) { return x.rid === id; }))) });
+      Recorrente.excluir(id);
+    });
     atualizar.forEach(function (u) {
       var r = Recorrente.achar(u.id); if (!r) return;
       desfazer.antes.push(JSON.parse(JSON.stringify(r)));
@@ -370,7 +459,7 @@
     desfazer.recorrentes = ids.slice();
     var ck = document.getElementById('cdlGasto'), ng = 0;
     if (plano.gasto && ck && ck.checked) {
-      var g = Object.assign({}, plano.gasto); delete g.jaLancado;
+      var g = Object.assign({}, plano.gasto); delete g.jaLancado; delete g.confira;
       g.data = (document.getElementById('cdlGData') || {}).value || g.data; g.valor = Number((document.getElementById('cdlGValor') || {}).value) || g.valor;
       g.desc = String((document.getElementById('cdlGDesc') || {}).value || g.desc).trim() || g.desc;
       if (g.valor > 0) { desfazer.gastos.push(Gasto.add(g).id); ng = 1; }
@@ -380,19 +469,21 @@
       try { await ArquivosFamilia.guardar({ nome: guardar[k].nome, tipo: guardar[k].tipo, ano: plano.ano, ligado: ligar }, guardar[k].bytes); } catch (e) {}
     }
     plano = null; guardar = []; Store.salvar(); fechar('genModal'); render();
-    avisoDesfazer((pt() ? ids.length + (ids.length === 1 ? ' compromisso criado' : ' compromissos criados') + (atualizar.length ? ', ' + atualizar.length + ' atualizado(s)' : '') + ', marcados "a confirmar"' + (ng ? ' · 1ª parcela lançada' : '') + '.'
-               : ids.length + ' commitment(s) created' + (atualizar.length ? ', ' + atualizar.length + ' updated' : '') + ', marked "to confirm"' + (ng ? ' · 1st instalment added' : '') + '.'), desfazer);
+    var na = desfazer.apagados.length;
+    avisoDesfazer((pt() ? ids.length + (ids.length === 1 ? ' compromisso criado' : ' compromissos criados') + (atualizar.length ? ', ' + atualizar.length + ' atualizado(s)' : '') + (na ? ', ' + na + ' repetido(s) apagado(s)' : '') + ', marcados "a confirmar"' + (ng ? ' · 1ª parcela lançada' : '') + '.'
+               : ids.length + ' commitment(s) created' + (atualizar.length ? ', ' + atualizar.length + ' updated' : '') + (na ? ', ' + na + ' duplicate(s) deleted' : '') + ', marked "to confirm"' + (ng ? ' · 1st instalment added' : '') + '.'), desfazer);
   }
   /* "Desfazer" por 5 minutos: tira exatamente o que acabou de nascer (compromissos e lançamento) e devolve o que foi
      atualizado como estava. O PDF guardado fica (o cofre de arquivos não apaga). */
   /* abre a prévia de um plano já lido (o caminho da tela é lerArquivos → planoModelo → esta prévia) */
   API.mostrarPlano = function (p) { plano = p; guardar = []; mostrarPlano(); };
   var DESFAZER_MS = 5 * 60 * 1000;
-  API.desfazer = function (d) {
+  API.desfazer = function (d) {   /* d = {recorrentes, antes, gastos, apagados: [{r, pags}]} */
     var rs = d.recorrentes || [], gs = d.gastos || [];
     ST.recorrentes = Recorrente.todos().filter(function (r) { return rs.indexOf(r.id) < 0; });
     (d.antes || []).forEach(function (velho) { var i = Recorrente.todos().findIndex(function (r) { return r.id === velho.id; }); if (i >= 0) ST.recorrentes[i] = velho; });
     ST.gastos = Gasto.todos().filter(function (g) { return gs.indexOf(g.id) < 0; });
+    (d.apagados || []).forEach(function (x) { if (!Recorrente.achar(x.r.id)) { ST.recorrentes.push(x.r); ST.pagamentos = (ST.pagamentos || []).concat(x.pags || []); } });   /* 1.5.0: o repetido apagado volta */
     Store.salvar(); if (typeof render === 'function') render();
   };
   function avisoDesfazer(msg, d) {

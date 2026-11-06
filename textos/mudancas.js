@@ -1,11 +1,16 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.58 · 06/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.59 · 06/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.59', d:'2026-11-06', t:'Boleto certo e a tela de conferir refeita', itens:[
+    'Boleto da matrícula: o app lê o valor a pagar e o vencimento do PDF de verdade (antes, nesse PDF, caía no valor do contrato) e acha o pagamento que já está no livro.',
+    '"Já existe": só compara o que é do mesmo tipo (mensalidade com mensalidade, período ampliado com período ampliado; lanche, cantina e uniforme nunca). Dois cadastros iguais aparecem juntos ("2 iguais"), com "Apagar o repetido".',
+    'A tela "Conferir o que foi lido" ficou mais larga no computador, com as partes lado a lado, títulos claros e os botões Manter · Atualizar este · Criar novo.'
+  ]},
   {v:'3.58', d:'2026-11-06', t:'Celular: o selo da nuvem não cobre o calendário', itens:[
     'No celular, com o menu ☰ aberto, o botão "Entrar na nuvem" fica ao lado do menu e não cobre mais o calendário.'
   ]},
