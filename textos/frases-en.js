@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.54 · 06/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.55 · 06/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.55 */
+  'Boleto conferido com a amostra real':'Bill checked against the real sample',
+  'Boleto da matrícula: se o app não conseguir ler o valor a pagar, ele faz a conta (valor do documento menos o desconto) ou avisa "confira o valor", e nunca usa o valor cheio calado.':'Enrolment bill: if the app cannot read the amount due, it works it out (document amount minus discount) or warns "check the amount", and never silently uses the full amount.',
   /* 3.54 */
   'Compromisso repetido: o app pergunta na hora, antes de criar ("Parece que já existe…": Atualizar o existente, Criar mesmo assim ou Cancelar). Nomes com números diferentes (Seguro 1 × Seguro 2) ou valores e categorias diferentes não contam mais como repetidos. No computador, a coluna de ações das tabelas não fica mais cortada.':'Repeated commitment: the app asks right away, before creating ("Looks like it already exists…": Update the existing one, Create anyway or Cancel). Names with different numbers (Insurance 1 × Insurance 2) or different amounts and categories no longer count as repeated. On the computer, the table action column is no longer cut off.',
   'Contrato com boleto, sem duplicar, Desfazer e o computador':'Contract with bill, no duplicates, Undo and the computer layout',

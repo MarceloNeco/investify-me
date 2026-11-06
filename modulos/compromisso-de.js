@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.4.0 · 06/Nov/2026
+   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.4.1 · 06/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · No formulário de um lançamento: "📌 Virar compromisso" abre o "Novo compromisso" já preenchido
@@ -261,10 +261,13 @@
     var gasto = null, opE = etapa && etapa.idx >= 0 ? opsE[etapa.idx] : null;
     if (bol || (esc1 && esc1.antecipadaNoAto && opE && opE.antecipada)) {
       /* 1.4.0: com boleto no lote, vale o que o boleto diz: valor a pagar (com o desconto) e o vencimento dele */
-      var valor = bol && bol.pagar ? bol.pagar : (opE ? opE.antecipada : 0), data = (bol && bol.venc) || hojeISO();
+      /* nunca o bruto calado: sem "a pagar" lido, documento − desconto; sem isso, a parcela do contrato com "confira o valor" */
+      var doBoleto = bol ? (bol.pagar > 0 ? bol.pagar : (bol.bruto > 0 && bol.desconto > 0 ? Math.round((bol.bruto - bol.desconto) * 100) / 100 : 0)) : 0;
+      var valor = doBoleto || (opE ? opE.antecipada : 0), data = (bol && bol.venc) || hojeISO();
       gasto = { data: data, valor: valor, grupo: 'DEPENDENTES', sub: sub, quem: aluno, irpf: true, per: 'Pontual', origem: 'contrato',
         desc: (pt() ? 'Matrícula ' + ano + ' (1ª parcela da anuidade)' : 'Enrolment ' + ano + ' (1st instalment)'),
         obs: bol && bol.desconto ? (pt() ? 'valor do documento ' : 'document amount ') + fmt(bol.bruto) + (pt() ? ', desconto ' : ', discount ') + fmt(bol.desconto) : '' };
+      gasto.confira = !!bol && !doBoleto;
       gasto.jaLancado = API.jaLancado(valor, data, [escola, bol && bol.benef].filter(Boolean).join(' '));
     }
     return { ano: ano, aluno: aluno, escola: escola, itens: itens, gasto: gasto };
@@ -327,6 +330,7 @@
       var jl = g.jaLancado;
       h += '<div class="cdl-gasto card"><label class="linha-check"><input type="checkbox" id="cdlGasto"' + (jl ? '' : ' checked') + '> <b>' + esc(pt() ? 'Lançar a 1ª parcela (gasto pontual)' : 'Add the 1st instalment (one-off)') + '</b></label>' +
         (jl ? '<div class="aviso-box small cdl-jalancado">' + esc((pt() ? 'Já está no livro: ' : 'Already in your book: ') + I18n.data(jl.data) + ' · ' + (jl.desc || jl.sub) + ' · ' + fmt(jl.valor) + (pt() ? '. Por isso veio desmarcado.' : '. That is why it is unticked.')) + '</div>' : '') +
+        (g.confira ? '<div class="aviso-box small">' + esc(pt() ? 'Confira o valor: o boleto não deixou claro quanto é a pagar (usei o valor do contrato).' : 'Check the amount: the bill did not make the amount due clear (contract value used).') + '</div>' : '') +
         campo(pt() ? 'Nome do lançamento' : 'Entry name', '<input id="cdlGDesc" maxlength="80" value="' + esc(g.desc) + '">') +
         '<div class="grid g2">' + campo(pt() ? 'Data' : 'Date', Cal.campo('cdlGData', g.data, {})) +
         campo(pt() ? 'Valor (R$)' : 'Amount (R$)', '<input type="number" id="cdlGValor" min="0" step="0.01" value="' + g.valor + '">') + '</div>' +
@@ -427,7 +431,7 @@
 
   MoneyModulos.registrar({
     id: 'compromisso-de',
-    versao: '1.4.0',
+    versao: '1.4.1',
     pontos: {
       'lancamento.form': function (ctx) {
         if (!ctx.g || ctx.g.fluxo === 'entrada' && ctx.g.grupo !== 'RENDA') return '';

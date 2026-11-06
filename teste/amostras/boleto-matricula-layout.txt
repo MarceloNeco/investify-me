@@ -1,0 +1,74 @@
+                                                                                      COLÉGIO ESCOLA EXEMPLO
+                                                                                       Rua Escola Exemplo, 36
+                                                                                   BAIRRO - São Paulo/SP
+                                                                                     Cnpj: 00.000.000/0000-00
+                                                                                       Fone: (11) 0000-0000
+                                                                                Site: http://escolaexemplo.com.br/
+                                                                              Email: tesouraria@escolaexemplo.com.br
+
+Aluno ALUNO XXXX                                                                                                      Matricula    00000000
+Curso Ensino Fundamental - Anos Iniciais                                   Série / Turma 3º Ano _ Manhã                          Numero
+
+Tipo Parcela                                    Parcela                    Valor Bruto                  Descontos                Valor a Pagar
+1ª Parcela da Anuidade -                           1                               1.534,00                     121,00                                            1.413,00
+EFAI
+
+
+
+
+Observações:                                                                                                                                              Valor do Documento
+  1) APÓS O VENCIMENTO COBRAR MULTA DE 2,00% ao mês                                                                                                               1.413,00
+  2) COBRAR MORA DE 0,033% a.d.
+
+
+
+
+                                           033-7                                                                                                              Recibo do Pagador
+Beneficiário                                                                                                                                  CNPJ
+                          ASSOC XXXX "COLEGIO ESCOLA EXEMPLO"                                   00.000.000/0000-00                                                               00.000.000/0000-00
+                          Rua Escola Exemplo, 36 - BAIRRO - Cep: 00000-000
+Vencimento                Agencia/Código do Beneficiário    Carteira                                  Especie    Quantidade                   Valor do Documento
+     30/10/2026                  0000/0000000                                  5                          R$                                                                            1.534,00
+
+(-) Desconto/Abatimento           (-) Outras Deduções                              (+) Mora/Multa/Juros                                       (+) Outros Acréscimos
+
+Data do Documento                 Nosso Número                                     Número do documento                                        (=) Valor Cobrado
+28/10/2026                                                             0000000                            0000000
+Pagador                                                                                                                                       CPF:
+
+PAGADOR XXXX                                                                                                                      XXX.XXX.XXX-XX
+                                                                                                    Autenticação Mecânica
+
+
+
+
+                                           033-7                                                            LINHA DIGITAVEL XXXX
+Local de Pagamento                                                                                                                               Vencimento
+
+ ATÉ O VENCIMENTO, PREFERENCIALMENTE NO BANCO SANTANDER                                                                                                                               30/10/2026
+                                                                                                                                                 Agência\Codigo do Beneficiário:
+Beneficiário
+                          ASSOC XXXX "COLEGIO ESCOLA EXEMPLO"              00.000.000/0000-00
+                                                                                                                                                                                    0000/0000000
+                          Rua Escola Exemplo, 36 - BAIRRO - Cep: 00000-000
+Data do Documento     Número do documento                               Especie Doc         Aceite      Data do Processamento                    Nosso Número
+ 28/10/2026                           0000000                                DM               N            28/10/2026                                                                   0000000
+Uso do Banco          Carteira              Especie        Quantidade                       Valor                                                Valor do Documento
+                                      5         R$                                                                                                                                       1.534,00
+INSTRUÇÕES (TODAS INFORMAÇÕES DESTE BLOQUETO SÃO DE EXCLUSIVA RESPONSABILIDADE DO BENEFICIÁRIO)                                                  (-) Desconto / Abatimento
+                                                                                                                                                                                          121,00
+  1) APÓS O VENCIMENTO COBRAR MULTA DE 2,00% ao mês                                                                                              (-) Outras Deduções
+
+                                                                                                                                                 (+) Mora / Multa
+  2) COBRAR MORA DE 0,033% a.d.
+                                                                                                                                                 (+) Outros Acréscimos
+
+                                                                                                                                                 (=) Valor Cobrado
+                               ALUNO XXXX                                                 Ensino Fundamental - Anos     3º Ano _
+                                                                                                     Iniciais
+ Pagador:                      PAGADOR XXXX
+                               RUA XXXX                    BAIRRO                                 CPF:   XXX.XXX.XXX-XX
+                               00000000 São Paulo                                     SP
+
+                                                                                                                                                        Autenticação Mecânica / FICHA DE COMPENSAÇÃO
+
