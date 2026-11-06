@@ -637,6 +637,9 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.56 (`nuvem.js` 1.8.1): `Tela.mostrar` põe o cursor no 1º campo 60 ms depois de abrir a tela **só se o cursor ainda não estiver
+  dentro dela** (antes roubava o campo de quem já estava digitando ou do preenchimento automático; era a causa do teste-nuvem instável, N43).
+  Teste: `teste/teste-nuvem.js`, "cursor não é roubado do campo onde a pessoa já está".
 - 3.55 (`compromisso-de` 1.4.1): amostra oficial `teste/amostras/boleto-matricula-layout.txt` no teste; com boleto no lote e "a pagar" não lido,
   usa documento − desconto; sem isso, a parcela do contrato com o aviso "confira o valor" (nunca o bruto calado, nunca zero).
 - Boleto REAL (fixture literal em `teste/teste-parte13.js`): a linha da tabela "1ª Parcela da Anuidade … bruto descontos a pagar"

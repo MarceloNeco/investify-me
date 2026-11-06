@@ -53,7 +53,8 @@ const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify',
       document.querySelectorAll('ol.mudancas').forEach((e) => e.parentNode.removeChild(e));
       /* o número da versão muda de propósito: troca pelo mesmo texto nas duas cópias */
       const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
-      while ((n = w.nextNode())) n.nodeValue = n.nodeValue.split(VERSAO).join('0.00').replace(/\b\d+ (versões|versions)\b/g, 'N $1');
+      const rv = new RegExp('(^|[^\\d.,])' + VERSAO.replace('.', '\\.') + '(?![\\d,])', 'g');   /* só o número inteiro: "3.56" não mexe em "R$ 3.561,50" */
+      while ((n = w.nextNode())) n.nodeValue = n.nodeValue.replace(rv, '$10.00').replace(/\b\d+ (versões|versions)\b/g, 'N $1');
     });
     /* foto só depois de imagens e fontes prontas (senão a mesma tela sai diferente por carregar a tempo ou não) */
     await p.waitForFunction(() => Array.from(document.images).every((i) => i.complete) && document.fonts.status === 'loaded');

@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.55 · 06/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.56 · 06/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.56 */
+  'Entrar e PIN sem trocar de campo':'Sign-in and PIN without jumping fields',
+  'Telas de entrar e do PIN da nuvem: o app não tira mais o cursor do campo em que você está (com o preenchimento automático de senha, o texto podia ir para o campo errado).':'Cloud sign-in and PIN screens: the app no longer moves the cursor away from the field you are in (with password autofill, the text could end up in the wrong field).',
   /* 3.55 */
   'Boleto conferido com a amostra real':'Bill checked against the real sample',
   'Boleto da matrícula: se o app não conseguir ler o valor a pagar, ele faz a conta (valor do documento menos o desconto) ou avisa "confira o valor", e nunca usa o valor cheio calado.':'Enrolment bill: if the app cannot read the amount due, it works it out (document amount minus discount) or warns "check the amount", and never silently uses the full amount.',
