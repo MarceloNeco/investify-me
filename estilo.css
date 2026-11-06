@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.57 · 06/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.58 · 06/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2337,3 +2337,13 @@ html.sem-animacao .assistone-bt{animation:none; transition:none}
 .calm-etq svg{flex:0 0 auto}
 .calm-etq:hover{border-color:var(--line2); color:var(--txt)}
 .calm-rec:focus-visible, .calm-etq:focus-visible{outline:2px solid var(--accent2); outline-offset:2px}
+
+/* 3.58 (N44) — celular: com o menu ☰ aberto, o selo da nuvem (nuvem.js) vai para o lado do menu, nunca em cima do calendário
+   (o mesmo que o computador faz com a barra lateral). Tela estreita demais para caber ao lado: o selo sai enquanto o menu está
+   aberto, como a pílula do Fundo e o AssistONE; fechou o menu, ele volta. */
+@media (max-width:760px){
+  body:has(.sidenav.open) .nv-selo{left:calc(248px + 12px); max-width:calc(100vw - 248px - 24px); white-space:normal; text-align:left; line-height:1.3}
+}
+@media (max-width:359px){
+  body:has(.sidenav.open) .nv-selo{display:none}
+}
