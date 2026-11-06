@@ -1,11 +1,16 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.60 · 06/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.61 · 06/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.61', d:'2026-11-06', t:'Entrar num aparelho novo sem código de recuperação', itens:[
+    'Primeira vez num celular ou computador: em vez do código de recuperação, aprove pelo outro aparelho onde você já entra (os dois mostram os mesmos 6 números; confira e digite o seu PIN) ou peça para alguém responsável da família aprovar.',
+    'Nuvem → Aparelhos: a lista dos seus aparelhos, com quem aprovou cada um, e "Tirar" (o aparelho tirado perde o acesso na próxima vez que abrir). Se alguém da família aprovar um aparelho seu, os outros avisam.',
+    'O PIN vale só no aparelho em que você criou; se quiser, use o mesmo nos outros. Quem ainda tem o código antigo pode usar pelo link "Tenho o código de recuperação antigo".'
+  ]},
   {v:'3.60', d:'2026-11-06', t:'Conferir o que foi lido: direto ao ponto', itens:[
     'No topo, um resumo do que vai acontecer (ex.: "Mensalidades ✓ já cadastrado", "Matrícula ✓ já paga em 30/10"). Só vem aberto o que precisa da sua decisão; o resto fica em "ver detalhes".',
     'Cadastros repetidos aparecem numa faixa só, com o botão "Limpar". Quando já existe um cadastro, "Manter" já vem escolhido; para atualizar ou criar outro, toque em "mudar".'

@@ -212,6 +212,11 @@ async function entrarComCodigo(page, nome) {
   await page.waitForFunction(() => { const e = document.querySelector('#nvErro'); return e && !e.classList.contains('nv-hidden'); });
   ok(/incorretos/.test(await page.textContent('#nvErro')), nome + ': senha errada avisa');
   await page.fill('#nvPw', 'senha-de-teste-1'); await page.click('#nvIn');
+  /* 3.61: a primeira vez mostra aprovar pelo outro aparelho / família; o código antigo fica num link discreto */
+  await page.waitForSelector('#nvApOutro', { timeout: 20000 });
+  await page.waitForSelector('#nvCodigoAntigo', { timeout: 20000 });
+  ok(!(await page.$('#nvCod')) && await page.isVisible('#nvApOutro'), nome + ': a primeira vez não pede o código de recuperação: "Aprovar pelo outro aparelho" e o código antigo só num link');
+  await page.click('#nvCodigoAntigo');
   await page.waitForSelector('#nvCod', { timeout: 20000 });
   ok(/recupera/.test(await page.textContent('.nv-card')) && /os dados não voltam/.test(await page.textContent('.nv-card')), nome + ': pede o código de recuperação e avisa que sem código e PIN os dados não voltam');
   await page.fill('#nvCod', 'KQ7PZ-3MXWD-ERRAD-0BCNE'); await page.click('#nvCodOk');
@@ -521,7 +526,7 @@ let BASE = '';
     await C.clock.install();
     await C.goto(BASE + '/'); await C.waitForSelector('#nvEm');
     await C.fill('#nvEm', 'dono@teste.com'); await C.fill('#nvPw', 'senha-de-teste-1'); await C.click('#nvIn');
-    await C.waitForSelector('#nvCod', { timeout: 30000 }); await C.fill('#nvCod', CODIGO); await C.click('#nvCodOk');
+    await C.click('#nvCodigoAntigo', { timeout: 30000 }); await C.waitForSelector('#nvCod', { timeout: 30000 }); await C.fill('#nvCod', CODIGO); await C.click('#nvCodOk');
     await C.waitForSelector('#nvP1'); await C.fill('#nvP1', '482915'); await C.fill('#nvP2', '482915'); await C.click('#nvPOk');
     await C.waitForSelector('#nvSelo', { timeout: 60000 });
     if (await C.$('#nvDigNao')) await C.click('#nvDigNao');

@@ -644,6 +644,21 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.61 (`nuvem.js` 1.9.0, seção `Aparelhos`): **sem código de recuperação**. Plataforma: `supabase/2026-11-07-sol-aparelhos.sql`
+  (sol_aparelhos, sol_acesso_pedidos, sol_passkeys; só funções, nenhuma regra de acesso direto). Formato v2 (o mesmo no OmniLifeONE):
+  B (aparelho novo) cria o pedido com pubB (ECDH P-256 efêmero, não extraível, guardado no IndexedDB para continuar se recarregar)
+  e C = SHA-256("sol-ap-v2|c|x.y|nB"); A (aparelho aberto da mesma conta, ou chefe/responsável da família) grava pubA e nA
+  (`sol_pedido_desafio`); B revela nB (`sol_pedido_revelar`); A confere C; os dois mostram 6 números = SHA-256("sol-ap-v2|id|pubA|pubB|nA|nB")
+  (4 primeiros bytes mod 10⁶). A aprova com o PIN ou a digital (`Cadeado.duk`, sem abrir nada) e grava a resposta: ECDH → HKDF
+  (info "sol-ap-v2|id|uid|nA|nB") → AES-GCM (AAD = id): pessoal = {sk: pkcs8 da pessoa}; família = {gid, kv, fk, cf} (só a chave da família).
+  B lê uma vez (`sol_pedido_buscar` → "usado", a resposta sai do banco), cria o PIN e `Cadeado.montar`. O aparelho guarda `L.ap`
+  (id na lista) e `L.como`. Ao abrir: `sol_aparelho_registrar` (quem já usava, "primeiro"), `sol_aparelho_visto` (false = tirado →
+  apaga o cadeado e a cópia) e o aviso "aprovado por X" (aparelho novo da conta aprovado pela família, depois de `L.avisosAte`).
+  A cada busca: `sol_pedidos_para_mim` → faixa "🔔 Pedido de acesso". Passkey: rp.id solverone.com.br, PRF → HKDF("sol-passkey-v2")
+  fecha o pkcs8 (`sol_passkeys`); a opção só aparece com leitor de digital e passkey na conta. O código antigo: link discreto
+  "Tenho o código de recuperação antigo", só se existe a cópia em `omni_chave_privada`. Sem o SQL, tudo isso fica quieto.
+  Testes: `teste/teste-aparelhos.js` (ponta a ponta, contextos separados: aprovar, repetir, recusar, vencer, pub trocada, responsável
+  aprova, tirar, passkey só interface) e `teste/sql/teste-sol-aparelhos.sql` (Postgres local).
 - 3.60 (`compromisso-de` 1.6.0): "Conferir o que foi lido" orientada a decisão. Chips no topo (`.cdl-chip`, um por seção, estado
   recalculado a cada escolha: ✓ já cadastrado / ⚠ escolha a opção / ✓ já paga em dd/mm / + será criado / ↻ vai atualizar). Seção aberta
   só quando pede decisão (opção não marcada e nada cadastrado; boleto sem valor claro); o resto com "ver detalhes" (`aria-expanded`).

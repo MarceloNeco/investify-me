@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.8.1 · 06/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.9.0 · 06/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -18,6 +18,11 @@
       aos módulos pelo evento 'ponte.recebida' [{id, de_app, tipo, criado_em, conteudo|null}]. Quem usou chama
       MoneyNuvem.ponte.marcarLido(id). Um app nunca lê a tabela do outro (C3): só a ponte.
    8. 1.8.1 — o cursor automático (1º campo, 60 ms depois de abrir a tela) não sai do campo onde a pessoa já está.
+   9. 1.9.0 — SEM código de recuperação (Aparelhos, formato v2; supabase/2026-11-07-sol-aparelhos.sql): a primeira vez num
+      aparelho é aprovada pelo outro aparelho aberto da mesma conta (6 números com compromisso), por chefe/responsável da
+      família (só a chave da família) ou pela digital sincronizada (passkey, WebAuthn PRF). ⚙ Nuvem → Aparelhos: a lista,
+      "Tirar" (o aparelho tirado apaga o cadeado na próxima abertura) e "Ver pedidos de acesso". O código antigo fica num
+      link discreto, só para quem tem a cópia no servidor. Sem o SQL aplicado, tudo isso fica quieto e o resto funciona.
    6. Tranca sozinho: 15 min sem uso (avisa 1 min antes) ou 10 min fora do app; nunca no meio de um trabalho; sem recarregar.
    Nunca grava nada de finanças em claro: o localStorage 'investifyme.dados.v1' (do app principal) só é LIDO, para
    oferecer "levar para a nuvem". Só a URL e a publishable key do Supabase ficam aqui (públicas por desenho).
@@ -28,7 +33,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.7.0';
+  var VERSAO = '1.9.0';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -327,8 +332,18 @@
     gravar: function (L, uid) { return IDB.set('kv', this.K(uid), L); },
     aberto: function () { return !!this.cf; },
     porPin: async function (pin, gid) {
+      var r = await this.duk(pin); if (r.erro) return r;
+      return this.comChaveDoAparelho(r.L, r.raw, gid);
+    },
+    /* 1.9.0: só confere o PIN (ou a digital) e devolve a chave do aparelho, sem abrir nada — para aprovar outro aparelho */
+    duk: async function (pin) {
       var L = await this.local(); if (!L) return { erro: 'novo' };
       if (L.bloqueado) return { erro: 'bloqueado' };
+      if (pin === null) {   /* pela digital */
+        if (!L.prf) return { erro: 'semdigital' };
+        var out = await this.prfAvaliar(L.prf.cred, L.prf.sal); if (!out) return { erro: 'digital' };
+        try { return { L: L, raw: await Cifra.decifrar(await Cifra.hkdf(out, PRF_INFO), L.prf) }; } catch (e) { return { erro: 'digital' }; } finally { out.fill(0); }
+      }
       if (L.ate && Date.now() < L.ate) return { erro: 'espera', ate: L.ate };
       var raw;
       try { raw = await Cifra.decifrar(await Cifra.kdf(pin, L.pin.sal, L.pin.iter), L.pin); }
@@ -340,7 +355,23 @@
         return { erro: L.bloqueado ? 'bloqueado' : 'pin', erros: L.erros, ate: L.ate };
       }
       if (L.erros || L.ate) { L.erros = 0; L.ate = 0; await this.gravar(L); }
-      return this.comChaveDoAparelho(L, raw, gid);
+      return { L: L, raw: raw };
+    },
+    /* 1.9.0: monta o cadeado deste aparelho com o que chegou (do outro aparelho, da família ou da passkey) e o PIN novo.
+       pkcs8: a chave privada da pessoa (null quando a família aprovou: aí vem só a chave da família em fam = {gid, raw, kv, fk}) */
+    montar: async function (pkcs8, fam, pin, gid, como, ap) {
+      var uid = Conta.uid(), r = fam;
+      if (pkcs8) { r = null; try { r = await this.buscarMinha(await Cifra.importarSk(pkcs8), gid); } catch (e) {} }
+      if (!r || !r.raw) { if (pkcs8) pkcs8.fill(0); return { erro: 'semliberar' }; }
+      var dukRaw = Cifra.rnd(32), duk = await Cifra.aes(dukRaw), sal = b64(Cifra.rnd(16));
+      var L = { v: 1, uid: uid, pin: Object.assign({ sal: sal, iter: ITER }, await Cifra.cifrar(await Cifra.kdf(pin, sal, ITER), dukRaw)), prf: null,
+        sk: pkcs8 ? await Cifra.cifrar(duk, pkcs8) : null, fam: {}, erros: 0, ate: 0, bloqueado: false,
+        como: como, ap: ap || null, avisosAte: new Date().toISOString() };
+      if (pkcs8) pkcs8.fill(0);
+      L.fam[gid] = Object.assign({ kv: r.kv, fk: r.fk }, await Cifra.cifrar(duk, r.raw));
+      await this.gravar(L); this.dukRaw = dukRaw;
+      await this.usar(r.raw, r.kv, r.fk, gid);
+      return { ok: true };
     },
     porDigital: async function (gid) {
       var L = await this.local(); if (!L || !L.prf) return { erro: 'semdigital' };
@@ -440,6 +471,291 @@
       var L = await this.local(), sal = b64(Cifra.rnd(16));
       L.pin = Object.assign({ sal: sal, iter: ITER }, await Cifra.cifrar(await Cifra.kdf(pin, sal, ITER), this.dukRaw)); L.erros = 0; L.ate = 0; L.bloqueado = false;
       await this.gravar(L); return true;
+    }
+  };
+
+  /* ---------------- 1.9.0 — Aparelhos: entrar SEM código de recuperação (plataforma, formato v2) ----------------
+     Tabelas e funções de plataforma: supabase/2026-11-07-sol-aparelhos.sql (sol_aparelhos, sol_acesso_pedidos, sol_passkeys).
+     O aparelho novo (B) gera um par ECDH P-256 efêmero e nB; grava pubB e C = SHA-256(pubB‖nB) (o compromisso).
+     Quem aprova (A: outro aparelho aberto da mesma conta, ou chefe/responsável da família) grava pubA e nA (desafio);
+     só então B revela nB; A confere C. Os dois mostram 6 números = SHA-256("sol-ap-v2"‖id‖pubA‖pubB‖nA‖nB): como B se
+     comprometeu antes de ver nA, um banco que troque a pub não escolhe os números. A aprova com o PIN ou a digital e grava
+     a resposta fechada: ECDH(A, pubB) → HKDF(id, uid, nA, nB) → AES-GCM (AAD = id). Pessoal: a chave privada da pessoa;
+     família: só a chave da família. Passkey (WebAuthn PRF): a chave privada fechada com o segredo da passkey. */
+  var AP_V = 'sol-ap-v2', AP_APP = 'moneytrio', PK_INFO = 'sol-passkey-v2', AP_POLL = 2000;
+  function b64u(buf) { return b64(buf).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function unb64u(t) { t = String(t).replace(/-/g, '+').replace(/_/g, '/'); while (t.length % 4) t += '='; return unb64(t); }
+  function nomeAparelho() {
+    var u = navigator.userAgent || '';
+    var so = /Android/i.test(u) ? 'Android' : /iPhone/i.test(u) ? 'iPhone' : /iPad/i.test(u) ? 'iPad' : /Windows/i.test(u) ? 'Windows' : /Mac OS/i.test(u) ? 'Mac' : /Linux/i.test(u) ? 'Linux' : tt('Aparelho', 'Device');
+    var nav = /SamsungBrowser/i.test(u) ? 'Samsung' : /Edg\//i.test(u) ? 'Edge' : /Firefox/i.test(u) ? 'Firefox' : /Chrome|CriOS/i.test(u) ? 'Chrome' : /Safari/i.test(u) ? 'Safari' : '';
+    return (so + (nav ? ' · ' + nav : '')).slice(0, 60);
+  }
+  function rpId() { return /(^|\.)solverone\.com\.br$/.test(location.hostname) ? 'solverone.com.br' : location.hostname; }
+  var Aparelhos = {
+    ligado: null,          /* false = o SQL de plataforma ainda não foi aplicado (a função não existe) */
+    _apr: {},              /* pedidos que ESTE aparelho está aprovando: {id: {priv, pub, nA}} */
+    _vistos: {},           /* pedidos que a pessoa já fechou nesta sessão (não insiste) */
+    canon: function (pub) { return pub.x + '.' + pub.y; },
+    sha: async function (txt) { return new Uint8Array(await crypto.subtle.digest('SHA-256', utf8(txt))); },
+    compromisso: async function (pub, nB) { return b64u(await this.sha([AP_V, 'c', this.canon(pub), nB].join('|'))); },
+    sas: async function (id, pubA, pubB, nA, nB) {
+      var h = await this.sha([AP_V, id, this.canon(pubA), this.canon(pubB), nA, nB].join('|'));
+      return String((((h[0] << 24) >>> 0) + (h[1] << 16) + (h[2] << 8) + h[3]) % 1000000).padStart(6, '0');
+    },
+    novoPar: async function () {
+      var k = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveBits']);
+      var j = await crypto.subtle.exportKey('jwk', k.publicKey);
+      return { priv: k.privateKey, pub: { kty: 'EC', crv: 'P-256', x: j.x, y: j.y } };
+    },
+    chave: async function (priv, pubOutro, id, uid, nA, nB) {
+      var pk = await crypto.subtle.importKey('jwk', { kty: 'EC', crv: 'P-256', x: pubOutro.x, y: pubOutro.y, ext: true }, { name: 'ECDH', namedCurve: 'P-256' }, false, []);
+      var bits = new Uint8Array(await crypto.subtle.deriveBits({ name: 'ECDH', public: pk }, priv, 256));
+      var base = await crypto.subtle.importKey('raw', bits, 'HKDF', false, ['deriveKey']); bits.fill(0);
+      return crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(32), info: utf8([AP_V, id, uid, nA, nB].join('|')) }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    },
+    fechar: async function (key, id, obj) {
+      var iv = Cifra.rnd(12), ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv, additionalData: utf8(id) }, key, utf8(JSON.stringify(obj)));
+      return { v: 2, iv: b64(iv), ct: b64(ct) };
+    },
+    abrirResp: async function (key, id, o) {
+      return JSON.parse(deUtf8(new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(o.iv), additionalData: utf8(id) }, key, unb64(o.ct)))));
+    },
+    rpc: async function (nome, args) {
+      try { var r = await Conta.rpc(nome, args || {}); this.ligado = true; return r; }
+      catch (e) { if (/PGRST202|404|does not exist|não existe/i.test(String(e && (e.code || e.message) || e))) this.ligado = false; throw e; }
+    },
+
+    /* ======== B: este aparelho é o novo ======== */
+    pedir: async function (fam, modo) {
+      var uid = Conta.uid(), par = await this.novoPar(), nB = b64u(Cifra.rnd(32)), C = await this.compromisso(par.pub, nB), id;
+      try { id = await this.rpc('sol_pedido_criar', { p_nome: nomeAparelho(), p_app: AP_APP, p_pub: par.pub, p_compromisso: C, p_grupo: modo === 'familia' ? fam.grupo_id : null }); }
+      catch (e) {
+        if (this.ligado === false) return Portao.mensagem(tt('Ainda não está pronto', 'Not ready yet'), tt('A aprovação pelo outro aparelho ainda está sendo ligada. Por enquanto, use o código de recuperação, se tiver.', 'Approval from another device is still being switched on. For now, use the recovery code if you have it.'), [[tt('Voltar', 'Back'), function () { Portao.primeiraVez(fam, false); }]]);
+        return Portao.mensagem(tt('Não deu para pedir', 'Could not request'), esc(Conta.explicar(e)), [[tt('Voltar', 'Back'), function () { Portao.primeiraVez(fam, false); }]]);
+      }
+      var ped = { id: id, uid: uid, priv: par.priv, pub: par.pub, nB: nB, modo: modo, gid: fam.grupo_id, criado: Date.now() };
+      await IDB.set('kv', 'pedido|' + uid, ped).catch(function () {});
+      this.esperar(fam, ped);
+    },
+    esperar: function (fam, ped) {
+      var self = this, sas = '', revelou = false, fim = false;
+      var tela = function (extra) {
+        var el = Tela.mostrar(Tela.topo() + '<h2>' + (ped.modo === 'familia' ? '👪 ' + tt('Pedir para alguém da família', 'Ask someone in the family') : '📱 ' + tt('Aprovar pelo outro aparelho', 'Approve from your other device')) + '</h2>' +
+          '<p>' + (ped.modo === 'familia'
+            ? tt('Peça para um chefe ou responsável da família <b>' + esc(fam.nome || '') + '</b> abrir o MoneyTRIO (ou o OmniLifeONE). Vai aparecer o seu pedido para ele aprovar.', 'Ask a head or guardian of the family <b>' + esc(fam.nome || '') + '</b> to open MoneyTRIO (or OmniLifeONE). Your request will show up for them to approve.')
+            : tt('Abra o MoneyTRIO (ou o OmniLifeONE) num aparelho onde você já entra, com esta mesma conta. Vai aparecer "Pedido de acesso".', 'Open MoneyTRIO (or OmniLifeONE) on a device where you are already in, with this same account. "Access request" will show up.')) + '</p>' +
+          (sas ? '<div class="nv-sas" id="nvSas" aria-label="' + tt('Números para comparar', 'Numbers to compare') + '">' + sas.slice(0, 3) + ' ' + sas.slice(3) + '</div>' +
+            '<p class="nv-muted">' + tt('Confira se o outro aparelho mostra estes mesmos 6 números. Se forem diferentes, não aprove.', 'Check that the other device shows these same 6 numbers. If they differ, do not approve.') + '</p>'
+            : '<div class="nv-nota" id="nvEsperando">⏳ ' + tt('Esperando o outro aparelho abrir o pedido…', 'Waiting for the other device to open the request…') + '</div>') +
+          (extra || '') + '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div>' +
+          '<button class="nv-btn" id="nvApCancelar">' + tt('Cancelar', 'Cancel') + '</button>');
+        el.querySelector('#nvApCancelar').onclick = function () { fim = true; esquecer(); Portao.primeiraVez(fam, false); };
+      };
+      /* o par efêmero (não extraível) sai do IndexedDB e da memória: nada dele fica depois do pedido */
+      var esquecer = function () { IDB.del('kv', 'pedido|' + ped.uid).catch(function () {}); ped.priv = null; };
+      var acabou = function (titulo, txt) {
+        fim = true; esquecer();
+        Portao.mensagem(titulo, txt, [[tt('Pedir de novo', 'Ask again'), function () { self.pedir(fam, ped.modo); }], [tt('Voltar', 'Back'), function () { Portao.primeiraVez(fam, false); }]]);
+      };
+      tela();
+      var volta = async function () {
+        if (fim) return;
+        var r = null;
+        try { r = await self.rpc('sol_pedido_buscar', { p_id: ped.id }); r = r && r[0]; } catch (e) { if (!fim) setTimeout(volta, AP_POLL * 2); return; }
+        if (fim) return;
+        if (!r || r.estado === 'vencido' || (r.estado === 'usado' && !r.resposta)) return acabou(tt('O pedido venceu', 'The request expired'), tt('Ninguém aprovou em 10 minutos. Peça de novo.', 'Nobody approved within 10 minutes. Ask again.'));
+        if (r.estado === 'recusado') return acabou(tt('Pedido recusado', 'Request declined'), tt('O outro aparelho recusou o pedido.', 'The other device declined the request.'));
+        if (r.estado === 'aberto' && r.pub_a && r.n_a && !revelou) {
+          try { await self.rpc('sol_pedido_revelar', { p_id: ped.id, p_n_b: ped.nB }); } catch (e) {}
+          revelou = true; ped.pubA = r.pub_a; ped.nA = r.n_a;
+          sas = await self.sas(ped.id, r.pub_a, ped.pub, r.n_a, ped.nB); tela();
+        }
+        if (r.estado === 'aprovado' && r.resposta) {
+          fim = true;
+          var o, priv = ped.priv; esquecer();
+          try { o = await self.abrirResp(await self.chave(priv, r.pub_a || ped.pubA, ped.id, ped.uid, r.n_a || ped.nA, ped.nB), ped.id, r.resposta); }
+          catch (e) { return acabou(tt('Não abriu', 'Did not open'), tt('A resposta não abriu neste aparelho. Peça de novo.', 'The answer did not open on this device. Ask again.')); }
+          return self.receber(fam, o, r.aparelho);
+        }
+        setTimeout(volta, AP_POLL);
+      };
+      setTimeout(volta, 300);
+    },
+    receber: function (fam, o, apId) {
+      Portao.novoPin(async function (pin) {
+        Portao.carregando(tt('Preparando o cadeado deste aparelho…', 'Preparing the lock on this device…'));
+        var r;
+        try {
+          if (o.tipo === 'pessoal') r = await Cadeado.montar(unb64(o.sk), null, pin, fam.grupo_id, o.como || 'aparelho', apId);
+          else r = await Cadeado.montar(null, { raw: unb64(o.cf), kv: o.kv, fk: o.fk }, pin, o.gid || fam.grupo_id, 'familia', apId);
+        } catch (e) { r = { erro: 'rede', e: e }; }
+        if (!r.ok) return Portao.mensagem(tt('Não deu', 'It did not work'), r.erro === 'semliberar' ? tt('O cadeado desta família ainda não foi liberado para você.', 'This family lock has not been released to you yet.') : esc(Conta.explicar(r.e)), [[tt('Voltar', 'Back'), function () { Portao.primeiraVez(fam, false); }]]);
+        IDB.set('kv', 'digitalPerguntada|' + Conta.uid(), Date.now()).catch(function () {});
+        Portao.oferecerDigital(function () { if (Nuvem.iniciado) Nuvem.destrancado(); else Nuvem.depoisDoCadeado(true); });
+      });
+    },
+    /* recarregou no meio do pedido: continua de onde parou (o par efêmero fica no IndexedDB, não extraível) */
+    retomar: async function (fam) {
+      var ped = await IDB.get('kv', 'pedido|' + Conta.uid()).catch(function () { return null; });
+      if (!ped || ped.gid !== fam.grupo_id || Date.now() - ped.criado > 10 * 60 * 1000) return false;
+      this.esperar(fam, ped); return true;
+    },
+
+    /* ======== A: este aparelho está aberto e aprova ======== */
+    olharPedidos: async function () {
+      if (this.ligado === false || !Cadeado.aberto() || this._olhando || Tela.el) return;   /* com uma tela do portão aberta, espera */
+      this._olhando = true;
+      try {
+        var lista = (await this.rpc('sol_pedidos_para_mim')) || [], self = this;
+        var meu = await IDB.get('kv', 'pedido|' + Conta.uid()).catch(function () { return null; });   /* o pedido que ESTE aparelho criou não é para ele aprovar */
+        this.pendentes = lista.filter(function (p) { return !self._vistos[p.id] && !(meu && meu.id === p.id); });
+        this.avisarPedido();
+      } catch (e) {} finally { this._olhando = false; }
+    },
+    avisarPedido: function () {
+      var p = (this.pendentes || [])[0], el = document.getElementById('nvPedido');
+      if (!p) { if (el) el.remove(); return; }
+      if (!el) { el = document.createElement('div'); el.id = 'nvPedido'; el.className = 'nv-pedido'; el.setAttribute('role', 'alert'); document.body.appendChild(el); }
+      el.innerHTML = '<span>🔔 ' + esc(p.tipo === 'familia' ? tt('Pedido de acesso de ', 'Access request from ') + (p.quem_nome || p.quem_email) + ': ' + p.nome : tt('Pedido de acesso: ', 'Access request: ') + p.nome) + ' · ' + esc(dataHora(p.criado_em)) + '</span>' +
+        '<button class="nv-btn pri" id="nvPedidoVer">' + tt('Ver', 'View') + '</button><button class="nv-x" id="nvPedidoX" aria-label="' + tt('Agora não', 'Not now') + '">✕</button>';
+      var self = this;
+      el.querySelector('#nvPedidoVer').onclick = function () { el.remove(); self.aprovar(p); };
+      el.querySelector('#nvPedidoX').onclick = function () { self._vistos[p.id] = 1; self.pendentes.shift(); self.avisarPedido(); };
+    },
+    aprovar: async function (p) {
+      var self = this, eu = this._apr[p.id], fim = false;
+      this._vistos[p.id] = 1;
+      var cabeca = Tela.topo() + '<h2>🔔 ' + tt('Pedido de acesso', 'Access request') + '</h2>' +
+        (p.tipo === 'familia'
+          ? '<p><b>' + esc(p.quem_nome || p.quem_email) + '</b>' + (p.quem_nome ? ' (' + esc(p.quem_email) + ')' : '') + tt(' quer entrar nas finanças da família pelo aparelho ', ' wants to open the family finances on the device ') + '<b>' + esc(p.nome) + '</b> · ' + esc(dataHora(p.criado_em)) + '</p>' +
+            '<div class="nv-nota atencao">' + tt('Só aprove se a pessoa está com você (ou ao telefone) e lê o mesmo número.', 'Only approve if the person is with you (or on the phone) and reads the same number.') + '</div>'
+          : '<p>' + tt('Pedido de acesso de: ', 'Access request from: ') + '<b>' + esc(p.nome) + '</b> · ' + esc(dataHora(p.criado_em)) + '</p>' +
+            '<div class="nv-nota atencao">' + tt('Só aprove se este pedido é do aparelho que você está segurando agora.', 'Only approve if this request comes from the device you are holding now.') + '</div>');
+      var sair = function (msg) { fim = true; delete self._apr[p.id]; eu = null; Tela.fechar(); if (msg) aviso(msg); };
+      var recusar = function () { fim = true; self.rpc('sol_pedido_recusar', { p_id: p.id }).catch(function () {}); sair(tt('Pedido recusado.', 'Request declined.')); };
+      var botoes = function () { return '<div class="nv-row"><button class="nv-btn" id="nvApRecusar">' + tt('Recusar', 'Decline') + '</button><button class="nv-btn" id="nvApDepois">' + tt('Agora não', 'Not now') + '</button></div>'; };
+      var ligar = function (el) { el.querySelector('#nvApRecusar').onclick = recusar; el.querySelector('#nvApDepois').onclick = function () { sair(); }; };
+      var el = Tela.mostrar(cabeca + '<div class="nv-nota">⏳ ' + tt('Conectando com o outro aparelho…', 'Connecting to the other device…') + '</div>' + botoes()); ligar(el);
+      try {
+        if (!eu) {
+          var par = await this.novoPar(), nA = b64u(Cifra.rnd(32));
+          if (!(await this.rpc('sol_pedido_desafio', { p_id: p.id, p_pub_a: par.pub, p_n_a: nA }))) return sair(tt('Outro aparelho já está cuidando deste pedido (ou ele venceu).', 'Another device is already handling this request (or it expired).'));
+          eu = this._apr[p.id] = { priv: par.priv, pub: par.pub, nA: nA };
+        }
+        /* espera o aparelho novo revelar nB */
+        var q = p;
+        for (var i = 0; !q.n_b && !fim && i < 300; i++) {
+          await dorme(1500);
+          var l = (await this.rpc('sol_pedidos_para_mim')) || []; q = l.find(function (x) { return x.id === p.id; });
+          if (!q) return sair(tt('O pedido não está mais aberto.', 'The request is no longer open.'));
+        }
+        if (fim) return;
+        if ((await this.compromisso(q.pub, q.n_b)) !== q.compromisso) {
+          el = Tela.mostrar(cabeca + '<div class="nv-nota erro" id="nvApAdulterado">⚠️ ' + tt('Este pedido foi alterado no caminho. Não aprove: recuse e peça de novo no outro aparelho.', 'This request was altered on the way. Do not approve: decline and ask again on the other device.') + '</div>' + botoes()); ligar(el); return;
+        }
+        var sas = await this.sas(p.id, eu.pub, q.pub, eu.nA, q.n_b), L = await Cadeado.local();
+        el = Tela.mostrar(cabeca + '<div class="nv-sas" id="nvSas">' + sas.slice(0, 3) + ' ' + sas.slice(3) + '</div>' +
+          '<p>' + tt('O outro aparelho mostra estes mesmos 6 números? Se sim, digite o seu PIN para aprovar.', 'Does the other device show these same 6 numbers? If so, type your PIN to approve.') + '</p>' +
+          '<label class="nv-fld"><span>PIN</span><input type="text" class="nv-pinc" id="nvApPin" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label>' +
+          '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div>' +
+          '<button class="nv-btn pri" id="nvApOk">' + tt('Os números são iguais: aprovar', 'The numbers match: approve') + '</button>' +
+          (L && L.prf ? '<button class="nv-btn" id="nvApDig">👆 ' + tt('Aprovar com a digital', 'Approve with fingerprint') + '</button>' : '') + botoes());
+        ligar(el);
+        var ir = function (pin) { return Tela.ocupar(el.querySelector(pin === null ? '#nvApDig' : '#nvApOk'), async function () {
+          var d = await Cadeado.duk(pin);
+          if (d.erro) return Tela.erro(d.erro === 'pin' ? tt('PIN errado.', 'Wrong PIN.') : d.erro === 'espera' ? tt('Espere um pouco para tentar de novo.', 'Wait a bit to try again.') : tt('Não conferiu.', 'Could not verify.'));
+          var duk = await Cifra.aes(d.raw), carga;
+          if (p.tipo === 'familia') {
+            var f = (d.L.fam || {})[p.grupo_id]; if (!f) return Tela.erro(tt('Esta família não está aberta neste aparelho.', 'This family is not open on this device.'));
+            var cf = await Cifra.decifrar(duk, f); carga = { v: 2, tipo: 'familia', gid: p.grupo_id, kv: f.kv, fk: f.fk, cf: b64(cf) }; cf.fill(0);
+          } else {
+            if (!d.L.sk) return Tela.erro(tt('Este aparelho entrou pela família e não guarda a sua chave pessoal: aprove por outro aparelho seu.', 'This device joined through the family and does not keep your personal key: approve from another device of yours.'));
+            var sk = await Cifra.decifrar(duk, d.L.sk); carga = { v: 2, tipo: 'pessoal', sk: b64(sk) }; sk.fill(0);
+          }
+          d.raw.fill(0);
+          var resp = await self.fechar(await self.chave(eu.priv, q.pub, p.id, p.quem, eu.nA, q.n_b), p.id, carga); carga = null;
+          var ok = await self.rpc('sol_pedido_aprovar', { p_id: p.id, p_resposta: resp, p_meu_ap: d.L.ap || null });
+          delete self._apr[p.id];
+          sair(ok ? '✓ ' + tt('Aprovado. O outro aparelho já pode criar o PIN dele.', 'Approved. The other device can now create its PIN.') : tt('Não deu para aprovar: o pedido venceu ou já foi respondido.', 'Could not approve: the request expired or was already answered.'));
+        }); };
+        el.querySelector('#nvApPin').addEventListener('keydown', function (e) { if (e.key === 'Enter') el.querySelector('#nvApOk').click(); });
+        el.querySelector('#nvApOk').onclick = function () { var v = el.querySelector('#nvApPin').value; if (v) ir(v); };
+        if (el.querySelector('#nvApDig')) el.querySelector('#nvApDig').onclick = function () { ir(null); };
+      } catch (e) { if (!fim) sair(tt('Não deu para aprovar: ', 'Could not approve: ') + Conta.explicar(e)); }
+    },
+
+    /* ======== ao abrir: registrar este aparelho, conferir se não foi tirado, avisar aparelho novo aprovado pela família ======== */
+    aoAbrir: async function () {
+      if (this.ligado === false || !navigator.onLine) return;
+      var L = await Cadeado.local(); if (!L) return;
+      try {
+        if (!L.ap) {
+          L.ap = await this.rpc('sol_aparelho_registrar', { p_nome: nomeAparelho(), p_app: AP_APP, p_como: L.como === 'passkey' ? 'passkey' : 'primeiro' });
+          if (!L.avisosAte) L.avisosAte = new Date().toISOString();
+          await Cadeado.gravar(L);
+        } else if ((await this.rpc('sol_aparelho_visto', { p_id: L.ap })) === false) {
+          return this.tirado();
+        }
+        var lista = (await this.rpc('sol_aparelhos_meus')) || [], ate = L.avisosAte || '', eu = Conta.uid();
+        var novos = lista.filter(function (a) { return a.id !== L.ap && a.como === 'familia' && a.aprovado_por !== eu && String(a.criado_em) > ate; });
+        if (novos.length) {
+          L.avisosAte = novos.map(function (a) { return String(a.criado_em); }).sort().pop(); await Cadeado.gravar(L);
+          this.avisoFamilia(novos[0]);
+        }
+      } catch (e) {}
+    },
+    avisoFamilia: function (a) {
+      var el = document.getElementById('nvAvisoAp') || document.createElement('div');
+      el.id = 'nvAvisoAp'; el.className = 'nv-pedido'; el.setAttribute('role', 'alert');
+      el.innerHTML = '<span>⚠️ ' + esc(tt('Um aparelho novo entrou na sua conta: ', 'A new device joined your account: ') + a.nome + tt(', aprovado por ', ', approved by ') + (a.aprovado_por_nome || a.aprovado_por_email || '?') + ' · ' + dataHora(a.criado_em) + '. ') +
+        esc(tt('Não foi você?', 'Was it not you?')) + '</span><button class="nv-btn" id="nvAvisoTirar">' + tt('Tirar', 'Remove') + '</button><button class="nv-x" id="nvAvisoX" aria-label="' + tt('Está certo', 'It is fine') + '">✕</button>';
+      document.body.appendChild(el);
+      var self = this;
+      el.querySelector('#nvAvisoX').onclick = function () { el.remove(); };
+      el.querySelector('#nvAvisoTirar').onclick = async function () { try { await self.rpc('sol_aparelho_tirar', { p_id: a.id }); aviso('✓ ' + tt('Aparelho tirado da sua conta.', 'Device removed from your account.')); } catch (e) {} el.remove(); };
+    },
+    /* este aparelho foi tirado da conta em outro aparelho: o cadeado local e a cópia daqui saem */
+    tirado: async function () {
+      var uid = Conta.uid();
+      try { await Cadeado.trancar(); await IDB.del('kv', Cadeado.K(uid)); await Nuvem.apagarDoAparelho(uid); } catch (e) {}
+      alertaERecarrega(tt('Este aparelho foi tirado da sua conta em outro aparelho. Para usar aqui de novo, entre e peça a aprovação.', 'This device was removed from your account on another device. To use it here again, sign in and ask for approval.'));
+    },
+    lista: async function () { try { return (await this.rpc('sol_aparelhos_meus')) || []; } catch (e) { return null; } },
+
+    /* ======== passkey sincronizada (WebAuthn PRF) ======== */
+    temPasskeys: async function () { try { return ((await this.rpc('sol_passkeys_minhas')) || []).length > 0; } catch (e) { return false; } },
+    criarPasskey: async function () {
+      if (!Cadeado.dukRaw) return { erro: 'fechado' };
+      var L = await Cadeado.local(); if (!L || !L.sk) return { erro: 'semchave' };
+      var sal = Cifra.rnd(32), cred;
+      try {
+        cred = await navigator.credentials.create({ publicKey: { challenge: Cifra.rnd(32), rp: { id: rpId(), name: 'SolverONE' }, user: { id: utf8(Conta.uid()).slice(0, 64), name: Conta.email() || 'solverone', displayName: 'SolverONE · ' + (Conta.email() || '') },
+          pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }], authenticatorSelection: { residentKey: 'required', userVerification: 'required' }, extensions: { prf: { eval: { first: sal } } }, timeout: 60000 } });
+      } catch (e) { return { erro: 'cancelou' }; }
+      var ext = cred.getClientExtensionResults ? cred.getClientExtensionResults() : {}, f = ext.prf && ext.prf.results && ext.prf.results.first, id = b64u(cred.rawId);
+      var out = f ? new Uint8Array(f) : null;
+      if (!out && !(ext.prf && ext.prf.enabled === false)) out = await this.prfDe([{ cred_id: id, sal: b64u(sal) }]).then(function (r) { return r && r.out; });
+      if (!out) return { erro: 'semprf' };
+      var sk = await Cifra.decifrar(await Cifra.aes(Cadeado.dukRaw), L.sk), fechada = await Cifra.cifrar(await Cifra.hkdf(out, PK_INFO), sk); sk.fill(0); out.fill(0);
+      await this.rpc('sol_passkey_guardar', { p_cred: id, p_sal: b64u(sal), p_fechada: fechada });
+      return { ok: true };
+    },
+    prfDe: async function (linhas) {
+      var ev = {}; linhas.forEach(function (k) { ev[k.cred_id] = { first: unb64u(k.sal) }; });
+      try {
+        var r = await navigator.credentials.get({ publicKey: { challenge: Cifra.rnd(32), rpId: rpId(), allowCredentials: linhas.map(function (k) { return { type: 'public-key', id: unb64u(k.cred_id) }; }), userVerification: 'required', timeout: 60000, extensions: { prf: { evalByCredential: ev } } } });
+        var e = r && r.getClientExtensionResults ? r.getClientExtensionResults() : null, f = e && e.prf && e.prf.results && e.prf.results.first;
+        return f ? { cred: b64u(r.rawId), out: new Uint8Array(f) } : null;
+      } catch (e2) { return null; }
+    },
+    entrarPasskey: async function (fam) {
+      var linhas = []; try { linhas = (await this.rpc('sol_passkeys_minhas')) || []; } catch (e) {}
+      var r = linhas.length ? await this.prfDe(linhas) : null;
+      var k = r && linhas.find(function (x) { return x.cred_id === r.cred; });
+      if (!k) return Tela.erro(tt('A digital (passkey) não abriu neste aparelho. Use a aprovação pelo outro aparelho.', 'The fingerprint (passkey) did not open on this device. Use approval from another device.'));
+      var sk; try { sk = await Cifra.decifrar(await Cifra.hkdf(r.out, PK_INFO), k.fechada); } catch (e) { return Tela.erro(tt('A passkey não abriu a chave.', 'The passkey did not open the key.')); } finally { r.out.fill(0); }
+      this.receber(fam, { tipo: 'pessoal', como: 'passkey', sk: b64(sk) }, null); sk.fill(0);
     }
   };
 
@@ -874,6 +1190,9 @@
     '.nv-nota.info{border-color:var(--accent2,#2bb3ff)}.nv-nota.atencao{border-color:var(--warn,#ffb84d)}.nv-nota.erro{border-color:var(--down,#ff6b6b);color:var(--down,#ff6b6b)}.nv-nota.ok{border-color:var(--accent,#3ddc97)}' +
     '.nv-pinc{-webkit-text-security:disc;text-security:disc;letter-spacing:.2em}' +
     '.nv-hidden{display:none!important}.nv-row{display:flex;gap:8px;flex-wrap:wrap}.nv-row .nv-btn{flex:1 1 140px}' +
+    '.nv-sas{font:700 2.2rem/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;text-align:center;margin:12px 0;padding:10px;border-radius:12px;background:var(--card2,#1b2430);border:1px solid var(--line2,#2e3c4f)}' +
+    '.nv-pedido{position:fixed;left:50%;transform:translateX(-50%);top:12px;z-index:99980;display:flex;align-items:center;gap:8px;flex-wrap:wrap;max-width:calc(100vw - 24px);padding:10px 12px;border-radius:12px;background:var(--card,#151c26);border:1px solid var(--warn,#ffb84d);color:var(--txt,#e7edf5);font:14px system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.35)}' +
+    '.nv-pedido span{flex:1 1 220px}.nv-pedido .nv-btn{width:auto;margin:0}' +
     '.nv-selo{position:fixed;left:12px;bottom:84px;z-index:9990;border-radius:999px;padding:8px 12px;background:var(--card,#151c26);border:1px solid var(--line2,#2e3c4f);color:var(--txt,#e7edf5);font:13px system-ui,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:calc(100vw - 24px)}' +
     '@media(min-width:900px){.nv-selo{bottom:16px}}' +
     '.nv-aviso{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:99995;background:var(--card2,#1b2430);color:var(--txt,#e7edf5);border:1px solid var(--line2,#2e3c4f);border-radius:12px;padding:10px 14px;max-width:calc(100vw - 32px);display:none;font:14px system-ui,sans-serif}.nv-aviso.on{display:block}' +
@@ -951,6 +1270,9 @@
         '<h2>🔒 ' + tt('Cadeado', 'Lock') + '</h2>' +
         '<div class="nv-row"><button class="nv-btn" id="nvTrancar">🔒 ' + tt('Fechar agora', 'Lock now') + '</button><button class="nv-btn" id="nvPin">' + tt('Trocar o PIN', 'Change PIN') + '</button></div>' +
         (dig ? (L && L.prf ? '<button class="nv-btn" id="nvDigOff">' + tt('Não abrir mais com a digital', 'Stop opening with fingerprint') + '</button>' : '<button class="nv-btn" id="nvDigOn">👆 ' + tt('Abrir também com a digital', 'Also open with fingerprint') + '</button>') : '') +
+        '<h2>📱 ' + tt('Aparelhos', 'Devices') + '</h2><div id="nvAps" class="nv-lista"><p class="nv-tiny">' + tt('Carregando…', 'Loading…') + '</p></div>' +
+        '<div class="nv-row"><button class="nv-btn" id="nvApPedidos">🔔 ' + tt('Ver pedidos de acesso', 'See access requests') + '</button>' +
+        (dig && Aparelhos.ligado !== false && L && L.sk ? '<button class="nv-btn" id="nvApPk">👆 ' + tt('Usar a digital em todos os aparelhos (passkey)', 'Use the fingerprint on all devices (passkey)') + '</button>' : '') + '</div>' +
         '<h2>' + tt('Este aparelho', 'This device') + '</h2>' +
         (Nuvem.podeLevar ? '<button class="nv-btn" id="nvLevar">' + tt('Levar para a nuvem os dados guardados só neste aparelho', 'Move the data kept only on this device to the cloud') + '</button>' : '') +
         '<div class="nv-row"><button class="nv-btn" id="nvSair">' + tt('Sair da conta', 'Sign out') + '</button><button class="nv-btn" id="nvDesc">📴 ' + tt('Desconectar este aparelho', 'Disconnect this device') + '</button></div>' +
@@ -971,6 +1293,34 @@
       if ($('#nvCaixaJa')) $('#nvCaixaJa').onclick = function () { Caixa.esvaziar(); };
       this.ligarRobo(el);
       if (!this._pediuRobos) { this._pediuRobos = true; this.robos(); }
+      $('#nvApPedidos').onclick = async function () { Aparelhos._vistos = {}; await Aparelhos.olharPedidos(); if (!(Aparelhos.pendentes || []).length) aviso(tt('Nenhum pedido de acesso agora.', 'No access request right now.')); else Painel.fechar(); };
+      if ($('#nvApPk')) $('#nvApPk').onclick = async function () {
+        if (!Cadeado.dukRaw) return aviso(tt('Para isso, feche o cadeado (🔒 Fechar agora) e abra de novo com o PIN.', 'For this, lock (🔒 Lock now) and open again with the PIN.'));
+        var r = await Aparelhos.criarPasskey();
+        aviso(r.ok ? '✓ ' + tt('Pronto: a digital (passkey) abre o MoneyTRIO nos seus outros aparelhos.', 'Done: the fingerprint (passkey) opens MoneyTRIO on your other devices.')
+          : r.erro === 'semprf' ? tt('Este aparelho ou navegador ainda não oferece isso. Use a aprovação pelo outro aparelho.', 'This device or browser does not offer this yet. Use approval from another device.')
+          : tt('A passkey não foi criada.', 'The passkey was not created.'));
+      };
+      this.aparelhos(el, L);
+    },
+    /* ---- 1.9.0: a lista de aparelhos da conta, com "Tirar" ---- */
+    aparelhos: async function (el, L) {
+      var caixa = el.querySelector('#nvAps'), lista = await Aparelhos.lista(); if (!caixa || !caixa.isConnected) return;
+      if (lista === null) { caixa.innerHTML = '<p class="nv-tiny">' + tt('A lista de aparelhos ainda está sendo ligada.', 'The device list is still being switched on.') + '</p>'; return; }
+      var como = { primeiro: tt('primeiro aparelho', 'first device'), aparelho: tt('aprovado por outro aparelho', 'approved by another device'), familia: tt('aprovado pela família', 'approved by the family'), passkey: tt('pela digital (passkey)', 'by fingerprint (passkey)'), kit: tt('pelo kit de emergência', 'by the emergency kit') };
+      caixa.innerHTML = lista.map(function (a) {
+        var este = L && a.id === L.ap;
+        return '<div class="nv-nota nv-ap" data-ap="' + esc(a.id) + '"><b>' + esc(a.nome) + '</b>' + (este ? ' <span class="nv-tiny">(' + tt('este aparelho', 'this device') + ')</span>' : '') +
+          '<br><span class="nv-tiny">' + esc((como[a.como] || a.como) + (a.como === 'familia' && (a.aprovado_por_nome || a.aprovado_por_email) ? ' (' + (a.aprovado_por_nome || a.aprovado_por_email) + ')' : '') + ' · ' + tt('desde ', 'since ') + dataHora(a.criado_em, true) + ' · ' + tt('última vez ', 'last seen ') + dataHora(a.visto_em)) + '</span>' +
+          '<br><button class="nv-btn" data-tirar="' + esc(a.id) + '">' + (este ? tt('Tirar este aparelho', 'Remove this device') : tt('Tirar', 'Remove')) + '</button></div>';
+      }).join('') || '<p class="nv-tiny">' + tt('Nenhum aparelho registrado ainda.', 'No device registered yet.') + '</p>';
+      caixa.querySelectorAll('[data-tirar]').forEach(function (b) { b.onclick = async function () {
+        var id = b.getAttribute('data-tirar'), este = L && id === L.ap;
+        if (!window.confirm(este ? tt('Tirar ESTE aparelho? O cadeado e a cópia daqui saem (na nuvem continua tudo).', 'Remove THIS device? The lock and the copy here are erased (everything stays in the cloud).') : tt('Tirar este aparelho da sua conta? Na próxima vez que ele abrir com internet, o cadeado de lá some.', 'Remove this device from your account? The next time it opens online, its lock is erased.'))) return;
+        try { await Aparelhos.rpc('sol_aparelho_tirar', { p_id: id }); } catch (e) { return aviso(Conta.explicar(e), 'erro'); }
+        if (este) return Aparelhos.tirado();
+        aviso('✓ ' + tt('Aparelho tirado.', 'Device removed.')); Painel.aparelhos(el, L);
+      }; });
     },
     /* ---- robôs autorizados (aprovado pelo dono, 03/Nov/2026): confirmação antes, mensagem fixa depois ---- */
     _msg: null, _rascunho: '', _conf: null,
@@ -1117,7 +1467,39 @@
       el.querySelectorAll('[data-i]').forEach(function (b) { b.onclick = function () { aoEscolher(lista[+b.dataset.i]); }; });
     },
     /* primeira vez: o código de recuperação do OmniLifeONE */
-    primeiraVez: function (fam, esqueci) {
+    /* 1.9.0: primeira vez (ou esqueci o PIN) SEM código de recuperação: aprovar pelo outro aparelho, pedir para alguém da
+       família ou a digital (passkey). O código antigo fica num link discreto, só para quem tem a cópia dele no servidor. */
+    primeiraVez: async function (fam, esqueci) {
+      if (!esqueci && (await Aparelhos.retomar(fam))) return;
+      var el = Tela.mostrar(Tela.topo() + '<h2>🔐 ' + (esqueci ? tt('Abrir sem o PIN', 'Open without the PIN') : tt('Primeira vez neste ' + apN(), 'First time on this ' + apN())) + '</h2>' +
+        '<p>' + tt('Para abrir as finanças da família <b>' + esc(fam.nome || '') + '</b> aqui, escolha um jeito:', 'To open the finances of the family <b>' + esc(fam.nome || '') + '</b> here, choose one way:') + '</p>' +
+        '<button class="nv-btn pri" id="nvApOutro">📱 ' + tt('Aprovar pelo outro aparelho', 'Approve from my other device') + '</button>' +
+        ((fam.membros || 0) > 1 ? '<button class="nv-btn" id="nvApFam">👪 ' + tt('Pedir para alguém da família aprovar', 'Ask someone in the family to approve') + '</button>' : '') +
+        '<span id="nvApPkLugar"></span>' +
+        '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div>' +
+        '<p class="nv-tiny">' + tt('Funciona com outro aparelho onde você já entra (celular ou computador), no MoneyTRIO ou no OmniLifeONE.', 'Works with another device where you are already in (phone or computer), in MoneyTRIO or OmniLifeONE.') + '</p>' +
+        '<div class="nv-row"><span id="nvCodLugar"></span>' + (esqueci ? '<button class="nv-lnk" id="nvCodVolta">' + tt('Voltar', 'Back') + '</button>' : '') +
+        '<button class="nv-lnk" id="nvSairC">' + tt('Sair da conta', 'Sign out') + '</button></div>');
+      var $ = function (s) { return el.querySelector(s); };
+      $('#nvSairC').onclick = function () { Nuvem.sair(false); };
+      if ($('#nvCodVolta')) $('#nvCodVolta').onclick = function () { Portao.pin(fam, Nuvem.motivoTranca); };
+      $('#nvApOutro').onclick = function () { if (!navigator.onLine) return Tela.erro(tt('Para isso, ligue a internet.', 'For this, connect to the internet.')); Tela.ocupar($('#nvApOutro'), function () { return Aparelhos.pedir(fam, 'pessoal'); }); };
+      if ($('#nvApFam')) $('#nvApFam').onclick = function () { if (!navigator.onLine) return Tela.erro(tt('Para isso, ligue a internet.', 'For this, connect to the internet.')); Tela.ocupar($('#nvApFam'), function () { return Aparelhos.pedir(fam, 'familia'); }); };
+      /* a digital (passkey) só aparece se a conta tem uma e este aparelho tem leitor; o código só para quem tem a cópia antiga */
+      (async function () {
+        if ((await Cadeado.temDigital()) && (await Aparelhos.temPasskeys()) && Tela.el === el) {
+          $('#nvApPkLugar').innerHTML = '<button class="nv-btn" id="nvApPasskey">👆 ' + tt('Usar a digital (passkey)', 'Use the fingerprint (passkey)') + '</button>';
+          $('#nvApPasskey').onclick = function () { Tela.ocupar($('#nvApPasskey'), function () { return Aparelhos.entrarPasskey(fam); }); };
+        }
+        var bk = null; try { bk = await Conta.rest('GET', 'omni_chave_privada?user_id=eq.' + Conta.uid() + '&select=user_id'); } catch (e) {}
+        if (bk && bk.length && Tela.el === el) {
+          $('#nvCodLugar').innerHTML = '<button class="nv-lnk" id="nvCodigoAntigo">' + tt('Tenho o código de recuperação antigo', 'I have the old recovery code') + '</button>';
+          $('#nvCodigoAntigo').onclick = function () { Portao.codigo(fam, esqueci); };
+        }
+      })();
+    },
+    /* o jeito antigo: o código de recuperação do OmniLifeONE (só para quem já tem) */
+    codigo: function (fam, esqueci) {
       var el = Tela.mostrar(Tela.topo() +
         '<h2>🔐 ' + (esqueci ? tt('Abrir com o código de recuperação', 'Open with the recovery code') : tt('Primeira vez neste ' + apN(), 'First time on this ' + apN())) + '</h2>' +
         '<p>' + tt('Digite o <b>código de recuperação</b>: aquele código em pedaços (ex.: ABCDE-FGH23-…) que o OmniLifeONE mostrou na primeira vez e você anotou num papel. É o mesmo cadeado da família ', 'Type the <b>recovery code</b>: the code in parts (e.g. ABCDE-FGH23-…) that OmniLifeONE showed the first time and you wrote on paper. It is the same family lock ') + '<b>' + esc(fam.nome) + '</b>.</p>' +
@@ -1126,15 +1508,12 @@
         '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div>' +
         '<button class="nv-btn pri" id="nvCodOk">' + tt('Continuar', 'Continue') + '</button>' +
         '<button class="nv-btn" id="nvCodSem">' + tt('Não tenho o código', "I don't have the code") + '</button>' +
-        (esqueci ? '<button class="nv-btn" id="nvCodVolta">' + tt('Voltar', 'Back') + '</button>' : '') +
+        '<button class="nv-btn" id="nvCodVolta">' + tt('Voltar', 'Back') + '</button>' +
         '<button class="nv-lnk" id="nvSairC">' + tt('Sair da conta', 'Sign out') + '</button>');
       var $ = function (s) { return el.querySelector(s); };
       $('#nvSairC').onclick = function () { Nuvem.sair(false); };
-      if ($('#nvCodVolta')) $('#nvCodVolta').onclick = function () { Portao.pin(fam, Nuvem.motivoTranca); };
-      $('#nvCodSem').onclick = function () {
-        Portao.mensagem(tt('Sem o código', 'Without the code'), tt('O MoneyTRIO usa o mesmo cadeado do OmniLifeONE. Se você não tem o papel com o código, abra o OmniLifeONE num aparelho onde as Senhas da casa já abrem e faça um código novo lá (Casa → Senhas da casa). Depois volte aqui e use o código novo.', 'MoneyTRIO uses the same lock as OmniLifeONE. If you do not have the paper with the code, open OmniLifeONE on a device where the home passwords already open and make a new code there. Then come back here and use the new code.'),
-          [[tt('Voltar', 'Back'), function () { Portao.primeiraVez(fam, esqueci); }]]);
-      };
+      $('#nvCodVolta').onclick = function () { Portao.primeiraVez(fam, esqueci); };
+      $('#nvCodSem').onclick = function () { Portao.primeiraVez(fam, esqueci); };
       $('#nvCodOk').onclick = function () {
         var cod = $('#nvCod').value; if (Cifra.normCode(cod).replace(/-/g, '').length < 10) return Tela.erro(tt('Digite o código inteiro, do jeito que está no papel.', 'Type the whole code, as it is on the paper.'));
         if (!navigator.onLine) return Tela.erro(tt('Para esta primeira vez, ligue a internet.', 'For this first time, connect to the internet.'));
@@ -1146,12 +1525,13 @@
             : r.erro === 'semchave' ? tt('Esta conta ainda não tem cadeado. Abra antes as Senhas da casa no OmniLifeONE (com esta mesma conta) e volte aqui.', 'This account has no lock yet. First open the home passwords in OmniLifeONE (with this same account) and come back.')
             : r.erro === 'semliberar' ? tt('O código está certo, mas o cadeado desta família ainda não foi liberado para você. Peça para outro responsável abrir as Senhas da casa no OmniLifeONE, com internet, e tente de novo.', 'The code is right, but this family lock has not been released to you yet. Ask another guardian to open the home passwords in OmniLifeONE, online, and try again.')
             : Conta.explicar(r.e);
-          Portao.primeiraVez(fam, esqueci); Tela.erro(msg);
+          Portao.codigo(fam, esqueci); Tela.erro(msg);
         });
       };
     },
     novoPin: function (aoSalvar, podeVoltar) {
       var el = Tela.mostrar(Tela.topo() + '<h2>🔢 ' + tt('Escolha o seu PIN', 'Choose your PIN') + '</h2>' +
+        '<p class="nv-tiny" id="nvPinUm">' + tt('O PIN vale só neste aparelho; se quiser, use o mesmo nos outros.', 'The PIN works only on this device; if you like, use the same one on the others.') + '</p>' +
         '<p>' + tt('O PIN abre o MoneyTRIO neste ' + apN() + ', até sem internet. Escolha <b>6 números</b> fáceis para você lembrar e difíceis para os outros — não use data de aniversário nem 123456. Não é a senha do e-mail.', 'The PIN opens MoneyTRIO on this ' + apN() + ', even offline. Choose <b>6 digits</b> easy for you and hard for others — not a birthday or 123456. It is not your e-mail password.') + '</p>' +
         '<label class="nv-fld"><span>' + tt('PIN (6 números ou mais)', 'PIN (6 digits or more)') + '</span><input type="text" class="nv-pinc" id="nvP1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label>' +
         '<label class="nv-fld"><span>' + tt('Digite o mesmo PIN de novo', 'Type the same PIN again') + '</span><input type="text" class="nv-pinc" id="nvP2" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label>' +
@@ -1193,7 +1573,7 @@
           : trancou === 'ocioso' ? tt('Trancado após 15 min sem uso', 'Locked after 15 min without use')
           : tt('Fechado sozinho por segurança.', 'Locked by itself for safety.')) + (trancou === 'manual' ? '' : ' · ' + esc(hora)) + '</div>' : '') +
         '<p class="nv-muted" id="nvConectado">' + tt('Você continua conectado como ', 'You are still signed in as ') + '<b>' + esc(nomeConta()) + '</b>. ' + tt('Só falta destravar.', 'You only need to unlock.') + '<br>' + tt('Família ', 'Family ') + '<b>' + esc(fam.nome) + '</b></p>' +
-        (L && L.bloqueado ? '<div class="nv-nota erro">' + tt('O PIN errou muitas vezes e ficou bloqueado neste ' + apN() + '. Use o código de recuperação (ou saia e entre de novo na conta).', 'The PIN failed too many times and is blocked on this ' + apN() + '. Use the recovery code (or sign out and sign in again).') + '</div>'
+        (L && L.bloqueado ? '<div class="nv-nota erro">' + tt('O PIN errou muitas vezes e ficou bloqueado neste ' + apN() + '. Toque em "Esqueci o PIN" e aprove pelo outro aparelho.', 'The PIN failed too many times and is blocked on this ' + apN() + '. Tap "I forgot the PIN" and approve from your other device.') + '</div>'
           : '<label class="nv-fld"><span>PIN</span><input type="text" class="nv-pinc" id="nvPin" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label><button class="nv-btn pri" id="nvPinOk">' + tt('Abrir', 'Open') + '</button>' +
             (dig ? '<button class="nv-btn" id="nvDig">👆 ' + tt('Abrir com a digital', 'Open with fingerprint') + '</button>' : '')) +
         '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div>' +
@@ -1532,6 +1912,7 @@
       }
       setInterval(function () { Nuvem.buscarAgora(); }, BUSCA_MS);
       setTimeout(function () { Nuvem.buscarAgora(); }, 1500);
+      Aparelhos.aoAbrir();   /* 1.9.0: registra este aparelho (quem já usava), confere se não foi tirado, avisa aparelho novo */
     },
     levarDeNovo: async function () {
       var loc = Portao.dadosLocais(); if (!loc || Sinc.vivos() > 0) { this.podeLevar = false; return; }
@@ -1560,7 +1941,8 @@
           this.aplicar(abertos);
         }
         this._voltas = (this._voltas || 0) + 1;
-        if (this._voltas % 3 === 1) { await this.conferirPapel(); await Ponte.buscar(); }
+        if (this._voltas % 3 === 1) { await this.conferirPapel(); await Ponte.buscar(); if (this._voltas > 1) await Aparelhos.aoAbrir(); }
+        Aparelhos.olharPedidos();   /* 1.9.0: pedido de acesso de um aparelho novo (meu ou da família) */
         Caixa.esvaziar();
       } catch (e) { console.warn('nuvem: busca', e); }
       finally { this._buscando = false; Painel.atualizar(); }
@@ -1649,7 +2031,7 @@
       lsDel(K_FAM);
     },
     /* para os testes automáticos (teste/nuvem.js): as peças, sem estado aberto */
-    _teste: { Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao }
+    _teste: { Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao }
   };
   function nomeConta() { var s = Conta.ler() || {}, d = Conta.dados(s.access_token).user_metadata || {}; return String(s.nome || d.full_name || d.name || '').trim() || String(Conta.email() || '').split('@')[0]; }
   function confirmar(t) { try { return window.confirm(t); } catch (e) { return false; } }

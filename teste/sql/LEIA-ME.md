@@ -32,3 +32,15 @@ teste do v2 continua com 51 "ok", e `teste-moneytrio-correcao.sql` deu 23 "ok"; 
 v4 (arquivos no Storage), 06/Nov/2026: depois do v1–v3, `for i in 1 2; do psql -d lab -v ON_ERROR_STOP=1 -f investify-me/supabase/2026-11-06-moneytrio-arquivos.sql; done`
 e `psql -d lab -f investify-me/teste/sql/teste-moneytrio-arquivos.sql 2>&1 | grep -E "ok:|FALHOU"` → rodou duas vezes, conferência 3/3 "sim",
 14 "ok" (o stub do Supabase tem storage.buckets e storage.objects com RLS).
+
+**Aparelhos sem código de recuperação (plataforma, 06/Nov/2026)** — `supabase/2026-11-07-sol-aparelhos.sql` e
+`teste/sql/teste-sol-aparelhos.sql`. Só precisa da base (não do OmniLife nem do MoneyTRIO). O stub não tem
+`auth.users.raw_user_meta_data` (o Supabase tem): crie antes com
+`psql -d lab -c "ALTER TABLE auth.users ADD COLUMN IF NOT EXISTS raw_user_meta_data jsonb DEFAULT '{}'"`.
+```
+for i in 1 2; do psql -d lab -v ON_ERROR_STOP=1 -f investify-me/supabase/2026-11-07-sol-aparelhos.sql; done
+psql -d lab -f investify-me/teste/sql/teste-sol-aparelhos.sql 2>&1 | grep -E "ok:|FALHOU"
+```
+Resultado em 06/Nov/2026 (Postgres 16): rodou duas vezes sem erro; 46 "ok", nenhuma falha (tabelas fechadas, desafio e
+revelar uma vez, resposta uma vez e apagada ao ler, vencido sem resposta, até 3 pedidos, responsável aprova, membro não,
+tirar aparelho, passkeys só da própria pessoa); `sql-grants.js`: OK.
