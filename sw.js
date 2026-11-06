@@ -2,7 +2,7 @@
    Faz o site abrir sem internet e permite instalar como app.
    AO PUBLICAR UMA VERSÃO NOVA, troque o número abaixo (v1 -> v2).
    É o que avisa os celulares de que existe conteúdo novo. */
-var VERSAO = 'v45';
+var VERSAO = 'v46';
 var CACHE = 'moneytrio-' + VERSAO;
 /* O que fica guardado para abrir sem internet. Cada <script src> do index.html entra aqui com o MESMO ?v=
    (teste/teste-modulos.js confere). Módulo novo = uma linha aqui + uma no index.html. */
@@ -15,6 +15,9 @@ var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './aju
   './modulos/saude.js?v=1.0.0',
   './modulos/patrimonio-iliquido.js?v=1.0.0',
   './modulos/importar-posicoes.js?v=1.0.0',
+  './modulos/assinaturas.js?v=1.0.0',
+  './modulos/compromisso-de.js?v=1.0.0',
+  './modulos/previsto.js?v=1.0.0',
   './nuvem.js?v=1.7.0'];
 /* O motor de leitura de fotos (assets/ocr: Tesseract, português, ZXing,
    jsQR — uns 10 MB) tem cache próprio, que NÃO muda a cada versão do app:

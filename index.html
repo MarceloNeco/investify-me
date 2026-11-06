@@ -1371,6 +1371,7 @@ details.imp-arq.repetido{border-color:var(--warn)}
 .prof-campos{margin-top:6px}
 .il-etiqueta{color:var(--warn); margin:0 0 8px}
 .il-tag{color:var(--warn)}
+.as-comp{color:var(--accent2); margin:4px 0 0}
 .rdet-sec{font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--txt3); margin:12px 0 2px}
 .aba-c{background:var(--card2); border:1px solid transparent; border-radius:20px; padding:7px 14px;
        cursor:pointer; color:var(--txt2); font-size:.83rem; white-space:nowrap}
@@ -2956,6 +2957,11 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.46 */
+  'Assinaturas, compromisso de um contrato, época do ano e boleto':'Subscriptions, commitments from a contract, seasonality and bills',
+  'Assinaturas: plano mensal ou anual, data de renovação, aviso antes de renovar (7 dias no mensal, 30 no anual) e a comparação "anual × mensal" quando há os dois preços.':'Subscriptions: monthly or yearly plan, renewal date, a reminder before renewing (7 days monthly, 30 yearly) and the "yearly × monthly" comparison when both prices are known.',
+  '"📌 Virar compromisso" no lançamento e "📄 Compromisso de um contrato (PDF)" em Custos: o app lê o contrato da escola sem IA (escola, aluno, ano, parcelas, valor, vencimento) e abre o formulário preenchido para você conferir.':'"📌 Make it a commitment" on an entry and "📄 Commitment from a contract (PDF)" in Costs: the app reads the school contract without AI (school, student, year, instalments, amount, due day) and opens the form filled in for you to check.',
+  'Valor que varia: com 12 meses de histórico, "usar a época do ano" (ex.: luz mais cara em janeiro). "🧾 Chegou um boleto (PDF)": o app lê valor e vencimento (também pela linha digitável) e o boleto vira o previsto daquele mês; o pagamento de verdade ainda ganha.':'Varying amounts: with 12 months of history, "use seasonality" (e.g. power is pricier in January). "🧾 A bill arrived (PDF)": the app reads amount and due date (also from the barcode line) and the bill becomes that month\'s forecast; the real payment still wins.',
   /* 3.45 */
   'Patrimônio sem liquidez e Importar posições':'Non-liquid assets and Import positions',
   'InvestifyONE: patrimônio sem liquidez (FGTS, previdência bloqueada, imóvel…) com a etiqueta "🔒 sem liquidez — não dá para sacar". Entra no Patrimônio total do Painel, mostrado separado do líquido, e fica fora da alocação e da rentabilidade.':'InvestifyONE: non-liquid assets (FGTS, locked pension, property…) labelled "🔒 not liquid — cannot be withdrawn". They count in the Dashboard\'s total net worth, shown separately from liquid assets, and stay out of allocation and returns.',
@@ -13709,6 +13715,11 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.46', d:'2026-11-06', t:'Assinaturas, compromisso de um contrato, época do ano e boleto', itens:[
+    'Assinaturas: plano mensal ou anual, data de renovação, aviso antes de renovar (7 dias no mensal, 30 no anual) e a comparação "anual × mensal" quando há os dois preços.',
+    '"📌 Virar compromisso" no lançamento e "📄 Compromisso de um contrato (PDF)" em Custos: o app lê o contrato da escola sem IA (escola, aluno, ano, parcelas, valor, vencimento) e abre o formulário preenchido para você conferir.',
+    'Valor que varia: com 12 meses de histórico, "usar a época do ano" (ex.: luz mais cara em janeiro). "🧾 Chegou um boleto (PDF)": o app lê valor e vencimento (também pela linha digitável) e o boleto vira o previsto daquele mês; o pagamento de verdade ainda ganha.'
+  ]},
   {v:'3.45', d:'2026-11-06', t:'Patrimônio sem liquidez e Importar posições', itens:[
     'InvestifyONE: patrimônio sem liquidez (FGTS, previdência bloqueada, imóvel…) com a etiqueta "🔒 sem liquidez — não dá para sacar". Entra no Patrimônio total do Painel, mostrado separado do líquido, e fica fora da alocação e da rentabilidade.',
     'Carteira → "Importar posições (JSON)": prévia em tabela; o que já existe e as linhas com problema vêm desmarcados; nada é trocado nem apagado.'
@@ -15196,7 +15207,7 @@ const Recorrente = {
 
     /* num serviço por visita o valor não é fixo: é a soma dos dias
        trabalhados na janela que este pagamento cobre */
-    let valor, extra = null;
+    let valor, extra = null, previstoFonte = '';
     if(r.porVisita){
       const v = this.visitasDoPagamento(r, iso);
       const validas = v.visitas.filter(x => x.vale);
@@ -15204,6 +15215,11 @@ const Recorrente = {
       valor = validas.reduce((sm, x) => sm + x.valor, 0);
     }else{
       valor = this.valorEm(r, iso);
+      /* 3.46: módulos ajustam o previsto (sazonalidade, boleto que já chegou): o último que responder vale */
+      if(window.MoneyModulos){
+        const aj = MoneyModulos.itens('recorrente.previsto', {r: r, iso: iso, valor: valor}).filter(x => x && x.valor > 0);
+        if(aj.length){ valor = aj[aj.length - 1].valor; previstoFonte = aj[aj.length - 1].fonte || ''; }
+      }
     }
     /* o que você marcou à mão sempre ganha do que o app calculou */
     const previsto = valor;
@@ -15212,7 +15228,7 @@ const Recorrente = {
     return {
       r: r, data: iso, chave: r.id + '|' + iso,
       valor: valor, servico: extra,
-      previsto: previsto, realizado: !!(reg && reg.valor != null),
+      previsto: previsto, previstoFonte: previstoFonte, realizado: !!(reg && reg.valor != null),
       estado: estado, registro: reg || null,
       emDias: Math.round((new Date(iso + 'T12:00:00') - new Date(hojeISO() + 'T12:00:00')) / 86400000)
     };
@@ -16895,6 +16911,7 @@ function abrirRecorrente(id, semente, op){
       campo(de('Cartão ou forma de pagamento', 'Card or payment method'), '<input id="rcCartao" autocomplete="off" value="' + esc(r.cartao || '') + '" placeholder="' + de('ex.: Itaú Black final 6514', 'e.g. Visa ending 6514') + '">') +
     '</div>' +
     campo(de('Observação', 'Note'), '<textarea id="rcObs" rows="2">' + esc(r.obs || '') + '</textarea>') +
+    (window.MoneyModulos ? MoneyModulos.html('compromisso.detalhes', {r: r}) : '') +
     '<p class="tiny rc-senha">🔒 ' + de('Não escreva senha aqui. Senha vai no cofre Senhas da casa.', 'Do not write passwords here. Passwords go in the Home passwords vault.') + '</p>' +
 
     Abat.bloco('rc', r) +
@@ -16953,6 +16970,8 @@ function recVariaInfo(){
     '<p class="tiny muted" style="margin:6px 0 0">' + (pt
       ? 'O Valor vira o previsto de cada mês. Quando o pagamento de verdade chega (pelo robô, pela conferência ou marcado à mão), ele substitui o previsto daquele mês e a diferença aparece.'
       : 'Amount becomes each month\'s forecast. When the real payment arrives, it replaces that month\'s forecast and the difference shows.') + '</p></div>');
+  /* 3.46: módulos acrescentam (ex.: sazonalidade com 12+ meses) */
+  if(window.MoneyModulos) alvo.insertAdjacentHTML('beforeend', Verter.html(MoneyModulos.html('compromisso.varia', {r: {id: recEditando, grupo: ($('#rcGrupo') || {}).value, sub: ($('#rcSub') || {}).value}})));
 }
 
 /* a sugestão aparece à vista, embaixo do nome; um toque aceita */
@@ -23500,7 +23519,9 @@ function linhaOcorrencia(o, op){
       '<div class="oc-freq">🔁 ' + esc(Recorrente.explicar(o.r)) + '</div>' +
       (o.r.varia ? '<div class="oc-freq oc-var">' + (o.realizado
         ? esc((I18n.atual === 'pt' ? 'realizado · previsto ' : 'actual · forecast ') + fmt(o.previsto) + ' · ' + (o.valor - o.previsto >= 0 ? '+' : '−') + fmt(Math.abs(o.valor - o.previsto)))
-        : esc(I18n.atual === 'pt' ? 'previsto (o valor varia)' : 'forecast (amount varies)')) + '</div>' : '') +
+        : esc(o.previstoFonte === 'boleto' ? (I18n.atual === 'pt' ? 'boleto que chegou' : 'bill received')
+            : o.previstoFonte === 'sazonal' ? (I18n.atual === 'pt' ? 'previsto pela época do ano' : 'seasonal forecast')
+            : (I18n.atual === 'pt' ? 'previsto (o valor varia)' : 'forecast (amount varies)'))) + '</div>' : '') +
     '</div>' +
     '<div class="oc-dir">' +
       '<div class="oc-valor ' + (ent ? 'up' : 'down') + '">' + (ent ? '+' : '−') + fmt(o.valor) + '</div>' +
@@ -36075,6 +36096,9 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/saude.js?v=1.0.0"></script>
 <script src="modulos/patrimonio-iliquido.js?v=1.0.0"></script>
 <script src="modulos/importar-posicoes.js?v=1.0.0"></script>
+<script src="modulos/assinaturas.js?v=1.0.0"></script>
+<script src="modulos/compromisso-de.js?v=1.0.0"></script>
+<script src="modulos/previsto.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.7.0"></script>
 </body>
 </html>

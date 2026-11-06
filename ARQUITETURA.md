@@ -569,6 +569,8 @@ Desde a 3.41, **toda função nova é um módulo**: um arquivo em `modulos/`, co
 - html: `custos.revisar` (topo da aba Revisar) — 3.43
 - html: `investify.painel` (depois dos números do Painel), `investify.carteira.topo` (topo da Carteira) — 3.45
 - itens: `patrimonio.extra` → `[{valor, rotulo}]`: o Painel soma ao "Patrimônio total" e mostra separado do líquido — 3.45
+- html: `compromisso.detalhes` {r} (fim de "Mais opções"), `compromisso.varia` {r} (embaixo de "O valor varia") — 3.46
+- itens: `recorrente.previsto` {r, iso, valor} → `[{valor, fonte}]`: ajusta o previsto de uma ocorrência (o último vale; o valor marcado à mão ainda ganha) — 3.46
 - telas aceitam `ajuda: {pt: {t, o, f}, en: {…}}` (título e ajuda do AssistONE); `appDaView` usa o `app` da tela
 - nome global de módulo não pode repetir um `const`/`function` do index.html (o do app esconde o do módulo;
   `teste-modulos.js` confere). Ex.: o cofre de arquivos é `window.ArquivosFamilia` porque `Arquivos` já existia.
@@ -641,3 +643,15 @@ o TaxONE e os leitores só depois de terem testes próprios.
   - Sem liquidez: `{semLiquidez: true, nome, tipo, inst?, valor, data?, obs?}`.
   - "Já existe" = mesmo ticker e instituição (líquida) ou mesmo nome e instituição (sem liquidez): vem desmarcado.
 - Teste: `teste/teste-parte9.js`.
+
+### Sobras (3.46)
+- `modulos/assinaturas.js` (`Assinaturas`, N29 b): `Store.estado.assinaturas` = [{id do compromisso, plano, renova, precoMensal, precoAnual}];
+  `proxima()` avança a renovação sozinha; aviso em Custos e na fita (7/30 dias); comparação anual × mensal.
+- `modulos/compromisso-de.js` (`CompromissoDe`): "Virar compromisso" (lançamento → semente) e contrato PDF por modelo (escola, aluno,
+  ano letivo, anuidade, N parcelas de R$ X, dia de vencimento, matrícula; 11 parcelas = fev–dez). Abre o formulário para conferir;
+  o PDF vai para `ArquivosFamilia` (tipo `contrato`). Regras de texto só dentro da linha (`[ \t]`, não `\s`).
+- `modulos/previsto.js` (`Previsto`, N28): `previsto_cfg` (época do ano ligada por compromisso) e `boletos`. Pesos por mês = média do mês
+  ÷ média geral (12+ meses, até 2 anos). Boleto: texto ("valor do documento", "vencimento", "beneficiário") e linha digitável (valor nos 10
+  últimos números; fator de vencimento com a base nova de 22/02/2025). Ajusta o previsto pelo ponto `recorrente.previsto`
+  (`Recorrente.ocorrencia` → `previstoFonte` 'sazonal' | 'boleto'); o valor marcado/conciliado ainda ganha.
+- Teste: `teste/teste-parte10.js`.
