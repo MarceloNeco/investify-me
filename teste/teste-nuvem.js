@@ -329,7 +329,8 @@ let BASE = '';
     ok(ponte[0].lido_em && ponte[1].lido_em && !ponte[2].lido_em, 'ponte: as duas mensagens abertas ficam lidas; a que não abre com a chave desta família fica na caixa, sem aplicar');
     await esperar(1200); await filaVazia(A);
     const sdNuvem = db.money_docs.filter((r) => r.colecao === 'saude_planos' || r.colecao === 'profissionais' || r.colecao === 'ponte_omnilife');
-    ok(sdNuvem.length >= 3 && sdNuvem.every((r) => !/Amil|Carla|Bia/.test(r.dados_cifrado || '')), 'ponte: o que veio do OmniLifeONE sobe para o money_docs fechado (' + sdNuvem.length + ' registros)');
+    /* procura o JSON aberto (com aspas): base64 nunca tem aspas, mas pode ter "Bia" por acaso */
+    ok(sdNuvem.length >= 3 && sdNuvem.every((r) => !/"Amil"|Carla Mendes|"Bia"/.test(r.dados_cifrado || '')), 'ponte: o que veio do OmniLifeONE sobe para o money_docs fechado (' + sdNuvem.length + ' registros)');
     await A.evaluate(() => MoneyNuvem._teste.Ponte.buscar());
     ok(await A.evaluate(() => (Store.estado.saude_planos || []).length === 1 && (Store.estado.profissionais || []).length === 1), 'ponte: buscar de novo não repete nada');
 

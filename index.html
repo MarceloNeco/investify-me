@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.48">
+<link rel="stylesheet" href="estilo.css?v=3.54">
 </head>
 <body>
 
@@ -377,6 +377,7 @@ const TEXTOS = {
   'pg.agendado':       {pt:'Agendado',           en:'Scheduled'},
   'pg.atrasado':       {pt:'Atrasado',           en:'Overdue'},
   'pg.cancelado':      {pt:'Cancelado',          en:'Cancelled'},
+  'pg.semconf':        {pt:'Sem conferência',    en:'Not checked'},
 
   /* periodicidade */
   'per.diario':        {pt:'Diário',             en:'Daily'},
@@ -627,7 +628,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.53"></script>
+<script src="textos/frases-en.js?v=3.54"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7367,7 +7368,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.53"></script>
+<script src="textos/mudancas.js?v=3.54"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -8104,7 +8105,11 @@ const ESTADOS_PG = {
                desc:{pt:'Bateu com um lançamento do extrato.',
                      en:'Matched a line from an imported statement.'}},
   atrasado:   {t:'pg.atrasado',   ico:'⚠', cor:'--down',   conta:true},
-  cancelado:  {t:'pg.cancelado',  ico:'—', cor:'--txt3',   conta:false}
+  cancelado:  {t:'pg.cancelado',  ico:'—', cor:'--txt3',   conta:false},
+  /* 3.54: venceu ANTES de o compromisso ser cadastrado e nenhum lançamento bateu: não é atraso (ninguém sabia dele) */
+  semconf:    {t:'pg.semconf',    ico:'·', cor:'--txt3',   conta:false,
+               desc:{pt:'Venceu antes de você cadastrar o compromisso e nenhum lançamento bateu: não conta como atrasado.',
+                     en:'Due before you registered the commitment and no entry matched: not counted as overdue.'}}
 };
 
 const Recorrente = {
@@ -8472,7 +8477,7 @@ const Recorrente = {
     let estado = reg ? reg.estado : r.estadoPadrao;
     /* venceu, ninguém marcou nada e ainda conta como em aberto */
     if(ESTADOS_PG[estado] && ESTADOS_PG[estado].conta && iso < hojeISO() && estado !== 'automatico')
-      estado = 'atrasado';
+      estado = (!reg && r.criadoEm && iso < String(r.criadoEm).slice(0,10)) ? 'semconf' : 'atrasado';
 
     /* num serviço por visita o valor não é fixo: é a soma dos dias
        trabalhados na janela que este pagamento cobre */
@@ -8617,21 +8622,30 @@ const Recorrente = {
   /* ---------- parece repetido? (N23n, N29c) ----------
      Outro compromisso ligado, com nome ou categoria parecidos, da mesma
      pessoa, e período que se cruza. Devolve [{r, cruza:'ago–dez/2026'}]. */
-  sobreposicoes(x){
+  /* 3.54: dois compromissos "parecem repetidos" quando os períodos se cruzam E
+     (o nome é igual sem acentos, maiúsculas e o ano  OU  a mesma categoria, o mesmo "para quem é" e o valor a ±10%).
+     Números diferentes no nome (Seguro 1 × Seguro 2, "6 cartas") nunca são repetidos; ano (2027) não conta como número. */
+  parecemRepetidos(a, b){
     const N = s2 => String(s2 || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const pal = s2 => N(s2).split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !/^\d+$/.test(w) && !/^(sem|semestre|ano|mensal|anual|plano)$/.test(w));
-    const px = pal(x.nome);
+    const semAno = s2 => N(s2).replace(/\b20\d\d\b/g, ' ');
+    const nums = s2 => (semAno(s2).match(/\d+/g) || []).map(Number).sort((x,y) => x-y).join(',');
+    const base = s2 => semAno(s2).replace(/[^a-z0-9]+/g, ' ').trim();
+    if((a.fluxo || (GRUPOS[a.grupo] || {}).fluxo) !== (b.fluxo || (GRUPOS[b.grupo] || {}).fluxo)) return false;
+    if(nums(a.nome) !== nums(b.nome)) return false;
     const ini = r => r.desde || '0000-01-01', fim = r => r.ate || '9999-12-31';
+    if((ini(a) > ini(b) ? ini(a) : ini(b)) > (fim(a) < fim(b) ? fim(a) : fim(b))) return false;
+    if(base(a.nome) && base(a.nome) === base(b.nome)) return true;
+    const va = Number(a.valor) || 0, vb = Number(b.valor) || 0;
+    return a.grupo === b.grupo && N(a.sub) === N(b.sub) && N(a.quem).trim() === N(b.quem).trim() &&
+      va > 0 && vb > 0 && Math.abs(va - vb) <= Math.max(va, vb) * 0.10;
+  },
+  sobreposicoes(x){
+    const ini = r => r.desde || '0000-01-01', fim = r => r.ate || '9999-12-31';
+    const ok = (r, o) => (r.repetidoOk || []).indexOf(o.id) >= 0 || (o.repetidoOk || []).indexOf(r.id) >= 0;
     const out = [];
     this.ativos().forEach(r => {
-      if(r.id === x.id || r.fluxo === 'entrada' && (GRUPOS[x.grupo] || {}).fluxo !== 'entrada') return;
-      const pr = pal(r.nome), comuns = pr.filter(w => px.indexOf(w) >= 0).length;
-      const nomeParecido = comuns && comuns >= Math.min(px.length, pr.length, 2);
-      const mesmaCat = r.grupo === x.grupo && N(r.sub) === N(x.sub) && comuns > 0;
-      if(!nomeParecido && !mesmaCat) return;
-      if(N(r.quem) && N(x.quem) && N(r.quem) !== N(x.quem)) return;
+      if(r.id === x.id || (x.id && ok(r, x)) || !this.parecemRepetidos(x, r)) return;
       const de = ini(r) > ini(x) ? ini(r) : ini(x), ate = fim(r) < fim(x) ? fim(r) : fim(x);
-      if(de > ate) return;
       const mostra = iso => iso.startsWith('0000') || iso.startsWith('9999') ? '' : iso;
       const cruza = this.periodoCurto({desde: mostra(de), ate: mostra(ate)}) || (I18n.atual === 'pt' ? 'o mesmo período' : 'the same period');
       out.push({r, cruza});
@@ -8809,24 +8823,31 @@ const Pagamento = {
   },
 
   /* procura, entre os lançamentos importados, um que case com cada ocorrência
-     em aberto: mesma categoria, valor perto e data perto */
-  conciliarAutomatico(dias){
+     em aberto: mesma categoria, valor perto e data perto.
+     op: número (a janela em dias, como antes) ou {dias, tol, meses, porNome} — 3.54: o módulo conciliacao.js
+     usa {dias: 7, tol: 0.10, meses: 12, porNome: true} sozinho, para os meses passados (ex.: compromisso
+     importado hoje que já vinha sendo pago); porNome aceita categoria diferente quando o nome bate */
+  conciliarAutomatico(op){
     if(typeof Gasto === 'undefined') return {casados:0};
-    const janela = dias || 6;
+    op = typeof op === 'object' && op ? op : {dias: op};
+    const janela = op.dias || 6;
     const hoje = hojeISO();
-    const de = new Date(hoje + 'T12:00:00'); de.setMonth(de.getMonth() - 3);
+    const de = new Date(hoje + 'T12:00:00'); de.setMonth(de.getMonth() - (op.meses || 3));
     const abertas = Recorrente.ocorrencias(Recorrente.iso(de), hoje)
-      .filter(o => ESTADOS_PG[o.estado] && ESTADOS_PG[o.estado].conta);
+      .filter(o => (ESTADOS_PG[o.estado] && ESTADOS_PG[o.estado].conta) || (op.porNome && o.estado === 'semconf'));
+    const palavras = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w.length >= 4);
+    const nomeBate = (g, r) => { const a = palavras(r.nome); if(!a.length) return false; const b = palavras([g.desc, g.sub].join(' ')); return a.some(w => b.indexOf(w) >= 0); };
     let casados = 0;
     abertas.forEach(o => {
       const alvo = Gasto.todos().find(g => {
         if(!g.data || g.recorrenteId) return false;
-        if(g.grupo !== o.r.grupo) return false;
-        if(String(g.sub).toLowerCase() !== String(o.r.sub).toLowerCase()) return false;
+        if(g.fluxo && o.r.fluxo && g.fluxo !== o.r.fluxo) return false;
+        const mesmaCat = g.grupo === o.r.grupo && String(g.sub).toLowerCase() === String(o.r.sub).toLowerCase();
+        if(!mesmaCat && !(op.porNome && nomeBate(g, o.r))) return false;
         const dd = Math.abs((new Date(g.data + 'T12:00:00') - new Date(o.data + 'T12:00:00')) / 86400000);
         if(dd > janela) return false;
         const dif = o.valor ? Math.abs(g.valor - o.valor) / o.valor : 1;
-        return dif <= (o.r.varia ? 0.30 : 0.12);  /* até 12% ainda é a mesma conta; 30% se o valor varia (N28) */
+        return dif <= (o.r.varia ? 0.30 : (op.tol || 0.12));  /* até 12% ainda é a mesma conta; 30% se o valor varia (N28) */
       });
       if(alvo){ this.conciliar(o.r.id, o.data, alvo.id, alvo.valor); alvo.recorrenteId = o.r.id; casados++; }
     });
@@ -9895,7 +9916,6 @@ const ImportRec = {
   },
   analisar(itens){
     const pt = I18n.atual === 'pt';
-    const norm = x => String(x || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     const existentes = Recorrente.todos();
     const vistos = [];
     return itens.map((bruto, i) => {
@@ -9906,9 +9926,8 @@ const ImportRec = {
       if(b.regra && !REGRAS_REC[b.regra]) avisos.push(pt ? 'regra de data inválida' : 'invalid date rule');
       const semId = Object.assign({}, b, {grupo: String(b.grupo || '').toUpperCase()}); delete semId.id; delete semId.criadoEm;
       const r = Recorrente.arruma(semId);
-      const parecido = e => norm(e.nome) === norm(r.nome) ||
-        (e.sub === r.sub && norm(e.quem) === norm(r.quem) && Math.abs((e.valor || 0) - r.valor) <= Math.max(1, r.valor * 0.1));
-      const ja = existentes.find(parecido);
+      const parecido = e => Recorrente.parecemRepetidos(r, e);   /* 3.54: a mesma regra do formulário */
+      const ja = existentes.filter(e => e.ativo !== false).find(parecido);
       const noArquivo = vistos.find(parecido);
       vistos.push(r);
       return {i, r, avisos, ja: ja || null, repetidoNoArquivo: !!noArquivo, marcado: !avisos.length && !ja && !noArquivo};
@@ -10369,10 +10388,23 @@ function salvarRecorrente(op){
     toast(I18n.atual === 'pt' ? 'O abatimento passou do preço cheio.' : 'The offset is larger than the full price.', 'warn'); return;
   }
   const vReal = dados.valor;
-  /* aviso de repetido (sem IA): só pergunta uma vez por salvamento */
-  if(!op.mesmoAssim){
-    const rep = Recorrente.sobreposicoes(Object.assign({id: recEditando}, dados))[0];
+  /* 3.54: parece repetido? pergunta NA HORA, antes de criar (só ao criar; ao editar, não) */
+  if(!op.mesmoAssim && !recEditando){
+    const rep = Recorrente.sobreposicoes(dados)[0];
     if(rep){ avisarRepetido(rep, op); return; }
+  }
+  if(op.atualizar){                       /* "Atualizar o existente": os dados do formulário vão para ele */
+    const alvo = Recorrente.achar(op.atualizar);
+    if(alvo){
+      if(alvo.valor !== vReal && (alvo.valores || []).length){ Recorrente.reajustar(alvo.id, vReal, hojeISO()); delete dados.valor; }
+      Recorrente.atualizar(alvo.id, dados);
+      if(window.MoneyModulos) MoneyModulos.emitir('compromisso.salvo', {id: alvo.id, estadoPadrao: dados.estadoPadrao});
+      recRascunho = null; Store.salvar();
+      recSalvando = true; fechar('assetModal'); recSalvando = false;
+      render(); renderFita(); recEditando = null;
+      toast(I18n.atual === 'pt' ? 'Atualizado: ' + alvo.nome + '.' : 'Updated: ' + alvo.nome + '.');
+      return;
+    }
   }
   if(recEditando){
     const antes = Recorrente.achar(recEditando);
@@ -10384,7 +10416,7 @@ function salvarRecorrente(op){
   const eraEdicao = !!recEditando;
   let salvoId = recEditando;
   if(recEditando) Recorrente.atualizar(recEditando, dados);
-  else salvoId = Recorrente.add(dados).id;
+  else { const novo = Recorrente.add(dados); salvoId = novo.id; if(op.repetidoOk) novo.repetidoOk = [op.repetidoOk]; }
   if(window.MoneyModulos) MoneyModulos.emitir('compromisso.salvo', {id: salvoId, estadoPadrao: dados.estadoPadrao});
   if(recRascunho && (recRascunho.id || null) === (recEditando || null)) recRascunho = null;
   Store.salvar();
@@ -10406,9 +10438,11 @@ function avisarRepetido(rep, op){
   recPendente = op;
   $('#genTitle').textContent = Verter.txt(ass ? (pt ? 'Assinatura duplicada?' : 'Duplicate subscription?') : (pt ? 'Parece repetido' : 'Looks repeated'));
   $('#genBody').innerHTML = Verter.html('<p class="small">' + (pt ? 'Parece repetido: ' : 'Looks repeated: ') + '<b>' + esc(o.nome) + '</b> (' + esc(per) + ') ' +
-      (pt ? 'já cobre ' : 'already covers ') + '<b>' + esc(rep.cruza) + '</b>. ' + (pt ? 'Quer ajustar?' : 'Want to adjust?') + '</p>' +
-    '<div class="f-actions"><button class="btn" data-acao="rec-rep-outro" data-para="' + esc(o.id) + '">' + (pt ? 'Ajustar o outro' : 'Adjust the other') + '</button>' +
-    '<button class="btn primary" data-acao="rec-rep-salvar">' + (pt ? 'Salvar assim mesmo' : 'Save anyway') + '</button></div>');
+      '(' + esc(fmt(Recorrente.valorEm(o, hojeISO()))) + ', ' + esc(Recorrente.explicar(o)) + ') ' +
+      (pt ? 'já cobre ' : 'already covers ') + '<b>' + esc(rep.cruza) + '</b>.</p>' +
+    '<div class="f-actions"><button class="btn" data-close="genModal">' + esc(t('ac.cancelar')) + '</button>' +
+    '<button class="btn" data-acao="rec-rep-salvar" data-para="' + esc(o.id) + '">' + (pt ? 'Criar mesmo assim' : 'Create anyway') + '</button>' +
+    '<button class="btn primary" data-acao="rec-rep-atualizar" data-para="' + esc(o.id) + '">' + (pt ? 'Atualizar o existente' : 'Update the existing one') + '</button></div>');
   abrir('genModal');
 }
 let recPendente = null;
@@ -17168,7 +17202,7 @@ function abrirEstado(chave){
   $('#genTitle').textContent = r.nome + ' · ' + I18n.data(data);
   $('#genBody').innerHTML = Verter.html('<p class="small muted" style="margin:0 0 14px">' + esc(Recorrente.explicar(r)) + ' · ' +
       fmt(o.valor) + '</p>' +
-    '<div class="estados">' + Object.keys(ESTADOS_PG).filter(k => k !== 'atrasado').map(k => {
+    '<div class="estados">' + Object.keys(ESTADOS_PG).filter(k => k !== 'atrasado' && k !== 'semconf').map(k => {
       const E = ESTADOS_PG[k];
       return '<button class="estado-bt' + (o.estado === k ? ' on' : '') + '" data-pgest="' +
         esc(chave) + '" data-est="' + k + '">' +
@@ -17525,7 +17559,7 @@ function abrirOcorrencia(chave){
 
   /* o estado deste vencimento */
   h += '<div class="sub-lbl">' + de('Como está este vencimento', 'Status of this due date') + '</div>' +
-    '<div class="chips">' + Object.keys(ESTADOS_PG).filter(k => k !== 'atrasado').map(k =>
+    '<div class="chips">' + Object.keys(ESTADOS_PG).filter(k => k !== 'atrasado' && k !== 'semconf').map(k =>
       '<button type="button" class="chip click' + (o.estado === k ? ' on' : '') +
       '" data-pgest="' + esc(chave + '|' + k) + '" style="' +
       (o.estado === k ? 'border-color:var(' + ESTADOS_PG[k].cor + ')' : '') + '">' +
@@ -17869,13 +17903,28 @@ const UX = {
      Só nas tabelas que cabem inteiras na largura (as largas continuam rolando
      para o lado). Na página, fica logo abaixo do topo; na janela, no alto dela. */
   cabecalhoFixo(raiz, naJanela){
-    if(!raiz || window.innerWidth < (naJanela ? 1024 : 1200)) return;
+    if(!raiz) return;
+    const largo = window.innerWidth >= (naJanela ? 1024 : 1200);
     raiz.querySelectorAll('.tbl-wrap > table').forEach(tb => {
       if(!tb.tHead || tb.classList.contains('tbl-mini')) return;
       const caixa = tb.parentElement;
       if(caixa.classList.contains('tbl-fixa')) return;          /* já tem o seu (3.35, janela com rolagem própria) */
-      if(tb.scrollWidth > caixa.clientWidth + 2) return;
+      /* 3.54 (N35): mede de novo a cada vez (a janela muda de tamanho, troca de tela): primeiro tira a marca;
+         a tabela que deixou de caber volta a rolar para o lado — nunca fica cortada pelo cartão */
+      const cardAntes = caixa.closest('.card');
+      caixa.classList.remove('tbl-cabe'); tb.classList.remove('tbl-topo', 'tbl-topo-j');
+      if(cardAntes && !naJanela && !cardAntes.querySelector('.tbl-cabe')) cardAntes.classList.remove('card-topo');
+      if(!largo || tb.scrollWidth > caixa.clientWidth + 2) return;
       caixa.classList.add('tbl-cabe'); tb.classList.add(naJanela ? 'tbl-topo-j' : 'tbl-topo');
+      /* se a tabela crescer depois (selos, textos que chegam, nome longo), deixa de "caber": tira a marca e ela rola */
+      if(window.ResizeObserver){
+        this._obsTab = this._obsTab || new ResizeObserver(lista => lista.forEach(en => {
+          const t2 = en.target, cx = t2.parentElement; if(!cx || !cx.classList.contains('tbl-cabe') || t2.scrollWidth <= cx.clientWidth + 2) return;
+          cx.classList.remove('tbl-cabe'); t2.classList.remove('tbl-topo', 'tbl-topo-j');
+          const c2 = cx.closest('.card'); if(c2 && !c2.querySelector('.tbl-cabe')) c2.classList.remove('card-topo');
+        }));
+        this._obsTab.observe(tb);
+      }
       const card = caixa.closest('.card'); if(card && !naJanela) card.classList.add('card-topo');
     });
   },
@@ -28500,10 +28549,8 @@ function ligarEventos(){
       case 'rec-sug-usar': recUsarSugestao(); break;
       case 'rec-rasc-usar': { const rs = recRascunho; if(rs) abrirRecorrente(rs.id, null, {doRascunho: true, abrirMais: true}); break; }
       case 'rec-rasc-fora': { recRascunho = null; const bx = document.querySelector('.rc-rasc'); if(bx) bx.parentNode.removeChild(bx); break; }
-      case 'rec-rep-salvar': fechar('genModal'); salvarRecorrente(Object.assign({}, recPendente || {}, {mesmoAssim: true})); break;
-      case 'rec-rep-outro': { fechar('genModal'); recGuardarRascunho(); fechar('assetModal');
-        toast(I18n.atual === 'pt' ? 'O que você digitou ficou guardado: ao abrir "Novo compromisso" de novo, toque em "Continuar de onde parou".' : 'What you typed was kept: open "New commitment" again and tap "Pick up where you left".');
-        abrirRecorrente(el.dataset.para); break; }
+      case 'rec-rep-salvar': fechar('genModal'); salvarRecorrente(Object.assign({}, recPendente || {}, {mesmoAssim: true, repetidoOk: el.dataset.para})); break;
+      case 'rec-rep-atualizar': fechar('genModal'); salvarRecorrente(Object.assign({}, recPendente || {}, {mesmoAssim: true, atualizar: el.dataset.para})); break;
       case 'rec-clonar': if(recEditando) recClonar(recEditando); break;
       case 'rec-rolar-um': if(recEditando){ const rid = recEditando; recSalvando = true; fechar('assetModal'); recSalvando = false; abrirRolar([rid]); } break;
       case 'rec-rolar': abrirRolar(); break;
@@ -29351,8 +29398,38 @@ function mostrarBloqueio(){
 }
 /* 3.35: a altura do topo, para o cabeçalho fixo das tabelas ficar logo abaixo dele */
 function medirTopo(){ const tp = document.querySelector('.topbar'); if(tp && tp.offsetHeight) document.documentElement.style.setProperty('--altura-topo', tp.offsetHeight + 'px'); }
+/* 3.54 (N35): a barra lateral do computador vai do lugar onde ela está na tela até o fim da tela.
+   Ela começa abaixo do topo E da faixa de anúncio; ao rolar, o anúncio sobe e ela gruda no topo.
+   Por isso a altura é medida de verdade (e não "tela − topo"), senão o pé (o calendário) fica fora da tela. */
+let lateralPedido = 0;
+function ajustarLateral(){
+  lateralPedido = 0;
+  const sn = document.getElementById('sidenav'); if(!sn) return;
+  if(window.innerWidth < 761){ sn.style.removeProperty('height'); return; }
+  const t = Math.max(0, sn.getBoundingClientRect().top);
+  sn.style.height = Math.max(160, window.innerHeight - t) + 'px';
+}
+function pedirLateral(){ if(!lateralPedido) lateralPedido = requestAnimationFrame(ajustarLateral); }
 window.addEventListener('resize', medirTopo);
-document.addEventListener('DOMContentLoaded', function () { setTimeout(medirTopo, 600); setTimeout(medirTopo, 3000); });
+window.addEventListener('resize', pedirLateral);
+/* 3.54 (N35): ao mudar o tamanho da janela, as tabelas da tela aberta medem de novo se ainda cabem inteiras */
+let cabecalhoPedido = 0;
+function pedirCabecalho(){
+  clearTimeout(cabecalhoPedido);
+  cabecalhoPedido = setTimeout(() => { try{ const v = document.querySelector('.content > .view:not(.hidden)'); if(v && typeof UX !== 'undefined') UX.cabecalhoFixo(v); }catch(e){} }, 150);
+}
+window.addEventListener('resize', pedirCabecalho);
+window.addEventListener('scroll', pedirLateral, {passive: true});
+document.addEventListener('DOMContentLoaded', function () {
+  medirTopo(); ajustarLateral(); setTimeout(medirTopo, 600); setTimeout(medirTopo, 3000); setTimeout(pedirLateral, 600);
+  /* 3.54 (N35): o topo e o anúncio mudam de altura sozinhos (fita, aviso, quebra de linha): a barra lateral acompanha */
+  const tp = document.querySelector('.topbar'), an = document.getElementById('anuncioCaixa');
+  if(window.ResizeObserver){ const ro = new ResizeObserver(() => { medirTopo(); pedirLateral(); }); if(tp) ro.observe(tp); if(an) ro.observe(an); }
+  /* passou de celular para computador (ou o contrário) com a página aberta: fecha o menu de celular e mede de novo */
+  const mq = window.matchMedia ? matchMedia('(min-width:761px)') : null;
+  const trocou = () => { if(mq && mq.matches){ const sn = document.getElementById('sidenav'), bd = document.getElementById('navBackdrop'); if(sn) sn.classList.remove('open'); if(bd) bd.classList.remove('on'); } medirTopo(); ajustarLateral(); };
+  if(mq){ if(mq.addEventListener) mq.addEventListener('change', trocou); else if(mq.addListener) mq.addListener(trocou); }
+});
 /* 3.30: o app começa pelo portão da nuvem (conta → família → cadeado) ou abre só neste aparelho — nuvem.js */
 document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuvem) MoneyNuvem.portao(iniciar); else iniciar(); });
 
@@ -29370,8 +29447,9 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/fgts.js?v=1.0.0"></script>
 <script src="modulos/importar-posicoes.js?v=1.0.0"></script>
 <script src="modulos/assinaturas.js?v=1.0.0"></script>
-<script src="modulos/compromisso-de.js?v=1.3.1"></script>
+<script src="modulos/compromisso-de.js?v=1.4.0"></script>
 <script src="modulos/previsto.js?v=1.0.0"></script>
+<script src="modulos/conciliacao.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.8.0"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.48 · 06/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.54 · 06/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2306,4 +2306,23 @@ html.sem-animacao .assistone-bt{animation:none; transition:none}
   .brand-caixa{min-width:0; flex:1 1 auto}
   .brand-btn{max-width:100%}
   .brand-name{overflow:hidden; text-overflow:ellipsis}
+}
+
+/* =========================================================
+   3.54 (N35, regra da plataforma) — computador
+   A barra lateral fica colada à esquerda, ocupa a altura toda abaixo do topo (a altura de verdade do
+   topo, medida em --altura-topo) e tem rolagem própria: a lista encolhe primeiro e rola; o calendário
+   fica sempre no fim, à vista; se nem assim couber, a barra inteira rola (nunca é cortada).
+   O conteúdo é fluido e usa o resto da largura; só texto corrido tem limite de linha.
+   ========================================================= */
+@media (min-width:761px){
+  .shell{max-width:none; margin:0}
+  .sidenav{top:var(--altura-topo, 57px); height:calc(100vh - var(--altura-topo, 57px)); height:calc(100dvh - var(--altura-topo, 57px));
+    overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:var(--line) transparent}
+  .sidenav #navLista{min-height:96px}
+  .content > .view, .content > #view-carteira, .content > #view-movimentos, .content > #view-b-lanc, .content > #view-b-custos,
+  .content > .view[id^="view-t-"]{max-width:none; margin-left:0; margin-right:0}
+  .content .aba-explica, .content .explica, .content .vazio p{max-width:110ch}
+  /* o selo "Entrar na nuvem" (nuvem.js) fica ao lado da barra, nunca em cima do calendário */
+  body .nv-selo{left:calc(212px + 16px)}
 }

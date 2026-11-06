@@ -76,17 +76,39 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       let R = await recs(); const esc = R.find((r) => r.nome === 'Escola Bia');
       ok(esc && esc.fora.join() === '7' && esc.conta === 'outro.email@exemplo.com' && esc.cartao === 'Itaú Black final 6514' && esc.obs === 'renova em fevereiro' && esc.pagador === '', 'salvo com meses de fora, conta de acesso, cartão e observação');
       ok(await p.evaluate((a) => Recorrente.datasNoMes(Recorrente.achar(Store.estado.recorrentes.find((r) => r.nome === 'Escola Bia').id), a, 7).length === 0, anoEsc), 'julho não tem vencimento');
-      /* (n) aviso de repetido */
+      /* (n) repetido — 3.54: pergunta NA HORA, antes de criar; números diferentes no nome (1º × 2º) não são repetidos */
       await p.fill('#rcNome', 'Ampliado Bia 2º sem'); await p.fill('#rcValor', '900');
+      await p.evaluate((a) => { document.getElementById('rcDesde').value = a + '-08-01'; document.getElementById('rcAte').value = a + '-12-31'; }, ANO);
+      const nAntes = (await recs()).length;
+      await p.click('[data-acao="rec-salvar-copiar"]'); await p.waitForSelector('#assetModal:not(.hidden) #rcNome');
+      ok((await recs()).length === nAntes + 1 && await p.isHidden('#genModal [data-acao="rec-rep-salvar"]').catch(() => true), '"Ampliado Bia 2º sem" × "1º sem": número diferente no nome, não pergunta nada');
+      await p.fill('#rcNome', 'Ampliado Bia 1º sem'); await p.fill('#rcValor', '900');
       await p.evaluate((a) => { document.getElementById('rcDesde').value = a + '-08-01'; document.getElementById('rcAte').value = a + '-12-31'; }, ANO);
       await p.click('#assetModal [data-acao="rec-salvar"]');
       await p.waitForSelector('#genModal:not(.hidden) [data-acao="rec-rep-salvar"]');
       const av = await p.textContent('#genBody');
-      ok(/Parece repetido/.test(av) && /Ampliado Bia 1º sem/.test(av) && /já cobre/.test(av), 'aviso: "Parece repetido: Ampliado Bia 1º sem … já cobre …"');
+      ok(/Parece repetido/.test(av) && /Ampliado Bia 1º sem/.test(av) && /já cobre/.test(av) && /Atualizar o existente/.test(av) && /Criar mesmo assim/.test(av) && /Cancelar/.test(av),
+        'mesmo nome: pergunta na hora "Parece repetido: Ampliado Bia 1º sem … já cobre …" com [Cancelar] [Criar mesmo assim] [Atualizar o existente]');
+      const nAntes2 = (await recs()).length;
       await p.click('[data-acao="rec-rep-salvar"]');
       R = await recs();
-      ok(R.some((r) => r.nome === 'Ampliado Bia 2º sem'), '"Salvar assim mesmo" salva');
-      ok((await p.textContent('#view-b-custos')).includes('repetido?'), 'a lista de Recorrentes marca "⚠ repetido?"');
+      ok(R.length === nAntes2 + 1 && R.filter((r) => r.nome === 'Ampliado Bia 1º sem').length === 2, '"Criar mesmo assim" cria');
+      ok(!(await p.textContent('#view-b-custos')).includes('repetido?'), 'quem respondeu "Criar mesmo assim" não ganha o selo "⚠ repetido?" na lista');
+      ok(await p.evaluate(() => !Recorrente.parecemRepetidos({ nome: 'Consórcio auto Porto', valor: 1200, grupo: 'VEICULO', sub: 'Consórcio' }, { nome: 'Consórcio imóvel Porto (6 cartas)', valor: 3400, grupo: 'HABITACAO', sub: 'Consórcio' })
+        && !Recorrente.parecemRepetidos({ nome: 'Seguro Prudential 1', valor: 500, grupo: 'SAUDE', sub: 'Seguro de vida' }, { nome: 'Seguro Prudential 2', valor: 500, grupo: 'SAUDE', sub: 'Seguro de vida' })
+        && Recorrente.parecemRepetidos({ nome: 'Netflix', valor: 55.9, grupo: 'LAZER', sub: 'Assinaturas' }, { nome: 'NETFLIX', valor: 59.9, grupo: 'LAZER', sub: 'Assinaturas' })
+        && Recorrente.parecemRepetidos({ nome: 'Escola', valor: 3000, grupo: 'DEPENDENTES', sub: 'Escola', quem: 'Bia' }, { nome: 'Mensalidade colégio', valor: 3100, grupo: 'DEPENDENTES', sub: 'Escola', quem: 'Bia' })
+        && !Recorrente.parecemRepetidos({ nome: 'Escola 2026', valor: 3000, grupo: 'DEPENDENTES', sub: 'Escola', desde: '2026-01-01', ate: '2026-12-31' }, { nome: 'Escola 2027', valor: 3000, grupo: 'DEPENDENTES', sub: 'Escola', desde: '2027-01-01', ate: '2027-12-31' })),
+        'repetido: "auto × imóvel (6 cartas)" e "Prudential 1 × 2" não; mesmo nome (sem maiúsculas) ou mesma categoria/pessoa/valor ±10% sim; períodos que não se cruzam não');
+      /* "Atualizar o existente": o que foi digitado vai para o que já existe */
+      await p.evaluate(() => abrirRecorrente(null, null, {})); await p.waitForSelector('#assetModal:not(.hidden) #rcNome');
+      await p.fill('#rcNome', 'Ampliado Bia 2º sem'); await p.fill('#rcValor', '950');
+      await p.evaluate((a) => { document.getElementById('rcDesde').value = a + '-08-01'; document.getElementById('rcAte').value = a + '-12-31'; }, ANO);
+      const nAntes3 = (await recs()).length;
+      await p.click('#assetModal [data-acao="rec-salvar"]'); await p.waitForSelector('#genModal:not(.hidden) [data-acao="rec-rep-atualizar"]');
+      await p.click('[data-acao="rec-rep-atualizar"]');
+      R = await recs();
+      ok(R.length === nAntes3 && R.filter((r) => r.nome === 'Ampliado Bia 2º sem').length === 1 && R.find((r) => r.nome === 'Ampliado Bia 2º sem').valor === 950, '"Atualizar o existente" não cria outro: o existente fica com o valor novo');
       /* N26 clonar */
       await p.click('[data-recclone="r-seg"]'); await p.waitForSelector('#assetModal:not(.hidden) #rcNome');
       ok(await p.inputValue('#rcNome') === 'Seguro Auto ' + ANO && /cópia/.test(await p.textContent('#assetModalTitle')), 'Clonar abre um novo com tudo preenchido');

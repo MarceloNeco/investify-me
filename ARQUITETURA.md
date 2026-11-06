@@ -545,6 +545,13 @@ Desde a 3.41, **toda função nova é um módulo**: um arquivo em `modulos/`, co
 5. Banco: se precisar de tabela ou Storage, o SQL vai em `supabase/AAAA-MM-DD…sql`: idempotente, com porteiro,
    conferência e GRANTs, passando no `teste/sql-grants.js`. Quem aplica é a sessão principal, depois de revisar.
 
+**Antes de cada commit (regra permanente, 06/Nov/2026 — o repositório é público)**
+- `node teste/teste-sem-dados-reais.js`: procura em `teste/`, `modulos/`, `textos/`, `supabase/`, `*.md` e `index.html` os nomes
+  e valores reais da família (filhos, pais, escola, empregadores, saldos). A lista guarda só o hash de cada palavra; achou → troque
+  por fictício (Ana, Bia, Alex, Paulo, Carla; "Escola Exemplo"; "Empresa A"; valores redondos). Endereço, CPF, CNPJ, telefone e
+  linha digitável reais também não entram: em fixtures, use X ou zeros. Texto real de documento só entra como fixture com os dados
+  trocados (o layout e os valores públicos, como a tabela de preços da escola, podem ficar).
+
 **Como testar**
 - `teste/teste-<nome>.js` (Playwright, modo "só neste aparelho", telas de 390 e 1366 px, sem erro de página),
   no padrão dos outros testes.
@@ -614,6 +621,35 @@ jeito (carregados antes de `GLOS_MAP`/`COACH_MAP`). Ficaram carregando junto com
 O `index.html` caiu para cerca de 29,4 mil linhas. O que falta da proposta (TaxONE e leitores) depende de testes próprios e de nova aprovação.
 Teste de fumaça para arrumação interna: `teste/teste-fumaca-telas.js <pasta de antes>` (10 telas × 390/1366 px × PT/EN: mesma foto,
 mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de cada aula do Coach, 3 níveis × PT/EN; o número da versão e a lista "O que há de novo" ficam de fora da comparação).
+
+### Parte 13 (3.54): contrato com boleto, sem duplicar, Desfazer, vencimentos passados e o computador
+- `compromisso-de` 1.4.0: boleto de banco (rótulos em colunas: "Valor do documento", "(-) Desconto", "Valor cobrado/a pagar", vencimento até
+  200 caracteres depois do rótulo); com boleto no lote, o gasto usa o valor a pagar e o vencimento dele e se chama "Matrícula AAAA (1ª parcela
+  da anuidade)" (editável). `jaLancado(valor, data, nomes)`: mesmo valor e até 15 dias, ou nome da escola/beneficiário parecido e até 45 dias.
+  `jaExistem(semente)`: mesmo grupo, período que se cruza, uma palavra do nome em comum e o mesmo aluno → a prévia vem desmarcada com
+  "manter como está" / "atualizar <existente>" (valor, dia se o contrato diz, IR, a confirmar; as datas ficam) / "criar mesmo assim".
+  "↩ Desfazer" por 5 min tira o que nasceu e devolve o que foi atualizado (o PDF guardado fica).
+- `modulos/conciliacao.js` (`Conciliacao.rodar`): ao abrir e 2 s depois do último `gasto.novo`, chama
+  `Pagamento.conciliarAutomatico({dias: 7, tol: 0.10, meses: 12, porNome: true})` (index.html; sem argumento continua como antes).
+  `Recorrente.ocorrencia`: vencimento sem registro, de antes do `criadoEm` do compromisso, vira `semconf` ("sem conferência",
+  `conta: false`), e não `atrasado`; não aparece como opção para marcar à mão.
+- N35 no computador (≥ 761 px): `.shell` sem `max-width`, barra colada à esquerda; `ajustarLateral()` mede a altura da barra (da posição
+  dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
+  anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
+  nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- Boleto REAL (fixture literal em `teste/teste-parte13.js`): a linha da tabela "1ª Parcela da Anuidade … bruto descontos a pagar"
+  ganha; sem ela, os rótulos ("Valor do Documento" aparece duas vezes, com o a pagar E com o bruto: não confiar nele sozinho;
+  a pagar = "Valor a pagar/cobrado" ou documento − desconto). Vencimento = a data logo abaixo do rótulo "Vencimento" (nunca a
+  "Data do Documento"; "após o vencimento" é instrução de multa, não rótulo). "Série / Turma 3º Ano" do boleto também escolhe a etapa.
+- Repetido (itens 7 e 8 do dono): `Recorrente.parecemRepetidos(a, b)` = períodos que se cruzam E (nome igual sem acentos,
+  maiúsculas e ano OU mesma categoria + mesmo "para quem é" + valor ±10%); números diferentes no nome (1 × 2, "6 cartas")
+  nunca são repetidos. O formulário pergunta NA HORA, só ao criar: [Cancelar] [Criar mesmo assim] [Atualizar o existente];
+  "Criar mesmo assim" grava `repetidoOk` e o par não ganha o selo "⚠ repetido?" (o selo fica para o que já existia).
+  O importar JSON usa a mesma regra; o contrato PDF tem a sua (mais larga: mesmo aluno e uma palavra do nome) porque sempre mostra a escolha.
+- Tabelas no computador (item 9): `UX.cabecalhoFixo` mede de novo a cada vez (tira a marca antes), roda no `resize` (150 ms) e um
+  `ResizeObserver` em cada tabela marcada tira a marca se ela crescer depois: tabela que não cabe rola para o lado, nunca é cortada.
+- Testes: `teste/teste-parte13.js` (36 ok), `teste/teste-desktop.js` (58 ok), `teste/teste-compromisso.js` (64 ok),
+  `teste/teste-sem-dados-reais.js`.
 
 ### Ligação com o OmniLifeONE (3.50) — especificação
 Decidido pelo dono em 06/Nov/2026 (respostas "sim" às perguntas a e b): o OmniLifeONE manda um resumo mínimo da saúde da família e o
