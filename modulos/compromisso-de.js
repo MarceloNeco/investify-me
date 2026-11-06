@@ -175,13 +175,28 @@
       o.bruto = vs.length >= 3 ? num(vs[vs.length - 3]) : vs.length ? num(vs[0]) : 0;
       o.desconto = vs.length >= 3 ? num(vs[vs.length - 2]) : 0;
       o.pagar = vs.length ? num(vs[vs.length - 1]) : 0;
-      /* os rótulos do boleto ganham da linha da parcela: "Valor a pagar" (ou "cobrado") é o que sai da conta */
-      var vPagar = valorDepois(s, /valor (?:total )?(?:a pagar|cobrado)/), vDoc = valorDepois(s, /valor do documento/), vDesc = valorDepois(s, /desconto/);
-      if (vDoc) o.bruto = vDoc;
-      if (vDesc && vDesc < (o.bruto || Infinity)) o.desconto = vDesc;
-      if (vPagar) o.pagar = vPagar;
-      else if (!o.pagar && o.bruto) o.pagar = Math.round((o.bruto - (o.desconto || 0)) * 100) / 100;
-      o.venc = (m = s.match(/vencimento[\s\S]{0,200}?(\d{2}\/\d{2}\/\d{4})/)) ? br2iso(m[1]) : '';
+      /* a linha da tabela ("1ª Parcela da Anuidade … bruto  descontos  a pagar") é a fonte mais segura e ganha.
+         Sem ela, os rótulos do boleto de banco: "Valor do Documento" aparece mais de uma vez (no boleto real, com o
+         valor a pagar E com o bruto), então "a pagar" = "Valor a pagar/cobrado" se tiver número, senão documento − desconto. */
+      if (vs.length < 3) {
+        var vPagar = valorDepois(s, /valor (?:total )?(?:a pagar|cobrado)/), vDoc = valorDepois(s, /valor do documento/), vDesc = valorDepois(s, /desconto/);
+        if (vDoc) o.bruto = vDoc;
+        if (vDesc && vDesc < (o.bruto || Infinity)) o.desconto = vDesc;
+        if (vPagar) o.pagar = vPagar;
+        else if (o.bruto) o.pagar = Math.round((o.bruto - (o.desconto || 0)) * 100) / 100;
+      }
+      /* vencimento: a data logo abaixo do rótulo "Vencimento" (coluna do boleto), nunca a "Data do Documento";
+         "após o vencimento" (instrução de multa) não é rótulo */
+      o.venc = '';
+      for (var iv = 0; iv < ls.length && !o.venc; iv++) {
+        var sl = sa(ls[iv]);
+        if (!/\bvencimento\b/.test(sl) || /apos o vencimento|ate o vencimento|vencimento[^a-z]*cobrar/.test(sl)) continue;
+        var naMesma = sl.match(/vencimento\D{0,20}(\d{2}\/\d{2}\/\d{4})/);
+        if (naMesma) { o.venc = br2iso(naMesma[1]); break; }
+        for (var jv = iv + 1; jv <= iv + 2 && jv < ls.length; jv++) { var d = ls[jv].match(/(\d{2}\/\d{2}\/\d{4})/); if (d) { o.venc = br2iso(d[1]); break; } }
+      }
+      if (!o.venc) o.venc = (m = s.match(/vencimento\s*:?\s*(\d{2}\/\d{2}\/\d{4})/)) ? br2iso(m[1]) : '';
+      o.serie = (m = s.match(/\b(\d{1,2})\s?[ºo°]\s?ano\b/)) ? Number(m[1]) : 0;     /* "Série / Turma 3º Ano" também ajuda a escolher a etapa */
       o.benef = (m = t.match(/benefici[aá]rio\s*:?[ \t]*([^\n]{3,80})/i)) ? m[1].replace(/\b(?:cnpj|cpf)\b.*$/i, '').replace(/[\d.\/-]{11,}.*$/, '').trim() : '';
       if (!o.ano && o.venc) o.ano = Number(o.venc.slice(0, 4)) + 1;
       return o;
@@ -234,7 +249,7 @@
         regra: 'dia', dia: dia || 10, desde: iso2(ano, ini, 1), ate: iso2(ano, fim, new Date(ano, fim, 0).getDate()), fora: fora,
         aConfirmar: true, origem: 'contrato', obs: obs.filter(Boolean).join(' · ') };
     }
-    var etapa = esc1 ? escolherEtapa(esc1.opcoes, esc1.curso, esc1.serie || (amp && amp.serie) || 0) : null;
+    var etapa = esc1 ? escolherEtapa(esc1.opcoes, esc1.curso, esc1.serie || (amp && amp.serie) || (bol && bol.serie) || 0) : null;
     var opsE = etapa ? etapa.lista.map(function (i) { return esc1.opcoes[i]; }) : [];
     if (esc1) itens.push({ chave: 'escolar', rotulo: pt() ? 'Anuidade escolar' : 'School fees', opcoes: opsE, escolhida: etapa.idx, diaInformado: !!esc1.dia,
       semente: function (i) { var op = opsE[i]; return semente('Escola', op, esc1.meses, esc1.dia, [escola, op && op.nome, op ? (pt() ? 'anuidade ' : 'yearly ') + fmt(op.anuidade) : '',

@@ -84,6 +84,35 @@ async function medir(p) {
       await p.setViewportSize(vp); await p.waitForTimeout(400);
       await conferir(p, 'virou ' + vp.width + 'x' + vp.height);
     }
+    /* item 9: as ações da tabela de Recorrentes nunca ficam cortadas — nem depois de diminuir a janela */
+    await p.setViewportSize({ width: 1920, height: 1080 });
+    await p.evaluate(() => {
+      for (let i = 0; i < 6; i++) Recorrente.add({ nome: 'Consorcio_imovel_Porto_seis_cartas_com_um_nome_bem_comprido_sem_espaco_' + 'X'.repeat(40) + i, valor: 1000 + i, grupo: 'HABITACAO', sub: 'Aluguel', regra: 'dia', dia: 5 + i });
+      custosAba = 'recorrentes'; irPara('b-custos'); render();
+    });
+    await p.waitForTimeout(300);
+    const acoes = async () => p.evaluate(() => {
+      const tb = [...document.querySelectorAll('#view-b-custos .tbl-wrap > table')].pop(), caixa = tb.parentElement, card = caixa.closest('.card');
+      const cr = card.getBoundingClientRect(), maxR = Math.max(...[...tb.querySelectorAll('tbody tr')].map((tr) => tr.lastElementChild.getBoundingClientRect().right));
+      const rola = getComputedStyle(caixa).overflowX !== 'visible';
+      return { cabe: caixa.classList.contains('tbl-cabe'), rola, maxR: Math.round(maxR), cardR: Math.round(cr.right), larga: tb.scrollWidth > caixa.clientWidth + 2 };
+    });
+    const a1 = await acoes();
+    ok(!a1.larga ? a1.maxR <= a1.cardR + 1 : a1.rola, 'Recorrentes em 1920: as ações aparecem inteiras (' + JSON.stringify(a1) + ')');
+    /* a tabela cresce DEPOIS de medida (selo, texto que chega): ela não pode passar a ser cortada */
+    /* injeta de novo se o app redesenhar a tela no meio (o texto injetado sumiria) */
+    await p.waitForFunction(() => {
+      const tb = [...document.querySelectorAll('#view-b-custos .tbl-wrap > table')].pop(); if (!tb) return false;
+      if (!tb.querySelector('.cresceu')) tb.querySelector('tbody tr td:nth-child(2)').insertAdjacentHTML('beforeend', '<span class="cresceu" style="white-space:nowrap"> ' + 'Z'.repeat(260) + '</span>');
+      return tb.scrollWidth > tb.parentElement.clientWidth + 2;
+    }, null, { polling: 200, timeout: 5000 });
+    await p.waitForTimeout(400);
+    const a3 = await acoes();
+    ok(a3.larga && a3.rola && !a3.cabe, 'a tabela cresceu depois de desenhada: deixa de "caber", rola para o lado e as ações não ficam cortadas (' + JSON.stringify(a3) + ')');
+    await p.evaluate(() => render());
+    await p.setViewportSize({ width: 1280, height: 720 }); await p.waitForTimeout(600);
+    const a2 = await acoes();
+    ok((!a2.larga && a2.maxR <= a2.cardR + 1) || (a2.larga && a2.rola && !a2.cabe), 'diminuiu a janela para 1280: a tabela que não cabe rola para o lado, as ações não ficam cortadas (' + JSON.stringify(a2) + ')');
     ok(erros.length === 0, 'sem erro de página ao trocar a largura' + (erros.length ? ': ' + erros.join(' | ') : ''));
     await ctx.close();
   } finally { await b.close(); srv.close(); }

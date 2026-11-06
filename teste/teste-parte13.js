@@ -29,6 +29,39 @@ const BOLETO_BANCO = [
   'Instruções: 1ª Parcela da Anuidade 2027. Não receber após o vencimento.',
   'Pagador: XXXXXXXX XXXXX XXXXX'];
 
+/* o boleto REAL da escola (pdftotext -layout, espaços originais; nome, CPF, endereço, CNPJ, códigos e site trocados) */
+const BOLETO_REAL = [
+  '                                                                                      COLÉGIO ESCOLA EXEMPLO',
+  '                                                                                       Rua Escola Exemplo, 36',
+  '                                                                                   BAIRRO - São Paulo/SP',
+  '                                                                                     Cnpj: 00.000.000/0000-00',
+  '                                                                                       Fone: (11) 0000-0000',
+  '                                                                                Site: http://escolaexemplo.com.br/',
+  '                                                                              Email: tesouraria@escolaexemplo.com.br',
+  'Aluno ALUNO XXXX                                                                                                      Matricula    00000000',
+  'Curso Ensino Fundamental - Anos Iniciais                                   Série / Turma 3º Ano _ Manhã                          Numero',
+  'Tipo Parcela                                    Parcela                    Valor Bruto                  Descontos                Valor a Pagar',
+  '1ª Parcela da Anuidade -                           1                               1.534,00                     121,00                                            1.413,00',
+  'EFAI',
+  'Observações:                                                                                                                                              Valor do Documento',
+  '  1) APÓS O VENCIMENTO COBRAR MULTA DE 2,00% ao mês                                                                                                               1.413,00',
+  '  2) COBRAR MORA DE 0,033% a.d.',
+  '                                           033-7                                                                                                              Recibo do Pagador',
+  'Beneficiário                                                                                                                                  CNPJ',
+  '                          ASSOC XXXX "COLEGIO ESCOLA EXEMPLO"                                   00.000.000/0000-00                                                               00.000.000/0000-00',
+  '                          Rua Escola Exemplo, 36 - BAIRRO - Cep: 00000-000',
+  'Vencimento                Agencia/Código do Beneficiário    Carteira                                  Especie    Quantidade                   Valor do Documento',
+  '     30/10/2026                  0000/0000000                                  5                          R$                                                                            1.534,00',
+  '(-) Desconto/Abatimento           (-) Outras Deduções                              (+) Mora/Multa/Juros                                       (+) Outros Acréscimos',
+  'Data do Documento                 Nosso Número                                     Número do documento                                        (=) Valor Cobrado',
+  '28/10/2026                                                             0000000                            0000000',
+  '',
+  'Local de Pagamento                                                                                                     Vencimento',
+  'PAGÁVEL EM QUALQUER BANCO                                                                                              30/10/2026',
+  'Valor do Documento 1.534,00',
+  '(-) Desconto / Abatimento',
+  '121,00',
+  '(=) Valor Cobrado'];
 const hoje = new Date();
 const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 const mesAtras = (n, dia) => iso(new Date(hoje.getFullYear(), hoje.getMonth() - n, dia));
@@ -81,6 +114,10 @@ const LOCAL = { v: 1, config: {}, posicoes: [], gastos, recorrentes: [
       console.log(' contrato + boleto de banco');
       const bo = await p.evaluate((t) => CompromissoDe.lerModelo(t), BOLETO_BANCO.join('\n'));
       ok(bo && bo.tipo === 'boleto' && bo.bruto === 1534 && bo.desconto === 121 && bo.pagar === 1413 && bo.venc === '2026-10-30', 'boleto de banco (rótulos em colunas): documento 1.534, desconto 121, a pagar 1.413, vencimento 30/10/2026 (' + JSON.stringify(bo && [bo.bruto, bo.desconto, bo.pagar, bo.venc]) + ')');
+      const br = await p.evaluate((t) => CompromissoDe.lerModelo(t), BOLETO_REAL.join('\n'));
+      ok(br && br.tipo === 'boleto' && br.bruto === 1534 && br.desconto === 121 && br.pagar === 1413 && br.venc === '2026-10-30', 'boleto REAL (layout literal): bruto 1.534, desconto 121, a pagar 1.413 e vencimento 30/10/2026 — não a "Data do Documento" 28/10 (' + JSON.stringify(br && [br.bruto, br.desconto, br.pagar, br.venc]) + ')');
+      const brp = await p.evaluate((ts) => { const q = CompromissoDe.planoModelo(ts.map((t) => CompromissoDe.lerModelo(t))); return [q.gasto.valor, q.gasto.data, q.gasto.desc, q.itens[0].escolhida, q.itens[0].opcoes.length]; }, [ESCOLAR.join('\n'), BOLETO_REAL.join('\n')]);
+      ok(brp[0] === 1413 && brp[1] === '2026-10-30' && brp[2] === 'Matrícula 2027 (1ª parcela da anuidade)' && brp[3] === 0 && brp[4] === 2, 'contrato + boleto real: 1ª parcela R$ 1.413 em 30/10/2026, "Matrícula 2027 (1ª parcela da anuidade)"; o "3º Ano" do boleto pré-seleciona "1º ao 5º"');
       const pl = await p.evaluate((ts) => { const q = CompromissoDe.planoModelo(ts.map((t) => CompromissoDe.lerModelo(t))); return { g: q.gasto && [q.gasto.valor, q.gasto.data, q.gasto.desc, q.gasto.jaLancado && q.gasto.jaLancado.id], ja: q.itens.map((i) => CompromissoDe.jaExistem(i.semente(i.escolhida >= 0 ? i.escolhida : 1)).map((r) => r.id).join('+')) }; },
         [ESCOLAR.join('\n'), AMPLIADO.join('\n'), BOLETO_BANCO.join('\n')]);
       ok(pl.g[0] === 1413 && pl.g[1] === '2026-10-30' && pl.g[2] === 'Matrícula 2027 (1ª parcela da anuidade)', 'com boleto no lote: 1ª parcela com o valor a pagar e o vencimento do boleto, nome "Matrícula 2027 (1ª parcela da anuidade)"');

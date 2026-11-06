@@ -545,6 +545,13 @@ Desde a 3.41, **toda função nova é um módulo**: um arquivo em `modulos/`, co
 5. Banco: se precisar de tabela ou Storage, o SQL vai em `supabase/AAAA-MM-DD…sql`: idempotente, com porteiro,
    conferência e GRANTs, passando no `teste/sql-grants.js`. Quem aplica é a sessão principal, depois de revisar.
 
+**Antes de cada commit (regra permanente, 06/Nov/2026 — o repositório é público)**
+- `node teste/teste-sem-dados-reais.js`: procura em `teste/`, `modulos/`, `textos/`, `supabase/`, `*.md` e `index.html` os nomes
+  e valores reais da família (filhos, pais, escola, empregadores, saldos). A lista guarda só o hash de cada palavra; achou → troque
+  por fictício (Ana, Bia, Alex, Paulo, Carla; "Escola Exemplo"; "Empresa A"; valores redondos). Endereço, CPF, CNPJ, telefone e
+  linha digitável reais também não entram: em fixtures, use X ou zeros. Texto real de documento só entra como fixture com os dados
+  trocados (o layout e os valores públicos, como a tabela de preços da escola, podem ficar).
+
 **Como testar**
 - `teste/teste-<nome>.js` (Playwright, modo "só neste aparelho", telas de 390 e 1366 px, sem erro de página),
   no padrão dos outros testes.
@@ -630,7 +637,19 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
-- Testes: `teste/teste-parte13.js` (32 ok), `teste/teste-desktop.js` (55 ok).
+- Boleto REAL (fixture literal em `teste/teste-parte13.js`): a linha da tabela "1ª Parcela da Anuidade … bruto descontos a pagar"
+  ganha; sem ela, os rótulos ("Valor do Documento" aparece duas vezes, com o a pagar E com o bruto: não confiar nele sozinho;
+  a pagar = "Valor a pagar/cobrado" ou documento − desconto). Vencimento = a data logo abaixo do rótulo "Vencimento" (nunca a
+  "Data do Documento"; "após o vencimento" é instrução de multa, não rótulo). "Série / Turma 3º Ano" do boleto também escolhe a etapa.
+- Repetido (itens 7 e 8 do dono): `Recorrente.parecemRepetidos(a, b)` = períodos que se cruzam E (nome igual sem acentos,
+  maiúsculas e ano OU mesma categoria + mesmo "para quem é" + valor ±10%); números diferentes no nome (1 × 2, "6 cartas")
+  nunca são repetidos. O formulário pergunta NA HORA, só ao criar: [Cancelar] [Criar mesmo assim] [Atualizar o existente];
+  "Criar mesmo assim" grava `repetidoOk` e o par não ganha o selo "⚠ repetido?" (o selo fica para o que já existia).
+  O importar JSON usa a mesma regra; o contrato PDF tem a sua (mais larga: mesmo aluno e uma palavra do nome) porque sempre mostra a escolha.
+- Tabelas no computador (item 9): `UX.cabecalhoFixo` mede de novo a cada vez (tira a marca antes), roda no `resize` (150 ms) e um
+  `ResizeObserver` em cada tabela marcada tira a marca se ela crescer depois: tabela que não cabe rola para o lado, nunca é cortada.
+- Testes: `teste/teste-parte13.js` (36 ok), `teste/teste-desktop.js` (58 ok), `teste/teste-compromisso.js` (64 ok),
+  `teste/teste-sem-dados-reais.js`.
 
 ### Ligação com o OmniLifeONE (3.50) — especificação
 Decidido pelo dono em 06/Nov/2026 (respostas "sim" às perguntas a e b): o OmniLifeONE manda um resumo mínimo da saúde da família e o

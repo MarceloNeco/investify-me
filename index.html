@@ -8622,21 +8622,30 @@ const Recorrente = {
   /* ---------- parece repetido? (N23n, N29c) ----------
      Outro compromisso ligado, com nome ou categoria parecidos, da mesma
      pessoa, e período que se cruza. Devolve [{r, cruza:'ago–dez/2026'}]. */
-  sobreposicoes(x){
+  /* 3.54: dois compromissos "parecem repetidos" quando os períodos se cruzam E
+     (o nome é igual sem acentos, maiúsculas e o ano  OU  a mesma categoria, o mesmo "para quem é" e o valor a ±10%).
+     Números diferentes no nome (Seguro 1 × Seguro 2, "6 cartas") nunca são repetidos; ano (2027) não conta como número. */
+  parecemRepetidos(a, b){
     const N = s2 => String(s2 || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const pal = s2 => N(s2).split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !/^\d+$/.test(w) && !/^(sem|semestre|ano|mensal|anual|plano)$/.test(w));
-    const px = pal(x.nome);
+    const semAno = s2 => N(s2).replace(/\b20\d\d\b/g, ' ');
+    const nums = s2 => (semAno(s2).match(/\d+/g) || []).map(Number).sort((x,y) => x-y).join(',');
+    const base = s2 => semAno(s2).replace(/[^a-z0-9]+/g, ' ').trim();
+    if((a.fluxo || (GRUPOS[a.grupo] || {}).fluxo) !== (b.fluxo || (GRUPOS[b.grupo] || {}).fluxo)) return false;
+    if(nums(a.nome) !== nums(b.nome)) return false;
     const ini = r => r.desde || '0000-01-01', fim = r => r.ate || '9999-12-31';
+    if((ini(a) > ini(b) ? ini(a) : ini(b)) > (fim(a) < fim(b) ? fim(a) : fim(b))) return false;
+    if(base(a.nome) && base(a.nome) === base(b.nome)) return true;
+    const va = Number(a.valor) || 0, vb = Number(b.valor) || 0;
+    return a.grupo === b.grupo && N(a.sub) === N(b.sub) && N(a.quem).trim() === N(b.quem).trim() &&
+      va > 0 && vb > 0 && Math.abs(va - vb) <= Math.max(va, vb) * 0.10;
+  },
+  sobreposicoes(x){
+    const ini = r => r.desde || '0000-01-01', fim = r => r.ate || '9999-12-31';
+    const ok = (r, o) => (r.repetidoOk || []).indexOf(o.id) >= 0 || (o.repetidoOk || []).indexOf(r.id) >= 0;
     const out = [];
     this.ativos().forEach(r => {
-      if(r.id === x.id || r.fluxo === 'entrada' && (GRUPOS[x.grupo] || {}).fluxo !== 'entrada') return;
-      const pr = pal(r.nome), comuns = pr.filter(w => px.indexOf(w) >= 0).length;
-      const nomeParecido = comuns && comuns >= Math.min(px.length, pr.length, 2);
-      const mesmaCat = r.grupo === x.grupo && N(r.sub) === N(x.sub) && comuns > 0;
-      if(!nomeParecido && !mesmaCat) return;
-      if(N(r.quem) && N(x.quem) && N(r.quem) !== N(x.quem)) return;
+      if(r.id === x.id || (x.id && ok(r, x)) || !this.parecemRepetidos(x, r)) return;
       const de = ini(r) > ini(x) ? ini(r) : ini(x), ate = fim(r) < fim(x) ? fim(r) : fim(x);
-      if(de > ate) return;
       const mostra = iso => iso.startsWith('0000') || iso.startsWith('9999') ? '' : iso;
       const cruza = this.periodoCurto({desde: mostra(de), ate: mostra(ate)}) || (I18n.atual === 'pt' ? 'o mesmo período' : 'the same period');
       out.push({r, cruza});
@@ -9907,7 +9916,6 @@ const ImportRec = {
   },
   analisar(itens){
     const pt = I18n.atual === 'pt';
-    const norm = x => String(x || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     const existentes = Recorrente.todos();
     const vistos = [];
     return itens.map((bruto, i) => {
@@ -9918,9 +9926,8 @@ const ImportRec = {
       if(b.regra && !REGRAS_REC[b.regra]) avisos.push(pt ? 'regra de data inválida' : 'invalid date rule');
       const semId = Object.assign({}, b, {grupo: String(b.grupo || '').toUpperCase()}); delete semId.id; delete semId.criadoEm;
       const r = Recorrente.arruma(semId);
-      const parecido = e => norm(e.nome) === norm(r.nome) ||
-        (e.sub === r.sub && norm(e.quem) === norm(r.quem) && Math.abs((e.valor || 0) - r.valor) <= Math.max(1, r.valor * 0.1));
-      const ja = existentes.find(parecido);
+      const parecido = e => Recorrente.parecemRepetidos(r, e);   /* 3.54: a mesma regra do formulário */
+      const ja = existentes.filter(e => e.ativo !== false).find(parecido);
       const noArquivo = vistos.find(parecido);
       vistos.push(r);
       return {i, r, avisos, ja: ja || null, repetidoNoArquivo: !!noArquivo, marcado: !avisos.length && !ja && !noArquivo};
@@ -10381,10 +10388,23 @@ function salvarRecorrente(op){
     toast(I18n.atual === 'pt' ? 'O abatimento passou do preço cheio.' : 'The offset is larger than the full price.', 'warn'); return;
   }
   const vReal = dados.valor;
-  /* aviso de repetido (sem IA): só pergunta uma vez por salvamento */
-  if(!op.mesmoAssim){
-    const rep = Recorrente.sobreposicoes(Object.assign({id: recEditando}, dados))[0];
+  /* 3.54: parece repetido? pergunta NA HORA, antes de criar (só ao criar; ao editar, não) */
+  if(!op.mesmoAssim && !recEditando){
+    const rep = Recorrente.sobreposicoes(dados)[0];
     if(rep){ avisarRepetido(rep, op); return; }
+  }
+  if(op.atualizar){                       /* "Atualizar o existente": os dados do formulário vão para ele */
+    const alvo = Recorrente.achar(op.atualizar);
+    if(alvo){
+      if(alvo.valor !== vReal && (alvo.valores || []).length){ Recorrente.reajustar(alvo.id, vReal, hojeISO()); delete dados.valor; }
+      Recorrente.atualizar(alvo.id, dados);
+      if(window.MoneyModulos) MoneyModulos.emitir('compromisso.salvo', {id: alvo.id, estadoPadrao: dados.estadoPadrao});
+      recRascunho = null; Store.salvar();
+      recSalvando = true; fechar('assetModal'); recSalvando = false;
+      render(); renderFita(); recEditando = null;
+      toast(I18n.atual === 'pt' ? 'Atualizado: ' + alvo.nome + '.' : 'Updated: ' + alvo.nome + '.');
+      return;
+    }
   }
   if(recEditando){
     const antes = Recorrente.achar(recEditando);
@@ -10396,7 +10416,7 @@ function salvarRecorrente(op){
   const eraEdicao = !!recEditando;
   let salvoId = recEditando;
   if(recEditando) Recorrente.atualizar(recEditando, dados);
-  else salvoId = Recorrente.add(dados).id;
+  else { const novo = Recorrente.add(dados); salvoId = novo.id; if(op.repetidoOk) novo.repetidoOk = [op.repetidoOk]; }
   if(window.MoneyModulos) MoneyModulos.emitir('compromisso.salvo', {id: salvoId, estadoPadrao: dados.estadoPadrao});
   if(recRascunho && (recRascunho.id || null) === (recEditando || null)) recRascunho = null;
   Store.salvar();
@@ -10418,9 +10438,11 @@ function avisarRepetido(rep, op){
   recPendente = op;
   $('#genTitle').textContent = Verter.txt(ass ? (pt ? 'Assinatura duplicada?' : 'Duplicate subscription?') : (pt ? 'Parece repetido' : 'Looks repeated'));
   $('#genBody').innerHTML = Verter.html('<p class="small">' + (pt ? 'Parece repetido: ' : 'Looks repeated: ') + '<b>' + esc(o.nome) + '</b> (' + esc(per) + ') ' +
-      (pt ? 'já cobre ' : 'already covers ') + '<b>' + esc(rep.cruza) + '</b>. ' + (pt ? 'Quer ajustar?' : 'Want to adjust?') + '</p>' +
-    '<div class="f-actions"><button class="btn" data-acao="rec-rep-outro" data-para="' + esc(o.id) + '">' + (pt ? 'Ajustar o outro' : 'Adjust the other') + '</button>' +
-    '<button class="btn primary" data-acao="rec-rep-salvar">' + (pt ? 'Salvar assim mesmo' : 'Save anyway') + '</button></div>');
+      '(' + esc(fmt(Recorrente.valorEm(o, hojeISO()))) + ', ' + esc(Recorrente.explicar(o)) + ') ' +
+      (pt ? 'já cobre ' : 'already covers ') + '<b>' + esc(rep.cruza) + '</b>.</p>' +
+    '<div class="f-actions"><button class="btn" data-close="genModal">' + esc(t('ac.cancelar')) + '</button>' +
+    '<button class="btn" data-acao="rec-rep-salvar" data-para="' + esc(o.id) + '">' + (pt ? 'Criar mesmo assim' : 'Create anyway') + '</button>' +
+    '<button class="btn primary" data-acao="rec-rep-atualizar" data-para="' + esc(o.id) + '">' + (pt ? 'Atualizar o existente' : 'Update the existing one') + '</button></div>');
   abrir('genModal');
 }
 let recPendente = null;
@@ -17881,13 +17903,28 @@ const UX = {
      Só nas tabelas que cabem inteiras na largura (as largas continuam rolando
      para o lado). Na página, fica logo abaixo do topo; na janela, no alto dela. */
   cabecalhoFixo(raiz, naJanela){
-    if(!raiz || window.innerWidth < (naJanela ? 1024 : 1200)) return;
+    if(!raiz) return;
+    const largo = window.innerWidth >= (naJanela ? 1024 : 1200);
     raiz.querySelectorAll('.tbl-wrap > table').forEach(tb => {
       if(!tb.tHead || tb.classList.contains('tbl-mini')) return;
       const caixa = tb.parentElement;
       if(caixa.classList.contains('tbl-fixa')) return;          /* já tem o seu (3.35, janela com rolagem própria) */
-      if(tb.scrollWidth > caixa.clientWidth + 2) return;
+      /* 3.54 (N35): mede de novo a cada vez (a janela muda de tamanho, troca de tela): primeiro tira a marca;
+         a tabela que deixou de caber volta a rolar para o lado — nunca fica cortada pelo cartão */
+      const cardAntes = caixa.closest('.card');
+      caixa.classList.remove('tbl-cabe'); tb.classList.remove('tbl-topo', 'tbl-topo-j');
+      if(cardAntes && !naJanela && !cardAntes.querySelector('.tbl-cabe')) cardAntes.classList.remove('card-topo');
+      if(!largo || tb.scrollWidth > caixa.clientWidth + 2) return;
       caixa.classList.add('tbl-cabe'); tb.classList.add(naJanela ? 'tbl-topo-j' : 'tbl-topo');
+      /* se a tabela crescer depois (selos, textos que chegam, nome longo), deixa de "caber": tira a marca e ela rola */
+      if(window.ResizeObserver){
+        this._obsTab = this._obsTab || new ResizeObserver(lista => lista.forEach(en => {
+          const t2 = en.target, cx = t2.parentElement; if(!cx || !cx.classList.contains('tbl-cabe') || t2.scrollWidth <= cx.clientWidth + 2) return;
+          cx.classList.remove('tbl-cabe'); t2.classList.remove('tbl-topo', 'tbl-topo-j');
+          const c2 = cx.closest('.card'); if(c2 && !c2.querySelector('.tbl-cabe')) c2.classList.remove('card-topo');
+        }));
+        this._obsTab.observe(tb);
+      }
       const card = caixa.closest('.card'); if(card && !naJanela) card.classList.add('card-topo');
     });
   },
@@ -28512,10 +28549,8 @@ function ligarEventos(){
       case 'rec-sug-usar': recUsarSugestao(); break;
       case 'rec-rasc-usar': { const rs = recRascunho; if(rs) abrirRecorrente(rs.id, null, {doRascunho: true, abrirMais: true}); break; }
       case 'rec-rasc-fora': { recRascunho = null; const bx = document.querySelector('.rc-rasc'); if(bx) bx.parentNode.removeChild(bx); break; }
-      case 'rec-rep-salvar': fechar('genModal'); salvarRecorrente(Object.assign({}, recPendente || {}, {mesmoAssim: true})); break;
-      case 'rec-rep-outro': { fechar('genModal'); recGuardarRascunho(); fechar('assetModal');
-        toast(I18n.atual === 'pt' ? 'O que você digitou ficou guardado: ao abrir "Novo compromisso" de novo, toque em "Continuar de onde parou".' : 'What you typed was kept: open "New commitment" again and tap "Pick up where you left".');
-        abrirRecorrente(el.dataset.para); break; }
+      case 'rec-rep-salvar': fechar('genModal'); salvarRecorrente(Object.assign({}, recPendente || {}, {mesmoAssim: true, repetidoOk: el.dataset.para})); break;
+      case 'rec-rep-atualizar': fechar('genModal'); salvarRecorrente(Object.assign({}, recPendente || {}, {mesmoAssim: true, atualizar: el.dataset.para})); break;
       case 'rec-clonar': if(recEditando) recClonar(recEditando); break;
       case 'rec-rolar-um': if(recEditando){ const rid = recEditando; recSalvando = true; fechar('assetModal'); recSalvando = false; abrirRolar([rid]); } break;
       case 'rec-rolar': abrirRolar(); break;
@@ -29377,6 +29412,13 @@ function ajustarLateral(){
 function pedirLateral(){ if(!lateralPedido) lateralPedido = requestAnimationFrame(ajustarLateral); }
 window.addEventListener('resize', medirTopo);
 window.addEventListener('resize', pedirLateral);
+/* 3.54 (N35): ao mudar o tamanho da janela, as tabelas da tela aberta medem de novo se ainda cabem inteiras */
+let cabecalhoPedido = 0;
+function pedirCabecalho(){
+  clearTimeout(cabecalhoPedido);
+  cabecalhoPedido = setTimeout(() => { try{ const v = document.querySelector('.content > .view:not(.hidden)'); if(v && typeof UX !== 'undefined') UX.cabecalhoFixo(v); }catch(e){} }, 150);
+}
+window.addEventListener('resize', pedirCabecalho);
 window.addEventListener('scroll', pedirLateral, {passive: true});
 document.addEventListener('DOMContentLoaded', function () {
   medirTopo(); ajustarLateral(); setTimeout(medirTopo, 600); setTimeout(medirTopo, 3000); setTimeout(pedirLateral, 600);
