@@ -561,7 +561,25 @@ Desde a 3.41, **toda função nova é um módulo**: um arquivo em `modulos/`, co
 - Módulo que usa outro módulo: só pela API do cabeçalho (`window.<Nome>`).
 
 **Pontos de encaixe e eventos que existem** (cresce a cada módulo; manter esta lista atualizada)
-- (nenhum ainda: a Parte 6 cria os primeiros)
+- html: `compromisso.form` {r} (dentro de "Como paga"), `recorrente.linha` {r}, `custos.topo`, `lancamentos.topo`,
+  `lancamento.linha` {g}, `lancamento.form` {g}, `tax.deducoes.topo`
+- itens (listas): `fita.budget`, `fita.tax` → `[{ico, texto, tom}]`
+- eventos: `compromisso.form` {r} (formulário aberto), `compromisso.salvo` {id, estadoPadrao} (antes de fechar)
+- telas aceitam `ajuda: {pt: {t, o, f}, en: {…}}` (título e ajuda do AssistONE); `appDaView` usa o `app` da tela
+- nome global de módulo não pode repetir um `const`/`function` do index.html (o do app esconde o do módulo;
+  `teste-modulos.js` confere). Ex.: o cofre de arquivos é `window.ArquivosFamilia` porque `Arquivos` já existia.
+
+### Módulos (3.42)
+- `modulos/arquivos.js` (`ArquivosFamilia`): cofre de arquivos. Descrição em `Store.estado.arquivos`; bytes no
+  IndexedDB `moneytrio-arquivos` (fechados se a nuvem estiver aberta) e no Storage (`MoneyNuvem.arquivos`, `nuvem.js` 1.7.0:
+  bucket privado `money-arquivos`, caminho `<grupo>/<id>`, formato `MTA1`+kv+iv+AES-GCM). Sem o SQL v4, fica no aparelho e
+  sobe sozinho depois (`sincronizar()` a cada 2 min e ao voltar a internet).
+- `modulos/agendamentos.js` (`Agendamentos`, N37): `Store.estado.agendamentos` = [{id do compromisso, ate, ciclo, renovadoEm}].
+- `modulos/nf-ir.js` (`NfIr`, N40): `Store.estado.nf_status`; telas `b-nfs` e `t-pasta-ir`; leitura do PDF pelo `PdfTexto`
+  do app (sem IA) e proposta por valor (5), data até 45 dias (2) e palavras em comum (até 3). Subir vários PDFs usa o `Fundo`.
+- SQL v4 `supabase/2026-11-06-moneytrio-arquivos.sql` (bucket + regras em storage.objects: ler e subir só chefe/responsável;
+  ninguém muda nem apaga). Teste local: `teste/sql/teste-moneytrio-arquivos.sql`.
+- Testes: `teste/teste-parte6.js`, `teste/teste-nuvem.js` (arquivo fechado indo e voltando), `teste/teste-modulos.js`.
 
 ### Proposta (não feita): tirar partes antigas do index.html
 

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/base.js — o registro de módulos do MoneyTRIO            1.0.0 · 06/Nov/2026
+   modulos/base.js — o registro de módulos do MoneyTRIO            1.1.0 · 06/Nov/2026
    ---------------------------------------------------------------------
    POR QUE EXISTE
    O index.html passou de 2 MB. Daqui para frente, cada função nova mora num arquivo próprio em
@@ -21,6 +21,7 @@
                                  }
      colecoes()                → todas as coleções dos módulos (a nuvem soma às dela)
      html(ponto, ctx)          → junta o html que os módulos põem naquele ponto ('' se nenhum)
+     itens(ponto, ctx)         → junta as listas que os módulos devolvem naquele ponto ([] se nenhum; ex.: avisos da fita)
      acao(nome, el, dados)     → roda a ação de um módulo; devolve true se algum tratou
      tela(id)                  → a função que desenha a tela de um módulo (ou null)
      emitir(evento, dados)     → avisa os módulos que ouvem aquele evento
@@ -45,7 +46,7 @@
   }
 
   var M = {
-    VERSAO: '1.0.0',
+    VERSAO: '1.1.0',
     registrar: function (def) {
       if (!def || !RX_ID.test(String(def.id || ''))) throw new Error('módulo sem id válido');
       if (porId[def.id]) throw new Error('módulo repetido: ' + def.id);
@@ -68,6 +69,11 @@
       var h = '';
       mods.forEach(function (m) { var f = m.pontos[ponto]; if (typeof f === 'function') { var r = seguro(m.id, f, [ctx || {}]); if (typeof r === 'string') h += r; } });
       return h;
+    },
+    itens: function (ponto, ctx) {
+      var out = [];
+      mods.forEach(function (m) { var f = m.pontos[ponto]; if (typeof f === 'function') { var r = seguro(m.id, f, [ctx || {}]); if (Array.isArray(r)) out = out.concat(r); } });
+      return out;
     },
     acao: function (nome, el, dados) {
       for (var i = 0; i < mods.length; i++) {

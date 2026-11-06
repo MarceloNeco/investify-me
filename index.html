@@ -1363,6 +1363,10 @@ details.imp-arq.repetido{border-color:var(--warn)}
 .oc-var{color:var(--accent2)}
 .tf-cinza, .tf-cinza .t-main, .tf-cinza td{color:var(--txt3) !important}
 .tf-card{opacity:.85}
+.nf-tag{border:0; background:none; padding:0; font-size:.72rem; font-weight:700; cursor:pointer}
+.nf-falta{color:var(--warn)} .nf-ok{color:var(--up)}
+.nf-conf{padding:8px 0; border-top:1px solid var(--line)} .nf-conf select{width:100%; margin-top:4px}
+.ag-box{margin-top:8px}
 .rdet-sec{font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--txt3); margin:12px 0 2px}
 .aba-c{background:var(--card2); border:1px solid transparent; border-radius:20px; padding:7px 14px;
        cursor:pointer; color:var(--txt2); font-size:.83rem; white-space:nowrap}
@@ -2948,6 +2952,12 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.42 */
+  'Agendamentos que vencem, nota fiscal pendente e Pasta do IR':'Bank schedules that expire, pending invoices and the tax folder',
+  'Compromisso "Agendado no banco" ganha "o agendamento vale até". Um mês antes, Custos e a fita avisam "Renovar o agendamento"; o botão "Renovei" empurra a data 12 meses (ou o ciclo escolhido).':'A "Scheduled at the bank" commitment gets "the schedule is valid until". A month before, Costs and the ticker say "Renew the bank schedule"; the "Renewed" button pushes the date 12 months (or the chosen cycle).',
+  'Todo gasto que entra no imposto de renda nasce com "🧾 NF aguardando". Um toque em "Recebi" dá baixa; a tela "NFs que faltam" mostra o que cobrar de cada profissional.':'Every tax-deductible expense starts with "🧾 invoice pending". One tap on "Got it" clears it; the "Missing invoices" screen shows what to ask each professional for.',
+  'Subir NFs em PDF: o app lê o PDF (sem IA), liga cada nota ao gasto pelo valor, data e nome, e guarda na Pasta do IR do ano com o nome "AAAA-MM-DD Categoria Pessoa.pdf". Informes de rendimentos e outros papéis vão para a mesma pasta (TaxONE → Deduções → Pasta do IR).':'Upload invoice PDFs: the app reads them (no AI), links each to its expense by amount, date and name, and keeps it in the year\'s tax folder named "YYYY-MM-DD Category Person.pdf". Income statements and other papers go to the same folder (TaxONE → Deductions → Tax folder).',
+  'Os arquivos ficam guardados fechados: no aparelho e, depois da atualização do banco de dados, também na nuvem.':'Files are stored encrypted: on the device and, after the database update, in the cloud too.',
   /* 3.41 */
   'Base para as funções novas (módulos)':'Groundwork for new features (modules)',
   'Por dentro: as funções novas passam a vir em arquivos separados (módulos), cada uma com o próprio teste. O app fica mais fácil de manter e não muda nada na tela.':'Under the hood: new features now come in separate files (modules), each with its own test. The app is easier to maintain and nothing changes on screen.',
@@ -13682,6 +13692,12 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.42', d:'2026-11-06', t:'Agendamentos que vencem, nota fiscal pendente e Pasta do IR', itens:[
+    'Compromisso "Agendado no banco" ganha "o agendamento vale até". Um mês antes, Custos e a fita avisam "Renovar o agendamento"; o botão "Renovei" empurra a data 12 meses (ou o ciclo escolhido).',
+    'Todo gasto que entra no imposto de renda nasce com "🧾 NF aguardando". Um toque em "Recebi" dá baixa; a tela "NFs que faltam" mostra o que cobrar de cada profissional.',
+    'Subir NFs em PDF: o app lê o PDF (sem IA), liga cada nota ao gasto pelo valor, data e nome, e guarda na Pasta do IR do ano com o nome "AAAA-MM-DD Categoria Pessoa.pdf". Informes de rendimentos e outros papéis vão para a mesma pasta (TaxONE → Deduções → Pasta do IR).',
+    'Os arquivos ficam guardados fechados: no aparelho e, depois da atualização do banco de dados, também na nuvem.'
+  ]},
   {v:'3.41', d:'2026-11-06', t:'Base para as funções novas (módulos)', itens:[
     'Por dentro: as funções novas passam a vir em arquivos separados (módulos), cada uma com o próprio teste. O app fica mais fácil de manter e não muda nada na tela.'
   ]},
@@ -16111,7 +16127,8 @@ const VIEWS_BUDGET = ['b-painel','b-lanc','b-fluxo','b-custos','b-renda','b-desl
 const VIEWS_TAX = ['t-painel','t-imposto','t-pjclt','t-declaracoes','t-processos','t-docs','t-deducoes'];
 /* o rótulo da aba sai do dicionário, para trocar de idioma sem remexer em nada */
 function nomeAba(a){ return a.chave ? t(a.chave) : (a.nome || a.v); }
-const appDaView = v => VIEWS_BUDGET.indexOf(v) >= 0 ? 'budget' : VIEWS_TAX.indexOf(v) >= 0 ? 'tax' : 'investify';
+const appDaView = v => VIEWS_BUDGET.indexOf(v) >= 0 ? 'budget' : VIEWS_TAX.indexOf(v) >= 0 ? 'tax'
+  : (window.MoneyModulos && MoneyModulos.infoTela(v)) ? (MoneyModulos.infoTela(v).app || 'investify') : 'investify';   /* 3.42: telas dos módulos */
 
 /* =========================================================
    A tela de escolha
@@ -16452,6 +16469,7 @@ function viewBLanc(){
       '<button class="btn primary sm" data-acao="b-novo">+ Novo</button>' +
     '</div></div>';
 
+  h += (window.MoneyModulos ? MoneyModulos.html('lancamentos.topo', {}) : '');
   h += barraFiltros();
 
   /* o que o recorte soma */
@@ -16489,7 +16507,8 @@ function viewBLanc(){
         (g.grupo === 'RENDA' && Transferencia.daRenda(g.id).length ? '<div class="t-sub tf-cinza">↪ ' + esc((I18n.atual === 'pt' ? 'passou para outra conta em ' : 'moved to another account on ') +
           Transferencia.daRenda(g.id).map(t => I18n.data(t.data) + (t.banco ? ' (' + t.banco + ')' : '')).join(', ') + (I18n.atual === 'pt' ? ' — transferência, não conta de novo' : ' — transfer, not counted again')) + '</div>' : '') +
         (g.quem || g.forma ? '<div class="t-sub">' + esc([g.quem, g.forma].filter(Boolean).join(' · ')) +
-          (g.irpf ? ' · <span class="badge-irpf">IRPF</span>' : '') + '</div>' : '') + '</td>' +
+          (g.irpf ? ' · <span class="badge-irpf">IRPF</span>' : '') + '</div>' : '') +
+        (window.MoneyModulos ? MoneyModulos.html('lancamento.linha', {g: g}) : '') + '</td>' +
       '<td class="num ' + sinal + '">' + (g.fluxo === 'entrada' ? '+' : '') + fmt(g.valor) + Abat.marca(g) + '</td></tr>';
   });
   h += '</tbody></table></div>';
@@ -16838,7 +16857,7 @@ function abrirRecorrente(id, semente, op){
     '</div>' +
 
     '<div class="bloco-regra"><span class="bf-tit">' + de('Como paga', 'How it is paid') + '</span>' +
-      ['pendente','automatico','agendado'].map(radio).join('') + '</div>' +
+      ['pendente','automatico','agendado'].map(radio).join('') + (window.MoneyModulos ? MoneyModulos.html('compromisso.form', {r: r}) : '') + '</div>' +
 
     '<div class="grid g2">' +
       campo(de('Conta de acesso', 'Login account'), '<input id="rcConta" autocomplete="off" value="' + esc(r.conta || '') + '" placeholder="' + de('ex.: o e-mail usado no serviço', 'e.g. the e-mail used on the service') + '">') +
@@ -16865,7 +16884,8 @@ function abrirRecorrente(id, semente, op){
   desenharCamposRegra(regra, r);
   ligarBlocoServico();
   abrir('assetModal');
-  $('#assetModal').dataset.fixo = 'rec';            /* não fecha ao tocar fora */
+  $('#assetModal').dataset.fixo = 'rec';
+  if(window.MoneyModulos) MoneyModulos.emitir('compromisso.form', {r: r});            /* não fecha ao tocar fora */
   /* sempre no topo */
   const corpo = $('#assetModalBody'); if(corpo) corpo.scrollTop = 0;
   const caixa = $('#assetModal .modal'); if(caixa) caixa.scrollTop = 0;
@@ -17041,8 +17061,10 @@ function salvarRecorrente(op){
     }
   }
   const eraEdicao = !!recEditando;
+  let salvoId = recEditando;
   if(recEditando) Recorrente.atualizar(recEditando, dados);
-  else Recorrente.add(dados);
+  else salvoId = Recorrente.add(dados).id;
+  if(window.MoneyModulos) MoneyModulos.emitir('compromisso.salvo', {id: salvoId, estadoPadrao: dados.estadoPadrao});
   if(recRascunho && (recRascunho.id || null) === (recEditando || null)) recRascunho = null;
   Store.salvar();
   recSalvando = true; fechar('assetModal'); recSalvando = false;
@@ -17424,6 +17446,7 @@ function abrirLancamento(id){
         (g ? esc(g.conta) : '') + '">') +
     '</div>' +
     Abat.bloco('gl', g) +
+    (window.MoneyModulos ? MoneyModulos.html('lancamento.form', {g: g}) : '') +
     '<label class="linha-check"><input type="checkbox" id="glIrpf"' + (g && g.irpf ? ' checked' : '') + '> ' +
       (I18n.atual === 'pt' ? 'Entra no imposto de renda' : 'Counts for income tax') + '</label>' +
     '<label class="linha-check"><input type="checkbox" id="glFav"' + (g && g.favorito ? ' checked' : '') + '> ' +
@@ -23500,6 +23523,7 @@ function viewBCustos(){
          dec.sobra >= 0 ? 'up' : 'down') +
     '</div>';
 
+  h += (window.MoneyModulos ? MoneyModulos.html('custos.topo', {}) : '');
   const econ = Abat.doAno(hojeISO().slice(0,4));
   if(econ.n)
     h += '<p class="small abat-econ">🎁 ' + (I18n.atual === 'pt'
@@ -23591,7 +23615,8 @@ function blocoRecorrentes(){
           (r.ativo !== false && Recorrente.sobreposicoes(r).length ? ' <span class="tag-rep" title="' + esc((I18n.atual === 'pt' ? 'Parece repetido com: ' : 'Looks repeated with: ') + Recorrente.sobreposicoes(r).map(x => x.r.nome).join(', ')) + '">⚠ ' + (I18n.atual === 'pt' ? 'repetido?' : 'repeated?') + '</span>' : '') +
           '<div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) +
           (r.quem ? ' · ' + esc(r.quem) : '') +
-          (r.varia ? ' · ' + esc(I18n.atual === 'pt' ? 'valor varia' : 'amount varies') : '') + '</div></td>' +
+          (r.varia ? ' · ' + esc(I18n.atual === 'pt' ? 'valor varia' : 'amount varies') : '') + '</div>' +
+          (window.MoneyModulos ? MoneyModulos.html('recorrente.linha', {r: r}) : '') + '</td>' +
         '<td class="nowrap t-sub">' + esc(Recorrente.explicar(r)) +
           (Recorrente.periodoCurto(r) ? '<div class="t-sub rec-periodo">' + esc(Recorrente.periodoCurto(r)) + '</div>' : '') + '</td>' +
         '<td class="num ' + (r.fluxo === 'entrada' ? 'up' : '') + '">' +
@@ -25016,7 +25041,7 @@ const AssistOne = {
     const L = I18n.atual === 'en' ? 'en' : 'pt';
     const de = (a, b) => L === 'pt' ? a : b;
     const v = Assist.telaAtual();
-    const a = (AJUDA_TELAS[v] || {})[L];
+    const a = (AJUDA_TELAS[v] || (window.MoneyModulos && (MoneyModulos.infoTela(v) || {}).ajuda) || {})[L];   /* 3.42: ajuda das telas dos módulos */
     const titulo = a ? a.t : (v === 'hub' ? 'MoneyTRIO' : v);
     let h = '';
     if(modo === 'ola'){
@@ -28804,6 +28829,7 @@ function viewTDeducoes(){
   const nomes = {medicas: pt ? 'Saúde' : 'Health', educacao: pt ? 'Educação' : 'Education', pgbl: pt ? 'Previdência (PGBL)' : 'Pension (PGBL)',
                  pensao: pt ? 'Pensão alimentícia' : 'Alimony', outros: pt ? 'Marcados, mas não dedutíveis por essa regra' : 'Flagged, not deductible'};
   let h = '<div class="card-head"><h1>' + (pt ? 'Deduções' : 'Deductions') + '</h1>' + seletorAno() + '</div>' + seletorPessoa();
+  h += (window.MoneyModulos ? MoneyModulos.html('tax.deducoes.topo', {}) : '');
   h += '<div class="kpis kpis-4">' + ['medicas', 'educacao', 'pgbl', 'pensao'].map(k => kpiB(nomes[k], fmt(d[k]), null, d.listas[k].length + (pt ? ' lançamentos' : ' entries'))).join('') + '</div>';
   h += '<div class="card"><p class="small muted" style="margin:0">' + (pt
     ? 'Vêm do BudgetONE: tudo que tem a marca "Entra no imposto de renda". Saúde não tem limite; educação tem limite de ' + fmt(TABELAS_SALARIO.anual.limiteEducacao) +
@@ -33784,7 +33810,7 @@ function renderFita(){
   /* no TaxONE a fita mostra o que está com a Receita: restituição,
      imposto a pagar, prazos. Sem nada aberto, ela some. */
   if((ST.appAtual || 'investify') === 'tax'){
-    const av = (typeof Tax !== 'undefined') ? Tax.avisos() : [];
+    const av = ((typeof Tax !== 'undefined') ? Tax.avisos() : []).concat(window.MoneyModulos ? MoneyModulos.itens('fita.tax') : []);
     if(!av.length){ caixa.classList.add('hidden'); return; }
     const htmlT = av.map(a => '<span class="fi fi-aviso"><span class="fi-ico">' + a.ico + '</span><span class="' + (a.tom || '') + '">' +
       esc(a.texto) + '</span></span>').join('');
@@ -33796,7 +33822,7 @@ function renderFita(){
      o que mudou de patamar e como vai o mês */
   if((ST.appAtual || 'investify') === 'budget'){
     if(cfg.fitaBudgetLigada === false){ caixa.classList.add('hidden'); return; }
-    const avisos = FitaBudget.itens();
+    const avisos = FitaBudget.itens().concat(window.MoneyModulos ? MoneyModulos.itens('fita.budget') : []);
     const htmlB = avisos.map(a =>
       '<span class="fi fi-aviso"><span class="fi-ico">' + a.ico + '</span>' +
       '<span class="' + (a.tom || '') + '">' + esc(a.texto) + '</span></span>').join('');
@@ -36005,7 +36031,10 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 </script>
 <!-- 3.41: módulos (um arquivo por função nova; guia em ARQUITETURA.md). A ordem importa: base, módulos, nuvem.
      O ?v= de cada arquivo é a versão dele e tem de ser igual no sw.js (teste/teste-modulos.js confere). -->
-<script src="modulos/base.js?v=1.0.0"></script>
-<script src="nuvem.js?v=1.6.0"></script>
+<script src="modulos/base.js?v=1.1.0"></script>
+<script src="modulos/arquivos.js?v=1.0.0"></script>
+<script src="modulos/agendamentos.js?v=1.0.0"></script>
+<script src="modulos/nf-ir.js?v=1.0.0"></script>
+<script src="nuvem.js?v=1.7.0"></script>
 </body>
 </html>

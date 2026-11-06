@@ -28,3 +28,7 @@ Resultado em 03/Nov/2026 (Postgres 16.15): o v2 rodou duas vezes sem erro, confe
 
 v3 (correção do robô), 03/Nov/2026 (Postgres 16): rodou duas vezes sem erro, conferência 4/4 "sim"; com o v3 aplicado o
 teste do v2 continua com 51 "ok", e `teste-moneytrio-correcao.sql` deu 23 "ok"; `sql-grants.js`: OK (3 scripts).
+
+v4 (arquivos no Storage), 06/Nov/2026: depois do v1–v3, `for i in 1 2; do psql -d lab -v ON_ERROR_STOP=1 -f investify-me/supabase/2026-11-06-moneytrio-arquivos.sql; done`
+e `psql -d lab -f investify-me/teste/sql/teste-moneytrio-arquivos.sql 2>&1 | grep -E "ok:|FALHOU"` → rodou duas vezes, conferência 3/3 "sim",
+14 "ok" (o stub do Supabase tem storage.buckets e storage.objects com RLS).

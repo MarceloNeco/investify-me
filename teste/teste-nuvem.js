@@ -79,8 +79,17 @@ function escolher(linhas, params) {
   return out;
 }
 const chamadas = [];
+const storage = { ligado: false, objs: {} };   /* Storage de mentira: bucket money-arquivos (3.42) */
 async function supabase(route) {
   const req = route.request(), url = new URL(req.url()), metodo = req.method();
+  if (url.pathname.startsWith('/storage/v1/object/') && metodo !== 'OPTIONS') {
+    chamadas.push(metodo + ' ' + url.pathname);
+    const m = url.pathname.match(/^\/storage\/v1\/object\/(authenticated\/)?money-arquivos\/(.+)$/);
+    const cab = { 'access-control-allow-origin': '*' };
+    if (!m || !storage.ligado) return route.fulfill({ status: 404, contentType: 'application/json', headers: cab, body: JSON.stringify({ statusCode: '404', error: 'Bucket not found', message: 'Bucket not found' }) });
+    if (metodo === 'POST') { if (storage.objs[m[2]]) return route.fulfill({ status: 409, headers: cab, body: '{"error":"Duplicate"}' }); storage.objs[m[2]] = req.postDataBuffer(); return route.fulfill({ status: 200, contentType: 'application/json', headers: cab, body: '{"Key":"x"}' }); }
+    if (metodo === 'GET') { const b = storage.objs[m[2]]; return b ? route.fulfill({ status: 200, contentType: 'application/octet-stream', headers: cab, body: b }) : route.fulfill({ status: 400, headers: cab, body: '{"error":"not_found"}' }); }
+  }
   const corpo = req.postData() ? JSON.parse(req.postData()) : null;
   const json = (st, o) => route.fulfill({ status: st, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: o === undefined ? '' : JSON.stringify(o) });
   if (metodo === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
@@ -348,6 +357,22 @@ let BASE = '';
     const tfs = await A.evaluate(() => JSON.parse(JSON.stringify(Store.estado.transferencias || [])));
     ok(tfs.length === 1 && tfs[0].id === 'tf_pluggy-tf-1' && tfs[0].valor === 95 && tfs[0].banco === 'BTG' && (await estado(A)).gastos.length === 4, 'transferência do robô fica guardada (não vira lançamento, não some)');
     ok(!!linhaTf().consumido_em && db.money_docs.some((r) => r.colecao === 'transferencias' && r.id === 'tf_pluggy-tf-1'), 'e vai para o money_docs fechada, e é marcada como aproveitada');
+    /* 3.42: arquivos (NF/pasta do IR) fechados com a chave da família; Storage ainda sem o SQL → ficam no aparelho */
+    const ORIG = 'PDF-de-teste-NFS-e-Dentista-R$-350,00-' + 'x'.repeat(300);
+    const m1 = await A.evaluate(async (t) => { const m = await ArquivosFamilia.guardar({ nome: '2026-11-05 Dentista Ana.pdf', tipo: 'nf', ano: 2026 }, new TextEncoder().encode(t)); return m; }, ORIG);
+    await esperar(800);
+    ok(m1 && !m1.nuvem && Object.keys(storage.objs).length === 0, 'arquivo: sem o bucket (SQL não aplicado), fica só no aparelho, sem erro');
+    for (let i = 0; i < 40 && !db.money_docs.some((r) => r.colecao === 'arquivos' && r.id === m1.id); i++) await esperar(250);
+    const regArq = db.money_docs.find((r) => r.colecao === 'arquivos' && r.id === m1.id);
+    ok(regArq && !/Dentista|PDF-de-teste/.test(JSON.stringify(regArq)), 'a descrição do arquivo vai para o money_docs fechada (nem o nome aparece)');
+    storage.ligado = true;
+    const sinc = await A.evaluate(() => ArquivosFamilia.sincronizar());
+    const obj = storage.objs[GID + '/' + m1.id];
+    ok(sinc.subiram === 1 && obj && obj.slice(0, 4).toString() === 'MTA1', 'com o bucket: sobe sozinho, fechado (formato MTA1)');
+    ok(obj && obj.indexOf(Buffer.from('Dentista')) < 0 && obj.indexOf(Buffer.from('PDF-de-teste')) < 0, 'o Storage não vê o conteúdo do arquivo');
+    ok(await A.evaluate((id) => (Store.estado.arquivos.find((x) => x.id === id) || {}).nuvem === true, m1.id), 'e marca "na nuvem"');
+    const volta = await A.evaluate(async (id) => { await new Promise((ok2) => { const r = indexedDB.open('moneytrio-arquivos', 1); r.onsuccess = () => { const tx = r.result.transaction('arq', 'readwrite'); tx.objectStore('arq').delete(id); tx.oncomplete = ok2; }; }); const b = await ArquivosFamilia.ler(id); return b ? new TextDecoder().decode(b) : null; }, m1.id);
+    ok(volta === ORIG, 'sem a cópia do aparelho, baixa da nuvem e abre com a chave da família');
 
     /* ---------- 4. recarregar: dentro dos 15 min não pede o PIN (3.35); trancado, pede ---------- */
     console.log('4) recarregar: PIN');

@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.6.0 · 06/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.7.0 · 06/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -23,7 +23,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.6.0';
+  var VERSAO = '1.7.0';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -1323,7 +1323,55 @@
   };
 
   /* ---------------- o maestro ---------------- */
+  /* ---------------- Arquivos (1.7.0): bytes fechados com a chave da família, no Storage ----------------
+     Bucket privado 'money-arquivos', caminho '<grupo>/<id>' (SQL: supabase/2026-11-06-moneytrio-arquivos.sql).
+     Formato: 'MTA1' + kv (4 bytes) + iv (12) + AES-GCM(bytes). O banco nunca vê o arquivo aberto.
+     Usado pelo modulos/arquivos.js; sem nuvem (ou cadeado fechado), ativo() = false. */
+  var BUCKET = 'money-arquivos', RX_ARQ = /^[A-Za-z0-9_-]{6,80}$/;
+  var Arquivos = {
+    ativo: function () { return !!(Nuvem.iniciado && Cadeado.aberto() && Sinc.gid); },
+    cifrar: async function (bytes) {
+      if (!Cadeado.aberto()) throw new Error('cadeado fechado');
+      var iv = Cifra.rnd(12), ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, Cadeado.cf, bytes));
+      var out = new Uint8Array(4 + 4 + 12 + ct.length);
+      out.set([77, 84, 65, 49], 0); new DataView(out.buffer).setUint32(4, Cadeado.kv >>> 0); out.set(iv, 8); out.set(ct, 20);
+      return out;
+    },
+    decifrar: async function (bytes) {
+      var b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+      if (b.length < 21 || b[0] !== 77 || b[1] !== 84 || b[2] !== 65 || b[3] !== 49) throw new Error('formato');
+      if (!Cadeado.aberto()) throw new Error('cadeado fechado');
+      var kv = new DataView(b.buffer, b.byteOffset).getUint32(4);
+      if (kv !== (Cadeado.kv >>> 0)) { var e = new Error('chave de outra versão'); e.codigo = 'kv'; throw e; }
+      return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b.slice(8, 20) }, Cadeado.cf, b.slice(20)));
+    },
+    url: function (id, ler) {
+      if (!RX_ARQ.test(String(id))) throw new Error('id do arquivo');
+      return SB + '/storage/v1/object/' + (ler ? 'authenticated/' : '') + BUCKET + '/' + Sinc.gid + '/' + id;
+    },
+    /* sobe os bytes JÁ cifrados. true = guardado (ou já estava); erro com .codigo 'sembucket' se o SQL ainda não foi aplicado */
+    subir: async function (id, cifrados) {
+      var t = await Conta.token(); if (!t) throw new Error('sem sessão');
+      var r = await fetch(this.url(id), { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + t, 'Content-Type': 'application/octet-stream', 'x-upsert': 'false' }, body: cifrados });
+      if (r.ok) return true;
+      var txt = await r.text().catch(function () { return ''; });
+      if (r.status === 409 || /duplicate|already exists/i.test(txt)) return true;
+      var e = new Error('Storage ' + r.status + ' ' + txt.slice(0, 120)); e.status = r.status;
+      if (/bucket not found/i.test(txt) || r.status === 404) e.codigo = 'sembucket';
+      throw e;
+    },
+    /* baixa os bytes cifrados; null se não existe */
+    baixar: async function (id) {
+      var t = await Conta.token(); if (!t) throw new Error('sem sessão');
+      var r = await fetch(this.url(id, true), { headers: { apikey: KEY, Authorization: 'Bearer ' + t } });
+      if (r.status === 404 || r.status === 400) return null;
+      if (!r.ok) { var e = new Error('Storage ' + r.status); e.status = r.status; throw e; }
+      return new Uint8Array(await r.arrayBuffer());
+    }
+  };
+
   var Nuvem = {
+    arquivos: Arquivos,
     iniciado: false, familia: null, podeLevar: false,
     /* 3.32: o nome da pessoa no topo (no lugar de "Dono da carteira"): nome do perfil SolverONE (user_settings.display_name),
        senão o nome do Google (user_metadata), senão a parte do e-mail antes do @. Sem nuvem: o app fica como sempre. */

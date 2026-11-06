@@ -31,6 +31,13 @@ scripts.forEach((s) => {
 fs.readdirSync(path.join(RAIZ, 'modulos')).filter((f) => f.endsWith('.js') && !f.startsWith('_')).forEach((f) => {
   ok(scripts.some((s) => s.startsWith('modulos/' + f + '?')), 'modulos/' + f + ' está ligado no index.html');
 });
+fs.readdirSync(path.join(RAIZ, 'modulos')).filter((f) => f.endsWith('.js') && !f.startsWith('_')).forEach((f) => {
+  const src = fs.readFileSync(path.join(RAIZ, 'modulos', f), 'utf8');
+  [...src.matchAll(/window\.([A-Za-z_$][\w$]*)\s*=/g)].forEach((m) => {
+    const choca = new RegExp('^(?:const|let|var|function|class)\\s+' + m[1] + '\\b', 'm').test(idx);
+    ok(!choca, 'modulos/' + f + ': o nome window.' + m[1] + ' não existe no index.html (senão o do app esconde o do módulo)');
+  });
+});
 const pos = (s) => idx.indexOf('<script src="' + s);
 ok(pos('modulos/base.js') > 0 && pos('modulos/base.js') < pos('nuvem.js') && scripts.filter((s) => s.startsWith('modulos/') && !s.startsWith('modulos/base.js')).every((s) => pos(s) > pos('modulos/base.js') && pos(s) < pos('nuvem.js')), 'ordem: base, módulos, nuvem');
 
