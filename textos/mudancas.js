@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.54 · 06/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.55 · 06/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.55', d:'2026-11-06', t:'Boleto conferido com a amostra real', itens:[
+    'Boleto da matrícula: se o app não conseguir ler o valor a pagar, ele faz a conta (valor do documento menos o desconto) ou avisa "confira o valor", e nunca usa o valor cheio calado.'
+  ]},
   {v:'3.54', d:'2026-11-06', t:'Contrato com boleto, sem duplicar, Desfazer e o computador', itens:[
     'Contrato da escola: com o boleto no lote, a 1ª parcela entra com o valor a pagar e o vencimento do boleto, com o nome "Matrícula 2027 (1ª parcela da anuidade)" (dá para trocar). Se o pagamento já está no livro, ou se o compromisso já existe, vem desmarcado e o app mostra qual é; dá para atualizar o que existe ou criar mesmo assim. Depois de Criar, "↩ Desfazer" por 5 minutos.',
     'Vencimentos passados: o app confere sozinho com os lançamentos (mesmo valor ±10%, mesma categoria ou o nome, até 7 dias) e marca como pagos. O que venceu antes de você cadastrar o compromisso e não bateu fica "sem conferência", e não mais "atrasado".',
