@@ -567,6 +567,8 @@ Desde a 3.41, **toda função nova é um módulo**: um arquivo em `modulos/`, co
 - eventos: `compromisso.form` {r} (formulário aberto), `compromisso.salvo` {id, estadoPadrao} (antes de fechar)
 - eventos: `gasto.novo` (o lançamento, logo depois do `Gasto.add`; vale para manual, importação e robô) — 3.43
 - html: `custos.revisar` (topo da aba Revisar) — 3.43
+- html: `investify.painel` (depois dos números do Painel), `investify.carteira.topo` (topo da Carteira) — 3.45
+- itens: `patrimonio.extra` → `[{valor, rotulo}]`: o Painel soma ao "Patrimônio total" e mostra separado do líquido — 3.45
 - telas aceitam `ajuda: {pt: {t, o, f}, en: {…}}` (título e ajuda do AssistONE); `appDaView` usa o `app` da tela
 - nome global de módulo não pode repetir um `const`/`function` do index.html (o do app esconde o do módulo;
   `teste-modulos.js` confere). Ex.: o cofre de arquivos é `window.ArquivosFamilia` porque `Arquivos` já existia.
@@ -628,3 +630,14 @@ o TaxONE e os leitores só depois de terem testes próprios.
    Leitura só de chefe/responsável, cifrada com a chave da família. Contrato escrito no `PLATAFORMA-DADOS.md`.
 3. O "médico de referência" do OmniLife pode virar um profissional conhecido (N39), para o extrato reconhecê-lo desde o primeiro PIX.
 4. A ponte por `localStorage` deve ser registrada como obsoleta nos dois repositórios.
+
+### Patrimônio sem liquidez e Importar posições (3.45)
+- `modulos/patrimonio-iliquido.js` (`PatrimonioIliquido`): `Store.estado.patrimonio_iliquido` = [{id, nome, tipo (fgts|previdencia|imovel|empresa|outro),
+  inst, valor, data, obs}]. Entra no "Patrimônio total" do Painel pelo ponto `patrimonio.extra`, separado do líquido; `totais()` da carteira
+  (alocação, rentabilidade, rebalanceamento) não muda.
+- `modulos/importar-posicoes.js` (`ImportarPosicoes`): arquivo `{"tipo":"moneytrio-posicoes","versao":1,"itens":[…]}`.
+  - Posição líquida: `{ticker, nome?, tipo (chave de TIPOS), inst?, qtd, pm, moeda?, data?, valorAtual? (fundo/previdência/outro), ix?/taxa? (renda fixa), notas?}`;
+    em renda fixa, fundo, previdência e outro, `pm` é o valor aplicado (qtd = 1).
+  - Sem liquidez: `{semLiquidez: true, nome, tipo, inst?, valor, data?, obs?}`.
+  - "Já existe" = mesmo ticker e instituição (líquida) ou mesmo nome e instituição (sem liquidez): vem desmarcado.
+- Teste: `teste/teste-parte9.js`.

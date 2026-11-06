@@ -1369,6 +1369,8 @@ details.imp-arq.repetido{border-color:var(--warn)}
 .ag-box{margin-top:8px}
 .prof-q{padding:10px 0; border-top:1px solid var(--line)}
 .prof-campos{margin-top:6px}
+.il-etiqueta{color:var(--warn); margin:0 0 8px}
+.il-tag{color:var(--warn)}
 .rdet-sec{font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--txt3); margin:12px 0 2px}
 .aba-c{background:var(--card2); border:1px solid transparent; border-radius:20px; padding:7px 14px;
        cursor:pointer; color:var(--txt2); font-size:.83rem; white-space:nowrap}
@@ -2954,6 +2956,10 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.45 */
+  'Patrimônio sem liquidez e Importar posições':'Non-liquid assets and Import positions',
+  'InvestifyONE: patrimônio sem liquidez (FGTS, previdência bloqueada, imóvel…) com a etiqueta "🔒 sem liquidez — não dá para sacar". Entra no Patrimônio total do Painel, mostrado separado do líquido, e fica fora da alocação e da rentabilidade.':'InvestifyONE: non-liquid assets (FGTS, locked pension, property…) labelled "🔒 not liquid — cannot be withdrawn". They count in the Dashboard\'s total net worth, shown separately from liquid assets, and stay out of allocation and returns.',
+  'Carteira → "Importar posições (JSON)": prévia em tabela; o que já existe e as linhas com problema vêm desmarcados; nada é trocado nem apagado.':'Portfolio → "Import positions (JSON)": table preview; existing items and problem lines come unticked; nothing is changed or deleted.',
   /* 3.44 */
   'Plano de saúde: reembolso estimado e o que fica para o IR':'Health plan: estimated refund and what is left for tax',
   'Nova tela "Plano de saúde" (BudgetONE): operadora, PF ou PJ, quem o plano cobre, coparticipação, reembolso e a tabela de reembolso por tipo (consulta, exame, terapia, dentista) e por especialidade.':'New "Health plan" screen (BudgetONE): insurer, individual or company, who is covered, co-payment, refund and the refund table by type (visit, test, therapy, dentist) and specialty.',
@@ -13703,6 +13709,10 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.45', d:'2026-11-06', t:'Patrimônio sem liquidez e Importar posições', itens:[
+    'InvestifyONE: patrimônio sem liquidez (FGTS, previdência bloqueada, imóvel…) com a etiqueta "🔒 sem liquidez — não dá para sacar". Entra no Patrimônio total do Painel, mostrado separado do líquido, e fica fora da alocação e da rentabilidade.',
+    'Carteira → "Importar posições (JSON)": prévia em tabela; o que já existe e as linhas com problema vêm desmarcados; nada é trocado nem apagado.'
+  ]},
   {v:'3.44', d:'2026-11-06', t:'Plano de saúde: reembolso estimado e o que fica para o IR', itens:[
     'Nova tela "Plano de saúde" (BudgetONE): operadora, PF ou PJ, quem o plano cobre, coparticipação, reembolso e a tabela de reembolso por tipo (consulta, exame, terapia, dentista) e por especialidade.',
     'Cada gasto de Saúde mostra "↩ volta ~R$ X · IR R$ Y (estimado)"; TaxONE → Deduções mostra o total do ano: gasto, quanto volta e quanto fica para o IR.',
@@ -30885,13 +30895,16 @@ function viewPainel(){
       '<div class="row" style="justify-content:center;margin-top:14px">' +
       '<button class="btn primary" data-acao="nova">+ Cadastrar meu primeiro investimento</button>' +
       '<button class="btn" data-acao="ir-coach">Não sei por onde começar</button></div></div></div>';
+    h += (window.MoneyModulos ? MoneyModulos.html('investify.painel', {}) : '');
     h += cardMercadoResumo();
     return h;
   }
 
+  /* 3.45: o que não dá para sacar (módulos, ex.: FGTS) entra no total, separado do líquido */
+  const semLiq = (window.MoneyModulos ? MoneyModulos.itens('patrimonio.extra') : []).reduce((s2, x) => s2 + (Number(x.valor) || 0), 0);
   h += '<div class="grid g4" style="margin-bottom:14px">' +
-    kpi('Patrimônio total', fmt(t.valor), 'patrimonio',
-        'Investido: ' + fmt(t.custo), 'hero') +
+    kpi('Patrimônio total', fmt(t.valor + semLiq), 'patrimonio',
+        semLiq ? 'Líquido: ' + fmt(t.valor) + ' · 🔒 sem liquidez: ' + fmt(semLiq) : 'Investido: ' + fmt(t.custo), 'hero') +
     kpi('Lucro / prejuízo', fmt(t.pl), 'lucro-prejuizo',
         '<span class="' + cls(t.pl) + '">' + fmtPct(t.plPct, true) + '</span>') +
     kpi('Hoje', fmt(t.dia), null,
@@ -30899,6 +30912,7 @@ function viewPainel(){
     kpi('Ativos', String(ST.posicoes.length), null,
         Object.keys(t.porTipo).length + ' tipos · ' + Object.keys(t.porInst).length + ' instituições') +
   '</div>';
+  h += (window.MoneyModulos ? MoneyModulos.html('investify.painel', {}) : '');
 
   /* evolução do patrimônio */
   const fotos = (ST.fotos || []).map(f => ({t: f[0], v: f[1]}));
@@ -31034,6 +31048,7 @@ function viewCarteira(){
   let h = '<div class="card-head"><h1>Carteira</h1><div class="spacer"></div>' +
     '<button class="btn sm" data-acao="csv">⬇ CSV</button>' +
     '<button class="btn primary sm" data-acao="nova">+ Novo investimento</button></div>';
+  h += (window.MoneyModulos ? MoneyModulos.html('investify.carteira.topo', {}) : '');   /* 3.45: importar posições, sem liquidez */
 
   if(!ST.posicoes.length){
     return h + '<div class="card"><div class="empty"><span class="ic">💼</span><h2>Nada cadastrado ainda</h2>' +
@@ -36058,6 +36073,8 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/nf-ir.js?v=1.0.0"></script>
 <script src="modulos/profissionais.js?v=1.0.0"></script>
 <script src="modulos/saude.js?v=1.0.0"></script>
+<script src="modulos/patrimonio-iliquido.js?v=1.0.0"></script>
+<script src="modulos/importar-posicoes.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.7.0"></script>
 </body>
 </html>
