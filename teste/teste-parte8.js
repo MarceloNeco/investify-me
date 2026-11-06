@@ -27,10 +27,10 @@ function pdfCom(linhas) {
 }
 const d = (m, dd) => ANO + '-' + String(m).padStart(2, '0') + '-' + String(dd).padStart(2, '0');
 const LOCAL = { v: 1, posicoes: [], config: {}, recorrentes: [], gastos: [
-  { id: 's1', data: d(1, 10), valor: 450, grupo: 'SAUDE', sub: 'Pediatra', quem: 'Ana', desc: 'PIX DRA MARIANA PEDIATRA', irpf: true, fluxo: 'saida' },
-  { id: 's2', data: d(1, 20), valor: 300, grupo: 'SAUDE', sub: 'Consulta', quem: 'Neco', desc: 'CONSULTA DERMATO', irpf: true, fluxo: 'saida' },
-  { id: 's3', data: d(2, 5), valor: 120, grupo: 'SAUDE', sub: 'Exames', quem: 'Neco', desc: 'LABORATORIO FLEURY', irpf: true, fluxo: 'saida' },
-  { id: 's4', data: d(2, 8), valor: 200, grupo: 'SAUDE', sub: 'Psicólogo', quem: 'Pessoa B', desc: 'PIX PSICOLOGA ANA', irpf: true, fluxo: 'saida' },
+  { id: 's1', data: d(1, 10), valor: 450, grupo: 'SAUDE', sub: 'Pediatra', quem: 'Bia', desc: 'PIX DRA MARIANA PEDIATRA', irpf: true, fluxo: 'saida' },
+  { id: 's2', data: d(1, 20), valor: 300, grupo: 'SAUDE', sub: 'Consulta', quem: 'Alex', desc: 'CONSULTA DERMATO', irpf: true, fluxo: 'saida' },
+  { id: 's3', data: d(2, 5), valor: 120, grupo: 'SAUDE', sub: 'Exames', quem: 'Alex', desc: 'LABORATORIO FLEURY', irpf: true, fluxo: 'saida' },
+  { id: 's4', data: d(2, 8), valor: 200, grupo: 'SAUDE', sub: 'Psicólogo', quem: 'Carla', desc: 'PIX PSICOLOGA ANA', irpf: true, fluxo: 'saida' },
   { id: 'm1', data: d(2, 9), valor: 50, grupo: 'PESSOAL', sub: 'Mercado', desc: 'mercado', fluxo: 'saida' } ] };
 (async () => {
   const srv = http.createServer((q, s) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404); return s.end(); } s.writeHead(200, { 'Content-Type': p.endsWith('.html') ? 'text/html; charset=utf-8' : p.endsWith('.js') ? 'text/javascript' : p.endsWith('.css') ? 'text/css' : 'application/octet-stream' }); fs.createReadStream(p).pipe(s); });
@@ -68,13 +68,13 @@ const LOCAL = { v: 1, posicoes: [], config: {}, recorrentes: [], gastos: [
       ok(f.op === 'Porto Saúde' && f.cop === false && f.ree === true, 'apólice: operadora Porto, sem coparticipação, com reembolso');
       ok(f.c === '180' && f.e === '60' && f.t === '90' && f.o === '', 'apólice: consulta 180, exame 60, terapia 90 (odonto sem valor)');
       ok(/pediatra = 220/.test(f.esp), 'apólice: pediatria 220 por especialidade');
-      await p.fill('#sdMem', 'Ana, Neco'); await p.selectOption('#sdTit', 'PJ');
+      await p.fill('#sdMem', 'Bia, Alex'); await p.selectOption('#sdTit', 'PJ');
       await semToasts(); await p.click('[data-acao="saude-salvar"]');
       const pl = await p.evaluate(() => JSON.parse(JSON.stringify(Store.estado.saude_planos[0])));
-      ok(pl.operadora === 'Porto Saúde' && pl.titular === 'PJ' && pl.membros.join() === 'Ana,Neco' && pl.reembolso && pl.esp.pediatra === 220 && !!pl.apolice, 'plano salvo, com a apólice guardada');
+      ok(pl.operadora === 'Porto Saúde' && pl.titular === 'PJ' && pl.membros.join() === 'Bia,Alex' && pl.reembolso && pl.esp.pediatra === 220 && !!pl.apolice, 'plano salvo, com a apólice guardada');
       const est = await p.evaluate(() => Gasto.todos().map((g) => { const e = Saude.estimar(g); return e ? e.volta + '/' + e.ir : '-'; }));
-      ok(est.join() === '220/230,180/120,60/60,-,-', 'pediatra 450 → volta 220 (especialidade), IR 230; consulta 300 → 180/120; exame 120 → 60/60; Pessoa B fora do plano; mercado não é saúde');
-      ok(await p.evaluate((a) => JSON.stringify(Saude.doAno(a)), ANO) === JSON.stringify({ gasto: 1070, volta: 460, ir: 610, n: 4 }), 'no ano: R$ 1.070 de saúde, volta ~R$ 460, fica para o IR ~R$ 610 (Pessoa B inteira)');
+      ok(est.join() === '220/230,180/120,60/60,-,-', 'pediatra 450 → volta 220 (especialidade), IR 230; consulta 300 → 180/120; exame 120 → 60/60; Carla fora do plano; mercado não é saúde');
+      ok(await p.evaluate((a) => JSON.stringify(Saude.doAno(a)), ANO) === JSON.stringify({ gasto: 1070, volta: 460, ir: 610, n: 4 }), 'no ano: R$ 1.070 de saúde, volta ~R$ 460, fica para o IR ~R$ 610 (Carla inteira)');
       ok(/Volta \(estimado\)\s*R\$\s?460,00/.test(await p.textContent('#view-b-saude')), 'tela do plano mostra o resumo do ano');
       await p.evaluate(() => { irPara('b-lanc'); bFiltro.periodo = 'tudo'; bFiltro.de = ''; bFiltro.ate = ''; render(); });
       ok(/volta ~R\$\s?220,00 · IR R\$\s?230,00 \(estimado\)/.test(await p.textContent('#view-b-lanc')), 'Lançamentos: "↩ volta ~R$ 220,00 · IR R$ 230,00 (estimado)"');

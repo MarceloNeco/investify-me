@@ -43,18 +43,18 @@ const LOCAL = { v: 1, posicoes: [], config: {}, recorrentes: [], gastos: [
       let qs = await p.$$eval('.prof-q .t-main', (e) => e.map((x) => x.textContent));
       ok(qs.length === 2 && qs.some((t) => /MARIANA SOUZA/.test(t)) && qs.some((t) => /SORRISO/.test(t)) && !qs.some((t) => /MERCADO/.test(t)), 'Revisar pergunta 2 nomes (Mariana: os 3 lançamentos juntos; Clínica), e não o mercado');
       ok(/3 lançamento/.test(await p.textContent('.prof-q:has-text("MARIANA")')), 'Mariana: uma pergunta para os 3 lançamentos');
-      /* confirmar Mariana: pediatra da Ana, IR */
+      /* confirmar Mariana: pediatra da Bia, IR */
       await semToasts();
       await p.fill('.prof-q:has-text("MARIANA") .prof-nome', 'Dra. Mariana Souza');
       await p.fill('.prof-q:has-text("MARIANA") .prof-sub', 'Pediatra');
-      await p.fill('.prof-q:has-text("MARIANA") .prof-quem', 'Ana');
+      await p.fill('.prof-q:has-text("MARIANA") .prof-quem', 'Bia');
       await p.check('.prof-q:has-text("MARIANA") .prof-ir');
       await p.click('.prof-q:has-text("MARIANA") [data-acao="prof-confirmar"]');
       const ms = await p.evaluate(() => Store.estado.gastos.filter((g) => /MARIANA/.test(g.desc)).map((g) => [g.grupo, g.sub, g.quem, g.irpf].join('|')));
-      ok(ms.length === 3 && ms.every((x) => x === 'SAUDE|Pediatra|Ana|true'), 'confirmar classifica os 3 lançamentos antigos (Saúde · Pediatra · Ana · IR)');
+      ok(ms.length === 3 && ms.every((x) => x === 'SAUDE|Pediatra|Bia|true'), 'confirmar classifica os 3 lançamentos antigos (Saúde · Pediatra · Bia · IR)');
       /* um novo, com 1 letra diferente, chega do "robô" */
       const novo = await p.evaluate(() => { const g = Gasto.add({ data: hojeISO(), valor: 450, grupo: 'OUTROS', sub: 'Sem categoria', desc: 'PIX DRA MARIANA SOUSA', origem: 'robo' }); return [g.grupo, g.sub, g.quem, g.irpf, !!g.profissional].join('|'); });
-      ok(novo === 'SAUDE|Pediatra|Ana|true|true', 'lançamento novo "MARIANA SOUSA" já entra classificado, sem perguntar');
+      ok(novo === 'SAUDE|Pediatra|Bia|true|true', 'lançamento novo "MARIANA SOUSA" já entra classificado, sem perguntar');
       await p.evaluate(() => render());
       qs = await p.$$eval('.prof-q .t-main', (e) => e.map((x) => x.textContent));
       ok(!qs.some((t) => /MARIANA/.test(t)), 'e a Mariana não volta para as perguntas');
@@ -71,7 +71,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, recorrentes: [], gastos: [
       ok(await p.evaluate(() => { const g = Gasto.add({ data: hojeISO(), valor: 450, grupo: 'LAZER', sub: 'Outro', desc: 'PIX DRA MARIANA SOUZA', origem: 'robo', editadoPessoa: true }); return g.grupo; }) === 'LAZER', 'lançamento editado pela pessoa não é reclassificado');
       await p.evaluate(() => irPara('b-profissionais'));
       await p.waitForSelector('#view-b-profissionais');
-      ok(/Dra\. Mariana Souza/.test(await p.textContent('#view-b-profissionais')) && /Pediatra · Ana · IR/.test(await p.textContent('#view-b-profissionais')), 'tela "Profissionais conhecidos"');
+      ok(/Dra\. Mariana Souza/.test(await p.textContent('#view-b-profissionais')) && /Pediatra · Bia · IR/.test(await p.textContent('#view-b-profissionais')), 'tela "Profissionais conhecidos"');
       await p.reload(); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.profissionais || []).length === 2);
       ok(true, 'depois de recarregar, os conhecidos continuam');
       ok(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'sem rolagem para o lado');

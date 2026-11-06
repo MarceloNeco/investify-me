@@ -27,8 +27,8 @@ function pdfCom(texto) {
   return Buffer.from(out, 'latin1');
 }
 const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [
-  { id: 'gd1', data: dataG, valor: 350, grupo: 'SAUDE', sub: 'Dentista', quem: 'Ana', desc: 'PIX CLINICA ODONTO SORRISO', irpf: true, fluxo: 'saida' },
-  { id: 'gp1', data: mais(-10), valor: 420, grupo: 'SAUDE', sub: 'Pediatra', quem: 'Ana', desc: 'PIX DRA PEDIATRA', irpf: true, fluxo: 'saida' },
+  { id: 'gd1', data: dataG, valor: 350, grupo: 'SAUDE', sub: 'Dentista', quem: 'Bia', desc: 'PIX CLINICA ODONTO SORRISO', irpf: true, fluxo: 'saida' },
+  { id: 'gp1', data: mais(-10), valor: 420, grupo: 'SAUDE', sub: 'Pediatra', quem: 'Bia', desc: 'PIX DRA PEDIATRA', irpf: true, fluxo: 'saida' },
   { id: 'gm1', data: mais(-5), valor: 80, grupo: 'PESSOAL', sub: 'Mercado', desc: 'mercado', fluxo: 'saida' } ],
   recorrentes: [{ id: 'r-ted', nome: 'TED Caixa', valor: 700, grupo: 'HABITACAO', sub: 'Aluguel', regra: 'dia', dia: 10, estadoPadrao: 'agendado' }] };
 (async () => {
@@ -76,7 +76,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [
 
       console.log(' N40 NF pendente e pasta do IR');
       ok(await p.evaluate(() => [NfIr.estado(Gasto.todos().find((g) => g.id === 'gd1')), NfIr.estado(Gasto.todos().find((g) => g.id === 'gm1'))].join()) === 'aguardando,', 'gasto com IR nasce "NF aguardando"; gasto sem IR não tem NF');
-      ok(await p.evaluate(() => NfIr.nomeArquivo(Gasto.todos().find((g) => g.id === 'gd1'))) === dataG + ' Dentista Ana.pdf', 'nome do arquivo: "' + dataG + ' Dentista Ana.pdf"');
+      ok(await p.evaluate(() => NfIr.nomeArquivo(Gasto.todos().find((g) => g.id === 'gd1'))) === dataG + ' Dentista Bia.pdf', 'nome do arquivo: "' + dataG + ' Dentista Bia.pdf"');
       await p.evaluate(() => { irPara('b-lanc'); bFiltro.periodo = 'tudo'; bFiltro.de = ''; bFiltro.ate = ''; render(); });
       ok(/2 notas fiscais faltando/.test(await p.textContent('#view-b-lanc .nf-topo')), 'Lançamentos: "2 notas fiscais faltando"');
       ok((await p.$$('#view-b-lanc .nf-falta')).length === 2, 'as duas linhas mostram "🧾 NF aguardando"');
@@ -84,7 +84,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [
       await p.click('#view-b-lanc .nf-topo');
       await p.waitForSelector('#view-b-nfs');
       await p.waitForFunction(() => window.scrollY === 0);   /* irPara rola suave até o topo: espera parar antes de tocar */
-      ok(/Dentista · Ana/.test(await p.textContent('#view-b-nfs')) && /Pediatra · Ana/.test(await p.textContent('#view-b-nfs')), 'tela "NFs que faltam", por profissional');
+      ok(/Dentista · Bia/.test(await p.textContent('#view-b-nfs')) && /Pediatra · Bia/.test(await p.textContent('#view-b-nfs')), 'tela "NFs que faltam", por profissional');
       /* subir o PDF: o app lê, propõe o gasto e guarda */
       await semJanelas();
       const [fc] = await Promise.all([p.waitForEvent('filechooser'), p.click('#view-b-nfs [data-acao="nf-subir"]')]);
@@ -94,7 +94,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [
       await p.click('#genBody [data-acao="nf-guardar"]');
       await p.waitForFunction(() => (Store.estado.arquivos || []).length === 1);
       const arq = await p.evaluate(() => JSON.parse(JSON.stringify(Store.estado.arquivos[0])));
-      ok(arq.nome === dataG + ' Dentista Ana.pdf' && arq.tipo === 'nf' && arq.ano === ANO && arq.ligado === 'gd1' && !arq.nuvem, 'guardado na Pasta do IR ' + ANO + ' como "' + arq.nome + '"');
+      ok(arq.nome === dataG + ' Dentista Bia.pdf' && arq.tipo === 'nf' && arq.ano === ANO && arq.ligado === 'gd1' && !arq.nuvem, 'guardado na Pasta do IR ' + ANO + ' como "' + arq.nome + '"');
       ok(await p.evaluate(() => NfIr.estado(Gasto.todos().find((g) => g.id === 'gd1'))) === 'recebida', 'e a NF do dentista deu baixa');
       ok(await p.evaluate(() => JSON.stringify(localStorage).indexOf('NFS-e') < 0), 'os bytes do PDF não vão para o localStorage (ficam no IndexedDB)');
       /* recebi sem arquivo */
@@ -108,7 +108,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [
       await p.evaluate(() => irPara('t-pasta-ir'));
       await p.waitForSelector('#view-t-pasta-ir');
       await p.waitForFunction(() => window.scrollY === 0);
-      ok((await p.textContent('#view-t-pasta-ir')).includes(dataG + ' Dentista Ana.pdf'), 'a pasta lista a NF');
+      ok((await p.textContent('#view-t-pasta-ir')).includes(dataG + ' Dentista Bia.pdf'), 'a pasta lista a NF');
       await semJanelas();
       const [fc2] = await Promise.all([p.waitForEvent('filechooser'), p.click('#view-t-pasta-ir [data-acao="ir-subir"][data-tipo="informe"]')]);
       await fc2.setFiles([inf]);

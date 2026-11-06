@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/nf-ir.js — nota fiscal pendente e pasta do IR (N40)       1.0.0 · 06/Nov/2026
+   modulos/nf-ir.js — nota fiscal pendente e pasta do IR (N40)       1.0.1 · 06/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · Todo gasto marcado "Entra no imposto de renda" (saúde, educação…) do ano aberto nasce com
@@ -7,7 +7,7 @@
      · "NFs que faltam" (tela b-nfs): a lista para cobrar cada profissional.
      · Subir PDFs: o app lê o texto do PDF (sem IA: valores, datas e palavras), propõe o gasto de cada
        arquivo (valor igual, data perto, nome parecido), a pessoa confere e guarda. O arquivo vai para a
-       "Pasta do IR" do ano com o nome "AAAA-MM-DD descrição.pdf" (ex.: "2026-11-05 Dentista Ana.pdf"),
+       "Pasta do IR" do ano com o nome "AAAA-MM-DD descrição.pdf" (ex.: "2026-11-05 Dentista Bia.pdf"),
        fechado como o resto (modulos/arquivos.js, window.ArquivosFamilia).
      · "Pasta do IR" (tela t-pasta-ir): os arquivos do ano (NFs, informes de rendimentos, outros
        papéis), para baixar ou acrescentar.
@@ -215,7 +215,7 @@
 
   MoneyModulos.registrar({
     id: 'nf-ir',
-    versao: '1.0.0',
+    versao: '1.0.1',
     colecoes: [COL],
     pontos: {
       'lancamento.linha': function (ctx) { var b = ctx.g ? botaoLinha(ctx.g) : ''; return b ? '<div class="t-sub">' + b + '</div>' : ''; },

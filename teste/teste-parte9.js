@@ -13,8 +13,8 @@ let falhas = 0, oks = 0;
 const ok = (c, m) => { if (c) { oks++; console.log('  ✓ ' + m); } else { falhas++; console.log('  ✗ FALHOU: ' + m); } };
 const LOCAL = { v: 1, gastos: [], recorrentes: [], config: {}, posicoes: [{ id: 'p1', ticker: 'CDB BANCO X', nome: 'CDB', tipo: 'fundo', inst: 'Banco X', qtd: 1, pm: 10000, valorManual: 10500, moeda: 'BRL' }] };
 const ARQ = { tipo: 'moneytrio-posicoes', versao: 1, itens: [
-  { semLiquidez: true, nome: 'FGTS Empresa A', tipo: 'fgts', inst: 'Empresa A', valor: 100000.00, data: '2026-11-01' },
-  { semLiquidez: true, nome: 'FGTS Empresa B', tipo: 'fgts', inst: 'Empresa B', valor: 40000.00, data: '2026-11-01' },
+  { semLiquidez: true, nome: 'FGTS Empresa A', tipo: 'fgts', inst: 'Empresa A', valor: 120000.5, data: '2026-11-01' },
+  { semLiquidez: true, nome: 'FGTS Empresa B', tipo: 'fgts', inst: 'Empresa B', valor: 30000.25, data: '2026-11-01' },
   { ticker: 'PETR4', nome: 'Petrobras PN', tipo: 'acao-br', inst: 'XP', qtd: 100, pm: 30.5 },
   { ticker: 'CDB BANCO X', tipo: 'fundo', inst: 'Banco X', pm: 10000 },
   { ticker: 'XYZ', tipo: 'nao-existe', qtd: 1, pm: 1 } ] };
@@ -46,26 +46,26 @@ const ARQ = { tipo: 'moneytrio-posicoes', versao: 1, itens: [
       await abrirArq(arq); await p.waitForSelector('.pi-tbl');
       const ls = await p.$$eval('.pi-tbl tbody tr', (trs) => trs.map((tr) => ({ ck: tr.querySelector('.pi-ck').checked, dis: tr.querySelector('.pi-ck').disabled, t: tr.textContent })));
       ok(ls.length === 5 && ls[0].ck && ls[1].ck && ls[2].ck, 'prévia: os 2 FGTS e a PETR4 vêm marcados');
-      ok(/🔒 FGTS/.test(ls[0].t) && /148\.892,36/.test(ls[0].t), 'FGTS aparece com 🔒 e o valor');
+      ok(/🔒 FGTS/.test(ls[0].t) && /120\.000,50/.test(ls[0].t), 'FGTS aparece com 🔒 e o valor');
       ok(!ls[3].ck && /já existe: CDB BANCO X/.test(ls[3].t), 'o que já existe vem desmarcado');
       ok(!ls[4].ck && ls[4].dis && /tipo desconhecido/.test(ls[4].t), 'linha com problema vem desmarcada e travada');
       ok(/Importar 3 marcadas/.test(await p.textContent('#piOk')), 'botão "Importar 3 marcadas"');
       await p.click('#piOk');
       const st = await p.evaluate(() => ({ pos: Store.estado.posicoes.map((x) => x.ticker), il: Store.estado.patrimonio_iliquido.map((x) => x.nome + '=' + x.valor) }));
-      ok(st.pos.join() === 'CDB BANCO X,PETR4' && st.il.join() === 'FGTS Empresa A=100000.00,FGTS Empresa B=40000.00', 'importou 1 posição e 2 sem liquidez; nada foi trocado');
+      ok(st.pos.join() === 'CDB BANCO X,PETR4' && st.il.join() === 'FGTS Empresa A=120000.5,FGTS Empresa B=30000.25', 'importou 1 posição e 2 sem liquidez; nada foi trocado');
       ok(/não dá para sacar/.test(await p.textContent('#view-carteira .il-card')), 'Carteira mostra o bloco "🔒 sem liquidez — não dá para sacar"');
       const valor1 = await p.evaluate(() => totais().valor);
       ok(Math.abs(valor1 - valor0 - 100 * 30.5) < 0.01, 'os totais da carteira (alocação, rentabilidade) não incluem o FGTS');
       await p.evaluate(() => irPara('painel'));
       const kp = await p.textContent('#view-painel');
-      ok(/Patrimônio total/.test(kp) && /🔒 sem liquidez: R\$\s?195\.927,80/.test(kp) && /Líquido: R\$/.test(kp), 'Painel: total com o sem liquidez, mostrado separado do líquido');
-      ok(await p.evaluate(() => { const v = PatrimonioIliquido.total(); return v === 140000; }), 'total sem liquidez R$ 140.000,00');
+      ok(/Patrimônio total/.test(kp) && /🔒 sem liquidez: R\$\s?150\.000,75/.test(kp) && /Líquido: R\$/.test(kp), 'Painel: total com o sem liquidez, mostrado separado do líquido');
+      ok(await p.evaluate(() => { const v = PatrimonioIliquido.total(); return v === 150000.75; }), 'total sem liquidez R$ 150.000,75');
       /* à mão: cadastrar, editar, excluir */
       await p.evaluate(() => irPara('carteira')); await p.waitForFunction(() => window.scrollY === 0);
       await semToasts(); await p.click('#view-carteira .il-card [data-acao="iliq-novo"]'); await p.waitForSelector('#ilForm');
       await p.fill('#ilNome', 'Previdência da empresa'); await p.selectOption('#ilTipo', 'previdencia'); await p.fill('#ilValor', '1000');
       await semToasts(); await p.click('[data-acao="iliq-salvar"]');
-      ok(await p.evaluate(() => PatrimonioIliquido.total()) === 196927.8, 'cadastrar à mão soma ao total');
+      ok(await p.evaluate(() => PatrimonioIliquido.total()) === 151000.75, 'cadastrar à mão soma ao total');
       await semToasts(); await p.click('#view-carteira tr[data-acao="iliq-editar"]:has-text("Previdência da empresa")'); await p.waitForSelector('#ilForm');
       await semToasts(); await p.click('[data-acao="iliq-excluir"]');
       ok(await p.evaluate(() => Store.estado.patrimonio_iliquido.length) === 2, 'excluir tira o item');

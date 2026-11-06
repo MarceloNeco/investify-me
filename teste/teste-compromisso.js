@@ -15,9 +15,9 @@ const ok = (c, m) => { if (c) { oks++; console.log('  ✓ ' + m); } else { falha
 const hoje = new Date(), ANO = hoje.getFullYear();
 const dt = (k, d) => { const x = new Date(ANO, hoje.getMonth() - k, d); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
 const gastos = [];
-for (let k = 1; k <= 4; k++) gastos.push({ id: 'e' + k, data: dt(k, 5), valor: 3100, grupo: 'DEPENDENTES', sub: 'Escola', desc: 'Escola Ana mensalidade', quem: 'Ana', irpf: true, fluxo: 'saida', per: 'Mensal' });
+for (let k = 1; k <= 4; k++) gastos.push({ id: 'e' + k, data: dt(k, 5), valor: 3100, grupo: 'DEPENDENTES', sub: 'Escola', desc: 'Escola Bia mensalidade', quem: 'Bia', irpf: true, fluxo: 'saida', per: 'Mensal' });
 const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
-  { id: 'r-amp', nome: 'Ampliado Ana 1º sem', valor: 900, grupo: 'DEPENDENTES', sub: 'Escola', regra: 'dia', dia: 10, quem: 'Ana', desde: ANO + '-01-01', ate: ANO + '-12-31' },
+  { id: 'r-amp', nome: 'Ampliado Bia 1º sem', valor: 900, grupo: 'DEPENDENTES', sub: 'Escola', regra: 'dia', dia: 10, quem: 'Bia', desde: ANO + '-01-01', ate: ANO + '-12-31' },
   { id: 'r-seg', nome: 'Seguro Auto ' + ANO, valor: 2400, grupo: 'VEICULO', sub: 'Seguro Auto', regra: 'anual', mes: 3, dia: 10, desde: ANO + '-01-01', ate: ANO + '-12-31' } ] };
 (async () => {
   const srv = http.createServer((q, s) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404); return s.end(); } s.writeHead(200, { 'Content-Type': p.endsWith('.html') ? 'text/html; charset=utf-8' : p.endsWith('.js') ? 'text/javascript' : p.endsWith('.css') ? 'text/css' : 'application/octet-stream' }); fs.createReadStream(p).pipe(s); });
@@ -43,13 +43,13 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       ok(await p.evaluate(() => (document.querySelector('#assetModal .modal') || {}).scrollTop === 0), 'abre no topo');
       ok(/Não escreva senha aqui/.test(await p.textContent('#rcMais')), 'aviso fixo de não pôr senha');
       /* (f)(g)(i) sugestão */
-      await p.fill('#rcNome', 'Escola Ana'); await p.waitForSelector('.rc-sug');
+      await p.fill('#rcNome', 'Escola Bia'); await p.waitForSelector('.rc-sug');
       const sug = await p.textContent('.rc-sug');
-      ok(/Dependentes/.test(sug) && /Ana/.test(sug) && /IR/.test(sug) && /dia 5/.test(sug) && /3\.100/.test(sug), 'sugestão à vista: Dependentes · Escola · Ana · IR · dia 5 · R$ 3.100');
+      ok(/Dependentes/.test(sug) && /Bia/.test(sug) && /IR/.test(sug) && /dia 5/.test(sug) && /3\.100/.test(sug), 'sugestão à vista: Dependentes · Escola · Bia · IR · dia 5 · R$ 3.100');
       await p.click('[data-acao="rec-sug-usar"]');
       const anoEsc = ANO + (hoje.getMonth() + 1 >= 7 ? 1 : 0);
       const f = await p.evaluate(() => lerFormRecorrente());
-      ok(f.grupo === 'DEPENDENTES' && f.quem === 'Ana' && f.irpf && f.dia === 5 && f.valor === 3100, '"Usar" preenche grupo, para quem, IR, dia e valor');
+      ok(f.grupo === 'DEPENDENTES' && f.quem === 'Bia' && f.irpf && f.dia === 5 && f.valor === 3100, '"Usar" preenche grupo, para quem, IR, dia e valor');
       ok(f.desde === anoEsc + '-01-01' && f.ate === anoEsc + '-12-31', 'escola sugere 01/jan a 31/dez de ' + anoEsc);
       /* (m) tocar fora não fecha; cancelar guarda rascunho */
       await p.mouse.click(3, vp.height - 3);
@@ -59,7 +59,7 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       await novo();
       ok(await p.isVisible('.rc-rasc'), 'ao abrir de novo: "Você tinha começado este compromisso"');
       await p.click('[data-acao="rec-rasc-usar"]');
-      ok(await p.inputValue('#rcNome') === 'Escola Ana' && await p.inputValue('#rcValor') === '3100', '"Continuar de onde parou" devolve o que foi digitado');
+      ok(await p.inputValue('#rcNome') === 'Escola Bia' && await p.inputValue('#rcValor') === '3100', '"Continuar de onde parou" devolve o que foi digitado');
       ok(await p.evaluate(() => !Object.keys(localStorage).concat(Object.keys(sessionStorage)).some((k) => /rascunho/i.test(k))), 'rascunho fica só na memória (nada de finança solta no aparelho)');
       /* (h) Como paga */
       const rot = await p.$$eval('.rc-radio b', (e) => e.map((x) => x.textContent));
@@ -72,20 +72,20 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       /* (k) Salvar e copiar */
       await p.click('[data-acao="rec-salvar-copiar"]');
       await p.waitForSelector('#assetModal:not(.hidden) #rcNome');
-      ok(/cópia/.test(await p.textContent('#assetModalTitle')) && await p.inputValue('#rcNome') === 'Escola Ana', '"Salvar e copiar" salva e abre outro igual');
-      let R = await recs(); const esc = R.find((r) => r.nome === 'Escola Ana');
+      ok(/cópia/.test(await p.textContent('#assetModalTitle')) && await p.inputValue('#rcNome') === 'Escola Bia', '"Salvar e copiar" salva e abre outro igual');
+      let R = await recs(); const esc = R.find((r) => r.nome === 'Escola Bia');
       ok(esc && esc.fora.join() === '7' && esc.conta === 'outro.email@exemplo.com' && esc.cartao === 'Itaú Black final 6514' && esc.obs === 'renova em fevereiro' && esc.pagador === '', 'salvo com meses de fora, conta de acesso, cartão e observação');
-      ok(await p.evaluate((a) => Recorrente.datasNoMes(Recorrente.achar(Store.estado.recorrentes.find((r) => r.nome === 'Escola Ana').id), a, 7).length === 0, anoEsc), 'julho não tem vencimento');
+      ok(await p.evaluate((a) => Recorrente.datasNoMes(Recorrente.achar(Store.estado.recorrentes.find((r) => r.nome === 'Escola Bia').id), a, 7).length === 0, anoEsc), 'julho não tem vencimento');
       /* (n) aviso de repetido */
-      await p.fill('#rcNome', 'Ampliado Ana 2º sem'); await p.fill('#rcValor', '900');
+      await p.fill('#rcNome', 'Ampliado Bia 2º sem'); await p.fill('#rcValor', '900');
       await p.evaluate((a) => { document.getElementById('rcDesde').value = a + '-08-01'; document.getElementById('rcAte').value = a + '-12-31'; }, ANO);
       await p.click('#assetModal [data-acao="rec-salvar"]');
       await p.waitForSelector('#genModal:not(.hidden) [data-acao="rec-rep-salvar"]');
       const av = await p.textContent('#genBody');
-      ok(/Parece repetido/.test(av) && /Ampliado Ana 1º sem/.test(av) && /já cobre/.test(av), 'aviso: "Parece repetido: Ampliado Ana 1º sem … já cobre …"');
+      ok(/Parece repetido/.test(av) && /Ampliado Bia 1º sem/.test(av) && /já cobre/.test(av), 'aviso: "Parece repetido: Ampliado Bia 1º sem … já cobre …"');
       await p.click('[data-acao="rec-rep-salvar"]');
       R = await recs();
-      ok(R.some((r) => r.nome === 'Ampliado Ana 2º sem'), '"Salvar assim mesmo" salva');
+      ok(R.some((r) => r.nome === 'Ampliado Bia 2º sem'), '"Salvar assim mesmo" salva');
       ok((await p.textContent('#view-b-custos')).includes('repetido?'), 'a lista de Recorrentes marca "⚠ repetido?"');
       /* N26 clonar */
       await p.click('[data-recclone="r-seg"]'); await p.waitForSelector('#assetModal:not(.hidden) #rcNome');

@@ -23,24 +23,41 @@ function pdfCom(linhas) {
     'trailer\n<< /Size ' + (objs.length + 1) + ' /Root 1 0 R >>\nstartxref\n' + x + '\n%%EOF\n';
   return Buffer.from(out, 'latin1');
 }
-/* o modelo do texto que o pdftotext tira dos contratos (sem acento no PDF de teste, que é Helvetica simples) */
-const ESCOLAR = ['ASSOCIACAO EDUCACIONAL EXEMPLO', 'CONTRATO DE SERVICOS DE EDUCACAO ESCOLAR - 2027', 'RA: 99999',
-  'Curso: ( ) Educacao infantil / ( X ) Ensino Fundamental Ano/Serie: Turno: ( ) Ensino Medio (X ) Manha ( ) Tarde',
-  'Nome Completo: Ana Teste Exemplo',
-  'CLAUSULA 7a: O valor da anuidade para o ano letivo de janeiro a dezembro de 2027 podera ser parcelado em ate 13 parcelas,',
-  'sendo a primeira parcela devida no ato da contratacao, como antecipacao da propria anuidade e 12 mensais iguais, de janeiro',
-  'a dezembro, venciveis no dia 10. Havendo feriado, o primeiro ocorrera em 11/01/2027.',
-  'Curso / Etapa Valor da Anuidade 1a Parcela Antecipada Valor Restante Numero de Parcela Valor de Cada Parcela',
-  'Educacao Infantil R$ 30.000,00 R$ 1.200,00 R$ 28.800,00 12 R$ 2.400,00',
-  'Ens. Fundamental (1o ao 5o', 'ano) R$ 40.000,00 R$ 1.600,00 R$ 38.400,00 12 R$ 3.200,00',
-  'Ens. Medio R$ 45.000,00 R$ 1.800,00 R$ 43.200,00 12 R$ 3.600,00'];
-const AMPLIADO = ['CONTRATO DE SERVICO DO PERIODO AMPLIADO - 2027', 'Nome Completo: Ana Teste Exemplo',
-  'Modalidade Horario Valor da Anuidade No de Parcelas Valor da Parcela',
-  'Periodo Ampliado (5x na semana) 8h30 as 13h / 12h as 16h30 R$ 12.000,00 10 R$ 1.200,00',
-  '(3x na semana) R$ 7.000,00 10 R$ 700,00',
-  'As 10 (dez) parcelas terao vencimento nos meses de fevereiro a junho e de agosto a dezembro de 2027, nao havendo parcela com vencimento em julho.'];
-const BOLETO = ['Beneficiario: ASSOCIACAO EDUCACIONAL EXEMPLO', 'Vencimento 30/10/2026', 'Descricao Qtd Valor Desconto Total',
-  '1a Parcela da Anuidade - 1 1.600,00 130,00 1.470,00'];
+/* o MESMO layout do texto real (pdftotext -layout): colunas com muitos espaços, o complemento do nome da etapa na linha DE
+   BAIXO dos valores, e as partes do pai e da mãe com "Nome Completo:". Valores = tabela pública da escola; nomes fictícios. */
+const ESCOLAR = ['ASSOCIAÇÃO EDUCACIONAL EXEMPLO', 'CONTRATO DE SERVIÇOS DE EDUCAÇÃO ESCOLAR - 2027',
+  'Informações do(a) educando(a)', 'RA: 99999', 'Nome Completo:    ANA TESTE EXEMPLO',
+  'Curso: ( ) Educação infantil / ( X ) Ensino Fundamental     Ano/Série:          Turno: ( ) Ensino Médio   (X ) Manhã ( ) Tarde',
+  'Informações do Pai', 'Nome Completo:    PEDRO TESTE EXEMPLO', 'Informações da Mãe', 'Nome Completo:    JOANA TESTE EXEMPLO',
+  'CLÁUSULA 7ª: O valor da anuidade para o ano letivo de janeiro a dezembro de 2027 poderá ser parcelado em até 13 parcelas,',
+  'sendo a primeira parcela devida no ato da contratação, como antecipação da própria anuidade e 12 mensais iguais, de janeiro',
+  'a dezembro, vencíveis no dia 10. Havendo feriado, o primeiro ocorrerá em 11/01/2027.',
+  'Curso / Etapa         Valor da Anuidade    1ª Parcela Antecipada    Valor Restante    Número de Parcela    Valor de Cada Parcela',
+  'Educação Infantil         R$ 36.788,00        R$ 1.472,00        R$ 35.316,00        12        R$ 2.943,00',
+  'Ens. Fundamental          R$ 38.338,00        R$ 1.534,00        R$ 36.804,00        12        R$ 3.067,00',
+  '(1º ao 5º ano)',
+  '                          R$ 45.588,00        R$ 1.824,00        R$ 43.764,00        12        R$ 3.647,00',
+  '(6º ao 9º ano)',
+  'Ensino Médio              R$ 52.613,00        R$ 2.105,00        R$ 50.508,00        12        R$ 4.209,00',
+  '(1ª série)',
+  '                          R$ 53.838,00        R$ 2.154,00        R$ 51.684,00        12        R$ 4.307,00',
+  '(2ª e 3ª série)'];
+const AMPLIADO = ['CONTRATO DE SERVIÇO DO PERÍODO AMPLIADO - 2027', 'Informações do Pai', 'Nome Completo:    PEDRO TESTE EXEMPLO',
+  'Informações do(a) Educando (a)', 'Nome do Aluno:    ANA TESTE EXEMPLO          Ano/Série: 3º Ano',
+  'Modalidade            Horário                       Valor da Anuidade    Nº de Parcelas    Valor da Parcela',
+  'Período Ampliado      8h30 às 13h / 12h às 16h30    R$ 11.040,00         10                R$ 1.104,00',
+  '(5x na semana)',
+  '                                                    R$ 6.200,00          10                R$ 620,00',
+  '(3x na semana)',
+  'Horário Estendido     7h às 8h30                    R$ 4.300,00          10                R$ 430,00',
+  '(5x na semana)',
+  '                                                    R$ 3.260,00          10                R$ 326,00',
+  '(3x na semana)',
+  'As 10 (dez) parcelas terão vencimento nos meses de fevereiro a junho e de agosto a dezembro de 2027, não havendo parcela com vencimento em julho.'];
+const BOLETO = ['Beneficiário: ASSOCIAÇÃO EDUCACIONAL EXEMPLO', 'Vencimento 30/10/2026', 'Descrição    Qtd    Valor    Desconto    Total',
+  '1ª Parcela da Anuidade - 1    1.534,00    121,00    1.413,00'];
+/* o PDF de teste é Helvetica simples: sem acento */
+const ascii = (l) => l.map((x) => x.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/º/g, 'o').replace(/ª/g, 'a'));
 const FGTS1 = ['EXTRATO DO FGTS', 'Empregador: EMPRESA EXEMPLO TECNOLOGIA LTDA CNPJ: 00.000.000/0001-00', 'Data de admissao: 01/03/2018',
   'Data e codigo de afastamento: 30/06/2024 - I1', 'DATA LANCAMENTOS VALOR TOTAL',
   '10/04/2026 115-DEPOSITO MARCO/2026 R$ 0,00 R$ 100.000,00',
@@ -56,7 +73,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [], recorrentes: [],
   const BASE = 'http://127.0.0.1:' + srv.address().port;
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cf-'));
   const arq = (n, l) => { const f = path.join(tmp, n); fs.writeFileSync(f, pdfCom(l)); return f; };
-  const fEsc = arq('contrato.pdf', ESCOLAR), fAmp = arq('ampliado.pdf', AMPLIADO), fBol = arq('boleto.pdf', BOLETO), fF1 = arq('fgts1.pdf', FGTS1), fF2 = arq('fgts2.pdf', FGTS2);
+  const fEsc = arq('contrato.pdf', ascii(ESCOLAR)), fAmp = arq('ampliado.pdf', ascii(AMPLIADO)), fBol = arq('boleto.pdf', ascii(BOLETO)), fF1 = arq('fgts1.pdf', FGTS1), fF2 = arq('fgts2.pdf', FGTS2);
   const b = await chromium.launch();
   try {
     for (const vp of [{ width: 390, height: 800 }, { width: 1366, height: 768 }]) {
@@ -71,28 +88,31 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [], recorrentes: [],
 
       console.log(' contrato da escola pelo modelo');
       const e1 = await p.evaluate((t) => CompromissoDe.lerModelo(t), ESCOLAR.join('\n'));
-      ok(e1.tipo === 'escolar' && e1.ano === 2027 && e1.aluno === 'Ana' && e1.curso === 'fundamental' && e1.turno === 'manha', 'contrato escolar: tipo, ano 2027, aluno, curso e turno marcados com X');
-      ok(e1.opcoes.length === 3 && e1.escolhida === 1 && e1.opcoes[1].nome === 'Ens. Fundamental (1o ao 5o ano)' && e1.opcoes[1].parcela === 3200 && e1.opcoes[1].antecipada === 1600 && e1.opcoes[1].anuidade === 40000,
-        'a tabela tem 3 etapas; escolhe a do curso marcado, mesmo com o nome quebrado em 2 linhas');
-      ok(e1.meses.length === 12 && e1.dia === 10 && e1.primeiroVenc === '2027-01-11' && e1.antecipadaNoAto, '12 mensais de janeiro a dezembro, dia 10, 1º vencimento 11/01/2027, 1ª parcela no ato');
-      const e2 = await p.evaluate((t) => CompromissoDe.lerModelo(t.replace('Ens. Medio R$ 45.000,00', 'Ens. Fundamental (6o ao 9o ano) R$ 45.000,00')), ESCOLAR.join('\n'));
-      ok(e2.escolhida === -1, 'duas linhas do Fundamental e sem série: o app pergunta');
-      const e3 = await p.evaluate((t) => CompromissoDe.lerModelo(t.replace('Ano/Serie:', 'Ano/Serie: 7').replace('Ens. Medio R$ 45.000,00', 'Ens. Fundamental (6o ao 9o ano) R$ 45.000,00')), ESCOLAR.join('\n'));
-      ok(e3.escolhida === 2, 'com a série (7º ano): escolhe "6º ao 9º ano"');
+      ok(e1.tipo === 'escolar' && e1.ano === 2027 && e1.aluno === 'Ana' && e1.curso === 'fundamental' && e1.turno === 'manha', 'contrato escolar: ano 2027, aluno (o 1º "Nome Completo", não o pai nem a mãe), curso e turno marcados com X');
+      const nomes = e1.opcoes.map((o) => o.nome + '=' + o.anuidade + '/' + o.antecipada + '/' + o.parcelas + 'x' + o.parcela).join(' | ');
+      ok(nomes === 'Educação Infantil=36788/1472/12x2943 | Ens. Fundamental (1º ao 5º ano)=38338/1534/12x3067 | Ens. Fundamental (6º ao 9º ano)=45588/1824/12x3647 | Ensino Médio (1ª série)=52613/2105/12x4209 | Ensino Médio (2ª e 3ª série)=53838/2154/12x4307',
+        'a tabela: o complemento da linha de baixo fica com a linha certa (' + nomes + ')');
+      ok(e1.meses.length === 12 && e1.dia === 10 && e1.primeiroVenc === '2027-01-11' && e1.antecipadaNoAto, '12 mensais de janeiro a dezembro, dia 10 ("vencíveis", com acento), 1º vencimento 11/01/2027, 1ª parcela no ato');
+      ok(e1.escolhida === -1, 'só o contrato escolar, sem série: duas linhas do Fundamental → o app pergunta');
+      ok(await p.evaluate((t) => CompromissoDe.lerModelo(t.replace('Ano/Série:  ', 'Ano/Série: 7')).escolhida, ESCOLAR.join('\n')) === 2, 'com "Ano/Série: 7": escolhe "6º ao 9º ano"');
       const a1 = await p.evaluate((t) => CompromissoDe.lerModelo(t), AMPLIADO.join('\n'));
-      ok(a1.tipo === 'ampliado' && a1.opcoes.length === 2 && a1.opcoes[1].nome === '(3x na semana)' && a1.opcoes[1].parcela === 700 && a1.opcoes[0].parcelas === 10 && a1.escolhida === -1 && a1.dia === 0,
-        'período ampliado: 2 opções (5x e 3x), sem X → perguntar; dia não informado');
+      const na = a1.opcoes.map((o) => o.nome + '=' + o.anuidade + '/' + o.parcelas + 'x' + o.parcela).join(' | ');
+      ok(na === 'Período Ampliado (5x na semana)=11040/10x1104 | Período Ampliado (3x na semana)=6200/10x620 | Horário Estendido (5x na semana)=4300/10x430 | Horário Estendido (3x na semana)=3260/10x326',
+        'período ampliado: 4 opções com o nome certo (' + na + ')');
+      ok(a1.aluno === 'Ana' && a1.serie === 3 && a1.escolhida === -1 && a1.dia === 0 && a1.opcoes[0].horario === '8h30 às 13h / 12h às 16h30', 'aluno pelo "Nome do Aluno" (não o pai), série 3, sem X → perguntar, dia não informado, horário à parte');
       ok(a1.meses.join() === '2,3,4,5,6,8,9,10,11,12', 'meses: fevereiro a junho e agosto a dezembro (sem julho)');
       ok(await p.evaluate((t) => CompromissoDe.lerModelo(t.replace('(3x na semana)', '( X ) (3x na semana)')).escolhida, AMPLIADO.join('\n')) === 1, 'com "( X )" na opção: escolhe sozinho');
+      const pl = await p.evaluate((ts) => { const q = CompromissoDe.planoModelo(ts.map((t) => CompromissoDe.lerModelo(t))); return q.itens.map((i) => i.opcoes.map((o) => o.nome).join(',') + '@' + i.escolhida); }, [ESCOLAR.join('\n'), AMPLIADO.join('\n')]);
+      ok(pl[0] === 'Ens. Fundamental (1º ao 5º ano),Ens. Fundamental (6º ao 9º ano)@0' && /@-1$/.test(pl[1]), 'no lote: só as 2 linhas do Fundamental, e o "3º Ano" do ampliado pré-seleciona "1º ao 5º ano"');
       const b1 = await p.evaluate((t) => CompromissoDe.lerModelo(t), BOLETO.join('\n'));
-      ok(b1.tipo === 'boleto' && b1.bruto === 1600 && b1.desconto === 130 && b1.pagar === 1470 && b1.venc === '2026-10-30', 'boleto da matrícula: bruto, desconto, a pagar e vencimento');
+      ok(b1.tipo === 'boleto' && b1.bruto === 1534 && b1.desconto === 121 && b1.pagar === 1413 && b1.venc === '2026-10-30', 'boleto da matrícula: bruto, desconto, a pagar e vencimento');
       ok(await p.evaluate(() => CompromissoDe.lerModelo('Contrato de prestacao de servicos qualquer') === null), 'texto de outro contrato: não é modelo (fica o leitor genérico)');
 
       await p.evaluate(() => { abrirApp('budget'); irPara('b-custos'); custosAba = 'recorrentes'; render(); });
       await p.waitForFunction(() => window.scrollY === 0); await semToasts();
       const [fc] = await Promise.all([p.waitForEvent('filechooser'), p.click('#view-b-custos [data-acao="cdl-contrato"]')]);
       await fc.setFiles([fEsc, fAmp, fBol]); await p.waitForSelector('#genModal:not(.hidden) .cdl-item');
-      ok(await p.$$eval('#genBody .cdl-item', (l) => l.length) === 2 && await p.isChecked('#cdlGasto') && await p.inputValue('#cdlGValor') === '1470', 'prévia: escola + período ampliado + 1ª parcela (R$ 1.470, marcada)');
+      ok(await p.$$eval('#genBody .cdl-item', (l) => l.length) === 2 && await p.isChecked('#cdlGasto') && await p.inputValue('#cdlGValor') === '1413' && await p.inputValue('#genBody .cdl-item[data-k="0"] .cdl-op') === '0', 'prévia: escola (1º ao 5º já escolhido) + período ampliado + 1ª parcela (R$ 1.413, marcada)');
       ok(/Qual opção vocês contrataram/.test(await p.textContent('#genBody')), 'o período ampliado sem X pergunta qual opção');
       await semToasts(); await p.click('#genBody [data-acao="cdl-criar"]');
       ok(await p.evaluate(() => (Store.estado.recorrentes || []).length === 0) && /Escolha a opção/.test(await p.textContent('#toasts')), 'sem escolher a opção: não cria nada e avisa');
@@ -100,12 +120,12 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [], recorrentes: [],
       await semToasts(); await p.click('#genBody [data-acao="cdl-criar"]');
       await p.waitForFunction(() => (Store.estado.recorrentes || []).length === 2 && document.getElementById('genModal').classList.contains('hidden'));
       const rs = await p.evaluate(() => Store.estado.recorrentes.map((r) => ({ n: r.nome, v: r.valor, d: r.dia, de: r.desde, ate: r.ate, fora: r.fora.join(), c: r.aConfirmar, ir: r.irpf, g: r.grupo, q: r.quem })));
-      ok(rs[0].n === 'Escola Ana 2027' && rs[0].v === 3200 && rs[0].d === 10 && rs[0].de === '2027-01-01' && rs[0].ate === '2027-12-31' && rs[0].fora === '' && rs[0].c && rs[0].ir && rs[0].g === 'DEPENDENTES' && rs[0].q === 'Ana',
-        'criou "Escola Ana 2027": R$ 3.200, dia 10, jan–dez, IR, a confirmar');
-      ok(rs[1].n === 'Período ampliado Ana 2027' && rs[1].v === 700 && rs[1].d === 10 && rs[1].de === '2027-02-01' && rs[1].fora === '7' && rs[1].c && rs[1].ir,
-        'criou "Período ampliado Ana 2027": R$ 700, fev–dez sem julho, dia do contrato escolar, a confirmar');
+      ok(rs[0].n === 'Escola Ana 2027' && rs[0].v === 3067 && rs[0].d === 10 && rs[0].de === '2027-01-01' && rs[0].ate === '2027-12-31' && rs[0].fora === '' && rs[0].c && rs[0].ir && rs[0].g === 'DEPENDENTES' && rs[0].q === 'Ana',
+        'criou "Escola Ana 2027": R$ 3.067, dia 10, jan–dez, IR, a confirmar');
+      ok(rs[1].n === 'Período ampliado Ana 2027' && rs[1].v === 620 && rs[1].d === 10 && rs[1].de === '2027-02-01' && rs[1].fora === '7' && rs[1].c && rs[1].ir,
+        'criou "Período ampliado Ana 2027": R$ 620 (3x), fev–dez sem julho, dia do contrato escolar, a confirmar');
       const gs = await p.evaluate(() => Store.estado.gastos.map((g) => [g.data, g.valor, g.grupo, g.quem, g.irpf, g.per].join('|')));
-      ok(gs.length === 1 && gs[0] === '2026-10-30|1470|DEPENDENTES|Ana|true|Pontual', '1ª parcela lançada como gasto pontual (30/10/2026, R$ 1.470, IR)');
+      ok(gs.length === 1 && gs[0] === '2026-10-30|1413|DEPENDENTES|Ana|true|Pontual', '1ª parcela lançada como gasto pontual (30/10/2026, R$ 1.413, IR)');
       ok(await p.evaluate(() => (Store.estado.arquivos || []).filter((a) => a.tipo === 'contrato').length === 2 && Store.estado.arquivos.some((a) => a.tipo === 'boleto')), 'os 3 PDFs ficam guardados (2 contratos e o boleto)');
       ok(await p.evaluate((t) => CompromissoDe.planoModelo([CompromissoDe.lerModelo(t)]).gasto.jaLancado, BOLETO.join('\n')), 'ler o boleto de novo: a 1ª parcela já aparece como lançada');
       ok((await p.textContent('#view-b-custos')).match(/a confirmar/g).length >= 2, 'a lista mostra "⚠ a confirmar" nos dois');

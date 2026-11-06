@@ -684,3 +684,10 @@ mesmo HTML, sem erro de página; o número da versão e a lista "O que há de no
 - `modulos/patrimonio-iliquido.js` 1.1.0: `valorHoje(item)` (ponto `iliquido.valor`), `total()` pelo valor de hoje; FGTS pode ter valor 0
   (conta sacada: guardada e escondida, "N contas zeradas guardadas — mostrar").
 - Teste: `teste/teste-contrato-fgts.js` (textos sintéticos, sem dado real).
+- 3.49 (`compromisso-de` 1.2.0), conferido pela sessão principal contra o texto real (`pdftotext -layout`): o complemento "(1º ao 5º ano)" /
+  "(5x na semana)" vem na linha DE BAIXO dos valores e completa a linha de cima; linha de valores sem nome herda a etapa de cima; o
+  horário sai do nome (`horario`); aluno = "Nome do Aluno:" ou o 1º "Nome Completo:" depois de "Informações do(a) educando(a)";
+  espaços repetidos viram um antes das regras; só as linhas da etapa marcada com X entram na prévia, e a série ("Ano/Série" ou o
+  "3º Ano" do contrato do ampliado) pré-seleciona. O teste usa o mesmo layout, com nomes fictícios.
+- Nenhum nome real nos testes, nos módulos e na documentação (3.49): crianças, pais, escola, empregadores e saldos foram trocados
+  por fictícios. O que já está no histórico do git só sai reescrevendo a main (decisão do dono).

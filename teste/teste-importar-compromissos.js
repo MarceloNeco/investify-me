@@ -13,9 +13,9 @@ let falhas = 0, oks = 0;
 const ok = (c, m) => { if (c) { oks++; console.log('  ✓ ' + m); } else { falhas++; console.log('  ✗ FALHOU: ' + m); } };
 const LOCAL = { v: 1, posicoes: [], gastos: [], recorrentes: [{ id: 'r-ja', nome: 'Condomínio Jardim', valor: 2700, grupo: 'HABITACAO', sub: 'Condomínio', regra: 'dia', dia: 10 }], config: {} };
 const ARQ = { tipo: 'moneytrio-compromissos', versao: 1, criado_em: '2026-11-03', itens: [
-  { nome: 'Condomínio Jardim', valor: 2700, grupo: 'HABITACAO', sub: 'Condomínio', regra: 'dia', dia: 10, cada: 1, quem: 'Neco', estadoPadrao: 'pendente', desde: '', ate: '', irpf: false, avisar: true },
-  { nome: 'Escola Ana 2027', valor: 3100, grupo: 'DEPENDENTES', sub: 'Escola', regra: 'dia', dia: 5, cada: 1, quem: 'Ana', desde: '2027-01-01', ate: '2027-12-31', irpf: true },
-  { nome: 'YouTube Premium', valor: 26.9, grupo: 'LAZER', sub: 'Assinaturas', regra: 'dia', dia: 3, quem: 'Neco' },
+  { nome: 'Condomínio Jardim', valor: 2700, grupo: 'HABITACAO', sub: 'Condomínio', regra: 'dia', dia: 10, cada: 1, quem: 'Alex', estadoPadrao: 'pendente', desde: '', ate: '', irpf: false, avisar: true },
+  { nome: 'Escola Bia 2027', valor: 3100, grupo: 'DEPENDENTES', sub: 'Escola', regra: 'dia', dia: 5, cada: 1, quem: 'Bia', desde: '2027-01-01', ate: '2027-12-31', irpf: true },
+  { nome: 'YouTube Premium', valor: 26.9, grupo: 'LAZER', sub: 'Assinaturas', regra: 'dia', dia: 3, quem: 'Alex' },
   { nome: 'Coisa sem grupo', valor: 50, grupo: 'NAO_EXISTE', sub: 'X', regra: 'dia', dia: 1 },
   { nome: 'Valor zerado', valor: 0, grupo: 'PESSOAL', sub: 'Y', regra: 'dia', dia: 1 } ] };
 (async () => {
@@ -61,7 +61,7 @@ const ARQ = { tipo: 'moneytrio-compromissos', versao: 1, criado_em: '2026-11-03'
       ok(linhas[1].ck && linhas[2].ck, 'os novos vêm marcados');
       ok(!linhas[3].ck && /grupo inválido/.test(linhas[3].txt), 'grupo inválido: desmarcado e avisado');
       ok(!linhas[4].ck && /valor zero/.test(linhas[4].txt), 'valor zero: desmarcado e avisado');
-      ok(/01\/Jan\/2027|01\/01\/2027/.test(linhas[1].txt) && /Ana/.test(linhas[1].txt) && /✓/.test(linhas[1].txt), 'a prévia mostra período, quem e IR');
+      ok(/01\/Jan\/2027|01\/01\/2027/.test(linhas[1].txt) && /Bia/.test(linhas[1].txt) && /✓/.test(linhas[1].txt), 'a prévia mostra período, quem e IR');
       ok((await p.textContent('#impOk')).trim() === 'Importar 2 marcados', 'botão "Importar 2 marcados"');
       const lay = await p.evaluate(() => { const m = document.querySelector('#genModal .modal'), w = document.querySelector('#genModal .tbl-fixa'); return { modal: m.getBoundingClientRect().width, cabe: w.scrollWidth <= w.clientWidth + 1 }; });
       if (vp.width >= 1024) {
@@ -75,7 +75,7 @@ const ARQ = { tipo: 'moneytrio-compromissos', versao: 1, criado_em: '2026-11-03'
       await p.click('#impOk');
       await p.waitForFunction(() => Store.estado.recorrentes.length === 3);
       const recs = await p.evaluate(() => Store.estado.recorrentes.map((r) => ({ id: r.id, nome: r.nome, grupo: r.grupo, irpf: r.irpf, desde: r.desde })));
-      ok(recs[0].id === 'r-ja' && recs.some((r) => r.nome === 'Escola Ana 2027' && r.grupo === 'DEPENDENTES' && r.irpf && r.desde === '2027-01-01') && recs.some((r) => r.nome === 'YouTube Premium'), 'importou só os 2 marcados; o que já existia ficou igual');
+      ok(recs[0].id === 'r-ja' && recs.some((r) => r.nome === 'Escola Bia 2027' && r.grupo === 'DEPENDENTES' && r.irpf && r.desde === '2027-01-01') && recs.some((r) => r.nome === 'YouTube Premium'), 'importou só os 2 marcados; o que já existia ficou igual');
       ok(/2 compromissos importados\. Você pode editar cada um em Recorrentes\./.test(await p.textContent('#toasts')), 'mensagem final "2 compromissos importados…"');
       ok(JSON.parse(await p.evaluate(() => localStorage.getItem('investifyme.dados.v1'))).recorrentes.length === 3, 'modo só neste aparelho: gravado no aparelho');
       /* janela pequena depois da grande: não fica larga */

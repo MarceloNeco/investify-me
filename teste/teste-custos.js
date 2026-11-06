@@ -27,7 +27,7 @@ for (let k = 0; k <= 6; k++) g({ data: dt(k, 10), valor: 2700, grupo: 'HABITACAO
 for (let k = 0; k <= 6; k++) g({ data: dt(k, 3 + k), valor: 300 + 400 * (k % 3), grupo: 'PESSOAL', sub: 'Mercado' });   /* variável: não é conta fixa */
 const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
   { id: 'r-cond', nome: 'Condomínio Jardim', valor: 2700, grupo: 'HABITACAO', sub: 'Condomínio', regra: 'dia', dia: 10 },
-  { id: 'r-esc', nome: 'Escola Ana ' + anoQueVem, valor: 3100, grupo: 'DEPENDENTES', sub: 'Escola', regra: 'dia', dia: 5, desde: anoQueVem + '-01-01', ate: anoQueVem + '-12-31' },
+  { id: 'r-esc', nome: 'Escola Bia ' + anoQueVem, valor: 3100, grupo: 'DEPENDENTES', sub: 'Escola', regra: 'dia', dia: 5, desde: anoQueVem + '-01-01', ate: anoQueVem + '-12-31' },
   { id: 'r-des', nome: 'Curso', valor: 100, grupo: 'DEPENDENTES', sub: 'Curso', regra: 'dia', dia: 8, desde: anoQueVem + '-03-01' },
   { id: 'r-ate', nome: 'Seguro', valor: 100, grupo: 'VEICULO', sub: 'Seguro Auto', regra: 'dia', dia: 8, ate: anoQueVem + '-12-31' },
   { id: 'r-2a', nome: 'Plano', valor: 100, grupo: 'SAUDE', sub: 'Plano', regra: 'dia', dia: 8, desde: '2026-01-30', ate: anoQueVem + '-08-14' } ] };

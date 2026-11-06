@@ -167,9 +167,9 @@ const LOCAL = {
   v: 1, moedaBase: 'BRL', nivel: 'iniciante', tema: 'dark',
   posicoes: [{ id: 'p1', ticker: 'PETR4', nome: 'Petrobras PN', tipo: 'acao', qtd: 10, pm: 30, moeda: 'BRL', inst: 'XP', data: '2025-01-10' }],
   gastos: [
-    { id: 'g1', data: '2026-10-01', valor: 59.9, grupo: 'LAZER', sub: 'Cinema', desc: 'Cinema com as crianças', per: 'Pontual', quem: 'Neco', forma: 'Pix', fluxo: 'saida' },
+    { id: 'g1', data: '2026-10-01', valor: 59.9, grupo: 'LAZER', sub: 'Cinema', desc: 'Cinema com as crianças', per: 'Pontual', quem: 'Alex', forma: 'Pix', fluxo: 'saida' },
     { id: 'g2', data: '2026-10-05', valor: 412.3, grupo: 'HABITACAO', sub: 'Supermercado', desc: 'Compra do mês', per: 'Mensal', quem: '', forma: 'Credito', fluxo: 'saida' },
-    { id: 'g3', data: '2026-10-05', valor: 9000, grupo: 'RENDA', sub: 'Salário', desc: 'Salário outubro', per: 'Mensal', quem: 'Neco', forma: 'Pix', fluxo: 'entrada' }],
+    { id: 'g3', data: '2026-10-05', valor: 9000, grupo: 'RENDA', sub: 'Salário', desc: 'Salário outubro', per: 'Mensal', quem: 'Alex', forma: 'Pix', fluxo: 'entrada' }],
   cartoes: [{ id: 'c1', nome: 'Visa', final: '1234', fechamento: 1, vencimento: 10 }],
   pagamentos: [{ rid: 'r1', data: '2026-10-10', pago: true }],
   agenda: [{ chave: 'ag|1', data: '2026-12-01', valor: 1000, tipo: 'resgate' }],
@@ -284,7 +284,7 @@ let BASE = '';
     await filaVazia(A);
     const vivos = db.money_docs.filter((r) => !r.apagado_em);
     ok(vivos.length >= 10, 'A: os registros subiram para money_docs (' + vivos.length + ')');
-    ok(!JSON.stringify(db.money_docs).match(/Cinema|PETR4|Supermercado|Neco|9000/), 'no banco não há nenhum texto aberto (só pacotes fechados)');
+    ok(!JSON.stringify(db.money_docs).match(/Cinema|PETR4|Supermercado|Alex|9000/), 'no banco não há nenhum texto aberto (só pacotes fechados)');
     const g1 = vivos.find((r) => r.colecao === 'gastos' && r.id === 'g1');
     ok(g1 && (await abrirDoBanco(g1.dados_cifrado)).desc === 'Cinema com as crianças', 'o pacote do banco abre com a chave da família (g1)');
     ok(vivos.some((r) => r.colecao === 'pagamentos' && r.id === 'r1@2026-10-10') && vivos.some((r) => r.colecao === 'agenda' && r.id === 'ag|1') === false && vivos.some((r) => r.colecao === 'agenda'), 'ids: pagamento por rid@data; chave com "|" vira id seguro');
@@ -294,18 +294,18 @@ let BASE = '';
     ok(/Tudo guardado/.test(await A.textContent('#nvSelo')), 'A: selo "Tudo guardado"');
     await A.waitForFunction(() => (document.querySelector('#perfilNome') || {}).textContent === 'dono', null, { timeout: 10000 }).catch(() => {});
     ok((await A.textContent('#perfilNome')) === 'dono' && (await A.textContent('#perfilAv')) === 'D', 'A: sem nome no perfil nem no Google, o topo mostra a parte do e-mail antes do @ ("dono", iniciais "D")');
-    db.user_settings.push({ user_id: UID, display_name: 'Marcelo Freitas' });
+    db.user_settings.push({ user_id: UID, display_name: 'Paulo Souza' });
     await A.evaluate(() => MoneyNuvem.buscarNome());
-    ok((await A.textContent('#perfilNome')) === 'Marcelo Freitas' && (await A.textContent('#perfilAv')) === 'MF', 'A: com o nome do perfil SolverONE, o topo mostra "Marcelo Freitas" e as iniciais "MF"');
+    ok((await A.textContent('#perfilNome')) === 'Paulo Souza' && (await A.textContent('#perfilAv')) === 'PS', 'A: com o nome do perfil SolverONE, o topo mostra "Paulo Souza" e as iniciais "PS"');
     db.user_settings.length = 0;
     ok(/Fica guardado na nuvem/.test(await A.textContent('.hub-pe')), 'A: rodapé da tela inicial diz que fica na nuvem');
     await A.screenshot({ path: path.join(SAIDA, 'A-app.png') });
 
     /* 3.33: importar compromissos com a nuvem: grava pelo caminho normal (fechado) */
-    await A.evaluate(() => { ImportRec.abrir(JSON.stringify({ tipo: 'moneytrio-compromissos', versao: 1, itens: [{ nome: 'Escola Ana 2027', valor: 3100, grupo: 'DEPENDENTES', sub: 'Escola', regra: 'dia', dia: 5, quem: 'Ana', irpf: true }] })); ImportRec.importar(); });
+    await A.evaluate(() => { ImportRec.abrir(JSON.stringify({ tipo: 'moneytrio-compromissos', versao: 1, itens: [{ nome: 'Escola Bia 2027', valor: 3100, grupo: 'DEPENDENTES', sub: 'Escola', regra: 'dia', dia: 5, quem: 'Bia', irpf: true }] })); ImportRec.importar(); });
     await esperar(1200); await filaVazia(A);
     const recNuvem = db.money_docs.filter((r) => r.colecao === 'recorrentes' && !r.apagado_em);
-    ok(recNuvem.length === 1 && (await abrirDoBanco(recNuvem[0].dados_cifrado)).nome === 'Escola Ana 2027' && !/Escola Ana/.test(recNuvem[0].dados_cifrado), 'importar compromissos com a nuvem: sobe fechado para money_docs (recorrentes)');
+    ok(recNuvem.length === 1 && (await abrirDoBanco(recNuvem[0].dados_cifrado)).nome === 'Escola Bia 2027' && !/Escola Bia/.test(recNuvem[0].dados_cifrado), 'importar compromissos com a nuvem: sobe fechado para money_docs (recorrentes)');
 
     /* ---------- 3. caixa do robô ---------- */
     console.log('3) caixa do robô');
@@ -316,7 +316,7 @@ let BASE = '';
     ok(cx && cx.chave_publica.kty === 'RSA' && cx.chave_publica.n.length === 512 && !cx.chave_publica.d, 'A: criou a chave pública da caixa (3072 bits, sem a parte privada)');
     const sec = db.money_docs.find((r) => r.colecao === 'config' && r.id === 'caixa_robo');
     ok(sec && (await abrirDoBanco(sec.dados_cifrado)).kid === cx.chave_publica.kid, 'a parte secreta da caixa está no money_docs, fechada com a chave da família');
-    const lanc = { id: 'pluggy-e2e-1', data: '2026-11-03', valor: 87.5, tipo: 'despesa', grupo: 'VEICULO', categoria: 'Combustível', descricao: 'Posto teste', quem: 'Neco', forma: 'Crédito', cartao: 'Visa', final: '1234', banco: 'Banco Teste', ir: false, freq: 'Pontual', origem: 'pluggy', cat_pluggy: 'Gas' };
+    const lanc = { id: 'pluggy-e2e-1', data: '2026-11-03', valor: 87.5, tipo: 'despesa', grupo: 'VEICULO', categoria: 'Combustível', descricao: 'Posto teste', quem: 'Alex', forma: 'Crédito', cartao: 'Visa', final: '1234', banco: 'Banco Teste', ir: false, freq: 'Pontual', origem: 'pluggy', cat_pluggy: 'Gas' };
     const pacPy = execFileSync('python3', ['-I', '-c', 'import sys,json; sys.path.insert(0, sys.argv[1]); import pacote_caixa as pc; print(pc.selar(json.loads(sys.argv[2]), json.loads(sys.argv[3])))', path.join(__dirname, 'robo-pacote'), JSON.stringify(cx.chave_publica), JSON.stringify(lanc)]).toString().trim();
     db.money_entrada.push({ grupo_id: GID, id: 'pluggy-e2e-1', pacote: pacPy, origem: 'pluggy', criado_em: agora(), consumido_em: null });
     db.money_entrada.push({ grupo_id: GID, id: 'pluggy-e2e-2', pacote: vetor.itens[0].pacote, origem: 'pluggy', criado_em: agora(), consumido_em: null });   /* fechado para outra chave */
@@ -359,7 +359,7 @@ let BASE = '';
     ok(!!linhaTf().consumido_em && db.money_docs.some((r) => r.colecao === 'transferencias' && r.id === 'tf_pluggy-tf-1'), 'e vai para o money_docs fechada, e é marcada como aproveitada');
     /* 3.42: arquivos (NF/pasta do IR) fechados com a chave da família; Storage ainda sem o SQL → ficam no aparelho */
     const ORIG = 'PDF-de-teste-NFS-e-Dentista-R$-350,00-' + 'x'.repeat(300);
-    const m1 = await A.evaluate(async (t) => { const m = await ArquivosFamilia.guardar({ nome: '2026-11-05 Dentista Ana.pdf', tipo: 'nf', ano: 2026 }, new TextEncoder().encode(t)); return m; }, ORIG);
+    const m1 = await A.evaluate(async (t) => { const m = await ArquivosFamilia.guardar({ nome: '2026-11-05 Dentista Bia.pdf', tipo: 'nf', ano: 2026 }, new TextEncoder().encode(t)); return m; }, ORIG);
     await esperar(800);
     ok(m1 && !m1.nuvem && Object.keys(storage.objs).length === 0, 'arquivo: sem o bucket (SQL não aplicado), fica só no aparelho, sem erro');
     for (let i = 0; i < 40 && !db.money_docs.some((r) => r.colecao === 'arquivos' && r.id === m1.id); i++) await esperar(250);

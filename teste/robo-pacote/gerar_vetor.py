@@ -17,11 +17,11 @@ ARQ = os.path.join(AQUI, "vetor-caixa-robo.json")
 
 LANCAMENTOS = [
     {"id": "pluggy-teste-0001", "data": "2026-11-02", "valor": 123.45, "tipo": "despesa", "grupo": "HABITACAO",
-     "categoria": "Supermercado", "descricao": "PÃO DE AÇÚCAR — compra teste", "quem": "Neco", "forma": "Crédito",
+     "categoria": "Supermercado", "descricao": "PÃO DE AÇÚCAR — compra teste", "quem": "Alex", "forma": "Crédito",
      "cartao": "Visa teste", "final": "1234", "banco": "Banco Teste", "ir": False, "freq": "Pontual",
      "origem": "pluggy", "cat_pluggy": "Groceries"},
     {"id": "pluggy-teste-0002", "data": "2026-11-01", "valor": 5000, "tipo": "receita", "grupo": "RENDA",
-     "categoria": "Salário", "descricao": "Salário teste", "quem": "Neco", "forma": "Pix", "cartao": "", "final": "",
+     "categoria": "Salário", "descricao": "Salário teste", "quem": "Alex", "forma": "Pix", "cartao": "", "final": "",
      "banco": "Banco Teste", "ir": True, "freq": "Mensal", "origem": "pluggy", "cat_pluggy": "Salary"},
     {"id": "pluggy-teste-0003", "data": "2026-11-02", "valor": -40.0, "tipo": "despesa", "grupo": "LAZER",
      "categoria": "Restaurante", "descricao": "Estorno teste", "quem": "", "forma": "Crédito", "cartao": "", "final": "1234",

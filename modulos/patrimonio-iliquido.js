@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/patrimonio-iliquido.js — patrimônio SEM LIQUIDEZ (InvestifyONE)   1.1.0 · 06/Nov/2026
+   modulos/patrimonio-iliquido.js — patrimônio SEM LIQUIDEZ (InvestifyONE)   1.1.1 · 06/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      Guarda o que é da família mas não dá para sacar quando quiser: saldo de FGTS por empregador,
@@ -58,7 +58,7 @@
     x = x || { tipo: 'fgts', data: hojeISO() };
     return '<div class="card" id="ilForm"><div class="card-head"><h3>' + (x.id ? (pt() ? 'Editar' : 'Edit') : (pt() ? 'Novo item sem liquidez' : 'New non-liquid item')) + '</h3></div>' +
       '<input type="hidden" id="ilId" value="' + esc(x.id || '') + '">' +
-      '<div class="grid g2">' + campo(pt() ? 'Nome' : 'Name', '<input id="ilNome" value="' + esc(x.nome || '') + '" placeholder="' + (pt() ? 'FGTS Empresa A' : 'e.g. FGTS employer') + '">') +
+      '<div class="grid g2">' + campo(pt() ? 'Nome' : 'Name', '<input id="ilNome" value="' + esc(x.nome || '') + '" placeholder="' + (pt() ? 'FGTS Empresa' : 'e.g. FGTS employer') + '">') +
         campo(pt() ? 'Tipo' : 'Type', '<select id="ilTipo">' + Object.keys(TIPOS).map(function (k) { return '<option value="' + k + '"' + (x.tipo === k ? ' selected' : '') + '>' + esc(TIPOS[k][pt() ? 'pt' : 'en']) + '</option>'; }).join('') + '</select>') +
         campo(pt() ? 'Onde está (empregador, banco…)' : 'Where (employer, bank…)', '<input id="ilInst" value="' + esc(x.inst || '') + '">') +
         campo(pt() ? 'Valor (R$)' : 'Amount (R$)', '<input type="number" id="ilValor" min="0" step="0.01" inputmode="decimal" value="' + (x.valor || '') + '">') +
@@ -94,7 +94,7 @@
 
   MoneyModulos.registrar({
     id: 'patrimonio-iliquido',
-    versao: '1.1.0',
+    versao: '1.1.1',
     colecoes: [COL],
     pontos: {
       'patrimonio.extra': function () { var v = API.total(); return v ? [{ valor: v, rotulo: pt() ? 'sem liquidez' : 'not liquid' }] : []; },

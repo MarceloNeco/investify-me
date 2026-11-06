@@ -27,7 +27,7 @@ const mais = (n) => { const d = new Date(hoje); d.setDate(d.getDate() + n); retu
 /* 14 meses de conta de luz, janeiro mais caro */
 const gastos = [];
 for (let k = 1; k <= 14; k++) { const d = new Date(ANO, hoje.getMonth() - k, 15); gastos.push({ id: 'e' + k, data: iso(d), valor: d.getMonth() === 0 ? 600 : 400, grupo: 'HABITACAO', sub: 'Energia', desc: 'ENEL', fluxo: 'saida' }); }
-gastos.push({ id: 'gx', data: mais(-2), valor: 89.9, grupo: 'PESSOAL', sub: 'Academia', desc: 'SMARTFIT MENSALIDADE', quem: 'Neco', fluxo: 'saida' });
+gastos.push({ id: 'gx', data: mais(-2), valor: 89.9, grupo: 'PESSOAL', sub: 'Academia', desc: 'SMARTFIT MENSALIDADE', quem: 'Alex', fluxo: 'saida' });
 const vEnergia = new Date(ANO, hoje.getMonth() + 1, 15);
 const LOCAL = { v: 1, posicoes: [], config: {}, gastos, recorrentes: [
   { id: 'r-yt', nome: 'YouTube Premium', valor: 26.9, grupo: 'LAZER', sub: 'Assinaturas', regra: 'dia', dia: 3 },
@@ -38,7 +38,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos, recorrentes: [
   const BASE = 'http://127.0.0.1:' + srv.address().port;
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'p10-'));
   const contrato = path.join(tmp, 'contrato.pdf');
-  fs.writeFileSync(contrato, pdfCom(['COLEGIO MADRE CABRINI', 'Contrato de prestacao de servicos educacionais - ano letivo de ' + (ANO + 1), 'Aluno: Ana Exemplo',
+  fs.writeFileSync(contrato, pdfCom(['COLEGIO EXEMPLO', 'Contrato de prestacao de servicos educacionais - ano letivo de ' + (ANO + 1), 'Aluno: Bia Souza',
     'Anuidade R$ 36.000,00 em 12 parcelas de R$ 3.000,00', 'Vencimento todo dia 05 de cada mes', 'Matricula R$ 3.000,00']));
   const boleto = path.join(tmp, 'boleto.pdf');
   fs.writeFileSync(boleto, pdfCom(['Beneficiario: ENEL DISTRIBUICAO SAO PAULO CNPJ 61.695.227/0001-93', 'Vencimento ' + iso(vEnergia).split('-').reverse().join('/'), 'Valor do documento 412,37']));
@@ -75,16 +75,16 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos, recorrentes: [
       await p.waitForSelector('#assetModal [data-acao="cdl-lanc"]');
       await semToasts(); await p.click('#assetModal [data-acao="cdl-lanc"]'); await p.waitForSelector('#assetModal #rcNome');
       const fl = await p.evaluate(() => lerFormRecorrente());
-      ok(fl.nome === 'SMARTFIT MENSALIDADE' && fl.valor === 89.9 && fl.grupo === 'PESSOAL' && fl.sub === 'Academia' && fl.quem === 'Neco' && fl.dia === Number(mais(-2).slice(8)), '"Virar compromisso" abre o formulário preenchido pelo lançamento');
+      ok(fl.nome === 'SMARTFIT MENSALIDADE' && fl.valor === 89.9 && fl.grupo === 'PESSOAL' && fl.sub === 'Academia' && fl.quem === 'Alex' && fl.dia === Number(mais(-2).slice(8)), '"Virar compromisso" abre o formulário preenchido pelo lançamento');
       await p.click('#assetModal .f-actions [data-close="assetModal"]');
-      ok(await p.evaluate((a) => { const k = CompromissoDe.lerContrato('COLEGIO MADRE CABRINI\nano letivo de ' + a + '\nAluno: Ana Exemplo\nAnuidade R$ 36.000,00 em 12 parcelas de R$ 3.000,00\nVencimento todo dia 05\nMatricula R$ 3.000,00'); return [k.escola, k.aluno, k.ano, k.parcelas, k.parcela, k.dia, k.anuidade, k.matricula].join('|'); }, ANO + 1) === 'Colegio Escola Exemplo|Ana|' + (ANO + 1) + '|12|3000|5|36000|3000', 'lê o contrato por modelo: escola, aluno, ano, 12 × R$ 3.000, dia 5, anuidade e matrícula');
-      ok(await p.evaluate(() => { const s2 = CompromissoDe.sementeContrato({ ano: 2027, parcelas: 11, parcela: 3000, dia: 5, aluno: 'Ana' }); return s2.desde + '|' + s2.ate; }) === '2027-02-01|2027-12-31', '11 parcelas: de fevereiro a dezembro');
+      ok(await p.evaluate((a) => { const k = CompromissoDe.lerContrato('COLEGIO EXEMPLO\nano letivo de ' + a + '\nAluno: Bia Souza\nAnuidade R$ 36.000,00 em 12 parcelas de R$ 3.000,00\nVencimento todo dia 05\nMatricula R$ 3.000,00'); return [k.escola, k.aluno, k.ano, k.parcelas, k.parcela, k.dia, k.anuidade, k.matricula].join('|'); }, ANO + 1) === 'Colegio Exemplo|Bia|' + (ANO + 1) + '|12|3000|5|36000|3000', 'lê o contrato por modelo: escola, aluno, ano, 12 × R$ 3.000, dia 5, anuidade e matrícula');
+      ok(await p.evaluate(() => { const s2 = CompromissoDe.sementeContrato({ ano: 2027, parcelas: 11, parcela: 3000, dia: 5, aluno: 'Bia' }); return s2.desde + '|' + s2.ate; }) === '2027-02-01|2027-12-31', '11 parcelas: de fevereiro a dezembro');
       await p.evaluate(() => { irPara('b-custos'); }); await p.waitForFunction(() => window.scrollY === 0);
       await semToasts();
       const [fc] = await Promise.all([p.waitForEvent('filechooser'), p.click('#view-b-custos [data-acao="cdl-contrato"]')]);
       await fc.setFiles(contrato); await p.waitForSelector('#assetModal:not(.hidden) #rcNome');
       const fc2 = await p.evaluate(() => lerFormRecorrente());
-      ok(fc2.nome === 'Escola Ana ' + (ANO + 1) && fc2.valor === 3000 && fc2.dia === 5 && fc2.grupo === 'DEPENDENTES' && fc2.quem === 'Ana' && fc2.irpf && fc2.desde === (ANO + 1) + '-01-01' && fc2.ate === (ANO + 1) + '-12-31' && /Escola Exemplo/.test(fc2.obs), 'contrato PDF → "Novo compromisso" preenchido (Escola Ana ' + (ANO + 1) + ', R$ 3.000, dia 5, jan–dez, IR)');
+      ok(fc2.nome === 'Escola Bia ' + (ANO + 1) && fc2.valor === 3000 && fc2.dia === 5 && fc2.grupo === 'DEPENDENTES' && fc2.quem === 'Bia' && fc2.irpf && fc2.desde === (ANO + 1) + '-01-01' && fc2.ate === (ANO + 1) + '-12-31' && /Exemplo/.test(fc2.obs), 'contrato PDF → "Novo compromisso" preenchido (Escola Bia ' + (ANO + 1) + ', R$ 3.000, dia 5, jan–dez, IR)');
       ok(await p.evaluate(() => (Store.estado.arquivos || []).some((a) => a.tipo === 'contrato')), 'o PDF do contrato fica guardado');
       await p.click('#assetModal .f-actions [data-close="assetModal"]');
 

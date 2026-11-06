@@ -1,11 +1,11 @@
 /* =====================================================================
-   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.1.0 · 06/Nov/2026
+   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.2.0 · 06/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · No formulário de um lançamento: "📌 Virar compromisso" abre o "Novo compromisso" já preenchido
        (nome, valor, grupo, categoria, pessoa, IR, dia do mês, desde a data do lançamento).
      · Em Custos: "📄 Compromisso de um contrato (PDF)" lê o contrato SEM IA, por modelo — escola
-       (ex.: Colégio Escola Exemplo) e genérico: nome da escola/empresa, aluno, ano letivo, valor da
+       e genérico: nome da escola/empresa, aluno, ano letivo, valor da
        parcela, número de parcelas, dia de vencimento, matrícula — e abre o "Novo compromisso"
        preenchido para a pessoa conferir. O PDF fica guardado fechado (ArquivosFamilia, tipo 'contrato').
      · 1.1.0: contrato da escola por MODELO (pode escolher vários PDFs de uma vez): "Contrato de serviços de
@@ -13,6 +13,10 @@
        período ampliado" (opção marcada com X; sem X o app pergunta; meses sem julho) e o boleto da matrícula
        ("1ª Parcela da Anuidade": bruto, desconto, a pagar, vencimento). Mostra uma prévia e cria os compromissos
        "a confirmar" (meses de fora, IR) e a 1ª parcela como gasto pontual (desmarcado se já parece lançado).
+     · 1.2.0 (texto real, pdftotext -layout): o complemento "(1º ao 5º ano)" / "(5x na semana)" vem na linha DE BAIXO
+       dos valores e completa o nome DESSA linha; linha de valores sem nome herda a etapa de cima; o horário sai do nome.
+       Aluno = "Nome do Aluno:" ou o 1º "Nome Completo:" depois de "Informações do(a) educando(a)" (nunca pai/mãe).
+       Etapa marcada com X: só as linhas dela; a série ("Ano/Série" ou "3º Ano" no outro contrato) pré-seleciona.
    API (window.CompromissoDe)
      doLancamento(g)        → semente do compromisso
      lerContrato(texto)     → {escola, aluno, ano, parcela, parcelas, dia, matricula, anuidade, primeiroMes, achados:[…]}
@@ -80,16 +84,42 @@
     while ((m = rx.exec(frase))) { for (var k = MESES_LONGOS[m[1]]; k <= MESES_LONGOS[m[2]]; k++) if (out.indexOf(k) < 0) out.push(k); }
     return out.sort(function (a, b) { return a - b; });
   }
-  /* linhas da tabela: o valor fica no fim da linha; o nome da etapa pode ter quebrado na(s) linha(s) de cima */
+  /* linhas da tabela (texto do pdftotext -layout): os valores ficam no fim da linha; o complemento do nome vem na
+     linha DE BAIXO, entre parênteses ("Ens. Fundamental … R$ 3.067,00" e depois "(1º ao 5º ano)"); linha de valores sem
+     nome herda o nome da etapa de cima ("R$ 45.588,00 …" + "(6º ao 9º ano)" = "Ens. Fundamental (6º ao 9º ano)"). */
   function linhasTabela(ls, rx) {
-    var out = [];
+    var out = [], base = '', ultima = -9;
     ls.forEach(function (l, i) {
-      var m = sa(l).match(rx); if (!m) return;
-      var nome = l.slice(0, m.index).trim(), j = i - 1, voltas = 0;
-      while (j >= 0 && voltas < 2 && !/r\$/i.test(ls[j]) && !RX_CABECALHO.test(sa(ls[j])) && !/:/.test(ls[j])) { nome = ls[j] + ' ' + nome; j--; voltas++; }
-      out.push({ nome: nome.replace(/\s+/g, ' ').trim(), m: m, marcada: MARCA.test(sa(l.slice(0, m.index))) || (voltas && MARCA.test(sa(ls[i - 1]))) });
+      var m = sa(l).match(rx);
+      if (!m) {
+        if (out.length && ultima === i - 1 && /^\([^)]*\)/.test(l) && !/r\$/i.test(l)) {
+          var u = out[out.length - 1]; u.nome = (u.nome + ' ' + l).trim(); u.marcada = u.marcada || MARCA.test(sa(l)); ultima = i;
+        }
+        return;
+      }
+      var pre = l.slice(0, m.index).trim(), marc = MARCA.test(sa(pre));
+      pre = pre.replace(/\(\s*[xX]?\s*\)/g, ' ').replace(/\s+/g, ' ').trim();
+      var nome, hm = pre.match(/\s*\b\d{1,2}h\d{0,2}\b.*$/), horario = hm ? hm[0].trim() : '';   /* "8h30 às 13h / 12h às 16h30" sai do nome */
+      if (hm) pre = pre.slice(0, hm.index).trim();
+      if (!pre || pre.charAt(0) === '(') nome = (base + ' ' + pre).trim();
+      else { nome = pre; base = pre.replace(/\s*\(.*$/, '').trim(); }
+      out.push({ nome: nome, horario: horario, m: m, marcada: marc }); ultima = i;
     });
     return out;
+  }
+  /* a etapa marcada com X: só as linhas dela; a série (deste ou de outro documento do lote) pré-seleciona */
+  function escolherEtapa(opcoes, curso, serie) {
+    var lista = opcoes.map(function (x, i) { return i; }).filter(function (i) { return !curso || sa(opcoes[i].nome).indexOf(curso) >= 0; });
+    if (!lista.length) lista = opcoes.map(function (x, i) { return i; });
+    var idx = lista.length === 1 ? 0 : -1;
+    if (lista.length > 1 && serie) lista.forEach(function (i, k) { var r = sa(opcoes[i].nome).match(/(\d{1,2})\D{0,3} ao (\d{1,2})/); if (r && serie >= Number(r[1]) && serie <= Number(r[2])) idx = k; });
+    return { lista: lista, idx: idx };
+  }
+  /* o aluno: na parte "Informações do(a) educando(a)", o "Nome do Aluno:" ou o PRIMEIRO "Nome Completo:" (os outros são dos responsáveis) */
+  function acharAluno(t) {
+    var i = t.search(/informa[çc][õo]es\s+d[oa]\s*\(?a?\)?\s*educand[oa]/i), parte = i >= 0 ? t.slice(i) : t, m;
+    m = parte.match(/nome\s+do\s*\(?a?\)?\s*alun[oa]\s*(?:\(a\))?\s*:[ \t]*([A-Za-zÀ-ÿ]+)/i) || parte.match(/nome\s+completo\s*:[ \t]*([A-Za-zÀ-ÿ]+)/i);
+    return m ? titulo(m[1]) : '';
   }
   function tipoDoTexto(s) {
     if (/parcela da anuidade[^\n]*\d,\d{2}[^\n]*\d,\d{2}/.test(s)) return 'boleto';
@@ -99,12 +129,11 @@
   }
 
   API.lerModelo = function (texto) {
-    var t = String(texto || ''), s = sa(t), ls = linhasDe(t), tipo = tipoDoTexto(s), m;
+    var t = String(texto || ''), s = sa(t).replace(/[ \t]+/g, ' '), ls = linhasDe(t), tipo = tipoDoTexto(s), m;
     if (!tipo) return null;
     var o = { tipo: tipo, ano: 0, aluno: '', escola: API.lerContrato(t).escola };
     if ((m = s.match(/contrato de serv[a-z ]*?-\s*(20\d\d)/)) || (m = s.match(/ano letivo de [a-z]+ a [a-z]+ de (20\d\d)/)) || (m = s.match(/ano letivo[^\n]*?(20\d\d)/))) o.ano = Number(m[1]);
-    if ((m = t.match(/nome completo\s*:\s*([A-Za-zÀ-ú]+(?:[ \t]+[A-Za-zÀ-ú]+){0,5})/i))) o.aluno = titulo(m[1]).split(' ')[0];
-    else o.aluno = API.lerContrato(t).aluno;
+    o.aluno = acharAluno(t) || API.lerContrato(t).aluno;
     if (tipo === 'boleto') {
       var lb = ls.find(function (l) { return /parcela da anuidade/.test(sa(l)); }) || '', vs = lb.match(/\d{1,3}(?:\.\d{3})*,\d{2}/g) || [];
       o.bruto = vs.length >= 3 ? num(vs[vs.length - 3]) : vs.length ? num(vs[0]) : 0;
@@ -123,25 +152,25 @@
       o.opcoes = linhasTabela(ls, RX_LINHA_ESC).map(function (x) {
         return { nome: x.nome, anuidade: num(x.m[1]), antecipada: num(x.m[2]), restante: num(x.m[3]), parcelas: Number(x.m[4]), parcela: num(x.m[5]) };
       });
-      var cand = o.opcoes.map(function (x, i) { return i; }).filter(function (i) { return !o.curso || sa(o.opcoes[i].nome).indexOf(o.curso) >= 0; });
-      if (cand.length > 1 && o.serie) cand = cand.filter(function (i) { var r = sa(o.opcoes[i].nome).match(/(\d{1,2})\D{0,3} ao (\d{1,2})/); return r && o.serie >= Number(r[1]) && o.serie <= Number(r[2]); });
-      o.escolhida = cand.length === 1 && (o.curso || o.opcoes.length === 1) ? cand[0] : -1;
-      var mm = s.match(new RegExp('(\\d{1,2})\\s+mensais[^.]*?' + NOMES_MES + '\\s+a\\s+' + NOMES_MES));
+      var ee = escolherEtapa(o.opcoes, o.curso, o.serie);
+      o.escolhida = ee.idx >= 0 ? ee.lista[ee.idx] : -1;
+      var mm = s.match(new RegExp('(\\d{1,2})\\s+mensais[\\s\\S]{0,160}?' + NOMES_MES + '\\s+a\\s+' + NOMES_MES));
       o.meses = mm ? faixas(mm[2] + ' a ' + mm[3]) : [];
-      o.dia = (m = s.match(/vencive(?:is|l)[^.]{0,80}?dia (\d{1,2})/)) || (m = s.match(/vencimento[^.]{0,80}?dia (\d{1,2})/)) ? Number(m[1]) : 0;
+      o.dia = (m = s.match(/vencive(?:is|l)\D{0,60}?dia\s+(\d{1,2})/)) || (m = s.match(/vencimento\D{0,60}?dia\s+(\d{1,2})/)) ? Number(m[1]) : 0;
       o.primeiroVenc = (m = s.match(/primeir[oa]\s+ocorrera\s+em\s+(\d{2}\/\d{2}\/\d{4})/)) ? br2iso(m[1]) : '';
       o.antecipadaNoAto = /ato da contratacao/.test(s);
       return o;
     }
     /* ampliado */
     o.opcoes = linhasTabela(ls, RX_LINHA_AMP).filter(function (x) { return !RX_LINHA_ESC.test(sa(x.nome + ' ' + x.m[0])); }).map(function (x) {
-      return { nome: x.nome, anuidade: num(x.m[1]), parcelas: Number(x.m[2]), parcela: num(x.m[3]), marcada: !!x.marcada };
+      return { nome: x.nome, horario: x.horario, anuidade: num(x.m[1]), parcelas: Number(x.m[2]), parcela: num(x.m[3]), marcada: !!x.marcada };
     });
     var mk = o.opcoes.map(function (x, i) { return x.marcada ? i : -1; }).filter(function (i) { return i >= 0; });
     o.escolhida = mk.length === 1 ? mk[0] : -1;           /* sem X (ou com mais de um): o app pergunta */
     var fr = s.match(/vencimento nos meses de ([^.]*)/);
     o.meses = fr ? faixas(fr[1]) : [];
-    o.dia = (m = s.match(/vencimento[^.]{0,80}?dia (\d{1,2})/)) ? Number(m[1]) : 0;
+    o.dia = (m = s.match(/vencimento\D{0,60}?dia\s+(\d{1,2})/)) ? Number(m[1]) : 0;
+    o.serie = (m = s.match(/\b(\d{1,2})\s?[ºo°]\s?ano\b/)) ? Number(m[1]) : 0;     /* "3º Ano": ajuda a escolher a etapa do contrato escolar */
     return o;
   };
 
@@ -162,14 +191,16 @@
         regra: 'dia', dia: dia || 10, desde: iso2(ano, ini, 1), ate: iso2(ano, fim, new Date(ano, fim, 0).getDate()), fora: fora,
         aConfirmar: true, origem: 'contrato', obs: obs.filter(Boolean).join(' · ') };
     }
-    if (esc1) itens.push({ chave: 'escolar', rotulo: pt() ? 'Anuidade escolar' : 'School fees', opcoes: esc1.opcoes, escolhida: esc1.escolhida, diaInformado: !!esc1.dia,
-      semente: function (i) { var op = esc1.opcoes[i]; return semente('Escola', op, esc1.meses, esc1.dia, [escola, op && op.nome, op ? (pt() ? 'anuidade ' : 'yearly ') + fmt(op.anuidade) : '',
+    var etapa = esc1 ? escolherEtapa(esc1.opcoes, esc1.curso, esc1.serie || (amp && amp.serie) || 0) : null;
+    var opsE = etapa ? etapa.lista.map(function (i) { return esc1.opcoes[i]; }) : [];
+    if (esc1) itens.push({ chave: 'escolar', rotulo: pt() ? 'Anuidade escolar' : 'School fees', opcoes: opsE, escolhida: etapa.idx, diaInformado: !!esc1.dia,
+      semente: function (i) { var op = opsE[i]; return semente('Escola', op, esc1.meses, esc1.dia, [escola, op && op.nome, op ? (pt() ? 'anuidade ' : 'yearly ') + fmt(op.anuidade) : '',
         op && op.antecipada ? (pt() ? '1ª parcela antecipada ' : '1st instalment in advance ') + fmt(op.antecipada) : '',
         esc1.primeiroVenc ? (pt() ? '1º vencimento ' : '1st due ') + I18n.data(esc1.primeiroVenc) : '']); } });
     if (amp) itens.push({ chave: 'ampliado', rotulo: pt() ? 'Período ampliado' : 'Extended day', opcoes: amp.opcoes, escolhida: amp.escolhida, diaInformado: !!amp.dia,
-      semente: function (i) { var op = amp.opcoes[i]; return semente(pt() ? 'Período ampliado' : 'Extended day', op, amp.meses, amp.dia || (esc1 && esc1.dia), [escola, op && op.nome,
+      semente: function (i) { var op = amp.opcoes[i]; return semente(pt() ? 'Período ampliado' : 'Extended day', op, amp.meses, amp.dia || (esc1 && esc1.dia), [escola, op && op.nome, op && op.horario,
         op ? (pt() ? 'anuidade ' : 'yearly ') + fmt(op.anuidade) : '', amp.dia ? '' : (pt() ? 'dia de vencimento não informado no contrato' : 'due day not in the contract')]); } });
-    var gasto = null, opE = esc1 && esc1.escolhida >= 0 ? esc1.opcoes[esc1.escolhida] : null;
+    var gasto = null, opE = etapa && etapa.idx >= 0 ? opsE[etapa.idx] : null;
     if (bol || (esc1 && esc1.antecipadaNoAto && opE && opE.antecipada)) {
       var valor = bol ? bol.pagar : opE.antecipada, data = (bol && bol.venc) || hojeISO();
       gasto = { data: data, valor: valor, grupo: 'DEPENDENTES', sub: sub, quem: aluno, irpf: true, per: 'Pontual', origem: 'contrato',
@@ -265,7 +296,7 @@
 
   MoneyModulos.registrar({
     id: 'compromisso-de',
-    versao: '1.1.0',
+    versao: '1.2.0',
     pontos: {
       'lancamento.form': function (ctx) {
         if (!ctx.g || ctx.g.fluxo === 'entrada' && ctx.g.grupo !== 'RENDA') return '';
