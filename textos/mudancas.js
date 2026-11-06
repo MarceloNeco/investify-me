@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.50 · 06/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.51 · 06/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.51', d:'2026-11-06', t:'Arrumação interna', itens:[
+    'Arrumação interna, nada muda para você: o glossário e as aulas do Coach foram para arquivos próprios.'
+  ]},
   {v:'3.50', d:'2026-11-06', t:'Ligação com o OmniLifeONE (saúde)', itens:[
     'Ligação com o OmniLifeONE: quando o OmniLifeONE mandar o resumo da saúde da família (fechado, só chefe e responsável abrem), o plano de saúde ganha a operadora e quem ele cobre, e o médico de referência vira profissional conhecido: o PIX para ele já entra como Saúde, da pessoa certa, com IR.'
   ]},

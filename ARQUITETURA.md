@@ -608,8 +608,12 @@ carregam antes do bloco que usa cada um, e a `const` vale para todo o app. Os tr
 arquivo diz a versão (`teste-modulos.js` confere, agora também o `<link rel="stylesheet">`). O `index.html` caiu de 36 mil para 32,6 mil linhas.
 **A cada versão nova:** a entrada nova vai em `textos/mudancas.js`, o inglês em `textos/frases-en.js` e o `?v=` dos dois (e do
 `estilo.css`, se mudou) no `index.html` e no `sw.js`.
+**Feito na 3.51 (Parte 12):** `textos/glossario.js` (`const GLOSSARIO`, 147 verbetes) e `textos/coach.js` (`const COACH`, 18 aulas), do mesmo
+jeito (carregados antes de `GLOS_MAP`/`COACH_MAP`). Ficaram carregando junto com o app, e não "só quando abre uma explicação": com o
+`sw.js` guardando tudo para uso sem internet, carregar depois ganharia pouco e obrigaria a busca e o AssistONE a esperar o arquivo.
+O `index.html` caiu para cerca de 29,4 mil linhas. O que falta da proposta (TaxONE e leitores) depende de testes próprios e de nova aprovação.
 Teste de fumaça para arrumação interna: `teste/teste-fumaca-telas.js <pasta de antes>` (10 telas × 390/1366 px × PT/EN: mesma foto,
-mesmo HTML, sem erro de página; o número da versão e a lista "O que há de novo" ficam de fora da comparação).
+mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de cada aula do Coach, 3 níveis × PT/EN; o número da versão e a lista "O que há de novo" ficam de fora da comparação).
 
 ### Ligação com o OmniLifeONE (3.50) — especificação
 Decidido pelo dono em 06/Nov/2026 (respostas "sim" às perguntas a e b): o OmniLifeONE manda um resumo mínimo da saúde da família e o

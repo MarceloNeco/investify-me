@@ -40,6 +40,7 @@ fs.readdirSync(path.join(RAIZ, 'modulos')).filter((f) => f.endsWith('.js') && !f
 });
 const pos = (s) => idx.indexOf('<script src="' + s);
 ok(idx.indexOf('<style') < 0 && /^const FRASES_EN = \{/m.test(fs.readFileSync(path.join(RAIZ, 'textos/frases-en.js'), 'utf8')) && /^const MUDANCAS = \[/m.test(fs.readFileSync(path.join(RAIZ, 'textos/mudancas.js'), 'utf8')) && !/^const (?:FRASES_EN|MUDANCAS)\b/m.test(idx), '3.48: CSS, FRASES_EN e MUDANCAS moram fora do index.html');
+ok(!/^const (?:GLOSSARIO|COACH)\b/m.test(idx) && /^const GLOSSARIO = \[/m.test(fs.readFileSync(path.join(RAIZ, 'textos/glossario.js'), 'utf8')) && /^const COACH = \[/m.test(fs.readFileSync(path.join(RAIZ, 'textos/coach.js'), 'utf8')) && pos('textos/glossario.js') < idx.indexOf('const GLOS_MAP') && pos('textos/coach.js') < idx.indexOf('const COACH_MAP'), '3.51: GLOSSARIO e COACH moram em textos/ e carregam antes de quem usa');
 ok(pos('textos/frases-en.js') > 0 && pos('textos/frases-en.js') < idx.indexOf('const Verter') && pos('textos/mudancas.js') > 0 && pos('textos/mudancas.js') < idx.indexOf('const VERSAO = MUDANCAS[0].v'), 'ordem: frases-en antes do Verter; mudancas antes da VERSAO');
 ok(pos('modulos/base.js') > 0 && pos('modulos/base.js') < pos('nuvem.js') && scripts.filter((s) => s.startsWith('modulos/') && !s.startsWith('modulos/base.js')).every((s) => pos(s) > pos('modulos/base.js') && pos(s) < pos('nuvem.js')), 'ordem: base, módulos, nuvem');
 

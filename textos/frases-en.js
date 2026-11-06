@@ -1,10 +1,12 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.50 · 06/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.51 · 06/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.51 */
+  'Arrumação interna, nada muda para você: o glossário e as aulas do Coach foram para arquivos próprios.':'Internal tidy-up, nothing changes for you: the glossary and the Coach lessons moved to their own files.',
   /* 3.50 */
   'Ligação com o OmniLifeONE (saúde)':'OmniLifeONE link (health)',
   'Ligação com o OmniLifeONE: quando o OmniLifeONE mandar o resumo da saúde da família (fechado, só chefe e responsável abrem), o plano de saúde ganha a operadora e quem ele cobre, e o médico de referência vira profissional conhecido: o PIX para ele já entra como Saúde, da pessoa certa, com IR.':'OmniLifeONE link: when OmniLifeONE sends the family health summary (encrypted, only heads and guardians can open it), the health plan gets the insurer and who it covers, and the main doctor becomes a known professional: payments to them are classified as Health, for the right person, with the tax flag.',
