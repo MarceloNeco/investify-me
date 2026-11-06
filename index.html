@@ -1367,6 +1367,8 @@ details.imp-arq.repetido{border-color:var(--warn)}
 .nf-falta{color:var(--warn)} .nf-ok{color:var(--up)}
 .nf-conf{padding:8px 0; border-top:1px solid var(--line)} .nf-conf select{width:100%; margin-top:4px}
 .ag-box{margin-top:8px}
+.prof-q{padding:10px 0; border-top:1px solid var(--line)}
+.prof-campos{margin-top:6px}
 .rdet-sec{font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--txt3); margin:12px 0 2px}
 .aba-c{background:var(--card2); border:1px solid transparent; border-radius:20px; padding:7px 14px;
        cursor:pointer; color:var(--txt2); font-size:.83rem; white-space:nowrap}
@@ -2952,6 +2954,10 @@ const t = (k, v) => I18n.t(k, v);
    ========================================================= */
 
 const FRASES_EN = {
+  /* 3.43 */
+  'Profissionais conhecidos':'Known professionals',
+  'Em Custos → Revisar, "Profissionais para confirmar": o app junta os lançamentos de cada médico, dentista ou escola pelo nome (mesmo com PIX, DRA., LTDA ou uma letra diferente) e pergunta uma vez só. Confirmado, todo lançamento com esse nome, antigo e novo, já entra com a categoria, a pessoa e o IR certos.':'In Costs → Review, "Professionals to confirm": the app groups each doctor, dentist or school by name (even with PIX, DR., LTDA or one letter off) and asks only once. Once confirmed, every entry with that name, old and new, is classified with the right category, person and tax flag.',
+  'Nome meio parecido com um conhecido aparece com a sugestão ("parece Dra. …"), e só é classificado depois de confirmar. "Não é profissional" para de perguntar. Lançamento que você editou à mão nunca é mexido.':'A name only partly similar to a known one shows a suggestion ("looks like Dr …") and is only classified after you confirm. "Not a professional" stops asking. Entries you edited by hand are never touched.',
   /* 3.42 */
   'Agendamentos que vencem, nota fiscal pendente e Pasta do IR':'Bank schedules that expire, pending invoices and the tax folder',
   'Compromisso "Agendado no banco" ganha "o agendamento vale até". Um mês antes, Custos e a fita avisam "Renovar o agendamento"; o botão "Renovei" empurra a data 12 meses (ou o ciclo escolhido).':'A "Scheduled at the bank" commitment gets "the schedule is valid until". A month before, Costs and the ticker say "Renew the bank schedule"; the "Renewed" button pushes the date 12 months (or the chosen cycle).',
@@ -13692,6 +13698,10 @@ const Importador = {
    ========================================================= */
 
 const MUDANCAS = [
+  {v:'3.43', d:'2026-11-06', t:'Profissionais conhecidos', itens:[
+    'Em Custos → Revisar, "Profissionais para confirmar": o app junta os lançamentos de cada médico, dentista ou escola pelo nome (mesmo com PIX, DRA., LTDA ou uma letra diferente) e pergunta uma vez só. Confirmado, todo lançamento com esse nome, antigo e novo, já entra com a categoria, a pessoa e o IR certos.',
+    'Nome meio parecido com um conhecido aparece com a sugestão ("parece Dra. …"), e só é classificado depois de confirmar. "Não é profissional" para de perguntar. Lançamento que você editou à mão nunca é mexido.'
+  ]},
   {v:'3.42', d:'2026-11-06', t:'Agendamentos que vencem, nota fiscal pendente e Pasta do IR', itens:[
     'Compromisso "Agendado no banco" ganha "o agendamento vale até". Um mês antes, Custos e a fita avisam "Renovar o agendamento"; o botão "Renovei" empurra a data 12 meses (ou o ciclo escolhido).',
     'Todo gasto que entra no imposto de renda nasce com "🧾 NF aguardando". Um toque em "Recebi" dá baixa; a tela "NFs que faltam" mostra o que cobrar de cada profissional.',
@@ -14184,6 +14194,7 @@ const Gasto = {
     r.criadoEm = r.criadoEm || new Date().toISOString();
     r.origem = r.origem || 'manual';
     ST.gastos.push(r);
+    if(window.MoneyModulos) MoneyModulos.emitir('gasto.novo', r);   /* 3.43: ex.: profissionais conhecidos classificam sozinhos */
     return r;
   },
 
@@ -23778,7 +23789,7 @@ function blocoPontuais(){
 
 /* ---------- o que merece um olhar ---------- */
 function blocoRevisar(paraRevisar, atrasados){
-  let h = '';
+  let h = (window.MoneyModulos ? MoneyModulos.html('custos.revisar', {}) : '');
 
   if(atrasados.length){
     h += '<div class="card"><div class="card-head"><h3>' +
@@ -36035,6 +36046,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/arquivos.js?v=1.0.0"></script>
 <script src="modulos/agendamentos.js?v=1.0.0"></script>
 <script src="modulos/nf-ir.js?v=1.0.0"></script>
+<script src="modulos/profissionais.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.7.0"></script>
 </body>
 </html>

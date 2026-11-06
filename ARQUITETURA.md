@@ -565,6 +565,8 @@ Desde a 3.41, **toda função nova é um módulo**: um arquivo em `modulos/`, co
   `lancamento.linha` {g}, `lancamento.form` {g}, `tax.deducoes.topo`
 - itens (listas): `fita.budget`, `fita.tax` → `[{ico, texto, tom}]`
 - eventos: `compromisso.form` {r} (formulário aberto), `compromisso.salvo` {id, estadoPadrao} (antes de fechar)
+- eventos: `gasto.novo` (o lançamento, logo depois do `Gasto.add`; vale para manual, importação e robô) — 3.43
+- html: `custos.revisar` (topo da aba Revisar) — 3.43
 - telas aceitam `ajuda: {pt: {t, o, f}, en: {…}}` (título e ajuda do AssistONE); `appDaView` usa o `app` da tela
 - nome global de módulo não pode repetir um `const`/`function` do index.html (o do app esconde o do módulo;
   `teste-modulos.js` confere). Ex.: o cofre de arquivos é `window.ArquivosFamilia` porque `Arquivos` já existia.
@@ -593,3 +595,11 @@ Desde a 3.41, **toda função nova é um módulo**: um arquivo em `modulos/`, co
 
 Sugestão de ordem, se o dono aprovar: `FRASES_EN`/`MUDANCAS` e o CSS (risco baixo), depois o glossário e o coach (maior ganho);
 o TaxONE e os leitores só depois de terem testes próprios.
+
+### Profissionais conhecidos (3.43)
+- `modulos/profissionais.js` (`Profissionais`, N39): `Store.estado.profissionais` = [{id, nome, apelidos (nomes normalizados), grupo, sub, quem,
+  irpf} | {id:'prign', ignorar: true, apelidos}]. Normaliza sem IA (acentos, PIX/TED/PAGAMENTO, DR/DRA, LTDA/ME/S/A, números) e compara
+  palavra a palavra (1 letra de diferença vale nas palavras de 5+ letras). Nota ≥ 0,8 = o mesmo (classifica sozinho); 0,5–0,8 = pergunta
+  com sugestão; nome novo de saúde/educação = pergunta. Ouve `gasto.novo`; cartão em `custos.revisar`; tela `b-profissionais`.
+  Muda o lançamento no próprio objeto (quem chamou `Gasto.add` continua com a referência) e nunca mexe em `editadoPessoa`.
+- Teste: `teste/teste-parte7.js`.
