@@ -1,11 +1,15 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.59 · 06/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.60 · 06/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.60', d:'2026-11-06', t:'Conferir o que foi lido: direto ao ponto', itens:[
+    'No topo, um resumo do que vai acontecer (ex.: "Mensalidades ✓ já cadastrado", "Matrícula ✓ já paga em 30/10"). Só vem aberto o que precisa da sua decisão; o resto fica em "ver detalhes".',
+    'Cadastros repetidos aparecem numa faixa só, com o botão "Limpar". Quando já existe um cadastro, "Manter" já vem escolhido; para atualizar ou criar outro, toque em "mudar".'
+  ]},
   {v:'3.59', d:'2026-11-06', t:'Boleto certo e a tela de conferir refeita', itens:[
     'Boleto da matrícula: o app lê o valor a pagar e o vencimento do PDF de verdade (antes, nesse PDF, caía no valor do contrato) e acha o pagamento que já está no livro.',
     '"Já existe": só compara o que é do mesmo tipo (mensalidade com mensalidade, período ampliado com período ampliado; lanche, cantina e uniforme nunca). Dois cadastros iguais aparecem juntos ("2 iguais"), com "Apagar o repetido".',

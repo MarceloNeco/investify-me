@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.59 · 06/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.60 · 06/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.60 */
+  'Conferir o que foi lido: direto ao ponto':'Check what was read: straight to the point',
+  'No topo, um resumo do que vai acontecer (ex.: "Mensalidades ✓ já cadastrado", "Matrícula ✓ já paga em 30/10"). Só vem aberto o que precisa da sua decisão; o resto fica em "ver detalhes".':'At the top, a summary of what will happen (e.g. "Monthly fees ✓ already registered", "Enrolment ✓ already paid on 10/30"). Only what needs your decision comes open; the rest is under "see details".',
+  'Cadastros repetidos aparecem numa faixa só, com o botão "Limpar". Quando já existe um cadastro, "Manter" já vem escolhido; para atualizar ou criar outro, toque em "mudar".':'Duplicate entries show in a single strip, with a "Clean up" button. When an entry already exists, "Keep" comes chosen; to update it or create another, tap "change".',
   /* 3.59 */
   'Boleto certo e a tela de conferir refeita':'Right bill amount and a redone check screen',
   'Boleto da matrícula: o app lê o valor a pagar e o vencimento do PDF de verdade (antes, nesse PDF, caía no valor do contrato) e acha o pagamento que já está no livro.':'Enrolment bill: the app reads the amount due and the due date from the real PDF (before, with this PDF, it fell back to the contract value) and finds the payment already in your book.',
