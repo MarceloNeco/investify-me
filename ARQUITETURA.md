@@ -637,6 +637,13 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.57 `modulos/calendario-menu.js` (`CalendarioMenu.recolhido/alternar/aplicar`): o calendário do pé do menu (barra lateral no
+  computador, menu ☰ no celular; o mesmo `#navCal`) ganha no cabeçalho um botão discreto (seta, `aria-expanded`, `aria-controls`) que o
+  recolhe numa etiqueta "📅 Novembro de 2026 ⌄" (botão de verdade; tocar abre). Padrão aberto; a escolha fica em localStorage
+  `moneytrio.calMenu.recolhido` (só preferência de tela, com try/catch). Ligação no index.html: `renderCalendarioMenu` chama
+  `CalendarioMenu.aplicar(#navCal)` depois de desenhar; o `ResizeObserver` da barra lateral observa também o `#navCal`. Estilo `.calm-*`
+  no fim do estilo.css. Teste: `teste/teste-desktop.js` (aberto, recolhido pelo teclado, lembrado ao recarregar, aberto de novo, nas 4
+  larguras e no celular 390×800). O botão ✨ IA não foi mexido (posição a decidir na diretriz da plataforma).
 - 3.56 (`nuvem.js` 1.8.1): `Tela.mostrar` põe o cursor no 1º campo 60 ms depois de abrir a tela **só se o cursor ainda não estiver
   dentro dela** (antes roubava o campo de quem já estava digitando ou do preenchimento automático; era a causa do teste-nuvem instável, N43).
   Teste: `teste/teste-nuvem.js`, "cursor não é roubado do campo onde a pessoa já está".

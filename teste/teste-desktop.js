@@ -1,12 +1,14 @@
 /* =====================================================================
-   teste/teste-desktop.js — layout no computador (N35, regra da plataforma)   3.54
+   teste/teste-desktop.js — layout no computador (N35, regra da plataforma)   3.57
    ---------------------------------------------------------------------
    Em 1280×720, 1366×768, 1920×1080 e 2560×1440 (e trocando a largura com a página aberta):
    · a barra lateral fica colada à esquerda da tela, ocupa a altura toda abaixo do topo e não passa do fim da tela;
    · o calendário do pé da barra aparece inteiro (dentro da tela);
    · a roda do mouse / dois dedos no touchpad em cima da lista do menu rola a lista (e não a página);
    · o conteúdo usa a largura que sobra (sem faixa vazia grande dos lados);
-   · sem rolagem para o lado e sem erro de página.
+   · sem rolagem para o lado e sem erro de página;
+   · 3.57: o calendário do menu recolhe numa etiqueta (teclado e toque), fica lembrado ao recarregar e abre de novo;
+     o mesmo no celular (390×800, dentro do menu ☰).
    Uso (na pasta raiz): node teste/teste-desktop.js
    ===================================================================== */
 'use strict';
@@ -28,6 +30,35 @@ async function medir(p) {
       contL: Math.round(rco.left), contR: Math.round(rco.right), vistaW: Math.round(rv.width), listaRola: lista.scrollHeight > lista.clientHeight + 1,
       ovNav: getComputedStyle(nav).overflowY, scrollW: document.documentElement.scrollWidth };
   });
+}
+
+
+/* 3.57: o calendário do menu recolhe numa etiqueta e abre de novo; a escolha fica lembrada (recarregar) */
+async function recolherAbrir(p, nome, antesDeMedir) {
+  const cal = () => p.evaluate(() => {
+    const c = document.getElementById('navCal'), r = c.getBoundingClientRect(), n = document.getElementById('sidenav').getBoundingClientRect();
+    const rec = c.querySelector('.calm-rec'), etq = c.querySelector('.calm-etq'), mes = c.querySelector('.calm-mes');
+    return { h: Math.round(r.height), top: Math.round(r.top), bot: Math.round(r.bottom), H: innerHeight, navBot: Math.round(n.bottom), grade: !!c.querySelector('.cal-grade'),
+      rec: rec ? rec.getAttribute('aria-expanded') + '|' + rec.getAttribute('aria-label') : '', etq: etq ? etq.getAttribute('aria-expanded') : '', mes: mes ? mes.textContent : '',
+      cortado: mes ? mes.scrollWidth > mes.clientWidth : false, foco: document.activeElement && document.activeElement.className, salvo: localStorage.getItem('moneytrio.calMenu.recolhido') };
+  });
+  const a = await cal();
+  ok(a.grade && a.rec === 'true|Recolher o calendário' && !a.etq, nome + ': calendário aberto por padrão, com o botão de recolher no cabeçalho (aria-expanded=true)');
+  await p.focus('#navCal .calm-rec'); await p.keyboard.press('Enter'); await p.waitForTimeout(150);
+  const r = await cal();
+  ok(!r.grade && r.etq === 'false' && /^[A-ZÇ][a-zç]+ de 20\d\d$/.test(r.mes) && !r.cortado && r.h < 60, nome + ': pelo teclado recolhe numa etiqueta "' + r.mes + '" (' + r.h + ' px, aria-expanded=false, sem cortar o texto)');
+  ok(r.foco === 'calm-etq' && r.salvo === '1', nome + ': o foco vai para a etiqueta e a escolha fica guardada no aparelho');
+  ok(r.bot <= r.H + 1 && r.navBot <= r.H + 1, nome + ': recolhido, a etiqueta e a barra cabem na tela (' + r.top + '–' + r.bot + ')');
+  await p.reload(); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.recorrentes || []).length >= 1);
+  await antesDeMedir(); await p.waitForTimeout(300);
+  const l = await cal();
+  ok(!l.grade && l.etq === 'false', nome + ': depois de recarregar continua recolhido (lembrado)');
+  await p.click('#navCal .calm-etq'); await p.waitForTimeout(150);
+  const o = await cal();
+  ok(o.grade && o.rec.startsWith('true') && o.salvo === null && o.bot <= o.H + 1 && o.h > 100, nome + ': tocar na etiqueta abre de novo, inteiro na tela (' + o.top + '–' + o.bot + ')');
+  await p.reload(); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.recorrentes || []).length >= 1);
+  await antesDeMedir(); await p.waitForTimeout(300);
+  ok((await cal()).grade, nome + ': depois de recarregar continua aberto');
 }
 
 (async () => {
@@ -70,7 +101,25 @@ async function medir(p) {
       await p.waitForTimeout(200); await p.mouse.move(m.W - 200, m.H / 2); await p.mouse.wheel(0, 900); await p.waitForTimeout(300);
       const r2 = await medir(p), sy = await p.evaluate(() => scrollY);
       ok(sy > 0 && r2.navBot <= r2.H + 1 && r2.navBot >= r2.H - 2 && r2.calBot <= r2.H + 1, 'rolando a página (' + sy + ' px): a barra vai até o fim da tela e o calendário continua inteiro (' + r2.navTop + '–' + r2.navBot + ')');
+      await p.evaluate(() => scrollTo(0, 0));
+      await recolherAbrir(p, 'calendário ' + vp.width, () => p.evaluate(() => { I18n.atual = 'pt'; abrirApp('budget'); irPara('b-custos'); }));
       ok(erros.length === 0, 'sem erro de página' + (erros.length ? ': ' + erros.join(' | ') : ''));
+      await ctx.close();
+    }
+    console.log('celular 390x800: o calendário fica no menu ☰');
+    {
+      const ctx = await b.newContext({ viewport: { width: 390, height: 800 }, serviceWorkers: 'block' });
+      await ctx.route('**/*', (r) => r.request().url().startsWith(BASE) ? r.continue() : r.abort());
+      await ctx.addInitScript((t) => { if (!sessionStorage.getItem('semeado')) { localStorage.setItem('investifyme.dados.v1', t); localStorage.setItem('moneytrio.soNesteAparelho', '1'); localStorage.setItem('moneytrio.tutorial.v1', 'visto'); sessionStorage.setItem('semeado', '1'); } }, JSON.stringify(LOCAL));
+      const p = await ctx.newPage(); const erros = []; p.on('pageerror', (e) => erros.push(String(e)));
+      await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.recorrentes || []).length === 1);
+      const abrirMenu = async () => { await p.evaluate(() => { I18n.atual = 'pt'; abrirApp('budget'); irPara('b-custos'); }); await p.click('#btnMenu'); await p.waitForTimeout(350); };
+      await abrirMenu();
+      await recolherAbrir(p, 'celular', abrirMenu);
+      const en = await p.evaluate(() => { I18n.atual = 'en'; renderCalendarioMenu(); const b1 = document.querySelector('#navCal .calm-rec').getAttribute('aria-label');
+        CalendarioMenu.alternar(true); const e = document.querySelector('#navCal .calm-etq'); const r = [b1, e.textContent, e.title]; CalendarioMenu.alternar(false); I18n.atual = 'pt'; return r; });
+      ok(en[0] === 'Collapse the calendar' && /^[A-Z][a-z]+ 20\d\d$/.test(en[1]) && en[2] === 'Show the calendar', 'em inglês: "' + en.join('" · "') + '"');
+      ok(erros.length === 0, 'celular: sem erro de página' + (erros.length ? ': ' + erros.join(' | ') : ''));
       await ctx.close();
     }
     console.log('trocando a largura com a página aberta (notebook → monitor grande → notebook)');
