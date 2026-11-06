@@ -627,7 +627,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.51"></script>
+<script src="textos/frases-en.js?v=3.52"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7367,7 +7367,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.51"></script>
+<script src="textos/mudancas.js?v=3.52"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -11842,13 +11842,13 @@ const PASSOS_WZ = [
 
 const SUGESTOES_WZ = {
   renda: [
-    {nome:{pt:'Salário',                en:'Salary'},            grupo:'RENDA', sub:'Salário Neco (liquido)', dia:5, regra:'diaUtil'},
+    {nome:{pt:'Salário',                en:'Salary'},            grupo:'RENDA', sub:'Salário', dia:5, regra:'diaUtil'},
     {nome:{pt:'Pró-labore',             en:'Owner draw'},        grupo:'RENDA', sub:'Pró-labore',       dia:5},
     {nome:{pt:'Aluguel que eu recebo',  en:'Rent I receive'},    grupo:'RENDA', sub:'Aluguel Imoveis',  dia:10},
     {nome:{pt:'Vale alimentação',       en:'Meal allowance'},    grupo:'RENDA', sub:'Vale alimentação', dia:1},
     {nome:{pt:'Vale refeição',          en:'Food allowance'},    grupo:'RENDA', sub:'Vale refeição',    dia:1},
     {nome:{pt:'Restituição do IR',      en:'Tax refund'},        grupo:'RENDA', sub:'Outros (Restituicao IRPF / Recisão)', dia:15, regra:'anual', mes:6},
-    {nome:{pt:'13º salário',            en:'Year-end bonus'},    grupo:'RENDA', sub:'Salário Neco (liquido)', dia:20, regra:'anual', mes:12},
+    {nome:{pt:'13º salário',            en:'Year-end bonus'},    grupo:'RENDA', sub:'Salário', dia:20, regra:'anual', mes:12},
     {nome:{pt:'Proventos da carteira',  en:'Portfolio income'},  grupo:'RENDA', sub:'Rendimentos de aplicações', dia:15}
   ],
   moradia: [
@@ -19226,7 +19226,7 @@ function abrirCadastroSalario(id){
   $('#assetModalBody').innerHTML = Verter.html(
     '<div class="grid g2">' +
       campo(pt ? 'Quem recebe' : 'Who receives',
-        '<input id="scQuem" list="scQuemLista" placeholder="' + (pt ? 'ex.: Neco' : 'e.g. Alex') + '" value="' + esc(r ? r.quem : '') + '">' +
+        '<input id="scQuem" list="scQuemLista" placeholder="' + (pt ? 'ex.: Ana' : 'e.g. Alex') + '" value="' + esc(r ? r.quem : '') + '">' +
         '<datalist id="scQuemLista">' + pessoas.map(p => '<option value="' + esc(p) + '"></option>').join('') + '</datalist>') +
       campo(pt ? 'Quem paga' : 'Who pays',
         '<input id="scFonte" placeholder="' + (pt ? 'a empresa (opcional)' : 'the employer (optional)') + '" value="' + esc(s.fonte || '') + '">') +
@@ -20135,7 +20135,7 @@ function viewBDesloc(){
   h += '<div class="card"><div class="card-head"><h3>🧭 ' + (pt ? 'Trajetos' : 'Trips') + '</h3>' +
     (trajetos.length && r.total ? '<button class="btn sm" data-acao="desloc-fixo">' + (pt ? 'Lançar como custo fixo' : 'Add as fixed cost') + '</button>' : '') + '</div>';
   if(!trajetos.length) h += '<p class="small muted" style="margin:0">' + (pt
-    ? 'Cada trajeto diz de onde para onde, como vai, quem vai e quantas vezes. Ex.: casa → escola da Ana, de carro, 5 vezes por semana; casa → pais, de carro, 1 vez por semana; casa → Passos-MG, de carro, 4 vezes por ano, 2,5 tanques.'
+    ? 'Cada trajeto diz de onde para onde, como vai, quem vai e quantas vezes. Ex.: casa → escola da Ana, de carro, 5 vezes por semana; casa → avós, de carro, 1 vez por semana; casa → praia, de carro, 4 vezes por ano, 2,5 tanques.'
     : 'Each trip says from where to where, how, who and how often. E.g. home → school, by car, 5 times a week; home → parents, by car, once a week.') + '</p>';
   else h += '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>' + (pt ? 'Trajeto' : 'Trip') + '</th><th>' + (pt ? 'Como e quando' : 'How and when') + '</th><th class="num" data-principal>' + (pt ? 'Por mês' : 'Per month') + '</th></tr></thead><tbody>' +
     trajetos.map(t => {
@@ -20167,7 +20167,7 @@ function abrirLugar(id){
   $('#assetModalTitle').textContent = l ? (pt ? 'Editar lugar' : 'Edit place') : (pt ? 'Novo lugar' : 'New place');
   $('#assetModalBody').innerHTML = Verter.html(
     '<div class="grid g2">' +
-      campo(pt ? 'Nome' : 'Name', '<input id="lgNome" value="' + esc(l ? l.nome : '') + '" placeholder="' + (pt ? 'ex.: Casa, Escola da Ana, Pais' : 'e.g. Home, School, Parents') + '">') +
+      campo(pt ? 'Nome' : 'Name', '<input id="lgNome" value="' + esc(l ? l.nome : '') + '" placeholder="' + (pt ? 'ex.: Casa, Escola da Ana, Avós' : 'e.g. Home, School, Parents') + '">') +
       campo(pt ? 'Tipo' : 'Type', '<select id="lgTipo">' + Object.keys(TIPOS_LUGAR).map(k => '<option value="' + k + '"' + ((l ? l.tipo : 'casa') === k ? ' selected' : '') + '>' + TIPOS_LUGAR[k].ico + ' ' + esc(TIPOS_LUGAR[k][L]) + '</option>').join('') + '</select>') +
     '</div>' +
     campo(pt ? 'Endereço' : 'Address', '<input id="lgEnd" value="' + esc(l ? l.endereco || '' : '') + '" placeholder="' + (pt ? 'rua, número, cidade, estado' : 'street, number, city, state') + '">',
@@ -20180,7 +20180,7 @@ function abrirLugar(id){
       campo(pt ? 'Latitude' : 'Latitude', '<input type="number" step="any" id="lgLat" value="' + (l && l.lat != null ? l.lat : '') + '">', null, pt ? 'ou cole do Google Maps' : 'or paste from Google Maps') +
       campo(pt ? 'Longitude' : 'Longitude', '<input type="number" step="any" id="lgLon" value="' + (l && l.lon != null ? l.lon : '') + '">') +
     '</div>' +
-    campo(pt ? 'De quem é este lugar' : 'Whose place', '<input id="lgQuem" list="lgQuemLista" value="' + esc(l ? l.quem || '' : '') + '" placeholder="' + (pt ? 'opcional — ex.: Ana, pais de alguém' : 'optional') + '">' +
+    campo(pt ? 'De quem é este lugar' : 'Whose place', '<input id="lgQuem" list="lgQuemLista" value="' + esc(l ? l.quem || '' : '') + '" placeholder="' + (pt ? 'opcional — ex.: Ana, avós' : 'optional') + '">' +
       '<datalist id="lgQuemLista">' + pessoas.map(p => '<option value="' + esc(p) + '"></option>').join('') + '</datalist>') +
     '<div class="f-actions">' +
       (l ? '<button class="btn danger" data-acao="lug-excluir" data-id="' + l.id + '">' + (pt ? 'Excluir' : 'Delete') + '</button>' : '') +
@@ -20225,7 +20225,7 @@ function abrirTrajeto(id){
     '</div>' +
     campo(pt ? 'Como vai' : 'How',
       '<div class="chips" id="tjModo">' + Object.keys(MODOS_DESLOC).map(k => '<button type="button" class="chip click' + (((t && t.modo) || 'carro') === k ? ' on' : '') + '" data-modo="' + k + '">' + MODOS_DESLOC[k].ico + ' ' + esc(MODOS_DESLOC[k][L]) + '</button>').join('') + '</div>') +
-    campo(pt ? 'Quem vai' : 'Who goes', '<input id="tjQuem" value="' + esc(t ? (t.quem || []).join(', ') : '') + '" placeholder="' + (pt ? 'ex.: Marcelo, Ana — separe por vírgula' : 'comma-separated') + '" list="tjQuemLista">' +
+    campo(pt ? 'Quem vai' : 'Who goes', '<input id="tjQuem" value="' + esc(t ? (t.quem || []).join(', ') : '') + '" placeholder="' + (pt ? 'ex.: Paulo, Ana — separe por vírgula' : 'comma-separated') + '" list="tjQuemLista">' +
       '<datalist id="tjQuemLista">' + pessoas.map(p => '<option value="' + esc(p) + '"></option>').join('') + '</datalist>') +
     '<div class="grid g3">' +
       campo(pt ? 'Quantas vezes' : 'How many times', '<input type="number" id="tjVezes" min="0" step="0.5" value="' + (t ? t.vezes : 5) + '">') +
@@ -20244,7 +20244,7 @@ function abrirTrajeto(id){
     '</div>' +
     campo(pt ? 'Vai junto com' : 'Rides with', '<select id="tjJunto"><option value="">' + (pt ? '— viagem própria —' : '— its own trip —') + '</option>' +
       outros.map(x => { const o = Desloc.lugar(x.origemId), d = Desloc.lugar(x.destinoId); return '<option value="' + x.id + '"' + (t && t.juntoCom === x.id ? ' selected' : '') + '>' + esc((o ? o.nome : '?') + ' → ' + (d ? d.nome : '?') + ' · ' + (x.quem || []).join(', ')) + '</option>'; }).join('') + '</select>',
-      null, pt ? 'Mesmo carro, mesma hora: a viagem conta uma vez só. Ex.: a Julia passa a ir com a Ana quando estudarem juntas.' : 'Same car, same time: the trip counts once.') +
+      null, pt ? 'Mesmo carro, mesma hora: a viagem conta uma vez só. Ex.: a Bia passa a ir com a Ana quando estudarem juntas.' : 'Same car, same time: the trip counts once.') +
     '<div class="grid g2">' +
       campo(pt ? 'Vale a partir de' : 'Valid from', '<input type="date" id="tjDesde" value="' + esc(t ? t.desde || '' : '') + '">') +
       campo(pt ? 'Até' : 'Until', '<input type="date" id="tjAte" value="' + esc(t ? t.ate || '' : '') + '">') +
@@ -29370,7 +29370,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/fgts.js?v=1.0.0"></script>
 <script src="modulos/importar-posicoes.js?v=1.0.0"></script>
 <script src="modulos/assinaturas.js?v=1.0.0"></script>
-<script src="modulos/compromisso-de.js?v=1.2.0"></script>
+<script src="modulos/compromisso-de.js?v=1.3.0"></script>
 <script src="modulos/previsto.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.8.0"></script>
 </body>

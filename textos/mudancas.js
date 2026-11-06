@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.51 · 06/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.52 · 06/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.52', d:'2026-11-06', t:'Tabela do contrato lida certo', itens:[
+    'Contrato da escola: a tabela de preços agora é lida no formato exato do PDF real. Cada opção sai com o nome certo (ex.: "Ens. Fundamental (1º ao 5º ano)", "Período Ampliado (3x na semana)", "Horário Estendido (5x na semana)"), com o horário à parte. Os exemplos das telas usam nomes genéricos.'
+  ]},
   {v:'3.51', d:'2026-11-06', t:'Arrumação interna', itens:[
     'Arrumação interna, nada muda para você: o glossário e as aulas do Coach foram para arquivos próprios.'
   ]},
@@ -232,7 +235,7 @@ const MUDANCAS = [
     'Cadastro de salário: quem recebe, quem paga, tipo (CLT, pró-labore, PJ, outro), bruto ou líquido — obrigatório escolher —, cálculo de INSS e IR ligado ou desligado, dependentes, outros descontos da folha, holerite (PDF ou foto) e vigência: vale de tal data até tal data, ou até cadastrar outro.',
     'Cadastrar outro salário da mesma pessoa no mesmo período faz o app perguntar: Substituir (aumento, troca de emprego — o anterior termina na véspera) ou Complementar (outra renda, os dois valem).',
     'Lançamento avulso de salário também pede bruto ou líquido e oferece calcular o imposto. No caixa entra o líquido; o bruto fica guardado para o TaxONE.',
-    '"Salário Neco (liquido)" deixou de existir como categoria. Todos os lançamentos, categorias e lançamentos fixos viraram "Salário", com Neco em Quem recebeu e a marca "líquido". Reimportar a planilha antiga usa a mesma regra e não traz a categoria velha de volta.',
+    '"Salário Fulano (liquido)" deixou de existir como categoria. Todos os lançamentos, categorias e lançamentos fixos viraram "Salário", com o nome da pessoa em Quem recebeu e a marca "líquido". Reimportar a planilha antiga usa a mesma regra e não traz a categoria velha de volta.',
     'Microfone: enquanto ouve, um anel em volta do botão cresce com o volume da voz. Se travar, o app diz em qual etapa parou — sem som (microfone errado ou mudo), ou ouviu e o serviço do Google não respondeu — e o que fazer.',
     'Consertado: ler PDF no "Importar arquivo" nunca funcionou desde a 3.7 (o leitor recebia os bytes em vez do arquivo). E o leitor passou a entender PDFs com compressão ASCII85.',
     'Consertado: as janelas de lançamento e de salário acumulavam ouvintes de eventos a cada abertura.',

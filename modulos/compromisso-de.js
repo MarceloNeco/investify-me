@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.2.0 · 06/Nov/2026
+   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.3.0 · 06/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · No formulário de um lançamento: "📌 Virar compromisso" abre o "Novo compromisso" já preenchido
@@ -17,6 +17,8 @@
        dos valores e completa o nome DESSA linha; linha de valores sem nome herda a etapa de cima; o horário sai do nome.
        Aluno = "Nome do Aluno:" ou o 1º "Nome Completo:" depois de "Informações do(a) educando(a)" (nunca pai/mãe).
        Etapa marcada com X: só as linhas dela; a série ("Ano/Série" ou "3º Ano" no outro contrato) pré-seleciona.
+     · 1.3.0: a tabela é lida em BLOCOS (layout exato do texto real): o nome vem nas linhas ACIMA dos valores, com horários e
+       "Opcional" no meio, e o complemento "(…)" na linha de baixo. Fixture literal em teste/teste-contrato-fgts.js.
    API (window.CompromissoDe)
      doLancamento(g)        → semente do compromisso
      lerContrato(texto)     → {escola, aluno, ano, parcela, parcelas, dia, matricula, anuidade, primeiroMes, achados:[…]}
@@ -74,7 +76,7 @@
   var DIN = '(\\d{1,3}(?:\\.\\d{3})*,\\d{2})';
   var RX_LINHA_ESC = new RegExp('r\\$ ?' + DIN + ' r\\$ ?' + DIN + ' r\\$ ?' + DIN + ' (\\d{1,2}) r\\$ ?' + DIN + '\\s*$');
   var RX_LINHA_AMP = new RegExp('r\\$ ?' + DIN + ' (\\d{1,2}) r\\$ ?' + DIN + '\\s*$');
-  var RX_CABECALHO = /valor|anuidade|antecipada|restante|parcela|modalidade|curso ?\/ ?etapa|numero|n[ºo°] de|horario|^clausula/;
+  var RX_CABECALHO = /valor da|valor de cada|valor restante|curso ?\/ ?etapa|modalidade|n[ºo°] de parcelas|numero de parcela|^clausula/;   /* "Horário Estendido" é nome, não cabeçalho */
   var MARCA = /\(\s*x\s*\)/;
   function linhasDe(t) { return String(t || '').split(/\r?\n/).map(function (l) { return l.replace(/[ \t]+/g, ' ').trim(); }).filter(Boolean); }
   function iso2(a, m, d) { return a + '-' + ('0' + m).slice(-2) + '-' + ('0' + d).slice(-2); }
@@ -84,27 +86,43 @@
     while ((m = rx.exec(frase))) { for (var k = MESES_LONGOS[m[1]]; k <= MESES_LONGOS[m[2]]; k++) if (out.indexOf(k) < 0) out.push(k); }
     return out.sort(function (a, b) { return a - b; });
   }
-  /* linhas da tabela (texto do pdftotext -layout): os valores ficam no fim da linha; o complemento do nome vem na
-     linha DE BAIXO, entre parênteses ("Ens. Fundamental … R$ 3.067,00" e depois "(1º ao 5º ano)"); linha de valores sem
-     nome herda o nome da etapa de cima ("R$ 45.588,00 …" + "(6º ao 9º ano)" = "Ens. Fundamental (6º ao 9º ano)"). */
+  /* linhas da tabela (texto do pdftotext -layout), em BLOCOS: o bloco começa nas linhas de nome (sem "R$") acima dos
+     valores, junta "Opcional" e os horários, passa pela linha dos valores e termina na linha "(…)" logo depois deles.
+     Nome = nome-base + (complemento): "Ens. Fundamental" + "(1º ao 5º ano)"; "Horário Estendido – Opcional" + "(5x na semana)"
+     → "Horário Estendido (5x na semana)". Os horários (8h30 às 13h…) saem do nome e ficam em `horario`. Linha de valores sem
+     nome nenhum herda o nome-base de cima. Linha com "R$" que não é de valores completos (ex.: "Diária Avulsa - - R$ 110") é ignorada. */
+  var RX_HORA = /\b\d{1,2}h\d{0,2}\s*(?:às|as|a)\s*\d{1,2}h\d{0,2}\b/gi;
+  function semHoras(t) { return String(t || '').replace(RX_HORA, ' ').replace(/\s+/g, ' ').trim(); }
+  function horasDe(t) { return (String(t || '').match(RX_HORA) || []); }
+  function limparBase(t) { return semHoras(t).replace(/\(\s*[xX]?\s*\)/g, ' ').replace(/\s*[–—-]?\s*\bopcional\b/gi, ' ').replace(/\s*[–—-]\s*$/, '').replace(/\s+/g, ' ').trim(); }
   function linhasTabela(ls, rx) {
-    var out = [], base = '', ultima = -9;
-    ls.forEach(function (l, i) {
-      var m = sa(l).match(rx);
+    var out = [], base = '', pend = [], marcPend = false;
+    for (var i = 0; i < ls.length; i++) {
+      var l = ls[i], sl = sa(l), m = sl.match(rx);
       if (!m) {
-        if (out.length && ultima === i - 1 && /^\([^)]*\)/.test(l) && !/r\$/i.test(l)) {
-          var u = out[out.length - 1]; u.nome = (u.nome + ' ' + l).trim(); u.marcada = u.marcada || MARCA.test(sa(l)); ultima = i;
-        }
-        return;
+        if (/r\$/i.test(l) || /:/.test(l) || RX_CABECALHO.test(sl) || l.length > 60) { pend = []; marcPend = false; continue; }
+        if (/^\(/.test(l) && !MARCA.test(sl.slice(0, 5))) { pend = []; marcPend = false; continue; }   /* "(…)" solto: não é começo de bloco */
+        pend.push(l); if (pend.length > 4) pend.shift(); marcPend = marcPend || MARCA.test(sl);
+        continue;
       }
-      var pre = l.slice(0, m.index).trim(), marc = MARCA.test(sa(pre));
-      pre = pre.replace(/\(\s*[xX]?\s*\)/g, ' ').replace(/\s+/g, ' ').trim();
-      var nome, hm = pre.match(/\s*\b\d{1,2}h\d{0,2}\b.*$/), horario = hm ? hm[0].trim() : '';   /* "8h30 às 13h / 12h às 16h30" sai do nome */
-      if (hm) pre = pre.slice(0, hm.index).trim();
-      if (!pre || pre.charAt(0) === '(') nome = (base + ' ' + pre).trim();
-      else { nome = pre; base = pre.replace(/\s*\(.*$/, '').trim(); }
-      out.push({ nome: nome, horario: horario, m: m, marcada: marc }); ultima = i;
-    });
+      var pre = l.slice(0, m.index).trim(), partes = pend.concat(pre ? [pre] : []), horas = [];
+      partes.forEach(function (x) { horas = horas.concat(horasDe(x)); });
+      var marc = marcPend || MARCA.test(sa(pre)), nomeBase = limparBase(partes.join(' ')), comp = '';
+      if (nomeBase && nomeBase.charAt(0) !== '(') base = nomeBase;
+      else if (nomeBase) { comp = nomeBase; }                      /* "(3x na semana) R$ …" na mesma linha */
+      /* depois dos valores: horários soltos e o complemento "(…)" */
+      for (var j = i + 1; j < ls.length && j <= i + 3; j++) {
+        var n = ls[j];
+        if (!semHoras(n)) { horas = horas.concat(horasDe(n)); i = j; continue; }
+        if (/^\(/.test(n) && !/r\$/i.test(n)) {
+          var pm = n.match(/^\([^)]*\)/); comp = (comp + ' ' + pm[0]).trim(); horas = horas.concat(horasDe(n.slice(pm[0].length)));
+          marc = marc || MARCA.test(sa(n)); i = j;
+        }
+        break;
+      }
+      out.push({ nome: (base + ' ' + comp).replace(/\(\s*[xX]\s*\)/g, ' ').replace(/\s+/g, ' ').trim(), horario: horas.join(' / '), m: m, marcada: marc });
+      pend = []; marcPend = false;
+    }
     return out;
   }
   /* a etapa marcada com X: só as linhas dela; a série (deste ou de outro documento do lote) pré-seleciona */
@@ -296,7 +314,7 @@
 
   MoneyModulos.registrar({
     id: 'compromisso-de',
-    versao: '1.2.0',
+    versao: '1.3.0',
     pontos: {
       'lancamento.form': function (ctx) {
         if (!ctx.g || ctx.g.fluxo === 'entrada' && ctx.g.grupo !== 'RENDA') return '';

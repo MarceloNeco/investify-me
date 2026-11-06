@@ -33,26 +33,44 @@ const ESCOLAR = ['ASSOCIAÇÃO EDUCACIONAL EXEMPLO', 'CONTRATO DE SERVIÇOS DE E
   'sendo a primeira parcela devida no ato da contratação, como antecipação da própria anuidade e 12 mensais iguais, de janeiro',
   'a dezembro, vencíveis no dia 10. Havendo feriado, o primeiro ocorrerá em 11/01/2027.',
   'Curso / Etapa         Valor da Anuidade    1ª Parcela Antecipada    Valor Restante    Número de Parcela    Valor de Cada Parcela',
-  'Educação Infantil         R$ 36.788,00        R$ 1.472,00        R$ 35.316,00        12        R$ 2.943,00',
-  'Ens. Fundamental          R$ 38.338,00        R$ 1.534,00        R$ 36.804,00        12        R$ 3.067,00',
-  '(1º ao 5º ano)',
-  '                          R$ 45.588,00        R$ 1.824,00        R$ 43.764,00        12        R$ 3.647,00',
-  '(6º ao 9º ano)',
-  'Ensino Médio              R$ 52.613,00        R$ 2.105,00        R$ 50.508,00        12        R$ 4.209,00',
-  '(1ª série)',
-  '                          R$ 53.838,00        R$ 2.154,00        R$ 51.684,00        12        R$ 4.307,00',
-  '(2ª e 3ª série)'];
+  /* a tabela de preços como sai do pdftotext -layout (literal, pública da escola) */
+  '  Educação Infantil                R$ 36.788,00   R$ 1.472,00   R$ 35.316,00   12    R$ 2.943,00',
+  '  Ens. Fundamental',
+  '                                   R$ 38.338,00   R$ 1.534,00   R$ 36.804,00   12    R$ 3.067,00',
+  '  (1º ao 5º ano)',
+  '  Ens. Fundamental',
+  '                                   R$ 45.588,00   R$ 1.824,00   R$ 43.764,00   12    R$ 3.647,00',
+  '  (6º ao 9º ano)',
+  '  Ensino Médio',
+  '                                   R$ 52.613,00   R$ 2.105,00   R$ 50.508,00   12    R$ 4.209,00',
+  '  (1ª série)',
+  '  Ensino Médio',
+  '                                   R$ 53.838,00   R$ 2.154,00   R$ 51.684,00   12    R$ 4.307,00',
+  '  (2ª e 3ª série)'];
 const AMPLIADO = ['CONTRATO DE SERVIÇO DO PERÍODO AMPLIADO - 2027', 'Informações do Pai', 'Nome Completo:    PEDRO TESTE EXEMPLO',
   'Informações do(a) Educando (a)', 'Nome do Aluno:    ANA TESTE EXEMPLO          Ano/Série: 3º Ano',
   'Modalidade            Horário                       Valor da Anuidade    Nº de Parcelas    Valor da Parcela',
-  'Período Ampliado      8h30 às 13h / 12h às 16h30    R$ 11.040,00         10                R$ 1.104,00',
-  '(5x na semana)',
-  '                                                    R$ 6.200,00          10                R$ 620,00',
-  '(3x na semana)',
-  'Horário Estendido     7h às 8h30                    R$ 4.300,00          10                R$ 430,00',
-  '(5x na semana)',
-  '                                                    R$ 3.260,00          10                R$ 326,00',
-  '(3x na semana)',
+  /* literal do pdftotext -layout */
+  '    Período Ampliado                      8h30 às 13h',
+  '                                                         R$ 11.040,00     10       R$ 1.104,00',
+  '     (5x na semana)                      12h às 16h30',
+  '    Período Ampliado                      8h30 às 13h',
+  '                                                         R$ 6.200,00      10       R$ 620,00',
+  '     (3x na semana)                      12h às 16h30',
+  '   Horário Estendido –',
+  '                                         7h20 às 8h30',
+  '        Opcional                                         R$ 4.300,00      10       R$ 430,00',
+  '                                        16h30 às 17h40',
+  '     (5x na semana)',
+  '   Horário Estendido –',
+  '                                         7h20 às 8h30',
+  '        Opcional                                         R$ 3.260,00      10       R$ 326,00',
+  '                                        16h30 às 17h40',
+  '     (3x na semana)',
+  '      Diária Avulsa',
+  ' (conforme disponibilidade de',
+  '                                          7h20 às 13h',
+  '  vaga e critérios divulgados                                 -            -       R$ 110,00',
   'As 10 (dez) parcelas terão vencimento nos meses de fevereiro a junho e de agosto a dezembro de 2027, não havendo parcela com vencimento em julho.'];
 const BOLETO = ['Beneficiário: ASSOCIAÇÃO EDUCACIONAL EXEMPLO', 'Vencimento 30/10/2026', 'Descrição    Qtd    Valor    Desconto    Total',
   '1ª Parcela da Anuidade - 1    1.534,00    121,00    1.413,00'];
@@ -91,17 +109,17 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [], recorrentes: [],
       ok(e1.tipo === 'escolar' && e1.ano === 2027 && e1.aluno === 'Ana' && e1.curso === 'fundamental' && e1.turno === 'manha', 'contrato escolar: ano 2027, aluno (o 1º "Nome Completo", não o pai nem a mãe), curso e turno marcados com X');
       const nomes = e1.opcoes.map((o) => o.nome + '=' + o.anuidade + '/' + o.antecipada + '/' + o.parcelas + 'x' + o.parcela).join(' | ');
       ok(nomes === 'Educação Infantil=36788/1472/12x2943 | Ens. Fundamental (1º ao 5º ano)=38338/1534/12x3067 | Ens. Fundamental (6º ao 9º ano)=45588/1824/12x3647 | Ensino Médio (1ª série)=52613/2105/12x4209 | Ensino Médio (2ª e 3ª série)=53838/2154/12x4307',
-        'a tabela: o complemento da linha de baixo fica com a linha certa (' + nomes + ')');
+        'a tabela (layout literal): nome de cima + complemento de baixo, cada um na linha certa (' + nomes + ')');
       ok(e1.meses.length === 12 && e1.dia === 10 && e1.primeiroVenc === '2027-01-11' && e1.antecipadaNoAto, '12 mensais de janeiro a dezembro, dia 10 ("vencíveis", com acento), 1º vencimento 11/01/2027, 1ª parcela no ato');
       ok(e1.escolhida === -1, 'só o contrato escolar, sem série: duas linhas do Fundamental → o app pergunta');
       ok(await p.evaluate((t) => CompromissoDe.lerModelo(t.replace('Ano/Série:  ', 'Ano/Série: 7')).escolhida, ESCOLAR.join('\n')) === 2, 'com "Ano/Série: 7": escolhe "6º ao 9º ano"');
       const a1 = await p.evaluate((t) => CompromissoDe.lerModelo(t), AMPLIADO.join('\n'));
       const na = a1.opcoes.map((o) => o.nome + '=' + o.anuidade + '/' + o.parcelas + 'x' + o.parcela).join(' | ');
       ok(na === 'Período Ampliado (5x na semana)=11040/10x1104 | Período Ampliado (3x na semana)=6200/10x620 | Horário Estendido (5x na semana)=4300/10x430 | Horário Estendido (3x na semana)=3260/10x326',
-        'período ampliado: 4 opções com o nome certo (' + na + ')');
-      ok(a1.aluno === 'Ana' && a1.serie === 3 && a1.escolhida === -1 && a1.dia === 0 && a1.opcoes[0].horario === '8h30 às 13h / 12h às 16h30', 'aluno pelo "Nome do Aluno" (não o pai), série 3, sem X → perguntar, dia não informado, horário à parte');
+        'período ampliado (layout literal): 4 opções com o nome certo, horários e "Opcional" fora do nome, Diária Avulsa ignorada (' + na + ')');
+      ok(a1.aluno === 'Ana' && a1.serie === 3 && a1.escolhida === -1 && a1.dia === 0 && a1.opcoes[0].horario === '8h30 às 13h / 12h às 16h30' && a1.opcoes[2].horario === '7h20 às 8h30 / 16h30 às 17h40', 'aluno pelo "Nome do Aluno" (não o pai), série 3, sem X → perguntar, dia não informado, horário à parte');
       ok(a1.meses.join() === '2,3,4,5,6,8,9,10,11,12', 'meses: fevereiro a junho e agosto a dezembro (sem julho)');
-      ok(await p.evaluate((t) => CompromissoDe.lerModelo(t.replace('(3x na semana)', '( X ) (3x na semana)')).escolhida, AMPLIADO.join('\n')) === 1, 'com "( X )" na opção: escolhe sozinho');
+      ok(await p.evaluate((t) => CompromissoDe.lerModelo(t.replace('    Período Ampliado                      8h30 às 13h\n                                                         R$ 6.200', '( X ) Período Ampliado                      8h30 às 13h\n                                                         R$ 6.200')).escolhida, AMPLIADO.join('\n')) === 1, 'com "( X )" na opção: escolhe sozinho');
       const pl = await p.evaluate((ts) => { const q = CompromissoDe.planoModelo(ts.map((t) => CompromissoDe.lerModelo(t))); return q.itens.map((i) => i.opcoes.map((o) => o.nome).join(',') + '@' + i.escolhida); }, [ESCOLAR.join('\n'), AMPLIADO.join('\n')]);
       ok(pl[0] === 'Ens. Fundamental (1º ao 5º ano),Ens. Fundamental (6º ao 9º ano)@0' && /@-1$/.test(pl[1]), 'no lote: só as 2 linhas do Fundamental, e o "3º Ano" do ampliado pré-seleciona "1º ao 5º ano"');
       const b1 = await p.evaluate((t) => CompromissoDe.lerModelo(t), BOLETO.join('\n'));

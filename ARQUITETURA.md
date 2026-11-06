@@ -725,5 +725,9 @@ o OmniLifeONE não lê `money_docs`, o MoneyTRIO não lê `omni_docs`.
   horário sai do nome (`horario`); aluno = "Nome do Aluno:" ou o 1º "Nome Completo:" depois de "Informações do(a) educando(a)";
   espaços repetidos viram um antes das regras; só as linhas da etapa marcada com X entram na prévia, e a série ("Ano/Série" ou o
   "3º Ano" do contrato do ampliado) pré-seleciona. O teste usa o mesmo layout, com nomes fictícios.
+- 3.52 (`compromisso-de` 1.3.0): a tabela é lida em BLOCOS, pelo layout exato que a sessão principal mandou (fixture literal no teste):
+  o nome vem nas linhas ACIMA dos valores ("Ens. Fundamental", "Horário Estendido –", horários, "Opcional"), o complemento "(…)" na linha
+  de baixo; horários vão para `horario`, "Opcional" e o travessão saem do nome; linha com "R$" sem valores completos (Diária Avulsa) é ignorada.
+  Os exemplos das telas (placeholders) usam nomes genéricos; o catálogo de compromissos sugere "Salário" (não mais com um nome de pessoa).
 - Nenhum nome real nos testes, nos módulos e na documentação (3.49): crianças, pais, escola, empregadores e saldos foram trocados
   por fictícios. O que já está no histórico do git só sai reescrevendo a main (decisão do dono).
