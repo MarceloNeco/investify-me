@@ -615,6 +615,23 @@ O `index.html` caiu para cerca de 29,4 mil linhas. O que falta da proposta (TaxO
 Teste de fumaça para arrumação interna: `teste/teste-fumaca-telas.js <pasta de antes>` (10 telas × 390/1366 px × PT/EN: mesma foto,
 mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de cada aula do Coach, 3 níveis × PT/EN; o número da versão e a lista "O que há de novo" ficam de fora da comparação).
 
+### Parte 13 (3.54): contrato com boleto, sem duplicar, Desfazer, vencimentos passados e o computador
+- `compromisso-de` 1.4.0: boleto de banco (rótulos em colunas: "Valor do documento", "(-) Desconto", "Valor cobrado/a pagar", vencimento até
+  200 caracteres depois do rótulo); com boleto no lote, o gasto usa o valor a pagar e o vencimento dele e se chama "Matrícula AAAA (1ª parcela
+  da anuidade)" (editável). `jaLancado(valor, data, nomes)`: mesmo valor e até 15 dias, ou nome da escola/beneficiário parecido e até 45 dias.
+  `jaExistem(semente)`: mesmo grupo, período que se cruza, uma palavra do nome em comum e o mesmo aluno → a prévia vem desmarcada com
+  "manter como está" / "atualizar <existente>" (valor, dia se o contrato diz, IR, a confirmar; as datas ficam) / "criar mesmo assim".
+  "↩ Desfazer" por 5 min tira o que nasceu e devolve o que foi atualizado (o PDF guardado fica).
+- `modulos/conciliacao.js` (`Conciliacao.rodar`): ao abrir e 2 s depois do último `gasto.novo`, chama
+  `Pagamento.conciliarAutomatico({dias: 7, tol: 0.10, meses: 12, porNome: true})` (index.html; sem argumento continua como antes).
+  `Recorrente.ocorrencia`: vencimento sem registro, de antes do `criadoEm` do compromisso, vira `semconf` ("sem conferência",
+  `conta: false`), e não `atrasado`; não aparece como opção para marcar à mão.
+- N35 no computador (≥ 761 px): `.shell` sem `max-width`, barra colada à esquerda; `ajustarLateral()` mede a altura da barra (da posição
+  dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
+  anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
+  nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- Testes: `teste/teste-parte13.js` (32 ok), `teste/teste-desktop.js` (55 ok).
+
 ### Ligação com o OmniLifeONE (3.50) — especificação
 Decidido pelo dono em 06/Nov/2026 (respostas "sim" às perguntas a e b): o OmniLifeONE manda um resumo mínimo da saúde da família e o
 MoneyTRIO usa para (a) preencher o plano de saúde (operadora e quem ele cobre) e (b) transformar o médico de referência em profissional conhecido.

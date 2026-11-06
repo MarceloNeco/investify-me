@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.48">
+<link rel="stylesheet" href="estilo.css?v=3.54">
 </head>
 <body>
 
@@ -377,6 +377,7 @@ const TEXTOS = {
   'pg.agendado':       {pt:'Agendado',           en:'Scheduled'},
   'pg.atrasado':       {pt:'Atrasado',           en:'Overdue'},
   'pg.cancelado':      {pt:'Cancelado',          en:'Cancelled'},
+  'pg.semconf':        {pt:'Sem conferência',    en:'Not checked'},
 
   /* periodicidade */
   'per.diario':        {pt:'Diário',             en:'Daily'},
@@ -627,7 +628,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.53"></script>
+<script src="textos/frases-en.js?v=3.54"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7367,7 +7368,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.53"></script>
+<script src="textos/mudancas.js?v=3.54"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -8104,7 +8105,11 @@ const ESTADOS_PG = {
                desc:{pt:'Bateu com um lançamento do extrato.',
                      en:'Matched a line from an imported statement.'}},
   atrasado:   {t:'pg.atrasado',   ico:'⚠', cor:'--down',   conta:true},
-  cancelado:  {t:'pg.cancelado',  ico:'—', cor:'--txt3',   conta:false}
+  cancelado:  {t:'pg.cancelado',  ico:'—', cor:'--txt3',   conta:false},
+  /* 3.54: venceu ANTES de o compromisso ser cadastrado e nenhum lançamento bateu: não é atraso (ninguém sabia dele) */
+  semconf:    {t:'pg.semconf',    ico:'·', cor:'--txt3',   conta:false,
+               desc:{pt:'Venceu antes de você cadastrar o compromisso e nenhum lançamento bateu: não conta como atrasado.',
+                     en:'Due before you registered the commitment and no entry matched: not counted as overdue.'}}
 };
 
 const Recorrente = {
@@ -8472,7 +8477,7 @@ const Recorrente = {
     let estado = reg ? reg.estado : r.estadoPadrao;
     /* venceu, ninguém marcou nada e ainda conta como em aberto */
     if(ESTADOS_PG[estado] && ESTADOS_PG[estado].conta && iso < hojeISO() && estado !== 'automatico')
-      estado = 'atrasado';
+      estado = (!reg && r.criadoEm && iso < String(r.criadoEm).slice(0,10)) ? 'semconf' : 'atrasado';
 
     /* num serviço por visita o valor não é fixo: é a soma dos dias
        trabalhados na janela que este pagamento cobre */
@@ -8809,24 +8814,31 @@ const Pagamento = {
   },
 
   /* procura, entre os lançamentos importados, um que case com cada ocorrência
-     em aberto: mesma categoria, valor perto e data perto */
-  conciliarAutomatico(dias){
+     em aberto: mesma categoria, valor perto e data perto.
+     op: número (a janela em dias, como antes) ou {dias, tol, meses, porNome} — 3.54: o módulo conciliacao.js
+     usa {dias: 7, tol: 0.10, meses: 12, porNome: true} sozinho, para os meses passados (ex.: compromisso
+     importado hoje que já vinha sendo pago); porNome aceita categoria diferente quando o nome bate */
+  conciliarAutomatico(op){
     if(typeof Gasto === 'undefined') return {casados:0};
-    const janela = dias || 6;
+    op = typeof op === 'object' && op ? op : {dias: op};
+    const janela = op.dias || 6;
     const hoje = hojeISO();
-    const de = new Date(hoje + 'T12:00:00'); de.setMonth(de.getMonth() - 3);
+    const de = new Date(hoje + 'T12:00:00'); de.setMonth(de.getMonth() - (op.meses || 3));
     const abertas = Recorrente.ocorrencias(Recorrente.iso(de), hoje)
-      .filter(o => ESTADOS_PG[o.estado] && ESTADOS_PG[o.estado].conta);
+      .filter(o => (ESTADOS_PG[o.estado] && ESTADOS_PG[o.estado].conta) || (op.porNome && o.estado === 'semconf'));
+    const palavras = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w.length >= 4);
+    const nomeBate = (g, r) => { const a = palavras(r.nome); if(!a.length) return false; const b = palavras([g.desc, g.sub].join(' ')); return a.some(w => b.indexOf(w) >= 0); };
     let casados = 0;
     abertas.forEach(o => {
       const alvo = Gasto.todos().find(g => {
         if(!g.data || g.recorrenteId) return false;
-        if(g.grupo !== o.r.grupo) return false;
-        if(String(g.sub).toLowerCase() !== String(o.r.sub).toLowerCase()) return false;
+        if(g.fluxo && o.r.fluxo && g.fluxo !== o.r.fluxo) return false;
+        const mesmaCat = g.grupo === o.r.grupo && String(g.sub).toLowerCase() === String(o.r.sub).toLowerCase();
+        if(!mesmaCat && !(op.porNome && nomeBate(g, o.r))) return false;
         const dd = Math.abs((new Date(g.data + 'T12:00:00') - new Date(o.data + 'T12:00:00')) / 86400000);
         if(dd > janela) return false;
         const dif = o.valor ? Math.abs(g.valor - o.valor) / o.valor : 1;
-        return dif <= (o.r.varia ? 0.30 : 0.12);  /* até 12% ainda é a mesma conta; 30% se o valor varia (N28) */
+        return dif <= (o.r.varia ? 0.30 : (op.tol || 0.12));  /* até 12% ainda é a mesma conta; 30% se o valor varia (N28) */
       });
       if(alvo){ this.conciliar(o.r.id, o.data, alvo.id, alvo.valor); alvo.recorrenteId = o.r.id; casados++; }
     });
@@ -17168,7 +17180,7 @@ function abrirEstado(chave){
   $('#genTitle').textContent = r.nome + ' · ' + I18n.data(data);
   $('#genBody').innerHTML = Verter.html('<p class="small muted" style="margin:0 0 14px">' + esc(Recorrente.explicar(r)) + ' · ' +
       fmt(o.valor) + '</p>' +
-    '<div class="estados">' + Object.keys(ESTADOS_PG).filter(k => k !== 'atrasado').map(k => {
+    '<div class="estados">' + Object.keys(ESTADOS_PG).filter(k => k !== 'atrasado' && k !== 'semconf').map(k => {
       const E = ESTADOS_PG[k];
       return '<button class="estado-bt' + (o.estado === k ? ' on' : '') + '" data-pgest="' +
         esc(chave) + '" data-est="' + k + '">' +
@@ -17525,7 +17537,7 @@ function abrirOcorrencia(chave){
 
   /* o estado deste vencimento */
   h += '<div class="sub-lbl">' + de('Como está este vencimento', 'Status of this due date') + '</div>' +
-    '<div class="chips">' + Object.keys(ESTADOS_PG).filter(k => k !== 'atrasado').map(k =>
+    '<div class="chips">' + Object.keys(ESTADOS_PG).filter(k => k !== 'atrasado' && k !== 'semconf').map(k =>
       '<button type="button" class="chip click' + (o.estado === k ? ' on' : '') +
       '" data-pgest="' + esc(chave + '|' + k) + '" style="' +
       (o.estado === k ? 'border-color:var(' + ESTADOS_PG[k].cor + ')' : '') + '">' +
@@ -29351,8 +29363,31 @@ function mostrarBloqueio(){
 }
 /* 3.35: a altura do topo, para o cabeçalho fixo das tabelas ficar logo abaixo dele */
 function medirTopo(){ const tp = document.querySelector('.topbar'); if(tp && tp.offsetHeight) document.documentElement.style.setProperty('--altura-topo', tp.offsetHeight + 'px'); }
+/* 3.54 (N35): a barra lateral do computador vai do lugar onde ela está na tela até o fim da tela.
+   Ela começa abaixo do topo E da faixa de anúncio; ao rolar, o anúncio sobe e ela gruda no topo.
+   Por isso a altura é medida de verdade (e não "tela − topo"), senão o pé (o calendário) fica fora da tela. */
+let lateralPedido = 0;
+function ajustarLateral(){
+  lateralPedido = 0;
+  const sn = document.getElementById('sidenav'); if(!sn) return;
+  if(window.innerWidth < 761){ sn.style.removeProperty('height'); return; }
+  const t = Math.max(0, sn.getBoundingClientRect().top);
+  sn.style.height = Math.max(160, window.innerHeight - t) + 'px';
+}
+function pedirLateral(){ if(!lateralPedido) lateralPedido = requestAnimationFrame(ajustarLateral); }
 window.addEventListener('resize', medirTopo);
-document.addEventListener('DOMContentLoaded', function () { setTimeout(medirTopo, 600); setTimeout(medirTopo, 3000); });
+window.addEventListener('resize', pedirLateral);
+window.addEventListener('scroll', pedirLateral, {passive: true});
+document.addEventListener('DOMContentLoaded', function () {
+  medirTopo(); ajustarLateral(); setTimeout(medirTopo, 600); setTimeout(medirTopo, 3000); setTimeout(pedirLateral, 600);
+  /* 3.54 (N35): o topo e o anúncio mudam de altura sozinhos (fita, aviso, quebra de linha): a barra lateral acompanha */
+  const tp = document.querySelector('.topbar'), an = document.getElementById('anuncioCaixa');
+  if(window.ResizeObserver){ const ro = new ResizeObserver(() => { medirTopo(); pedirLateral(); }); if(tp) ro.observe(tp); if(an) ro.observe(an); }
+  /* passou de celular para computador (ou o contrário) com a página aberta: fecha o menu de celular e mede de novo */
+  const mq = window.matchMedia ? matchMedia('(min-width:761px)') : null;
+  const trocou = () => { if(mq && mq.matches){ const sn = document.getElementById('sidenav'), bd = document.getElementById('navBackdrop'); if(sn) sn.classList.remove('open'); if(bd) bd.classList.remove('on'); } medirTopo(); ajustarLateral(); };
+  if(mq){ if(mq.addEventListener) mq.addEventListener('change', trocou); else if(mq.addListener) mq.addListener(trocou); }
+});
 /* 3.30: o app começa pelo portão da nuvem (conta → família → cadeado) ou abre só neste aparelho — nuvem.js */
 document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuvem) MoneyNuvem.portao(iniciar); else iniciar(); });
 
@@ -29370,8 +29405,9 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/fgts.js?v=1.0.0"></script>
 <script src="modulos/importar-posicoes.js?v=1.0.0"></script>
 <script src="modulos/assinaturas.js?v=1.0.0"></script>
-<script src="modulos/compromisso-de.js?v=1.3.1"></script>
+<script src="modulos/compromisso-de.js?v=1.4.0"></script>
 <script src="modulos/previsto.js?v=1.0.0"></script>
+<script src="modulos/conciliacao.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.8.0"></script>
 </body>
 </html>

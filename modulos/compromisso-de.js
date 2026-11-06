@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.3.1 · 06/Nov/2026
+   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.4.0 · 06/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · No formulário de um lançamento: "📌 Virar compromisso" abre o "Novo compromisso" já preenchido
@@ -20,6 +20,13 @@
      · 1.3.0: a tabela é lida em BLOCOS (layout exato do texto real): o nome vem nas linhas ACIMA dos valores, com horários e
        "Opcional" no meio, e o complemento "(…)" na linha de baixo. Fixture literal em teste/teste-contrato-fgts.js.
      · 1.3.1: linha só com palavras de cabeçalho ("Anuidade   Parcelas   Parcela") não entra no nome.
+     · 1.4.0: boleto de banco (rótulos em colunas: "Valor do documento", "Desconto", "Valor cobrado/a pagar",
+       vencimento na linha de baixo); com boleto no lote vale o valor a pagar e o vencimento dele; o gasto se chama
+       "Matrícula AAAA (1ª parcela da anuidade)" e o nome é editável. "Já está no livro" (jaLancado): mesmo valor
+       e até 15 dias, ou nome da escola/beneficiário parecido e até 45 dias → vem desmarcado e mostra o lançamento.
+       "Já existe" (jaExistem): compromisso do mesmo aluno e nome parecido no mesmo período → vem desmarcado, com
+       "manter como está", "atualizar <o existente>" (valor, dia informado, IR, a confirmar) ou "criar mesmo assim".
+       Depois de Criar, "↩ Desfazer" por 5 minutos.
    API (window.CompromissoDe)
      doLancamento(g)        → semente do compromisso
      lerContrato(texto)     → {escola, aluno, ano, parcela, parcelas, dia, matricula, anuidade, primeiroMes, achados:[…]}
@@ -27,6 +34,8 @@
      lerModelo(texto)       → null | {tipo:'escolar'|'ampliado'|'boleto', ano, aluno, escola, opcoes:[{nome, anuidade, parcelas, parcela…}],
                               escolhida (-1 = perguntar), meses:[1..12], dia, primeiroVenc | bruto, desconto, pagar, venc}
      planoModelo([docs])    → {ano, aluno, escola, itens:[{chave, rotulo, opcoes, escolhida, semente(i)}], gasto|null}
+     jaLancado(valor, data, nomes) → lançamento | null · jaExistem(semente) → [compromisso] · desfazer({recorrentes, antes, gastos})
+     mostrarPlano(plano)    → abre a prévia de um plano já lido
    PONTOS QUE USA
      lancamento.form · custos.topo · ações cdl-* · genModal (prévia) · Fundo (leitura dos PDFs)
    ===================================================================== */
@@ -148,8 +157,12 @@
     if (/parcela da anuidade[^\n]*\d,\d{2}[^\n]*\d,\d{2}/.test(s)) return 'boleto';
     if (/periodo ampliado/.test(s) && /contrato/.test(s)) return 'ampliado';
     if (/educacao escolar/.test(s) || /curso ?\/ ?etapa/.test(s)) return 'escolar';
+    /* 1.4.0: boleto de banco (rótulos em colunas): linha digitável ou "valor do documento/cobrado/a pagar" + vencimento */
+    if (/vencimento/.test(s) && (/valor (?:do documento|cobrado|a pagar|total a pagar)/.test(s) || /\d{5}\.?\d{5} ?\d{5}\.?\d{6} ?\d{5}\.?\d{6} ?\d ?\d{14}/.test(s))) return 'boleto';
     return '';
   }
+  /* o primeiro valor "1.413,00" depois do rótulo (na mesma linha ou nas de baixo, como no -layout) */
+  function valorDepois(s, rx) { var m = s.match(new RegExp(rx.source + '[^\\d]{0,80}?(\\d{1,3}(?:\\.\\d{3})*,\\d{2})')); return m ? num(m[1]) : 0; }
 
   API.lerModelo = function (texto) {
     var t = String(texto || ''), s = sa(t).replace(/[ \t]+/g, ' '), ls = linhasDe(t), tipo = tipoDoTexto(s), m;
@@ -158,11 +171,18 @@
     if ((m = s.match(/contrato de serv[a-z ]*?-\s*(20\d\d)/)) || (m = s.match(/ano letivo de [a-z]+ a [a-z]+ de (20\d\d)/)) || (m = s.match(/ano letivo[^\n]*?(20\d\d)/))) o.ano = Number(m[1]);
     o.aluno = acharAluno(t) || API.lerContrato(t).aluno;
     if (tipo === 'boleto') {
-      var lb = ls.find(function (l) { return /parcela da anuidade/.test(sa(l)); }) || '', vs = lb.match(/\d{1,3}(?:\.\d{3})*,\d{2}/g) || [];
+      var lb = ls.find(function (l) { return /parcela da anuidade/.test(sa(l)) && /\d,\d{2}/.test(l); }) || '', vs = lb.match(/\d{1,3}(?:\.\d{3})*,\d{2}/g) || [];
       o.bruto = vs.length >= 3 ? num(vs[vs.length - 3]) : vs.length ? num(vs[0]) : 0;
       o.desconto = vs.length >= 3 ? num(vs[vs.length - 2]) : 0;
       o.pagar = vs.length ? num(vs[vs.length - 1]) : 0;
-      o.venc = (m = s.match(/vencimento\s*:?\s*(\d{2}\/\d{2}\/\d{4})/)) ? br2iso(m[1]) : '';
+      /* os rótulos do boleto ganham da linha da parcela: "Valor a pagar" (ou "cobrado") é o que sai da conta */
+      var vPagar = valorDepois(s, /valor (?:total )?(?:a pagar|cobrado)/), vDoc = valorDepois(s, /valor do documento/), vDesc = valorDepois(s, /desconto/);
+      if (vDoc) o.bruto = vDoc;
+      if (vDesc && vDesc < (o.bruto || Infinity)) o.desconto = vDesc;
+      if (vPagar) o.pagar = vPagar;
+      else if (!o.pagar && o.bruto) o.pagar = Math.round((o.bruto - (o.desconto || 0)) * 100) / 100;
+      o.venc = (m = s.match(/vencimento[\s\S]{0,200}?(\d{2}\/\d{2}\/\d{4})/)) ? br2iso(m[1]) : '';
+      o.benef = (m = t.match(/benefici[aá]rio\s*:?[ \t]*([^\n]{3,80})/i)) ? m[1].replace(/\b(?:cnpj|cpf)\b.*$/i, '').replace(/[\d.\/-]{11,}.*$/, '').trim() : '';
       if (!o.ano && o.venc) o.ano = Number(o.venc.slice(0, 4)) + 1;
       return o;
     }
@@ -225,12 +245,40 @@
         op ? (pt() ? 'anuidade ' : 'yearly ') + fmt(op.anuidade) : '', amp.dia ? '' : (pt() ? 'dia de vencimento não informado no contrato' : 'due day not in the contract')]); } });
     var gasto = null, opE = etapa && etapa.idx >= 0 ? opsE[etapa.idx] : null;
     if (bol || (esc1 && esc1.antecipadaNoAto && opE && opE.antecipada)) {
-      var valor = bol ? bol.pagar : opE.antecipada, data = (bol && bol.venc) || hojeISO();
+      /* 1.4.0: com boleto no lote, vale o que o boleto diz: valor a pagar (com o desconto) e o vencimento dele */
+      var valor = bol && bol.pagar ? bol.pagar : (opE ? opE.antecipada : 0), data = (bol && bol.venc) || hojeISO();
       gasto = { data: data, valor: valor, grupo: 'DEPENDENTES', sub: sub, quem: aluno, irpf: true, per: 'Pontual', origem: 'contrato',
-        desc: (pt() ? '1ª parcela anuidade ' : '1st instalment ') + ano + (bol && bol.desconto ? (pt() ? ' (desconto ' : ' (discount ') + fmt(bol.desconto) + ')' : '') };
-      gasto.jaLancado = Gasto.todos().some(function (g) { return g.fluxo === 'saida' && Math.abs(g.valor - valor) < 0.01 && Math.abs(new Date(g.data + 'T12:00:00') - new Date(data + 'T12:00:00')) <= 15 * 86400000; });
+        desc: (pt() ? 'Matrícula ' + ano + ' (1ª parcela da anuidade)' : 'Enrolment ' + ano + ' (1st instalment)'),
+        obs: bol && bol.desconto ? (pt() ? 'valor do documento ' : 'document amount ') + fmt(bol.bruto) + (pt() ? ', desconto ' : ', discount ') + fmt(bol.desconto) : '' };
+      gasto.jaLancado = API.jaLancado(valor, data, [escola, bol && bol.benef].filter(Boolean).join(' '));
     }
     return { ano: ano, aluno: aluno, escola: escola, itens: itens, gasto: gasto };
+  };
+  /* palavras que contam de um nome (4+ letras, sem acento, sem palavras de banco e de empresa) */
+  var NAO_CONTA = { ltda: 1, pagamento: 1, boleto: 1, enviado: 1, compra: 1, debito: 1, credito: 1, transferencia: 1, para: 1, servicos: 1, educacionais: 1 };
+  function palavrasNome(t) { return sa(t).replace(/[^a-z ]/g, ' ').split(/\s+/).filter(function (w) { return w.length >= 4 && !NAO_CONTA[w]; }); }
+  /* o pagamento já está no livro (o robô ou o extrato trouxe)? mesmo valor e até 15 dias; ou mesmo valor, nome da escola
+     parecido e até 45 dias. Devolve o lançamento (para mostrar) ou null. */
+  API.jaLancado = function (valor, data, nomes) {
+    var alvo = palavrasNome(nomes), d0 = new Date(data + 'T12:00:00');
+    return Gasto.todos().find(function (g) {
+      if (g.fluxo !== 'saida' || Math.abs(g.valor - valor) >= 0.01 || !g.data) return false;
+      var dd = Math.abs(new Date(g.data + 'T12:00:00') - d0) / 86400000;
+      if (dd <= 15) return true;
+      var w = palavrasNome([g.desc, g.sub].join(' '));
+      return dd <= 45 && alvo.some(function (x) { return w.indexOf(x) >= 0; });
+    }) || null;
+  };
+  /* o compromisso já existe? mesmo grupo, período que se cruza e nome parecido (uma palavra de 4+ letras em comum,
+     sem contar o ano e o nome do aluno) com o mesmo aluno no nome ou em "para quem é" */
+  API.jaExistem = function (sem) {
+    var alunoW = palavrasNome(sem.quem), w0 = palavrasNome(sem.nome).filter(function (x) { return alunoW.indexOf(x) < 0; });
+    return Recorrente.todos().filter(function (r) {
+      if (r.ativo === false || r.grupo !== sem.grupo) return false;
+      if ((r.desde && r.desde > sem.ate) || (r.ate && r.ate < sem.desde)) return false;
+      var w = palavrasNome(r.nome), mesmoAluno = !alunoW.length || alunoW.some(function (x) { return w.indexOf(x) >= 0; }) || sa(r.quem).trim() === sa(sem.quem).trim();
+      return mesmoAluno && w0.some(function (x) { return w.indexOf(x) >= 0; });
+    });
   };
 
   /* ---------- prévia: confere e cria (compromissos "a confirmar" + 1ª parcela como gasto pontual) ---------- */
@@ -240,8 +288,13 @@
     var h = '<p class="small muted">' + esc(pt() ? 'O app leu o contrato pelo modelo, sem IA. Confira: os compromissos entram marcados "a confirmar", com os meses certos e "Entra no imposto de renda".'
       : 'Read by template, no AI. Check: commitments are created marked "to confirm", with the right months and the tax flag.') + '</p>';
     plano.itens.forEach(function (it, k) {
-      var s0 = it.semente(it.escolhida >= 0 ? it.escolhida : 0);
-      h += '<div class="cdl-item card" data-k="' + k + '"><label class="linha-check"><input type="checkbox" class="cdl-criar" checked> <b>' + esc(it.rotulo) + '</b></label>';
+      var s0 = it.semente(it.escolhida >= 0 ? it.escolhida : 0), ja = API.jaExistem(s0);
+      h += '<div class="cdl-item card" data-k="' + k + '"><label class="linha-check"><input type="checkbox" class="cdl-criar"' + (ja.length ? '' : ' checked') + '> <b>' + esc(it.rotulo) + '</b></label>';
+      if (ja.length) h += '<div class="aviso-box small cdl-ja"><b>' + esc(pt() ? 'Já existe: ' : 'Already exists: ') + esc(ja.map(function (r) { return r.nome + ' (' + fmt(r.valor) + ', ' + (pt() ? 'dia ' : 'day ') + r.dia + ')'; }).join(' · ')) + '</b>' +
+        '<div class="row" style="gap:12px;flex-wrap:wrap;margin-top:6px">' +
+        '<label class="linha-check"><input type="radio" name="cdlJa' + k + '" value="" checked> ' + (pt() ? 'manter como está' : 'keep as is') + '</label>' +
+        ja.map(function (r) { return '<label class="linha-check"><input type="radio" name="cdlJa' + k + '" value="' + esc(r.id) + '"> ' + esc((pt() ? 'atualizar "' : 'update "') + r.nome + '"') + '</label>'; }).join('') +
+        '<label class="linha-check"><input type="radio" name="cdlJa' + k + '" value="criar"> ' + (pt() ? 'criar mesmo assim' : 'create anyway') + '</label></div></div>';
       if (it.opcoes.length > 1 || it.escolhida < 0) {
         h += campo(it.escolhida < 0 ? (pt() ? 'Qual opção vocês contrataram? (o contrato não marcou)' : 'Which option did you sign up for? (not marked)') : (pt() ? 'Opção' : 'Option'),
           '<select class="cdl-op"><option value="">' + (pt() ? '— escolha —' : '— choose —') + '</option>' + it.opcoes.map(function (o, i) {
@@ -256,11 +309,13 @@
     });
     if (plano.gasto) {
       var g = plano.gasto;
-      h += '<div class="cdl-gasto card"><label class="linha-check"><input type="checkbox" id="cdlGasto"' + (g.jaLancado ? '' : ' checked') + '> <b>' + esc(pt() ? 'Lançar a 1ª parcela (gasto pontual)' : 'Add the 1st instalment (one-off)') + '</b></label>' +
-        (g.jaLancado ? '<div class="tiny muted">' + esc(pt() ? 'Parece que já foi lançado (mesmo valor perto dessa data).' : 'Looks already entered (same amount near that date).') + '</div>' : '') +
+      var jl = g.jaLancado;
+      h += '<div class="cdl-gasto card"><label class="linha-check"><input type="checkbox" id="cdlGasto"' + (jl ? '' : ' checked') + '> <b>' + esc(pt() ? 'Lançar a 1ª parcela (gasto pontual)' : 'Add the 1st instalment (one-off)') + '</b></label>' +
+        (jl ? '<div class="aviso-box small cdl-jalancado">' + esc((pt() ? 'Já está no livro: ' : 'Already in your book: ') + I18n.data(jl.data) + ' · ' + (jl.desc || jl.sub) + ' · ' + fmt(jl.valor) + (pt() ? '. Por isso veio desmarcado.' : '. That is why it is unticked.')) + '</div>' : '') +
+        campo(pt() ? 'Nome do lançamento' : 'Entry name', '<input id="cdlGDesc" maxlength="80" value="' + esc(g.desc) + '">') +
         '<div class="grid g2">' + campo(pt() ? 'Data' : 'Date', Cal.campo('cdlGData', g.data, {})) +
         campo(pt() ? 'Valor (R$)' : 'Amount (R$)', '<input type="number" id="cdlGValor" min="0" step="0.01" value="' + g.valor + '">') + '</div>' +
-        '<div class="small muted">' + esc(g.desc) + '</div></div>';
+        (g.obs ? '<div class="small muted">' + esc(g.obs) + '</div>' : '') + '</div>';
     }
     h += '<div class="f-actions"><button class="btn" data-close="genModal">' + esc(t('ac.cancelar')) + '</button><button class="btn primary" data-acao="cdl-criar">' + (pt() ? 'Criar' : 'Create') + '</button></div>';
     $('#genTitle').textContent = pt() ? 'Conferir o contrato' : 'Check the contract';
@@ -269,31 +324,69 @@
   }
   async function criarPlano() {
     if (!plano) return;
-    var criados = [], falta = '';
+    var criados = [], atualizar = [], falta = '';
     document.querySelectorAll('#genBody .cdl-item').forEach(function (el) {
-      var it = plano.itens[Number(el.dataset.k)]; if (!el.querySelector('.cdl-criar').checked) return;
+      var it = plano.itens[Number(el.dataset.k)], ja = el.querySelector('input[name="cdlJa' + el.dataset.k + '"]:checked'), modo = ja ? ja.value : '';
+      if (!el.querySelector('.cdl-criar').checked && !(ja && modo)) return;
       var sel = el.querySelector('.cdl-op'), i = sel ? sel.value : String(it.escolhida >= 0 ? it.escolhida : 0);
       if (i === 'nao') return;
       if (i === '') { falta = it.rotulo; return; }
       var s = it.semente(Number(i));
       s.dia = Math.min(31, Math.max(1, Number(el.querySelector('.cdl-dia').value) || s.dia));
       s.irpf = el.querySelector('.cdl-ir').checked;
-      criados.push(s);
+      if (ja && modo && modo !== 'criar') atualizar.push({ id: modo, s: s, diaInformado: it.diaInformado });
+      else criados.push(s);
     });
     if (falta) { toast((pt() ? 'Escolha a opção de "' : 'Choose the option for "') + falta + (pt() ? '" (ou "Não contratamos").' : '" (or "We did not sign up").'), 'warn'); return; }
+    /* para "Desfazer": o que existia antes de mexer e o que nasceu agora */
+    var desfazer = { recorrentes: [], antes: [], gastos: [] };
+    atualizar.forEach(function (u) {
+      var r = Recorrente.achar(u.id); if (!r) return;
+      desfazer.antes.push(JSON.parse(JSON.stringify(r)));
+      var mud = { valor: u.s.valor, irpf: u.s.irpf, aConfirmar: true, obs: [r.obs, u.s.obs].filter(Boolean).join(' · ').slice(0, 300) };
+      if (u.diaInformado) mud.dia = u.s.dia;
+      Recorrente.atualizar(u.id, mud);
+    });
     var ids = criados.map(function (s) { return Recorrente.add(s).id; });
+    desfazer.recorrentes = ids.slice();
     var ck = document.getElementById('cdlGasto'), ng = 0;
     if (plano.gasto && ck && ck.checked) {
       var g = Object.assign({}, plano.gasto); delete g.jaLancado;
       g.data = (document.getElementById('cdlGData') || {}).value || g.data; g.valor = Number((document.getElementById('cdlGValor') || {}).value) || g.valor;
-      if (g.valor > 0) { Gasto.add(g); ng = 1; }
+      g.desc = String((document.getElementById('cdlGDesc') || {}).value || g.desc).trim() || g.desc;
+      if (g.valor > 0) { desfazer.gastos.push(Gasto.add(g).id); ng = 1; }
     }
+    var ligar = ids[0] || (atualizar[0] && atualizar[0].id) || '';
     for (var k = 0; k < guardar.length; k++) {
-      try { await ArquivosFamilia.guardar({ nome: guardar[k].nome, tipo: guardar[k].tipo, ano: plano.ano, ligado: ids[0] || '' }, guardar[k].bytes); } catch (e) {}
+      try { await ArquivosFamilia.guardar({ nome: guardar[k].nome, tipo: guardar[k].tipo, ano: plano.ano, ligado: ligar }, guardar[k].bytes); } catch (e) {}
     }
     plano = null; guardar = []; Store.salvar(); fechar('genModal'); render();
-    toast(pt() ? ids.length + (ids.length === 1 ? ' compromisso criado' : ' compromissos criados') + ', marcados "a confirmar"' + (ng ? ' · 1ª parcela lançada' : '') + '.'
-               : ids.length + ' commitment(s) created, marked "to confirm"' + (ng ? ' · 1st instalment added' : '') + '.');
+    avisoDesfazer((pt() ? ids.length + (ids.length === 1 ? ' compromisso criado' : ' compromissos criados') + (atualizar.length ? ', ' + atualizar.length + ' atualizado(s)' : '') + ', marcados "a confirmar"' + (ng ? ' · 1ª parcela lançada' : '') + '.'
+               : ids.length + ' commitment(s) created' + (atualizar.length ? ', ' + atualizar.length + ' updated' : '') + ', marked "to confirm"' + (ng ? ' · 1st instalment added' : '') + '.'), desfazer);
+  }
+  /* "Desfazer" por 5 minutos: tira exatamente o que acabou de nascer (compromissos e lançamento) e devolve o que foi
+     atualizado como estava. O PDF guardado fica (o cofre de arquivos não apaga). */
+  /* abre a prévia de um plano já lido (o caminho da tela é lerArquivos → planoModelo → esta prévia) */
+  API.mostrarPlano = function (p) { plano = p; guardar = []; mostrarPlano(); };
+  var DESFAZER_MS = 5 * 60 * 1000;
+  API.desfazer = function (d) {
+    var rs = d.recorrentes || [], gs = d.gastos || [];
+    ST.recorrentes = Recorrente.todos().filter(function (r) { return rs.indexOf(r.id) < 0; });
+    (d.antes || []).forEach(function (velho) { var i = Recorrente.todos().findIndex(function (r) { return r.id === velho.id; }); if (i >= 0) ST.recorrentes[i] = velho; });
+    ST.gastos = Gasto.todos().filter(function (g) { return gs.indexOf(g.id) < 0; });
+    Store.salvar(); if (typeof render === 'function') render();
+  };
+  function avisoDesfazer(msg, d) {
+    var caixa = document.getElementById('toasts'); if (!caixa) { toast(msg); return; }
+    var el = document.createElement('div'); el.className = 'toast cdl-desfazer';
+    var txt = document.createElement('span'); txt.textContent = msg + ' ';
+    var bt = document.createElement('button'); bt.type = 'button'; bt.className = 'btn sm'; bt.textContent = pt() ? '↩ Desfazer' : '↩ Undo';
+    var acabou = setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, DESFAZER_MS);
+    bt.addEventListener('click', function (ev) {
+      ev.stopPropagation(); clearTimeout(acabou); if (el.parentNode) el.parentNode.removeChild(el);
+      API.desfazer(d); toast(pt() ? 'Desfeito: os compromissos e o lançamento saíram (o PDF continua guardado).' : 'Undone: commitments and entry removed (the PDF stays saved).');
+    });
+    el.appendChild(txt); el.appendChild(bt); caixa.appendChild(el);
   }
   async function lerArquivos(arqs) {
     var tarefa = 'cdl-ler-' + Date.now(), temFundo = typeof Fundo !== 'undefined', docs = [], generico = null;
@@ -319,7 +412,7 @@
 
   MoneyModulos.registrar({
     id: 'compromisso-de',
-    versao: '1.3.1',
+    versao: '1.4.0',
     pontos: {
       'lancamento.form': function (ctx) {
         if (!ctx.g || ctx.g.fluxo === 'entrada' && ctx.g.grupo !== 'RENDA') return '';

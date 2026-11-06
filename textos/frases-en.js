@@ -1,10 +1,15 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.53 · 06/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.54 · 06/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.54 */
+  'Contrato com boleto, sem duplicar, Desfazer e o computador':'Contract with bill, no duplicates, Undo and the computer layout',
+  'Contrato da escola: com o boleto no lote, a 1ª parcela entra com o valor a pagar e o vencimento do boleto, com o nome "Matrícula 2027 (1ª parcela da anuidade)" (dá para trocar). Se o pagamento já está no livro, ou se o compromisso já existe, vem desmarcado e o app mostra qual é; dá para atualizar o que existe ou criar mesmo assim. Depois de Criar, "↩ Desfazer" por 5 minutos.':'School contract: with the bill in the batch, the 1st instalment uses the bill amount to pay and due date, named "Matrícula 2027 (1ª parcela da anuidade)" (editable). If the payment is already in your book, or the commitment already exists, it comes unticked and the app shows which one; you can update it or create anyway. After Create, "↩ Undo" for 5 minutes.',
+  'Vencimentos passados: o app confere sozinho com os lançamentos (mesmo valor ±10%, mesma categoria ou o nome, até 7 dias) e marca como pagos. O que venceu antes de você cadastrar o compromisso e não bateu fica "sem conferência", e não mais "atrasado".':'Past due dates: the app matches them with your entries on its own (same amount ±10%, same category or name, up to 7 days) and marks them paid. What was due before you registered the commitment and did not match is "not checked", no longer "overdue".',
+  'No computador: o menu fica colado à esquerda, vai até o fim da tela e rola com a roda do mouse ou com dois dedos; o calendário aparece sempre inteiro; o conteúdo usa a largura toda e se ajusta ao trocar de tela ou de tamanho de janela.':'On the computer: the menu sticks to the left, reaches the bottom of the screen and scrolls with the mouse wheel or two fingers; the calendar is always whole; the content uses the full width and adapts when you change screen or window size.',
   /* 3.53 */
   'Correção no contrato do período ampliado':'Fix in the extended-day contract',
   'Contrato do período ampliado: o nome da 1ª opção não leva mais o fim do cabeçalho da tabela ("Anuidade Parcelas Parcela").':'Extended-day contract: the 1st option name no longer picks up the end of the table header.',
