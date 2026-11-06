@@ -47,3 +47,10 @@ Lista viva (diretriz "Lista de pendências do app"). Mais nova em cima. Situaç�
 | N15 | Se o dono não achar o código de recuperação: gerar um código novo no OmniLifeONE (Senhas da casa → novo código), num aparelho onde o cofre já abre com o PIN, e usar o código novo aqui. | dono | aberta |
 | N16 | Pedidos do dono no teste (03/Nov/2026), feitos no `nuvem.js` 1.0.2-teste: o campo do PIN não é mais tratado como senha (o Chrome oferecia "atualizar senha" de uma conta antiga do domínio); logo depois de criar o PIN — ou na primeira vez que abre com o PIN, para quem já tinha — o app oferece "Usar a digital". **Vale também para o OmniLifeONE e o cofre comum** (PIN como campo de senha). | chat Arquitetura + OmniLifeONE | aberta (MoneyTRIO teste: feito) |
 | N13 | `PLATAFORMA-DADOS.md`/C7: registrar o formato do pacote da caixa do robô (`teste/robo-pacote/pacote_caixa.py`) como contrato da plataforma. | chat Arquitetura | aberta |
+
+## Segurança do repositório (06/Nov/2026)
+- Dados pessoais que tinham ido para testes e documentos (nome da filha, escola, saldos e empregadores do FGTS,
+  endereço, condomínio, cliente da PJ) foram trocados por nomes fictícios em TODO o histórico da main
+  (reescrita com filter-repo em 06/11/2026). Regra: antes de publicar, procurar nomes e valores reais em teste/,
+  modulos/ e documentos. Pendente: decidir se o repositório será recriado para apagar também as branches antigas e
+  as revisões (PRs), que ainda guardam o histórico velho.
