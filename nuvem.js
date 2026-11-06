@@ -891,7 +891,7 @@
     mostrar: function (html) {
       var el = this.montar();
       el.innerHTML = '<div class="nv-card" role="dialog" aria-modal="true">' + html + '</div>';
-      var f = el.querySelector('input'); if (f) setTimeout(function () { try { f.focus(); } catch (e) {} }, 60);
+      var f = el.querySelector('input'); if (f) setTimeout(function () { try { if (!el.contains(document.activeElement)) f.focus(); } catch (e) {} }, 60);   /* não rouba o cursor de quem já está num campo */
       return el;
     },
     fechar: function () { if (this.el) { this.el.remove(); this.el = null; } },
