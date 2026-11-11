@@ -23,7 +23,7 @@ var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './aju
   './modulos/compromisso-de.js?v=1.6.0',
   './modulos/previsto.js?v=1.0.0',
   './modulos/conciliacao.js?v=1.0.0', './modulos/calendario-menu.js?v=1.1.0',
-  './modulos/pessoas.js?v=1.0.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=1.0.0', './modulos/espelho.js?v=1.0.0',
+  './modulos/pessoas.js?v=1.0.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=1.0.0', './modulos/espelho.js?v=1.0.0', './modulos/tour.js?v=1.0.0',
   './nuvem.js?v=1.11.0'];
 /* O motor de leitura de fotos (assets/ocr: Tesseract, português, ZXing,
    jsQR — uns 10 MB) tem cache próprio, que NÃO muda a cada versão do app:

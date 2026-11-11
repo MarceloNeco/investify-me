@@ -2415,7 +2415,7 @@ body:has(.modal-wrap:not(.hidden)) .nv-selo{display:none}
 /* 3.63 — janela aberta: a tela de trás não rola (diretriz "janela.js": a trava só no <html>, nunca no <body>;
    o fim da rolagem dentro da janela não passa para o fundo). Fechou, a página está onde estava. */
 html:has(.modal-wrap:not(.hidden)), html:has(#nvPortao), html:has(.nv-painel), html:has(.lock-wrap:not(.hidden)),
-html:has(.popup-an), html:has(dialog[open]){overflow:hidden; scrollbar-gutter:stable}   /* a barra some com a trava; o lugar dela fica, nada pula para o lado */
+html:has(.popup-an), html:has(dialog[open]), html:has(.tour){overflow:hidden; scrollbar-gutter:stable}   /* a barra some com a trava; o lugar dela fica, nada pula para o lado */
 @media (max-width:760px){ html:has(.sidenav.open){overflow:hidden; scrollbar-gutter:stable} }
 .modal-wrap, .modal, .modal-body, .lock-wrap, .popup-an, .sidenav, #navLista, dialog{overscroll-behavior:contain}
 
@@ -2456,3 +2456,24 @@ html:has(.popup-an), html:has(dialog[open]){overflow:hidden; scrollbar-gutter:st
 @keyframes barraIndet{0%{transform:translateX(-100%)} 100%{transform:translateX(290%)}}
 @media (prefers-reduced-motion:reduce){ .barra-and.indet > i{animation:none; width:100%; opacity:.55} .barra-and > i{transition:none} }
 html.sem-animacao .barra-and.indet > i{animation:none; width:100%; opacity:.55}
+
+/* 3.65 — o passeio com spotlight (modulos/tour.js): escurece o resto, recorta o alvo, o balão se move até ele */
+.tour{position:fixed; inset:0; z-index:9995}   /* acima do selo da nuvem (9990) e do AssistONE; abaixo das telas da nuvem */
+.tour-furo{position:fixed; border-radius:12px; box-shadow:0 0 0 9999px rgba(3,7,12,.68); outline:2px solid var(--accent2); outline-offset:0;
+  transition:left .32s ease, top .32s ease, width .32s ease, height .32s ease, opacity .2s ease; pointer-events:none}
+.tour.sem-alvo .tour-furo{box-shadow:0 0 0 9999px rgba(3,7,12,.68); outline:0}
+.tour-balao{position:fixed; max-width:calc(100vw - 32px); box-sizing:border-box; padding:16px 16px 12px; border-radius:14px; background:var(--card);
+  border:1px solid var(--line2); box-shadow:var(--shadow); color:var(--txt); transition:left .32s ease, top .32s ease}
+.tour-balao:focus{outline:none}
+.tour-cab{display:flex; align-items:center; gap:8px; margin-bottom:6px}
+.tour-cab h3{margin:0; font-size:1.02rem; flex:1}
+.tour-ico{font-size:1.2rem}
+.tour-n{font-size:.75rem; color:var(--txt3); font-variant-numeric:tabular-nums}
+.tour-balao p{margin:0 0 12px; color:var(--txt2); font-size:.9rem; line-height:1.45}
+.tour-acoes{display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap}
+.tour-seta{position:absolute; width:14px; height:14px; background:var(--card); border:1px solid var(--line2); transform:rotate(45deg)}
+.tour-seta.cima{border-right:0; border-bottom:0}
+.tour-seta.baixo{border-left:0; border-top:0}
+.tour-seta.esq{border-right:0; border-top:0}
+.tour.calmo .tour-furo, .tour.calmo .tour-balao{transition:none}
+@media (prefers-reduced-motion:reduce){ .tour-furo, .tour-balao{transition:none} }

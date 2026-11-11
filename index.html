@@ -18261,6 +18261,8 @@ let assistBusca = '';
 
 const Assist = {
   abrir(aba){
+    /* 3.65: o tutorial virou o passeio de verdade, com spotlight (modulos/tour.js) */
+    if(aba === 'tutorial' && window.Tour){ this.fechar(); tutorialPasso = 0; Tour.iniciar(0); return; }
     assistAba = aba || 'tela';
     this.render();
     abrir('assistModal');
@@ -18278,7 +18280,7 @@ const Assist = {
     if(this.jaViuTutorial()) return;
     tutorialPasso = 0;
     setTimeout(() => {
-      if(this.jaViuTutorial()) return;
+      if(this.jaViuTutorial() || (window.Tour && Tour.aberto())) return;   /* 3.65: com o passeio aberto, o "Olá" não aparece por cima */
       if(typeof AssistOne !== 'undefined' && AssistOne.ligado()) AssistOne.abrir('ola');
       else this.abrir('tutorial');
     }, 900);
@@ -29543,6 +29545,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=1.0.0"></script>
 <script src="modulos/espelho.js?v=1.0.0"></script>
+<script src="modulos/tour.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.11.0"></script>
 </body>
 </html>
