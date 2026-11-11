@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/espelho.js — planilha espelho: as edições da pessoa vão para o robô (3.64)        1.1.0 · 11/Nov/2026
+   modulos/espelho.js — planilha espelho: as edições da pessoa vão para o robô (3.64)        1.1.1 · 11/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      Quando a PESSOA cria, edita ou apaga um lançamento, ou confirma o palpite do robô, o app monta o texto do
@@ -62,6 +62,7 @@
       var regra = null;
       if (!opt.semRegra && g.origem === 'robo' && (opt.confirmada || (antes && (antes.grupo !== g.grupo || antes.sub !== g.sub || (antes.paraQuem || '') !== (g.paraQuem || '')))))
         regra = API.regraDe(g, !!(opt.confirmada || (antes && antes.confianca)));
+      if (regra && window.Origem && Origem.generica && Origem.generica(g)) regra = null;   /* 1.1.1 (3.65.1): genérica sem CNPJ não vira regra */
       n.enfileirar(API.texto(g, 'upsert', { regra: regra })).catch(function (e) { console.warn('espelho', e); });
       return true;
     },
@@ -84,7 +85,7 @@
 
   MoneyModulos.registrar({
     id: 'espelho',
-    versao: '1.1.0',
+    versao: '1.1.1',
     pontos: {
       'config.todos': function () {
         var l = cfg().espelhoLink || '';
