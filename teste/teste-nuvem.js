@@ -488,9 +488,11 @@ let BASE = '';
     /* ---------- 6c. painel: autorizar e remover o robô ---------- */
     console.log('6c) painel: autorizar e remover o robô');
     db.money_robos.push({ grupo_id: GID, user_id: '44444444-4444-4444-4444-444444444444', nome: 'robô', criado_em: '2026-11-03T12:55:00Z', desligado_em: null });
-    await A.click('#nvSelo'); await A.waitForSelector('#nvRoboEmail');
-    await A.waitForFunction(() => /e-mail não registrado/.test(document.querySelector('#nvRobo').textContent));
-    ok(/03\/Nov\/2026 09:55/.test(await A.textContent('#nvRobo')), 'A: robô antigo aparece como "robô (e-mail não registrado)", com data no horário de Brasília');
+    await A.click('#nvSelo'); await A.waitForSelector('#nvRoboEmail', { state: 'attached' });
+    await A.waitForFunction(() => /Robô da família/.test(document.querySelector('#nvRobo').textContent));
+    ok(/Robô da família, autorizado em 03\/Nov\/2026/.test(await A.textContent('#nvRobo')) && !/não registrado/.test(await A.textContent('#nvRobo')), 'A: robô antigo aparece como "Robô da família, autorizado em 03/Nov/2026" (sem "e-mail não registrado")');
+    ok(await A.evaluate(() => !document.querySelector('#nvRoboAv').open), 'A: com robô autorizado, o e-mail e "autorizar" ficam no Avançado, fechado');
+    await A.click('#nvRoboAv summary'); await A.waitForSelector('#nvRoboEmail');
     await A.fill('#nvRoboEmail', 'ninguem@teste.com'); await A.click('#nvRoboOk');
     await A.waitForSelector('#nvConfSim');
     ok(/poderá <b>entregar<\/b>|poderá entregar/.test(await A.innerHTML('#nvRobo')) && /não consegue ler nada/.test(await A.textContent('#nvRobo')), 'A: pede confirmação antes de autorizar (entrega, não lê)');
@@ -516,7 +518,7 @@ let BASE = '';
     await A.click('[data-remover="33333333-3333-3333-3333-333333333333"]'); await A.waitForSelector('#nvConfSim');
     ok(/O que já chegou continua guardado/.test(await A.textContent('#nvRobo')), 'A: pede confirmação antes de remover o acesso');
     await A.click('#nvConfSim'); await A.waitForSelector('.nv-nota.fixa.ok');
-    ok(db.money_robos.filter((r) => !r.desligado_em).length === n0 - 1 && !/robo-financas@solverone\.com\.br<\/b><br>/.test(await A.innerHTML('#nvRobo').then((h) => h.split('Robôs autorizados')[1] || '')), 'A: remover acesso desliga o robô e tira da lista');
+    ok(db.money_robos.filter((r) => !r.desligado_em).length === n0 - 1 && !/nv-tiny">robo-financas@solverone\.com\.br/.test(await A.innerHTML('#nvRobo')), 'A: remover acesso desliga o robô e tira da lista');
     await A.screenshot({ path: path.join(SAIDA, 'A-robo.png') });
     await A.click('#nvFechar');
 
@@ -580,7 +582,7 @@ let BASE = '';
     for (const [pg, nm] of [[A, 'A'], [B, 'B']]) {
       for (const v of ['b-lanc', 'b-painel', 'carteira', 'config']) { await pg.evaluate((x) => { try { irPara(x); } catch (e) { throw e; } }, v); await esperar(150); }
       await pg.click('#nvSelo'); await pg.waitForSelector('.nv-painel .nv-card'); await pg.screenshot({ path: path.join(SAIDA, nm + '-painel.png') });
-      ok(/Caixa do robô/.test(await pg.textContent('.nv-painel')), nm + ': painel da nuvem abre (conta, família, caixa do robô, cadeado)');
+      ok(/Segurança e aparelhos/.test(await pg.textContent('.nv-painel')) && /Seus dados/.test(await pg.textContent('.nv-painel')) && /Robô do banco/.test(await pg.textContent('.nv-painel')) && /PIN e digital/.test(await pg.textContent('.nv-painel')), nm + ': "Segurança e aparelhos" abre (seus dados, PIN e digital, robô do banco)');
       await pg.click('#nvFechar');
       ok(pg.erros.length === 0, nm + ': nenhum erro de página (' + pg.erros.length + ')');
     }
