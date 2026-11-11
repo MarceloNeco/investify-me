@@ -27,10 +27,11 @@ var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './aju
   /* 3.65: o motor do Leitor OCR para o cartão por foto (cópia do leitor-ocr; leitor/tesseract/ é guardado no 1º uso) */
   './leitor/leitura.js', './leitor/leitura/catalogo.js', './leitor/leitura/texto.js', './leitor/leitura/foto.js', './leitor/leitores/cartao-plastico.js', './modulos/contraparte.js?v=1.0.0', './modulos/declaracao-escolhas.js?v=1.0.0', './modulos/origem.js?v=1.0.0', './modulos/categorias.js?v=1.0.0',
   './nuvem.js?v=1.12.0'];
-/* O motor de leitura de fotos (assets/ocr: Tesseract, português, ZXing,
-   jsQR — uns 10 MB) tem cache próprio, que NÃO muda a cada versão do app:
-   baixa na primeira leitura e fica. Para trocar o motor, troque o número. */
-var CACHE_OCR = 'moneytrio-ocr-1';
+/* O motor de leitura de fotos (leitor/tesseract: Tesseract e português, uns 9 MB, a MESMA pasta do motor do
+   Leitor OCR; assets/ocr: ZXing e jsQR) tem cache próprio, que NÃO muda a cada versão do app:
+   baixa na primeira leitura e fica. Para trocar o motor, troque o número.
+   3.65: ocr-2 — o Tesseract saiu de assets/ocr (era uma 2ª cópia); a ativação apaga o ocr-1. */
+var CACHE_OCR = 'moneytrio-ocr-2';
 
 self.addEventListener('install', function (e) {
   self.skipWaiting();

@@ -13170,7 +13170,8 @@ function agendarEscaneado(){
    app procura o motor em três lugares, nesta ordem:
 
      1. Embutido no próprio arquivo (window.TESSERACT_EMBUTIDO)
-     2. Um arquivo ao lado, em assets/ocr/tesseract.min.js
+     2. Um arquivo ao lado, em leitor/tesseract/tesseract.min.js (3.65: a MESMA pasta do motor do
+        Leitor OCR, que o cartão por foto usa; uma cópia só no aparelho)
      3. A CDN, na primeira vez, e depois o cache do navegador
 
    Com qualquer um dos três o OCR funciona igual. Sem nenhum,
@@ -13185,7 +13186,7 @@ function agendarEscaneado(){
 
 const FONTES_OCR = [
   {nome:'embutido', url:null},
-  {nome:'local',    url:'assets/ocr/tesseract.min.js'},
+  {nome:'local',    url:'leitor/tesseract/tesseract.min.js'},
   {nome:'cdn',      url:'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js'}
 ];
 
@@ -13197,13 +13198,13 @@ const Ocr = {
   disponivel(){ return !!(this.motor || window.Tesseract || window.TESSERACT_EMBUTIDO); },
 
   /* onde o Tesseract procura o trabalhador, o núcleo e o idioma. Quando o
-     motor veio de assets/ocr/ (o normal, publicado junto com o app), tudo
+     motor veio de leitor/tesseract/ (o normal, publicado junto com o app), tudo
      vem de lá também — e fica guardado no aparelho pelo sw.js. Se veio da
      CDN, usa os endereços padrão da biblioteca. Só o português está em
-     assets/ocr/; "por+eng" (documentos em inglês) busca o idioma na rede. */
+     leitor/tesseract/; "por+eng" (documentos em inglês) busca o idioma na rede. */
   opcoesTrabalhador(idioma){
     if(this.origem !== 'local') return {};
-    const base = new URL('assets/ocr/', document.baseURI).href;
+    const base = new URL('leitor/tesseract/', document.baseURI).href;
     const o = {workerPath: base + 'worker.min.js', corePath: base};
     if(idioma === 'por') o.langPath = base;
     return o;
@@ -13231,6 +13232,9 @@ const Ocr = {
         }
       }
       if(!window.Tesseract) throw new Error('semMotor');
+      /* 3.65: o motor do Leitor OCR (cartão por foto) já carregou o MESMO tesseract.min.js de leitor/tesseract/:
+         então o trabalhador, o núcleo e o português também vêm de lá (e não da CDN) */
+      if(!this.origem && document.querySelector('script[src*="leitor/tesseract/tesseract.min.js"]')) this.origem = 'local';
       this.motor = window.Tesseract;
       return this.motor;
     })();
@@ -13536,8 +13540,8 @@ const CupomTexto = {
         senão oferece os candidatos para a pessoa tocar no certo
      5. lê QR code e código de barras (ZXing + jsQR)
 
-   Os arquivos do motor (Tesseract, português, ZXing, jsQR) moram em
-   assets/ocr/, ao lado deste index.html, e ficam guardados no
+   O Tesseract e o português moram em leitor/tesseract/ (a pasta do motor do Leitor OCR,
+   uma cópia só); ZXing e jsQR em assets/ocr/. Tudo fica guardado no
    aparelho pelo sw.js. Nenhuma foto sai do aparelho.
    ========================================================= */
 const Leitor = (() => {

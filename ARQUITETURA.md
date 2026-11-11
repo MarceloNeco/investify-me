@@ -38,8 +38,8 @@ internet (cotação, notícia, IA, Google Drive).
 **Vão para o GitHub exatamente 7 arquivos e uma pasta:**
 `index.html`, `manifest.json`, `sw.js`, `icone-192.png`, `icone-512.png`,
 `recursos.js` e `recursos-do-app.json` (os interruptores do RootifyONE, §15)
-e a pasta `assets/ocr/` (o motor de leitura de fotos: Tesseract, português,
-ZXing, jsQR — uns 10 MB, copiados do app Leitor OCR). Mais nada.
+a pasta `leitor/` (o motor do Leitor OCR, copiado sem alterar; `leitor/tesseract/` tem o Tesseract e o português, uns 9 MB,
+usados pelo cartão por foto E pelo leitor de comprovantes, uma cópia só) e a pasta `assets/ocr/` (só ZXing e jsQR). Mais nada.
 
 ---
 
@@ -137,7 +137,7 @@ dele **depois** dos que ele usa e **antes** de `app.js`.
 | `importar.js` | leitura de extrato e de planilha, reconhecimento de colunas |
 | `planilha.js` | leitura de `.xlsx` e `.csv` |
 | `pdf-texto.js` | texto de dentro de PDF |
-| `ocr.js` | `Ocr`: carregar o Tesseract (de `assets/ocr/`, do arquivo embutido ou da CDN, nesta ordem) e ler texto cru; `CupomTexto`: entender o texto de um cupom brasileiro (total, data, CNPJ, itens, forma de pagamento e cartão) |
+| `ocr.js` | `Ocr`: carregar o Tesseract (de `leitor/tesseract/` desde a 3.65, do arquivo embutido ou da CDN, nesta ordem) e ler texto cru; `CupomTexto`: entender o texto de um cupom brasileiro (total, data, CNPJ, itens, forma de pagamento e cartão) |
 | `leitor.js` | `Leitor`: **o motor de leitura de fotos**, portado do app Leitor OCR (`MarceloNeco/leitor-ocr`, v0.6.0) sem mexer na lógica dele. Endireita a foto (`estimateAngles`), acha o papel ou vários papéis (`findPapers`), lê até 4 vezes de jeitos diferentes e só afirma o **valor quando duas leituras concordam** (`agreedValue`); senão devolve candidatos. Lê QR code e código de barras (ZXing + jsQR). É UM motor para os três apps: BudgetONE (Escanear), InvestifyONE (Ler comprovante), TaxONE (Documentos do IR, via `DocIR.textoDe`). O que é nosso está marcado `(MoneyTRIO)`: `enquadrar` (foto de celular de 12 MP é recortada no bloco de texto e reduzida a 1600 px antes de tudo — é o que tira a leitura de minutos para segundos); o **sinal do ângulo invertido** (`base = -tilt[0]`: o motor original girava para o lado errado); a ordem pela inclinação (foto reta → duas leituras do quadro inteiro, cru e preparado como nos documentos do IR, que acertam o valor em negrito que o ajuste local do motor clareava; foto torta de 8° a 45° → direto para o motor, que endireita); `nomePeloCnpj` (nome oficial na BrasilAPI quando o CNPJ confere pelo dígito; só os 14 números saem); e `paraCupom`, que traduz o resultado para o formato que a tela já entendia. **Leitura pela IA** (`IA.lerFoto` + `perguntarFoto` em cada provedor + `cupomDaIA`): a foto só sai do aparelho com a chavinha "Ler com a IA" ligada (`ST.config.leitorIA`) ou pelo botão "Tentar com a IA" de um cartão; vai reduzida, a resposta é JSON e cada campo é conferido antes de entrar |
 | `fundo.js` | `Fundo`: trabalho demorado que não morre ao sair da tela (§13). `comecar/passo/terminar/limpar`; segura a tela acesa (Wake Lock), arma o aviso de fechar/recarregar e mostra a pílula `#fundoPill` que leva de volta ao resultado |
 | `camera.js`, `camera-ui.js` | a tela de escanear (`abrirEscanear`, `lerArquivosEscaneados`, cartões de resultado com os candidatos de valor) e `Camera`: entender QR da NFC-e, chave de 44 dígitos e código de boleto |
@@ -327,8 +327,8 @@ valer em todos os apps.
    número da versão e a data saem dali sozinhos.
 2. Troque `var VERSAO` em `pwa/sw.js` (`v2` → `v3`). É o que avisa os
    celulares de que existe conteúdo novo — sem isso o app instalado
-   continua mostrando a versão velha. A pasta `assets/ocr/` tem cache
-   próprio (`CACHE_OCR`, `moneytrio-ocr-1`), que **não** muda com a versão:
+   continua mostrando a versão velha. As pastas `leitor/tesseract/` e `assets/ocr/` têm cache
+   próprio (`CACHE_OCR`, `moneytrio-ocr-2` desde a 3.65), que **não** muda com a versão:
    o motor baixa na primeira leitura e fica. Só troque esse número se
    trocar os arquivos do motor.
 3. Rode `python3 gerar/gerar-arquivo-unico.py`.
@@ -678,7 +678,9 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   final já de um cartão → "Abrir esse cartão"; o final nas compras do robô (`Cartoes.encontrados`) → reabre o cadastro com a semente da
   conta; virtual com final novo → "Juntar a" um cartão do robô do mesmo banco. Segurança: o arquivo vai direto ao motor e o input é limpo
   (`input.value = ''`); nada no IndexedDB, histórico ou fila; sem IA e sem internet; só a frente. `sw.js`: os .js do motor no básico;
-  `leitor/tesseract/` no cache do OCR (1º uso). Atualizar o motor: copiar de novo do leitor-ocr (mudanças lá só pelo PEDIDOS.md).
+  `leitor/tesseract/` no cache do OCR (1º uso). **Uma cópia só do Tesseract**: o leitor antigo do app (`Ocr`, `Leitor`) também lê de
+  `leitor/tesseract/`; de `assets/ocr/` saiu tudo menos ZXing e jsQR; `CACHE_OCR` foi para `moneytrio-ocr-2` e a ativação apaga o
+  `ocr-1` (quem já tinha baixa o Tesseract uma vez, de `leitor/`). Atualizar o motor: copiar de novo do leitor-ocr (mudanças lá só pelo PEDIDOS.md).
   Teste: `teste/teste-cartao-foto.js` (cartões fictícios com os números de teste públicos das bandeiras).
   **Declaração com escolhas** (`modulos/declaracao-escolhas.js`, ponto `declaracao.escolhas`): bens sem liquidez com dono e dívida,
   restituição prevista (desmarcada), imposto em compromissos (dia −1), conferência de deduções. Testes: `teste/teste-tour.js`,

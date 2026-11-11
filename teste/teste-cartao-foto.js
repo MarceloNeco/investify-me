@@ -7,7 +7,9 @@
      2. a foto preenche final, bandeira, validade e apelido; a pessoa confere antes de salvar; o campo do arquivo é limpo;
      3. só o final é guardado: o número inteiro não aparece no Store, no localStorage, na tela nem no console;
      4. o final que já é de um cartão → "Abrir esse cartão"; o final que está nas compras do robô → o cadastro liga à conta;
-     5. sem cartão na foto → pede outra foto; nenhum pedido para fora do site (sem IA e sem internet).
+     5. sem cartão na foto → pede outra foto; nenhum pedido para fora do site (sem IA e sem internet);
+     6. o leitor antigo do app (comprovantes) lê igual, com o Tesseract da MESMA pasta (leitor/tesseract/);
+     7. o sw.js apaga o cache antigo do OCR (a 2ª cópia) na ativação.
    Uso (na pasta raiz): node teste/teste-cartao-foto.js
    ===================================================================== */
 'use strict';
@@ -100,7 +102,46 @@ const cartaoHtml = (num, nome, val, banco, marca, fundo, cor) => `<div style="wi
     const doLeitor = fora.slice(antesFora).filter((u) => /tesseract|traineddata|cdnjs|jsdelivr|unpkg|anthropic|openai|generativelanguage|googleapis|groq|mistral|ocr/i.test(u));   /* as cotações e notícias do app seguem como sempre */
     ok(doLeitor.length === 0, 'o leitor não pede nada fora do site (sem IA, sem CDN, sem internet)' + (doLeitor.length ? ': ' + doLeitor.join(' ') : ''));
     ok(!(await p.evaluate(async () => { try { const n = await indexedDB.databases(); return n.some((d) => /leitor/i.test(d.name)); } catch (e) { return false; } })), 'nada do leitor no IndexedDB (a foto não é guardada)');
+
+    console.log('6) o leitor antigo (comprovantes) usa a mesma pasta do Tesseract');
+    const pedidos = []; p.on('request', (r) => pedidos.push(r.url()));
+    const cupom = await (async () => { const g = await b.newPage(); await g.setContent('<body style="margin:0;background:#fff;padding:40px;font:28px monospace;width:560px">PADARIA EXEMPLO LTDA<br>CNPJ 11.222.333/0001-81<br>08/10/2026 10:15<br>PAO FRANCES 10,00<br>CAFE 75,00<br>TOTAL R$ 85,00<br>CREDITO MASTERCARD</body>'); const f = path.join(tmp, 'cupom.png'); await g.screenshot({ path: f, fullPage: true }); await g.close(); return fs.readFileSync(f).toString('base64'); })();
+    const lido = await p.evaluate(async (b64) => {
+      const blob = await (await fetch('data:image/png;base64,' + b64)).blob(), file = new File([blob], 'cupom.png', { type: 'image/png' });
+      const papeis = await Leitor.ler([file], { tipo: 'auto' });
+      const c = papeis[0] && Leitor.paraCupom(papeis[0]);
+      return { valor: c && c.valor, origem: Ocr.origem, texto: JSON.stringify(papeis[0] && papeis[0].result && papeis[0].result.fields || []).slice(0, 300) };
+    }, cupom);
+    ok(lido.origem === 'local' && Math.abs(Number(lido.valor) - 85) < 0.01, 'o leitor antigo lê o comprovante igual (total 85,00) com o Tesseract de leitor/tesseract/ (' + JSON.stringify({ valor: lido.valor, origem: lido.origem }) + ')');
+    const tess = pedidos.filter((u) => /tesseract|traineddata|worker\.min/.test(u));
+    ok(tess.length > 0 && tess.every((u) => u.indexOf(BASE + '/leitor/tesseract/') === 0), 'todos os arquivos do Tesseract vêm de leitor/tesseract/ (nada de assets/ocr/ nem CDN): ' + [...new Set(tess.map((u) => u.replace(BASE, '').split('?')[0]))].join(', '));
     ok(erros.length === 0, 'sem erro de página' + (erros.length ? ': ' + erros[0] : ''));
+    /* a outra ordem: página nova, o leitor antigo primeiro (sem o cartão por foto antes) */
+    const p2 = await ctx.newPage(); const ped2 = []; p2.on('request', (r) => ped2.push(r.url()));
+    await p2.goto(BASE + '/'); await p2.waitForFunction(() => typeof Leitor !== 'undefined' && Store.estado);
+    const lido2 = await p2.evaluate(async (b64) => {
+      const blob = await (await fetch('data:image/png;base64,' + b64)).blob();
+      const papeis = await Leitor.ler([new File([blob], 'cupom.png', { type: 'image/png' })], { tipo: 'auto' });
+      return { valor: papeis[0] && Leitor.paraCupom(papeis[0]).valor, origem: Ocr.origem };
+    }, cupom);
+    const tess2 = ped2.filter((u) => /tesseract|traineddata|worker\.min/.test(u));
+    ok(lido2.origem === 'local' && Math.abs(Number(lido2.valor) - 85) < 0.01 && tess2.length && tess2.every((u) => u.indexOf(BASE + '/leitor/tesseract/') === 0), 'página nova, o leitor antigo primeiro: lê igual, tudo de leitor/tesseract/ (' + [...new Set(tess2.map((u) => u.replace(BASE, '').split('?')[0]))].join(', ') + ')');
+    await p2.close();
+
+    console.log('7) sw.js: uma cópia só no aparelho');
+    const sctx = await b.newContext();
+    await sctx.route('**/*', (r) => r.request().url().startsWith(BASE) ? r.continue() : r.abort());
+    const sp = await sctx.newPage();
+    await sp.goto(BASE + '/manifest.json');
+    await sp.evaluate(async () => { await (await caches.open('moneytrio-ocr-1')).put('/x', new Response('velho')); });
+    const chaves = await sp.evaluate(async () => {
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      await new Promise((ok) => { const w = reg.installing || reg.waiting || reg.active; if (w.state === 'activated') return ok(); w.addEventListener('statechange', () => { if (w.state === 'activated') ok(); }); });
+      await new Promise((ok) => setTimeout(ok, 500));
+      return caches.keys();
+    });
+    ok(!chaves.includes('moneytrio-ocr-1'), 'na ativação o cache antigo do OCR (moneytrio-ocr-1, com a 2ª cópia) é apagado (' + chaves.join(', ') + ')');
+    await sctx.close();
   } catch (e) { falhas++; console.log('  ✗ ERRO: ' + (e && e.stack || e)); }
   await b.close(); srv.close();
   console.log('\n' + oks + ' ok, ' + falhas + ' falha(s)');
