@@ -644,6 +644,10 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.65.1 (`origem` 1.0.1, `espelho` 1.1.1): descrição genérica do banco (`Origem.GENERICA`, a mesma lista do robô, espelho.py GENERICA:
+  boleto "PAG TIT", Pix enviado/recebido sem nome, TED, DOC, compra débito) SEM `contraparte.cnpj` nem `id_pessoa` → a origem é só aquele
+  lançamento (`origemDe` = `u:<id>`, `mesma` = false): confirmar não replica e o espelho não manda `regra`. O Itaú não manda o beneficiário
+  do boleto. Teste: `teste/teste-origem.js`.
 - 3.65 (`nuvem.js` 1.12.0; módulos novos `tour` 1.0.0, `cartoes` 1.0.0, `contraparte` 1.0.0, `declaracao-escolhas` 1.0.0; `pessoas` 1.1.0,
   `profissionais` 1.2.0, `compromisso-de` 1.7.0, `calendario-menu` 1.1.0).
   **Barra de andamento global** (`Fundo.mostrar(id, frac|null, rótulo)` / `Fundo.esconder(id)` / `Fundo.renderBarra`): `#barraAndamento`

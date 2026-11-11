@@ -71,6 +71,28 @@ const LOCAL = { v: 1, config: { pessoasV: 2 }, posicoes: [], recorrentes: [], ga
       /* Desfazer volta tudo */
       const b3 = await p.evaluate(() => { document.querySelector('.or-toast [data-acao="or-desfazer"]').click(); return ['ip1', 'ip2'].map((i) => { const g = Gasto.todos().find((x) => x.idRobo === i); return [g.grupo, g.sub, Origem.status(g)].join(','); }); });
       ok(b3.every((x) => x === 'OUTROS,Outros,confirmar'), 'Desfazer volta os outros como estavam ("A confirmar")');
+      /* 3.65.1: boleto do Itaú com a descrição genérica (o Itaú não manda quem recebeu): confirmar vale SÓ para ele */
+      const b5 = await p.evaluate(() => {
+        const C = MoneyNuvem._teste.Caixa, add = (l) => Gasto.add(C.converter(Object.assign({ tipo: 'despesa', data: '2026-11-05', confianca: 'palpite', forma: 'Debito', banco: 'Itaú' }, l)));
+        ['bo0', 'bo1', 'bo2'].forEach((id, i) => add({ id, valor: 100 + i, descricao: 'Pagamento de boleto INT PAG TIT ULO ITAU', grupo: 'OUTROS', categoria: 'Boleto' }));
+        ['px0', 'px1'].forEach((id, i) => add({ id, valor: 30 + i, descricao: 'PIX ENVIADO', grupo: 'OUTROS', categoria: 'Pix' }));
+        const fila = [], antesNv = MoneyNuvem.espelho; MoneyNuvem.espelho = { enfileirar: async (t) => { fila.push(typeof t === 'string' ? t : JSON.stringify(t)); } };
+        const g0 = Gasto.todos().find((g) => g.idRobo === 'bo0'), antes = Object.assign({}, g0);
+        Gasto.atualizar(g0.id, { grupo: 'HABITACAO', sub: 'Condomínio', confirmadoEm: new Date().toISOString() });
+        const novo = Gasto.todos().find((g) => g.id === g0.id); delete novo.confianca;
+        Espelho.registrar(novo, antes, { confirmada: true });   /* o caminho do formulário: espelho → Origem.depoisDe */
+        const p0 = Gasto.todos().find((g) => g.idRobo === 'px0'), antesP = Object.assign({}, p0);
+        Gasto.atualizar(p0.id, { grupo: 'LAZER', sub: 'Restaurante', confirmadoEm: new Date().toISOString() });
+        const n2 = Origem.depoisDe(Gasto.todos().find((g) => g.id === p0.id), antesP);
+        MoneyNuvem.espelho = antesNv;
+        const st = (i) => { const g = Gasto.todos().find((x) => x.idRobo === i); return [g.sub, Origem.status(g)].join(','); };
+        return { outros: ['bo1', 'bo2'].map(st), px1: st('px1'), n2, gen: Origem.generica(novo), comCnpj: Origem.generica(Object.assign({}, novo, { contraparte: { cnpj: '11222333000144' } })),
+          regra: fila.some((t) => /"regra"\s*:\s*\{/.test(t)), fila: fila.length, grupos: Origem.grupos().filter((x) => /PAG TIT/.test(x.rotulo)).length };
+      });
+      ok(b5.outros.every((x) => x === 'Boleto,confirmar') && b5.px1 === 'Pix,confirmar' && b5.n2 === 0, 'boleto genérico do Itaú: confirmar como "Condomínio" NÃO muda os outros boletos nem os Pix sem nome (' + b5.outros.join(' | ') + ')');
+      ok(b5.gen && !b5.comCnpj, 'genérica só quando não há CNPJ nem id_pessoa (com CNPJ, a origem volta a valer)');
+      ok(b5.fila >= 1 && !b5.regra, 'a planilha recebe o lançamento, mas sem "regra" (no robô também está bloqueado)');
+      ok(b5.grupos === 2, 'na tela agrupada, cada boleto genérico ainda pendente fica sozinho (' + b5.grupos + ')');
       /* descrição: "RAIA EXEMPLO SA 01/04" e "… 02/04" são a mesma origem; tela agrupada */
       const b4 = await p.evaluate(() => { irPara('b-confirmar'); const linhas = [...document.querySelectorAll('.or-tbl tr')].map((t) => t.textContent.replace(/\s+/g, ' '));
         const raia = Origem.grupos().find((x) => /RAIA EXEMPLO SA/.test(x.rotulo)); const n = Origem.confirmarGrupo(raia.chave);

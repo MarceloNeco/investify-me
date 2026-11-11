@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/origem.js — "A confirmar" / "A identificar" e confirmar por ORIGEM (3.65)        1.0.0 · 11/Nov/2026
+   modulos/origem.js — "A confirmar" / "A identificar" e confirmar por ORIGEM (3.65)        1.0.1 · 11/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · Selo na coluna Categoria (no lugar do "palpite do robô"): amarelo "A confirmar" (o robô tem sugestão,
@@ -32,10 +32,20 @@
       return String(t || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z]+/g, ' ')
         .split(' ').filter(function (w) { return w.length > 1; }).join(' ');
     },
+    /* 1.0.1 (3.65.1): descrição genérica ("Pagamento de boleto INT PAG TIT ULO ITAU", "PIX ENVIADO"…) sem CNPJ nem
+       id_pessoa não identifica ninguém: a origem é SÓ aquele lançamento (não replica, não manda regra ao espelho).
+       A mesma lista do robô (espelho.py GENERICA). O Itaú não manda o beneficiário do boleto. */
+    GENERICA: /PAG(AMENTO DE)? ?(BOLETO|TIT)|PAG TIT|^COMPRA D[EÉ]BITO\s*$|^PIX (ENVIADO|RECEBIDO)\s*$|^TED\b|^DOC\b/,
+    generica: function (g) {
+      var cp = (g && g.contraparte) || {};
+      if (cp.cnpj || cp.idp) return false;
+      return API.GENERICA.test(String((g && (g.descRobo || g.desc)) || '').trim().toUpperCase());
+    },
     origemDe: function (g) {
       var cp = g.contraparte || {};
       if (cp.cnpj) return 'c:' + cp.cnpj;
       if (cp.idp) return 'i:' + cp.idp;
+      if (API.generica(g)) return 'u:' + g.id;   /* só ele */
       var k = API.chaveDesc(g.descRobo || g.desc);
       return k ? 'd:' + k : '';
     },
@@ -43,6 +53,7 @@
       var ca = a.contraparte || {}, cb = b.contraparte || {};
       if (ca.cnpj) return cb.cnpj === ca.cnpj;
       if (ca.idp) return cb.idp === ca.idp;
+      if (API.generica(a) || API.generica(b)) return false;   /* 3.65.1 */
       var k = API.chaveDesc(a.descRobo || a.desc); return !!k && k === API.chaveDesc(b.descRobo || b.desc);
     },
     status: function (g) {
@@ -149,7 +160,7 @@
 
   MoneyModulos.registrar({
     id: 'origem',
-    versao: '1.0.0',
+    versao: '1.0.1',
     pontos: {
       'lancamento.categoria': function (ctx) { return selo(ctx.g); },
       'lancamentos.topo': function () {

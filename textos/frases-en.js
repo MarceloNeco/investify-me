@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.65 · 11/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.65.1 · 11/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.65.1 */
+  'Confirmar um boleto vale só para ele':'Confirming a bill applies to it only',
+  'Confirmar um boleto do Itaú (ou um Pix, TED, DOC ou "compra débito") com a descrição genérica do banco vale só para ele: não muda mais os outros boletos "A confirmar". O Itaú não manda quem recebeu o boleto.':'Confirming an Itaú bill payment (or a Pix, TED, DOC or "debit purchase") with the bank generic description now applies to that entry only: it no longer changes the other bills "To confirm". Itaú does not send who received the bill.',
   /* 3.65 */
   'O que o robô só supõe aparece com o selo amarelo "A confirmar" (um toque no ✓ confirma); o que ele não sabe, com o selo vermelho "A identificar". Confirmar ou corrigir um vale para todos da mesma origem, com Desfazer, e a tela "A confirmar" agrupa por origem.':'What the robot only guesses shows a yellow "To confirm" badge (tap ✓ to confirm); what it does not know shows a red "To identify" badge. Confirming or fixing one applies to all from the same origin, with Undo, and the "To confirm" screen groups by origin.',
   'Conferência com o banco em três partes: contas e poupança, cartões (a fatura aberta, com vencimento e limite) e investimentos. Assinatura que você não vai renovar termina na data marcada, e o app avisa se cobrarem depois. "Locação de vídeo" e "CDs/DVDs" viraram "Streaming e mídias", e agora dá para renomear categorias.':'Bank check in three parts: accounts and savings, cards (the open bill, with due date and limit) and investments. A subscription you will not renew ends on the date you set, and the app warns if they charge again. "Video rental" and "CDs/DVDs" became "Streaming and media", and you can now rename categories.',
