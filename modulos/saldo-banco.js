@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.0.0 · 11/Nov/2026
+   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.1.0 · 11/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      O robô manda, na mesma caixa (money_entrada), itens que NUNCA viram lançamento (nuvem.js desvia para cá):
@@ -93,6 +93,18 @@
     },
     zerada: function (r) { return Math.abs(r.saldo || 0) < 0.005 && r.hist.every(function (h) { return Math.abs(h.saldo) < 0.005; }) && !API.lancamentos(r).some(function (g) { return g.data >= menos(r.data, 90); }); },
     /* as três seções; nome e final iguais = um item só (o mais novo) */
+    /* 3.65.2 (2.1.0): o que o robô diz que há hoje: caixa = saldos das contas e poupanças; investido = os investimentos */
+    patrimonio: function () {
+      var r = { caixa: 0, invest: 0, data: '', contas: 0, invests: 0 };
+      lista().forEach(function (x) {
+        var s = Number(x.saldo) || 0;
+        if (x.tipo === 'conta' || x.tipo === 'poupanca') { r.caixa += s; r.contas++; }
+        else if (x.tipo === 'investimento') { r.invest += s; r.invests++; }
+        else return;
+        if ((x.data || '') > r.data) r.data = x.data || '';
+      });
+      return r.contas || r.invests ? r : null;
+    },
     secoes: function () {
       var vistos = {}, contas = [], cartoes = [], invs = [];
       lista().slice().sort(function (a, b) { return (b.data || '').localeCompare(a.data || ''); }).forEach(function (r) {
@@ -178,7 +190,7 @@
 
   MoneyModulos.registrar({
     id: 'saldo-banco',
-    versao: '2.0.0',
+    versao: '2.1.0',
     colecoes: [COL],
     pontos: { 'budget.painel': cartao },
     acoes: {

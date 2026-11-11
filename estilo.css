@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.65 · 11/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.65.2 · 11/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -19,6 +19,8 @@
      (nenhum passo mais escuro que o degrau 600, para não sumir no fundo escuro) */
   --r1:#86b6ef; --r2:#5598e7; --r3:#3987e5; --r4:#256abf; --r5:#184f95;
   --grid:#26313f;
+  /* 3.65.2: gráficos — eixo legível (AA), zero sempre visível, saldo do mês em roxo-claro */
+  --viz-eixo:#a9b8ca; --viz-grade:#26313f; --viz-zero:#8a9bb0; --viz-saldo:#c4a7ff; --viz-trilho:#222c3a;
 }
 html[data-theme="light"]{
   --bg:#f2f5f9; --bg2:#ffffff; --card:#ffffff; --card2:#f6f9fc;
@@ -34,6 +36,7 @@ html[data-theme="light"]{
   /* escala ordinal de risco no modo claro: nenhum passo mais claro que o degrau 250 */
   --r1:#86b6ef; --r2:#5598e7; --r3:#2a78d6; --r4:#1c5cab; --r5:#104281;
   --grid:#e6ebf2;
+  --viz-eixo:#4f6178; --viz-grade:#e6ebf2; --viz-zero:#5c6b80; --viz-saldo:#6d3fd1; --viz-trilho:#e9eef5;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -2512,3 +2515,40 @@ html.sem-animacao .barra-and.indet > i{animation:none; width:100%; opacity:.55}
 .ctf-status{margin-top:8px; font-size:.92rem; line-height:1.45}
 .ctf-status.atencao{color:var(--warn)}
 .ctf-status .btn{margin:4px 4px 0 0}
+
+/* 3.65.2: o formulário do lançamento (modulos/lancamento-form.js) */
+.lf-topo{display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; padding:10px 12px; margin:0 0 12px; border-radius:12px; border:1px solid var(--warn); background:color-mix(in srgb, var(--warn) 10%, transparent)}
+.lf-topo .tiny{flex-basis:100%}
+.lf-falta-txt{margin:0 0 10px; color:var(--warn); font-weight:600}
+.lf-falta{outline:2px solid var(--warn); outline-offset:1px}
+.lf-lista{position:absolute; left:0; right:0; top:100%; z-index:50; margin:4px 0 0; padding:4px; list-style:none; max-height:260px; overflow:auto;
+  background:var(--card); border:1px solid var(--line2, var(--linha-suave)); border-radius:10px; box-shadow:0 10px 24px rgba(0,0,0,.3)}
+.lf-lista li{padding:8px 10px; border-radius:8px; cursor:pointer}
+.lf-lista li:hover, .lf-lista li.ativo{background:color-mix(in srgb, var(--accent2) 18%, transparent)}
+.lf-lista li.atual{font-weight:700}
+.lf-lista li.vazio{cursor:default; color:var(--txt2)}
+
+/* 3.65.2: GRÁFICOS — regra do app (ARQUITETURA, "Gráficos"): desenhados na largura real (Viz.auto), altura que cabe
+   na tela, eixo do tamanho do texto pequeno com contraste AA, zero sempre visível, cores do tema (sem cor fixa) */
+.viz-auto{width:100%; min-width:0}
+.viz-auto > svg, .viz-auto .viz-svg{display:block; width:100%; height:auto}
+svg .ax, .viz .ax, .viz-tempo .ax, .viz-duplo .ax{fill:var(--viz-eixo); font-size:12px}
+svg .gl, .viz .gl{stroke:var(--viz-grade)}
+.viz-duplo .ax-l{stroke:var(--viz-grade)}
+.viz-zero{stroke:var(--viz-zero); stroke-width:1.4}
+.viz-saldo{stroke:var(--viz-saldo); fill:none; stroke-width:2.4; stroke-linejoin:round; stroke-linecap:round}
+.viz-saldo-p{fill:var(--viz-saldo); stroke:var(--card); stroke-width:1.5}
+.viz-painel-t{fill:var(--txt); font-size:13px; font-weight:700}
+.viz-painel-bg{fill:var(--card2); opacity:.45}
+.viz-duplo .rot-dir{font-size:12px}
+.viz-div-zero{position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px; background:var(--viz-zero); border-radius:1px}
+.painel-par{display:grid; grid-template-columns:1fr; gap:0 18px; align-items:start}
+@media (min-width:1200px){ .painel-par{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .painel-par .rosca-fig{flex-basis:170px; max-width:170px} }
+.viz-cols{display:grid; grid-template-columns:repeat(12, minmax(0,1fr)); gap:6px; align-items:end; height:clamp(150px, 22vh, 210px); max-width:980px}
+.viz-col{display:flex; flex-direction:column; align-items:center; height:100%; min-width:0}
+.viz-col-v{font-size:11px; color:var(--viz-eixo); white-space:nowrap; margin-bottom:4px}
+.viz-col-b{flex:1; width:100%; max-width:46px; display:flex; align-items:flex-end; background:var(--viz-trilho); border-radius:6px 6px 2px 2px; overflow:hidden}
+.viz-col-b i{display:block; width:100%; background:var(--s3); border-radius:6px 6px 0 0; min-height:2px}
+.viz-col-n{font-size:12px; color:var(--viz-eixo); margin-top:6px}
+@media (max-width:640px){ .viz-cols{gap:3px} .viz-col-v{display:none} }
+.viz-barras, .rosca-leg{max-width:760px}

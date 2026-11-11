@@ -644,6 +644,41 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.65.2 (`nuvem.js` 1.13.0; módulo novo `lancamento-form` 1.0.0; `saldo-banco` 2.1.0).
+  **Gráficos** (regra do app, vale para todo gráfico novo):
+  1. **Largura real e altura que cabe:** todo gráfico em SVG passa por `Viz.auto(fn(W, H), {frac, min, max})`. O desenho é feito na
+     largura medida do lugar (sem esticar o viewBox: o texto do eixo fica com o tamanho do CSS) e com a altura = `frac` da janela
+     (entre `min` e `max`). Um `MutationObserver` e o `resize` chamam `Viz.ajustar()`, que redesenha só quando a medida muda. O
+     cartão inteiro, com a legenda, cabe sem rolar no 1366×768 e no 1920×1080.
+  2. **Eixo legível:** `.ax` = 12 px, cor `--viz-eixo` (contraste AA ≥ 4,5 nos dois temas), formato curto (`vizEixo`/`fmtCurto`:
+     "R$ 150 mil", "R$ 2,5 mil") e marcas redondas (`vizMarcas`: 1, 2, 2,5, 5 × 10ⁿ).
+  3. **Zero sempre:** `.viz-zero` (cor `--viz-zero`) em todo gráfico com valor negativo ou barras para cima e para baixo;
+     `.viz-div-zero` nas barras divergentes.
+  4. **Cores do tema:** nada de cor fixa no código. `--viz-*` e `--s1…--s8` mudam com o tema; o saldo do mês é `--viz-saldo`
+     (roxo-claro no escuro, roxo mais escuro no claro).
+  5. **Escalas diferentes = blocos diferentes:** blocos com título e eixo próprios. No Fluxo, "O que você tem" (estoque) e
+     "Entrou e saiu, mês a mês" (barras, zero e a linha do saldo do mês).
+
+  **Painel:** "Para onde foi" e "Mês a mês" lado a lado a partir de 1200 px (`.painel-par`); "Os meses caros" em 12 colunas
+  (`vizColunas`).
+
+  **Aporte:** a aplicação ou o resgate do robô (`Caixa.aporte`, pela descrição; grupo INVESTIMENTO sem a palavra = aplicação) vira
+  lançamento do grupo Investimento com `fluxo` 'aplicacao'. O resgate é negativo (`g.resgate`, em `Gasto.arruma`). As já guardadas
+  como transferência migram uma vez (`config.aportesV`).
+
+  **Patrimônio de hoje** (`patrimonioHoje`):
+  - caixa = os saldos das contas e poupanças que o robô manda (`SaldoBanco.patrimonio`);
+  - investido = a carteira do InvestifyONE (sem a classe "Dinheiro em conta" quando o robô já trouxe as contas) ou, sem carteira,
+    os investimentos do robô.
+
+  **Lançamento** (`modulos/lancamento-form.js`):
+  - Categoria: combobox com a lista INTEIRA do grupo (`Gasto.arvore`), com a atual marcada; o texto livre continua valendo.
+  - "A confirmar": o selo e "✓ Confirmar como está" no topo (ponto `lancamento.topo`); com pendência, a bandeira "Marcar para
+    conferir" sai.
+  - "Falta: …" destaca o grupo, a categoria, "como pagou", o banco e o cartão vazios.
+  - "Por qual banco" vem de `Banco.palpite(g.conta)` (o cadastrado ou `cod:341`, que salvar cadastra).
+
+  Teste: `teste/teste-graficos.js` (1366, 1920 e 390, nos dois temas; fotos em `/tmp/graf2-*.png`).
 - 3.65.1 (`origem` 1.0.1, `espelho` 1.1.1): descrição genérica do banco (`Origem.GENERICA`, a mesma lista do robô, espelho.py GENERICA:
   boleto "PAG TIT", Pix enviado/recebido sem nome, TED, DOC, compra débito) SEM `contraparte.cnpj` nem `id_pessoa` → a origem é só aquele
   lançamento (`origemDe` = `u:<id>`, `mesma` = false): confirmar não replica e o espelho não manda `regra`. O Itaú não manda o beneficiário
