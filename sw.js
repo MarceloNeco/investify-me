@@ -7,7 +7,7 @@ var CACHE = 'moneytrio-' + VERSAO;
 /* O que fica guardado para abrir sem internet. Cada <script src> do index.html entra aqui com o MESMO ?v=
    (teste/teste-modulos.js confere). Módulo novo = uma linha aqui + uma no index.html. */
 var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './ajuda-botao.png', './icone-192.png',
-  './estilo.css?v=3.66', './textos/frases-en.js?v=3.66', './textos/mudancas.js?v=3.66',
+  './estilo.css?v=3.65.2', './textos/frases-en.js?v=3.66', './textos/mudancas.js?v=3.66',
   './textos/glossario.js?v=3.51', './textos/coach.js?v=3.51',
   './modulos/base.js?v=1.1.0',
   './modulos/arquivos.js?v=1.0.0',
