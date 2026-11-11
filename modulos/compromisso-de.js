@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.6.0 · 06/Nov/2026
+   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.7.0 · 11/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · No formulário de um lançamento: "📌 Virar compromisso" abre o "Novo compromisso" já preenchido
@@ -35,6 +35,8 @@
      · 1.6.0: a tela orientada a decisão: chips no topo com o estado de cada seção (✓ já cadastrado, ⚠ escolha a opção,
        ✓ já paga em…, + será criado); só o que pede decisão vem aberto ("ver detalhes"); repetidos numa faixa só ("Limpar");
        com um cadastro só, "Manter" escolhido e o resto em "mudar"; sem texto miúdo (ⓘ e ⚠ com o texto no title); até 1200 px.
+     · 1.7.0 (3.65): "Virar compromisso" de uma compra parcelada ("08/12") vai até a última parcela; quem pagou vira "Quem paga"
+       e o beneficiário vira "Para quem é".
    API (window.CompromissoDe)
      doLancamento(g)        → semente do compromisso
      lerContrato(texto)     → {escola, aluno, ano, parcela, parcelas, dia, matricula, anuidade, primeiroMes, achados:[…]}
@@ -60,8 +62,19 @@
   var API = {
     doLancamento: function (g) {
       var dia = g.data ? Number(g.data.slice(8, 10)) : 10;
-      return { nome: (g.desc && g.desc.length <= 40 ? g.desc : g.sub) || g.sub, valor: g.cheio || g.valor, grupo: g.grupo, sub: g.sub, quem: g.quem || '',
+      var desc = String(g.desc || ''), sem = { nome: (desc && desc.length <= 40 ? desc : g.sub) || g.sub, valor: g.cheio || g.valor, grupo: g.grupo, sub: g.sub,
+        quem: g.paraQuem || g.quem || '', pagador: g.paraQuem && g.quem && g.quem !== g.paraQuem ? g.quem : '',   /* 3.65: quem pagou × para quem */
         irpf: !!g.irpf, regra: 'dia', dia: dia, desde: g.data || '', forma: g.forma || '' };
+      /* 3.65: compra parcelada ("PARC 08/12", "8 de 12"): o compromisso vai até a última parcela */
+      var m = desc.match(/(?:parc(?:ela)?\.?\s*)?\b(\d{1,2})\s*(?:\/|de)\s*(\d{1,2})\b/i);
+      if (m && g.data && Number(m[1]) >= 1 && Number(m[2]) > Number(m[1]) && Number(m[2]) <= 48) {
+        var falta = Number(m[2]) - Number(m[1]), d = new Date(g.data.slice(0, 7) + '-01T12:00:00Z');
+        d.setUTCMonth(d.getUTCMonth() + falta);
+        sem.ate = d.toISOString().slice(0, 7) + '-' + ('0' + Math.min(dia, 28)).slice(-2);
+        sem.nome = (desc.replace(m[0], '').replace(/\s{2,}/g, ' ').trim() || g.sub).slice(0, 40) + ' (' + falta + (pt() ? ' parcela(s) a mais)' : ' more instalment(s))');
+        sem.parcelasFaltam = falta;
+      }
+      return sem;
     },
     lerContrato: function (texto) {
       var t = String(texto || ''), s = sa(t), c = { escola: '', aluno: '', ano: 0, parcela: 0, parcelas: 0, dia: 0, matricula: 0, anuidade: 0, primeiroMes: 0, achados: [] };
@@ -598,7 +611,7 @@
 
   MoneyModulos.registrar({
     id: 'compromisso-de',
-    versao: '1.4.1',
+    versao: '1.7.0',
     pontos: {
       'lancamento.form': function (ctx) {
         if (!ctx.g || ctx.g.fluxo === 'entrada' && ctx.g.grupo !== 'RENDA') return '';

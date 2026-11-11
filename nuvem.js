@@ -1207,6 +1207,17 @@
       if (g.desc) g.descRobo = g.desc.slice(0, 160);                                    /* o texto original do extrato (regra do espelho) */
       if (l.conta) g.contaRobo = String(l.conta).trim().slice(0, 80);                   /* a conta do banco (conferência do saldo) */
       if (l.para_quem) g.paraQuem = String(l.para_quem).trim().slice(0, 80);
+      /* 1.12.0: a outra parte (contraparte): CNPJ, id_pessoa (o CPF virou HMAC no robô; nunca aparece na tela), nome no banco,
+         meio e MCC. Reconhece contato/profissional nessa ordem (modulos/contraparte.js); MCC só vira palpite de categoria */
+      if (l.contraparte && typeof l.contraparte === 'object') {
+        var cp = l.contraparte, cpo = {};
+        if (/^\d{14}$/.test(String(cp.cnpj || ''))) cpo.cnpj = String(cp.cnpj);
+        if (/^[0-9a-f]{24}$/i.test(String(cp.id_pessoa || ''))) cpo.idp = String(cp.id_pessoa).toLowerCase();
+        if (cp.nome) cpo.nome = String(cp.nome).trim().slice(0, 80);
+        if (/^(PIX|TED|BOLETO|DEBIT|TEF|OTHER)$/.test(String(cp.meio || ''))) cpo.meio = String(cp.meio);
+        if (/^\d{4}$/.test(String(cp.mcc || ''))) cpo.mcc = String(cp.mcc);
+        if (Object.keys(cpo).length) g.contraparte = cpo;
+      }
       var conf = String(l.confianca || '').toLowerCase();
       if (conf === 'palpite' || conf === 'desconhecido') g.confianca = conf;            /* sem o campo = dado antigo, não é palpite */
       if (tipo === 'receita') g.grupo = 'RENDA';
@@ -1222,11 +1233,13 @@
       if (valor < 0) this.estornar(g);
       if (g.grupo === 'OUTROS') g.revisar = true;
       /* cartão: pelo final */
-      var fim = String(l.final || '').replace(/\D/g, '').slice(-4);
-      if (fim) { var ca = (Store.estado.cartoes || []).find(function (c) { return String(c.final || '').replace(/\D/g, '').slice(-4) === fim; }); if (ca) g.cartaoId = ca.id; }
+      /* 1.12.0: cartão pela conta do cartão e pelos finais (modulos/cartoes.js); antes procurava c.final, mas o app guarda c.fim */
+      if (window.Cartoes) Cartoes.doRobo(l, g);
+      else { var fim = String(l.final || '').replace(/\D/g, '').slice(-4); if (fim) { var ca = (Store.estado.cartoes || []).find(function (c) { return String(c.fim || '').replace(/\D/g, '').slice(-4) === fim; }); if (ca) g.cartaoId = ca.id; } }
       if (l.cartao) g.cartaoNome = String(l.cartao).slice(0, 60);
       try { if (g.forma && typeof Banco !== 'undefined' && Banco.formaDoTextoAntigo) g.formaId = Banco.formaDoTextoAntigo(g.forma); } catch (e) {}
       if (window.Pessoas) Pessoas.ligarTudo(g);   /* "Neco" → a pessoa do cadastro (o mesmo nome que o lançamento guardado tem) */
+      if (window.Contraparte) Contraparte.aplicar(g);   /* 1.12.0: contato/profissional pelo CNPJ → id_pessoa → nome; MCC = palpite */
       return g;
     },
     andamento: function (mais) {
@@ -1293,7 +1306,7 @@
     /* o robô mandou de novo um lançamento que já existe (correção).
        A pessoa não mexeu nele: atualiza. A pessoa editou: a edição dela vence; guarda o que o robô
        sugeriu (roboSugeriu) e marca para conferir, para ela decidir. Devolve 'corrigido', 'sugerido' ou ''. */
-    CAMPOS_ROBO: ['data', 'valor', 'grupo', 'sub', 'desc', 'quem', 'forma', 'conta', 'irpf', 'per', 'cartaoId', 'cartaoNome', 'formaId', 'catPluggy', 'origemRobo', 'irTexto', 'estorno'],
+    CAMPOS_ROBO: ['data', 'valor', 'grupo', 'sub', 'desc', 'quem', 'forma', 'conta', 'irpf', 'per', 'cartaoId', 'cartaoNome', 'formaId', 'catPluggy', 'origemRobo', 'irTexto', 'estorno', 'finalCartao', 'contaCartao', 'contraparte'],
     corrigir: function (ja, g) {
       var muda = {}, n = 0;
       if (g.paraQuem && g.paraQuem !== ja.paraQuem) { muda.paraQuem = g.paraQuem; n++; }   /* "para_quem" só quando o robô manda */

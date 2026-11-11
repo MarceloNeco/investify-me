@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.0.0 · 11/Nov/2026
+   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.1.0 · 11/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      Um cadastro só de "quem": Da casa (responsáveis e dependentes), Outras pessoas (pai, amigo, sócio) e
@@ -14,6 +14,10 @@
        revisa a lista uma vez (aviso na tela das pessoas).
      · Pré-preenche com os membros da família na plataforma (sol_grupo_membros) e com as pessoas que a ponte
        do OmniLife trouxe (saude-resumo).
+     · 1.1.0 (3.65): "nomes no banco" de quem é da casa saem do nome completo (MARIA DE SOUZA LIMA → "MARIA DE SOUZA",
+       "MARIA L", "M S LIMA"); o dono pode acrescentar outros. Apelido da casa NUNCA vira nome de banco: os nomes de
+       antes (migração, renomear) ficam em "aliases" (também chamado no app). Contatos guardam cnpjs/idps
+       (modulos/contraparte.js; o idp nunca aparece). Pares novos: contato, titular e "quem usa" do cartão.
    API (window.Pessoas)
      todas() · ativas() · porId(id) · rotulo(p) · nomeCompleto(p)
      achar(texto)                → pessoa (nome, apelido, nome completo ou apelido do banco, sem acento) | null
@@ -40,7 +44,8 @@
 (function () {
   'use strict';
   var COL = 'pessoas';
-  var PARES = [['quem', 'quemId'], ['paraQuem', 'paraQuemId'], ['pagador', 'pagadorId']];
+  var PARES = [['quem', 'quemId'], ['paraQuem', 'paraQuemId'], ['pagador', 'pagadorId'], ['contato', 'contatoId'], ['titular', 'titularId'], ['usa', 'usaId']];
+  var PARTICULAS = { de: 1, da: 1, do: 1, das: 1, dos: 1, e: 1 };
   var TIPOS = { casa: ['Da casa', 'Household'], outra: ['Outras pessoas', 'Other people'], empresa: ['Empresas e instituições', 'Companies and institutions'] };
   var PAPEIS = { responsavel: ['Responsável', 'Guardian'], dependente: ['Dependente', 'Dependant'], '': ['papel a definir', 'role not set'] };
   function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
@@ -57,7 +62,8 @@
   function chaves(p) {
     var k = {}, add = function (x) { x = N(x); if (x) k[x] = 1; };
     add(API.rotulo(p)); add(p.nome); add([p.nome, p.sobrenome].join(' ')); add(API.nomeCompleto(p)); add(p.apelido);
-    (p.banco || []).forEach(add);
+    (p.banco || []).forEach(add); (p.aliases || []).forEach(add);
+    if (p.tipo === 'casa') API.nomesDoBanco(p).forEach(add);
     return Object.keys(k);
   }
   function semelhanca(a, b) {
@@ -85,6 +91,17 @@
       if (String(p.apelido || '').trim()) return String(p.apelido).trim();
       if (p.tipo === 'empresa') return String(p.nome || '').trim();
       return String(p.nome || '').trim().split(/\s+/)[0] || '';
+    },
+    /* como o banco costuma escrever o nome de quem é da casa (sem o apelido) */
+    nomesDoBanco: function (p) {
+      var ws = [p.nome, p.meio, p.sobrenome].join(' ').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).filter(Boolean);
+      if (ws.length < 2) return [];
+      var ult = ws[ws.length - 1], meio = ws.slice(1, -1), ini = ws.slice(0, -1).filter(function (w) { return !PARTICULAS[w.toLowerCase()]; }).map(function (w) { return w[0]; });
+      var out = [];
+      if (meio.length) out.push([ws[0]].concat(meio).join(' '));
+      out.push(ws[0] + ' ' + ult[0]);
+      if (ini.length >= 2) out.push(ini.join(' ') + ' ' + ult);
+      return out.filter(function (x, i, a) { return a.indexOf(x) === i; });
     },
     nomeCompleto: function (p) { return p ? [p.nome, p.meio, p.sobrenome].map(function (x) { return String(x || '').trim(); }).filter(Boolean).join(' ') : ''; },
     achar: function (texto) {
@@ -147,13 +164,14 @@
           .filter(function (x, i, a) { return a.map(N).indexOf(N(x)) === i; }),
         cnpj: d.tipo === 'empresa' ? String(d.cnpj || '').replace(/[^\d./-]/g, '').slice(0, 18) : ''
       };
+      if (d.aliases != null) limpo.aliases = (Array.isArray(d.aliases) ? d.aliases : String(d.aliases).split(/[,;\n]/)).map(function (x) { return String(x).trim().slice(0, 40); }).filter(Boolean);
       if (!limpo.nome) throw new Error(tr('Escreva o nome.', 'Type the name.'));
       if (d.uid) limpo.uid = String(d.uid); if (d.perfil) limpo.perfil = String(d.perfil);
       if (p) {
         var velho = API.rotulo(p);
         Object.assign(p, limpo); delete p.revisar;
         /* o nome de antes continua achando a pessoa (registro que chega de outro aparelho com o nome velho) */
-        if (velho && N(velho) !== N(API.rotulo(p)) && chaves(p).indexOf(N(velho)) < 0) p.banco.push(velho);
+        if (velho && N(velho) !== N(API.rotulo(p)) && chaves(p).indexOf(N(velho)) < 0) (p.aliases = p.aliases || []).push(velho);
       }
       else { p = Object.assign({ id: novoId(), criadoEm: new Date().toISOString() }, limpo); lista().push(p); }
       API.religar(); API.propagar(p.id);
@@ -175,6 +193,7 @@
           var p = API.achar(o[x[0]]); if (p) { o[x[1]] = p.id; o[x[0]] = API.rotulo(p); n++; }
         });
       });
+      if (window.Contraparte) Contraparte.aprenderTodos();   /* 3.65: o contato confirmado aprende o CNPJ / id da outra parte */
       return n;
     },
     /* os textos soltos (sem ID) de todos os registros, contados */
@@ -198,23 +217,25 @@
     },
     confirmarParecida: function (texto, id) {
       var p = API.porId(id); if (!p) return 0;
-      p.banco = (p.banco || []); if (p.banco.map(N).indexOf(N(texto)) < 0) p.banco.push(String(texto).trim().slice(0, 60));
+      var t = String(texto).trim().slice(0, 60), doBanco = /^[A-Z0-9 .'-]{4,}$/.test(t) && /\s/.test(t);   /* "MARIA S LIMA" é do extrato; "Neco" é apelido */
+      var l = doBanco ? (p.banco = p.banco || []) : (p.aliases = p.aliases || []);
+      if (l.map(N).indexOf(N(t)) < 0) l.push(t);
       return API.religar();
     },
     naoEhParecida: function (texto) { (cfg().pessoasNao = cfg().pessoasNao || {})[N(texto)] = 1; },
     /* "Neco", "Beta", "PJ"… viram pessoas; o texto de hoje fica como apelido do banco (o extrato continua batendo) */
     migrar: function () {
-      if (cfg().pessoasV >= 1) return 0;
+      if (cfg().pessoasV >= 1) return 0;   /* (1 = migrou na 3.64; 2 = aliases separados na 3.65) */
       var criadas = 0;
       API.soltos().forEach(function (s) {
         if (API.achar(s.texto) || API.parecida(s.texto)) return;   /* parecido com quem já entrou: pergunta depois ("é a mesma pessoa?") */
         var empresa = /^pj$/i.test(s.texto.trim()), varias = /\s/.test(s.texto.trim());
         lista().push({ id: novoId(), tipo: empresa ? 'empresa' : 'casa', papel: '', nome: empresa ? 'PJ' : titulo(s.texto), meio: '', sobrenome: '', apelido: empresa ? 'PJ' : (varias ? s.texto.trim() : ''),
-          banco: [s.texto.trim()], cnpj: '', revisar: true, criadoEm: new Date().toISOString() });
+          banco: [], aliases: [s.texto.trim()], cnpj: '', revisar: true, criadoEm: new Date().toISOString() });
         criadas++;
       });
       API.religar();
-      cfg().pessoasV = 1;
+      cfg().pessoasV = 2;
       if (criadas) cfg().pessoasRevisar = true;
       return criadas;
     },
@@ -283,6 +304,15 @@
     })();
   }
 
+  /* 3.65: quem tem assinatura de IA e software ganha a SolverONE como empresa (uma vez), para o "para quem" (usufruto) */
+  API.solverone = function () {
+    try {
+      if (!temST() || cfg().pessoasSolverone || typeof Gasto === 'undefined' || !Gasto.todos().some(function (g) { return g.sub === 'IA e software'; })) return false;
+      if (!API.achar('SolverONE')) lista().push({ id: novoId(), tipo: 'empresa', papel: '', nome: 'SolverONE', meio: '', sobrenome: '', apelido: '', banco: [], cnpj: '', criadoEm: new Date().toISOString() });
+      cfg().pessoasSolverone = 1; return true;
+    } catch (e) { return false; }
+  };
+
   /* ---------------- tela: Configurações → Pessoas da família ---------------- */
   var editando = null;   /* id ou 'novo' */
   function formPessoa(p) {
@@ -298,7 +328,9 @@
         '<div class="ps-nao-empresa">' + cp(tr('Nome do meio (opcional)', 'Middle name (optional)'), inp('psMeio', p.meio)) + '</div>' +
         '<div class="ps-nao-empresa">' + cp(tr('Sobrenome', 'Last name'), inp('psSobrenome', p.sobrenome), tr('O nome completo ajuda o leitor de documentos a saber de quem é um contrato ou exame.', 'The full name helps the document reader know whose contract or exam it is.')) + '</div>' +
         cp(tr('Apelido (como aparece no app)', 'Nickname (how it shows in the app)'), inp('psApelido', p.apelido, tr('vazio = o primeiro nome', 'blank = first name'))) +
-        cp(tr('Como aparece no extrato do banco', 'How it shows on the bank statement'), inp('psBanco', (p.banco || []).join(', '), tr('ex.: NECO, MARIA S — separe por vírgula', 'e.g. NECO, MARIA S — comma separated'))) +
+        cp(tr('Nomes no banco (como aparece no extrato)', 'Names at the bank (as on the statement)'), inp('psBanco', (p.banco || []).join(', '), tr('ex.: MARIA S LIMA — separe por vírgula', 'e.g. MARIA S LIMA — comma separated')),
+          p.tipo === 'casa' && API.nomesDoBanco(p).length ? tr('Já reconhecidos pelo nome completo: ', 'Already recognised from the full name: ') + API.nomesDoBanco(p).join(' · ') : '') +
+        cp(tr('Também chamado no app', 'Also called in the app'), inp('psAliases', (p.aliases || []).join(', '), tr('nomes antigos, apelidos do robô', 'old names, robot nicknames'))) +
         '<div class="ps-so-empresa">' + cp(tr('CNPJ (opcional)', 'Company tax ID (optional)'), inp('psCnpj', p.cnpj, '00.000.000/0000-00'), tr('Dado público. CPF o app não pede.', 'Public data. The app never asks for personal tax IDs.')) + '</div>' +
       '</div>' +
       '<div class="f-actions"><button class="btn" data-acao="ps-cancelar">' + esc(tr('Cancelar', 'Cancel')) + '</button>' +
@@ -308,7 +340,7 @@
     var usos = API.usos(p.id);
     var sub = [p.tipo === 'casa' ? (PAPEIS[p.papel || ''] || PAPEIS[''])[pt() ? 0 : 1] : TIPOS[p.tipo][pt() ? 0 : 1],
       API.nomeCompleto(p) !== API.rotulo(p) ? API.nomeCompleto(p) : '', (p.banco || []).length ? tr('extrato: ', 'statement: ') + p.banco.join(', ') : '',
-      p.cnpj ? 'CNPJ ' + p.cnpj : ''].filter(Boolean).join(' · ');
+      p.cnpj ? 'CNPJ ' + p.cnpj : ((p.cnpjs || [])[0] ? 'CNPJ ' + p.cnpjs[0].replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') : '')].filter(Boolean).join(' · ');   /* o idp nunca aparece */
     return '<tr' + (p.arquivada ? ' class="muted"' : '') + '><td><span class="t-main">' + esc(API.rotulo(p)) + (p.revisar ? ' <span class="ps-novo">' + esc(tr('revisar', 'review')) + '</span>' : '') +
       (p.arquivada ? ' <span class="small">(' + esc(tr('arquivada', 'archived')) + ')</span>' : '') + '</span><div class="t-sub">' + esc(sub) + '</div></td>' +
       '<td class="num small muted">' + usos + '</td><td class="num"><div class="row" style="gap:4px;justify-content:flex-end">' +
@@ -319,7 +351,8 @@
       '</div></td></tr>';
   }
   function tela() {
-    if (cfg().pessoasV !== 1) API.migrar();
+    if (!cfg().pessoasV) API.migrar();
+    API.solverone();
     var h = '<div class="card-head"><h1>👥 ' + esc(tr('Pessoas da família', 'Family people')) + '</h1>' +
       '<div class="row" style="gap:6px">' + (window.MoneyNuvem && MoneyNuvem.iniciado ? '<button class="btn sm" data-acao="ps-familia">' + esc(tr('Trazer da família', 'Bring from the family')) + '</button>' : '') +
       '<button class="btn sm primary" data-acao="ps-novo">' + esc(tr('+ Adicionar', '+ Add')) + '</button></div></div>' +
@@ -364,7 +397,7 @@
     var v = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
     var f = document.querySelector('.ps-form');
     return { id: f ? f.dataset.id : '', tipo: v('psTipo'), papel: v('psPapel'), nome: v('psNome'), meio: v('psMeio'), sobrenome: v('psSobrenome'),
-      apelido: v('psApelido'), banco: v('psBanco'), cnpj: v('psCnpj') };
+      apelido: v('psApelido'), banco: v('psBanco'), aliases: v('psAliases'), cnpj: v('psCnpj') };
   }
   function salvarERender(msg) { Store.salvar(); render(); if (msg) toast(msg); }
 
@@ -386,11 +419,18 @@
 
   MoneyModulos.registrar({
     id: 'pessoas',
-    versao: '1.0.0',
+    versao: '1.1.0',
     colecoes: [COL],
     iniciar: function () {
-      try { if (ST && cfg().pessoasV !== 1 && (ST.gastos || []).length + (ST.recorrentes || []).length) { API.migrar(); Store.salvar(); } } catch (e) { console.warn('pessoas', e); }
+      try { if (ST && !cfg().pessoasV && (ST.gastos || []).length + (ST.recorrentes || []).length) { API.migrar(); Store.salvar(); } } catch (e) { console.warn('pessoas', e); }
+      try {   /* 1.1.0: apelido da casa que tinha ido para "nome no banco" (migração da 3.64) passa para aliases */
+        if (temST() && cfg().pessoasV === 1) {
+          lista().forEach(function (p) { var fica = [], vai = p.aliases || []; (p.banco || []).forEach(function (b) { (/\s/.test(String(b).trim()) ? fica : vai).push(b); }); p.banco = fica; if (vai.length) p.aliases = vai; });
+          cfg().pessoasV = 2; Store.salvar();
+        }
+      } catch (e) {}
       trazerUmaVez();
+      API.solverone();
     },
     pontos: {
       'config.todos': function () {
@@ -422,7 +462,8 @@
         var dica = el.closest('.ps-dica'), inp = dica && dica.dataset.para ? document.getElementById(dica.dataset.para) : null;
         var texto = el.dataset.texto || (inp ? inp.value : '');
         if (!String(texto).trim()) return;
-        var p = API.salvar({ tipo: 'outra', nome: titulo(texto), apelido: String(texto).trim(), banco: [texto] });
+        var doBanco = /^[A-Z0-9 .'-]{4,}$/.test(String(texto).trim());
+        var p = API.salvar({ tipo: /\b(LTDA|S\.?A|ME|EIRELI|EPP)\b/i.test(texto) ? 'empresa' : 'outra', nome: titulo(texto), apelido: doBanco ? titulo(texto) : String(texto).trim(), banco: doBanco ? [texto] : [], aliases: doBanco ? [] : [texto] });
         Store.salvar();
         if (inp) { inp.value = API.rotulo(p); atualizarDica(inp); toast(tr('Cadastrado: ', 'Added: ') + API.rotulo(p)); }
         else { editando = p.id; render(); }

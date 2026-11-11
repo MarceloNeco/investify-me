@@ -7786,6 +7786,9 @@ const Gasto = {
     /* 3.39 (N24): Renda · Rescisão e Renda · FGTS (separado) existem mesmo sem lançamento */
     m.RENDA = m.RENDA || new Set(); ['Rescisão', 'FGTS'].forEach(x => m.RENDA.add(x));
     m.SAUDE = m.SAUDE || new Set(); m.SAUDE.add(SUB_TERAPIAS);   /* 3.64: TO, fono, psicopedagogia (com IR) */
+    /* 3.65: assinaturas de IA e software; seguro de vida; o IOF/TED/DOC dos bancos (o robô já manda nelas) */
+    m.PESSOAL = m.PESSOAL || new Set(); ['IA e software', 'Seguro de vida', 'Cursos'].forEach(x => m.PESSOAL.add(x));
+    m.BANCARIOS = m.BANCARIOS || new Set(); m.BANCARIOS.add('IOF / TED / DOC');
     const out = {};
     Object.keys(m).forEach(k => { out[k] = Array.from(m[k]).sort((a,b) => a.localeCompare(b,'pt')); });
     return out;
@@ -10041,6 +10044,7 @@ function recPessoas(){
 const SUB_TERAPIAS = 'Terapias (TO/Fono/Psicopedagogia)';
 const DICIO_REC = [
   [/terapia ocupacional|fonoaudi|\bfono\b|psicoped|reabilita/i, 'SAUDE', SUB_TERAPIAS, {irpf:true}],
+  [/anthropic|openai|chatgpt|claude\.ai|microsoft 365|office 365|github|google one|notion/i, 'PESSOAL', 'IA e software'],
   [/escola|col[eé]gio|faculdade|universidade|curso|ingl[eê]s|ballet|nata[cç][aã]o|ampliado|material escolar/i, 'DEPENDENTES', 'Escola', {irpf:true, anual:true}],
   [/aluguel/i, 'HABITACAO', 'Aluguel'], [/condom[ií]nio/i, 'HABITACAO', 'Condomínio'],
   [/\b(luz|energia|enel|cemig|light|copel)\b/i, 'HABITACAO', 'Energia'], [/\b(água|agua|sabesp|copasa)\b/i, 'HABITACAO', 'Água'],
@@ -18577,6 +18581,7 @@ function blocoBancosCartoes(){
   }
   h += '<button class="btn sm" data-acao="cartao-novo" style="margin-top:8px">' +
        (pt ? '+ Cadastrar cartão' : '+ Add card') + '</button>';
+  h += (window.MoneyModulos ? MoneyModulos.html('cartoes.config', {}) : '');   /* 3.65: cartões encontrados, "de qual cartão?", finais novos */
 
   h += '<p class="tiny muted" style="margin-top:12px">' + (pt
     ? 'O selo colorido é desenhado pelo próprio app, com a cor da instituição. Não uso a marca de nenhum banco.'
@@ -18671,9 +18676,10 @@ function salvarBanco(){
 }
 
 /* ---------- formulário do cartão ---------- */
-function abrirCartao(id){
+function abrirCartao(id, semente){
   const pt = I18n.atual !== 'en';
   const c = id ? Banco.acharCartao(id) : null;
+  const sm = !c && semente ? semente : null;   /* 3.65: "Cartões encontrados" abre o cadastro já preenchido */
   const bancos = Banco.todos();
   const dias = n => { let o = '<option value="0">—</option>';
     for(let i = 1; i <= 31; i++) o += '<option value="' + i + '"' + (n === i ? ' selected' : '') + '>' + i + '</option>';
@@ -18685,10 +18691,10 @@ function abrirCartao(id){
     '<div class="grid g2">' +
       campo(pt ? 'Apelido' : 'Nickname',
         '<input id="ctApelido" placeholder="' + (pt ? 'Cartão do dia a dia' : 'Everyday card') + '" value="' +
-        (c ? esc(c.apelido) : '') + '">') +
+        (c ? esc(c.apelido) : (sm ? esc(sm.apelido || '') : '')) + '">') +
       campo(pt ? 'Últimos 4 dígitos' : 'Last 4 digits',
         '<input id="ctFim" inputmode="numeric" maxlength="4" placeholder="1234" value="' +
-        (c ? esc(c.fim) : '') + '">') +
+        (c ? esc(c.fim) : (sm ? esc(sm.fim || '') : '')) + '">') +
     '</div>' +
     '<div class="grid g2">' +
       campo(pt ? 'Crédito ou débito' : 'Credit or debit',
@@ -18699,12 +18705,12 @@ function abrirCartao(id){
             (pt ? 'Débito' : 'Debit') + '</option></select>') +
       campo(pt ? 'Bandeira' : 'Brand',
         '<select id="ctBandeira">' + BANDEIRAS.map(b =>
-          '<option value="' + b.id + '"' + (c && c.bandeira === b.id ? ' selected' : '') + '>' +
+          '<option value="' + b.id + '"' + ((c ? c.bandeira : sm && sm.bandeira) === b.id ? ' selected' : '') + '>' +
           esc(b.nome) + '</option>').join('') + '</select>') +
     '</div>' +
     campo(pt ? 'De qual banco' : 'Which bank',
       '<select id="ctBanco"><option value="">—</option>' +
-      bancos.map(b => '<option value="' + b.id + '"' + (c && c.bancoId === b.id ? ' selected' : '') + '>' +
+      bancos.map(b => '<option value="' + b.id + '"' + ((c ? c.bancoId : sm && sm.bancoId) === b.id ? ' selected' : '') + '>' +
         esc(Banco.rotulo(b.id)) + '</option>').join('') + '</select>',
       null, bancos.length ? '' : (pt ? 'Cadastre um banco antes, se quiser ligar os dois.'
                                      : 'Add a bank first if you want to link them.')) +
@@ -18717,6 +18723,7 @@ function abrirCartao(id){
     campo(pt ? 'Limite' : 'Limit',
       '<input type="number" inputmode="decimal" data-dinheiro="1" id="ctLimite" step="0.01" min="0" placeholder="' +
       (pt ? 'opcional' : 'optional') + '" value="' + (c && c.limite ? c.limite : '') + '">') +
+    (window.MoneyModulos ? MoneyModulos.html('cartao.form', {c: c, semente: sm}) : '') +   /* 3.65: titular, quem usa, finais (modulos/cartoes.js) */
     '<div id="ctPrevia" class="bk-previa"></div>' +
     '<p class="tiny muted">' + (pt
       ? 'Guardo só os quatro últimos dígitos, que é o que aparece no comprovante. O número inteiro do cartão não entra aqui e nunca deve ser digitado em nenhum app.'
@@ -18751,13 +18758,14 @@ function salvarCartao(id){
     toast(I18n.atual === 'pt' ? 'O final do cartão tem 4 dígitos.' : 'The card ending has 4 digits.', 'warn');
     return;
   }
-  Banco.salvarCartao({
+  const c = Banco.salvarCartao({
     id: id || '', apelido: $('#ctApelido').value.trim(), tipo: $('#ctTipo').value,
     bandeira: $('#ctBandeira').value, fim: fim, bancoId: $('#ctBanco').value,
     fecha: $('#ctFecha').value, vence: $('#ctVence').value, limite: $('#ctLimite').value
   });
+  const ligados = c && window.Cartoes ? Cartoes.lerForm(c) : 0;   /* 3.65: finais, titular, quem usa; e os lançamentos daqueles finais ganham o cartão */
   Store.salvar(); fechar('assetModal'); render();
-  toast(I18n.atual === 'pt' ? 'Cartão salvo.' : 'Card saved.');
+  toast((I18n.atual === 'pt' ? 'Cartão salvo.' : 'Card saved.') + (ligados ? ' ' + ligados + (I18n.atual === 'pt' ? ' compra(s) ligada(s) a ele.' : ' purchase(s) linked to it.') : ''));
 }
 
 </script>
@@ -21998,6 +22006,7 @@ function abrirDeclaracao(d, nova){
         (pt ? ' parecido' + (p.jaTem > 1 ? 's' : '') : ' similar') + ')</span>' : '') + '</label>').join('');
   }
 
+  if(nova && window.MoneyModulos) h += MoneyModulos.html('declaracao.escolhas', {d: txDec});   /* 3.65: importar com escolhas (modulos/declaracao-escolhas.js) */
   h += '<div class="f-actions">' +
     (!nova && txDec.id ? '<button class="btn danger" data-acao="tx-dec-excluir">' + (pt ? 'Excluir' : 'Delete') + '</button>' : '') +
     '<button class="btn" data-close="assetModal">' + (pt ? 'Cancelar' : 'Cancel') + '</button>' +
@@ -22020,12 +22029,17 @@ function salvarDeclaracaoTela(){
   if(!d.anoCalendario) d.anoCalendario = d.exercicio - 1;
   const escolhidas = $$('#assetModalBody [data-txprop]').filter(c => c.checked).map(c => (d._propostas || [])[Number(c.dataset.txprop)]).filter(Boolean);
   delete d._propostas;
+  const escolhasDec = window.DeclEscolhas ? DeclEscolhas.ler() : null;   /* 3.65 */
   Tax.salvarDeclaracao(d);
+  const resDec = escolhasDec ? DeclEscolhas.aplicar(d, escolhasDec) : null;
   let n = 0;
   escolhidas.forEach(p => { if(!Gasto.jaExiste(p.g)){ Gasto.add(p.g); n++; } });
   Gasto._idx = null;
   Store.salvar(); fechar('assetModal'); render();
-  toast((pt ? 'Declaração guardada.' : 'Return saved.') + (n ? (pt ? ' ' + n + ' lançamento' + (n > 1 ? 's' : '') + ' no BudgetONE.' : ' ' + n + ' entries in BudgetONE.') : ''));
+  toast((pt ? 'Declaração guardada.' : 'Return saved.') + (n ? (pt ? ' ' + n + ' lançamento' + (n > 1 ? 's' : '') + ' no BudgetONE.' : ' ' + n + ' entries in BudgetONE.') : '') +
+    (resDec && (resDec.bens + resDec.novos) ? (pt ? ' Patrimônio: ' : ' Net worth: ') + (resDec.bens + resDec.novos) + (pt ? ' bem(ns).' : ' asset(s).') : '') +
+    (resDec && resDec.rest ? (pt ? ' Restituição prevista.' : ' Refund expected.') : '') + (resDec && resDec.quotas ? (pt ? ' Imposto em ' + resDec.quotas + ' compromisso(s).' : ' Tax as commitments.') : ''));
+  if(resDec && resDec.conf) DeclEscolhas.mostrarConferencia(resDec.conf);
 }
 
 /* aceita vários arquivos de uma vez: a declaração e o recibo de entrega */
@@ -29530,22 +29544,25 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/arquivos.js?v=1.0.0"></script>
 <script src="modulos/agendamentos.js?v=1.0.0"></script>
 <script src="modulos/nf-ir.js?v=1.0.1"></script>
-<script src="modulos/profissionais.js?v=1.1.0"></script>
+<script src="modulos/profissionais.js?v=1.2.0"></script>
 <script src="modulos/saude.js?v=1.1.0"></script>
 <script src="modulos/ponte-omnilife.js?v=1.0.0"></script>
 <script src="modulos/patrimonio-iliquido.js?v=1.1.1"></script>
 <script src="modulos/fgts.js?v=1.0.0"></script>
 <script src="modulos/importar-posicoes.js?v=1.0.0"></script>
 <script src="modulos/assinaturas.js?v=1.0.0"></script>
-<script src="modulos/compromisso-de.js?v=1.6.0"></script>
+<script src="modulos/compromisso-de.js?v=1.7.0"></script>
 <script src="modulos/previsto.js?v=1.0.0"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
 <script src="modulos/calendario-menu.js?v=1.1.0"></script>
-<script src="modulos/pessoas.js?v=1.0.0"></script>
+<script src="modulos/pessoas.js?v=1.1.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=1.0.0"></script>
 <script src="modulos/espelho.js?v=1.0.0"></script>
 <script src="modulos/tour.js?v=1.0.0"></script>
+<script src="modulos/cartoes.js?v=1.0.0"></script>
+<script src="modulos/contraparte.js?v=1.0.0"></script>
+<script src="modulos/declaracao-escolhas.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.11.0"></script>
 </body>
 </html>
