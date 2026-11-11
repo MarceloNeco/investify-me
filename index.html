@@ -2654,7 +2654,7 @@ const Viz = {
       vivos[el.dataset.vid] = 1;
       const W = Math.round(el.clientWidth); if(W < 120) return;
       const H = this.altura(r.frac, r.min, r.max);
-      if(Math.abs(W - Number(el.dataset.w)) < 6 && H === Number(el.dataset.h)) return;
+      if(Math.abs(W - Number(el.dataset.w)) < 24 && H === Number(el.dataset.h)) return;   /* < 24 px: a barra de rolagem indo e vindo não redesenha */
       el.dataset.w = W; el.dataset.h = H;
       el.innerHTML = r.fn(W, H);
       if(typeof ligarGraficos === 'function') ligarGraficos(el);
@@ -2666,7 +2666,11 @@ const Viz = {
   let pedido = 0;
   const depois = () => { if(pedido) return; pedido = requestAnimationFrame(() => { pedido = 0; try{ Viz.ajustar(); }catch(e){} }); };
   const ligar = () => {
-    new MutationObserver(ms => { if(ms.some(m => m.addedNodes.length)) depois(); }).observe(document.body, {childList: true, subtree: true});
+    /* só o que entra na tela e tem gráfico (ou pode ter); o que muda dentro do próprio gráfico não conta */
+    new MutationObserver(ms => {
+      if(!document.querySelector('.viz-auto')) return;
+      if(ms.some(m => m.addedNodes.length && !(m.target.closest && m.target.closest('.viz-auto')))) depois();
+    }).observe(document.body, {childList: true, subtree: true});
     window.addEventListener('resize', depois);
   };
   if(document.body) ligar(); else document.addEventListener('DOMContentLoaded', ligar);
