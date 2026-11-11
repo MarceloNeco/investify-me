@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.65">
+<link rel="stylesheet" href="estilo.css?v=3.65.2">
 </head>
 <body>
 
@@ -629,7 +629,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.65.1"></script>
+<script src="textos/frases-en.js?v=3.65.2"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -2624,6 +2624,59 @@ const urlSegura = u => {
 };
 
 /* ---------------------------------------------------------
+   3.65.2 — Viz: todo gráfico em SVG é desenhado na LARGURA REAL do lugar onde está (sem esticar o desenho: o texto do
+   eixo fica do tamanho do texto pequeno do app) e com uma ALTURA que acompanha a janela (cabe na tela no 1366×768 e
+   no 1920×1080). Viz.auto(fn, op) devolve um <div class="viz-auto"> e guarda fn(W, H); depois que entra na tela (e
+   quando a janela muda), Viz.ajustar() mede e redesenha. Regra no ARQUITETURA, "Gráficos".
+   --------------------------------------------------------- */
+const Viz = {
+  n: 0, reg: {},
+  altura(frac, min, max){
+    const vh = window.innerHeight || 800;
+    return Math.round(Math.max(min || 180, Math.min(max || 460, vh * (frac || 0.4))));
+  },
+  /* a largura antes de medir: a área do conteúdo (o ajustar corrige depois) */
+  largura(){
+    const w = window.innerWidth || 1024;
+    return Math.max(280, Math.min(1500, w < 760 ? w - 56 : w - 300));
+  },
+  auto(fn, op){
+    op = op || {};
+    const id = ++this.n; this.reg[id] = {fn, frac: op.frac, min: op.min, max: op.max};
+    const W = this.largura(), H = this.altura(op.frac, op.min, op.max);
+    return '<div class="viz-auto" data-vid="' + id + '" data-w="' + W + '" data-h="' + H + '">' + fn(W, H) + '</div>';
+  },
+  ajustar(raiz){
+    const vivos = {};
+    document.querySelectorAll('.viz-auto').forEach(el => {
+      if(raiz && !raiz.contains(el)) return;
+      const r = this.reg[el.dataset.vid]; if(!r) return;
+      vivos[el.dataset.vid] = 1;
+      const W = Math.round(el.clientWidth); if(W < 120) return;
+      const H = this.altura(r.frac, r.min, r.max);
+      if(Math.abs(W - Number(el.dataset.w)) < 24 && H === Number(el.dataset.h)) return;   /* < 24 px: a barra de rolagem indo e vindo não redesenha */
+      el.dataset.w = W; el.dataset.h = H;
+      el.innerHTML = r.fn(W, H);
+      if(typeof ligarGraficos === 'function') ligarGraficos(el);
+    });
+    if(!raiz) Object.keys(this.reg).forEach(k => { if(!vivos[k]) delete this.reg[k]; });
+  }
+};
+(function(){
+  let pedido = 0;
+  const depois = () => { if(pedido) return; pedido = requestAnimationFrame(() => { pedido = 0; try{ Viz.ajustar(); }catch(e){} }); };
+  const ligar = () => {
+    /* só o que entra na tela e tem gráfico (ou pode ter); o que muda dentro do próprio gráfico não conta */
+    new MutationObserver(ms => {
+      if(!document.querySelector('.viz-auto')) return;
+      if(ms.some(m => m.addedNodes.length && !(m.target.closest && m.target.closest('.viz-auto')))) depois();
+    }).observe(document.body, {childList: true, subtree: true});
+    window.addEventListener('resize', depois);
+  };
+  if(document.body) ligar(); else document.addEventListener('DOMContentLoaded', ligar);
+})();
+
+/* ---------------------------------------------------------
    1) Barra 100% empilhada + legenda com rótulos diretos
    itens: [{nome, valor, cor}]
    --------------------------------------------------------- */
@@ -2682,16 +2735,17 @@ function vizDivergente(itens, fmt){
     let barra;
     if(umLado){
       barra = '<div style="position:absolute;top:2px;bottom:2px;left:0;border-radius:3px;width:' + pct.toFixed(2) +
-              '%;background:' + (pos ? 'var(--up)' : 'var(--down)') + '"></div>';
+              '%;background:' + (pos ? 'var(--up)' : 'var(--down)') + '"></div>' +
+              '<div class="viz-div-zero" style="left:0"></div>';   /* 3.65.2: o zero sempre visível */
     }else{
-      barra = '<div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line2)"></div>' +
+      barra = '<div class="viz-div-zero" style="left:50%"></div>' +
               '<div style="position:absolute;top:2px;bottom:2px;border-radius:3px;background:' +
               (pos ? 'var(--up)' : 'var(--down)') + ';' +
               (pos ? 'left:50%;width:' : 'right:50%;width:') + pct.toFixed(2) + '%"></div>';
     }
     h += '<div style="display:grid;grid-template-columns:92px 1fr 108px;gap:10px;align-items:center;margin-bottom:7px">' +
       '<div class="small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(i.nome) + '</div>' +
-      '<div style="position:relative;height:14px;background:var(--card2);border-radius:4px">' + barra + '</div>' +
+      '<div style="position:relative;height:14px;background:var(--viz-trilho);border-radius:4px">' + barra + '</div>' +
       '<div class="small mono ' + (pos ? 'up' : 'down') + '" style="text-align:right">' +
         (pos ? '+' : '') + fmt(i.valor) + '</div>' +
     '</div>';
@@ -2699,14 +2753,49 @@ function vizDivergente(itens, fmt){
   return h + '</div>';
 }
 
+/* 3.65.2: o rótulo curto do eixo ("R$ 150 mil"; "R$ 2,5 mil" quando a marca não é inteira) */
+function vizEixo(v){
+  if(v < 0) return '−' + vizEixo(-v);   /* o sinal antes da moeda: −R$ 5 mil */
+  const a = Math.abs(v);
+  if(a >= 1e3 && a < 1e6 && Math.round(a / 100) % 10 !== 0){
+    const m = SIMB[ST.moedaBase] || ST.moedaBase;
+    return m + ' ' + (v / 1e3).toLocaleString(loc(), {maximumFractionDigits: 1}) + (loc() === 'en-US' ? ' k' : ' mil');
+  }
+  return fmtCurto(v);
+}
+/* 3.65.2: marcas de eixo redondas (1, 2, 2,5, 5 × 10^n) que cobrem [min, max]; o zero entra quando o intervalo o contém */
+function vizMarcas(min, max, n){
+  if(!(max > min)) return [min];
+  const bruto = (max - min) / Math.max(1, n || 4), p = Math.pow(10, Math.floor(Math.log10(bruto)));
+  const passo = [1, 2, 2.5, 5, 10].map(k => k * p).find(k => k >= bruto) || 10 * p;
+  const r = [];
+  for(let v = Math.floor(min / passo) * passo; v <= max + passo * 0.001; v += passo) r.push(Math.abs(v) < passo * 1e-9 ? 0 : v);
+  if(r[r.length - 1] < max) r.push(r[r.length - 1] + passo);
+  return r;
+}
+/* 3.65.2: colunas verticais compactas (ex.: os 12 meses do ano). itens: [{nome, valor, cor?}] */
+function vizColunas(itens, fmt){
+  const max = Math.max.apply(null, itens.map(i => i.valor).concat([0])) || 1;
+  return '<div class="viz-cols" role="list">' + itens.map(i => {
+    const pct = Math.max(0, i.valor) / max * 100;
+    return '<div class="viz-col" role="listitem" title="' + esc(i.nome + ': ' + fmt(i.valor)) + '" aria-label="' + esc(i.nome + ': ' + fmt(i.valor)) + '">' +
+      '<span class="viz-col-v">' + (i.valor ? esc(fmtCurto(i.valor)) : '—') + '</span>' +
+      '<span class="viz-col-b"><i style="height:' + pct.toFixed(1) + '%' + (i.cor ? ';background:' + i.cor : '') + '"></i></span>' +
+      '<span class="viz-col-n">' + esc(i.nome) + '</span></div>';
+  }).join('') + '</div>';
+}
+
 /* ---------------------------------------------------------
    4) Linha de projeção — 3 cenários
    series: [{nome, cor, pontos:[v0..vn]}]   rotulos: ['hoje','1 ano',...]
    --------------------------------------------------------- */
 function vizLinhas(series, rotulos, fmtCurto, compacto){
-  const W = compacto ? 360 : 680, H = compacto ? 230 : 260;
-  const mL = compacto ? 52 : 56, mR = compacto ? 10 : 16, mT = 14, mB = compacto ? 26 : 28;
-  const fEixo = compacto ? 11 : 10.5, fVal = compacto ? 12 : 11.5;
+  /* 3.65.2: na largura real, altura pela janela (Viz) */
+  return Viz.auto((W, H) => vizLinhasDesenho(series, rotulos, fmtCurto, W < 520, W, H), {frac: 0.38, min: 220, max: 420});
+}
+function vizLinhasDesenho(series, rotulos, fmtCurto, compacto, W, H){
+  const mL = compacto ? 54 : 66, mR = compacto ? 10 : 16, mT = 14, mB = compacto ? 26 : 28;
+  const fEixo = 12, fVal = 12.5;
   const n = rotulos.length;
   const todos = series.flatMap(s => s.pontos);
   const max = Math.max(...todos) * 1.06 || 1;
@@ -2748,7 +2837,7 @@ function vizLinhas(series, rotulos, fmtCurto, compacto){
   series.forEach(s => leg += '<span><i style="background:' + s.cor + '"></i>' + esc(s.nome) + '</span>');
   leg += '</div>';
 
-  return '<svg class="viz" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" role="img" ' +
+  return '<svg class="viz" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" preserveAspectRatio="xMidYMid meet" role="img" ' +
          'aria-label="Projeção do patrimônio em três cenários">' + g + '</svg>' + leg;
 }
 
@@ -2779,10 +2868,12 @@ function amostrar(pontos, maximo){
 function vizLinhaTempo(pontos, op){
   op = op || {};
   if(!pontos || pontos.length < 2) return '<p class="muted small">Ainda não há histórico suficiente para desenhar.</p>';
-
-  const dados = amostrar(pontos.slice().sort((a,b) => new Date(a.t) - new Date(b.t)), 320);
-  const W = 720, H = op.altura || 240;
-  const mL = 58, mR = 14, mT = 12, mB = 26;
+  /* 3.65.2: na largura real, altura pela janela (Viz) */
+  return Viz.auto((W, H) => vizLinhaTempoDesenho(pontos, op, W, H), {frac: 0.36, min: Math.min(op.altura || 200, 220), max: 420});
+}
+function vizLinhaTempoDesenho(pontos, op, W, H){
+  const dados = amostrar(pontos.slice().sort((a,b) => new Date(a.t) - new Date(b.t)), Math.max(60, Math.round(W / 3)));
+  const mL = W < 480 ? 54 : 66, mR = 14, mT = 12, mB = 26;
   const vals = dados.map(p => p.v);
   let min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
   if(op.pm){ min = Math.min(min, op.pm); max = Math.max(max, op.pm); }
@@ -2801,6 +2892,7 @@ function vizLinhaTempo(pontos, op){
          '<text class="ax" x="' + (mL - 7) + '" y="' + (y + 3.5).toFixed(1) + '" text-anchor="end">' + esc(fmt(v)) + '</text>';
   }
 
+  if(min < 0 && max > 0) g += '<line class="viz-zero" x1="' + mL + '" y1="' + py(0).toFixed(1) + '" x2="' + (W - mR) + '" y2="' + py(0).toFixed(1) + '"/>';   /* 3.65.2: zero sempre */
   const alta = dados[n-1].v >= dados[0].v;
   const cor = op.cor || (alta ? 'var(--up)' : 'var(--down)');
   const linha = dados.map((p,i) => (i ? 'L' : 'M') + px(i).toFixed(1) + ' ' + py(p.v).toFixed(1)).join(' ');
@@ -2838,7 +2930,7 @@ function vizLinhaTempo(pontos, op){
   return '<div class="viz-tempo" data-pontos=\'' + dadosJson.replace(/'/g, '&#39;') +
          '\' data-geo="' + [W,H,mL,mR,mT,mB,min,max].join(',') + '" data-moeda="' + esc(op.moeda || '') + '">' +
     '<div class="viz-balao" hidden></div>' +
-    '<svg class="viz viz-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" ' +
+    '<svg class="viz viz-svg" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" ' +
     'aria-label="Gráfico de linha do período">' + g + '</svg></div>';
 }
 
@@ -2953,7 +3045,11 @@ function vizLinhasComparadas(series, op){
   }).filter(Boolean);
   if(!prep.length) return '<p class="muted small">O período em comum entre as séries é curto demais.</p>';
 
-  const W = 720, H = op.altura || 250, mL = 46, mR = 92, mT = 12, mB = 26;
+  /* 3.65.2: na largura real, altura pela janela (Viz) */
+  return Viz.auto((W, H) => vizLinhasComparadasDesenho(prep, t0, t1, W, H), {frac: 0.38, min: 220, max: 420});
+}
+function vizLinhasComparadasDesenho(prep, t0, t1, W, H){
+  const mL = 46, mR = W < 520 ? 70 : 110, mT = 12, mB = 26;
   let min = Infinity, max = -Infinity;
   prep.forEach(s => s.pontos.forEach(p => { if(p.v < min) min = p.v; if(p.v > max) max = p.v; }));
   const folga = (max - min) * 0.1 || 4;
@@ -2988,7 +3084,7 @@ function vizLinhasComparadas(series, op){
     g += '<text class="ax" x="' + px(x).toFixed(1) + '" y="' + (H - 7) + '" text-anchor="' + anc + '">' + esc(dt(x)) + '</text>';
   });
 
-  return '<div class="viz-tempo"><svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" ' +
+  return '<div class="viz-tempo"><svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" preserveAspectRatio="xMidYMid meet" ' +
          'role="img" aria-label="Comparação da carteira com os índices">' + g + '</svg></div>';
 }
 
@@ -3007,110 +3103,120 @@ function vizFluxoPatrimonio(meses, op){
   op = op || {};
   const ms = (meses || []).filter(m => m && m.t);
   if(ms.length < 2) return '<p class="muted small">Ainda não há meses suficientes para desenhar.</p>';
+  /* 3.65.2: na largura real, altura pela janela; dois blocos com título e eixo próprios (o de cima é estoque, na casa
+     das centenas de milhares; o de baixo é o mês, na casa dos milhares); zero sempre; saldo do mês em roxo */
+  return Viz.auto((W, H) => vizFluxoPatrimonioDesenho(ms, op, W, H), {frac: 0.5, min: 300, max: 560});
+}
+function vizFluxoPatrimonioDesenho(ms, op, W, H){
+  const estreito = W < 520;
+  const mL = estreito ? 54 : 66, mR = 14, tit = 20, mB = 24, gap = 30;
+  const util = H - 2 * tit - gap - mB;
+  const hA = Math.round(util * 0.46), hB = util - hA;
+  const topoA = tit, topoB = tit + hA + gap + tit;
+  const LARG = W - mL - mR, pad = Math.min(22, Math.max(10, LARG / ms.length / 2));   /* as colunas da ponta não encostam no eixo */
+  const passo = (LARG - 2 * pad) / Math.max(1, ms.length - 1);
+  const x = i => mL + pad + i * passo;
 
-  const W = 760, mL = 62, mR = 16;
-  const hA = op.alturaA || 168, hB = op.alturaB || 132, gap = 34, mT = 10, mB = 24;
-  const H = mT + hA + gap + hB + mB;
-  const LARG = W - mL - mR;
-  const passo = LARG / Math.max(1, ms.length - 1);
-  const x = i => mL + i * passo;
+  /* --- bloco A: o que você tem (estoque) --- */
+  const estoque = ms.flatMap(m => [m.patrimonio || 0, m.investAcum || 0]).concat(op.real && op.real.valor ? [op.real.valor] : []);
+  let aMax = Math.max.apply(null, estoque), aMin = Math.min.apply(null, estoque);
+  if(aMax === aMin){ aMax += 1; aMin -= 1; }
+  const fA = (aMax - aMin) * 0.08; aMax += fA; aMin -= (aMin >= 0 && aMin - fA < 0) ? aMin : fA;   /* sem negativo, não inventa o −R$ */
+  const nB = hB > 150 ? 5 : 3, nA = hA > 150 ? 4 : 3;
+  /* as marcas são calculadas uma vez e a escala vai exatamente da primeira à última: nenhum número do eixo sai do bloco */
+  const mkA = vizMarcas(aMin, aMax, nA); aMin = mkA[0]; aMax = mkA[mkA.length - 1];
+  const yA = v => topoA + hA - ((v - aMin) / (aMax - aMin)) * hA;
 
-  /* --- painel de cima: o que você tem (estoque) --- */
-  const estoque = ms.flatMap(m => [m.patrimonio || 0, m.investAcum || 0]);
-  let aMax = Math.max.apply(null, estoque), aMin = Math.min.apply(null, estoque, 0);
-  if(aMax === aMin) aMax = aMin + 1;
-  const folga = (aMax - aMin) * 0.08;
-  aMax += folga; aMin -= folga;
-  const yA = v => mT + hA - ((v - aMin) / (aMax - aMin)) * hA;
-
-  /* --- painel de baixo: o que entrou e saiu (fluxo) --- */
-  const fluxos = ms.flatMap(m => [m.entrada || 0, -(m.saida || 0) - (m.aplicacao || 0)]);
-  let bMax = Math.max.apply(null, fluxos.concat([0])), bMin = Math.min.apply(null, fluxos.concat([0]));
+  /* --- bloco B: o que entrou e saiu no mês, e o saldo do mês --- */
+  const saldo = m => (m.entrada || 0) - (m.saida || 0) - (m.aplicacao || 0);
+  const fluxos = ms.flatMap(m => [m.entrada || 0, -(m.saida || 0) - (m.aplicacao || 0), saldo(m)]).concat([0]);
+  let bMax = Math.max.apply(null, fluxos), bMin = Math.min.apply(null, fluxos);
   if(bMax === bMin) bMax = bMin + 1;
-  const topoB = mT + hA + gap;
+  const fB = (bMax - bMin) * 0.06; bMax += fB; bMin -= bMin < 0 ? fB : 0;
+  const mkB = vizMarcas(bMin, bMax, nB); bMin = mkB[0]; bMax = mkB[mkB.length - 1];
   const yB = v => topoB + hB - ((v - bMin) / (bMax - bMin)) * hB;
   const zeroB = yB(0);
 
   const linha = (campo, cor) => {
     const d = ms.map((m,i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + yA(m[campo] || 0).toFixed(1)).join(' ');
-    return '<path d="' + d + '" fill="none" stroke="' + cor + '" stroke-width="2" ' +
-           'stroke-linejoin="round" stroke-linecap="round"></path>';
+    return '<path d="' + d + '" fill="none" stroke="' + cor + '" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></path>';
   };
 
   let h = '<div class="viz-duplo" data-meses="' + esc(JSON.stringify(ms.map(m => ({
     t: m.t, e: Math.round(m.entrada || 0), s: Math.round(m.saida || 0),
     a: Math.round(m.aplicacao || 0), c: Math.round(m.saldoAcum || 0),
     i: Math.round(m.investAcum || 0), p: Math.round(m.patrimonio || 0)
-  })))) + '" data-geo="' + [W,H,mL,mR,passo].join(',') + '">';
+  })))) + '" data-geo="' + [W,H,mL + pad,mR,passo].join(',') + '">';
+  h += '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" class="viz-svg" role="img" ' +
+       'aria-label="Em cima, o que você tem; embaixo, o que entrou e saiu em cada mês e o saldo do mês">';
 
-  h += '<svg viewBox="0 0 ' + W + ' ' + H + '" class="viz-svg" role="img" ' +
-       'aria-label="Patrimônio acumulado em cima, entradas e saídas de cada mês embaixo">';
+  /* títulos dos blocos */
+  h += '<text class="viz-painel-t" x="' + mL + '" y="' + (topoA - 6) + '">O que você tem</text>' +
+       '<text class="viz-painel-t" x="' + mL + '" y="' + (topoB - 6) + '">Entrou e saiu, mês a mês</text>';
 
-  /* grade discreta */
-  const marcasA = 3;
-  for(let k = 0; k <= marcasA; k++){
-    const v = aMin + (aMax - aMin) * k / marcasA, y = yA(v);
+  /* bloco A: grade, eixo e o zero (quando o patrimônio passa por baixo dele) */
+  mkA.forEach(v => {
+    const y = yA(v);
     h += '<line class="ax-l" x1="' + mL + '" y1="' + y.toFixed(1) + '" x2="' + (W-mR) + '" y2="' + y.toFixed(1) + '"></line>' +
-         '<text class="ax" x="' + (mL-7) + '" y="' + (y+3.5).toFixed(1) + '" text-anchor="end">' + fmtCurto(v) + '</text>';
-  }
-  h += '<line class="ax-l" x1="' + mL + '" y1="' + zeroB.toFixed(1) + '" x2="' + (W-mR) + '" y2="' + zeroB.toFixed(1) + '" style="opacity:.9"></line>' +
-       '<text class="ax" x="' + (mL-7) + '" y="' + (yB(bMax)+9).toFixed(1) + '" text-anchor="end">' + fmtCurto(bMax) + '</text>' +
-       '<text class="ax" x="' + (mL-7) + '" y="' + (yB(bMin)-2).toFixed(1) + '" text-anchor="end">' + fmtCurto(bMin) + '</text>';
+         '<text class="ax" x="' + (mL-8) + '" y="' + (y+4).toFixed(1) + '" text-anchor="end">' + esc(vizEixo(v)) + '</text>';
+  });
+  if(aMin < 0 && aMax > 0)
+    h += '<line class="viz-zero" x1="' + mL + '" y1="' + yA(0).toFixed(1) + '" x2="' + (W-mR) + '" y2="' + yA(0).toFixed(1) + '"></line>';
 
-  /* colunas de fluxo: entrada para cima, saída (mais o que foi investir) para baixo */
-  const larg = Math.max(2, Math.min(16, passo * 0.42));
+  /* bloco B: grade, eixo e a linha do zero, sempre */
+  mkB.forEach(v => {
+    const y = yB(v);
+    h += '<line class="ax-l" x1="' + mL + '" y1="' + y.toFixed(1) + '" x2="' + (W-mR) + '" y2="' + y.toFixed(1) + '"></line>' +
+         '<text class="ax" x="' + (mL-8) + '" y="' + (y+4).toFixed(1) + '" text-anchor="end">' + esc(vizEixo(v)) + '</text>';
+  });
+
+  /* colunas: entrada para cima, saída (com o que foi investir) para baixo */
+  const larg = Math.max(2, Math.min(18, passo * 0.5));
   const r = Math.min(4, larg/2);
   ms.forEach((m,i) => {
     const cx = x(i);
     const ent = m.entrada || 0, sai = (m.saida || 0) + (m.aplicacao || 0);
-    if(ent > 0){
-      const y0 = yB(ent), alt = Math.max(1.5, zeroB - y0 - 1);   /* 1px de respiro na linha do zero */
-      h += '<path class="col-e" d="' + cantoArredondado(cx - larg/2 - 1, y0, larg, alt, r, true) + '"></path>';
-    }
-    if(sai > 0){
-      const y1 = yB(-sai), alt = Math.max(1.5, y1 - zeroB - 1);
-      h += '<path class="col-s" d="' + cantoArredondado(cx + 1 - larg/2 + 1, zeroB + 1, larg, alt, r, false) + '"></path>';
-    }
+    if(ent > 0){ const y0 = yB(ent), alt = Math.max(1.5, zeroB - y0 - 1); h += '<path class="col-e" d="' + cantoArredondado(cx - larg - 1, y0, larg, alt, r, true) + '"></path>'; }
+    if(sai > 0){ const y1 = yB(-sai), alt = Math.max(1.5, y1 - zeroB - 1); h += '<path class="col-s" d="' + cantoArredondado(cx + 1, zeroB + 1, larg, alt, r, false) + '"></path>'; }
   });
+  h += '<line class="viz-zero" x1="' + mL + '" y1="' + zeroB.toFixed(1) + '" x2="' + (W-mR) + '" y2="' + zeroB.toFixed(1) + '"></line>';
+  /* o saldo do mês (entrou − saiu), por cima das colunas */
+  h += '<path class="viz-saldo" d="' + ms.map((m,i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + yB(saldo(m)).toFixed(1)).join(' ') + '"></path>';
+  if(ms.length <= 40) ms.forEach((m,i) => { h += '<circle class="viz-saldo-p" cx="' + x(i).toFixed(1) + '" cy="' + yB(saldo(m)).toFixed(1) + '" r="3"></circle>'; });
 
-  /* linhas de estoque, por último para ficarem por cima */
+  /* bloco A por último: as linhas de estoque */
   h += linha('investAcum', 'var(--s4)');
   h += linha('patrimonio', 'var(--s1)');
-
-  /* o valor real de hoje, vindo do InvestifyONE */
   if(op.real && op.real.valor){
     const yr = yA(op.real.valor), xr = x(ms.length - 1);
-    h += '<circle cx="' + xr.toFixed(1) + '" cy="' + yr.toFixed(1) + '" r="5" fill="var(--accent)" ' +
-         'stroke="var(--card)" stroke-width="2"><title>' + esc(op.real.rotulo || 'hoje') + '</title></circle>';
+    h += '<circle cx="' + xr.toFixed(1) + '" cy="' + yr.toFixed(1) + '" r="5" fill="var(--accent)" stroke="var(--card)" stroke-width="2"><title>' + esc(op.real.rotulo || 'hoje') + '</title></circle>';
   }
-
-  /* rótulo direto no fim de cada linha: identidade sem depender só da cor */
   const ult = ms[ms.length-1];
-  h += '<text class="rot-dir" x="' + (W-mR) + '" y="' + (yA(ult.patrimonio||0) - 8).toFixed(1) + '" text-anchor="end">Patrimônio</text>' +
-       '<text class="rot-dir rot-dir-2" x="' + (W-mR) + '" y="' + (yA(ult.investAcum||0) + 14).toFixed(1) + '" text-anchor="end">Investido</text>';
-
-  /* eixo do tempo */
-  const quantos = Math.min(6, ms.length);
-  for(let k = 0; k < quantos; k++){
-    const i = Math.round(k * (ms.length-1) / Math.max(1, quantos-1));
-    const [ano, mes] = ms[i].t.split('-');
-    h += '<text class="ax" x="' + x(i).toFixed(1) + '" y="' + (H-6) + '" text-anchor="middle">' +
-         mes + '/' + ano.slice(2) + '</text>';
+  if(!estreito){
+    const yP = yA(ult.patrimonio||0), yI = yA(ult.investAcum||0), perto = Math.abs(yP - yI) < 16;
+    h += '<text class="rot-dir" x="' + (W-mR) + '" y="' + (yP - 8).toFixed(1) + '" text-anchor="end">Patrimônio</text>' +
+         '<text class="rot-dir rot-dir-2" x="' + (W-mR) + '" y="' + (perto ? yP + 18 : yI + 16).toFixed(1) + '" text-anchor="end">Investido</text>';
   }
 
-  /* camada de leitura: cursor que percorre os dois painéis de uma vez */
-  h += '<line class="dup-cursor" x1="0" y1="' + mT + '" x2="0" y2="' + (mT+hA+gap+hB) + '" opacity="0"></line>';
+  /* eixo do tempo, embaixo */
+  /* 3.65.2: um mês a cada `cada`, sempre com o último e com o mesmo espaço entre eles (nada de mês pulado ao acaso) */
+  const cada = Math.max(1, Math.ceil(passo ? 60 / passo : ms.length));
+  for(let i = ms.length - 1; i >= 0; i -= cada){
+    const [ano, mes] = ms[i].t.split('-');
+    h += '<text class="ax" x="' + x(i).toFixed(1) + '" y="' + (H-6) + '" text-anchor="' + (i === ms.length - 1 ? 'end' : x(i) - 22 < mL ? 'start' : 'middle') + '">' + mes + '/' + ano.slice(2) + '</text>';
+  }
+
+  h += '<line class="dup-cursor" x1="0" y1="' + topoA + '" x2="0" y2="' + (topoB + hB) + '" opacity="0"></line>';
   h += '<rect class="dup-captura" x="' + mL + '" y="0" width="' + LARG + '" height="' + H + '" fill="transparent"></rect>';
   h += '</svg><div class="viz-balao dup-balao"></div>';
 
-  /* legenda: sempre presente com duas séries ou mais */
   h += '<div class="viz-leg">' +
     '<span><i class="dot" style="background:var(--s1)"></i>Patrimônio (caixa + investido)</span>' +
     '<span><i class="dot" style="background:var(--s4)"></i>Investido acumulado</span>' +
     '<span><i class="dot" style="background:var(--up)"></i>Entrou no mês</span>' +
     '<span><i class="dot" style="background:var(--down)"></i>Saiu no mês</span>' +
-    (op.real && op.real.valor ? '<span><i class="dot" style="background:var(--accent)"></i>' +
-      esc(op.real.rotulo || 'valor de hoje') + '</span>' : '') +
+    '<span><i class="dot" style="background:var(--viz-saldo)"></i>Saldo do mês</span>' +
+    (op.real && op.real.valor ? '<span><i class="dot" style="background:var(--accent)"></i>' + esc(op.real.rotulo || 'valor de hoje') + '</span>' : '') +
     '</div></div>';
   return h;
 }
@@ -3462,6 +3568,23 @@ const Banco = {
     const id = this.cartaoDoTexto(lido);
     if(id){ const c = this.acharCartao(id); if(c) lido.forma = c.tipo === 'debito' ? 'debito' : 'credito'; }
     return lido;
+  },
+
+  /* 3.65.2: o banco pelo nome que o robô manda ("Itaú", "BTG"): o cadastrado (id) ou, se ainda não está cadastrado,
+     "cod:341" (o formulário mostra escolhido e salvar já cadastra). '' quando não reconhece. */
+  palpite(nome){
+    const n = String(nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    if(!n) return '';
+    const pal = n.split(' ');
+    const b = BANCOS_BR.find(x => x.cod !== '000' && (() => {
+      const sig = x.sigla.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const nm = x.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+      const forte = nm.split(' ').filter(w => w.length > 2 && !/^(banco|bank|do|da|de)$/.test(w));
+      return (sig.length >= 2 && pal.indexOf(sig) >= 0) || n === nm || (forte.length && pal.indexOf(forte[0]) >= 0);
+    })());
+    if(!b) return '';
+    const meu = this.todos().find(x => x.cod === b.cod);
+    return meu ? meu.id : 'cod:' + b.cod;
   },
 
   bancoDoTexto(lido){
@@ -7370,7 +7493,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.65.1"></script>
+<script src="textos/mudancas.js?v=3.65.2"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -7473,7 +7596,7 @@ const Gasto = {
   arruma(g){
     const r = Object.assign({}, g);
     /* 3.64: estorno é negativo, na categoria do gasto de origem (abate o "Para onde foi"; não é renda) */
-    r.valor = r.estorno ? -Math.abs(Number(r.valor) || 0) : Math.abs(Number(r.valor) || 0);
+    r.valor = (r.estorno || r.resgate) ? -Math.abs(Number(r.valor) || 0) : Math.abs(Number(r.valor) || 0);   /* 3.65.2: resgate = volta do investimento */
     if(!r.estorno) delete r.estorno;
     r.grupo = GRUPOS[r.grupo] ? r.grupo : 'OUTROS';
     r.sub   = (r.sub || '').trim() || 'Sem categoria';
@@ -9678,6 +9801,7 @@ function viewBPainel(){
     nome: (GRUPOS[x.chave] || {}).nome || x.chave,
     valor: x.valor, cor: 'var(' + ((GRUPOS[x.chave] || {}).cor || '--s1') + ')'
   }));
+  h += '<div class="painel-par">';   /* 3.65.2: lado a lado a partir de 1200 px */
   h += '<div class="card"><div class="card-head"><h3>Para onde foi</h3>' +
        '<button class="info-dot" data-info="gasto-por-grupo">i</button></div>' +
        '<div class="rosca-linha">' +
@@ -9701,6 +9825,7 @@ function viewBPainel(){
          'para a esquerda, você gastou mais do que entrou.</p>' +
          '</div>';
   }
+  h += '</div>';
 
   /* em que mês do ano você gasta mais */
   const saz = Gasto.sazonal(Gasto.todos());
@@ -9708,7 +9833,7 @@ function viewBPainel(){
   if(saz.some(m => m.media > 0)){
     h += '<div class="card"><div class="card-head"><h3>Os meses caros do seu ano</h3>' +
          '<button class="info-dot" data-info="sazonalidade">i</button></div>' +
-         vizBarras(saz.map((m,i) => ({nome: NOMES_MES[i], valor: m.media, cor:'var(--s3)'})), fmt) +
+         vizColunas(saz.map((m,i) => ({nome: NOMES_MES[i], valor: m.media})), fmt) +   /* 3.65.2: 12 colunas, não 12 linhas */
          '<p class="tiny muted" style="margin-top:8px">Média de cada mês em todos os anos que você registrou. ' +
          'É onde aparecem IPTU, IPVA, material escolar e as festas de fim de ano.</p></div>';
   }
@@ -10789,7 +10914,9 @@ function abrirLancamento(id){
     '<option value="' + esc(s) + '"></option>').join('');
 
   $('#assetModalTitle').textContent = g ? 'Editar lançamento' : 'Novo lançamento';
-  $('#assetModalBody').innerHTML = Verter.html(blocoRoboSugeriu(g) + '<div class="grid g2">' +
+  $('#assetModalBody').innerHTML = Verter.html(blocoRoboSugeriu(g) +
+    (window.MoneyModulos ? MoneyModulos.html('lancamento.topo', {g: g}) : '') +   /* 3.65.2: "A confirmar" + "Falta:" (modulos/lancamento-form.js) */
+    '<div class="grid g2">' +
       campo('Valor', '<input type="number" inputmode="decimal" data-dinheiro="1" id="glValor" step="0.01" min="0" placeholder="0,00" value="' +
             (g ? ((g.salBase === 'bruto' && g.bruto) ? g.bruto : (g.cheio || g.valor)) : '') + '">') +
       campo('Data', '<input type="date" id="glData" value="' + (g ? (g.data || '') : hojeISO()) + '">') +
@@ -10849,6 +10976,7 @@ function abrirLancamento(id){
       '<button class="btn primary" data-acao="gl-salvar">Salvar</button>' +
     '</div>');
   abrir('assetModal');
+  if(window.LancForm) LancForm.ligar(g);   /* 3.65.2: a lista inteira de categorias do grupo; o que falta */
 
   /* trocar o grupo troca a lista de categorias sugeridas */
   $('#glGrupo').addEventListener('change', e => {
@@ -10925,7 +11053,8 @@ function campoOndePagou(g){
 
   if(pede === 'banco'){
     /* os seus primeiro; embaixo, todos os bancos — escolher um já cadastra */
-    return campo(pt ? 'Por qual banco' : 'Which bank', selectBancoHTML('glBanco', g && g.bancoId || ''),
+    /* 3.65.2: veio do robô com o banco só no texto ("Itaú" em Observação da conta): já vem escolhido */
+    return campo(pt ? 'Por qual banco' : 'Which bank', selectBancoHTML('glBanco', g && (g.bancoId || Banco.palpite(g.conta)) || ''),
       null, pt ? 'Não está nos seus? Escolha na lista inteira: já fica cadastrado.' : 'Not in yours? Pick from the full list: it gets registered.');
   }
   return '';
@@ -11805,6 +11934,24 @@ function barraFiltros(op){
 /* =========================================================
    BudgetONE — Fluxo: o encontro dos dois apps
    ========================================================= */
+/* 3.65.2: o patrimônio de hoje = caixa (os saldos das contas que o robô manda) + investido (a carteira do InvestifyONE
+   quando há; senão, os investimentos que o robô manda). Sem contar duas vezes: com a carteira, o "dinheiro em conta"
+   dela sai quando o robô já trouxe as contas, e os investimentos do robô não somam por cima da carteira. */
+function patrimonioHoje(){
+  const rb = window.SaldoBanco && SaldoBanco.patrimonio ? SaldoBanco.patrimonio() : null;
+  const t = (typeof totais === 'function' && (ST.posicoes || []).length) ? totais() : null;
+  const temCart = !!(t && t.valor);
+  if(!rb && !temCart) return null;
+  const caixa = rb ? rb.caixa : 0;
+  const invest = temCart ? t.valor - (rb && rb.contas ? (t.porClasse.caixa || 0) : 0) : (rb ? rb.invest : 0);
+  const partes = [];
+  if(rb && rb.contas) partes.push('saldos das contas');
+  partes.push(temCart ? 'carteira do InvestifyONE' : (rb && rb.invests ? 'investimentos do banco' : ''));
+  return {valor: caixa + invest, caixa, invest,
+          rotulo: 'patrimônio de hoje',
+          sub: partes.filter(Boolean).join(' + ') + (rb && rb.data ? ' · ' + fmtData(rb.data) : '')};
+}
+
 function viewBFluxo(){
   if(!Gasto.todos().length) return bVazio('b-fluxo');
   const cob = Gasto.cobertura();
@@ -11834,16 +11981,15 @@ function viewBFluxo(){
       'Escolha um período maior lá em cima.</p></div>';
 
   const ult = serie[serie.length - 1];
-  const t = (typeof totais === 'function' && (ST.posicoes || []).length) ? totais() : null;
-  const real = t && t.valor ? {valor: t.valor, rotulo: 'valor de hoje no InvestifyONE'} : null;
+  const real = patrimonioHoje();
 
   h += '<div class="kpis kpis-4">' +
     kpiB('Sobrou no período', fmt(ult.saldoAcum), 'saldo-acumulado',
          'entradas menos saídas e aportes', ult.saldoAcum >= 0 ? 'up' : 'down') +
     kpiB('Foi para investimento', fmt(ult.investAcum), null, 'a preço de custo') +
     kpiB('Acumulado no período', fmt(ult.patrimonio), 'patrimonio-planilha', 'o que sobrou + o que foi investir') +
-    (real ? kpiB('Patrimônio de hoje', fmt(real.valor), null, 'valor de mercado, InvestifyONE', 'up')
-          : kpiB('Patrimônio de hoje', '—', null, 'cadastre a carteira no InvestifyONE')) +
+    (real ? kpiB('Patrimônio de hoje', fmt(real.valor), null, real.sub, 'up')
+          : kpiB('Patrimônio de hoje', '—', null, 'chega com os saldos do robô ou com a carteira do InvestifyONE')) +
     '</div>';
 
   h += '<div class="card"><div class="card-head"><h3>O que você tem, e o que entra e sai</h3>' +
@@ -11858,7 +12004,7 @@ function viewBFluxo(){
     h += '<div class="card2-box"><b class="small">' +
       (dif >= 0 ? 'Os investimentos renderam além do que você colocou' : 'O valor de mercado está abaixo do custo') +
       '</b><p class="small muted" style="margin:6px 0 0">A planilha diz que você acumulou <b>' +
-      fmt(ult.patrimonio) + '</b> somando caixa e aportes. O InvestifyONE diz que hoje isso vale <b>' +
+      fmt(ult.patrimonio) + '</b> somando caixa e aportes. Hoje (' + esc(real.sub) + ') isso vale <b>' +
       fmt(real.valor) + '</b> — uma diferença de <b class="' + (dif >= 0 ? 'up' : 'down') + '">' +
       fmt(Math.abs(dif)) + '</b>. ' +
       'Parte disso é rendimento; parte é gasto que nunca foi lançado na planilha. Quanto mais completo o ' +
@@ -29589,7 +29735,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/calendario-menu.js?v=1.1.0"></script>
 <script src="modulos/pessoas.js?v=1.1.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
-<script src="modulos/saldo-banco.js?v=2.0.0"></script>
+<script src="modulos/saldo-banco.js?v=2.1.0"></script>
 <script src="modulos/espelho.js?v=1.1.1"></script>
 <script src="modulos/tour.js?v=1.0.0"></script>
 <script src="modulos/cartoes.js?v=1.0.0"></script>
@@ -29597,7 +29743,8 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/contraparte.js?v=1.0.0"></script>
 <script src="modulos/declaracao-escolhas.js?v=1.0.0"></script>
 <script src="modulos/origem.js?v=1.0.1"></script>
+<script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
-<script src="nuvem.js?v=1.12.0"></script>
+<script src="nuvem.js?v=1.13.0"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.12.0 · 11/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.13.0 · 11/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -45,6 +45,9 @@
       Robô do banco e Sair (+ Avançado); aberta pelo menu do perfil (Nuvem.itemMenu/abrirPainel) e por Configurações; o selo virou
       ícone no topo (#nvSelo .nv-selo-topo; solto no canto na tela inicial). Jornada entre apps: primeiraVez lê sol_aparelhos_meus
       (app) e sol_pin_info antes de mostrar ("Você já usa o OmniLifeONE…"); novoPin "Crie o PIN da sua conta SolverONE".
+  15. 1.13.0 (3.65.2) — aplicação/resgate do robô (transferência "APLICACAO …"/"RESGATE …", grupo INVESTIMENTO) vira APORTE
+      (Caixa.aporte/comoAporte; fluxo 'aplicacao'; resgate = valor negativo, g.resgate); as já guardadas como transferência
+      migram uma vez (migrarAplicacoes, config.aportesV); "Por qual banco" pelo banco do robô (Banco.palpite, só o cadastrado).
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
       conta" sem o PIN antigo (sol_pin_definir com o atual nulo); "Trocar o PIN" só quando a conta já tem PIN. Conta sem PIN da
@@ -60,7 +63,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.12.0';
+  var VERSAO = '1.13.0';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -1271,6 +1274,9 @@
       }
       if (window.Pessoas) Pessoas.ligarTudo(g);   /* "Neco" → a pessoa do cadastro (o mesmo nome que o lançamento guardado tem) */
       if (window.Contraparte) Contraparte.aplicar(g);   /* 1.12.0: contato/profissional pelo CNPJ → id_pessoa → nome; MCC = palpite */
+      /* 1.13.0 (3.65.2): "Por qual banco" a partir do banco que o robô manda (só o já cadastrado; senão o formulário mostra
+         escolhido e salvar cadastra) */
+      try { if (!g.bancoId && g.conta && typeof Banco !== 'undefined' && Banco.palpite) { var bp = Banco.palpite(g.conta); if (bp && bp.indexOf('cod:') !== 0) g.bancoId = bp; } } catch (e) {}
       return g;
     },
     andamento: function (mais) {
@@ -1323,6 +1329,36 @@
       return g;
     },
     /* os estornos de antes (viravam Renda · Estorno) que a pessoa não editou: uma vez */
+    /* 1.13.0 (3.65.2): aplicação e resgate. O robô manda "APLICACAO PRIVILEGE INT" (grupo INVESTIMENTO, tipo transferencia):
+       antes virava só transferência e o Fluxo dizia "Foi para investimento R$ 0,00". Agora vira APORTE (fluxo 'aplicacao',
+       grupo Investimento): a aplicação soma ao investido; o resgate ("RESGATE …") volta (valor negativo na aplicação). Nunca
+       renda nem gasto. Pela descrição; sem a palavra, grupo INVESTIMENTO = aplicação. */
+    aporte: function (l) {
+      var d = String((l && l.descricao) || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase(), gr = String((l && l.grupo) || '').toUpperCase().trim();
+      if (/\bRESGAT/.test(d)) return 'resgate';
+      if (/\bAPLIC/.test(d)) return 'aplicacao';
+      return gr === 'INVESTIMENTO' ? 'aplicacao' : '';
+    },
+    comoAporte: function (l, tipo) {
+      return Object.assign({}, l, { tipo: 'despesa', grupo: 'INVESTIMENTO', categoria: tipo === 'resgate' ? 'Resgate' : 'Aplicação', _resgate: tipo === 'resgate', confianca: '' });
+    },
+    /* uma vez: as aplicações e resgates do robô que já estavam guardados como transferência viram aporte */
+    migrarAplicacoes: function () {
+      var ST = Store.estado, cfg = (ST.config = ST.config || {}); if (cfg.aportesV || typeof Transferencia === 'undefined') return 0;
+      var n = 0, self = this, fica = [];
+      (ST.transferencias || []).forEach(function (t) {
+        var tipo = t.origem === 'robo' && t.idRobo ? self.aporte({ descricao: t.desc }) : '';
+        if (!tipo) { fica.push(t); return; }
+        var id = self.idDe({ id: t.idRobo });
+        if (!(ST.gastos || []).some(function (g) { return g.id === id; })) {
+          var g = self.converter(self.comoAporte({ id: t.idRobo, data: t.data, valor: t.valor, descricao: t.desc, banco: t.banco, forma: t.forma }, tipo));
+          if (g) { if (tipo === 'resgate') g.resgate = true; Gasto.add(g); n++; }
+        }
+      });
+      if (n || fica.length !== (ST.transferencias || []).length) ST.transferencias = fica;
+      cfg.aportesV = 1;
+      return n;
+    },
     migrarEstornos: function () {
       var ST = Store.estado, cfg = (ST.config = ST.config || {}); if (cfg.estornosV) return 0;
       var n = 0, self = this;
@@ -1341,7 +1377,7 @@
     /* o robô mandou de novo um lançamento que já existe (correção).
        A pessoa não mexeu nele: atualiza. A pessoa editou: a edição dela vence; guarda o que o robô
        sugeriu (roboSugeriu) e marca para conferir, para ela decidir. Devolve 'corrigido', 'sugerido' ou ''. */
-    CAMPOS_ROBO: ['data', 'valor', 'grupo', 'sub', 'desc', 'quem', 'forma', 'conta', 'irpf', 'per', 'cartaoId', 'cartaoNome', 'formaId', 'catPluggy', 'origemRobo', 'irTexto', 'estorno', 'finalCartao', 'contaCartao', 'contraparte'],
+    CAMPOS_ROBO: ['data', 'valor', 'grupo', 'sub', 'desc', 'quem', 'forma', 'conta', 'irpf', 'per', 'cartaoId', 'cartaoNome', 'formaId', 'catPluggy', 'origemRobo', 'irTexto', 'estorno', 'finalCartao', 'contaCartao', 'contraparte', 'resgate'],
     CAMPOS_META: ['finalCartao', 'contaCartao', 'contraparte'],
     corrigir: function (ja, g) {
       var muda = {}, n = 0;
@@ -1396,6 +1432,7 @@
       try {
         if (!(await this.preparar())) return;
         if (this.migrarEstornos()) Store.salvar();   /* 1.11.0: uma vez */
+        if (this.migrarAplicacoes()) Store.salvar();   /* 1.13.0: uma vez */
         var rows = await Conta.rest('GET', 'money_entrada?grupo_id=eq.' + Sinc.gid + '&consumido_em=is.null&select=id,pacote,origem&order=criado_em.asc&limit=200');
         if (!rows || !rows.length) { this.andamento(null); return; }
         /* 1.12.0: a barra de andamento global ("Caixa do robô: x de N"); com lote cheio, conta quantos esperam */
@@ -1420,6 +1457,12 @@
             console.warn('nuvem: caixa do robô — tipo desconhecido ignorado:', tp);
             ignorados++; prontos.push(rows[i].id); continue;
           }
+          /* 1.13.0: aplicação/resgate (transferência para o investimento) vira aporte, não transferência solta */
+          var apt = l && tp === 'transferencia' ? this.aporte(l) : '';
+          if (apt) {
+            l = this.comoAporte(l, apt); tp = 'despesa';
+            if (typeof Transferencia !== 'undefined') { var tfid = 'tf_' + String(l.id).replace(/[^A-Za-z0-9_.:@-]/g, '_').slice(0, 70); ST.transferencias = Transferencia.todas().filter(function (t) { return t.id !== tfid; }); }
+          }
           /* 1.11.0: um gasto já entregue que o robô agora diz ser transferência ou fatura: não conta em dobro */
           if (l && (tp === 'transferencia' || tp === 'fatura') && ids[this.idDe(l)]) {
             var rv = this.virouTransferencia(ids[this.idDe(l)], tp);
@@ -1430,6 +1473,7 @@
             prontos.push(rows[i].id); continue;
           }
           var g; try { g = this.converter(l); } catch (e) { this.erros.add(rows[i].id); continue; }
+          if (g && l._resgate) g.resgate = true;
           if (g === null) { ignorados++; prontos.push(rows[i].id); continue; }
           var ja = ids[g.id];
           if (!ja) { if (g.confianca) g.revisar = true; ids[g.id] = Gasto.add(g); novos++; }   /* palpite só marca para conferir quando é NOVO */

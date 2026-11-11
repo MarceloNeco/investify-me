@@ -1,10 +1,16 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.65.1 · 11/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.65.2 · 11/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.65.2 */
+  'Gráficos que cabem na tela, investimentos e o lançamento mais claro':'Charts that fit the screen, investments and a clearer entry',
+  'Gráficos que cabem na tela: desenhados na largura da tela, com altura que acompanha a janela, números do eixo legíveis nos dois temas ("R$ 150 mil") e a linha do zero sempre à vista. No Fluxo, dois blocos com título próprio ("O que você tem" e "Entrou e saiu, mês a mês") e a linha roxa do saldo do mês. No Painel, "Para onde foi" e "Mês a mês" lado a lado no computador e os meses do ano em colunas.':'Charts that fit the screen: drawn at the screen width, with a height that follows the window, axis numbers readable in both themes ("R$ 150 k") and the zero line always visible. In Flow, two blocks with their own title ("What you own" and "In and out, month by month") and the purple line of the month balance. In the Panel, "Where it went" and "Month by month" side by side on the computer and the months of the year as columns.',
+  'Aplicação e resgate que o robô manda ("APLICACAO …", "RESGATE …") agora contam como dinheiro que foi para o investimento e que voltou, nunca como renda ou gasto. "Foi para investimento" deixou de mostrar R$ 0,00.':'Investments and redemptions sent by the robot ("APLICACAO …", "RESGATE …") now count as money that went into investments and came back, never as income or spending. "Went to investments" no longer shows R$ 0.00.',
+  '"Patrimônio de hoje" usa os saldos das contas e os investimentos que o robô manda (e a carteira do InvestifyONE, quando houver), sem contar duas vezes.':'"Net worth today" uses the account balances and the investments sent by the robot (and the InvestifyONE portfolio, when there is one), without counting twice.',
+  'No lançamento: a Categoria abre a lista inteira do grupo, com a atual marcada; "A confirmar" ganhou "✓ Confirmar como está" dentro da edição (salvar também confirma); o que o robô não soube aparece como "Falta: categoria, banco"; "Por qual banco" já vem com o banco do robô.':'In the entry: Category opens the whole list of the group, with the current one marked; "To confirm" gained "✓ Confirm as is" inside the edit (saving also confirms); what the robot did not know shows as "Missing: category, bank"; "Which bank" comes with the bank sent by the robot.',
   /* 3.65.1 */
   'Confirmar um boleto vale só para ele':'Confirming a bill applies to it only',
   'Confirmar um boleto do Itaú (ou um Pix, TED, DOC ou "compra débito") com a descrição genérica do banco vale só para ele: não muda mais os outros boletos "A confirmar". O Itaú não manda quem recebeu o boleto.':'Confirming an Itaú bill payment (or a Pix, TED, DOC or "debit purchase") with the bank generic description now applies to that entry only: it no longer changes the other bills "To confirm". Itaú does not send who received the bill.',

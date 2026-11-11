@@ -65,7 +65,7 @@ const LOCAL = { v: 1, config: { pessoasV: 2 }, posicoes: [], recorrentes: [], ga
       await p.evaluate(() => { const s = document.getElementById('glSub'); if (s.tagName === 'SELECT') { const o = document.createElement('option'); o.value = o.textContent = 'Presentes'; s.appendChild(o); } s.value = 'Presentes'; });
       await p.fill('#glParaQuem', 'Fulano');
       await p.evaluate(() => document.activeElement && document.activeElement.blur());
-      await p.click('#assetModal .btn.primary'); await p.waitForTimeout(300);
+      await p.click('#assetModal [data-acao="gl-salvar"]'); await p.waitForTimeout(300);
       const b2 = await p.evaluate(() => ['ip1', 'ip2'].map((i) => { const g = Gasto.todos().find((x) => x.idRobo === i); return [g.grupo, g.sub, g.paraQuem, Origem.status(g)].join(','); }));
       ok(b2.every((x) => x === 'PESSOAL,Presentes,Fulano,'), 'corrigir 1 pelo formulário (id_pessoa): os outros da mesma pessoa ganham grupo, categoria e "para quem" (' + b2[0] + ')');
       /* Desfazer volta tudo */

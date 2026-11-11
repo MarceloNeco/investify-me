@@ -103,7 +103,7 @@ async function parteA(b, BASE) {
       const dica2 = await p.evaluate(() => (document.querySelector('#glParaQuem + .ps-dica') || {}).textContent || '');
       ok(!/cadastrar/.test(dica1) && /cadastrar esta pessoa/.test(dica2), 'campo de pessoa: "zeca" bate no apelido (sem aviso); "Prima Nina" não bate e mostra "+ cadastrar esta pessoa"');
       await p.evaluate(() => salvarLancamento ? 0 : 0).catch(() => {});
-      await p.click('#assetModal .btn.primary'); await p.waitForTimeout(300);
+      await p.click('#assetModal [data-acao="gl-salvar"]'); await p.waitForTimeout(300);
       const novo = await p.evaluate(() => Gasto.todos().find((g) => g.desc === 'FARMACIA TESTE'));
       ok(novo && novo.quem === 'Carlos' && novo.quemId && novo.paraQuem === 'Prima Nina' && !novo.paraQuemId, 'salvo: "zeca" virou Carlos (com o ID); "Prima Nina" ficou como texto livre, sem obrigar cadastro');
       /* ---- quem pagou × para quem; IR pelo beneficiário ---- */
