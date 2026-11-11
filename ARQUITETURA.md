@@ -644,6 +644,25 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.65 (`nuvem.js` 1.12.0; módulos novos `tour` 1.0.0, `cartoes` 1.0.0, `contraparte` 1.0.0, `declaracao-escolhas` 1.0.0; `pessoas` 1.1.0,
+  `profissionais` 1.2.0, `compromisso-de` 1.7.0, `calendario-menu` 1.1.0).
+  **Barra de andamento global** (`Fundo.mostrar(id, frac|null, rótulo)` / `Fundo.esconder(id)` / `Fundo.renderBarra`): `#barraAndamento`
+  na base do cabeçalho, role=progressbar; mostra as tarefas do Fundo e os trabalhos curtos (caixa do robô com "x de N", sincronizar,
+  espelho); com algum total, o %; sem total, indeterminada; só aparece depois de 400 ms; some com fade; respeita reduzir movimento.
+  **Passeio** (`modulos/tour.js`, `Assist.abrir('tutorial')`): spotlight (sombra recortando o alvo), balão que se move (transition em
+  left/top) com seta, alvo por lista de seletores em ordem (computador: `#navLista`; celular: `#btnMenu`), fora da tela rola até ele,
+  teclado (→ ← Esc), foco preso, sem alvo → balão no meio; `html:has(.tour)` trava o fundo. **Calendário do menu**: animação de altura
+  (Web Animations, 220 ms) e o chevron gira; `pedirLateral()` no fim. **Lançamentos**: `.desc-txt` com line-clamp 2 e o texto no title.
+  **Cartões** (`modulos/cartoes.js`): o cartão é a conta (fatura) com `finais [{fim, tipo, titular}]`, `contaId` (conta_cartao da
+  Pluggy), `titular`, `usa` ("Quem usa"); final novo da mesma conta entra como virtual (novo); sem conta pergunta uma vez
+  (`ST.config.cartoesPergunta`); "Cartões encontrados" agrupa por conta; `ligarRetro` liga as compras antigas; quem pagou = titular do
+  adicional → quem usa → titular. Ponto novo `cartao.form` e `cartoes.config`. Corrigido: `cartao-salvar` usava `bt` (não existia).
+  **Contraparte** (`modulos/contraparte.js`): CNPJ → id_pessoa → nome (Pessoas e Profissionais guardam `cnpjs`/`idps`; aprendem ao
+  confirmar); MCC só palpite. **Pessoas 1.1.0**: nomes no banco gerados do nome completo (`nomesDoBanco`), apelido da casa e nomes antigos
+  em `aliases` (nunca como nome de banco); pares novos `contato`, `titular`, `usa`; SolverONE como empresa quando há "IA e software".
+  **Declaração com escolhas** (`modulos/declaracao-escolhas.js`, ponto `declaracao.escolhas`): bens sem liquidez com dono e dívida,
+  restituição prevista (desmarcada), imposto em compromissos (dia −1), conferência de deduções. Testes: `teste/teste-tour.js`,
+  `teste/teste-cartoes-contraparte.js`; teste-desktop (descrição longa, calendário animado); teste-pessoas-espelho (barra com %).
 - 3.64 (`nuvem.js` 1.11.0; módulos novos `pessoas` 1.0.0, `espelho` 1.0.0, `saldo-banco` 1.0.0, `indicadores` 1.0.0; `profissionais` 1.1.0).
   **Pessoas** (`modulos/pessoas.js`, coleção `pessoas`): da casa (responsável/dependente), outras pessoas, empresas (CNPJ opcional; nunca
   CPF). Cada registro guarda o ID ao lado do texto nos pares `quem/quemId`, `paraQuem/paraQuemId`, `pagador/pagadorId` (`Gasto.arruma`

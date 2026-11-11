@@ -2,12 +2,12 @@
    Faz o site abrir sem internet e permite instalar como app.
    AO PUBLICAR UMA VERSÃO NOVA, troque o número abaixo (v1 -> v2).
    É o que avisa os celulares de que existe conteúdo novo. */
-var VERSAO = 'v64';
+var VERSAO = 'v65';
 var CACHE = 'moneytrio-' + VERSAO;
 /* O que fica guardado para abrir sem internet. Cada <script src> do index.html entra aqui com o MESMO ?v=
    (teste/teste-modulos.js confere). Módulo novo = uma linha aqui + uma no index.html. */
 var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './ajuda-botao.png', './icone-192.png',
-  './estilo.css?v=3.64', './textos/frases-en.js?v=3.64', './textos/mudancas.js?v=3.64',
+  './estilo.css?v=3.65', './textos/frases-en.js?v=3.65', './textos/mudancas.js?v=3.65',
   './textos/glossario.js?v=3.51', './textos/coach.js?v=3.51',
   './modulos/base.js?v=1.1.0',
   './modulos/arquivos.js?v=1.0.0',
@@ -24,7 +24,7 @@ var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './aju
   './modulos/previsto.js?v=1.0.0',
   './modulos/conciliacao.js?v=1.0.0', './modulos/calendario-menu.js?v=1.1.0',
   './modulos/pessoas.js?v=1.1.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=1.0.0', './modulos/espelho.js?v=1.0.0', './modulos/tour.js?v=1.0.0', './modulos/cartoes.js?v=1.0.0', './modulos/contraparte.js?v=1.0.0', './modulos/declaracao-escolhas.js?v=1.0.0',
-  './nuvem.js?v=1.11.0'];
+  './nuvem.js?v=1.12.0'];
 /* O motor de leitura de fotos (assets/ocr: Tesseract, português, ZXing,
    jsQR — uns 10 MB) tem cache próprio, que NÃO muda a cada versão do app:
    baixa na primeira leitura e fica. Para trocar o motor, troque o número. */

@@ -1,10 +1,17 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.64 · 11/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.65 · 11/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.65 */
+  'Cartões, contatos, passeio e barra de andamento':'Cards, contacts, tour and progress bar',
+  'Cartões por conta: o cartão é a fatura, com vários finais (físico, virtual, adicional). O app encontra os cartões nas suas compras e pergunta uma vez o que não sabe. "Quem usa" define quem pagou.':'Cards by account: a card is the bill, with several endings (physical, virtual, additional). The app finds your cards in your purchases and asks once about what it does not know. "Who uses it" sets who paid.',
+  'Contatos e profissionais reconhecidos pelo CNPJ ou pela identificação do banco, mesmo que o nome mude. O nome completo gera os nomes no banco. O código da loja (MCC) vira só um palpite de categoria.':'Contacts and professionals recognised by company ID or by the bank\'s identification, even if the name changes. The full name generates the bank names. The shop code (MCC) is only a category guess.',
+  'Importar a declaração do IR com escolhas: patrimônio com os bens, restituição prevista, imposto em compromissos e conferência das deduções com o app.':'Import the tax return with choices: net worth from the assets, expected refund, tax as commitments and a check of deductions against the app.',
+  'Um passeio de verdade, que mostra cada parte da tela. Uma barra fina abaixo do cabeçalho mostra o andamento de tudo o que está processando. O calendário do menu abre e fecha com animação.':'A real tour that points at each part of the screen. A thin bar under the header shows the progress of everything that is processing. The menu calendar opens and closes with an animation.',
+  'Descrição longa nos lançamentos não passa mais por cima do valor. Parcela ("08/12") vira compromisso até a última. Categorias novas: IA e software, Seguro de vida, IOF / TED / DOC. Salvar cartão voltou a funcionar.':'Long descriptions no longer cover the amount. An instalment ("08/12") turns into a commitment until the last one. New categories: AI and software, Life insurance, IOF / TED / DOC. Saving a card works again.',
   /* 3.64 */
   'Pessoas da família, planilha espelho e conferência com o banco':'Family people, mirror spreadsheet and bank check',
   'Pessoas da família (⚙ Configurações): da casa (responsáveis e dependentes), outras pessoas e empresas. Nome, sobrenome, apelido e como o nome aparece no extrato. Mudou o nome, muda em tudo na hora. CPF o app não pede.':'Family people (⚙ Settings): household (guardians and dependants), other people and companies. Name, surname, nickname and how the name shows on the statement. Rename once and it changes everywhere. The app never asks for personal tax IDs.',

@@ -1,11 +1,18 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.64 · 11/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.65 · 11/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.65', d:'2026-11-11', t:'Cartões, contatos, passeio e barra de andamento', itens:[
+    'Cartões por conta: o cartão é a fatura, com vários finais (físico, virtual, adicional). O app encontra os cartões nas suas compras e pergunta uma vez o que não sabe. "Quem usa" define quem pagou.',
+    'Contatos e profissionais reconhecidos pelo CNPJ ou pela identificação do banco, mesmo que o nome mude. O nome completo gera os nomes no banco. O código da loja (MCC) vira só um palpite de categoria.',
+    'Importar a declaração do IR com escolhas: patrimônio com os bens, restituição prevista, imposto em compromissos e conferência das deduções com o app.',
+    'Um passeio de verdade, que mostra cada parte da tela. Uma barra fina abaixo do cabeçalho mostra o andamento de tudo o que está processando. O calendário do menu abre e fecha com animação.',
+    'Descrição longa nos lançamentos não passa mais por cima do valor. Parcela ("08/12") vira compromisso até a última. Categorias novas: IA e software, Seguro de vida, IOF / TED / DOC. Salvar cartão voltou a funcionar.'
+  ]},
   {v:'3.64', d:'2026-11-11', t:'Pessoas da família, planilha espelho e conferência com o banco', itens:[
     'Pessoas da família (⚙ Configurações): da casa (responsáveis e dependentes), outras pessoas e empresas. Nome, sobrenome, apelido e como o nome aparece no extrato. Mudou o nome, muda em tudo na hora. CPF o app não pede.',
     'Nos lançamentos, "Quem pagou" e "Para quem é" (o beneficiário, que importa na saúde, na escola e no IR). O campo aceita texto livre; nome parecido, mas sem certeza, o app pergunta uma vez.',

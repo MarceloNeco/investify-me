@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.11.0 · 11/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.12.0 · 11/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -37,6 +37,9 @@
       PLANILHA ESPELHO (Espelho; supabase/2026-11-11b-moneytrio-espelho.sql): fila no IndexedDB fechada com a CF, pacote
       ECDH P-256 + HKDF + AES-GCM para a chave do robô, lotes de 200; sem permissão ou sem a chave do robô, a fila espera.
       Nuvem.membros(): os membros da família (sol_grupo_membros) para o cadastro de pessoas.
+  13. 1.12.0 (3.65) — cartão pela conta do cartão e pelos finais (Cartoes.doRobo; antes procurava c.final, mas o app guarda
+      c.fim); finalCartao, contaCartao e contraparte {cnpj, idp, nome, meio, mcc} guardados (o idp nunca aparece) e
+      reconhecidos (Contraparte.aplicar); barra de andamento global: "Caixa do robô: x de N", sincronizar, espelho.
    6. Tranca sozinho: 15 min sem uso (avisa 1 min antes) ou 10 min fora do app; nunca no meio de um trabalho; sem recarregar.
    Nunca grava nada de finanças em claro: o localStorage 'investifyme.dados.v1' (do app principal) só é LIDO, para
    oferecer "levar para a nuvem". Só a URL e a publishable key do Supabase ficam aqui (públicas por desenho).
@@ -47,7 +50,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.11.0';
+  var VERSAO = '1.12.0';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
