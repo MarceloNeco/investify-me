@@ -9852,8 +9852,8 @@ function viewBLanc(){
       '<td><span class="t-main">' + esc(g.sub) + '</span>' +
         '<div class="t-sub">' + (G.ico || '') + ' ' + esc(G.nome || g.grupo) +
         (g.per && g.per !== 'Pontual' ? ' · ' + PERIODICIDADES[g.per].nome.toLowerCase() : '') + '</div></td>' +
-      '<td class="desc-cel">' + esc((g.desc || '').slice(0,110)) +
-        ((g.desc || '').length > 110 ? '…' : '') +
+      /* 3.65: a descrição fica na própria coluna (até 2 linhas, reticências); o texto inteiro no title e no detalhe */
+      '<td class="desc-cel"><span class="desc-txt" title="' + esc(g.desc || '') + '">' + esc(g.desc || '') + '</span>' +
         (g.grupo === 'RENDA' && Transferencia.daRenda(g.id).length ? '<div class="t-sub tf-cinza">↪ ' + esc((I18n.atual === 'pt' ? 'passou para outra conta em ' : 'moved to another account on ') +
           Transferencia.daRenda(g.id).map(t => I18n.data(t.data) + (t.banco ? ' (' + t.banco + ')' : '')).join(', ') + (I18n.atual === 'pt' ? ' — transferência, não conta de novo' : ' — transfer, not counted again')) + '</div>' : '') +
         (g.quem || g.paraQuem || g.forma ? '<div class="t-sub">' + esc([g.paraQuem && g.paraQuem !== g.quem ? (g.quem ? g.quem + ' → ' : '→ ') + g.paraQuem : g.quem, g.forma].filter(Boolean).join(' · ')) +

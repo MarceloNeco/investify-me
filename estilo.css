@@ -2441,3 +2441,7 @@ html:has(.popup-an), html:has(dialog[open]){overflow:hidden; scrollbar-gutter:st
 .sb-card .tbl td{vertical-align:top}
 .sb-dif{font-weight:600}
 .ind-seta.up{color:var(--up)} .ind-seta.down{color:var(--down)}
+
+/* 3.65 — descrição longa nos lançamentos: até 2 linhas na própria coluna; o valor nunca é coberto */
+.tbl-lanc .desc-txt{display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; overflow:hidden; overflow-wrap:anywhere; color:var(--txt)}
+.tbl-lanc td.num{white-space:nowrap}
