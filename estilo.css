@@ -2285,6 +2285,7 @@ html.sem-animacao .assistone-bt{animation:none; transition:none}
 .perfil-op:hover, .perfil-op:focus-visible{background:var(--card2)}
 .perfil-op i{font-style:normal; width:24px; text-align:center; flex:0 0 auto; display:inline-block}
 .perfil-op .perfil-sub{margin-left:auto; font-size:.74rem; color:var(--txt3); white-space:nowrap}
+.perfil-op.nv-est-enviando{color:var(--warn)} .perfil-op.nv-est-erro{color:var(--down)}   /* 3.65: "☁️ Dados salvos" guardando / com erro */
 .perfil-op.sair{color:var(--down); border-top:1px solid var(--linha-suave); border-radius:0 0 12px 12px; margin-top:4px}
 .perfil-op.spinning i{display:inline-block; animation:spin .9s linear infinite}
 .perfil-op .tog{margin-left:auto; width:38px; height:22px; border-radius:999px; background:var(--line2); position:relative; flex:0 0 auto; transition:background .15s}

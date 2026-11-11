@@ -660,6 +660,16 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   **Contraparte** (`modulos/contraparte.js`): CNPJ → id_pessoa → nome (Pessoas e Profissionais guardam `cnpjs`/`idps`; aprendem ao
   confirmar); MCC só palpite. **Pessoas 1.1.0**: nomes no banco gerados do nome completo (`nomesDoBanco`), apelido da casa e nomes antigos
   em `aliases` (nunca como nome de banco); pares novos `contato`, `titular`, `usa`; SolverONE como empresa quando há "IA e software".
+  **Segurança e aparelhos** (`nuvem.js` `Painel`): tela larga (`.nv-largo`, `.nv-grade` 1/2/3 colunas em <760/≥760/≥1600 px) com 5 seções
+  (Seus dados · PIN e digital · Seus aparelhos · Robô do banco · Sair), cada uma com "Avançado" (`<details>`) para o que é raro (passkey,
+  e-mail do robô, apagar a cópia, só neste aparelho). Abre pelo item do menu do perfil `data-perfil="nuvem"` ("☁️ Dados salvos · hh:mm",
+  amarelo guardando, vermelho com erro; `MoneyNuvem.itemMenu()`; só esse item é atualizado, sem redesenhar o menu) e por Configurações
+  (`#cfgSeguranca`, `data-acao="nuvem-painel"`). O selo "Tudo guardado" saiu: `#nvSelo` é um ícone ao lado do perfil (no início, solto no
+  canto). Aparelhos do mesmo nome em apps diferentes viram uma linha ("Linux · Chrome · MoneyTRIO e OmniLifeONE"). Com a tela aberta, o
+  pedido de acesso aparece dentro dela. **Jornada entre apps**: o PIN é da pessoa; `Portao.primeiraVez` lê `sol_aparelhos_meus` (coluna
+  `app`) e `sol_pin_info` antes de mostrar; já usa outro app → "Você já usa o OmniLifeONE. Aprove por um aparelho seu…" (+ aviso de que o
+  PIN escolhido também vale lá, se a conta não tem PIN); `novoPin` → "Crie o PIN da sua conta SolverONE. Ele vale no MoneyTRIO, no
+  OmniLifeONE e nos próximos apps". Os textos ficam no `nuvem.js` para o OmniLifeONE reaproveitar. Teste: `teste/teste-seguranca.js`.
   **Declaração com escolhas** (`modulos/declaracao-escolhas.js`, ponto `declaracao.escolhas`): bens sem liquidez com dono e dívida,
   restituição prevista (desmarcada), imposto em compromissos (dia −1), conferência de deduções. Testes: `teste/teste-tour.js`,
   `teste/teste-cartoes-contraparte.js`; teste-desktop (descrição longa, calendário animado); teste-pessoas-espelho (barra com %).

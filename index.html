@@ -26207,6 +26207,10 @@ function viewConfig(){
       '<button class="btn sm" data-acao="aone-recomecar">Recomeçar o passo a passo e as dicas</button></div>') +
     campo('Atualizar cotações a cada', selectHTML('cAuto', [[5,'5 minutos'],[10,'10 minutos'],[30,'30 minutos'],[0,'só quando eu clicar']], String(cfg.autoRefreshMin))) +
   '</div></div>';
+  if(window.MoneyNuvem && MoneyNuvem.iniciado && !MoneyNuvem.local)   /* 3.65: a mesma tela do menu do perfil */
+    h += '<div class="card cfg-sec" data-sec="todos" id="cfgSeguranca"><div class="card-head"><h3>🔐 Segurança e aparelhos</h3>' +
+      '<button class="btn sm" data-acao="nuvem-painel">Abrir</button></div>' +
+      '<p class="small muted">PIN da conta, digital, os seus aparelhos, o robô do banco e sair da conta.</p></div>';
   h += (window.MoneyModulos ? MoneyModulos.html('config.todos') : '');   /* 3.64: Pessoas da família, planilha espelho */
 
   /* fita e notícias */
@@ -27490,6 +27494,8 @@ function htmlPerfilMenu(){
     (id.desde ? '<span>' + esc(pt ? 'conectado desde ' : 'signed in since ') + esc(fmtData(id.desde.slice(0, 10))) + '</span>' : '') +
     '</div></div>';
   h += op('config', '⚙️', pt ? 'Configurações' : 'Settings');
+  const nv = window.MoneyNuvem && MoneyNuvem.itemMenu ? MoneyNuvem.itemMenu() : null;   /* 3.65: "☁️ Dados salvos · hh:mm" → Segurança e aparelhos */
+  if(nv) h += op('nuvem', nv.ico, nv.txt, '<span class="perfil-sub">' + esc(pt ? 'Segurança e aparelhos' : 'Security and devices') + '</span>', 'nv-est-' + nv.estado);
   h += op('tema', ST.tema === 'light' ? '☀️' : '🌙', pt ? 'Tema claro' : 'Light theme',
           '<span class="tog' + (ST.tema === 'light' ? ' on' : '') + '" aria-hidden="true"></span>');
   h += '<button type="button" role="menuitem" class="perfil-op' + (cotacoesAtualizando ? ' spinning' : '') +
@@ -27539,6 +27545,7 @@ function acaoPerfil(qual){
     case 'atualizar':
       atualizarCotacoes(true); renderPerfilMenu(); break;
     case 'ajuda':     fecharPerfilMenu(); Assist.abrir('tela'); break;
+    case 'nuvem':     fecharPerfilMenu(); if(window.MoneyNuvem && MoneyNuvem.abrirPainel) MoneyNuvem.abrirPainel(); break;   /* 3.65 */
     case 'espelho': {   /* 3.64: abre a planilha numa aba nova; sem link, vai para onde se cola o link */
       fecharPerfilMenu();
       const l = ST.config && ST.config.espelhoLink;
@@ -28759,6 +28766,8 @@ function ligarEventos(){
         Assist.fechar();
         if((ST.appAtual || 'investify') !== 'budget') abrirApp('budget');
         irPara('b-lanc'); abrirEscanear(); break;
+      case 'nuvem-painel':   /* 3.65 */
+        if(window.MoneyNuvem && MoneyNuvem.abrirPainel) MoneyNuvem.abrirPainel(); break;
       case 'aone-abrir':
         if(ST.config.assistOne === false){ ST.config.assistOne = true; Store.salvar(); AssistOne.aplicar(); render(); }
         AssistOne.abrir('tela'); break;

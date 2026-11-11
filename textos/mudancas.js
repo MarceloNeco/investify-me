@@ -13,7 +13,9 @@ const MUDANCAS = [
     'Um passeio de verdade, que mostra cada parte da tela. Uma barra fina abaixo do cabeçalho mostra o andamento de tudo o que está processando. O calendário do menu abre e fecha com animação.',
     'Descrição longa nos lançamentos não passa mais por cima do valor. Parcela ("08/12") vira compromisso até a última. Categorias novas: IA e software, Seguro de vida, IOF / TED / DOC. Salvar cartão voltou a funcionar.',
     'O que o robô só supõe aparece com o selo amarelo "A confirmar" (um toque no ✓ confirma); o que ele não sabe, com o selo vermelho "A identificar". Confirmar ou corrigir um vale para todos da mesma origem, com Desfazer, e a tela "A confirmar" agrupa por origem.',
-    'Conferência com o banco em três partes: contas e poupança, cartões (a fatura aberta, com vencimento e limite) e investimentos. Assinatura que você não vai renovar termina na data marcada, e o app avisa se cobrarem depois. "Locação de vídeo" e "CDs/DVDs" viraram "Streaming e mídias", e agora dá para renomear categorias.'
+    'Conferência com o banco em três partes: contas e poupança, cartões (a fatura aberta, com vencimento e limite) e investimentos. Assinatura que você não vai renovar termina na data marcada, e o app avisa se cobrarem depois. "Locação de vídeo" e "CDs/DVDs" viraram "Streaming e mídias", e agora dá para renomear categorias.',
+    '"Segurança e aparelhos": uma tela larga (2 a 3 colunas no computador, 1 no celular) com seus dados, PIN e digital, seus aparelhos (com os apps de cada um), o robô do banco e sair. Abre pelo menu do perfil ("☁️ Dados salvos · hh:mm") e por Configurações. O selo "Tudo guardado" virou um ícone discreto no topo.',
+    'O PIN é da sua conta SolverONE e vale em todos os apps: quem já usa o OmniLifeONE aprova por um aparelho seu (pode ser o OmniLifeONE no mesmo celular) e usa o mesmo PIN. Pedidos de acesso dizem de qual app vêm.'
   ]},
   {v:'3.64.1', d:'2026-11-11', t:'Sair de verdade e criar o PIN da conta', itens:[
     '"Sair" no menu do perfil agora sai da conta de verdade: os dados somem da tela, e nem recarregar nem o "Voltar" do navegador mostram nada até você entrar de novo.',

@@ -309,7 +309,7 @@ let BASE = '';
     const cfg = vivos.find((r) => r.colecao === 'config' && r.id === 'config');
     ok(cfg && !('chaves' in (await abrirDoBanco(cfg.dados_cifrado)).v), 'as chaves de API nunca sobem');
     ok(JSON.parse(await A.evaluate(() => localStorage.getItem('investifyme.dados.v1'))).gastos.length === 3, 'o MoneyTRIO sem nuvem deste aparelho continua igual');
-    ok(/Tudo guardado/.test(await A.textContent('#nvSelo')), 'A: selo "Tudo guardado"');
+    ok(/Dados salvos · hoje \d\d:\d\d/.test(await A.textContent('#nvSelo')), 'A: ícone da nuvem "Dados salvos · hoje hh:mm" (o selo "Tudo guardado" saiu)');
     await A.waitForFunction(() => (document.querySelector('#perfilNome') || {}).textContent === 'dono', null, { timeout: 10000 }).catch(() => {});
     ok((await A.textContent('#perfilNome')) === 'dono' && (await A.textContent('#perfilAv')) === 'D', 'A: sem nome no perfil nem no Google, o topo mostra a parte do e-mail antes do @ ("dono", iniciais "D")');
     db.user_settings.push({ user_id: UID, display_name: 'Paulo Souza' });

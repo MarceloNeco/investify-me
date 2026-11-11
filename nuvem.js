@@ -40,6 +40,11 @@
   14. 1.12.0 (3.65) — cartão pela conta do cartão e pelos finais (Cartoes.doRobo; antes procurava c.final, mas o app guarda
       c.fim); finalCartao, contaCartao e contraparte {cnpj, idp, nome, meio, mcc} guardados (o idp nunca aparece) e
       reconhecidos (Contraparte.aplicar); barra de andamento global: "Caixa do robô: x de N", sincronizar, espelho.
+      "Segurança e aparelhos" (Painel): tela larga em grade (1/2/3 colunas: <760, ≥760, ≥1600 px) com Seus dados, PIN e digital,
+      Seus aparelhos (apps por aparelho, "este aparelho", visto por último, Remover com confirmação, aviso de pedido só quando há),
+      Robô do banco e Sair (+ Avançado); aberta pelo menu do perfil (Nuvem.itemMenu/abrirPainel) e por Configurações; o selo virou
+      ícone no topo (#nvSelo .nv-selo-topo; solto no canto na tela inicial). Jornada entre apps: primeiraVez lê sol_aparelhos_meus
+      (app) e sol_pin_info antes de mostrar ("Você já usa o OmniLifeONE…"); novoPin "Crie o PIN da sua conta SolverONE".
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
       conta" sem o PIN antigo (sol_pin_definir com o atual nulo); "Trocar o PIN" só quando a conta já tem PIN. Conta sem PIN da
@@ -642,9 +647,10 @@
     },
     avisarPedido: function () {
       var p = (this.pendentes || [])[0], el = document.getElementById('nvPedido');
+      if (Painel.aberto) { if (el) el.remove(); Painel.avisoPedidos(); return; }   /* 1.12.0: com a tela aberta, o aviso fica dentro dela */
       if (!p) { if (el) el.remove(); return; }
       if (!el) { el = document.createElement('div'); el.id = 'nvPedido'; el.className = 'nv-pedido'; el.setAttribute('role', 'alert'); document.body.appendChild(el); }
-      el.innerHTML = '<span>🔔 ' + esc(p.tipo === 'familia' ? tt('Pedido de acesso de ', 'Access request from ') + (p.quem_nome || p.quem_email) + ': ' + p.nome : tt('Pedido de acesso: ', 'Access request: ') + p.nome) + ' · ' + esc(dataHora(p.criado_em)) + '</span>' +
+      el.innerHTML = '<span>🔔 ' + esc(p.tipo === 'familia' ? tt('Pedido de acesso de ', 'Access request from ') + (p.quem_nome || p.quem_email) + ': ' + p.nome : tt('Pedido de acesso: ', 'Access request: ') + p.nome) + (p.app ? ' · ' + esc(nomeApp(p.app)) : '') + ' · ' + esc(dataHora(p.criado_em)) + '</span>' +
         '<button class="nv-btn pri" id="nvPedidoVer">' + tt('Ver', 'View') + '</button><button class="nv-x" id="nvPedidoX" aria-label="' + tt('Agora não', 'Not now') + '">✕</button>';
       var self = this;
       el.querySelector('#nvPedidoVer').onclick = function () { el.remove(); self.aprovar(p); };
@@ -657,7 +663,7 @@
         (p.tipo === 'familia'
           ? '<p><b>' + esc(p.quem_nome || p.quem_email) + '</b>' + (p.quem_nome ? ' (' + esc(p.quem_email) + ')' : '') + tt(' quer entrar nas finanças da família pelo aparelho ', ' wants to open the family finances on the device ') + '<b>' + esc(p.nome) + '</b> · ' + esc(dataHora(p.criado_em)) + '</p>' +
             '<div class="nv-nota atencao">' + tt('Só aprove se a pessoa está com você (ou ao telefone) e lê o mesmo número.', 'Only approve if the person is with you (or on the phone) and reads the same number.') + '</div>'
-          : '<p>' + tt('Pedido de acesso de: ', 'Access request from: ') + '<b>' + esc(p.nome) + '</b> · ' + esc(dataHora(p.criado_em)) + '</p>' +
+          : '<p>' + tt('Pedido de acesso de: ', 'Access request from: ') + '<b>' + esc(p.nome) + (p.app ? ' · ' + esc(nomeApp(p.app)) : '') + '</b> · ' + esc(dataHora(p.criado_em)) + '</p>' +
             '<div class="nv-nota atencao">' + tt('Só aprove se este pedido é do aparelho que você está segurando agora.', 'Only approve if this request comes from the device you are holding now.') + '</div>');
       var sair = function (msg) { fim = true; delete self._apr[p.id]; eu = null; Tela.fechar(); if (msg) aviso(msg); };
       var recusar = function () { fim = true; self.rpc('sol_pedido_recusar', { p_id: p.id }).catch(function () {}); sair(tt('Pedido recusado.', 'Request declined.')); };
@@ -1558,6 +1564,22 @@
     '.nv-selo{position:fixed;left:12px;bottom:84px;z-index:9990;border-radius:999px;padding:8px 12px;background:var(--card,#151c26);border:1px solid var(--line2,#2e3c4f);color:var(--txt,#e7edf5);font:13px system-ui,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:calc(100vw - 24px)}' +
     '@media(min-width:900px){.nv-selo{bottom:16px}}' +
     '.nv-aviso{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:99995;background:var(--card2,#1b2430);color:var(--txt,#e7edf5);border:1px solid var(--line2,#2e3c4f);border-radius:12px;padding:10px 14px;max-width:calc(100vw - 32px);display:none;font:14px system-ui,sans-serif}.nv-aviso.on{display:block}' +
+    '.nv-card.nv-largo{max-width:min(1600px,100%);position:relative;margin-top:2vh}' +
+    '.nv-cab{display:flex;align-items:center;gap:12px;padding-right:36px}.nv-cab h1{margin:0;font-size:1.35rem}' +
+    '.nv-grade{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px;align-items:start}' +
+    '@media (min-width:760px){.nv-grade{grid-template-columns:repeat(2,minmax(0,1fr))}}' +
+    '@media (min-width:1600px){.nv-grade{grid-template-columns:repeat(3,minmax(0,1fr))}}' +
+    '.nv-sec{background:var(--bg2,#121821);border:1px solid var(--line,#243040);border-radius:14px;padding:14px 16px;min-width:0}' +
+    '.nv-sec h2{margin:0 0 8px}.nv-sec .nv-nota{background:var(--card,#151c26)}' +
+    '.nv-av{margin-top:10px;border-top:1px dashed var(--line2,#2e3c4f);padding-top:6px}.nv-av summary{cursor:pointer;font-size:.9rem;opacity:.85;padding:4px 0}' +
+    '.nv-sw{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:10px 0 4px;padding:10px 12px;border-radius:10px;border:1px solid var(--line2,#2e3c4f);background:var(--card2,#1b2430);color:inherit;font-size:15px;cursor:pointer;text-align:left}' +
+    '.nv-sw i{flex:0 0 42px;height:24px;border-radius:12px;background:var(--line2,#2e3c4f);position:relative;transition:background .2s}.nv-sw i::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s}' +
+    '.nv-sw.on i{background:var(--accent,#3ddc97)}.nv-sw.on i::after{left:21px}' +
+    '.nv-btn.nv-mini{flex:0 0 auto;width:auto;padding:6px 10px;font-size:13px;margin:6px 0 0}' +
+    '.nv-ap.este{border-color:var(--accent,#3ddc97)}.nv-tag{font-size:12px;padding:1px 8px;border-radius:999px;background:var(--accent,#3ddc97);color:#06281a;white-space:nowrap}' +
+    '.nv-selo-topo.nv-selo-solto{position:fixed;top:12px;right:12px;z-index:9990;width:42px;height:42px;border-radius:50%;background:var(--card,#151c26);border:1px solid var(--line2,#2e3c4f);color:inherit;cursor:pointer}' +
+    '.nv-selo-topo{position:relative}.nv-selo-topo::after{content:"";position:absolute;right:6px;bottom:6px;width:8px;height:8px;border-radius:50%;background:var(--accent,#3ddc97)}' +
+    '.nv-selo-topo[data-estado=enviando]::after{background:var(--warn,#ffb84d)}.nv-selo-topo[data-estado=erro]::after{background:var(--down,#ff6b6b)}.nv-selo-topo[data-estado=off]::after{background:#8a96a8}' +
     '.nv-painel{position:fixed;inset:0;z-index:99980;overscroll-behavior:contain;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 16px}' +
     '.nv-aviso.alto{z-index:2147483000}.nv-nota.fixa{position:relative;padding-right:36px}.nv-x{position:absolute;top:6px;right:6px;background:none;border:0;color:inherit;font-size:16px;cursor:pointer;padding:4px 8px}.nv-sub{font-size:.95rem;margin:10px 0 4px}' +
     '.nv-lista button{margin:6px 0}.nv-cod{font-family:ui-monospace,monospace;letter-spacing:.04em}';
@@ -1589,69 +1611,158 @@
   };
 
   /* ---------------- painel (depois de entrar) ---------------- */
+  /* 1.12.0 (3.65): "Segurança e aparelhos" — tela larga (1 coluna no celular, 2 no notebook, 3 em telas grandes), aberta pelo
+     menu do perfil ("☁️ Dados salvos · hh:mm") e por Configurações. O selo "Tudo guardado" saiu: no topo fica só um ícone discreto
+     (amarelo guardando, vermelho com erro). Os textos ficam aqui para o OmniLifeONE reaproveitar. */
+  var NOMES_APPS = { moneytrio: 'MoneyTRIO', omnilife: 'OmniLifeONE' };
+  function nomeApp(a) { return NOMES_APPS[a] || a || ''; }
+  function juntarE(l) { return l.length < 2 ? l.join('') : l.slice(0, -1).join(', ') + tt(' e ', ' and ') + l[l.length - 1]; }
+  function horaCurta(ts) {
+    var d = new Date(ts); if (isNaN(d)) return '';
+    var h = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    return d.toDateString() === new Date().toDateString() ? tt('hoje ', 'today ') + h : dataHora(d.toISOString());
+  }
   var Painel = {
-    selo: null,
+    selo: null, salvoEm: 0, _est: '',
     montar: function () {
       if (this.selo) return;
-      this.selo = document.createElement('button'); this.selo.className = 'nv-selo'; this.selo.id = 'nvSelo'; this.selo.type = 'button';
+      this.salvoEm = Date.now();
+      this.selo = document.createElement('button'); this.selo.id = 'nvSelo'; this.selo.type = 'button';
       this.selo.onclick = function () { Painel.abrir(); };
-      document.body.appendChild(this.selo); this.atualizar();
+      this.selo.className = 'icon-btn nv-selo-topo';
+      this.lugar();
+      var app = document.getElementById('app');   /* no início (sem a barra do topo) o ícone fica solto no canto; no app, ao lado do perfil */
+      if (app && window.MutationObserver) new MutationObserver(function () { Painel.lugar(); }).observe(app, { attributes: true, attributeFilter: ['class'] });
+      this.atualizar();
+    },
+    lugar: function () {
+      var app = document.getElementById('app'), perfil = document.querySelector('.topbar-actions .perfil-caixa');
+      var noApp = perfil && app && !app.classList.contains('hidden');
+      this.selo.classList.toggle('nv-selo-solto', !noApp);
+      if (noApp) { if (this.selo.nextSibling !== perfil) perfil.parentNode.insertBefore(this.selo, perfil); }
+      else if (this.selo.parentNode !== document.body) document.body.appendChild(this.selo);
+    },
+    /* ok | enviando | off | erro */
+    estado: function () {
+      var n = 0, r = 0; Sinc.fila.forEach(function (f) { if (f.recusado) r++; else n++; });
+      this._n = n; this._r = r;
+      return r ? 'erro' : !navigator.onLine ? 'off' : n ? 'enviando' : 'ok';
     },
     texto: function () {
-      var n = 0, r = 0; Sinc.fila.forEach(function (f) { if (f.recusado) r++; else n++; });
-      if (r) return '⚠️ ' + r + tt(' não aceitos', ' not accepted');
-      if (!navigator.onLine) return '📴 ' + tt('sem internet', 'offline') + (n ? ' · ' + n + tt(' esperando', ' waiting') : '');
-      if (n) return '⏳ ' + n + tt(' guardando na nuvem…', ' saving to the cloud…');
-      return '☁️ ' + tt('Tudo guardado', 'All saved');
+      var e = this.estado(), n = this._n, r = this._r;
+      if (e === 'erro') return '⚠️ ' + r + tt(' não aceitos', ' not accepted');
+      if (e === 'off') return '📴 ' + tt('sem internet', 'offline') + (n ? ' · ' + n + tt(' esperando', ' waiting') : '');
+      if (e === 'enviando') return '⏳ ' + n + tt(' guardando na nuvem…', ' saving to the cloud…');
+      return '☁️ ' + tt('Dados salvos', 'Data saved') + ' · ' + horaCurta(this.salvoEm);
     },
+    /* a frase de "Seus dados" */
+    frase: function () {
+      var e = this.estado();
+      if (e === 'ok') return '✅ ' + tt('Tudo salvo na nuvem, protegido pelo seu PIN · última vez ', 'Everything saved in the cloud, protected by your PIN · last time ') + horaCurta(this.salvoEm);
+      if (e === 'off') return this.texto() + ' · ' + tt('guarda sozinho quando a internet voltar', 'saves by itself when the internet is back');
+      return this.texto();
+    },
+    /* o item do menu do perfil (index.html: htmlPerfilMenu) */
+    itemMenu: function () { var e = this.estado(), t = this.texto(); return { estado: e, ico: t.split(' ')[0], txt: t.slice(t.indexOf(' ') + 1) }; },
     atualizar: function () {
-      if (this.selo) this.selo.textContent = this.texto();
-      var st = this.aberto && this.aberto.querySelector('#nvStatus'); if (st) st.textContent = this.texto();   /* só o texto: não apaga o que a pessoa digita */
+      var e = this.estado();
+      if (e === 'ok' && this._est && this._est !== 'ok') this.salvoEm = Date.now();
+      this._est = e;
+      if (this.selo) {
+        if (this.selo.classList.contains('nv-selo-topo')) {
+          var t = this.texto();
+          this.selo.innerHTML = '<span aria-hidden="true">' + (e === 'ok' ? '☁️' : t.split(' ')[0]) + '</span><span class="sr-only">' + esc(t) + '</span>';
+          this.selo.setAttribute('data-estado', e); this.selo.title = t + ' · ' + tt('Segurança e aparelhos', 'Security and devices');
+        } else this.selo.textContent = this.texto();
+      }
+      var st = this.aberto && this.aberto.querySelector('#nvStatus'); if (st) st.textContent = this.frase();   /* só o texto: não apaga o que a pessoa digita */
+      /* o item do menu do perfil, se aberto: só ele muda (redesenhar o menu inteiro no meio de um clique o fecharia) */
+      var it = document.querySelector('#perfilMenu [data-perfil="nuvem"]'), m = this.itemMenu();
+      if (it) { it.className = it.className.replace(/\bnv-est-\w+/, 'nv-est-' + m.estado); var i = it.querySelector('i'); if (i) i.textContent = m.ico;
+        var tx = Array.prototype.find.call(it.childNodes, function (n) { return n.nodeType === 3; }); if (tx) tx.nodeValue = m.txt; }
     },
     abrir: function () {
+      if (this.aberto) return;
       this.aberto = document.createElement('div'); this.aberto.className = 'nv-painel';
+      this.aberto.setAttribute('role', 'dialog'); this.aberto.setAttribute('aria-modal', 'true'); this.aberto.setAttribute('aria-label', tt('Segurança e aparelhos', 'Security and devices'));
       this.aberto.onclick = function (e) { if (e.target === Painel.aberto) Painel.fechar(); };
       document.body.appendChild(this.aberto); this.desenhar();
+      Aparelhos.olharPedidos().then(function () { Painel.avisoPedidos(); }).catch(function () {});
     },
     fechar: function () { if (this.aberto) { this.aberto.remove(); this.aberto = null; } this._msg = null; this._conf = null; },
     desenhar: async function () {
       var el = this.aberto; if (!el) return;
       var fam = Nuvem.familia || {}, L = await Cadeado.local(), dig = await Cadeado.temDigital();
-      var robos = Painel._robos || [];
-      var cx = Caixa.ligada === false ? '<p class="nv-tiny">' + tt('A caixa do robô ainda não foi ligada no banco (falta o "pode aplicar" do SQL v2).', 'The robot inbox is not switched on in the database yet (SQL v2 not applied).') + '</p>'
+      if (!this.aberto) return;
+      var abertos = {}; el.querySelectorAll('details[id]').forEach(function (x) { abertos[x.id] = x.open; });
+      var sec = function (id, tit, corpo) { return '<section class="nv-sec" id="' + id + '"><h2>' + tit + '</h2>' + corpo + '</section>'; };
+      var avanc = function (id, corpo, abrir) { return '<details class="nv-av" id="' + id + '"' + (abrir || abertos[id] ? ' open' : '') + '><summary>' + tt('Avançado', 'Advanced') + '</summary>' + corpo + '</details>'; };
+      var dica = function (t) { return '<p class="nv-tiny">' + t + '</p>'; };
+      /* 1. seus dados */
+      var s1 = '<div class="nv-nota nv-est"><span id="nvStatus">' + esc(this.frase()) + '</span></div>' +
+        (Sinc.recusados ? '<button class="nv-btn" id="nvDeNovo">' + tt('Tentar de novo os não aceitos', 'Retry the ones not accepted') + '</button>' : '') +
+        '<details class="nv-av" id="nvDadosDet"' + (abertos.nvDadosDet ? ' open' : '') + '><summary>' + tt('Ver detalhes', 'See details') + '</summary>' +
+        dica(Sinc.vivos() + tt(' registros guardados, fechados com o cadeado da família.', ' records saved, locked with the family lock.') + '<br>' +
+          tt('Conta: ', 'Account: ') + '<b>' + esc(Conta.email()) + '</b><br>' + tt('Família: ', 'Family: ') + '<b>' + esc(fam.nome || '') + '</b> · ' +
+          esc(fam.meu_papel === 'chefe' ? tt('chefe', 'head') : tt('responsável', 'guardian')) + '<br>nuvem ' + VERSAO) +
+        (Nuvem.podeLevar ? '<button class="nv-btn" id="nvLevar">' + tt('Levar para a nuvem os dados guardados só neste aparelho', 'Move the data kept only on this device to the cloud') + '</button>' : '') +
+        '</details>';
+      /* 2. PIN e digital */
+      var s2 = '<div class="nv-row"><button class="nv-btn nv-hidden" id="nvPinCriar">🔢 ' + tt('Criar o PIN da conta', 'Create the account PIN') + '</button>' +
+        '<button class="nv-btn nv-hidden" id="nvPin">🔢 ' + tt('Trocar o PIN', 'Change PIN') + '</button></div>' +
+        '<p class="nv-tiny" id="nvPinDica"></p>' +
+        '<button class="nv-btn" id="nvTrancar">🔒 ' + tt('Bloquear agora', 'Lock now') + ' <span class="nv-tiny">' + tt('(pede o PIN ou a digital para abrir de novo)', '(asks for the PIN or fingerprint to open again)') + '</span></button>' +
+        dica(tt('Use quando for emprestar o aparelho ou deixá-lo sozinho. Seus dados continuam salvos.', 'Use it when you lend the device or leave it alone. Your data stays saved.')) +
+        (dig ? (L && L.prf
+          ? '<button class="nv-sw on" role="switch" aria-checked="true" id="nvDigOff"><span>👆 ' + tt('Abrir com a digital neste aparelho', 'Open with the fingerprint on this device') + '</span><i aria-hidden="true"></i></button>'
+          : '<button class="nv-sw" role="switch" aria-checked="false" id="nvDigOn"><span>👆 ' + tt('Abrir com a digital neste aparelho', 'Open with the fingerprint on this device') + '</span><i aria-hidden="true"></i></button>')
+          : dica(tt('Este aparelho (ou este navegador) não tem leitor de digital.', 'This device (or browser) has no fingerprint reader.')));
+      /* 3. seus aparelhos */
+      var pk = dig && Aparelhos.ligado !== false && L && L.sk;
+      var s3 = '<div id="nvApAviso"></div><div id="nvAps" class="nv-lista"><p class="nv-tiny">' + tt('Carregando…', 'Loading…') + '</p></div>' +
+        avanc('nvApAv', (pk ? '<button class="nv-btn" id="nvApPk">👆 ' + tt('Entrar com a digital num aparelho novo, sem precisar de outro aparelho', 'Sign in with the fingerprint on a new device, without another device') + '</button>' +
+          dica(tt('Cria uma chave de acesso (passkey) que o Google ou a Apple guardam para você. Num aparelho novo, a digital basta para entrar; sem ela, um aparelho seu aprova a entrada.', 'Creates an access key (passkey) that Google or Apple keep for you. On a new device, the fingerprint is enough to get in; without it, one of your devices approves the entry.')) : '') +
+          '<button class="nv-btn" id="nvApPedidos">🔔 ' + tt('Ver pedidos de acesso', 'See access requests') + '</button>');
+      /* 4. robô do banco */
+      var cx = Caixa.ligada === false ? dica(tt('A caixa do robô ainda não foi ligada no banco.', 'The robot inbox is not switched on in the database yet.'))
         : Caixa.problema === 'semsecreta' ? '<div class="nv-nota atencao">' + tt('A caixa do robô existe, mas a parte secreta dela ainda não chegou a este aparelho. Espere a próxima busca.', 'The robot inbox exists, but its secret part has not reached this device yet. Wait for the next check.') + '</div>'
         : Caixa.problema === 'diferente' ? '<div class="nv-nota erro">' + tt('As duas partes da chave da caixa do robô não combinam. Anote e avise o suporte.', 'The two parts of the robot inbox key do not match. Tell support.') + '</div>'
-        : '<p class="nv-tiny">' + (Caixa.ultimos ? tt('Última vez: ', 'Last time: ') + new Date(Caixa.ultimos.quando).toLocaleString() + ' · ' + Caixa.ultimos.novos + tt(' novos', ' new') : tt('Nada novo do robô por enquanto.', 'Nothing new from the robot so far.')) + (Caixa.erros.size ? ' · ' + Caixa.erros.size + tt(' não abriram', ' did not open') : '') + '</p>';
-      el.innerHTML = '<div class="nv-card">' +
-        '<h1>☁️ ' + tt('Nuvem', 'Cloud') + '</h1>' +
-        '<p class="nv-muted">' + tt('Conta: ', 'Account: ') + '<b>' + esc(Conta.email()) + '</b><br>' + tt('Família: ', 'Family: ') + '<b>' + esc(fam.nome || '') + '</b> · ' + esc(fam.meu_papel === 'chefe' ? tt('chefe', 'head') : tt('responsável', 'guardian')) + '</p>' +
-        '<div class="nv-nota"><span id="nvStatus">' + esc(this.texto()) + '</span><br><span class="nv-tiny">' + Sinc.vivos() + tt(' registros guardados (fechados com o cadeado).', ' records saved (locked).') + '</span></div>' +
-        (Sinc.recusados ? '<button class="nv-btn" id="nvDeNovo">' + tt('Tentar de novo os não aceitos', 'Retry the ones not accepted') + '</button>' : '') +
-        '<h2>🤖 ' + tt('Caixa do robô', 'Robot inbox') + '</h2>' + cx +
-        (Caixa.ligada !== false ? this.htmlRobo() : '') +
-        '<h2>🔒 ' + tt('Cadeado', 'Lock') + '</h2>' +
-        '<div class="nv-row"><button class="nv-btn" id="nvTrancar">🔒 ' + tt('Bloquear agora', 'Lock now') + ' <span class="nv-tiny">' + tt('(pede o PIN ou a digital para abrir de novo)', '(asks for the PIN or fingerprint to open again)') + '</span></button><button class="nv-btn nv-hidden" id="nvPin">' + tt('Trocar o PIN', 'Change PIN') + '</button>' +
-        '<button class="nv-btn nv-hidden" id="nvPinCriar">🔢 ' + tt('Criar o PIN da conta', 'Create the account PIN') + '</button></div>' +
-        (dig ? (L && L.prf ? '<button class="nv-btn" id="nvDigOff">' + tt('Não abrir mais com a digital', 'Stop opening with fingerprint') + '</button>' : '<button class="nv-btn" id="nvDigOn">👆 ' + tt('Abrir também com a digital', 'Also open with fingerprint') + '</button>') : '') +
-        '<h2>📱 ' + tt('Aparelhos', 'Devices') + '</h2><div id="nvAps" class="nv-lista"><p class="nv-tiny">' + tt('Carregando…', 'Loading…') + '</p></div>' +
-        '<div class="nv-row"><button class="nv-btn" id="nvApPedidos">🔔 ' + tt('Ver pedidos de acesso', 'See access requests') + '</button>' +
-        (dig && Aparelhos.ligado !== false && L && L.sk ? '<button class="nv-btn" id="nvApPk">👆 ' + tt('Usar a digital em todos os aparelhos (passkey)', 'Use the fingerprint on all devices (passkey)') + '</button>' : '') + '</div>' +
-        '<h2>' + tt('Este aparelho', 'This device') + '</h2>' +
-        (Nuvem.podeLevar ? '<button class="nv-btn" id="nvLevar">' + tt('Levar para a nuvem os dados guardados só neste aparelho', 'Move the data kept only on this device to the cloud') + '</button>' : '') +
-        '<div class="nv-row"><button class="nv-btn" id="nvSair">' + tt('Sair da conta', 'Sign out') + '</button><button class="nv-btn" id="nvDesc">📴 ' + tt('Desconectar este aparelho', 'Disconnect this device') + '</button></div>' +
-        '<p class="nv-tiny">' + tt('Sair: fecha o cadeado e sai da conta. Desconectar: também apaga deste aparelho a cópia guardada aqui (na nuvem continua tudo).', 'Sign out: locks and signs out. Disconnect: also erases the copy kept on this device (everything stays in the cloud).') + '</p>' +
-        '<p class="nv-tiny"><button class="nv-lnk" id="nvIrLocal">' + tt('Usar o MoneyTRIO só neste aparelho (sem nuvem)', 'Use MoneyTRIO only on this device (no cloud)') + '</button> · nuvem ' + VERSAO + '</p>' +
-        '<button class="nv-btn" id="nvFechar">' + tt('Fechar', 'Close') + '</button></div>';
+        : '';
+      var ativos = (this._robos || []).filter(function (r) { return !r.desligado_em; });
+      var s4 = cx + (Caixa.ligada !== false ? '<div class="nv-nota" id="nvRoboEstado">' + (ativos.length ? '📥 ' + tt('Recebendo do robô', 'Receiving from the robot') : tt('Nenhum robô autorizado ainda.', 'No robot authorized yet.')) +
+          (Caixa.ultimos ? ' · ' + tt('última entrega ', 'last delivery ') + esc(horaCurta(Caixa.ultimos.quando)) + ' · ' + Caixa.ultimos.novos + tt(' novos', ' new') : ativos.length ? ' · ' + tt('nada novo por enquanto', 'nothing new so far') : '') +
+          (Caixa.erros.size ? ' · ' + Caixa.erros.size + tt(' não abriram', ' did not open') : '') + '</div>' +
+          '<button class="nv-btn" id="nvCaixaJa">🔄 ' + tt('Buscar agora', 'Check now') + '</button>' + this.htmlRobo() : '');
+      /* 5. sair */
+      var s5 = '<button class="nv-btn" id="nvSair">⏏ ' + tt('Sair da conta', 'Sign out') + '</button>' +
+        dica(tt('Sai da conta neste aparelho. Para voltar, entre de novo. Seus dados continuam salvos na nuvem.', 'Signs out on this device. To come back, sign in again. Your data stays saved in the cloud.')) +
+        avanc('nvSairAv', '<button class="nv-btn" id="nvDesc">🧹 ' + tt('Sair e apagar a cópia deste aparelho', 'Sign out and erase the copy on this device') + '</button>' +
+          dica(tt('Para aparelho emprestado ou que vai ser vendido. Na nuvem continua tudo.', 'For a borrowed device or one you will sell. Everything stays in the cloud.')) +
+          '<button class="nv-btn" id="nvIrLocal">📴 ' + tt('Usar só neste aparelho (sem nuvem)', 'Use only on this device (no cloud)') + '</button>' +
+          dica('⚠️ ' + tt('Sem a nuvem, o que você fizer fica só aqui: não chega aos outros aparelhos nem à família, e se o aparelho se perder, vai junto.', 'Without the cloud, what you do stays only here: it does not reach other devices or the family, and if the device is lost, it is lost too.')));
+      el.innerHTML = '<div class="nv-card nv-largo">' +
+        '<div class="nv-cab"><h1>🔐 ' + tt('Segurança e aparelhos', 'Security and devices') + '</h1><button class="nv-x" id="nvFechar" aria-label="' + tt('Fechar', 'Close') + '">✕</button></div>' +
+        '<div class="nv-grade">' +
+          sec('nvSecDados', '☁️ ' + tt('Seus dados', 'Your data'), s1) +
+          sec('nvSecPin', '🔢 ' + tt('PIN e digital', 'PIN and fingerprint'), s2) +
+          sec('nvSecAps', '📱 ' + tt('Seus aparelhos', 'Your devices'), s3) +
+          sec('nvSecRobo', '🤖 ' + tt('Robô do banco', 'Bank robot'), s4) +
+          sec('nvSecSair', '⏏ ' + tt('Sair', 'Sign out'), s5) +
+        '</div></div>';
       var $ = function (s) { return el.querySelector(s); };
       $('#nvFechar').onclick = function () { Painel.fechar(); };
-      $('#nvIrLocal').onclick = async function () { try { await Promise.race([Sinc.registrar().then(function () { return Sinc.enviar(); }), dorme(5000)]); } catch (e) {} await Cadeado.trancar(); lsSet(K_SO_AQUI, 1); location.reload(); };
+      $('#nvIrLocal').onclick = async function () {
+        if (!window.confirm(tt('Usar o MoneyTRIO só neste aparelho? O que você fizer daqui em diante não vai para a nuvem nem para os outros aparelhos.', 'Use MoneyTRIO only on this device? What you do from now on will not go to the cloud or to your other devices.'))) return;
+        try { await Promise.race([Sinc.registrar().then(function () { return Sinc.enviar(); }), dorme(5000)]); } catch (e) {} await Cadeado.trancar(); lsSet(K_SO_AQUI, 1); location.reload();
+      };
       $('#nvTrancar').onclick = function () { Nuvem.trancar('manual'); };
       $('#nvSair').onclick = function () { Nuvem.sair(false); };
-      $('#nvDesc').onclick = function () { Nuvem.sair(true); };
+      $('#nvDesc').onclick = function () { if (window.confirm(tt('Sair e apagar deste aparelho a cópia dos seus dados? Na nuvem continua tudo.', 'Sign out and erase the copy of your data on this device? Everything stays in the cloud.'))) Nuvem.sair(true); };
       /* 1.10.2: conta sem PIN da conta → "Criar o PIN da conta"; com PIN → "Trocar o PIN" (sem internet/sem o SQL: o PIN deste aparelho) */
       Cadeado.local().then(function (L) { return L && L.ap ? Pin.info() : null; }).then(function (info) {
-        var b1 = el.querySelector('#nvPin'), b2 = el.querySelector('#nvPinCriar'); if (!b1 || !b2) return;
-        if (info && !info.tem) b2.classList.remove('nv-hidden'); else b1.classList.remove('nv-hidden');
+        var b1 = el.querySelector('#nvPin'), b2 = el.querySelector('#nvPinCriar'), d = el.querySelector('#nvPinDica'); if (!b1 || !b2) return;
+        if (info && !info.tem) { b2.classList.remove('nv-hidden'); if (d) d.textContent = tt('A sua conta ainda não tem PIN da conta. Crie um: ele vale em todos os seus aparelhos e apps.', 'Your account has no account PIN yet. Create one: it works on all your devices and apps.'); }
+        else { b1.classList.remove('nv-hidden'); if (d) d.textContent = tt('O PIN da sua conta vale em todos os seus aparelhos e apps.', 'Your account PIN works on all your devices and apps.'); }
       }).catch(function () { var b1 = el.querySelector('#nvPin'); if (b1) b1.classList.remove('nv-hidden'); });
       $('#nvPinCriar').onclick = function () { if (!Cadeado.dukRaw) return aviso(tt('Abra o cadeado (com o PIN ou a digital) para criar o PIN da conta.', 'Open the lock (PIN or fingerprint) to create the account PIN.')); Painel.fechar(); Portao.criarPinConta(); };
       $('#nvPin').onclick = function () { if (!Cadeado.dukRaw) return aviso(tt('Para trocar o PIN, toque em 🔒 Bloquear agora e abra de novo com o PIN.', 'To change the PIN, lock (🔒 Lock now) and open again with the PIN.')); Painel.fechar(); Portao.trocarPinConta(); };
@@ -1659,9 +1770,9 @@
       if ($('#nvDigOn')) $('#nvDigOn').onclick = async function () { if (!Cadeado.dukRaw) return aviso(tt('Para ligar a digital, toque em 🔒 Bloquear agora e abra de novo com o PIN.', 'To turn on the fingerprint, lock (🔒 Lock now) and open again with the PIN.')); var r = await Cadeado.ligarDigital(); aviso(r.ok ? '✓ ' + tt('Pronto: abre com a digital neste ' + apN() + '.', 'Done: opens with your fingerprint on this ' + apN() + '.') : tt('A digital não foi ligada. Continue usando o PIN.', 'Fingerprint was not turned on. Keep using the PIN.')); Painel.desenhar(); };
       if ($('#nvDigOff')) $('#nvDigOff').onclick = async function () { await Cadeado.desligarDigital(); Painel.desenhar(); };
       if ($('#nvLevar')) $('#nvLevar').onclick = function () { Painel.fechar(); Nuvem.levarDeNovo(); };
-      if ($('#nvCaixaJa')) $('#nvCaixaJa').onclick = function () { Caixa.esvaziar(); };
       this.ligarRobo(el);
       if (!this._pediuRobos) { this._pediuRobos = true; this.robos(); }
+      this.avisoPedidos();
       $('#nvApPedidos').onclick = async function () { Aparelhos._vistos = {}; await Aparelhos.olharPedidos(); if (!(Aparelhos.pendentes || []).length) aviso(tt('Nenhum pedido de acesso agora.', 'No access request right now.')); else Painel.fechar(); };
       if ($('#nvApPk')) $('#nvApPk').onclick = async function () {
         if (!Cadeado.dukRaw) return aviso(tt('Para isso, toque em 🔒 Bloquear agora e abra de novo com o PIN.', 'For this, lock (🔒 Lock now) and open again with the PIN.'));
@@ -1672,23 +1783,41 @@
       };
       this.aparelhos(el, L);
     },
-    /* ---- 1.9.0: a lista de aparelhos da conta, com "Tirar" ---- */
+    /* aviso só quando há pedido: "1 aparelho pedindo para entrar · Ver e aprovar" */
+    avisoPedidos: function () {
+      var c = this.aberto && this.aberto.querySelector('#nvApAviso'); if (!c) return;
+      var n = (Aparelhos.pendentes || []).length;
+      c.innerHTML = n ? '<div class="nv-nota atencao" role="status">🔔 ' + n + (n === 1 ? tt(' aparelho pedindo para entrar', ' device asking to get in') : tt(' aparelhos pedindo para entrar', ' devices asking to get in')) +
+        ' · <button class="nv-lnk" id="nvApVer">' + tt('Ver e aprovar', 'See and approve') + '</button></div>' : '';
+      var b = c.querySelector('#nvApVer'); if (b) b.onclick = function () { Painel.fechar(); Aparelhos.avisarPedido(); };
+    },
+    /* ---- 1.9.0: a lista de aparelhos; 1.12.0: os apps de cada aparelho, "este aparelho", visto por último, Remover com confirmação ---- */
     aparelhos: async function (el, L) {
       var caixa = el.querySelector('#nvAps'), lista = await Aparelhos.lista(); if (!caixa || !caixa.isConnected) return;
       if (lista === null) { caixa.innerHTML = '<p class="nv-tiny">' + tt('A lista de aparelhos ainda está sendo ligada.', 'The device list is still being switched on.') + '</p>'; return; }
-      var como = { primeiro: tt('primeiro aparelho', 'first device'), aparelho: tt('aprovado por outro aparelho', 'approved by another device'), familia: tt('aprovado pela família', 'approved by the family'), passkey: tt('pela digital (passkey)', 'by fingerprint (passkey)'), kit: tt('pelo kit de emergência', 'by the emergency kit') };
-      caixa.innerHTML = lista.map(function (a) {
-        var este = L && a.id === L.ap;
-        return '<div class="nv-nota nv-ap" data-ap="' + esc(a.id) + '"><b>' + esc(a.nome) + '</b>' + (este ? ' <span class="nv-tiny">(' + tt('este aparelho', 'this device') + ')</span>' : '') +
-          '<br><span class="nv-tiny">' + esc((como[a.como] || a.como) + (a.como === 'familia' && (a.aprovado_por_nome || a.aprovado_por_email) ? ' (' + (a.aprovado_por_nome || a.aprovado_por_email) + ')' : '') + ' · ' + tt('desde ', 'since ') + dataHora(a.criado_em, true) + ' · ' + tt('última vez ', 'last seen ') + dataHora(a.visto_em)) + '</span>' +
-          '<br><button class="nv-btn" data-tirar="' + esc(a.id) + '">' + (este ? tt('Tirar este aparelho', 'Remove this device') : tt('Tirar', 'Remove')) + '</button></div>';
+      /* o mesmo aparelho em apps diferentes (mesmo nome, apps diferentes) aparece numa linha só */
+      var grupos = [];
+      lista.forEach(function (a) {
+        var g = grupos.find(function (x) { return x.nome === a.nome && !x.itens.some(function (i) { return i.app === a.app; }); });
+        if (g) g.itens.push(a); else grupos.push({ nome: a.nome, itens: [a] });
+      });
+      grupos.forEach(function (g) { g.este = g.itens.some(function (a) { return L && a.id === L.ap; }); g.visto = g.itens.map(function (a) { return a.visto_em || a.criado_em; }).sort().pop(); });
+      grupos.sort(function (x, y) { return (y.este - x.este) || String(y.visto).localeCompare(String(x.visto)); });
+      caixa.innerHTML = grupos.map(function (g) {
+        var apps = juntarE(g.itens.map(function (a) { return nomeApp(a.app); }));
+        return '<div class="nv-nota nv-ap' + (g.este ? ' este' : '') + '" data-ap="' + esc(g.itens[0].id) + '"><b>' + esc(g.nome) + '</b> · ' + esc(apps) +
+          (g.este ? ' <span class="nv-tag">' + tt('este aparelho', 'this device') + '</span>' : '') +
+          '<br><span class="nv-tiny">' + (g.este ? tt('em uso agora', 'in use now') : tt('visto por último ', 'last seen ') + esc(horaCurta(g.visto))) + '</span>' +
+          '<div class="nv-row">' + g.itens.map(function (a) {
+            return '<button class="nv-btn nv-mini" data-tirar="' + esc(a.id) + '">' + tt('Remover', 'Remove') + (g.itens.length > 1 ? ' ' + tt('do ', 'from ') + esc(nomeApp(a.app)) : '') + '</button>';
+          }).join('') + '</div></div>';
       }).join('') || '<p class="nv-tiny">' + tt('Nenhum aparelho registrado ainda.', 'No device registered yet.') + '</p>';
       caixa.querySelectorAll('[data-tirar]').forEach(function (b) { b.onclick = async function () {
         var id = b.getAttribute('data-tirar'), este = L && id === L.ap;
-        if (!window.confirm(este ? tt('Tirar ESTE aparelho? O cadeado e a cópia daqui saem (na nuvem continua tudo).', 'Remove THIS device? The lock and the copy here are erased (everything stays in the cloud).') : tt('Tirar este aparelho da sua conta? Na próxima vez que ele abrir com internet, o cadeado de lá some.', 'Remove this device from your account? The next time it opens online, its lock is erased.'))) return;
+        if (!window.confirm(este ? tt('Remover ESTE aparelho? O cadeado e a cópia daqui saem (na nuvem continua tudo).', 'Remove THIS device? The lock and the copy here are erased (everything stays in the cloud).') : tt('Remover este aparelho da sua conta? Para usar lá de novo, vai ser preciso aprovar outra vez.', 'Remove this device from your account? To use it there again, it will need approval again.'))) return;
         try { await Aparelhos.rpc('sol_aparelho_tirar', { p_id: id }); } catch (e) { return aviso(Conta.explicar(e), 'erro'); }
         if (este) return Aparelhos.tirado();
-        aviso('✓ ' + tt('Aparelho tirado.', 'Device removed.')); Painel.aparelhos(el, L);
+        aviso('✓ ' + tt('Aparelho removido.', 'Device removed.')); Painel.aparelhos(el, L);
       }; });
     },
     /* ---- robôs autorizados (aprovado pelo dono, 03/Nov/2026): confirmação antes, mensagem fixa depois ---- */
@@ -1698,21 +1827,22 @@
       var m = this._msg, c = this._conf;
       return '<div class="nv-lista" id="nvRobo">' +
         (m ? '<div class="nv-nota fixa ' + m.tipo + '" role="' + (m.tipo === 'erro' ? 'alert' : 'status') + '"><button class="nv-x" id="nvMsgX" aria-label="' + tt('Fechar a mensagem', 'Close message') + '">✕</button>' + m.html + '</div>' : '') +
-        '<h3 class="nv-sub">' + tt('Robôs autorizados', 'Authorized robots') + '</h3>' +
-        (ativos.length ? ativos.map(function (r) {
-          var nome = /@/.test(r.nome || '') ? esc(r.nome) : esc(r.nome || tt('robô', 'robot')) + ' <span class="nv-tiny">' + tt('(e-mail não registrado)', '(e-mail not recorded)') + '</span>';
-          return '<div class="nv-nota"><b>' + nome + '</b><br><span class="nv-tiny">' + tt('autorizado em ', 'authorized on ') + esc(dataHora(r.criado_em)) + '</span>' +
-            '<br><button class="nv-btn" data-remover="' + esc(r.user_id) + '">' + tt('Remover acesso', 'Remove access') + '</button></div>';
-        }).join('') : '<p class="nv-tiny">' + tt('Nenhum robô autorizado ainda.', 'No robot authorized yet.') + '</p>') +
+        ativos.map(function (r) {
+          return '<div class="nv-nota"><b>🤖 ' + tt('Robô da família', 'Family robot') + '</b>, ' + tt('autorizado em ', 'authorized on ') + esc(dataHora(r.criado_em, true)) +
+            (/@/.test(r.nome || '') ? '<br><span class="nv-tiny">' + esc(r.nome) + '</span>' : '') +
+            '<div class="nv-row"><button class="nv-btn nv-mini" data-remover="' + esc(r.user_id) + '">' + tt('Remover acesso', 'Remove access') + '</button></div></div>';
+        }).join('') +
         (c ? '<div class="nv-nota atencao" role="alertdialog"><p>' + c.html + '</p><div class="nv-row"><button class="nv-btn" id="nvConfNao">' + tt('Cancelar', 'Cancel') + '</button><button class="nv-btn pri" id="nvConfSim">' + c.sim + '</button></div></div>' : '') +
+        '<details class="nv-av" id="nvRoboAv"' + (!ativos.length || m || c || this._rascunho || this._roboAv ? ' open' : '') + '><summary>' + tt('Avançado', 'Advanced') + '</summary>' +
         '<label class="nv-fld"><span>' + tt('E-mail da conta do robô (para autorizar)', 'Robot account e-mail (to authorize)') + '</span><input type="email" id="nvRoboEmail" autocomplete="off" value="' + esc(this._rascunho) + '"></label>' +
-        '<button class="nv-btn" id="nvRoboOk">' + tt('Autorizar o robô nesta família', 'Authorize the robot in this family') + '</button><button class="nv-btn" id="nvCaixaJa">' + tt('Ver se chegou algo agora', 'Check for new entries now') + '</button></div>';
+        '<button class="nv-btn" id="nvRoboOk">' + tt('Autorizar o robô nesta família', 'Authorize the robot in this family') + '</button></details></div>';
     },
     mensagem: function (tipo, html) { this._msg = { tipo: tipo, html: html }; this._conf = null; this.desenhar(); },
     ligarRobo: function (el) {
       var self = this, $ = function (s) { return el.querySelector(s); }, fam = esc((Nuvem.familia || {}).nome || '');
       var campo = $('#nvRoboEmail'); if (!campo) return;
       campo.oninput = function () { self._rascunho = campo.value; };
+      var av = $('#nvRoboAv'); if (av) av.querySelector('summary').onclick = function () { setTimeout(function () { self._roboAv = av.open; }, 0); };   /* só o toque da pessoa */
       if ($('#nvMsgX')) $('#nvMsgX').onclick = function () { self._msg = null; self.desenhar(); };
       if ($('#nvCaixaJa')) $('#nvCaixaJa').onclick = function () { Caixa.esvaziar(); };
       if ($('#nvConfNao')) $('#nvConfNao').onclick = function () { self._conf = null; self.desenhar(); };
@@ -1840,8 +1970,16 @@
        família ou a digital (passkey). O código antigo fica num link discreto, só para quem tem a cópia dele no servidor. */
     primeiraVez: async function (fam, esqueci) {
       if (!esqueci && (await Aparelhos.retomar(fam))) return;
+      /* 1.12.0: antes de mostrar, o estado real: em que outros apps a pessoa já entra (sol_aparelhos_meus.app) e se a conta tem PIN */
+      var aps = null, info = null;
+      try { aps = await Promise.race([Aparelhos.lista(), dorme(4000)]); info = await Promise.race([Pin.info(), dorme(4000)]); } catch (e) {}
+      var outros = []; (aps || []).forEach(function (a) { var n = nomeApp(a.app); if (a.app && a.app !== AP_APP && outros.indexOf(n) < 0) outros.push(n); });
+      Portao._outrosApps = info && info.tem ? [] : outros;
+      var jaUsa = outros.length ? '<div class="nv-nota" id="nvJaUsa">👋 ' + tt('Você já usa o ', 'You already use ') + esc(juntarE(outros)) + tt('. Aprove por um aparelho seu (pode ser o ', '. Approve from one of your devices (it can be ') + esc(outros[0]) +
+        tt(' neste mesmo celular) e use o mesmo PIN da sua conta.', ' on this same phone) and use the same PIN of your account.') +
+        (info && !info.tem ? '<br><span class="nv-tiny">' + tt('A sua conta ainda não tem PIN da conta: o PIN que você escolher aqui também passa a valer no ', 'Your account has no account PIN yet: the PIN you choose here also becomes the PIN in ') + esc(juntarE(outros)) + '.</span>' : '') + '</div>' : '';
       var el = Tela.mostrar(Tela.topo() + '<h2>🔐 ' + (esqueci ? tt('Abrir sem o PIN', 'Open without the PIN') : tt('Primeira vez neste ' + apN(), 'First time on this ' + apN())) + '</h2>' +
-        '<p>' + tt('Para abrir as finanças da família <b>' + esc(fam.nome || '') + '</b> aqui, escolha um jeito:', 'To open the finances of the family <b>' + esc(fam.nome || '') + '</b> here, choose one way:') + '</p>' +
+        '<p>' + tt('Para abrir as finanças da família <b>' + esc(fam.nome || '') + '</b> aqui, escolha um jeito:', 'To open the finances of the family <b>' + esc(fam.nome || '') + '</b> here, choose one way:') + '</p>' + jaUsa +
         '<button class="nv-btn pri" id="nvApOutro">📱 ' + tt('Aprovar pelo outro aparelho', 'Approve from my other device') + '</button>' +
         ((fam.membros || 0) > 1 ? '<button class="nv-btn" id="nvApFam">👪 ' + tt('Pedir para alguém da família aprovar', 'Ask someone in the family to approve') + '</button>' : '') +
         '<span id="nvApPkLugar"></span>' +
@@ -1904,9 +2042,13 @@
         }); })();
       };
     },
-    novoPin: function (aoSalvar, podeVoltar) {
-      var el = Tela.mostrar(Tela.topo() + '<h2>🔢 ' + tt('Escolha o PIN da conta', 'Choose the account PIN') + '</h2>' +
-        '<p class="nv-tiny" id="nvPinUm">' + tt('É um PIN só para a sua conta: o mesmo em todos os seus aparelhos (como a senha do banco).', 'It is one PIN for your account: the same on all your devices (like a bank password).') + '</p>' +
+    /* 1.12.0: o PIN é da pessoa, em todos os apps. troca = a conta já tem PIN e a pessoa escolhe outro ("Esqueci o PIN") */
+    novoPin: function (aoSalvar, podeVoltar, troca) {
+      var outros = Portao._outrosApps || [];
+      var el = Tela.mostrar(Tela.topo() + '<h2>🔢 ' + (troca ? tt('Escolha um PIN novo para a sua conta', 'Choose a new PIN for your account') : tt('Crie o PIN da sua conta SolverONE', 'Create your SolverONE account PIN')) + '</h2>' +
+        '<p class="nv-tiny" id="nvPinUm">' + (troca ? tt('O PIN novo vale em todos os seus aparelhos e apps.', 'The new PIN works on all your devices and apps.')
+          : tt('Ele vale no MoneyTRIO, no OmniLifeONE e nos próximos apps: o mesmo em todos os seus aparelhos (como a senha do banco).', 'It works in MoneyTRIO, OmniLifeONE and the next apps: the same on all your devices (like a bank password).')) + '</p>' +
+        (!troca && outros.length ? '<div class="nv-nota atencao" id="nvPinOutros">⚠️ ' + tt('O PIN que você escolher aqui também passa a valer no ', 'The PIN you choose here also becomes the PIN in ') + esc(juntarE(outros)) + '.</div>' : '') +
         '<p>' + tt('O PIN abre o MoneyTRIO, até sem internet. Escolha <b>6 números</b> fáceis para você lembrar e difíceis para os outros — não use data de aniversário nem 123456. Não é a senha do e-mail.', 'The PIN opens MoneyTRIO, even offline. Choose <b>6 digits</b> easy for you and hard for others — not a birthday or 123456. It is not your e-mail password.') + '</p>' +
         '<label class="nv-fld"><span>' + tt('PIN (6 números ou mais)', 'PIN (6 digits or more)') + '</span><input type="text" class="nv-pinc" id="nvP1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label>' +
         '<label class="nv-fld"><span>' + tt('Digite o mesmo PIN de novo', 'Type the same PIN again') + '</span><input type="text" class="nv-pinc" id="nvP2" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label>' +
@@ -1949,7 +2091,7 @@
           if (!d || !d.ok) return Tela.erro(tt('A conta já tem PIN: use "Trocar o PIN".', 'The account already has a PIN: use "Change PIN".'));
           await Pin.gravar(L, a, Cadeado.dukRaw, d.segredo, d.versao, L.ap);
           var av = document.getElementById('nvAvisoPin'); if (av) av.remove();
-          Tela.fechar(); aviso('✓ ' + tt('PIN da conta criado. Vale em todos os seus aparelhos.', 'Account PIN created. It works on all your devices.'));
+          Tela.fechar(); aviso('✓ ' + tt('PIN da conta criado. Vale em todos os seus aparelhos e apps.', 'Account PIN created. It works on all your devices and apps.'));
         });
       };
     },
@@ -1957,7 +2099,7 @@
     trocarPinConta: function () {
       var campo = function (id, rot) { return '<label class="nv-fld"><span>' + rot + '</span><input type="text" class="nv-pinc" id="' + id + '" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label>'; };
       var el = Tela.mostrar(Tela.topo() + '<h2>🔢 ' + tt('Trocar o PIN da conta', 'Change the account PIN') + '</h2>' +
-        '<p class="nv-tiny">' + tt('O PIN novo vale em todos os seus aparelhos.', 'The new PIN works on all your devices.') + '</p>' +
+        '<p class="nv-tiny">' + tt('O PIN novo vale em todos os seus aparelhos e apps.', 'The new PIN works on all your devices and apps.') + '</p>' +
         campo('nvTA', tt('PIN atual', 'Current PIN')) + campo('nvT1', tt('PIN novo (6 números ou mais)', 'New PIN (6 digits or more)')) + campo('nvT2', tt('Digite o PIN novo de novo', 'Type the new PIN again')) +
         '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div>' +
         '<button class="nv-btn pri" id="nvTOk">' + tt('Trocar o PIN', 'Change PIN') + '</button><button class="nv-btn" id="nvTVolta">' + tt('Cancelar', 'Cancel') + '</button>');
@@ -1999,7 +2141,7 @@
           var d; try { d = await Pin.definir(pin, null, null, ap); } catch (e) { d = null; }
           if (!d || !d.ok) { Portao.pinConta(info, ap, aoOk); return Tela.erro(tt('Para escolher outro PIN da conta, este aparelho precisa ter sido aprovado pelo seu outro aparelho (há menos de 10 minutos). Se foi a família que aprovou, use o PIN da conta.', 'To choose another account PIN, this device must have been approved by your other device (less than 10 minutes ago). If the family approved it, use the account PIN.')); }
           Portao.carregando(tt('Preparando o cadeado deste aparelho…', 'Preparing the lock on this device…')); await aoOk(pin, d);
-        }, false);
+        }, false, true);
       };
     },
     /* 1.10.0 (migração): o PIN antigo deste aparelho abriu, mas a conta já tem outro PIN */
@@ -2526,6 +2668,9 @@
       try { if (this._foco && this._foco.isConnected) this._foco.focus({ preventScroll: true }); } catch (e) {}
       Trava.usou(); this.buscarAgora();
     },
+    /* 1.12.0: a tela "Segurança e aparelhos" e o item do menu do perfil (index.html) */
+    abrirPainel: function () { Painel.abrir(); },
+    itemMenu: function () { return this.iniciado && !this.local ? Painel.itemMenu() : null; },
     sair: async function (desconectar) {
       var n = 0; Sinc.fila.forEach(function () { n++; });
       if (!desconectar || !n) Tela.mostrar('<p class="nv-muted">' + tt('Saindo…', 'Signing out…') + '</p>');   /* 1.10.2: nada de dado na tela enquanto sai */
@@ -2545,7 +2690,7 @@
       lsDel(K_FAM);
     },
     /* para os testes automáticos (teste/nuvem.js): as peças, sem estado aberto */
-    _teste: { Pin: Pin, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao, Espelho: Espelho }
+    _teste: { Pin: Pin, Painel: Painel, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao, Espelho: Espelho }
   };
   function nomeConta() { var s = Conta.ler() || {}, d = Conta.dados(s.access_token).user_metadata || {}; return String(s.nome || d.full_name || d.name || '').trim() || String(Conta.email() || '').split('@')[0]; }
   function confirmar(t) { try { return window.confirm(t); } catch (e) { return false; } }
