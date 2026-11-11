@@ -51,6 +51,16 @@ async function entrar(page, uid) {
 const subir = (pg) => pg.evaluate(async () => { const S = MoneyNuvem._teste.Sinc; Store.salvar(); await S.registrar(); await S.enviar(); return S.fila.size; });
 const buscar = (pg) => pg.evaluate(async () => { await MoneyNuvem.buscarAgora(); return true; });
 /* os marcadores: o que é reservado nunca pode chegar à Beta */
+/* fotos para o resumo: 1366, 1920 e 390, nos dois temas (em /tmp/vc-*.png) */
+async function fotos(pg, nome, ir) {
+  for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) for (const tema of ['dark', 'light']) {
+    await pg.setViewportSize({ width: w, height: h });
+    await pg.evaluate(async (a) => { ST.tema = a.tema; aplicarTema(); Assist.marcarTutorial(); ST.config.assistOne = false; AssistOne.aplicar(); document.querySelectorAll('.tour-balao,.tour-alvo,.tour-fundo,[class*="tour-"]').forEach((t) => t.remove()); document.querySelectorAll('.toast,.toasts,#toasts').forEach((t) => t.remove()); }, { tema });
+    await pg.evaluate(ir); await pg.waitForTimeout(500);
+    await pg.screenshot({ path: '/tmp/vc-' + nome + '-' + w + '-' + tema + '.png', fullPage: w === 390 });
+  }
+  await pg.setViewportSize({ width: 1366, height: 768 });
+}
 const RES = ['MARCADOR-RESERVADO-DEBITO', 'MARCADOR-RENDA-DELE', 'MARCADOR-PJ-CONTADOR', 'MARCADOR-INVEST', 'MARCADOR-BLACK', 'MARCADOR-ROBO-RES'];
 const CASA = ['MARCADOR-CASA-DELA', 'MARCADOR-CASA-COND', 'MARCADOR-CASA-CARTAO'];
 
@@ -92,6 +102,8 @@ const CASA = ['MARCADOR-CASA-DELA', 'MARCADOR-CASA-COND', 'MARCADOR-CASA-CARTAO'
 
     const cedo = await A.evaluate(async () => { try { await MoneyNuvem.escopos.definir('55555555-5555-5555-5555-555555555555', 'casa'); return 'aceitou'; } catch (e) { return String(e.status || e.code || e.message); } });
     ok(cedo !== 'aceitou' && !X.visao(BETA), 'o chefe tenta liberar "casa" antes da migração: o servidor recusa (' + cedo + ')');
+
+    await fotos(A, 'chefe-preparar', async () => { abrirApp('budget'); irPara('config'); cfgSecao = 'todos'; render(); await new Promise((r) => setTimeout(r, 900)); render(); await new Promise((r) => setTimeout(r, 200)); const c = document.getElementById('vcFamilia'); if (c) c.scrollIntoView({ block: 'center' }); });
 
     console.log('2) a migração (Preparar a visão da família)');
     const conf = await A.evaluate(() => MoneyNuvem.escopos.migrar());
@@ -170,7 +182,7 @@ const CASA = ['MARCADOR-CASA-DELA', 'MARCADOR-CASA-COND', 'MARCADOR-CASA-CARTAO'
     ok(!/Planilha espelho|Família no MoneyTRIO/.test(tela.cfg), 'ela: Configurações sem a planilha espelho e sem "Família no MoneyTRIO"');
     const painelB = await B.evaluate(async () => { MoneyNuvem._teste.Painel.abrir ? MoneyNuvem._teste.Painel.abrir() : null; await new Promise((r) => setTimeout(r, 400)); const t = (document.querySelector('.nv-painel') || document.body).innerText; MoneyNuvem._teste.Painel.fechar(); return t; });
     ok(!/Robô do banco/.test(painelB), 'ela: "Segurança e aparelhos" sem o robô do banco');
-    await B.screenshot({ path: '/tmp/visao-casa-beta.png', fullPage: false });
+    await fotos(B, 'beta-painel', async () => { irPara('b-painel'); render(); await new Promise((r) => setTimeout(r, 300)); const c = document.querySelector('.vc-familia'); if (c && innerWidth > 500) c.scrollIntoView({ block: 'center' }); });
 
     console.log('5) editar e reclassificar');
     await B.evaluate(() => { const g = Store.estado.gastos.find((x) => x.id === 'g1'); g.sub = 'Calçados'; });
@@ -184,7 +196,7 @@ const CASA = ['MARCADOR-CASA-DELA', 'MARCADOR-CASA-COND', 'MARCADOR-CASA-CARTAO'
     await A2.waitForSelector('#nvSelo', { timeout: 90000 });
     const cfgA = await A2.evaluate(async () => { abrirApp('budget'); irPara('config'); cfgSecao = 'todos'; render(); await new Promise((r) => setTimeout(r, 1200)); render(); await new Promise((r) => setTimeout(r, 300)); const c = document.getElementById('vcFamilia'); if (c) c.scrollIntoView({ block: 'center' }); return c ? c.innerText : ''; });
     ok(/Família no MoneyTRIO/.test(cfgA) && /Beta|Pessoa da família/.test(cfgA) && /vê a casa/.test(cfgA), 'chefe: Configurações → "Família no MoneyTRIO" lista a Beta com "vê a casa"');
-    await A2.screenshot({ path: '/tmp/visao-casa-chefe.png', fullPage: false });
+    await fotos(A2, 'chefe-familia', async () => { abrirApp('budget'); irPara('config'); cfgSecao = 'todos'; render(); await new Promise((r) => setTimeout(r, 900)); render(); await new Promise((r) => setTimeout(r, 200)); const c = document.getElementById('vcFamilia'); if (c) c.scrollIntoView({ block: 'center' }); });
     const a2 = await A2.evaluate(() => ({ sub: (Store.estado.gastos.find((x) => x.id === 'g1') || {}).sub, res: Store.estado.gastos.some((x) => /MARCADOR-RENDA-DELE/.test(x.desc)), mk: MoneyNuvem.escopos.estado() }));
     ok(a2.sub === 'Calçados' && a2.res && a2.mk.mk && a2.mk.tudo, 'outro aparelho da Ana (entrou pelo código): baixa as duas chaves, vê tudo e recebe a edição dela');
     await A2.evaluate(() => { const g = Store.estado.gastos.find((x) => x.id === 'g2'); g.escopo = 'casa'; });

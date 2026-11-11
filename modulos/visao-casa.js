@@ -113,7 +113,7 @@
     var ult = l.reduce(function (m, r) { return r.atualizadoEm > m ? r.atualizadoEm : m; }, '');
     var grupos = {}; l.forEach(function (r) { Object.keys(r.grupos || {}).forEach(function (g) { grupos[g] = (grupos[g] || 0) + r.grupos[g]; }); });
     var ord = Object.keys(grupos).sort(function (a, b) { return grupos[b] - grupos[a]; });
-    var nome = function (g) { return (window.GRUPOS && GRUPOS[g] && GRUPOS[g].nome) || g; };
+    var nome = function (g) { return (typeof GRUPOS !== 'undefined' && GRUPOS[g] && GRUPOS[g].nome) || g; };
     return '<div class="card vc-familia"><div class="card-head"><h2>' + esc(tr('Gastos da família', 'Family spending')) + '</h2>' +
       '<span class="small muted">' + esc(tr('atualizado em ', 'updated on ') + dm(ult)) + '</span></div>' +
       '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>' + esc(tr('Mês', 'Month')) + '</th><th class="num">' + esc(tr('Total', 'Total')) + '</th>' +
@@ -144,7 +144,7 @@
         'For someone in the family to see only the household part (commitments, household bills, their own spending and the family totals), MoneyTRIO first separates what belongs to the household and what is yours only. Done once, on this device.')) + '</p>' +
         '<p class="small"><b>' + esc(tr('Quem é da casa (os lançamentos dessas pessoas e dos cartões que elas usam ficam na parte da casa):', 'Who belongs to the household (their entries and the cards they use go to the household part):')) + '</b></p>' +
         '<div class="vc-pessoas">' + (pessoas.length ? pessoas.map(function (p) {
-          return '<label class="chk"><input type="checkbox" data-acao="vc-pessoa" data-id="' + esc(p.id) + '"' + (marcadas.indexOf(p.id) >= 0 ? ' checked' : '') + '> ' + esc(p.apelido || p.nome) + '</label>';
+          return '<label class="linha-check" style="margin-right:18px"><input type="checkbox" data-acao="vc-pessoa" data-id="' + esc(p.id) + '"' + (marcadas.indexOf(p.id) >= 0 ? ' checked' : '') + '> ' + esc(p.apelido || p.nome) + '</label>';
         }).join(' ') : '<span class="small muted">' + esc(tr('Cadastre as pessoas da casa em "Pessoas da família".', 'Add the household people in "Family people".')) + '</span>') + '</div>' +
         '<p class="small muted">' + esc(tr('Compromissos de PJ (contador, DAS, TFE…) ficam sempre só seus. Você pode mudar um item depois.', 'Business commitments (accountant, taxes…) always stay yours only. You can change an item later.')) + '</p>' +
         '<button class="btn primary" data-acao="vc-preparar"' + (marcadas.length ? '' : ' disabled') + '>' + esc(tr('Preparar a visão da família', 'Prepare the family view')) + '</button>' +
@@ -154,16 +154,17 @@
     h += '<p class="small">' + esc(tr('Escolha o que cada pessoa vê. "Só a casa": compromissos, contas da casa, os lançamentos dela e os totais da família.', 'Choose what each person sees. "Household only": commitments, household bills, their own entries and the family totals.')) + '</p>';
     if (!Tela.lista) return h + '<p class="small muted">…</p></div>';
     if (!membros.length) return h + '<p class="small muted">' + esc(tr('Ainda não há outra pessoa na família. Convide pelo OmniLifeONE e volte aqui.', 'No one else in the family yet. Invite through OmniLifeONE and come back.')) + '</p></div>';
-    h += '<div class="tbl-wrap"><table class="tbl"><tbody>' + membros.map(function (m) {
+    h += '<div class="vc-membros">' + membros.map(function (m) {
       var p = pessoas.filter(function (x) { return x.uid === m.user_id; })[0];
       var nome = p ? (p.apelido || p.nome) : tr('Pessoa da família', 'Family member');
-      return '<tr><td>' + esc(nome) + ' <span class="tiny muted">' + esc(m.papel === 'responsavel' ? tr('responsável', 'guardian') : tr('membro', 'member')) + '</span></td><td>' +
-        '<select class="vc-visao" data-uid="' + esc(m.user_id) + '" aria-label="' + esc(tr('O que vê', 'What they see')) + '">' +
+      return '<div class="vc-membro" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 0;border-bottom:1px solid var(--line, rgba(127,127,127,.2))">' +
+        '<div style="flex:1 1 160px;min-width:0"><b>' + esc(nome) + '</b> <span class="tiny muted">' + esc(m.papel === 'responsavel' ? tr('responsável', 'guardian') : tr('membro', 'member')) +
+        (m.visao ? ' · ' + esc(m.visao === 'casa' ? tr('vê a casa', 'sees the household') : tr('vê tudo', 'sees everything')) : '') + '</span></div>' +
+        '<select class="vc-visao" data-uid="' + esc(m.user_id) + '" aria-label="' + esc(tr('O que vê', 'What they see')) + '" style="flex:0 1 180px;min-width:140px;width:auto">' +
         '<option value="casa"' + (m.visao !== 'tudo' ? ' selected' : '') + '>' + esc(tr('Só a casa', 'Household only')) + '</option>' +
-        '<option value="tudo"' + (m.visao === 'tudo' ? ' selected' : '') + '>' + esc(tr('Tudo', 'Everything')) + '</option></select></td>' +
-        '<td><button class="btn sm" data-acao="vc-liberar" data-uid="' + esc(m.user_id) + '">' + esc(m.visao ? tr('Liberar de novo', 'Grant again') : tr('Liberar', 'Grant')) + '</button>' +
-        (m.visao ? ' <span class="tiny muted">' + esc(m.visao === 'casa' ? tr('vê a casa', 'sees the household') : tr('vê tudo', 'sees everything')) + '</span>' : '') + '</td></tr>';
-    }).join('') + '</tbody></table></div>';
+        '<option value="tudo"' + (m.visao === 'tudo' ? ' selected' : '') + '>' + esc(tr('Tudo', 'Everything')) + '</option></select>' +
+        '<button class="btn sm" data-acao="vc-liberar" data-uid="' + esc(m.user_id) + '">' + esc(m.visao ? tr('Liberar de novo', 'Grant again') : tr('Liberar', 'Grant')) + '</button></div>';
+    }).join('') + '</div>';
     return h + '</div>';
   }
 
