@@ -54,6 +54,7 @@
         <div class="perfil-menu hidden" id="perfilMenu" role="menu" aria-label="Perfil"></div>
       </div>
     </div>
+    <div id="barraAndamento" class="barra-and" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Andamento" hidden><i></i></div>
   </header>
 
   <div id="anuncioCaixa"></div>
@@ -12551,6 +12552,38 @@ const Fundo = {
     toast(t.msg + (I18n.atual === 'pt' ? ' — toque na pílula para ver' : ' — tap the pill to see'));
   },
   limpar(id){ delete this.tarefas[id]; this.soltar(); this.render(); },
+
+  /* 3.65: a BARRA DE ANDAMENTO global, fina, logo abaixo do cabeçalho. Mostra tudo o que processa: as tarefas
+     do Fundo (ler foto/PDF, importar…) e os trabalhos curtos da plataforma (caixa do robô, sincronizar a nuvem,
+     espelho) que avisam por aqui. Com total conhecido, o %; sem total, indeterminada. Só aparece se o trabalho
+     passar de 400 ms (a busca da nuvem a cada 20 s não pisca) e some com fade. Uma barra só, para o app todo. */
+  leves: {},        /* id -> {rotulo, frac (null = sem total)} */
+  mostrar(id, frac, rotulo){
+    this.leves[id] = {frac: frac == null ? null : Math.max(0, Math.min(1, frac)), rotulo: rotulo || '', desde: (this.leves[id] || {}).desde || Date.now()};
+    this.renderBarra();
+  },
+  esconder(id){ if(this.leves[id]){ delete this.leves[id]; this.renderBarra(); } },
+  renderBarra(){
+    const b = document.getElementById('barraAndamento'); if(!b) return;
+    const itens = Object.values(this.leves).concat(Object.values(this.tarefas).filter(t => !t.pronto).map(t => ({frac: t.frac > 0 ? t.frac : null, rotulo: t.msg, desde: 0})));
+    clearTimeout(this._tBarra);
+    if(!itens.length){
+      if(!b.hidden && !b.classList.contains('some')){ b.classList.add('some'); this._tBarra = setTimeout(() => { b.hidden = true; b.classList.remove('some'); }, 400); }
+      return;
+    }
+    const cedo = itens.every(x => x.desde && Date.now() - x.desde < 400);
+    if(b.hidden && cedo){ this._tBarra = setTimeout(() => this.renderBarra(), 400 - Math.max(0, ...itens.map(x => Date.now() - x.desde))); return; }
+    const comTotal = itens.filter(x => x.frac != null);
+    const det = comTotal.length > 0;   /* com algum total conhecido (ex.: a caixa), a barra mostra o % dele */
+    const frac = det ? comTotal.reduce((s, x) => s + x.frac, 0) / comTotal.length : null;
+    b.hidden = false; b.classList.remove('some');
+    b.classList.toggle('indet', !det);
+    const txt = itens.map(x => x.rotulo).filter(Boolean).join(' · ');
+    b.setAttribute('aria-label', txt || (I18n.atual === 'pt' ? 'Processando' : 'Working'));
+    b.title = txt;
+    if(det){ const pc = Math.round(frac * 100); b.setAttribute('aria-valuenow', pc); b.setAttribute('aria-valuetext', (txt ? txt + ' · ' : '') + pc + '%'); b.firstChild.style.width = pc + '%'; }
+    else { b.removeAttribute('aria-valuenow'); b.removeAttribute('aria-valuetext'); b.firstChild.style.width = ''; }
+  },
   ativa(id){ return id ? !!(this.tarefas[id] && !this.tarefas[id].pronto) : Object.values(this.tarefas).some(t => !t.pronto); },
   estado(id){ return this.tarefas[id] || null; },
 
@@ -12585,6 +12618,7 @@ const Fundo = {
   },
 
   render(){
+    this.renderBarra();
     const pill = $('#fundoPill'); if(!pill) return;
     const id = Object.keys(this.tarefas)[0]; const t = this.tarefas[id];
     if(!t){ pill.classList.add('hidden'); return; }

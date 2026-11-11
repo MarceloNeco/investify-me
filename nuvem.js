@@ -1229,6 +1229,15 @@
       if (window.Pessoas) Pessoas.ligarTudo(g);   /* "Neco" → a pessoa do cadastro (o mesmo nome que o lançamento guardado tem) */
       return g;
     },
+    andamento: function (mais) {
+      if (typeof Fundo === 'undefined' || !Fundo.mostrar) return;
+      if (mais === null) { this._seq = null; Fundo.esconder('caixa'); return; }
+      var q = this._seq; if (!q) return;
+      q.feitos += mais; if (q.feitos > q.total) q.total = q.feitos;
+      if (q.feitos % 10 && q.feitos !== q.total) return;   /* a cada 10, para não redesenhar à toa */
+      var f = function (n) { return Number(n).toLocaleString(tt('pt-BR', 'en-US')); };
+      Fundo.mostrar('caixa', q.feitos / q.total, tt('Caixa do robô: ', 'Robot inbox: ') + f(q.feitos) + tt(' de ', ' of ') + f(q.total));
+    },
     idDe: function (l) { return 'rb_' + String(l.id).replace(/[^A-Za-z0-9_.:@-]/g, '_').slice(0, 70); },
     /* sem edição da pessoa: sai do livro (vira só a movimentação entre contas, que não conta no "Para onde foi");
        editado pela pessoa: fica, com a sugestão em Revisar ("o robô diz que isto é transferência") */
@@ -1333,7 +1342,13 @@
         if (!(await this.preparar())) return;
         if (this.migrarEstornos()) Store.salvar();   /* 1.11.0: uma vez */
         var rows = await Conta.rest('GET', 'money_entrada?grupo_id=eq.' + Sinc.gid + '&consumido_em=is.null&select=id,pacote,origem&order=criado_em.asc&limit=200');
-        if (!rows || !rows.length) return;
+        if (!rows || !rows.length) { this.andamento(null); return; }
+        /* 1.12.0: a barra de andamento global ("Caixa do robô: x de N"); com lote cheio, conta quantos esperam */
+        if (!this._seq) {
+          var total = rows.length;
+          if (rows.length === 200) { try { total = ((await Conta.rest('GET', 'money_entrada?grupo_id=eq.' + Sinc.gid + '&consumido_em=is.null&select=id&limit=50000')) || []).length || 200; } catch (e) { total = 200; } }
+          this._seq = { total: total, feitos: 0 };
+        }
         var ST = Store.estado, ids = {}, novos = 0, ignorados = 0, corrigidos = 0, sugeridos = 0, transf = 0, prontos = [], mudou = false;
         (ST.gastos || []).forEach(function (g) { ids[g.id] = g; if (g.idRobo) ids['rb_' + g.idRobo] = g; });
         for (var i = 0; i < rows.length; i++) {
@@ -1369,6 +1384,7 @@
             if (r) mudou = true;
           }
           prontos.push(rows[i].id);
+          this.andamento(1);
         }
         if ((novos || transf) && typeof Transferencia !== 'undefined' && Transferencia.todas().length) Transferencia.ligarTudo();   /* uma vez por lote (3.40) */
         if (novos || mudou) { Store.salvar(); }
@@ -1384,7 +1400,8 @@
         if (sugeridos) aviso('🤖 ' + sugeridos + tt(' lançamento(s) que você editou: o robô sugeriu outra coisa (veja em Custos → Revisar).', ' entr(ies) you edited: the robot suggested something else (see Costs → Review).'));
         if (novos || mudou) Nuvem.redesenhar();
         if (rows.length === 200) setTimeout(function () { Caixa.esvaziar(); }, 1500);
-      } catch (e) { console.warn('nuvem: caixa do robô', e); }
+        else this.andamento(null);
+      } catch (e) { console.warn('nuvem: caixa do robô', e); this.andamento(null); }
       finally { this._rodando = false; Painel.atualizar(); }
     }
   };
@@ -1432,6 +1449,7 @@
       this._rodando = true;
       try {
         var f = await this.fila(); if (!f.length) return 0;
+        if (typeof Fundo !== 'undefined' && Fundo.mostrar) Fundo.mostrar('espelho', null, tt('Mandando as edições para a planilha', 'Sending edits to the spreadsheet'));
         var jwk;
         try { jwk = await Conta.rpc('money_espelho_chave_de', { p_grupo: Sinc.gid }); }
         catch (e) {
@@ -1462,7 +1480,7 @@
         if (n) { this.problema = ''; this.enviados += n; }
         return n;
       } catch (e) { console.warn('nuvem: espelho', e); return 0; }
-      finally { this._rodando = false; }
+      finally { this._rodando = false; if (typeof Fundo !== 'undefined' && Fundo.esconder) Fundo.esconder('espelho'); }
     }
   };
 
@@ -2336,6 +2354,10 @@
     },
     /* a cada 20 s, ao voltar para o app e quando a internet volta */
     buscarAgora: async function () {
+      if (typeof Fundo !== 'undefined' && Fundo.mostrar) Fundo.mostrar('nuvem', null, tt('Sincronizando com a nuvem', 'Syncing with the cloud'));
+      try { return await this._buscarAgora.apply(this, arguments); } finally { if (typeof Fundo !== 'undefined' && Fundo.esconder) Fundo.esconder('nuvem'); }
+    },
+    _buscarAgora: async function () {
       if (!this.iniciado || !Cadeado.aberto() || this._buscando) return;
       this._buscando = true;
       try {
