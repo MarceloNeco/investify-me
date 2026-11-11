@@ -1,10 +1,15 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.64 · 11/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.64.1 · 11/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.64.1 */
+  'Sair de verdade e criar o PIN da conta':'Real sign-out and creating the account PIN',
+  '"Sair" no menu do perfil agora sai da conta de verdade: os dados somem da tela, e nem recarregar nem o "Voltar" do navegador mostram nada até você entrar de novo.':'"Sign out" in the profile menu now really signs you out: the data leaves the screen, and neither reloading nor the browser\'s "Back" shows anything until you sign in again.',
+  'Conta ainda sem PIN da conta: um aviso no topo, "Crie o PIN da sua conta SolverONE", leva a "Criar o PIN da conta" (PIN novo duas vezes, sem pedir o PIN antigo). Ele vale em todos os seus aparelhos e apps, e o PIN antigo deste aparelho deixa de abrir. Abrir com o PIN antigo não cria o PIN da conta sozinho. "Trocar o PIN" só aparece quando a conta já tem PIN.':'Account without an account PIN yet: a notice at the top, "Create your SolverONE account PIN", leads to "Create the account PIN" (new PIN twice, without asking for the old PIN). It works on all your devices and apps, and this device\'s old PIN stops opening. Opening with the old PIN does not create the account PIN by itself. "Change PIN" only shows when the account already has a PIN.',
+  '"🔒 Fechar agora" agora se chama "🔒 Bloquear agora": pede o PIN ou a digital para abrir de novo.':'"🔒 Lock now" (it asks for the PIN or fingerprint to open again).',
   /* 3.64 */
   'Pessoas da família, planilha espelho e conferência com o banco':'Family people, mirror spreadsheet and bank check',
   'Pessoas da família (⚙ Configurações): da casa (responsáveis e dependentes), outras pessoas e empresas. Nome, sobrenome, apelido e como o nome aparece no extrato. Mudou o nome, muda em tudo na hora. CPF o app não pede.':'Family people (⚙ Settings): household (guardians and dependants), other people and companies. Name, surname, nickname and how the name shows on the statement. Rename once and it changes everywhere. The app never asks for personal tax IDs.',

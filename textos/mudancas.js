@@ -1,11 +1,16 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.64 · 11/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.64.1 · 11/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.64.1', d:'2026-11-11', t:'Sair de verdade e criar o PIN da conta', itens:[
+    '"Sair" no menu do perfil agora sai da conta de verdade: os dados somem da tela, e nem recarregar nem o "Voltar" do navegador mostram nada até você entrar de novo.',
+    'Conta ainda sem PIN da conta: um aviso no topo, "Crie o PIN da sua conta SolverONE", leva a "Criar o PIN da conta" (PIN novo duas vezes, sem pedir o PIN antigo). Ele vale em todos os seus aparelhos e apps, e o PIN antigo deste aparelho deixa de abrir. Abrir com o PIN antigo não cria o PIN da conta sozinho. "Trocar o PIN" só aparece quando a conta já tem PIN.',
+    '"🔒 Fechar agora" agora se chama "🔒 Bloquear agora": pede o PIN ou a digital para abrir de novo.'
+  ]},
   {v:'3.64', d:'2026-11-11', t:'Pessoas da família, planilha espelho e conferência com o banco', itens:[
     'Pessoas da família (⚙ Configurações): da casa (responsáveis e dependentes), outras pessoas e empresas. Nome, sobrenome, apelido e como o nome aparece no extrato. Mudou o nome, muda em tudo na hora. CPF o app não pede.',
     'Nos lançamentos, "Quem pagou" e "Para quem é" (o beneficiário, que importa na saúde, na escola e no IR). O campo aceita texto livre; nome parecido, mas sem certeza, o app pergunta uma vez.',

@@ -3,7 +3,8 @@
    ---------------------------------------------------------------------
    Ponta a ponta, um contexto de navegador por aparelho, com o "Supabase de mentira" de teste/mock-sol.js (as mesmas regras
    de supabase/2026-11-11-sol-pin-conta.sql, que tem o teste próprio em teste/sql/teste-sol-pin-conta.sql).
-     1. migração com PINs DIFERENTES: o celular (PIN antigo 736251) destrava primeiro e o PIN dele vira o da conta; o
+     1. migração com PINs DIFERENTES: o celular (PIN antigo 713529) destrava e NÃO cria o PIN da conta; cria de propósito pelo
+        aviso do topo (736251); o
         computador (PIN antigo 482915) destrava com o antigo → "Agora o PIN é um só para a conta" → digita o da conta;
         um terceiro aparelho digita direto o PIN da conta → "Falta só um passo" (o PIN antigo dele, uma vez só);
      2. troca num aparelho vale no outro: o computador troca; o celular tranca ("foi trocado em outro aparelho") e só
@@ -68,12 +69,17 @@ const erroTela = (page) => page.evaluate(() => (document.querySelector('#nvErro'
     console.log('1) migração: dois aparelhos com PINs DIFERENTES');
     const CEL = await aparelho(browser, { width: 390, height: 800 }, 'CEL');
     const PC = await aparelho(browser, { width: 1366, height: 768 }, 'PC');
-    await antigo(CEL, '736251');
+    await antigo(CEL, '713529');
     await antigo(PC, '482915');
     ok(!conta() && db.sol_aparelhos.filter((a) => a.user_id === ANA).length === 2, 'antes: a conta sem PIN e os 2 aparelhos na lista, cada um com o PIN dele');
-    await trancar(CEL); await digitarPin(CEL, '736251'); await CEL.waitForSelector('#nvSelo', { timeout: 60000 });
+    await trancar(CEL); await digitarPin(CEL, '713529'); await CEL.waitForSelector('#nvSelo', { timeout: 60000 });
+    await CEL.waitForSelector('#nvAvisoPin', { timeout: 30000 });
+    ok(!conta(), '3.64.1: abrir com o PIN antigo NÃO cria o PIN da conta; aparece o aviso "Crie o PIN da sua conta SolverONE"');
+    await CEL.click('#nvAvisoPinOk'); await CEL.waitForSelector('#nvC1');
+    await CEL.fill('#nvC1', '736251'); await CEL.fill('#nvC2', '736251'); await CEL.click('#nvCOk');
+    await CEL.waitForFunction(() => !document.querySelector('#nvC1'), null, { timeout: 60000 });
     const Lc = await local(CEL);
-    ok(conta() && conta().versao === 1 && Lc.srv && Lc.pinVersao === 1, 'o 1º que destrava (celular) define o PIN da conta = o PIN dele; o aparelho ganha a cópia do servidor (L.srv)');
+    ok(conta() && conta().versao === 1 && Lc.srv && Lc.pinVersao === 1, 'o celular cria o PIN da conta de propósito ("Criar agora"); o aparelho ganha a cópia do servidor (L.srv)');
     ok(!/736251/.test(JSON.stringify(db.sol_pin_conta)) && /^[0-9a-f]{64}$/.test(conta().hv), 'o banco não tem o PIN: só SHA-256(v)');
     await trancar(PC); await digitarPin(PC, '482915');
     await PC.waitForSelector('#nvPDC', { timeout: 30000 });

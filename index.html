@@ -628,7 +628,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.64"></script>
+<script src="textos/frases-en.js?v=3.64.1"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7368,7 +7368,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.64"></script>
+<script src="textos/mudancas.js?v=3.64.1"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -27486,6 +27486,8 @@ function acaoPerfil(qual){
     case 'entrar':    fecharPerfilMenu(); abrirConta(); break;
     case 'sair':
       fecharPerfilMenu();
+      /* 3.64.1: com a nuvem ligada, sair DE VERDADE (tranca, sai e volta para a tela de entrar); sem nuvem, como antes */
+      if(window.MoneyNuvem && MoneyNuvem.iniciado){ MoneyNuvem.sair(false); break; }
       Sessao.sair();
       Acesso.definir(window.CARTEIRA_CIFRADA ? 'dono' : 'local');
       Anuncio.render(); renderPerfilTopo(); if(!$('#app').classList.contains('hidden')) render();
@@ -28454,6 +28456,7 @@ function ligarEventos(){
       case 'codigo-baixar': baixarCodigo(); break;
       case 'codigo-pronto': contaCodigoNaTela = null; fechar('contaModal'); render(); break;
       case 'conta-sair':
+        if(window.MoneyNuvem && MoneyNuvem.iniciado){ fechar('contaModal'); MoneyNuvem.sair(false); break; }   /* 3.64.1 */
         Sessao.sair();
         Acesso.definir(window.CARTEIRA_CIFRADA ? 'dono' : 'local');
         Anuncio.render(); render();
@@ -29509,6 +29512,6 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=1.0.0"></script>
 <script src="modulos/espelho.js?v=1.0.0"></script>
-<script src="nuvem.js?v=1.11.0"></script>
+<script src="nuvem.js?v=1.11.1"></script>
 </body>
 </html>
