@@ -27551,6 +27551,8 @@ function acaoPerfil(qual){
     case 'entrar':    fecharPerfilMenu(); abrirConta(); break;
     case 'sair':
       fecharPerfilMenu();
+      /* 3.64.1: com a nuvem ligada, sair DE VERDADE (tranca, sai e volta para a tela de entrar); sem nuvem, como antes */
+      if(window.MoneyNuvem && MoneyNuvem.iniciado){ MoneyNuvem.sair(false); break; }
       Sessao.sair();
       Acesso.definir(window.CARTEIRA_CIFRADA ? 'dono' : 'local');
       Anuncio.render(); renderPerfilTopo(); if(!$('#app').classList.contains('hidden')) render();
@@ -28519,6 +28521,7 @@ function ligarEventos(){
       case 'codigo-baixar': baixarCodigo(); break;
       case 'codigo-pronto': contaCodigoNaTela = null; fechar('contaModal'); render(); break;
       case 'conta-sair':
+        if(window.MoneyNuvem && MoneyNuvem.iniciado){ fechar('contaModal'); MoneyNuvem.sair(false); break; }   /* 3.64.1 */
         Sessao.sair();
         Acesso.definir(window.CARTEIRA_CIFRADA ? 'dono' : 'local');
         Anuncio.render(); render();

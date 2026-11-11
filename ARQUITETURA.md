@@ -672,6 +672,11 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   mídias"; "Renomear categoria" em Configurações. **Assinaturas 1.1.0**: "Não vou renovar" (fim → `r.ate`), "já paga até" (sem
   cobrança), cobrança depois do fim → aviso. **Conferência com o banco 2.0.0**: conta_id/categoria_conta/final_conta; três seções;
   cartão com a fatura positiva; itens `investimento` (`SaldoBanco.receberInvest`). Teste: `teste/teste-origem.js`.
+- 3.64.1 (`nuvem.js` 1.11.1), correção de segurança: "Sair" do menu do perfil e da conta (`case 'sair'`/`'conta-sair'`) chamavam o
+  `Sessao.sair()` antigo; com a nuvem ligada agora chamam `MoneyNuvem.sair(false)` (tela "Saindo…", tranca, sai, `location.replace`;
+  `pageshow` com página guardada pelo navegador → recarrega). "Criar o PIN da conta" (`Portao.criarPinConta`): conta sem PIN da conta e
+  cadeado aberto (PIN ou digital: a DUK fica na memória) → `sol_pin_definir` com o atual nulo + `Pin.gravar` (L.pin e L.srv); o painel
+  mostra "Criar" ou "Trocar" conforme `Pin.info().tem`. Teste: `teste/teste-sair-pin.js` (digital simulada: autenticador virtual com PRF).
 - 3.64 (`nuvem.js` 1.11.0; módulos novos `pessoas` 1.0.0, `espelho` 1.0.0, `saldo-banco` 1.0.0, `indicadores` 1.0.0; `profissionais` 1.1.0).
   **Pessoas** (`modulos/pessoas.js`, coleção `pessoas`): da casa (responsável/dependente), outras pessoas, empresas (CNPJ opcional; nunca
   CPF). Cada registro guarda o ID ao lado do texto nos pares `quem/quemId`, `paraQuem/paraQuemId`, `pagador/pagadorId` (`Gasto.arruma`

@@ -14,6 +14,9 @@ const MUDANCAS = [
     'Descrição longa nos lançamentos não passa mais por cima do valor. Parcela ("08/12") vira compromisso até a última. Categorias novas: IA e software, Seguro de vida, IOF / TED / DOC. Salvar cartão voltou a funcionar.',
     'O que o robô só supõe aparece com o selo amarelo "A confirmar" (um toque no ✓ confirma); o que ele não sabe, com o selo vermelho "A identificar". Confirmar ou corrigir um vale para todos da mesma origem, com Desfazer, e a tela "A confirmar" agrupa por origem.',
     'Conferência com o banco em três partes: contas e poupança, cartões (a fatura aberta, com vencimento e limite) e investimentos. Assinatura que você não vai renovar termina na data marcada, e o app avisa se cobrarem depois. "Locação de vídeo" e "CDs/DVDs" viraram "Streaming e mídias", e agora dá para renomear categorias.'
+  {v:'3.64.1', d:'2026-11-11', t:'Sair de verdade e criar o PIN da conta', itens:[
+    '"Sair" no menu do perfil agora sai da conta de verdade: os dados somem da tela, e nem recarregar nem o "Voltar" do navegador mostram nada até você entrar de novo.',
+    'Conta ainda sem PIN da conta: com o app aberto (pelo PIN ou pela digital), "Criar o PIN da conta" cria um PIN para todos os seus aparelhos, sem pedir o PIN antigo. "Trocar o PIN" só aparece quando a conta já tem PIN.'
   ]},
   {v:'3.64', d:'2026-11-11', t:'Pessoas da família, planilha espelho e conferência com o banco', itens:[
     'Pessoas da família (⚙ Configurações): da casa (responsáveis e dependentes), outras pessoas e empresas. Nome, sobrenome, apelido e como o nome aparece no extrato. Mudou o nome, muda em tudo na hora. CPF o app não pede.',
