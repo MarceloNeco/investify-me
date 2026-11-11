@@ -1,11 +1,16 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.61 · 06/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.62 · 11/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.62', d:'2026-11-11', t:'Um PIN só para a conta', itens:[
+    'O PIN agora é da conta, igual em todos os seus aparelhos (como a senha do banco). Trocou num, vale em todos. Num aparelho novo, depois de aprovado pelo outro, é só digitar o PIN que você já tem.',
+    'Quem tinha um PIN diferente em cada aparelho: o primeiro aparelho que você destravar define o PIN da conta; nos outros, o app pede uma vez o PIN da conta.',
+    'PIN errado 10 vezes: espere 24 h ou aprove por outro aparelho seu ("Esqueci o PIN"). A digital continua valendo em cada aparelho.'
+  ]},
   {v:'3.61', d:'2026-11-06', t:'Entrar num aparelho novo sem código de recuperação', itens:[
     'Primeira vez num celular ou computador: em vez do código de recuperação, aprove pelo outro aparelho onde você já entra (os dois mostram os mesmos 6 números; confira e digite o seu PIN) ou peça para alguém responsável da família aprovar.',
     'Nuvem → Aparelhos: a lista dos seus aparelhos, com quem aprovou cada um, e "Tirar" (o aparelho tirado perde o acesso na próxima vez que abrir). Se alguém da família aprovar um aparelho seu, os outros avisam.',

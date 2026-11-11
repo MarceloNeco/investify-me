@@ -4,7 +4,7 @@
    Compara as telas principais de duas cópias do app — a de ANTES (outra pasta, ex.: uma cópia do main) e a
    de agora (esta pasta) — em 390 e 1366 px: foto da tela, em português e em inglês, e o HTML desenhado.
    Também abre cada verbete do glossário e cada aula do Coach nas duas cópias e compara o texto.
-   Tem de dar igual (o número da versão vira 0.00, "N versões" e a lista "O que há de novo" sai, nas duas), e sem nenhum erro de página. Serve para mudanças que "não mudam nada para você".
+   Tem de dar igual (o número da versão vira 0.00 e a data dela 00/Xxx/0000, "N versões" e a lista "O que há de novo" sai, nas duas), e sem nenhum erro de página. Serve para mudanças que "não mudam nada para você".
    Uso (na pasta raiz):
      git worktree add /tmp/antes origin/main        (uma cópia do que está publicado)
      node teste/teste-fumaca-telas.js /tmp/antes
@@ -54,7 +54,11 @@ const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify',
       /* o número da versão muda de propósito: troca pelo mesmo texto nas duas cópias */
       const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
       const rv = new RegExp('(^|[^\\d.,])' + VERSAO.replace('.', '\\.') + '(?![\\d,])', 'g');   /* só o número inteiro: "3.56" não mexe em "R$ 3.561,50" */
-      while ((n = w.nextNode())) n.nodeValue = n.nodeValue.replace(rv, '$10.00').replace(/\b\d+ (versões|versions)\b/g, 'N $1');
+      /* a data da versão também muda de propósito ("atualizado em 11/Nov/2026"): vira o mesmo texto nas duas cópias */
+      /* só perto do número da versão (o rodapé e "Versão e o que mudou"): outra data igual na tela é dado, fica */
+      const dvs = []; if (typeof MUDANCAS !== 'undefined' && MUDANCAS[0] && MUDANCAS[0].d) { const L0 = I18n.atual; ['pt', 'en'].forEach((L) => { I18n.atual = L; dvs.push(I18n.data(MUDANCAS[0].d)); }); I18n.atual = L0; }
+      const pertoDaVersao = (n) => { const e = n.parentElement, q = e && (e.parentElement || e); return !!q && (q.textContent.indexOf(VERSAO) >= 0 || /atualizado em|updated on/i.test(q.textContent)); };
+      while ((n = w.nextNode())) { let t = n.nodeValue; if (pertoDaVersao(n)) dvs.forEach((dv) => { t = t.split(dv).join('00/Xxx/0000'); }); n.nodeValue = t.replace(rv, '$10.00').replace(/\b\d+ (versões|versions)\b/g, 'N $1'); }
     });
     /* foto só depois de imagens e fontes prontas (senão a mesma tela sai diferente por carregar a tempo ou não) */
     await p.waitForFunction(() => Array.from(document.images).every((i) => i.complete) && document.fonts.status === 'loaded');
