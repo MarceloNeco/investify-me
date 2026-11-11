@@ -2755,6 +2755,7 @@ function vizDivergente(itens, fmt){
 
 /* 3.65.2: o rótulo curto do eixo ("R$ 150 mil"; "R$ 2,5 mil" quando a marca não é inteira) */
 function vizEixo(v){
+  if(v < 0) return '−' + vizEixo(-v);   /* o sinal antes da moeda: −R$ 5 mil */
   const a = Math.abs(v);
   if(a >= 1e3 && a < 1e6 && Math.round(a / 100) % 10 !== 0){
     const m = SIMB[ST.moedaBase] || ST.moedaBase;
@@ -3115,14 +3116,15 @@ function vizFluxoPatrimonioDesenho(ms, op, W, H){
   const LARG = W - mL - mR, pad = Math.min(22, Math.max(10, LARG / ms.length / 2));   /* as colunas da ponta não encostam no eixo */
   const passo = (LARG - 2 * pad) / Math.max(1, ms.length - 1);
   const x = i => mL + pad + i * passo;
-  const marcas = (min, max, n) => vizMarcas(min, max, n);
 
   /* --- bloco A: o que você tem (estoque) --- */
   const estoque = ms.flatMap(m => [m.patrimonio || 0, m.investAcum || 0]).concat(op.real && op.real.valor ? [op.real.valor] : []);
   let aMax = Math.max.apply(null, estoque), aMin = Math.min.apply(null, estoque);
   if(aMax === aMin){ aMax += 1; aMin -= 1; }
-  const fA = (aMax - aMin) * 0.08; aMax += fA; aMin -= fA;
-  { const mk = vizMarcas(aMin, aMax, hA > 150 ? 4 : 3); aMin = Math.min(aMin, mk[0]); aMax = Math.max(aMax, mk[mk.length - 1]); }
+  const fA = (aMax - aMin) * 0.08; aMax += fA; aMin -= (aMin >= 0 && aMin - fA < 0) ? aMin : fA;   /* sem negativo, não inventa o −R$ */
+  const nB = hB > 150 ? 5 : 3, nA = hA > 150 ? 4 : 3;
+  /* as marcas são calculadas uma vez e a escala vai exatamente da primeira à última: nenhum número do eixo sai do bloco */
+  const mkA = vizMarcas(aMin, aMax, nA); aMin = mkA[0]; aMax = mkA[mkA.length - 1];
   const yA = v => topoA + hA - ((v - aMin) / (aMax - aMin)) * hA;
 
   /* --- bloco B: o que entrou e saiu no mês, e o saldo do mês --- */
@@ -3131,8 +3133,7 @@ function vizFluxoPatrimonioDesenho(ms, op, W, H){
   let bMax = Math.max.apply(null, fluxos), bMin = Math.min.apply(null, fluxos);
   if(bMax === bMin) bMax = bMin + 1;
   const fB = (bMax - bMin) * 0.06; bMax += fB; bMin -= bMin < 0 ? fB : 0;
-  const nB = hB > 150 ? 5 : 3, nA = hA > 150 ? 4 : 3;
-  { const mk = vizMarcas(bMin, bMax, nB); bMin = Math.min(bMin, mk[0]); bMax = Math.max(bMax, mk[mk.length - 1]); }
+  const mkB = vizMarcas(bMin, bMax, nB); bMin = mkB[0]; bMax = mkB[mkB.length - 1];
   const yB = v => topoB + hB - ((v - bMin) / (bMax - bMin)) * hB;
   const zeroB = yB(0);
 
@@ -3154,7 +3155,7 @@ function vizFluxoPatrimonioDesenho(ms, op, W, H){
        '<text class="viz-painel-t" x="' + mL + '" y="' + (topoB - 6) + '">Entrou e saiu, mês a mês</text>';
 
   /* bloco A: grade, eixo e o zero (quando o patrimônio passa por baixo dele) */
-  marcas(aMin, aMax, nA).forEach(v => {
+  mkA.forEach(v => {
     const y = yA(v);
     h += '<line class="ax-l" x1="' + mL + '" y1="' + y.toFixed(1) + '" x2="' + (W-mR) + '" y2="' + y.toFixed(1) + '"></line>' +
          '<text class="ax" x="' + (mL-8) + '" y="' + (y+4).toFixed(1) + '" text-anchor="end">' + esc(vizEixo(v)) + '</text>';
@@ -3163,7 +3164,7 @@ function vizFluxoPatrimonioDesenho(ms, op, W, H){
     h += '<line class="viz-zero" x1="' + mL + '" y1="' + yA(0).toFixed(1) + '" x2="' + (W-mR) + '" y2="' + yA(0).toFixed(1) + '"></line>';
 
   /* bloco B: grade, eixo e a linha do zero, sempre */
-  marcas(bMin, bMax, nB).forEach(v => {
+  mkB.forEach(v => {
     const y = yB(v);
     h += '<line class="ax-l" x1="' + mL + '" y1="' + y.toFixed(1) + '" x2="' + (W-mR) + '" y2="' + y.toFixed(1) + '"></line>' +
          '<text class="ax" x="' + (mL-8) + '" y="' + (y+4).toFixed(1) + '" text-anchor="end">' + esc(vizEixo(v)) + '</text>';
@@ -3198,11 +3199,11 @@ function vizFluxoPatrimonioDesenho(ms, op, W, H){
   }
 
   /* eixo do tempo, embaixo */
-  const quantos = Math.min(estreito ? 4 : 8, ms.length);
-  for(let k = 0; k < quantos; k++){
-    const i = Math.round(k * (ms.length-1) / Math.max(1, quantos-1));
+  /* 3.65.2: um mês a cada `cada`, sempre com o último e com o mesmo espaço entre eles (nada de mês pulado ao acaso) */
+  const cada = Math.max(1, Math.ceil(passo ? 60 / passo : ms.length));
+  for(let i = ms.length - 1; i >= 0; i -= cada){
     const [ano, mes] = ms[i].t.split('-');
-    h += '<text class="ax" x="' + x(i).toFixed(1) + '" y="' + (H-6) + '" text-anchor="' + (k === 0 ? 'start' : k === quantos - 1 ? 'end' : 'middle') + '">' + mes + '/' + ano.slice(2) + '</text>';
+    h += '<text class="ax" x="' + x(i).toFixed(1) + '" y="' + (H-6) + '" text-anchor="' + (i === ms.length - 1 ? 'end' : x(i) - 22 < mL ? 'start' : 'middle') + '">' + mes + '/' + ano.slice(2) + '</text>';
   }
 
   h += '<line class="dup-cursor" x1="0" y1="' + topoA + '" x2="0" y2="' + (topoB + hB) + '" opacity="0"></line>';

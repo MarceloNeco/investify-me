@@ -92,12 +92,19 @@ function contraste(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) 
           const saldo = svg.querySelector('.viz-saldo');
           return { escala: r.width / vb.width, cardH: card.getBoundingClientRect().height, vh: innerHeight, fonte: cs.fontSize, cor: cs.fill, bg,
             zero: svg.querySelectorAll('.viz-zero').length, saldo: saldo ? getComputedStyle(saldo).stroke : '', titulos: [...svg.querySelectorAll('.viz-painel-t')].map((t) => t.textContent),
-            leg: !!card.querySelector('.viz-leg'), lado: document.documentElement.scrollWidth > innerWidth + 1 };
+            leg: !!card.querySelector('.viz-leg'), lado: document.documentElement.scrollWidth > innerWidth + 1,
+            /* nenhum texto do gráfico encosta em outro (números do eixo × títulos dos blocos × meses) */
+            choque: (() => { const t = [...svg.querySelectorAll('text')].filter((e) => e.textContent.trim()).map((e) => ({ s: e.textContent, r: e.getBoundingClientRect() }));
+              for (let i = 0; i < t.length; i++) for (let j = i + 1; j < t.length; j++) { const a = t[i].r, b = t[j].r;
+                if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) return t[i].s + ' × ' + t[j].s; }
+              return ''; })(),
+            foraDoBloco: [...svg.querySelectorAll('.ax[text-anchor="end"]')].some((e) => e.getBoundingClientRect().top < svg.getBoundingClientRect().top) };
         });
         const c = contraste(f.cor, f.bg === 'rgba(0, 0, 0, 0)' ? (tema === 'dark' ? 'rgb(21,28,38)' : 'rgb(255,255,255)') : f.bg);
         ok(Math.abs(f.escala - 1) < 0.03 && f.fonte === '12px' && c >= 4.5, nome + ' ' + tema + ' · Fluxo: desenhado na largura real (escala ' + f.escala.toFixed(2) + '), eixo de 12 px com contraste ' + c.toFixed(1));
         ok(f.cardH <= f.vh - 40 || nome === '390', nome + ' ' + tema + ' · Fluxo: o cartão inteiro com a legenda cabe na tela (' + Math.round(f.cardH) + ' de ' + f.vh + ' px)');
         ok(f.zero >= 1 && f.saldo && f.titulos.join('|') === 'O que você tem|Entrou e saiu, mês a mês' && f.leg && !f.lado, nome + ' ' + tema + ' · zero visível, saldo do mês (' + f.saldo + '), dois blocos com título, legenda, sem rolagem para o lado');
+        ok(!f.choque && !f.foraDoBloco, nome + ' ' + tema + ' · Fluxo: nenhum número do eixo encosta em título, mês ou outro número' + (f.choque ? ' (' + f.choque + ')' : ''));
         corSaldo[tema] = f.saldo;
         await q.screenshot({ path: '/tmp/graf2-fluxo-' + nome + '-' + tema + '.png', fullPage: nome === '390' });
         await q.evaluate(() => { irPara('b-painel'); render(); });
@@ -130,6 +137,7 @@ function contraste(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) 
     });
     await w.waitForSelector('#glSub');
     await w.click('#glSub'); await w.waitForTimeout(150);
+    await w.screenshot({ path: '/tmp/graf2-form-aberto.png' });
     const cb = await w.evaluate(() => ({ itens: [...document.querySelectorAll('#glSubLista li[data-v]')].map((l) => l.textContent), atual: (document.querySelector('#glSubLista li.atual') || {}).textContent || '', arv: (Gasto.arvore().HABITACAO || []).length, aberto: !document.getElementById('glSubLista').hidden }));
     ok(cb.aberto && cb.itens.length === cb.arv && cb.arv > 3 && /✓ Condomínio/.test(cb.atual), 'categoria: ao tocar, abre a lista INTEIRA da Habitação (' + cb.itens.length + '), com "Condomínio" marcada');
     await w.fill('#glSub', 'inter'); await w.waitForTimeout(100);
@@ -148,6 +156,7 @@ function contraste(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) 
     ok(!cf.st && !cf.rev && cf.fechou && cf.quando, '"✓ Confirmar como está" confirma, tira a marca de conferir e fecha');
     await w.evaluate(() => abrirLancamento('rb_desc')); await w.waitForSelector('#lfFalta');
     const ft = await w.evaluate(() => ({ t: document.getElementById('lfFalta').textContent, marc: [...document.querySelectorAll('.lf-falta')].map((x) => x.id) }));
+    await w.screenshot({ path: '/tmp/graf2-form-falta.png' });
     ok(/Falta: grupo, categoria/.test(ft.t) && ft.marc.indexOf('glSub') >= 0, '"A identificar": "' + ft.t + '", com o campo destacado');
     await w.selectOption('#glGrupo', 'SAUDE'); await w.fill('#glSub', 'Farmácia'); await w.waitForTimeout(100);
     const ft2 = await w.evaluate(() => ({ t: document.getElementById('lfFalta').textContent, h: document.getElementById('lfFalta').hidden }));
