@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.64 · 11/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.64.1 · 11/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.64.1 */
+  'Sair de verdade e criar o PIN da conta':'Real sign-out and creating the account PIN',
+  '"Sair" no menu do perfil agora sai da conta de verdade: os dados somem da tela, e nem recarregar nem o "Voltar" do navegador mostram nada até você entrar de novo.':'"Sign out" in the profile menu now really signs you out: the data leaves the screen, and neither reloading nor the browser\'s "Back" shows anything until you sign in again.',
+  'Conta ainda sem PIN da conta: com o app aberto (pelo PIN ou pela digital), "Criar o PIN da conta" cria um PIN para todos os seus aparelhos, sem pedir o PIN antigo. "Trocar o PIN" só aparece quando a conta já tem PIN.':'Account without an account PIN yet: with the app open (by PIN or fingerprint), "Create the account PIN" sets one PIN for all your devices, without asking for the old one. "Change PIN" only shows once the account has a PIN.',
   /* 3.64 */
   'Pessoas da família, planilha espelho e conferência com o banco':'Family people, mirror spreadsheet and bank check',
   'Pessoas da família (⚙ Configurações): da casa (responsáveis e dependentes), outras pessoas e empresas. Nome, sobrenome, apelido e como o nome aparece no extrato. Mudou o nome, muda em tudo na hora. CPF o app não pede.':'Family people (⚙ Settings): household (guardians and dependants), other people and companies. Name, surname, nickname and how the name shows on the statement. Rename once and it changes everywhere. The app never asks for personal tax IDs.',
