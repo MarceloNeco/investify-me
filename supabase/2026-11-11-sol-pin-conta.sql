@@ -138,8 +138,9 @@ revoke all on function public.sol_pin_conferir(text, uuid) from public, anon;
 grant execute on function public.sol_pin_conferir(text, uuid) to authenticated, service_role;
 
 -- definir/trocar o PIN da conta. Vale: (1) a conta ainda sem PIN; (2) com o PIN atual certo (erro conta tentativa);
--- (3) sem o atual, se ESTE aparelho entrou por aprovação PRÓPRIA (aparelho, passkey, kit) há menos de 10 min — é assim
--- que se desbloqueia. Aprovação da família nunca troca o PIN de outra pessoa.
+-- (3) sem o atual, se ESTE aparelho entrou por aprovação de OUTRO APARELHO DA PRÓPRIA PESSOA (como = 'aparelho', gravado
+-- pelo banco no sol_pedido_buscar) há menos de 10 min — é assim que se desbloqueia. NÃO vale para 'passkey' nem 'kit'
+-- (o aparelho se registra sozinho; o banco não tem como conferir) nem para 'familia' (nunca troca o PIN de outra pessoa).
 create or replace function public.sol_pin_definir(p_v_novo text, p_sal_novo text, p_v_atual text, p_ap uuid) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare p public.sol_pin_conta; v_pode boolean := false; v_conf jsonb;
@@ -150,7 +151,7 @@ begin
   select * into p from public.sol_pin_conta where user_id = auth.uid() for update;
   if not found then v_pode := true;
   elsif exists (select 1 from public.sol_aparelhos a where a.id = p_ap and a.user_id = auth.uid() and a.removido_em is null
-                   and a.como in ('aparelho', 'passkey', 'kit') and a.criado_em > now() - interval '10 minutes') then v_pode := true;
+                   and a.como = 'aparelho' and a.criado_em > now() - interval '10 minutes') then v_pode := true;
   elsif p_v_atual is not null then
     v_conf := public.sol_pin_conferir(p_v_atual, p_ap);
     v_pode := coalesce((v_conf->>'ok')::boolean, false);
@@ -165,6 +166,24 @@ begin
 end $$;
 revoke all on function public.sol_pin_definir(text, text, text, uuid) from public, anon;
 grant execute on function public.sol_pin_definir(text, text, text, uuid) to authenticated, service_role;
+
+-- 3b) Registro de aparelho (troca a função da 2026-11-07): "primeiro" só quando a conta ainda não tem nenhum aparelho.
+--     Sem isso, quem rouba só a conta Google registraria um aparelho e gastaria as 10 tentativas do PIN (bloqueio do dono).
+--     Aparelho a mais entra pela aprovação (sol_pedido_*), que já registra com como = 'aparelho' ou 'familia'.
+create or replace function public.sol_aparelho_registrar(p_nome text, p_app text, p_como text) returns uuid
+language plpgsql security definer set search_path = '' as $$
+declare v_id uuid;
+begin
+  if auth.uid() is null then raise exception 'entre na conta'; end if;
+  if p_como not in ('primeiro', 'passkey', 'kit') then raise exception 'como'; end if;
+  if p_como = 'primeiro' and exists (select 1 from public.sol_aparelhos a where a.user_id = auth.uid() and a.removido_em is null) then
+    raise exception 'a conta já tem aparelho: este precisa ser aprovado pelo outro';
+  end if;
+  insert into public.sol_aparelhos (user_id, nome, app, como, aprovado_por) values (auth.uid(), p_nome, p_app, p_como, auth.uid()) returning id into v_id;
+  return v_id;
+end $$;
+revoke all on function public.sol_aparelho_registrar(text, text, text) from public, anon;
+grant execute on function public.sol_aparelho_registrar(text, text, text) to authenticated, service_role;
 
 -- 4) Tabelas: sem acesso direto
 revoke all on public.sol_pin_conta, public.sol_aparelho_pin from public, anon, authenticated;
