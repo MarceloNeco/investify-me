@@ -18,7 +18,7 @@ const normCode = (s) => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').
 
 const BETA = '55555555-5555-5555-5555-555555555555';
 PESSOAS[BETA] = { email: 'beta@teste.com', senha: 'senha-de-teste-3', nome: 'Beta Teste', papel: 'membro', codigo: 'MN4BV-7CXZA-QW2ER-9TYUI' };
-Object.assign(db, { money_visao: [], money_chaves: [], money_caixa_chave: [], money_entrada: [], arquivos: {} });
+Object.assign(db, { money_migracao: [], money_visao: [], money_chaves: [], money_caixa_chave: [], money_entrada: [], arquivos: {} });
 const pubs = {}, embrulhadas = {}, log = { beta: [] };
 let CF_RAW = null;
 
@@ -26,7 +26,7 @@ function visao(me) {
   const p = PESSOAS[me]; if (!p) return null;
   if (p.papel === 'chefe') return 'tudo';
   const v = db.money_visao.find((x) => x.user_id === me); if (v) return v.visao;
-  return p.papel === 'responsavel' ? 'tudo' : null;
+  return null;   /* só o chefe é 'tudo' sem linha */
 }
 const vejoTudo = (me) => visao(me) === 'tudo', vejoCasa = (me) => !!visao(me);
 const podeLer = (me, r) => vejoTudo(me) || (r.escopo === 'casa' && vejoCasa(me));
@@ -68,7 +68,13 @@ Object.assign(rpcs, {
   sol_grupo_membros: () => [],
   money_visao: (me) => visao(me),
   money_visoes: (me) => { if (PESSOAS[me].papel !== 'chefe') negado('só o chefe'); return Object.keys(PESSOAS).map((u) => ({ user_id: u, papel: PESSOAS[u].papel, visao: visao(u) })); },
-  money_visao_definir: (me, c) => { if (PESSOAS[me].papel !== 'chefe') negado('só o chefe'); db.money_visao = db.money_visao.filter((x) => x.user_id !== c.p_user); if (c.p_visao) db.money_visao.push({ grupo_id: GID, user_id: c.p_user, visao: c.p_visao }); return true; },
+  money_migracao_concluir: (me) => {
+    if (PESSOAS[me].papel !== 'chefe') negado('só o chefe'); if (!migrado()) negado('sem chaves');
+    if (db.money_docs.some((r) => !r.apagado_em && !String(r.dados_cifrado).startsWith('{"c":1,"m":'))) negado('ainda há registro com a CF');
+    db.money_migracao = [{ grupo_id: GID, concluida_em: base.agora(), por: me }]; return true;
+  },
+  money_visao_definir: (me, c) => { if (PESSOAS[me].papel !== 'chefe') negado('só o chefe');
+    if (c.p_visao === 'casa' && !db.money_migracao.length) negado('Antes de liberar a visão da casa, prepare a família (migração concluída).'); db.money_visao = db.money_visao.filter((x) => x.user_id !== c.p_user); if (c.p_visao) db.money_visao.push({ grupo_id: GID, user_id: c.p_user, visao: c.p_visao }); return true; },
   money_chave_guardar: (me, c) => {
     if (!vejoTudo(me)) negado('só quem vê tudo');
     const v = visao(c.p_user); if (!v) negado('sem visão'); if (c.p_escopo === 'reservado' && v !== 'tudo') negado('a reservada só para quem vê tudo');

@@ -1475,6 +1475,9 @@
         andar(tt('Conferindo', 'Checking'));
         var conf = await this.conferir();
         conf.antes = antes; conf.falhas = falhas; conf.comprovantes = ca;
+        /* só com a conferência limpa o chefe marca a migração como concluída (o banco confere de novo); antes disso, o
+           banco não aceita dar a visão "casa" a ninguém */
+        if (conf.ok && !falhas) { await Conta.rpc('money_migracao_concluir', { p_grupo: gid }); conf.concluida = true; }
         return conf;
       } finally { this.rodando = false; Painel.atualizar(); }
     },

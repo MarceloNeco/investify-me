@@ -90,9 +90,12 @@ const CASA = ['MARCADOR-CASA-DELA', 'MARCADOR-CASA-COND', 'MARCADOR-CASA-CARTAO'
     await A.evaluate(() => MoneyNuvem._teste.Caixa.preparar());
     ok(db.money_caixa_chave.length === 1 && db.money_docs.some((r) => r.id === 'caixa_robo'), 'antes: a caixa do robô de hoje (config|caixa_robo)');
 
+    const cedo = await A.evaluate(async () => { try { await MoneyNuvem.escopos.definir('55555555-5555-5555-5555-555555555555', 'casa'); return 'aceitou'; } catch (e) { return String(e.status || e.code || e.message); } });
+    ok(cedo !== 'aceitou' && !X.visao(BETA), 'o chefe tenta liberar "casa" antes da migração: o servidor recusa (' + cedo + ')');
+
     console.log('2) a migração (Preparar a visão da família)');
     const conf = await A.evaluate(() => MoneyNuvem.escopos.migrar());
-    ok(conf && conf.ok, 'conferência do app: ok (' + JSON.stringify(conf) + ')');
+    ok(conf && conf.ok && conf.concluida && db.money_migracao.length === 1, 'conferência do app: ok, e a migração marcada como concluída (' + JSON.stringify(conf) + ')');
     const vivos = db.money_docs.filter((r) => !r.apagado_em);
     let cf = 0; for (const r of vivos) if (await X.abreComCf(r.dados_cifrado)) cf++;
     ok(cf === 0, 'nenhuma linha viva abre com a CF (' + vivos.length + ' conferidas pelo teste, fora do app)');

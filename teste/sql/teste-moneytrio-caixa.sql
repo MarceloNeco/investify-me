@@ -23,6 +23,10 @@ INSERT INTO t VALUES ('cv_r', public.sol_criar_convite(pg_temp.g(), 'responsavel
 INSERT INTO t VALUES ('cv_m', public.sol_criar_convite(pg_temp.g(), 'membro', 7, 1));
 SELECT pg_temp.quem('b1000000-0000-0000-0000-000000000001'); SELECT public.sol_aceitar_convite((SELECT v FROM t WHERE k='cv_r'), 'Bia');
 SELECT pg_temp.quem('c1000000-0000-0000-0000-000000000001'); SELECT public.sol_aceitar_convite((SELECT v FROM t WHERE k='cv_m'), 'Caio');
+-- com o SQL v4 "escopos", só o chefe vê tudo sem linha: o chefe dá 'tudo' à responsável (como era antes)
+SELECT pg_temp.quem('a1000000-0000-0000-0000-000000000001');
+DO $$ BEGIN IF to_regprocedure('public.money_visao_definir(uuid,uuid,text)') IS NOT NULL THEN
+  PERFORM public.money_visao_definir(pg_temp.g(), 'b1000000-0000-0000-0000-000000000001', 'tudo'); END IF; END $$;
 
 -- 1) autorizar robô
 SELECT pg_temp.quem('f1000000-0000-0000-0000-000000000001');

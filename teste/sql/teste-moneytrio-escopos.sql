@@ -16,7 +16,7 @@ CREATE OR REPLACE FUNCTION pg_temp.emb() RETURNS text LANGUAGE sql AS $$ SELECT 
 CREATE OR REPLACE FUNCTION pg_temp.ana() RETURNS void LANGUAGE sql AS $$ SELECT pg_temp.quem('a4000000-0000-0000-0000-000000000001') $$;
 CREATE OR REPLACE FUNCTION pg_temp.beta() RETURNS void LANGUAGE sql AS $$ SELECT pg_temp.quem('b4000000-0000-0000-0000-000000000001') $$;
 
--- família: Ana chefe, Beta membro (vai ter a visão da casa), Caio responsável (vê tudo, como hoje)
+-- família: Ana chefe, Beta membro (vai ter a visão da casa), Caio responsável (vê tudo só com a linha do chefe)
 SET ROLE authenticated;
 SELECT pg_temp.ana();
 INSERT INTO t VALUES ('g', public.sol_criar_grupo('Família Escopo', 'familia', 'Ana'));
@@ -29,7 +29,12 @@ SELECT pg_temp.quem('c4000000-0000-0000-0000-000000000001'); SELECT public.sol_a
 SELECT pg_temp.ana();
 SELECT pg_temp.ok(public.money_visao(pg_temp.g()) = 'tudo', 'chefe vê tudo');
 SELECT pg_temp.quem('c4000000-0000-0000-0000-000000000001');
-SELECT pg_temp.ok(public.money_visao(pg_temp.g()) = 'tudo', 'responsável sem linha: vê tudo, como hoje');
+SELECT pg_temp.ok(public.money_visao(pg_temp.g()) IS NULL, 'responsável sem linha do chefe: não vê nada (só o chefe é "tudo" sem linha)');
+SELECT pg_temp.ana();
+SELECT pg_temp.ok((SELECT visao FROM public.money_visoes(pg_temp.g()) WHERE user_id = 'c4000000-0000-0000-0000-000000000001') IS NULL, 'na lista do chefe, o responsável sem linha aparece sem visão');
+SELECT pg_temp.ok(public.money_visao_definir(pg_temp.g(), 'c4000000-0000-0000-0000-000000000001', 'tudo'), 'o chefe dá "tudo" ao responsável (antes da migração pode)');
+SELECT pg_temp.quem('c4000000-0000-0000-0000-000000000001');
+SELECT pg_temp.ok(public.money_visao(pg_temp.g()) = 'tudo', 'com a linha do chefe: o responsável vê tudo');
 SELECT pg_temp.beta();
 SELECT pg_temp.ok(public.money_visao(pg_temp.g()) IS NULL, 'membro sem linha: não vê nada do MoneyTRIO');
 DO $$ BEGIN PERFORM public.money_visao_definir(pg_temp.g(), 'b4000000-0000-0000-0000-000000000001', 'tudo'); RAISE EXCEPTION 'FALHOU: membro se deu visão';
@@ -62,10 +67,24 @@ SELECT pg_temp.ok((SELECT count(*) FROM public.money_docs_recifrar(pg_temp.g(), 
   jsonb_build_object('colecao','gastos','id','g2','versao',99,'dados',repeat('N',40))))) = 1, 'recifrar em lote: só a versão certa muda (trava otimista)');
 SELECT pg_temp.ok((SELECT dados_cifrado FROM public.money_docs WHERE grupo_id = pg_temp.g() AND id = 'g1') = repeat('N',40), 'o pacote novo está lá');
 
--- 3) as chaves: CC para ela; CR não
-SELECT public.money_visao_definir(pg_temp.g(), 'b4000000-0000-0000-0000-000000000001', 'casa');
+-- 3) as chaves e a migração concluída; só então a visão da casa
+DO $$ BEGIN PERFORM public.money_visao_definir(pg_temp.g(), 'b4000000-0000-0000-0000-000000000001', 'casa'); RAISE EXCEPTION 'FALHOU: casa antes da migração';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: a visão casa antes da migração concluída é recusada (42501)'; END $$;
+DO $$ BEGIN PERFORM public.money_migracao_concluir(pg_temp.g()); RAISE EXCEPTION 'FALHOU: concluiu sem chaves';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: concluir sem as chaves do MoneyTRIO é recusado'; END $$;
 SELECT pg_temp.ok(public.money_chave_guardar(pg_temp.g(), 'a4000000-0000-0000-0000-000000000001', 'casa', 1, pg_temp.emb()), 'chefe guarda a CC para si');
 SELECT pg_temp.ok(public.money_chave_guardar(pg_temp.g(), 'a4000000-0000-0000-0000-000000000001', 'reservado', 1, pg_temp.emb()), 'chefe guarda a CR para si');
+DO $$ BEGIN PERFORM public.money_migracao_concluir(pg_temp.g()); RAISE EXCEPTION 'FALHOU: concluiu com linha da CF';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: concluir com registro ainda fechado com a CF é recusado'; END $$;
+SELECT pg_temp.ok((SELECT count(*) FROM public.money_docs_recifrar(pg_temp.g(), (SELECT jsonb_agg(jsonb_build_object('colecao', d.colecao, 'id', d.id, 'versao', d.versao,
+  'dados', '{"c":1,"m":"' || CASE WHEN d.id LIKE 'r.%' THEN 'r' ELSE 'c' END || '",' || repeat('M', 40)))
+  FROM public.money_docs d WHERE d.grupo_id = pg_temp.g() AND d.apagado_em IS NULL))) = 4, 'a migração recifra as 4 linhas com as chaves novas');
+SELECT pg_temp.beta();
+DO $$ BEGIN PERFORM public.money_migracao_concluir(pg_temp.g()); RAISE EXCEPTION 'FALHOU: membro concluiu';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: só o chefe conclui a migração'; END $$;
+SELECT pg_temp.ana();
+SELECT pg_temp.ok(public.money_migracao_concluir(pg_temp.g()), 'o chefe conclui a migração (o banco confere: nenhuma linha viva com a CF)');
+SELECT pg_temp.ok(public.money_visao_definir(pg_temp.g(), 'b4000000-0000-0000-0000-000000000001', 'casa'), 'depois da migração concluída: a visão da casa para ela');
 SELECT pg_temp.ok(public.money_chave_guardar(pg_temp.g(), 'b4000000-0000-0000-0000-000000000001', 'casa', 1, pg_temp.emb()), 'chefe guarda a CC para ela');
 DO $$ BEGIN PERFORM public.money_chave_guardar(pg_temp.g(), 'b4000000-0000-0000-0000-000000000001', 'reservado', 1, pg_temp.emb()); RAISE EXCEPTION 'FALHOU: CR para ela';
 EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: a CR nunca vai para quem vê só a casa'; END $$;
@@ -86,6 +105,8 @@ DO $$ BEGIN INSERT INTO public.money_docs (grupo_id, colecao, id, dados_cifrado,
 EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: ela não grava reservado'; END $$;
 UPDATE public.money_docs SET dados_cifrado = '{"c":1,"m":"c",' || repeat('Z', 40) WHERE grupo_id = pg_temp.g() AND id = 'g1';
 SELECT pg_temp.ok((SELECT dados_cifrado FROM public.money_docs WHERE grupo_id = pg_temp.g() AND id = 'g1') = '{"c":1,"m":"c",' || repeat('Z', 40), 'ela edita um lançamento da casa');
+DO $$ BEGIN UPDATE public.money_docs SET id = 'g1b' WHERE grupo_id = pg_temp.g() AND id = 'g1'; RAISE EXCEPTION 'FALHOU: mudou o id';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: o id de um registro não muda'; END $$;
 DO $$ BEGIN UPDATE public.money_docs SET dados_cifrado = '{"c":1,"kv":1,' || repeat('Z', 40) WHERE grupo_id = pg_temp.g() AND id = 'g1';
   RAISE EXCEPTION 'FALHOU: gravou fechado com a CF depois da migração';
 EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: depois das chaves novas, nada fechado com a CF entra'; END $$;

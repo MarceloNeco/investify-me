@@ -4,12 +4,14 @@
 --
 -- !!! NÃO RODAR ANTES DO "PODE APLICAR". Rodar UMA vez no SQL Editor, DEPOIS dos SQLs anteriores do MoneyTRIO
 --     (v1, caixa do robô, correção do robô, arquivos, espelho). É idempotente: rodar de novo não estraga nem duplica.
---     O app de hoje continua funcionando com este SQL aplicado (tudo nasce 'casa' e quem já via tudo continua vendo tudo).
+--     O app de hoje continua funcionando com este SQL aplicado (tudo nasce 'casa'; o chefe continua vendo tudo; um responsável
+--     só vê com uma linha do chefe em money_visao — hoje a família só tem o chefe).
 --
 -- O que muda:
 --   * money_docs ganha escopo ('casa' | 'reservado'); reservado ⇔ id começa com "r." (a chave primária não muda).
---   * money_visao: quem vê o quê. Chefe = 'tudo' sempre; responsável = 'tudo' (como hoje) se o chefe não disser outra coisa;
---     outro membro só com uma linha do chefe ('casa'). money_posso_ver passa a ser "vê tudo" (o robô, o espelho, a caixa
+--   * money_visao: quem vê o quê. Chefe = 'tudo' sempre; QUALQUER outro (responsável inclusive) só com uma linha do chefe
+--     ('tudo' ou 'casa'). 'casa' só depois da migração concluída (money_migracao, gravada pelo chefe no fim da conferência).
+--   * Grupo, coleção, id e escopo de um registro nunca mudam (gatilho money_docs_chave_fixa). money_posso_ver passa a ser "vê tudo" (o robô, o espelho, a caixa
 --     reservada e o resto seguem só para quem vê tudo).
 --   * money_docs: quem tem visão 'casa' lê e grava SÓ escopo casa. As linhas reservadas nem chegam ao aparelho dele.
 --   * money_chaves: as chaves do MoneyTRIO (CC da casa, CR reservada), embrulhadas (RSA-OAEP) para cada pessoa. Cada um lê as
@@ -55,9 +57,9 @@ create or replace function public.money_visao(p_grupo uuid) returns text
 language sql stable security definer set search_path = '' as $$
   select case
     when public.sol_meu_papel(p_grupo) = 'chefe' then 'tudo'
-    when (select v.visao from public.money_visao v where v.grupo_id = p_grupo and v.user_id = (select auth.uid())) is not null
+    -- só o chefe é 'tudo' sem linha; qualquer outro (responsável inclusive) precisa da linha do chefe
+    when public.sol_meu_papel(p_grupo) is not null
       then (select v.visao from public.money_visao v where v.grupo_id = p_grupo and v.user_id = (select auth.uid()))
-    when public.sol_meu_papel(p_grupo) = 'responsavel' then 'tudo'
     else null end;
 $$;
 create or replace function public.money_vejo_tudo(p_grupo uuid) returns boolean
@@ -69,6 +71,34 @@ language sql stable security definer set search_path = '' as $$ select public.mo
 create or replace function public.money_posso_ver(p_grupo uuid) returns boolean
 language sql stable security definer set search_path = '' as $$ select public.money_vejo_tudo(p_grupo); $$;
 
+-- a migração concluída (o app do chefe grava no fim da conferência). Antes dela, ninguém recebe a visão 'casa': tudo em
+-- money_docs nasce 'casa' e fechado com a CF, que o membro também tem.
+create table if not exists public.money_migracao (
+  grupo_id      uuid primary key references public.sol_grupos(id),
+  concluida_em  timestamptz not null default now(),
+  por           uuid references auth.users(id)
+);
+alter table public.money_migracao enable row level security;
+drop policy if exists money_migracao_ler on public.money_migracao;
+create policy money_migracao_ler on public.money_migracao for select to authenticated using (public.sol_meu_papel(grupo_id) is not null);
+create or replace function public.money_migracao_concluir(p_grupo uuid) returns boolean
+language plpgsql security definer set search_path = '' as $$
+begin
+  if public.sol_meu_papel(p_grupo) is distinct from 'chefe' then
+    raise exception 'Só o chefe conclui a preparação da família.' using errcode = '42501';
+  end if;
+  if not exists (select 1 from public.money_chaves k where k.grupo_id = p_grupo) then
+    raise exception 'Ainda não há as chaves do MoneyTRIO.' using errcode = '42501';
+  end if;
+  -- o banco confere também: nenhuma linha viva fechada com a CF, nenhum rastro de apagado com id da casa de antes
+  if exists (select 1 from public.money_docs d where d.grupo_id = p_grupo and d.apagado_em is null and d.dados_cifrado not like '{"c":1,"m":%') then
+    raise exception 'Ainda há registros fechados com a chave antiga.' using errcode = '42501';
+  end if;
+  insert into public.money_migracao (grupo_id, por) values (p_grupo, (select auth.uid()))
+  on conflict (grupo_id) do update set concluida_em = now(), por = excluded.por;
+  return true;
+end $$;
+
 -- o chefe define a visão de um membro (nunca a dele: o chefe vê tudo sempre)
 create or replace function public.money_visao_definir(p_grupo uuid, p_user uuid, p_visao text) returns boolean
 language plpgsql security definer set search_path = '' as $$
@@ -77,6 +107,9 @@ begin
     raise exception 'Só o chefe da família define quem vê o quê no MoneyTRIO.' using errcode = '42501';
   end if;
   if p_visao not in ('tudo', 'casa') then raise exception 'Visão: tudo ou casa.' using errcode = '22023'; end if;
+  if p_visao = 'casa' and not exists (select 1 from public.money_migracao g where g.grupo_id = p_grupo) then
+    raise exception 'Antes de liberar a visão da casa, prepare a família (migração concluída).' using errcode = '42501';
+  end if;
   if not exists (select 1 from public.sol_grupo_membros m where m.grupo_id = p_grupo and m.user_id = p_user and m.status = 'ativo') then
     raise exception 'Essa pessoa não é membro ativo da família.' using errcode = '22023';
   end if;
@@ -93,8 +126,7 @@ create or replace function public.money_visoes(p_grupo uuid) returns table (user
 language sql stable security definer set search_path = '' as $$
   select m.user_id, m.papel,
          case when m.papel = 'chefe' then 'tudo'
-              else coalesce((select v.visao from public.money_visao v where v.grupo_id = p_grupo and v.user_id = m.user_id),
-                            case when m.papel = 'responsavel' then 'tudo' end) end
+              else (select v.visao from public.money_visao v where v.grupo_id = p_grupo and v.user_id = m.user_id) end
     from public.sol_grupo_membros m
    where m.grupo_id = p_grupo and m.status = 'ativo' and m.user_id is not null and public.money_vejo_tudo(p_grupo);
 $$;
@@ -190,8 +222,7 @@ begin
     raise exception 'Essa pessoa não é membro ativo da família.' using errcode = '22023';
   end if;
   select case when m.papel = 'chefe' then 'tudo'
-              else coalesce((select v.visao from public.money_visao v where v.grupo_id = p_grupo and v.user_id = p_user),
-                            case when m.papel = 'responsavel' then 'tudo' end) end
+              else (select v.visao from public.money_visao v where v.grupo_id = p_grupo and v.user_id = p_user) end
     into v_dela from public.sol_grupo_membros m where m.grupo_id = p_grupo and m.user_id = p_user and m.status = 'ativo';
   if v_dela is null then raise exception 'Essa pessoa ainda não tem visão no MoneyTRIO.' using errcode = '42501'; end if;
   if p_escopo = 'reservado' and v_dela <> 'tudo' then
@@ -202,6 +233,20 @@ begin
   on conflict do nothing;
   return found;
 end $$;
+
+-- grupo, coleção, id e escopo de uma linha nunca mudam: mudar de escopo é apagar num e criar no outro (com outro id)
+create or replace function public.money_docs_chave_fixa() returns trigger
+language plpgsql set search_path = '' as $$
+begin
+  if new.grupo_id is distinct from old.grupo_id or new.colecao is distinct from old.colecao
+     or new.id is distinct from old.id or new.escopo is distinct from old.escopo then
+    raise exception 'Grupo, coleção, id e escopo de um registro não mudam.' using errcode = '42501';
+  end if;
+  return new;
+end $$;
+drop trigger if exists money_docs_chave_fixa on public.money_docs;
+create trigger money_docs_chave_fixa before update on public.money_docs for each row execute function public.money_docs_chave_fixa();
+revoke all on function public.money_docs_chave_fixa() from public, anon, authenticated;
 
 -- depois que a família tem as chaves do MoneyTRIO (a migração), o banco só aceita registro fechado com elas
 -- ('{"c":1,"m":…'): um aparelho ou app antigo nunca mais grava nada fechado com a CF (que o membro "casa" também tem)
@@ -370,6 +415,8 @@ create policy money_arquivos_apagar on storage.objects for delete to authenticat
 -- -------------------------------------------------------------------------------------
 revoke all on public.money_visao from public, anon;
 grant select on public.money_visao to authenticated;
+revoke all on public.money_migracao from public, anon;
+grant select on public.money_migracao to authenticated;
 revoke all on public.money_chaves from public, anon;
 grant select on public.money_chaves to authenticated;
 do $$
@@ -378,7 +425,7 @@ begin
   foreach f in array array['money_visao(uuid)', 'money_vejo_tudo(uuid)', 'money_vejo_casa(uuid)', 'money_posso_ver(uuid)',
     'money_visao_definir(uuid, uuid, text)', 'money_visoes(uuid)', 'money_reservar_apagar(uuid, text, text[])',
     'money_chave_guardar(uuid, uuid, text, integer, text)', 'money_entrada_consumir(uuid, text[])', 'money_robo_depositar(uuid, jsonb)',
-    'money_entrada_limpar(uuid)', 'money_arquivo_posso(text)', 'money_arquivo_apagar_posso(text)', 'money_arquivo_grupo(text)', 'money_docs_recifrar(uuid, jsonb)'] loop
+    'money_entrada_limpar(uuid)', 'money_migracao_concluir(uuid)', 'money_arquivo_posso(text)', 'money_arquivo_apagar_posso(text)', 'money_arquivo_grupo(text)', 'money_docs_recifrar(uuid, jsonb)'] loop
     execute format('revoke all on function public.%s from public, anon', f);
     execute format('grant execute on function public.%s to authenticated, service_role', f);
   end loop;
@@ -393,6 +440,8 @@ union all select 'money_chaves', to_regclass('public.money_chaves') is not null
 union all select 'money_entrada.escopo', exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'money_entrada' and column_name = 'escopo')
 union all select 'caixa por escopo', exists (select 1 from pg_catalog.pg_constraint c where c.conrelid = 'public.money_caixa_chave'::regclass and c.conname = 'money_caixa_chave_pkey' and pg_catalog.array_length(c.conkey, 1) = 2)
 union all select 'comprovantes: apagar só quem vê tudo', exists (select 1 from pg_catalog.pg_policies p where p.schemaname = 'storage' and p.tablename = 'objects' and p.policyname = 'money_arquivos_apagar')
+union all select 'migração concluída antes da visão casa', to_regclass('public.money_migracao') is not null
+union all select 'grupo, coleção, id e escopo fixos', exists (select 1 from pg_catalog.pg_trigger t where t.tgname = 'money_docs_chave_fixa')
 union all select 'só chave nova depois da migração', exists (select 1 from pg_catalog.pg_trigger t where t.tgname = 'money_docs_so_chave_nova')
 union all select 'RLS docs por escopo', exists (select 1 from pg_catalog.pg_policies p where p.tablename = 'money_docs' and p.policyname = 'money_docs_ler' and p.qual like '%escopo%');
 

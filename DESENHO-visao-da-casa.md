@@ -52,13 +52,19 @@ Duas chaves novas, só do MoneyTRIO, aleatórias (AES-256-GCM, como a CF). **A C
 - **Visão por pessoa:** tabela `money_visao (grupo_id, user_id, visao 'tudo'|'casa', definido_por, em)` e função
   `money_visao(grupo) → 'tudo' | 'casa' | null`:
   - o chefe é sempre `tudo`;
-  - um responsável que já existe continua `tudo` (como hoje);
+  - qualquer outro (responsável inclusive) só com uma linha explícita do chefe;
   - para os outros, só vale uma linha explícita gravada pelo chefe.
 - **RLS em money_docs:**
   - **ler:** `money_visao(g) = 'tudo' or (money_visao(g) = 'casa' and escopo = 'casa')`. As linhas reservadas **nem chegam** ao aparelho
     dela: não há contagem, nem id, nem tombstone.
-  - **criar e mudar:** a mesma regra. Um gatilho impede mudar o escopo de uma linha; quem tem `casa` só grava `casa`. Mover de escopo
-    = apagar num escopo e criar no outro.
+  - **criar e mudar:** a mesma regra. O gatilho `money_docs_chave_fixa` impede mudar grupo, coleção, id e escopo de uma linha; o check
+    (escopo reservado ⇔ id `r.`) amarra o escopo ao id. Quem tem `casa` só grava `casa`. Mover de escopo = apagar num escopo e criar no
+    outro.
+  - **só chave nova:** depois que a família tem as chaves do MoneyTRIO, o gatilho `money_docs_so_chave_nova` recusa registro fechado
+    com a CF (um aparelho ou app antigo nunca vaza).
+- **Só o chefe é `tudo` sem linha.** Qualquer outro, responsável inclusive, precisa de uma linha do chefe em `money_visao`.
+- **Visão `casa` só depois da migração concluída** (`money_migracao`, gravada pelo chefe com `money_migracao_concluir`, que confere
+  que nenhuma linha viva está com a CF). Antes disso `money_visao_definir(…, 'casa')` dá 42501.
 - **Papel dela na plataforma:** `membro`, não `responsavel`. Assim ela não guarda chaves para outros nem aprova pela família. No
   MoneyTRIO, quem decide é `money_visao`. A pergunta sobre o OmniLifeONE (o que ela vê lá) está no item 9.
 
