@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.10.1 · 11/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.11.0 · 11/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -29,6 +29,14 @@
       extraível do navegador) abre com internet e acompanha a troca de PIN feita em outro aparelho. Migração dos PINs antigos.
   11. 1.10.1 — as telas da nuvem (.nv-portao, .nv-painel) com overscroll-behavior:contain: o fim da rolagem não passa para a
       página de trás (a trava do fundo é o html:has(#nvPortao / .nv-painel) do estilo.css 3.63).
+  12. 1.11.0 (3.64) — CAIXA DO ROBÔ: "IRPF…" marca o IR (antes só "sim"; o texto fica em irTexto); só os tipos conhecidos viram
+      lançamento ('saldo' vai para modulos/saldo-banco.js; tipo desconhecido é ignorado e anotado); estorno = valor negativo na
+      categoria do gasto de origem (120 dias; os antigos "Renda · Estorno" migram uma vez); confianca 'palpite'/'desconhecido'
+      marca para conferir só o lançamento NOVO; para_quem; o apelido do extrato → a pessoa do cadastro (modulos/pessoas.js); gasto
+      que o robô reclassifica como transferência/fatura sai do livro (editado: sugestão em Revisar).
+      PLANILHA ESPELHO (Espelho; supabase/2026-11-11b-moneytrio-espelho.sql): fila no IndexedDB fechada com a CF, pacote
+      ECDH P-256 + HKDF + AES-GCM para a chave do robô, lotes de 200; sem permissão ou sem a chave do robô, a fila espera.
+      Nuvem.membros(): os membros da família (sol_grupo_membros) para o cadastro de pessoas.
    6. Tranca sozinho: 15 min sem uso (avisa 1 min antes) ou 10 min fora do app; nunca no meio de um trabalho; sem recarregar.
    Nunca grava nada de finanças em claro: o localStorage 'investifyme.dados.v1' (do app principal) só é LIDO, para
    oferecer "levar para a nuvem". Só a URL e a publishable key do Supabase ficam aqui (públicas por desenho).
@@ -39,7 +47,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.10.1';
+  var VERSAO = '1.11.0';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -1162,10 +1170,18 @@
   var Caixa = {
     ligada: null, sk: null, kid: '', erros: new Set(), ultimos: null,
     /* transforma o lançamento do robô no formato do BudgetONE. null = não vira lançamento (transferência, fatura) */
+    /* 1.11.0: só estes tipos viram lançamento; 'saldo' vai para a conferência; qualquer outro é ignorado (e anotado), nunca vira gasto */
+    TIPOS: { '': 1, despesa: 1, receita: 1, transferencia: 1, fatura: 1, saldo: 1 },
+    desconhecidos: [],
+    irDe: function (ir) {
+      if (ir === true) return true;
+      var t = String(ir == null ? '' : ir).trim();
+      return /^irpf/i.test(t) || /^(s|sim|y|yes|1|true)$/i.test(t);
+    },
     converter: function (l) {
       if (!l || typeof l !== 'object' || !l.id) throw new Error('sem id');
       var tipo = String(l.tipo || '').toLowerCase();
-      if (tipo === 'transferencia' || tipo === 'fatura') return null;
+      if (tipo === 'transferencia' || tipo === 'fatura' || tipo === 'saldo' || !this.TIPOS[tipo]) return null;
       var valor = Number(l.valor); if (!isFinite(valor) || valor === 0) throw new Error('valor');
       var G = typeof GRUPOS !== 'undefined' ? GRUPOS : {}, grupoRobo = String(l.grupo || '').toUpperCase().trim();
       var g = {
@@ -1178,13 +1194,21 @@
         quem: String(l.quem || '').trim(),
         forma: String(l.forma || '').trim(),
         conta: String(l.banco || '').trim(),
-        irpf: l.ir === true || /^(s|sim|y|yes|1|true)$/i.test(String(l.ir || '')),
+        /* 1.11.0: o robô manda "IRPF", "IRPF (saúde…)"; antes só "sim" valia e nada chegava marcado para o IR */
+        irpf: this.irDe(l.ir),
         per: typeof PERIODICIDADES !== 'undefined' && PERIODICIDADES[l.freq] ? l.freq : 'Pontual',
         origem: 'robo',
         origemRobo: String(l.origem || '').slice(0, 40),
         idRobo: String(l.id)
       };
       if (l.cat_pluggy) g.catPluggy = String(l.cat_pluggy).slice(0, 80);
+      var irT = String(l.ir == null || l.ir === true ? '' : l.ir).trim();
+      if (irT && !/^(s|sim|y|yes|1|true|n|nao|não|no|0|false)$/i.test(irT)) g.irTexto = irT.slice(0, 120);   /* a anotação do IR do robô */
+      if (g.desc) g.descRobo = g.desc.slice(0, 160);                                    /* o texto original do extrato (regra do espelho) */
+      if (l.conta) g.contaRobo = String(l.conta).trim().slice(0, 80);                   /* a conta do banco (conferência do saldo) */
+      if (l.para_quem) g.paraQuem = String(l.para_quem).trim().slice(0, 80);
+      var conf = String(l.confianca || '').toLowerCase();
+      if (conf === 'palpite' || conf === 'desconhecido') g.confianca = conf;            /* sem o campo = dado antigo, não é palpite */
       if (tipo === 'receita') g.grupo = 'RENDA';
       /* 3.39 (N24): Renda · Rescisão e Renda · FGTS (separado) */
       if (g.grupo === 'RENDA' && valor > 0) {
@@ -1193,22 +1217,77 @@
         else if (/rescis/i.test(txt)) g.sub = 'Rescisão';
       }
       else if (tipo === 'despesa' && g.grupo === 'RENDA') g.grupo = 'OUTROS';
-      /* estorno (valor negativo): entra como dinheiro que voltou, marcado para revisar (o app não tem "estorno") */
-      if (valor < 0) { g.desc = '↩ ' + tt('Estorno', 'Refund') + (g.sub ? ' · ' + g.sub : '') + (g.desc ? ' · ' + g.desc : ''); g.sub = tt('Estorno', 'Refund'); g.grupo = 'RENDA'; g.revisar = true; }
+      /* 1.11.0: estorno (valor negativo) = lançamento NEGATIVO na categoria do gasto de origem, na data em que aconteceu;
+         abate o "Para onde foi" e não conta como renda */
+      if (valor < 0) this.estornar(g);
       if (g.grupo === 'OUTROS') g.revisar = true;
       /* cartão: pelo final */
       var fim = String(l.final || '').replace(/\D/g, '').slice(-4);
       if (fim) { var ca = (Store.estado.cartoes || []).find(function (c) { return String(c.final || '').replace(/\D/g, '').slice(-4) === fim; }); if (ca) g.cartaoId = ca.id; }
       if (l.cartao) g.cartaoNome = String(l.cartao).slice(0, 60);
       try { if (g.forma && typeof Banco !== 'undefined' && Banco.formaDoTextoAntigo) g.formaId = Banco.formaDoTextoAntigo(g.forma); } catch (e) {}
+      if (window.Pessoas) Pessoas.ligarTudo(g);   /* "Neco" → a pessoa do cadastro (o mesmo nome que o lançamento guardado tem) */
       return g;
+    },
+    idDe: function (l) { return 'rb_' + String(l.id).replace(/[^A-Za-z0-9_.:@-]/g, '_').slice(0, 70); },
+    /* sem edição da pessoa: sai do livro (vira só a movimentação entre contas, que não conta no "Para onde foi");
+       editado pela pessoa: fica, com a sugestão em Revisar ("o robô diz que isto é transferência") */
+    virouTransferencia: function (ja, tp) {
+      if (!ja || ja.fluxo === 'entrada' && tp === 'fatura') return '';
+      if (ja.editadoPessoa) {
+        if (ja.roboSugeriu && ja.roboSugeriu.tipo === tp) return '';
+        ja.roboSugeriu = { tipo: tp }; ja.revisar = true; return 'sugerido';
+      }
+      Gasto.excluir(ja.id); Gasto._idx = null;
+      return 'removido';
+    },
+    /* acha o gasto de origem: mesma descrição e mesmo valor (ou maior, estorno parcial) nos 120 dias antes */
+    origemDoEstorno: function (g, lista) {
+      var alvo = Math.abs(g.valor), d0 = g.data ? new Date(Date.parse(g.data) - 120 * 86400000).toISOString().slice(0, 10) : '';
+      var norm = function (t) { return window.Profissionais ? Profissionais.norm(t) : String(t || '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); };
+      var w = norm(String(g.desc || '').replace(/^↩\s*/, '')), melhor = null;
+      if (!w.length) return null;
+      (lista || Store.estado.gastos || []).forEach(function (o) {
+        if (o.id === g.id || o.estorno || o.fluxo === 'entrada' || !(Number(o.valor) > 0) || Number(o.valor) + 0.005 < alvo) return;
+        if (g.data && o.data && (o.data > g.data || o.data < d0)) return;
+        var nota = window.Profissionais ? Profissionais.parecido(w, norm(o.descRobo || o.desc)) : (norm(o.descRobo || o.desc).join(' ') === w.join(' ') ? 1 : 0);
+        if (nota < 0.6) return;
+        var pontos = nota + (Math.abs(Number(o.valor) - alvo) < 0.005 ? 1 : 0) + (o.data || '') / 1e9;
+        if (!melhor || pontos > melhor.pontos) melhor = { o: o, pontos: pontos };
+      });
+      return melhor ? melhor.o : null;
+    },
+    estornar: function (g, lista) {
+      g.estorno = true; g.valor = -Math.abs(g.valor);
+      var o = this.origemDoEstorno(g, lista);
+      if (o) { g.grupo = o.grupo; g.sub = o.sub; g.estornoDe = o.id; if (o.paraQuem && !g.paraQuem) g.paraQuem = o.paraQuem; if (o.irpf) g.irpf = true; }
+      else if (g.grupo === 'RENDA' || !g.grupo) { g.grupo = 'OUTROS'; g.revisar = true; }   /* sem origem: a categoria que o robô mandou */
+      if (!/^↩/.test(g.desc)) g.desc = '↩ ' + g.desc;
+      return g;
+    },
+    /* os estornos de antes (viravam Renda · Estorno) que a pessoa não editou: uma vez */
+    migrarEstornos: function () {
+      var ST = Store.estado, cfg = (ST.config = ST.config || {}); if (cfg.estornosV) return 0;
+      var n = 0, self = this;
+      (ST.gastos || []).forEach(function (g) {
+        if (g.origem !== 'robo' || g.editadoPessoa || g.estorno || g.grupo !== 'RENDA' || !/^↩/.test(String(g.desc || ''))) return;
+        var resto = String(g.desc).replace(/^↩\s*(Estorno|Refund)\s*·?\s*/i, '');
+        var x = Object.assign({}, g, { desc: resto, grupo: 'OUTROS', sub: '' });
+        self.estornar(x, ST.gastos);
+        if (!x.estornoDe) { x.sub = 'Estorno'; }
+        Gasto.atualizar(g.id, { estorno: true, valor: x.valor, grupo: x.grupo, sub: x.sub, desc: x.desc, estornoDe: x.estornoDe || undefined, revisar: !x.estornoDe });
+        n++;
+      });
+      cfg.estornosV = 1;
+      return n;
     },
     /* o robô mandou de novo um lançamento que já existe (correção).
        A pessoa não mexeu nele: atualiza. A pessoa editou: a edição dela vence; guarda o que o robô
        sugeriu (roboSugeriu) e marca para conferir, para ela decidir. Devolve 'corrigido', 'sugerido' ou ''. */
-    CAMPOS_ROBO: ['data', 'valor', 'grupo', 'sub', 'desc', 'quem', 'forma', 'conta', 'irpf', 'per', 'cartaoId', 'cartaoNome', 'formaId', 'catPluggy', 'origemRobo'],
+    CAMPOS_ROBO: ['data', 'valor', 'grupo', 'sub', 'desc', 'quem', 'forma', 'conta', 'irpf', 'per', 'cartaoId', 'cartaoNome', 'formaId', 'catPluggy', 'origemRobo', 'irTexto', 'estorno'],
     corrigir: function (ja, g) {
       var muda = {}, n = 0;
+      if (g.paraQuem && g.paraQuem !== ja.paraQuem) { muda.paraQuem = g.paraQuem; n++; }   /* "para_quem" só quando o robô manda */
       this.CAMPOS_ROBO.forEach(function (k) {
         var a = ja[k] == null ? '' : ja[k], b = g[k] == null ? '' : g[k];
         if (JSON.stringify(a) !== JSON.stringify(b)) { muda[k] = g[k]; n++; }
@@ -1252,6 +1331,7 @@
       this._rodando = true;
       try {
         if (!(await this.preparar())) return;
+        if (this.migrarEstornos()) Store.salvar();   /* 1.11.0: uma vez */
         var rows = await Conta.rest('GET', 'money_entrada?grupo_id=eq.' + Sinc.gid + '&consumido_em=is.null&select=id,pacote,origem&order=criado_em.asc&limit=200');
         if (!rows || !rows.length) return;
         var ST = Store.estado, ids = {}, novos = 0, ignorados = 0, corrigidos = 0, sugeridos = 0, transf = 0, prontos = [], mudou = false;
@@ -1259,14 +1339,30 @@
         for (var i = 0; i < rows.length; i++) {
           var l;
           try { l = await Cifra.abrirPacote(this.sk, rows[i].pacote); } catch (e) { this.erros.add(rows[i].id); continue; }   /* não abre com esta chave: fica na caixa */
-          if (l && String(l.tipo || '').toLowerCase() === 'transferencia' && typeof Transferencia !== 'undefined') {
+          var tp = l ? String(l.tipo || '').toLowerCase() : '';
+          if (tp === 'saldo') {                    /* 1.11.0: a conferência com o saldo do banco; nunca vira lançamento */
+            if (window.SaldoBanco && SaldoBanco.receber(l)) mudou = true; else ignorados++;
+            prontos.push(rows[i].id); continue;
+          }
+          if (l && !this.TIPOS[tp]) {              /* tipo que este app não conhece: anota e deixa de lado */
+            this.desconhecidos.push({ tipo: tp.slice(0, 30), id: String(l.id || '').slice(0, 80), em: new Date().toISOString() });
+            if (this.desconhecidos.length > 50) this.desconhecidos.shift();
+            console.warn('nuvem: caixa do robô — tipo desconhecido ignorado:', tp);
+            ignorados++; prontos.push(rows[i].id); continue;
+          }
+          /* 1.11.0: um gasto já entregue que o robô agora diz ser transferência ou fatura: não conta em dobro */
+          if (l && (tp === 'transferencia' || tp === 'fatura') && ids[this.idDe(l)]) {
+            var rv = this.virouTransferencia(ids[this.idDe(l)], tp);
+            if (rv === 'removido') { delete ids[this.idDe(l)]; corrigidos++; mudou = true; } else if (rv === 'sugerido') { sugeridos++; mudou = true; }
+          }
+          if (l && tp === 'transferencia' && typeof Transferencia !== 'undefined') {
             var rt = Transferencia.receber(l, true); if (rt) { mudou = true; transf++; } else ignorados++;
             prontos.push(rows[i].id); continue;
           }
           var g; try { g = this.converter(l); } catch (e) { this.erros.add(rows[i].id); continue; }
           if (g === null) { ignorados++; prontos.push(rows[i].id); continue; }
           var ja = ids[g.id];
-          if (!ja) { ids[g.id] = Gasto.add(g); novos++; }
+          if (!ja) { if (g.confianca) g.revisar = true; ids[g.id] = Gasto.add(g); novos++; }   /* palpite só marca para conferir quando é NOVO */
           else {                                  /* 3.39 (N24): o robô corrigiu um lançamento que já existe */
             var r = this.corrigir(ja, g);
             if (r === 'corrigido') corrigidos++; else if (r === 'sugerido') sugeridos++;
@@ -1290,6 +1386,83 @@
         if (rows.length === 200) setTimeout(function () { Caixa.esvaziar(); }, 1500);
       } catch (e) { console.warn('nuvem: caixa do robô', e); }
       finally { this._rodando = false; Painel.atualizar(); }
+    }
+  };
+
+
+  /* ---------------- 1.11.0: planilha espelho (o app manda as edições da pessoa para o robô) ----------------
+     Contrato v1 (supabase/2026-11-11b-moneytrio-espelho.sql; vetor em teste/espelho/vetor-espelho.json):
+       ECDH P-256 efêmero × a chave pública do robô (money_espelho_chave_de) → 32 bytes → HKDF-SHA256 (sal 32 zeros,
+       info "money-espelho-v1|" + grupo) → AES-256-GCM (iv 12 bytes, AAD = grupo); {"v":1,"epk":{x,y},"iv","ct"}.
+     A fila fica no IndexedDB FECHADA com a chave da família (nada de finanças em claro); um registro por lançamento
+     (a última edição vale). Vai em lotes de até 200 quando há internet. Sem permissão (não é chefe nem responsável)
+     ou sem a chave do robô: a fila espera, sem insistir. */
+  var Espelho = {
+    ligado: null, problema: '', enviados: 0, _rodando: false,
+    k: function () { return 'espelho|' + Sinc.gid; },
+    fila: async function () { return (await IDB.get('kv', this.k()).catch(function () { return null; })) || []; },
+    pendentes: async function () { return Sinc.gid ? (await this.fila()).length : 0; },
+    /* texto aberto → pacote fechado para o robô (opt.efemera = JWK com d, opt.iv = 12 bytes: só para o teste do vetor) */
+    selar: async function (texto, jwkRobo, gid, opt) {
+      opt = opt || {};
+      var pub = await crypto.subtle.importKey('jwk', { kty: 'EC', crv: 'P-256', x: jwkRobo.x, y: jwkRobo.y, ext: true }, { name: 'ECDH', namedCurve: 'P-256' }, false, []);
+      var ef = opt.efemera
+        ? { privateKey: await crypto.subtle.importKey('jwk', Object.assign({ kty: 'EC', crv: 'P-256', ext: true }, opt.efemera), { name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveBits']),
+            pub: { x: opt.efemera.x, y: opt.efemera.y } }
+        : await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+      if (!ef.pub) { var j = await crypto.subtle.exportKey('jwk', ef.publicKey); ef.pub = { x: j.x, y: j.y }; }
+      var seg = await crypto.subtle.deriveBits({ name: 'ECDH', public: pub }, ef.privateKey, 256);
+      var base = await crypto.subtle.importKey('raw', seg, 'HKDF', false, ['deriveKey']);
+      var chave = await crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(32), info: utf8('money-espelho-v1|' + gid) }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+      var iv = opt.iv || crypto.getRandomValues(new Uint8Array(12));
+      var ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv, additionalData: utf8(gid) }, chave, utf8(texto));
+      return JSON.stringify({ v: 1, epk: { x: ef.pub.x, y: ef.pub.y }, iv: b64(iv), ct: b64(ct) });
+    },
+    /* guarda a edição (fechada com a CF) e tenta mandar */
+    enfileirar: async function (obj) {
+      if (!Sinc.gid || !Cadeado.aberto() || !obj || !obj.id) return false;
+      var f = await this.fila(), cif = await Cadeado.selar(JSON.stringify(obj));
+      f = f.filter(function (x) { return x.id !== obj.id; }); f.push({ id: obj.id, cif: cif });
+      await IDB.set('kv', this.k(), f);
+      var self = this; setTimeout(function () { self.enviar(); }, 0);
+      return true;
+    },
+    enviar: async function () {
+      if (this._rodando || !navigator.onLine || !Sinc.gid || !Conta.on() || !Cadeado.aberto()) return 0;
+      this._rodando = true;
+      try {
+        var f = await this.fila(); if (!f.length) return 0;
+        var jwk;
+        try { jwk = await Conta.rpc('money_espelho_chave_de', { p_grupo: Sinc.gid }); }
+        catch (e) {
+          if (e.status === 404 || /schema cache|PGRST20/i.test(e.message + ' ' + e.code)) { this.ligado = false; this.problema = 'semsql'; return 0; }
+          if (e.code === '42501' || e.status === 403) { this.problema = 'sempermissao'; return 0; }
+          throw e;
+        }
+        this.ligado = true;
+        if (!jwk || !jwk.x) { this.problema = 'semchave'; return 0; }   /* o robô ainda não publicou a chave dele */
+        var n = 0;
+        while (f.length) {
+          var lote = f.slice(0, 200), pacotes = [], ids = [];
+          for (var i = 0; i < lote.length; i++) {
+            var aberto = await Cadeado.abrir(lote[i].cif);
+            if (aberto) { pacotes.push(await this.selar(JSON.stringify(aberto), jwk, Sinc.gid)); }
+            ids.push(lote[i].id);
+          }
+          if (pacotes.length) {
+            try { await Conta.rpc('money_espelho_depositar', { p_grupo: Sinc.gid, p_pacotes: pacotes }); }
+            catch (e) { if (e.code === '42501' || e.status === 403) { this.problema = 'sempermissao'; break; } throw e; }
+          }
+          n += pacotes.length;
+          var atual = await this.fila();                      /* o que mudou enquanto mandava fica para a próxima */
+          var mandados = {}; lote.forEach(function (x) { mandados[x.id] = x.cif; });
+          f = atual.filter(function (x) { return mandados[x.id] !== x.cif; });
+          await IDB.set('kv', this.k(), f);
+        }
+        if (n) { this.problema = ''; this.enviados += n; }
+        return n;
+      } catch (e) { console.warn('nuvem: espelho', e); return 0; }
+      finally { this._rodando = false; }
     }
   };
 
@@ -2003,6 +2176,14 @@
 
   var Nuvem = {
     ponte: { marcarLido: function (id) { return Ponte.marcarLido(id); } },
+    /* 1.11.0: planilha espelho e os membros da família (para o cadastro de pessoas) */
+    espelho: { enfileirar: function (o) { return Espelho.enfileirar(o); }, enviar: function () { return Espelho.enviar(); },
+      pendentes: function () { return Espelho.pendentes(); }, selar: function (t, j, g, o) { return Espelho.selar(t, j, g, o); },
+      estado: function () { return { ligado: Espelho.ligado, problema: Espelho.problema, enviados: Espelho.enviados, ativo: !!(Sinc.gid && Cadeado.aberto()) }; } },
+    membros: async function () {
+      if (!Sinc.gid || !Conta.on()) return [];
+      try { return (await Conta.rest('GET', 'sol_grupo_membros?grupo_id=eq.' + Sinc.gid + '&status=eq.ativo&select=id,user_id,perfil_id,apelido,papel')) || []; } catch (e) { return []; }
+    },
     arquivos: Arquivos,
     iniciado: false, familia: null, podeLevar: false,
     /* 3.32: o nome da pessoa no topo (no lugar de "Dono da carteira"): nome do perfil SolverONE (user_settings.display_name),
@@ -2171,6 +2352,7 @@
         if (this._voltas % 3 === 1) { await this.conferirPapel(); await Ponte.buscar(); if (this._voltas > 1) await Aparelhos.aoAbrir(); }
         Aparelhos.olharPedidos();   /* 1.9.0: pedido de acesso de um aparelho novo (meu ou da família) */
         Caixa.esvaziar();
+        Espelho.enviar();   /* 1.11.0: o que ficou na fila do espelho (sem internet, chave do robô ainda não publicada) */
       } catch (e) { console.warn('nuvem: busca', e); }
       finally { this._buscando = false; Painel.atualizar(); }
     },
@@ -2258,7 +2440,7 @@
       lsDel(K_FAM);
     },
     /* para os testes automáticos (teste/nuvem.js): as peças, sem estado aberto */
-    _teste: { Pin: Pin, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao }
+    _teste: { Pin: Pin, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao, Espelho: Espelho }
   };
   function nomeConta() { var s = Conta.ler() || {}, d = Conta.dados(s.access_token).user_metadata || {}; return String(s.nome || d.full_name || d.name || '').trim() || String(Conta.email() || '').split('@')[0]; }
   function confirmar(t) { try { return window.confirm(t); } catch (e) { return false; } }

@@ -262,7 +262,7 @@ let BASE = '';
     const [cv1, cv2, cv3, cv4] = res.conv;
     ok(cv1.grupo === 'HABITACAO' && cv1.sub === 'Supermercado' && cv1.valor === 123.45 && cv1.id === 'rb_pluggy-teste-0001' && cv1.origem === 'robo', 'despesa do robô vira lançamento do BudgetONE');
     ok(cv2.grupo === 'RENDA' && cv2.irpf === true && cv2.per === 'Mensal', 'receita vai para Renda, com IR e frequência');
-    ok(cv3.grupo === 'RENDA' && cv3.valor === 40 && cv3.revisar === true && /Estorno/.test(cv3.desc), 'estorno (valor negativo) entra como dinheiro que voltou, marcado para revisar');
+    ok(cv3.grupo === 'LAZER' && cv3.sub === 'Restaurante' && cv3.valor === -40 && cv3.estorno === true && /^↩/.test(cv3.desc), 'estorno (valor negativo, 3.64): lançamento negativo na categoria (sem o original aqui, a que o robô mandou), não é renda');
     ok(cv4 === null, 'transferência não vira lançamento');
     await pu.context().close();
 
@@ -334,7 +334,7 @@ let BASE = '';
     await A.evaluate(() => MoneyNuvem._teste.Ponte.buscar());
     await A.waitForFunction(() => (Store.estado.ponte_omnilife || []).length === 1, null, { timeout: 5000 }).catch(() => {});
     for (let i = 0; i < 20 && !ponte[1].lido_em; i++) await esperar(100);
-    const sd = await A.evaluate(() => ({ pl: (Store.estado.saude_planos || []).map((x) => x.operadora + ':' + x.membros.join('+')), pr: (Store.estado.profissionais || []).map((x) => [x.nome, x.grupo, x.quem, x.irpf].join('|')) }));
+    const sd = await A.evaluate(() => ({ pl: (Store.estado.saude_planos || []).map((x) => x.operadora + ':' + x.membros.join('+')), pr: (Store.estado.profissionais || []).map((x) => [x.nome, x.grupo, x.paraQuem || x.quem, x.irpf].join('|')) }));
     ok(sd.pl.join() === 'Amil:Bia+Alex' && sd.pr.join() === 'Dra. Carla Mendes|SAUDE|Bia|true', 'ponte: o resumo mais novo do OmniLifeONE preenche o plano (Amil: Bia+Alex) e o médico vira profissional conhecido (' + JSON.stringify(sd) + ')');
     ok(ponte[0].lido_em && ponte[1].lido_em && !ponte[2].lido_em, 'ponte: as duas mensagens abertas ficam lidas; a que não abre com a chave desta família fica na caixa, sem aplicar');
     await esperar(1200); await filaVazia(A);
@@ -584,7 +584,7 @@ let BASE = '';
       await pg.click('#nvFechar');
       ok(pg.erros.length === 0, nm + ': nenhum erro de página (' + pg.erros.length + ')');
     }
-    const sem = chamadas.filter((c) => /\/rest\/v1\/(?!rpc|money_|omni_chave_privada|user_settings)/.test(c));
+    const sem = chamadas.filter((c) => /\/rest\/v1\/(?!rpc|money_|omni_chave_privada|user_settings|sol_grupo_membros)/.test(c));
     ok(sem.length === 0, 'só chama as tabelas previstas (' + sem.slice(0, 3).join(', ') + ')');
   } catch (e) {
     falhas++; console.error('ERRO NO TESTE:', e);

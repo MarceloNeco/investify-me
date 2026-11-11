@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.63">
+<link rel="stylesheet" href="estilo.css?v=3.64">
 </head>
 <body>
 
@@ -628,7 +628,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.63"></script>
+<script src="textos/frases-en.js?v=3.64"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7368,7 +7368,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.63"></script>
+<script src="textos/mudancas.js?v=3.64"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -7470,12 +7470,15 @@ const Gasto = {
   /* normaliza um lançamento, venha da planilha ou da tela */
   arruma(g){
     const r = Object.assign({}, g);
-    r.valor = Math.abs(Number(r.valor) || 0);
+    /* 3.64: estorno é negativo, na categoria do gasto de origem (abate o "Para onde foi"; não é renda) */
+    r.valor = r.estorno ? -Math.abs(Number(r.valor) || 0) : Math.abs(Number(r.valor) || 0);
+    if(!r.estorno) delete r.estorno;
     r.grupo = GRUPOS[r.grupo] ? r.grupo : 'OUTROS';
     r.sub   = (r.sub || '').trim() || 'Sem categoria';
     r.per   = PERIODICIDADES[r.per] ? r.per : 'Pontual';
     r.desc  = (r.desc || '').trim();
     r.quem  = (r.quem || '').trim();
+    r.paraQuem = String(r.paraQuem || '').trim(); if(!r.paraQuem) delete r.paraQuem;   /* 3.64: o beneficiário (saúde, educação, IR) */
     r.forma = (r.forma || '').trim();
     r.conta = (r.conta || '').trim();
     r.irpf  = !!r.irpf;
@@ -7485,6 +7488,7 @@ const Gasto = {
     if(!r.editadoPessoa) delete r.editadoPessoa;
     r.revisar = !!r.revisar;
     r.fluxo = GRUPOS[r.grupo].fluxo;
+    if(window.Pessoas) Pessoas.ligarTudo(r);   /* 3.64: o texto que bate numa pessoa guarda o ID dela */
     return r;
   },
 
@@ -7780,6 +7784,7 @@ const Gasto = {
     });
     /* 3.39 (N24): Renda · Rescisão e Renda · FGTS (separado) existem mesmo sem lançamento */
     m.RENDA = m.RENDA || new Set(); ['Rescisão', 'FGTS'].forEach(x => m.RENDA.add(x));
+    m.SAUDE = m.SAUDE || new Set(); m.SAUDE.add(SUB_TERAPIAS);   /* 3.64: TO, fono, psicopedagogia (com IR) */
     const out = {};
     Object.keys(m).forEach(k => { out[k] = Array.from(m[k]).sort((a,b) => a.localeCompare(b,'pt')); });
     return out;
@@ -8173,6 +8178,7 @@ const Recorrente = {
       /* o pagamento usa a regra normal do compromisso (última segunda,
          último dia do mês, dia 5…). O valor é que passa a ser a soma. */
     }
+    if(window.Pessoas) Pessoas.ligarTudo(o);   /* 3.64 */
     return o;
   },
 
@@ -8861,7 +8867,8 @@ const Pagamento = {
       data: o.data, valor: o.valor, grupo: o.r.grupo, sub: o.r.sub,
       desc: o.r.nome + (o.r.obs ? ' — ' + o.r.obs : ''),
       per: o.r.regra === 'anual' ? 'Anual' : 'Mensal',
-      quem: o.r.quem, forma: o.r.forma, irpf: !!o.r.irpf,
+      /* 3.64: "Quem paga" do compromisso é quem pagou; "Para quem é" é o beneficiário */
+      quem: o.r.pagador || o.r.quem, paraQuem: o.r.pagador && o.r.quem !== o.r.pagador ? o.r.quem : '', forma: o.r.forma, irpf: !!o.r.irpf,
       origem: 'recorrente', recorrenteId: o.r.id
     };
     /* salário cadastrado: o lançamento leva o bruto junto, para o TaxONE */
@@ -9652,6 +9659,8 @@ function viewBPainel(){
          (real.entrada - real.saida) >= 0 ? 'up' : 'down', 'b-fluxo') +
     kpiB('Custo de viver', fmt(fixo.mensal), 'custo-fixo', fixo.itens.length + ' compromissos fixos', '', 'b-custos') +
     '</div>';
+  /* 3.64: indicadores do mês e a conferência com o saldo do banco (modulos/indicadores.js, modulos/saldo-banco.js) */
+  h += (window.MoneyModulos ? MoneyModulos.html('budget.painel', {}) : '');
 
   /* para onde foi o dinheiro */
   const porGrupo = Gasto.porChave(doze.filter(g => g.fluxo === 'saida'), 'grupo');
@@ -9665,7 +9674,11 @@ function viewBPainel(){
          '<div class="rosca-fig">' + vizRosca(segs.map(s => ({valor: s.valor, cor: s.cor, nome: s.nome})),
                   {centro: fmtCurto(c.saida), legenda: 'saiu em 12 meses', semLegenda: true}) + '</div>' +
          '<div class="rosca-leg">' + vizBarras(segs, fmt) + '</div>' +
-       '</div></div>';
+       '</div>' +
+       /* 3.64: o peso de cada grupo na renda do período */
+       (window.Indicadores ? (pg => pg.length ? '<p class="small muted ind-peso" style="margin:8px 0 0">' + esc(I18n.atual === 'pt' ? 'Peso na renda: ' : 'Share of income: ') +
+         pg.slice(0, 8).map(x => esc(((GRUPOS[x.grupo] || {}).nome || x.grupo) + ' ' + Math.round(x.pct * 100) + '%')).join(' · ') + '</p>' : '')(Indicadores.pesoGrupos(doze)) : '') +
+       '</div>';
 
   /* o caixa mês a mês */
   const meses = Gasto.porMes(doze);
@@ -9843,7 +9856,7 @@ function viewBLanc(){
         ((g.desc || '').length > 110 ? '…' : '') +
         (g.grupo === 'RENDA' && Transferencia.daRenda(g.id).length ? '<div class="t-sub tf-cinza">↪ ' + esc((I18n.atual === 'pt' ? 'passou para outra conta em ' : 'moved to another account on ') +
           Transferencia.daRenda(g.id).map(t => I18n.data(t.data) + (t.banco ? ' (' + t.banco + ')' : '')).join(', ') + (I18n.atual === 'pt' ? ' — transferência, não conta de novo' : ' — transfer, not counted again')) + '</div>' : '') +
-        (g.quem || g.forma ? '<div class="t-sub">' + esc([g.quem, g.forma].filter(Boolean).join(' · ')) +
+        (g.quem || g.paraQuem || g.forma ? '<div class="t-sub">' + esc([g.paraQuem && g.paraQuem !== g.quem ? (g.quem ? g.quem + ' → ' : '→ ') + g.paraQuem : g.quem, g.forma].filter(Boolean).join(' · ')) +
           (g.irpf ? ' · <span class="badge-irpf">IRPF</span>' : '') + '</div>' : '') +
         (window.MoneyModulos ? MoneyModulos.html('lancamento.linha', {g: g}) : '') + '</td>' +
       '<td class="num ' + sinal + '">' + (g.fluxo === 'entrada' ? '+' : '') + fmt(g.valor) + Abat.marca(g) + '</td></tr>';
@@ -10024,7 +10037,9 @@ function recPessoas(){
 }
 
 /* ---------- sugestões enquanto digita o nome (sem IA) ---------- */
+const SUB_TERAPIAS = 'Terapias (TO/Fono/Psicopedagogia)';
 const DICIO_REC = [
+  [/terapia ocupacional|fonoaudi|\bfono\b|psicoped|reabilita/i, 'SAUDE', SUB_TERAPIAS, {irpf:true}],
   [/escola|col[eé]gio|faculdade|universidade|curso|ingl[eê]s|ballet|nata[cç][aã]o|ampliado|material escolar/i, 'DEPENDENTES', 'Escola', {irpf:true, anual:true}],
   [/aluguel/i, 'HABITACAO', 'Aluguel'], [/condom[ií]nio/i, 'HABITACAO', 'Condomínio'],
   [/\b(luz|energia|enel|cemig|light|copel)\b/i, 'HABITACAO', 'Energia'], [/\b(água|agua|sabesp|copasa)\b/i, 'HABITACAO', 'Água'],
@@ -10101,7 +10116,8 @@ const Sugestor = {
 };
 
 function recOpcoesPessoa(listaId){
-  return '<datalist id="' + listaId + '">' + [CASA_TODA[I18n.atual] || CASA_TODA.pt].concat(recPessoas())
+  const cad = window.Pessoas ? Pessoas.ativas().map(p => Pessoas.rotulo(p)) : [];   /* 3.64: as cadastradas primeiro */
+  return '<datalist id="' + listaId + '">' + [CASA_TODA[I18n.atual] || CASA_TODA.pt].concat(cad, recPessoas().filter(q => cad.indexOf(q) < 0))
     .map(q => '<option value="' + esc(q) + '"></option>').join('') + '</datalist>';
 }
 
@@ -10188,9 +10204,9 @@ function abrirRecorrente(id, semente, op){
     '</div>' +
 
     '<div class="grid g2">' +
-      campo(de('Para quem é', 'Who it is for'), '<input id="rcQuem" list="rcQuemLista" autocomplete="off" value="' + esc(r.quem || '') + '" placeholder="' + de('a pessoa, ou a casa', 'the person, or the home') + '">' + recOpcoesPessoa('rcQuemLista'),
+      campo(de('Para quem é', 'Who it is for'), '<input id="rcQuem" data-pessoa list="rcQuemLista" autocomplete="off" value="' + esc(r.quem || '') + '" placeholder="' + de('a pessoa, ou a casa', 'the person, or the home') + '">' + recOpcoesPessoa('rcQuemLista'),
         null, de('Quem usa. O nome de quem recebe (a escola, a diarista) fica no nome do compromisso.', 'Who uses it. Whoever gets paid (school, cleaner) goes in the name.')) +
-      campo(de('Quem paga', 'Who pays'), '<input id="rcPagador" list="rcPagaLista" autocomplete="off" value="' + esc(r.pagador || '') + '" placeholder="' + de('opcional', 'optional') + '">' + recOpcoesPessoa('rcPagaLista').replace('rcQuemLista', 'rcPagaLista')) +
+      campo(de('Quem paga', 'Who pays'), '<input id="rcPagador" data-pessoa list="rcPagaLista" autocomplete="off" value="' + esc(r.pagador || '') + '" placeholder="' + de('opcional', 'optional') + '">' + recOpcoesPessoa('rcPagaLista').replace('rcQuemLista', 'rcPagaLista')) +
     '</div>' +
 
     '<div class="bloco-regra"><span class="bf-tit">' + de('Como paga', 'How it is paid') + '</span>' +
@@ -10794,9 +10810,12 @@ function abrirLancamento(id){
     '<div id="glOnde">' + campoOndePagou(g) + '</div>' +
     '<div id="glFixo"></div>' +
     '<div class="grid g2">' +
-      campo('Quem pagou/recebeu', '<input id="glQuem" list="glQuemLista" placeholder="opcional" value="' +
-        (g ? esc(g.quem) : '') + '"><datalist id="glQuemLista">' +
-        Gasto.pessoas().map(p => '<option value="' + esc(p.chave) + '"></option>').join('') + '</datalist>') +
+      campo('Quem pagou/recebeu', '<input id="glQuem" data-pessoa list="glQuemLista" autocomplete="off" placeholder="' + esc(I18n.atual === 'pt' ? 'opcional · vem da conta ou do cartão' : 'optional · from the account or card') + '" value="' +
+        (g ? esc(g.quem) : '') + '">' + recOpcoesPessoa('glQuemLista')) +
+      campo(I18n.atual === 'pt' ? 'Para quem é' : 'Who it is for', '<input id="glParaQuem" data-pessoa list="glParaLista" autocomplete="off" placeholder="' + esc(I18n.atual === 'pt' ? 'opcional · saúde, escola, IR' : 'optional · health, school, tax') + '" value="' +
+        (g ? esc(g.paraQuem || '') : '') + '">' + recOpcoesPessoa('glParaLista'), null,
+        I18n.atual === 'pt' ? 'Quem usou (a filha na terapia). No IR, gasto de dependente vale para quem pagou.' : 'Who used it. For tax, a dependant\'s expense counts for whoever paid.') +
+    '</div><div class="grid g2">' +
       campo('Observação da conta', '<input id="glConta" placeholder="opcional" value="' +
         (g ? esc(g.conta) : '') + '">') +
     '</div>' +
@@ -10901,11 +10920,20 @@ function campoOndePagou(g){
 
 /* 3.39 (N24): o robô mandou outra versão de um lançamento que a pessoa já tinha editado */
 const ROTULOS_ROBO = {data:'Data', valor:'Valor', grupo:'Grupo', sub:'Categoria', desc:'Descrição', quem:'Quem', forma:'Forma',
-  conta:'Conta', irpf:'IR', per:'Frequência', cartaoId:'Cartão', cartaoNome:'Cartão', formaId:'Forma', catPluggy:'Categoria do banco', origemRobo:'Origem'};
+  conta:'Conta', irpf:'IR', per:'Frequência', cartaoId:'Cartão', cartaoNome:'Cartão', formaId:'Forma', catPluggy:'Categoria do banco', origemRobo:'Origem',
+  paraQuem:'Para quem', irTexto:'IR (texto do banco)', estorno:'Estorno', tipo:'Tipo'};
 function blocoRoboSugeriu(g){
   if(!g || !g.roboSugeriu || !Object.keys(g.roboSugeriu).length) return '';
   const pt = I18n.atual === 'pt';
   const mostra = (k, v) => k === 'valor' ? fmt(v) : k === 'data' ? I18n.data(v) : k === 'grupo' ? ((GRUPOS[v] || {}).nome || v) : k === 'irpf' ? (v ? (pt ? 'sim' : 'yes') : (pt ? 'não' : 'no')) : String(v == null || v === '' ? '—' : v);
+  /* 3.64: o robô diz que um gasto que você editou é transferência entre vocês (ou pagamento de fatura) */
+  const virou = g.roboSugeriu.tipo;
+  if(virou) return '<div class="aviso-box robo-sug"><b>🤖 ' + (virou === 'fatura' ? (pt ? 'O robô diz que isto é pagamento de fatura' : 'The robot says this is a card bill payment')
+      : (pt ? 'O robô diz que isto é transferência entre vocês' : 'The robot says this is a transfer between you')) + '</b>' +
+    '<p class="small" style="margin:6px 0 4px">' + (pt ? 'Se for, não é gasto: sai do livro e não conta em dobro no "Para onde foi". Você editou este lançamento, então só sai se você confirmar.'
+      : 'If so, it is not spending: it leaves the book and is not counted twice. You edited this entry, so it only leaves if you confirm.') + '</p>' +
+    '<div class="row"><button type="button" class="btn sm primary" data-acao="robo-aceitar">' + (pt ? 'É isso: tirar dos gastos' : 'Yes: remove from spending') + '</button>' +
+    '<button type="button" class="btn sm" data-acao="robo-manter">' + (pt ? 'Manter como gasto' : 'Keep as spending') + '</button></div></div>';
   const linhas = Object.keys(g.roboSugeriu).filter(k => !/^(cartaoId|formaId|origemRobo|catPluggy)$/.test(k)).map(k =>
     '<li><b>' + esc(ROTULOS_ROBO[k] || k) + ':</b> ' + esc(mostra(k, g[k])) + ' → ' + esc(mostra(k, g.roboSugeriu[k])) + '</li>').join('');
   return '<div class="aviso-box robo-sug"><b>🤖 ' + (pt ? 'O robô sugeriu outra coisa' : 'The robot suggested something else') + '</b>' +
@@ -10939,7 +10967,8 @@ function salvarLancamento(){
     cartaoId: ($('#glCartao') || {}).value || '',
     /* só vale para compra no cartão; trocou para Pix, a data de cobrança some */
     dataCobranca: (($('#glCartao') || {}).value && ($('#glCobranca') || {}).value) || '',
-    quem: $('#glQuem').value || quemSal,
+    quem: $('#glQuem').value || quemSal || (() => { const d = window.Pessoas && Pessoas.donoDe(resolverBanco(($('#glBanco') || {}).value), ($('#glCartao') || {}).value || ''); return d ? Pessoas.rotulo(d) : ''; })(),
+    paraQuem: ($('#glParaQuem') || {}).value || '',
     conta: $('#glConta').value, irpf: $('#glIrpf').checked,
     favorito: !!($('#glFav') || {}).checked, revisar: !!($('#glRev') || {}).checked
   };
@@ -10947,10 +10976,14 @@ function salvarLancamento(){
     toast(I18n.atual === 'pt' ? 'O abatimento passou do preço cheio.' : 'The offset is larger than the full price.', 'warn'); return;
   }
   /* 3.39 (N24): a pessoa editou um lançamento do robô — daqui em diante a edição dela vence a do robô */
-  if(bEditando){ const antes = Gasto.todos().find(x => x.id === bEditando); if(antes && antes.origem === 'robo') dados.editadoPessoa = true; }
+  const antesEsp = bEditando ? Object.assign({}, Gasto.todos().find(x => x.id === bEditando) || {}) : null;
+  if(bEditando){ const antes = Gasto.todos().find(x => x.id === bEditando); if(antes && antes.origem === 'robo') dados.editadoPessoa = true;
+    if(antes && antes.confianca){ dados.confianca = undefined; dados.confirmadoEm = new Date().toISOString(); } }   /* 3.64: editar é confirmar o palpite */
   let criado = null;
   if(bEditando) Gasto.atualizar(bEditando, dados);
   else criado = Gasto.add(dados);
+  /* 3.64: a edição da pessoa vai para a planilha espelho do robô (modulos/espelho.js) */
+  if(window.Espelho){ const gEsp = criado || Gasto.todos().find(x => x.id === bEditando); if(gEsp){ delete gEsp.confianca; Espelho.registrar(gEsp, antesEsp); } }
   Gasto._idx = null;
   bProj = null;                       /* a projeção envelheceu */
   Store.salvar(); fechar('assetModal'); render();
@@ -10967,6 +11000,7 @@ function salvarLancamento(){
 
 function excluirLancamento(){
   if(!bEditando) return;
+  if(window.Espelho){ const gEsp = Gasto.todos().find(x => x.id === bEditando); if(gEsp) Espelho.apagar(gEsp); }   /* 3.64 */
   Gasto.excluir(bEditando);
   Gasto._idx = null; bProj = null;
   Store.salvar(); fechar('assetModal'); render();
@@ -18990,7 +19024,7 @@ const Salarios = {
     const d = String(iso || hojeISO()).slice(0, 10);
     return r.ativo !== false && (!r.desde || r.desde <= d) && (!r.ate || r.ate >= d);
   },
-  mesmaPessoa(a, b){ return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase(); },
+  mesmaPessoa(a, b){ return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase() || !!(window.Pessoas && Pessoas.mesma(a, b)); },
   vigentes(iso, quem){ return this.todos().filter(r => this.vigenteEm(r, iso) && (quem == null || this.mesmaPessoa(r.quem, quem))); },
 
   /* a soma do mês: o que cai na conta e o bruto (de todos, ou de uma pessoa) */
@@ -20711,8 +20745,14 @@ const Tax = {
     return 'outros';
   },
 
-  /* despesa sem "Quem pagou" conta para a pessoa da declaração */
-  daPessoa(g, quem){ return quem == null || !String(g.quem || '').trim() || Salarios.mesmaPessoa(g.quem, quem); },
+  /* despesa sem "Quem pagou" conta para a pessoa da declaração.
+     3.64: com "Para quem" (o beneficiário): é da declaração dele, a não ser que seja dependente — aí vale de quem pagou */
+  daPessoa(g, quem){
+    if(quem == null) return true;
+    const benef = String(g.paraQuem || '').trim();
+    if(benef && !(window.Pessoas && Pessoas.ehDependente(g.paraQuemId || benef))) return Salarios.mesmaPessoa(benef, quem);
+    return !String(g.quem || '').trim() || Salarios.mesmaPessoa(g.quem, quem);
+  },
 
   deducoesDoAno(ano, quem){
     const A = String(ano);
@@ -26102,6 +26142,7 @@ function viewConfig(){
       '<button class="btn sm" data-acao="aone-recomecar">Recomeçar o passo a passo e as dicas</button></div>') +
     campo('Atualizar cotações a cada', selectHTML('cAuto', [[5,'5 minutos'],[10,'10 minutos'],[30,'30 minutos'],[0,'só quando eu clicar']], String(cfg.autoRefreshMin))) +
   '</div></div>';
+  h += (window.MoneyModulos ? MoneyModulos.html('config.todos') : '');   /* 3.64: Pessoas da família, planilha espelho */
 
   /* fita e notícias */
   h += '<div class="card cfg-sec" data-sec="investify"><div class="card-head"><h3>Fita de cotações e notícias (topo)</h3></div>' +
@@ -27389,6 +27430,7 @@ function htmlPerfilMenu(){
   h += '<button type="button" role="menuitem" class="perfil-op' + (cotacoesAtualizando ? ' spinning' : '') +
        '" id="btnRefresh" data-perfil="atualizar"' + (cotacoesAtualizando ? ' disabled' : '') + '><i class="refresh-icon">⟳</i>' +
        esc(pt ? 'Atualizar cotações' : 'Refresh quotes') + '<span class="perfil-sub" id="refreshTime">' + esc(horaCotacoes()) + '</span></button>';
+  h += op('espelho', '📄', pt ? 'Planilha espelho' : 'Mirror spreadsheet', '<span class="perfil-sub">' + (ST.config && ST.config.espelhoLink ? '↗' : esc(pt ? 'colar o link' : 'paste the link')) + '</span>');   /* 3.64 */
   h += op('ajuda', '💡', pt ? 'Ajuda e tutorial' : 'Help and tutorial');
   if(typeof Acesso !== 'undefined' && Acesso.pode('ia')) h += op('ia', '✨', pt ? 'Perguntar à IA' : 'Ask the AI');
   h += op('portal', '🏠', pt ? 'Todos os apps (portal)' : 'All apps (portal)', '<span class="perfil-sub">↗</span>');
@@ -27432,6 +27474,13 @@ function acaoPerfil(qual){
     case 'atualizar':
       atualizarCotacoes(true); renderPerfilMenu(); break;
     case 'ajuda':     fecharPerfilMenu(); Assist.abrir('tela'); break;
+    case 'espelho': {   /* 3.64: abre a planilha numa aba nova; sem link, vai para onde se cola o link */
+      fecharPerfilMenu();
+      const l = ST.config && ST.config.espelhoLink;
+      if(l && window.Espelho && Espelho.linkValido(l)) window.open(l, '_blank', 'noopener');
+      else { if($('#app').classList.contains('hidden')) abrirApp(ST.appAtual || 'budget'); irPara('config'); cfgSecao = 'todos'; render(); setTimeout(() => { const e = $('#espLink'); if(e){ const c = e.closest('.cfg-acc'); if(c) c.classList.add('aberta'); e.scrollIntoView({block:'center'}); e.focus(); } }, 100); }
+      break;
+    }
     case 'ia':        fecharPerfilMenu(); IA.abrir(); break;
     case 'portal':    fecharPerfilMenu(); window.open(ALVO_ANUNCIO, '_blank', 'noopener'); break;
     case 'entrar':    fecharPerfilMenu(); abrirConta(); break;
@@ -28720,6 +28769,11 @@ function ligarEventos(){
       case 'robo-aceitar': case 'robo-manter': {
         const g = bEditando ? Gasto.todos().find(x => x.id === bEditando) : null;
         if(!g || !g.roboSugeriu) break;
+        if(d.acao === 'robo-aceitar' && g.roboSugeriu.tipo){   /* 3.64: era transferência/fatura: sai dos gastos */
+          if(window.Espelho) Espelho.apagar(g);
+          Gasto.excluir(g.id); Gasto._idx = null; bProj = null; Store.salvar(); fechar('assetModal'); render();
+          toast(I18n.atual === 'pt' ? 'Tirado dos gastos.' : 'Removed from spending.'); bEditando = null; break;
+        }
         const dados = d.acao === 'robo-aceitar' ? Object.assign({}, g.roboSugeriu, {editadoPessoa: false}) : {};
         dados.roboSugeriu = null; dados.revisar = false;
         Gasto.atualizar(g.id, dados); Gasto._idx = null;
@@ -29440,7 +29494,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/arquivos.js?v=1.0.0"></script>
 <script src="modulos/agendamentos.js?v=1.0.0"></script>
 <script src="modulos/nf-ir.js?v=1.0.1"></script>
-<script src="modulos/profissionais.js?v=1.0.0"></script>
+<script src="modulos/profissionais.js?v=1.1.0"></script>
 <script src="modulos/saude.js?v=1.1.0"></script>
 <script src="modulos/ponte-omnilife.js?v=1.0.0"></script>
 <script src="modulos/patrimonio-iliquido.js?v=1.1.1"></script>
@@ -29451,6 +29505,10 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/previsto.js?v=1.0.0"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
 <script src="modulos/calendario-menu.js?v=1.0.0"></script>
-<script src="nuvem.js?v=1.10.1"></script>
+<script src="modulos/pessoas.js?v=1.0.0"></script>
+<script src="modulos/indicadores.js?v=1.0.0"></script>
+<script src="modulos/saldo-banco.js?v=1.0.0"></script>
+<script src="modulos/espelho.js?v=1.0.0"></script>
+<script src="nuvem.js?v=1.11.0"></script>
 </body>
 </html>

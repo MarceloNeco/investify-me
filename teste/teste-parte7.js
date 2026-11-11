@@ -50,10 +50,10 @@ const LOCAL = { v: 1, posicoes: [], config: {}, recorrentes: [], gastos: [
       await p.fill('.prof-q:has-text("MARIANA") .prof-quem', 'Bia');
       await p.check('.prof-q:has-text("MARIANA") .prof-ir');
       await p.click('.prof-q:has-text("MARIANA") [data-acao="prof-confirmar"]');
-      const ms = await p.evaluate(() => Store.estado.gastos.filter((g) => /MARIANA/.test(g.desc)).map((g) => [g.grupo, g.sub, g.quem, g.irpf].join('|')));
-      ok(ms.length === 3 && ms.every((x) => x === 'SAUDE|Pediatra|Bia|true'), 'confirmar classifica os 3 lançamentos antigos (Saúde · Pediatra · Bia · IR)');
+      const ms = await p.evaluate(() => Store.estado.gastos.filter((g) => /MARIANA/.test(g.desc)).map((g) => [g.grupo, g.sub, g.paraQuem, g.irpf].join('|')));
+      ok(ms.length === 3 && ms.every((x) => x === 'SAUDE|Pediatra|Bia|true'), 'confirmar classifica os 3 lançamentos antigos (Saúde · Pediatra · para Bia · IR; 3.64: o paciente vai em "Para quem")');
       /* um novo, com 1 letra diferente, chega do "robô" */
-      const novo = await p.evaluate(() => { const g = Gasto.add({ data: hojeISO(), valor: 450, grupo: 'OUTROS', sub: 'Sem categoria', desc: 'PIX DRA MARIANA SOUSA', origem: 'robo' }); return [g.grupo, g.sub, g.quem, g.irpf, !!g.profissional].join('|'); });
+      const novo = await p.evaluate(() => { const g = Gasto.add({ data: hojeISO(), valor: 450, grupo: 'OUTROS', sub: 'Sem categoria', desc: 'PIX DRA MARIANA SOUSA', origem: 'robo' }); return [g.grupo, g.sub, g.paraQuem, g.irpf, !!g.profissional].join('|'); });
       ok(novo === 'SAUDE|Pediatra|Bia|true|true', 'lançamento novo "MARIANA SOUSA" já entra classificado, sem perguntar');
       await p.evaluate(() => render());
       qs = await p.$$eval('.prof-q .t-main', (e) => e.map((x) => x.textContent));

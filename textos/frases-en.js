@@ -1,10 +1,17 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.63 · 11/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.64 · 11/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.64 */
+  'Pessoas da família, planilha espelho e conferência com o banco':'Family people, mirror spreadsheet and bank check',
+  'Pessoas da família (⚙ Configurações): da casa (responsáveis e dependentes), outras pessoas e empresas. Nome, sobrenome, apelido e como o nome aparece no extrato. Mudou o nome, muda em tudo na hora. CPF o app não pede.':'Family people (⚙ Settings): household (guardians and dependants), other people and companies. Name, surname, nickname and how the name shows on the statement. Rename once and it changes everywhere. The app never asks for personal tax IDs.',
+  'Nos lançamentos, "Quem pagou" e "Para quem é" (o beneficiário, que importa na saúde, na escola e no IR). O campo aceita texto livre; nome parecido, mas sem certeza, o app pergunta uma vez.':'Entries now have "Who paid" and "Who it is for" (the beneficiary, which matters for health, school and tax). The field takes free text; for a similar but uncertain name, the app asks once.',
+  'O que o robô manda com "IRPF" agora chega marcado para o imposto de renda. Estorno vira valor negativo na categoria da compra (não é mais renda). Palpite do robô aparece para você confirmar com um toque.':'What the robot sends with "IRPF" now arrives flagged for income tax. Refunds become a negative amount in the purchase category (no longer income). The robot\'s guesses show up for you to confirm with one tap.',
+  'Planilha espelho: o que você muda aqui vai para o robô e para a planilha dele (fechado, só o robô abre). O link fica no menu do perfil.':'Mirror spreadsheet: what you change here goes to the robot and its spreadsheet (sealed, only the robot can open it). The link is in the profile menu.',
+  'No Painel: taxa de poupança, peso de dívidas e parcelas na renda, meses de reserva, o peso de cada grupo na renda e a conferência com o saldo do banco.':'On the Dashboard: savings rate, debts and instalments vs income, months of reserve, each group\'s share of income and the check against the bank balance.',
   /* 3.63 */
   'Janela aberta: a tela de trás fica parada':'Window open: the screen behind stays still',
   'Com uma janela aberta (detalhe de um lançamento, novo compromisso, explicação ⓘ, "Conferir o que foi lido", as telas da nuvem e o menu ☰ no celular), a roda do mouse ou o dedo rolam só a janela; chegando ao fim, a página de trás não anda mais.':'With a window open (entry details, new commitment, ⓘ explanation, "Check what was read", the cloud screens and the ☰ menu on the phone), the mouse wheel or your finger scroll only the window; at its end, the page behind no longer moves.',

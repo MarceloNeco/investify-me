@@ -63,6 +63,7 @@ const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify',
     /* foto só depois de imagens e fontes prontas (senão a mesma tela sai diferente por carregar a tempo ou não) */
     await p.waitForFunction(() => Array.from(document.images).every((i) => i.complete) && document.fonts.status === 'loaded');
     await p.waitForTimeout(150);
+    await p.addStyleTag({ content: '#toasts{visibility:hidden}' });   /* aviso que chega a qualquer momento (tempo) não é mudança de tela */
     const png = await p.screenshot({ fullPage: true, animations: 'disabled', caret: 'hide' });
     const html = await p.evaluate(() => { const v = document.querySelector('.view:not(.hidden)') || document.body; return v.innerHTML.replace(/\?v=[\w.]+/g, ''); });
     const css = await p.evaluate(() => { const v = document.querySelector('.view:not(.hidden) .card') || document.body; const c = getComputedStyle(v); return [c.backgroundColor, c.color, c.borderRadius, c.padding, c.fontFamily].join('|'); });
