@@ -97,6 +97,106 @@
     }
   };
 
-  MoneyModulos.registrar({ id: 'visao-casa', versao: '1.0.0', colecoes: [COL] });
+  /* ---------------- telas ---------------- */
+  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
+  function tr(a, b) { return pt() ? a : b; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function nv() { return window.MoneyNuvem && MoneyNuvem.escopos && MoneyNuvem.iniciado ? MoneyNuvem.escopos : null; }
+  /* quem vê só a parte da casa (tem a chave da casa e não a reservada) */
+  API.soCasa = function () { var n = nv(); if (!n) return false; var e = n.estado(); return e.mk && !e.tudo; };
+  function dm(iso) { var d = new Date(iso); return isNaN(d) ? '' : ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2); }
+
+  /* Painel de quem vê só a casa: os totais da família (do resumo que o aparelho do chefe calcula) */
+  function gastosDaFamilia() {
+    var l = (ST[COL] || []).slice().sort(function (a, b) { return a.id < b.id ? 1 : -1; }).slice(0, 6);
+    if (!l.length) return '';
+    var ult = l.reduce(function (m, r) { return r.atualizadoEm > m ? r.atualizadoEm : m; }, '');
+    var grupos = {}; l.forEach(function (r) { Object.keys(r.grupos || {}).forEach(function (g) { grupos[g] = (grupos[g] || 0) + r.grupos[g]; }); });
+    var ord = Object.keys(grupos).sort(function (a, b) { return grupos[b] - grupos[a]; });
+    var nome = function (g) { return (window.GRUPOS && GRUPOS[g] && GRUPOS[g].nome) || g; };
+    return '<div class="card vc-familia"><div class="card-head"><h2>' + esc(tr('Gastos da família', 'Family spending')) + '</h2>' +
+      '<span class="small muted">' + esc(tr('atualizado em ', 'updated on ') + dm(ult)) + '</span></div>' +
+      '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>' + esc(tr('Mês', 'Month')) + '</th><th class="num">' + esc(tr('Total', 'Total')) + '</th>' +
+      ord.slice(0, 4).map(function (g) { return '<th class="num">' + esc(nome(g)) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      l.map(function (r) {
+        return '<tr><td>' + esc(r.id.slice(5) + '/' + r.id.slice(0, 4)) + '</td><td class="num"><b>' + esc(fmt(r.total)) + '</b></td>' +
+          ord.slice(0, 4).map(function (g) { return '<td class="num">' + esc(fmt((r.grupos || {})[g] || 0)) + '</td>'; }).join('') + '</tr>';
+      }).join('') + '</tbody></table></div></div>';
+  }
+
+  /* Configurações → "Família no MoneyTRIO" (só no aparelho do chefe) */
+  var Tela = { lista: null, erro: '' };
+  function cartaoChefe() {
+    var n = nv(); if (!n) return '';
+    var e = n.estado(); if (!e.tudo) return '';
+    if (!Tela.lista && !Tela._pedindo) {
+      Tela._pedindo = true;
+      n.visoes().then(function (l) { Tela.lista = l || []; }).catch(function (er) { Tela.lista = []; Tela.erro = (er && er.status === 403) ? 'chefe' : String(er && er.message || er); })
+        .then(function () { Tela._pedindo = false; if (typeof render === 'function') render(); });
+    }
+    var h = '<div class="card" id="vcFamilia"><div class="card-head"><h2>👪 ' + esc(tr('Família no MoneyTRIO', 'Family in MoneyTRIO')) + '</h2></div>';
+    if (Tela.erro === 'chefe') return h + '<p class="small muted">' + esc(tr('Só o chefe da família escolhe quem vê o quê.', 'Only the family head chooses who sees what.')) + '</p></div>';
+    var pessoas = (ST.pessoas || []).filter(function (p) { return p.tipo === 'casa' && !p.arquivada; });
+    var marcadas = (ST.visaoCasa && ST.visaoCasa.pessoas) || [];
+    var membros = (Tela.lista || []).filter(function (m) { return m.papel !== 'chefe'; });
+    if (!e.feito) {
+      h += '<p class="small">' + esc(tr('Para alguém da família ver só a parte da casa (compromissos, contas da casa, os gastos dela e os totais da família), o MoneyTRIO separa antes o que é da casa e o que é só seu. É feito uma vez, neste aparelho.',
+        'For someone in the family to see only the household part (commitments, household bills, their own spending and the family totals), MoneyTRIO first separates what belongs to the household and what is yours only. Done once, on this device.')) + '</p>' +
+        '<p class="small"><b>' + esc(tr('Quem é da casa (os lançamentos dessas pessoas e dos cartões que elas usam ficam na parte da casa):', 'Who belongs to the household (their entries and the cards they use go to the household part):')) + '</b></p>' +
+        '<div class="vc-pessoas">' + (pessoas.length ? pessoas.map(function (p) {
+          return '<label class="chk"><input type="checkbox" data-acao="vc-pessoa" data-id="' + esc(p.id) + '"' + (marcadas.indexOf(p.id) >= 0 ? ' checked' : '') + '> ' + esc(p.apelido || p.nome) + '</label>';
+        }).join(' ') : '<span class="small muted">' + esc(tr('Cadastre as pessoas da casa em "Pessoas da família".', 'Add the household people in "Family people".')) + '</span>') + '</div>' +
+        '<p class="small muted">' + esc(tr('Compromissos de PJ (contador, DAS, TFE…) ficam sempre só seus. Você pode mudar um item depois.', 'Business commitments (accountant, taxes…) always stay yours only. You can change an item later.')) + '</p>' +
+        '<button class="btn primary" data-acao="vc-preparar"' + (marcadas.length ? '' : ' disabled') + '>' + esc(tr('Preparar a visão da família', 'Prepare the family view')) + '</button>' +
+        (e.pin ? '' : '<p class="small muted">' + esc(tr('Abra pelo PIN ou pela digital antes de preparar (🔒 Bloquear agora e abrir de novo).', 'Unlock with the PIN or fingerprint before preparing.')) + '</p>');
+      return h + '</div>';
+    }
+    h += '<p class="small">' + esc(tr('Escolha o que cada pessoa vê. "Só a casa": compromissos, contas da casa, os lançamentos dela e os totais da família.', 'Choose what each person sees. "Household only": commitments, household bills, their own entries and the family totals.')) + '</p>';
+    if (!Tela.lista) return h + '<p class="small muted">…</p></div>';
+    if (!membros.length) return h + '<p class="small muted">' + esc(tr('Ainda não há outra pessoa na família. Convide pelo OmniLifeONE e volte aqui.', 'No one else in the family yet. Invite through OmniLifeONE and come back.')) + '</p></div>';
+    h += '<div class="tbl-wrap"><table class="tbl"><tbody>' + membros.map(function (m) {
+      var p = pessoas.filter(function (x) { return x.uid === m.user_id; })[0];
+      var nome = p ? (p.apelido || p.nome) : tr('Pessoa da família', 'Family member');
+      return '<tr><td>' + esc(nome) + ' <span class="tiny muted">' + esc(m.papel === 'responsavel' ? tr('responsável', 'guardian') : tr('membro', 'member')) + '</span></td><td>' +
+        '<select class="vc-visao" data-uid="' + esc(m.user_id) + '" aria-label="' + esc(tr('O que vê', 'What they see')) + '">' +
+        '<option value="casa"' + (m.visao !== 'tudo' ? ' selected' : '') + '>' + esc(tr('Só a casa', 'Household only')) + '</option>' +
+        '<option value="tudo"' + (m.visao === 'tudo' ? ' selected' : '') + '>' + esc(tr('Tudo', 'Everything')) + '</option></select></td>' +
+        '<td><button class="btn sm" data-acao="vc-liberar" data-uid="' + esc(m.user_id) + '">' + esc(m.visao ? tr('Liberar de novo', 'Grant again') : tr('Liberar', 'Grant')) + '</button>' +
+        (m.visao ? ' <span class="tiny muted">' + esc(m.visao === 'casa' ? tr('vê a casa', 'sees the household') : tr('vê tudo', 'sees everything')) + '</span>' : '') + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+    return h + '</div>';
+  }
+
+  MoneyModulos.registrar({
+    id: 'visao-casa', versao: '1.0.0', colecoes: [COL],
+    pontos: {
+      'budget.painel': function () { return API.soCasa() ? gastosDaFamilia() : ''; },
+      'config.todos': function () { return cartaoChefe(); }
+    },
+    acoes: {
+      'vc-pessoa': function (el) {
+        var v = ST.visaoCasa = Object.assign({ pessoas: [] }, ST.visaoCasa), id = el.dataset.id;
+        v.pessoas = v.pessoas.filter(function (x) { return x !== id; }); if (el.checked) v.pessoas.push(id);
+        Store.salvar(); render();
+      },
+      'vc-preparar': async function () {
+        var n = nv(); if (!n || n.estado().rodando) return;
+        Fundo.comecar({ id: 'vc-preparar', titulo: tr('Preparando a visão da família', 'Preparing the family view') });
+        try {
+          var c = await n.migrar(function (msg) { Fundo.passo('vc-preparar', msg); });
+          Fundo.terminar('vc-preparar', c.ok && c.concluida
+            ? tr('Pronto: a parte da casa e a reservada estão separadas (' + c.casa + ' + ' + c.reservado + '). Agora libere quem vai ver.', 'Done: household and private parts separated. Now grant access.')
+            : tr('Quase: alguns registros não ficaram prontos. Toque em "Preparar" de novo para continuar.', 'Almost: some records were not ready. Tap "Prepare" again to continue.'));
+        } catch (e) { Fundo.limpar('vc-preparar'); toast(e && e.message || String(e), 'warn'); }
+        Tela.lista = null; render();
+      },
+      'vc-liberar': async function (el) {
+        var n = nv(), uid = el.dataset.uid, sel = document.querySelector('select.vc-visao[data-uid="' + uid + '"]'), v = (sel && sel.value) || 'casa';
+        try { await n.liberar(uid, v); toast(v === 'casa' ? tr('Liberado: essa pessoa vê a parte da casa.', 'Granted: this person sees the household part.') : tr('Liberado: essa pessoa vê tudo.', 'Granted: this person sees everything.')); }
+        catch (e) { toast(e && e.message || String(e), 'warn'); }
+        Tela.lista = null; render();
+      }
+    }
+  });
   window.Escopo = API;
 })();

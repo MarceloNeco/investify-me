@@ -2106,6 +2106,9 @@
       var dica = function (t) { return '<p class="nv-tiny">' + t + '</p>'; };
       /* 1. seus dados */
       var s1 = '<div class="nv-nota nv-est"><span id="nvStatus">' + esc(this.frase()) + '</span></div>' +
+        /* 1.14.0: este aparelho não tem as chaves do MoneyTRIO (a família foi preparada depois) ou a chave da família girou */
+        (Cadeado.precisaMk && !Cadeado.mk ? '<div class="nv-nota nv-alerta" id="nvSemMk">⚠️ ' + tt('Este aparelho ainda não tem as chaves novas da família no MoneyTRIO, por isso não guarda nada. Abra pelo PIN ou pela digital (🔒 Bloquear agora e abrir de novo). Se continuar, aprove este aparelho por outro aparelho seu.', 'This device does not have the family\'s new MoneyTRIO keys yet, so it saves nothing. Unlock with the PIN or fingerprint (🔒 Lock now and open again). If it persists, approve this device from another device of yours.') + '</div>' : '') +
+        (Cadeado.cfNova ? '<div class="nv-nota nv-alerta" id="nvCfNova">🔑 ' + tt('A chave da família mudou. Abra pelo PIN ou pela digital para este aparelho buscar a nova.', 'The family key changed. Unlock with the PIN or fingerprint so this device fetches the new one.') + '</div>' : '') +
         (Sinc.recusados ? '<button class="nv-btn" id="nvDeNovo">' + tt('Tentar de novo os não aceitos', 'Retry the ones not accepted') + '</button>' : '') +
         '<details class="nv-av" id="nvDadosDet"' + (abertos.nvDadosDet ? ' open' : '') + '><summary>' + tt('Ver detalhes', 'See details') + '</summary>' +
         dica(Sinc.vivos() + tt(' registros guardados, fechados com o cadeado da família.', ' records saved, locked with the family lock.') + '<br>' +
@@ -2152,7 +2155,7 @@
           sec('nvSecDados', '☁️ ' + tt('Seus dados', 'Your data'), s1) +
           sec('nvSecPin', '🔢 ' + tt('PIN e digital', 'PIN and fingerprint'), s2) +
           sec('nvSecAps', '📱 ' + tt('Seus aparelhos', 'Your devices'), s3) +
-          sec('nvSecRobo', '🤖 ' + tt('Robô do banco', 'Bank robot'), s4) +
+          (Cadeado.vejoTudo() ? sec('nvSecRobo', '🤖 ' + tt('Robô do banco', 'Bank robot'), s4) : '') +   /* 1.14.0: o robô é de quem vê tudo */
           sec('nvSecSair', '⏏ ' + tt('Sair', 'Sign out'), s5) +
         '</div></div>';
       var $ = function (s) { return el.querySelector(s); };

@@ -66,8 +66,8 @@ const CASA = ['MARCADOR-CASA-DELA', 'MARCADOR-CASA-COND', 'MARCADOR-CASA-CARTAO'
       const E = Store.estado, d = '2026-10-';
       E.pessoas = (E.pessoas || []).concat([{ id: 'pAna', tipo: 'casa', papel: 'responsavel', nome: 'Ana' }, { id: 'pBeta', tipo: 'casa', papel: 'responsavel', nome: 'Beta', uid: '55555555-5555-5555-5555-555555555555' }]);
       E.cartoes = [{ id: 'cBeta', nome: 'Cartão dela', fim: '1111', usaId: 'pBeta' }, { id: 'cBlack', nome: 'MARCADOR-BLACK', fim: '2222', usaId: 'pAna' }];
-      E.recorrentes = [{ id: 'rCond', desc: 'Condomínio', sub: 'Condomínio', grupo: 'HABITACAO', valor: 900, dia: 10, ativo: true },
-                       { id: 'rCont', desc: 'Mensalidade', sub: 'Contador', grupo: 'BANCARIOS', valor: 300, dia: 5, ativo: true }];
+      E.recorrentes = [{ id: 'rCond', nome: 'Condomínio', desc: 'Condomínio', sub: 'Condomínio', grupo: 'HABITACAO', valor: 900, dia: 10, ativo: true },
+                       { id: 'rCont', nome: 'Mensalidade do contador', desc: 'Mensalidade', sub: 'Contador', grupo: 'BANCARIOS', valor: 300, dia: 5, ativo: true }];
       E.pagamentos = [{ rid: 'rCond', data: d + '10', pago: true }, { rid: 'rCont', data: d + '05', pago: true }];
       E.gastos = [
         { id: 'g1', data: d + '03', valor: 120, grupo: 'PESSOAL', sub: 'Roupa', desc: 'MARCADOR-CASA-DELA', quem: 'Beta', quemId: 'pBeta', fluxo: 'saida' },
@@ -149,6 +149,29 @@ const CASA = ['MARCADOR-CASA-DELA', 'MARCADOR-CASA-COND', 'MARCADOR-CASA-CARTAO'
     ok(tot && tot.total === 1525 && tot.atualizadoEm, 'os totais da família chegam a ela (out/2026: ' + (tot && tot.total) + ', com os gastos dele, sem a renda)');
     ok(!/12345|12\.345/.test(bst) && !bst.includes('50000'), 'a renda dele e o investimento não aparecem nem como número');
 
+    /* "não percebe": as telas dela */
+    const tela = await B.evaluate(async () => {
+      mostrarHub(); await new Promise((r) => setTimeout(r, 300));
+      const hub = !document.getElementById('hubTela').classList.contains('hidden');
+      irPara('b-painel'); render(); await new Promise((r) => setTimeout(r, 300));
+      const txt = document.body.innerText;
+      const menu = typeof menuDeApps === 'function' ? menuDeApps() : '';
+      irPara('painel'); render(); await new Promise((r) => setTimeout(r, 200));
+      const foiPara = document.querySelector('#view-b-painel:not(.hidden)') ? 'b-painel' : (ST.appAtual || '');
+      irPara('config'); render(); await new Promise((r) => setTimeout(r, 300));
+      const cfg = document.body.innerText;
+      return { hub, txt, menu, foiPara, cfg, app: ST.appAtual };
+    });
+    ok(!tela.hub && tela.app === 'budget' && !/InvestifyONE|TaxONE/.test(tela.menu), 'ela: sem a tela dos três apps; o menu não tem InvestifyONE nem TaxONE');
+    ok(tela.foiPara === 'b-painel', 'ela: uma tela do InvestifyONE leva ao Painel do BudgetONE');
+    ok(!/Sobrou por mês/.test(tela.txt) && /Gastos da família/.test(tela.txt) && /atualizado em \d\d\/\d\d/.test(tela.txt), 'ela: Painel sem "Sobrou", com "Gastos da família · atualizado em dd/mm"');
+    ok(!/oculto|restrito|escondido|reservad/i.test(tela.txt + tela.cfg), 'ela: nenhuma palavra "oculto", "restrito", "escondido" ou "reservado" nas telas');
+    ok(!/InvestifyONE|TaxONE/.test(tela.cfg), 'ela: Configurações sem as abas do InvestifyONE e do TaxONE');
+    ok(!/Planilha espelho|Família no MoneyTRIO/.test(tela.cfg), 'ela: Configurações sem a planilha espelho e sem "Família no MoneyTRIO"');
+    const painelB = await B.evaluate(async () => { MoneyNuvem._teste.Painel.abrir ? MoneyNuvem._teste.Painel.abrir() : null; await new Promise((r) => setTimeout(r, 400)); const t = (document.querySelector('.nv-painel') || document.body).innerText; MoneyNuvem._teste.Painel.fechar(); return t; });
+    ok(!/Robô do banco/.test(painelB), 'ela: "Segurança e aparelhos" sem o robô do banco');
+    await B.screenshot({ path: '/tmp/visao-casa-beta.png', fullPage: false });
+
     console.log('5) editar e reclassificar');
     await B.evaluate(() => { const g = Store.estado.gastos.find((x) => x.id === 'g1'); g.sub = 'Calçados'; });
     ok((await subir(B)) === 0, 'Beta edita a categoria de um lançamento da casa e sobe');
@@ -159,6 +182,9 @@ const CASA = ['MARCADOR-CASA-DELA', 'MARCADOR-CASA-COND', 'MARCADOR-CASA-CARTAO'
     await A2.fill('#nvCod', PESSOAS[ANA].codigo); await A2.click('#nvCodOk');
     await A2.waitForSelector('#nvPC', { timeout: 30000 }); await A2.fill('#nvPC', '482915'); await A2.click('#nvPCOk');
     await A2.waitForSelector('#nvSelo', { timeout: 90000 });
+    const cfgA = await A2.evaluate(async () => { abrirApp('budget'); irPara('config'); cfgSecao = 'todos'; render(); await new Promise((r) => setTimeout(r, 1200)); render(); await new Promise((r) => setTimeout(r, 300)); const c = document.getElementById('vcFamilia'); if (c) c.scrollIntoView({ block: 'center' }); return c ? c.innerText : ''; });
+    ok(/Família no MoneyTRIO/.test(cfgA) && /Beta|Pessoa da família/.test(cfgA) && /vê a casa/.test(cfgA), 'chefe: Configurações → "Família no MoneyTRIO" lista a Beta com "vê a casa"');
+    await A2.screenshot({ path: '/tmp/visao-casa-chefe.png', fullPage: false });
     const a2 = await A2.evaluate(() => ({ sub: (Store.estado.gastos.find((x) => x.id === 'g1') || {}).sub, res: Store.estado.gastos.some((x) => /MARCADOR-RENDA-DELE/.test(x.desc)), mk: MoneyNuvem.escopos.estado() }));
     ok(a2.sub === 'Calçados' && a2.res && a2.mk.mk && a2.mk.tudo, 'outro aparelho da Ana (entrou pelo código): baixa as duas chaves, vê tudo e recebe a edição dela');
     await A2.evaluate(() => { const g = Store.estado.gastos.find((x) => x.id === 'g2'); g.escopo = 'casa'; });

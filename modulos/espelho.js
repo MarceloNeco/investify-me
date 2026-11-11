@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/espelho.js — planilha espelho: as edições da pessoa vão para o robô (3.64)        1.1.1 · 11/Nov/2026
+   modulos/espelho.js — planilha espelho: as edições da pessoa vão para o robô (3.64)        1.1.2 · 12/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      Quando a PESSOA cria, edita ou apaga um lançamento, ou confirma o palpite do robô, o app monta o texto do
@@ -85,9 +85,10 @@
 
   MoneyModulos.registrar({
     id: 'espelho',
-    versao: '1.1.1',
+    versao: '1.1.2',
     pontos: {
       'config.todos': function () {
+        if (window.Escopo && Escopo.soCasa && Escopo.soCasa()) return '';   /* 1.1.2 (3.66): a planilha espelho é de quem vê tudo */
         var l = cfg().espelhoLink || '';
         return '<div class="card cfg-sec" data-sec="todos"><div class="card-head"><h3>📄 ' + esc(tr('Planilha espelho', 'Mirror spreadsheet')) + '</h3></div>' +
           '<p class="small muted" style="margin:0 0 8px">' + esc(tr('O robô copia os lançamentos para uma planilha do Google e recebe de volta o que você muda aqui. Cole o link dela para abrir pelo menu do perfil.',
