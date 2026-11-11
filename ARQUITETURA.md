@@ -38,8 +38,8 @@ internet (cotação, notícia, IA, Google Drive).
 **Vão para o GitHub exatamente 7 arquivos e uma pasta:**
 `index.html`, `manifest.json`, `sw.js`, `icone-192.png`, `icone-512.png`,
 `recursos.js` e `recursos-do-app.json` (os interruptores do RootifyONE, §15)
-e a pasta `assets/ocr/` (o motor de leitura de fotos: Tesseract, português,
-ZXing, jsQR — uns 10 MB, copiados do app Leitor OCR). Mais nada.
+a pasta `leitor/` (o motor do Leitor OCR, copiado sem alterar; `leitor/tesseract/` tem o Tesseract e o português, uns 9 MB,
+usados pelo cartão por foto E pelo leitor de comprovantes, uma cópia só) e a pasta `assets/ocr/` (só ZXing e jsQR). Mais nada.
 
 ---
 
@@ -137,7 +137,7 @@ dele **depois** dos que ele usa e **antes** de `app.js`.
 | `importar.js` | leitura de extrato e de planilha, reconhecimento de colunas |
 | `planilha.js` | leitura de `.xlsx` e `.csv` |
 | `pdf-texto.js` | texto de dentro de PDF |
-| `ocr.js` | `Ocr`: carregar o Tesseract (de `assets/ocr/`, do arquivo embutido ou da CDN, nesta ordem) e ler texto cru; `CupomTexto`: entender o texto de um cupom brasileiro (total, data, CNPJ, itens, forma de pagamento e cartão) |
+| `ocr.js` | `Ocr`: carregar o Tesseract (de `leitor/tesseract/` desde a 3.65, do arquivo embutido ou da CDN, nesta ordem) e ler texto cru; `CupomTexto`: entender o texto de um cupom brasileiro (total, data, CNPJ, itens, forma de pagamento e cartão) |
 | `leitor.js` | `Leitor`: **o motor de leitura de fotos**, portado do app Leitor OCR (`MarceloNeco/leitor-ocr`, v0.6.0) sem mexer na lógica dele. Endireita a foto (`estimateAngles`), acha o papel ou vários papéis (`findPapers`), lê até 4 vezes de jeitos diferentes e só afirma o **valor quando duas leituras concordam** (`agreedValue`); senão devolve candidatos. Lê QR code e código de barras (ZXing + jsQR). É UM motor para os três apps: BudgetONE (Escanear), InvestifyONE (Ler comprovante), TaxONE (Documentos do IR, via `DocIR.textoDe`). O que é nosso está marcado `(MoneyTRIO)`: `enquadrar` (foto de celular de 12 MP é recortada no bloco de texto e reduzida a 1600 px antes de tudo — é o que tira a leitura de minutos para segundos); o **sinal do ângulo invertido** (`base = -tilt[0]`: o motor original girava para o lado errado); a ordem pela inclinação (foto reta → duas leituras do quadro inteiro, cru e preparado como nos documentos do IR, que acertam o valor em negrito que o ajuste local do motor clareava; foto torta de 8° a 45° → direto para o motor, que endireita); `nomePeloCnpj` (nome oficial na BrasilAPI quando o CNPJ confere pelo dígito; só os 14 números saem); e `paraCupom`, que traduz o resultado para o formato que a tela já entendia. **Leitura pela IA** (`IA.lerFoto` + `perguntarFoto` em cada provedor + `cupomDaIA`): a foto só sai do aparelho com a chavinha "Ler com a IA" ligada (`ST.config.leitorIA`) ou pelo botão "Tentar com a IA" de um cartão; vai reduzida, a resposta é JSON e cada campo é conferido antes de entrar |
 | `fundo.js` | `Fundo`: trabalho demorado que não morre ao sair da tela (§13). `comecar/passo/terminar/limpar`; segura a tela acesa (Wake Lock), arma o aviso de fechar/recarregar e mostra a pílula `#fundoPill` que leva de volta ao resultado |
 | `camera.js`, `camera-ui.js` | a tela de escanear (`abrirEscanear`, `lerArquivosEscaneados`, cartões de resultado com os candidatos de valor) e `Camera`: entender QR da NFC-e, chave de 44 dígitos e código de boleto |
@@ -327,8 +327,8 @@ valer em todos os apps.
    número da versão e a data saem dali sozinhos.
 2. Troque `var VERSAO` em `pwa/sw.js` (`v2` → `v3`). É o que avisa os
    celulares de que existe conteúdo novo — sem isso o app instalado
-   continua mostrando a versão velha. A pasta `assets/ocr/` tem cache
-   próprio (`CACHE_OCR`, `moneytrio-ocr-1`), que **não** muda com a versão:
+   continua mostrando a versão velha. As pastas `leitor/tesseract/` e `assets/ocr/` têm cache
+   próprio (`CACHE_OCR`, `moneytrio-ocr-2` desde a 3.65), que **não** muda com a versão:
    o motor baixa na primeira leitura e fica. Só troque esse número se
    trocar os arquivos do motor.
 3. Rode `python3 gerar/gerar-arquivo-unico.py`.
@@ -644,6 +644,60 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.65 (`nuvem.js` 1.12.0; módulos novos `tour` 1.0.0, `cartoes` 1.0.0, `contraparte` 1.0.0, `declaracao-escolhas` 1.0.0; `pessoas` 1.1.0,
+  `profissionais` 1.2.0, `compromisso-de` 1.7.0, `calendario-menu` 1.1.0).
+  **Barra de andamento global** (`Fundo.mostrar(id, frac|null, rótulo)` / `Fundo.esconder(id)` / `Fundo.renderBarra`): `#barraAndamento`
+  na base do cabeçalho, role=progressbar; mostra as tarefas do Fundo e os trabalhos curtos (caixa do robô com "x de N", sincronizar,
+  espelho); com algum total, o %; sem total, indeterminada; só aparece depois de 400 ms; some com fade; respeita reduzir movimento.
+  **Passeio** (`modulos/tour.js`, `Assist.abrir('tutorial')`): spotlight (sombra recortando o alvo), balão que se move (transition em
+  left/top) com seta, alvo por lista de seletores em ordem (computador: `#navLista`; celular: `#btnMenu`), fora da tela rola até ele,
+  teclado (→ ← Esc), foco preso, sem alvo → balão no meio; `html:has(.tour)` trava o fundo. **Calendário do menu**: animação de altura
+  (Web Animations, 220 ms) e o chevron gira; `pedirLateral()` no fim. **Lançamentos**: `.desc-txt` com line-clamp 2 e o texto no title.
+  **Cartões** (`modulos/cartoes.js`): o cartão é a conta (fatura) com `finais [{fim, tipo, titular}]`, `contaId` (conta_cartao da
+  Pluggy), `titular`, `usa` ("Quem usa"); final novo da mesma conta entra como virtual (novo); sem conta pergunta uma vez
+  (`ST.config.cartoesPergunta`); "Cartões encontrados" agrupa por conta; `ligarRetro` liga as compras antigas; quem pagou = titular do
+  adicional → quem usa → titular. Ponto novo `cartao.form` e `cartoes.config`. Corrigido: `cartao-salvar` usava `bt` (não existia).
+  **Contraparte** (`modulos/contraparte.js`): CNPJ → id_pessoa → nome (Pessoas e Profissionais guardam `cnpjs`/`idps`; aprendem ao
+  confirmar); MCC só palpite. **Pessoas 1.1.0**: nomes no banco gerados do nome completo (`nomesDoBanco`), apelido da casa e nomes antigos
+  em `aliases` (nunca como nome de banco); pares novos `contato`, `titular`, `usa`; SolverONE como empresa quando há "IA e software".
+  **Segurança e aparelhos** (`nuvem.js` `Painel`): tela larga (`.nv-largo`, `.nv-grade` 1/2/3 colunas em <760/≥760/≥1600 px) com 5 seções
+  (Seus dados · PIN e digital · Seus aparelhos · Robô do banco · Sair), cada uma com "Avançado" (`<details>`) para o que é raro (passkey,
+  e-mail do robô, apagar a cópia, só neste aparelho). Abre pelo item do menu do perfil `data-perfil="nuvem"` ("☁️ Dados salvos · hh:mm",
+  amarelo guardando, vermelho com erro; `MoneyNuvem.itemMenu()`; só esse item é atualizado, sem redesenhar o menu) e por Configurações
+  (`#cfgSeguranca`, `data-acao="nuvem-painel"`). O selo "Tudo guardado" saiu: `#nvSelo` é um ícone ao lado do perfil (no início, solto no
+  canto). Aparelhos do mesmo nome em apps diferentes viram uma linha ("Linux · Chrome · MoneyTRIO e OmniLifeONE"). Com a tela aberta, o
+  pedido de acesso aparece dentro dela. **Jornada entre apps**: o PIN é da pessoa; `Portao.primeiraVez` lê `sol_aparelhos_meus` (coluna
+  `app`) e `sol_pin_info` antes de mostrar; já usa outro app → "Você já usa o OmniLifeONE. Aprove por um aparelho seu…" (+ aviso de que o
+  PIN escolhido também vale lá, se a conta não tem PIN); `novoPin` → "Crie o PIN da sua conta SolverONE. Ele vale no MoneyTRIO, no
+  OmniLifeONE e nos próximos apps". Os textos ficam no `nuvem.js` para o OmniLifeONE reaproveitar. Teste: `teste/teste-seguranca.js`.
+  **Cartão por foto** (`modulos/cartao-foto.js` 1.0.0, ponto novo `cartao.topo` no `abrirCartao`, só no cadastro novo): "📷 Fotografar cartão"
+  (`capture="environment"`) e "🖼️ Imagem ou print do cartão" (galeria). O motor do Leitor OCR (cópia SEM alterar do leitor-ocr 0.9.4,
+  motor 1.11.0, em `leitor/`: `leitura.js`, `leitura/`, `leitores/cartao-plastico.js`, `tesseract/`) carrega só no toque, em ordem
+  (`leitura.js`, `leitura/catalogo.js`, `leitura/texto.js`, `leitores/cartao-plastico.js`; o `foto.js` o motor carrega sozinho);
+  `Leitura.lerCartao(file, {aviso, progresso})` → `{final, bandeira, nome, validade, emissor, conferido, virtual}`. Preenche o vazio; o
+  final já de um cartão → "Abrir esse cartão"; o final nas compras do robô (`Cartoes.encontrados`) → reabre o cadastro com a semente da
+  conta; virtual com final novo → "Juntar a" um cartão do robô do mesmo banco. Segurança: o arquivo vai direto ao motor e o input é limpo
+  (`input.value = ''`); nada no IndexedDB, histórico ou fila; sem IA e sem internet; só a frente. `sw.js`: os .js do motor no básico;
+  `leitor/tesseract/` no cache do OCR (1º uso). **Uma cópia só do Tesseract**: o leitor antigo do app (`Ocr`, `Leitor`) também lê de
+  `leitor/tesseract/`; de `assets/ocr/` saiu tudo menos ZXing e jsQR; `CACHE_OCR` foi para `moneytrio-ocr-2` e a ativação apaga o
+  `ocr-1` (quem já tinha baixa o Tesseract uma vez, de `leitor/`). Atualizar o motor: copiar de novo do leitor-ocr (mudanças lá só pelo PEDIDOS.md).
+  Teste: `teste/teste-cartao-foto.js` (cartões fictícios com os números de teste públicos das bandeiras).
+  **Reenvio do robô** (`Caixa.corrigir`, 1.12.0): lançamento editado OU confirmado pela pessoa (`editadoPessoa` ou `confirmadoEm`) fica
+  como ela deixou; os campos que ela não vê nem edita (`CAMPOS_META`: `finalCartao`, `contaCartao`, `contraparte`) entram sem perguntar; o
+  resto vira `roboSugeriu` (e só ele marca para conferir). Intocado: ganha tudo, mais a `confianca` (`marcarConfianca`). O id do robô
+  (`rb_…`) evita dobra. Teste: `teste/teste-nuvem.js` (reenvio de tudo).
+  **Declaração com escolhas** (`modulos/declaracao-escolhas.js`, ponto `declaracao.escolhas`): bens sem liquidez com dono e dívida,
+  restituição prevista (desmarcada), imposto em compromissos (dia −1), conferência de deduções. Testes: `teste/teste-tour.js`,
+  `teste/teste-cartoes-contraparte.js`; teste-desktop (descrição longa, calendário animado); teste-pessoas-espelho (barra com %).
+  **Origem** (`modulos/origem.js`): selos "A confirmar"/"A identificar" na coluna Categoria (ponto `lancamento.categoria`), filtros
+  `bFiltro.aconfirmar/aidentificar`, mesma origem = cnpj → id_pessoa → chave da descrição (NFKD, A–Z, sem palavras de 1 letra);
+  `Origem.depoisDe` replica grupo/sub/paraQuem/irpf nos pendentes da mesma origem (nunca nos editados/confirmados), com Desfazer, e
+  manda cada um ao espelho sem regra (`semRegra`); tela `b-confirmar` agrupada. Caixa: `marcarConfianca` põe a confiança também no
+  lançamento já existente que ninguém tocou. "Debito" do robô = `debconta` (ou Pix/TED/boleto pela contraparte). **Categorias**
+  (`modulos/categorias.js`): `ST.config.subAlias` aplicado no `Gasto.arruma`/`Recorrente.arruma`; migração única para "Streaming e
+  mídias"; "Renomear categoria" em Configurações. **Assinaturas 1.1.0**: "Não vou renovar" (fim → `r.ate`), "já paga até" (sem
+  cobrança), cobrança depois do fim → aviso. **Conferência com o banco 2.0.0**: conta_id/categoria_conta/final_conta; três seções;
+  cartão com a fatura positiva; itens `investimento` (`SaldoBanco.receberInvest`). Teste: `teste/teste-origem.js`.
 - 3.64.1 (`nuvem.js` 1.11.1), correção de segurança: "Sair" do menu do perfil e da conta (`case 'sair'`/`'conta-sair'`) chamavam o
   `Sessao.sair()` antigo; com a nuvem ligada agora chamam `MoneyNuvem.sair(false)` (tela "Saindo…", tranca, sai, `location.replace`;
   `pageshow` com página guardada pelo navegador → recarrega). "Criar o PIN da conta" (`Portao.criarPinConta`): conta sem PIN da conta e

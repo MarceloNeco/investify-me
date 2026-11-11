@@ -2,33 +2,36 @@
    Faz o site abrir sem internet e permite instalar como app.
    AO PUBLICAR UMA VERSÃO NOVA, troque o número abaixo (v1 -> v2).
    É o que avisa os celulares de que existe conteúdo novo. */
-var VERSAO = 'v64.1';
+var VERSAO = 'v65';
 var CACHE = 'moneytrio-' + VERSAO;
 /* O que fica guardado para abrir sem internet. Cada <script src> do index.html entra aqui com o MESMO ?v=
    (teste/teste-modulos.js confere). Módulo novo = uma linha aqui + uma no index.html. */
 var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './ajuda-botao.png', './icone-192.png',
-  './estilo.css?v=3.64', './textos/frases-en.js?v=3.64.1', './textos/mudancas.js?v=3.64.1',
+  './estilo.css?v=3.65', './textos/frases-en.js?v=3.65', './textos/mudancas.js?v=3.65',
   './textos/glossario.js?v=3.51', './textos/coach.js?v=3.51',
   './modulos/base.js?v=1.1.0',
   './modulos/arquivos.js?v=1.0.0',
   './modulos/agendamentos.js?v=1.0.0',
   './modulos/nf-ir.js?v=1.0.1',
-  './modulos/profissionais.js?v=1.1.0',
+  './modulos/profissionais.js?v=1.2.0',
   './modulos/saude.js?v=1.1.0',
   './modulos/ponte-omnilife.js?v=1.0.0',
   './modulos/patrimonio-iliquido.js?v=1.1.1',
   './modulos/fgts.js?v=1.0.0',
   './modulos/importar-posicoes.js?v=1.0.0',
-  './modulos/assinaturas.js?v=1.0.0',
-  './modulos/compromisso-de.js?v=1.6.0',
+  './modulos/assinaturas.js?v=1.1.0',
+  './modulos/compromisso-de.js?v=1.7.0',
   './modulos/previsto.js?v=1.0.0',
-  './modulos/conciliacao.js?v=1.0.0', './modulos/calendario-menu.js?v=1.0.0',
-  './modulos/pessoas.js?v=1.0.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=1.0.0', './modulos/espelho.js?v=1.0.0',
-  './nuvem.js?v=1.11.1'];
-/* O motor de leitura de fotos (assets/ocr: Tesseract, português, ZXing,
-   jsQR — uns 10 MB) tem cache próprio, que NÃO muda a cada versão do app:
-   baixa na primeira leitura e fica. Para trocar o motor, troque o número. */
-var CACHE_OCR = 'moneytrio-ocr-1';
+  './modulos/conciliacao.js?v=1.0.0', './modulos/calendario-menu.js?v=1.1.0',
+  './modulos/pessoas.js?v=1.1.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=2.0.0', './modulos/espelho.js?v=1.1.0', './modulos/tour.js?v=1.0.0', './modulos/cartoes.js?v=1.0.0', './modulos/cartao-foto.js?v=1.0.0',
+  /* 3.65: o motor do Leitor OCR para o cartão por foto (cópia do leitor-ocr; leitor/tesseract/ é guardado no 1º uso) */
+  './leitor/leitura.js', './leitor/leitura/catalogo.js', './leitor/leitura/texto.js', './leitor/leitura/foto.js', './leitor/leitores/cartao-plastico.js', './modulos/contraparte.js?v=1.0.0', './modulos/declaracao-escolhas.js?v=1.0.0', './modulos/origem.js?v=1.0.0', './modulos/categorias.js?v=1.0.0',
+  './nuvem.js?v=1.12.0'];
+/* O motor de leitura de fotos (leitor/tesseract: Tesseract e português, uns 9 MB, a MESMA pasta do motor do
+   Leitor OCR; assets/ocr: ZXing e jsQR) tem cache próprio, que NÃO muda a cada versão do app:
+   baixa na primeira leitura e fica. Para trocar o motor, troque o número.
+   3.65: ocr-2 — o Tesseract saiu de assets/ocr (era uma 2ª cópia); a ativação apaga o ocr-1. */
+var CACHE_OCR = 'moneytrio-ocr-2';
 
 self.addEventListener('install', function (e) {
   self.skipWaiting();
@@ -58,7 +61,7 @@ self.addEventListener('fetch', function (e) {
   if (url.pathname.indexOf('/solverone-dados/') >= 0) return;
 
   /* o motor de leitura: cache primeiro e para sempre; só busca na rede o que ainda não tem */
-  if (url.pathname.indexOf('/assets/ocr/') >= 0) {
+  if (url.pathname.indexOf('/assets/ocr/') >= 0 || url.pathname.indexOf('/leitor/tesseract/') >= 0) {
     e.respondWith(
       caches.open(CACHE_OCR).then(function (c) {
         return c.match(req).then(function (r) {

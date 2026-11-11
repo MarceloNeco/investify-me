@@ -46,7 +46,8 @@ async function recolherAbrir(p, nome, antesDeMedir) {
   });
   const a = await cal();
   ok(a.grade && a.rec === 'true|Recolher o calendário' && !a.etq, nome + ': calendário aberto por padrão, com o botão de recolher no cabeçalho (aria-expanded=true)');
-  await p.focus('#navCal .calm-rec'); await p.keyboard.press('Enter'); await p.waitForTimeout(150);
+  const semAnimar = () => p.waitForFunction(() => !document.getElementById('navCal').getAnimations().length, null, { timeout: 5000 }).catch(() => {});
+  await p.focus('#navCal .calm-rec'); await p.keyboard.press('Enter'); await semAnimar(); await p.waitForTimeout(50);
   const r = await cal();
   ok(!r.grade && r.etq === 'false' && /^[A-ZÇ][a-zç]+ de 20\d\d$/.test(r.mes) && !r.cortado && r.h < 60, nome + ': pelo teclado recolhe numa etiqueta "' + r.mes + '" (' + r.h + ' px, aria-expanded=false, sem cortar o texto)');
   ok(r.foco === 'calm-etq' && r.salvo === '1', nome + ': o foco vai para a etiqueta e a escolha fica guardada no aparelho');
@@ -55,8 +56,18 @@ async function recolherAbrir(p, nome, antesDeMedir) {
   await antesDeMedir(); await p.waitForTimeout(300);
   const l = await cal();
   ok(!l.grade && l.etq === 'false', nome + ': depois de recarregar continua recolhido (lembrado)');
-  await p.click('#navCal .calm-etq'); await p.waitForTimeout(150);
+  /* 3.65: abre com animação de altura (não "pisca"): no meio do caminho a altura está entre a etiqueta e o calendário inteiro */
+  const hEtq = (await cal()).h;
+  await p.evaluate(() => { const c = document.getElementById('navCal'); window.__alturas = []; window.__anima = 0;
+    (function olhar(t0) { const n = c.getAnimations().length; __anima = Math.max(__anima, n); __alturas.push(Math.round(c.getBoundingClientRect().height)); if ((n || !__anima) && performance.now() - t0 < 2000) requestAnimationFrame(() => olhar(t0)); })(performance.now()); });
+  await p.click('#navCal .calm-etq'); await semAnimar(); await p.waitForTimeout(80);
   const o = await cal();
+  const meio = await p.evaluate(() => ({ anima: __anima, hs: __alturas }));
+  meio.h = meio.hs.find((x) => x > hEtq + 5 && x < o.h - 5) || hEtq;
+  ok(meio.anima >= 1 && meio.h > hEtq + 5 && meio.h < o.h - 5, nome + ': abre com animação suave de altura (' + hEtq + ' → ' + meio.h + ' → ' + o.h + ' px), o chevron gira junto');
+  const seta = await p.evaluate(() => (document.querySelector('#navCal .calm-rec path') || {}).getAttribute && document.querySelector('#navCal .calm-rec path').getAttribute('d'));
+  ok(seta === 'M4 10l4-4 4 4', nome + ': aberto, a seta aponta para CIMA (a ação é recolher)');
+  try { await (await p.$('#navCal')).screenshot({ path: '/tmp/cal-aberto-' + nome.replace(/\W+/g, '-') + '.png' }); } catch (e) {}
   ok(o.grade && o.rec.startsWith('true') && o.salvo === null && o.bot <= o.H + 1 && o.h > 100, nome + ': tocar na etiqueta abre de novo, inteiro na tela (' + o.top + '–' + o.bot + ')');
   await p.reload(); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.recorrentes || []).length >= 1);
   await antesDeMedir(); await p.waitForTimeout(300);
@@ -144,6 +155,18 @@ async function janelasTravam(p, nome, celular) {
       const r2 = await medir(p), sy = await p.evaluate(() => scrollY);
       ok(sy > 0 && r2.navBot <= r2.H + 1 && r2.navBot >= r2.H - 2 && r2.calBot <= r2.H + 1, 'rolando a página (' + sy + ' px): a barra vai até o fim da tela e o calendário continua inteiro (' + r2.navTop + '–' + r2.navBot + ')');
       if (vp.width === 1366 || vp.width === 1920) await janelasTravam(p, 'janelas ' + vp.width, false);
+      if (vp.width === 1366 || vp.width === 1920) {   /* 3.65: descrição longa respeita a própria coluna; o valor nunca é coberto */
+        const d = await p.evaluate(() => {
+          const longa = 'SERVICO DE ASSINATURA EXEMPLO · US$ 700 (US$ 1.000 em créditos com 30% de desconto) · dólar do banco R$ 5,8086 · IOF 3,5% · cobrança internacional referente ao mês de outubro do plano anual ABCDE';
+          const g = Gasto.add({ data: '2026-10-28', valor: 4066.01, grupo: 'PESSOAL', sub: 'Assinaturas', desc: longa.slice(0, 200) });
+          bFiltro.periodo = 'tudo'; irPara('b-lanc'); render();
+          const tr = document.querySelector('[data-bid="' + g.id + '"]'), dc = tr.querySelector('.desc-cel'), txt = dc.querySelector('.desc-txt') || dc, v = tr.querySelector('td.num');
+          const rt = txt.getBoundingClientRect(), rv = v.getBoundingClientRect(), lh = parseFloat(getComputedStyle(txt).lineHeight) || 20;
+          const r = { dir: Math.round(rt.right), val: Math.round(rv.left), linhas: Math.round(rt.height / lh), title: txt.getAttribute('title') || '', tam: longa.slice(0, 200).length };
+          Gasto.excluir(g.id); render(); return r;
+        });
+        ok(d.dir <= d.val && d.linhas <= 2 && d.title.length === d.tam, 'descrição de ' + d.tam + ' caracteres em ' + vp.width + ': até 2 linhas (' + d.linhas + '), termina antes do valor (' + d.dir + ' ≤ ' + d.val + ') e o texto inteiro fica no title');
+      }
       await p.evaluate(() => scrollTo(0, 0));
       await recolherAbrir(p, 'calendário ' + vp.width, () => p.evaluate(() => { I18n.atual = 'pt'; abrirApp('budget'); irPara('b-custos'); }));
       ok(erros.length === 0, 'sem erro de página' + (erros.length ? ': ' + erros.join(' | ') : ''));

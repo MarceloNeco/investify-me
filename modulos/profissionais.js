@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/profissionais.js — profissionais conhecidos (N39)        1.1.0 · 11/Nov/2026
+   modulos/profissionais.js — profissionais conhecidos (N39)        1.2.0 · 11/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      Reconhece o mesmo médico, dentista, pediatra, escola… no extrato pelo nome, SEM IA:
@@ -12,6 +12,8 @@
      · 1.1.0 (3.64): "para quem é" é o BENEFICIÁRIO (paraQuem + paraQuemId, a pessoa do cadastro); quem pagou continua
        vindo da conta. Outra pessoa da casa pagar o mesmo profissional muda só o "quem pagou"; categoria e beneficiário seguem.
        Os classificados antes (o "quem" tinha virado o beneficiário) passam o nome para "Para quem" uma vez.
+     · 1.2.0 (3.65): ao confirmar, o profissional aprende o CNPJ / id da outra parte dos lançamentos (cnpjs, idps);
+       daí em diante é reconhecido por eles mesmo que o nome no banco mude (modulos/contraparte.js).
    API (window.Profissionais)
      norm(texto)               → palavras que contam do nome (array)
      parecido(a, b)            → 0..1 (palavras iguais ou com 1 letra de diferença, sobre a maior)
@@ -132,7 +134,11 @@
       if (benef || !p.paraQuem) { p.paraQuem = benef; delete p.quem; if (window.Pessoas) Pessoas.ligar(p, 'paraQuem', 'paraQuemId'); }
       if (p.apelidos.indexOf(chave) < 0) p.apelidos.push(chave);
       var n = 0;
-      Gasto.todos().slice().forEach(function (g) { if (!g.editadoPessoa && API.parecido(API.norm(API.textoDe(g)), chave.split(' ')) >= SURE && API.aplicar(g, p)) n++; });
+      Gasto.todos().slice().forEach(function (g) {
+        if (API.parecido(API.norm(API.textoDe(g)), chave.split(' ')) < SURE) return;
+        if (window.Contraparte) Contraparte.aprender(g, p);   /* 1.2.0: o CNPJ / id da outra parte entra no profissional */
+        if (!g.editadoPessoa && API.aplicar(g, p)) n++;
+      });
       return { p: p, n: n };
     },
     ignorar: function (chave) {
@@ -189,7 +195,7 @@
 
   MoneyModulos.registrar({
     id: 'profissionais',
-    versao: '1.1.0',
+    versao: '1.2.0',
     colecoes: [COL],
     /* 1.1.0: uma vez, o nome que o profissional tinha posto no "quem" passa para "Para quem" */
     iniciar: function () {

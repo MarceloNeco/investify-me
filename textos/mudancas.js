@@ -1,11 +1,23 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.64.1 · 11/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.65 · 11/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.65', d:'2026-11-11', t:'Cartões, contatos, passeio e barra de andamento', itens:[
+    'Cartões por conta: o cartão é a fatura, com vários finais (físico, virtual, adicional). O app encontra os cartões nas suas compras e pergunta uma vez o que não sabe. "Quem usa" define quem pagou.',
+    'Contatos e profissionais reconhecidos pelo CNPJ ou pela identificação do banco, mesmo que o nome mude. O nome completo gera os nomes no banco. O código da loja (MCC) vira só um palpite de categoria.',
+    'Importar a declaração do IR com escolhas: patrimônio com os bens, restituição prevista, imposto em compromissos e conferência das deduções com o app.',
+    'Um passeio de verdade, que mostra cada parte da tela. Uma barra fina abaixo do cabeçalho mostra o andamento de tudo o que está processando. O calendário do menu abre e fecha com animação.',
+    'Descrição longa nos lançamentos não passa mais por cima do valor. Parcela ("08/12") vira compromisso até a última. Categorias novas: IA e software, Seguro de vida, IOF / TED / DOC. Salvar cartão voltou a funcionar.',
+    'O que o robô só supõe aparece com o selo amarelo "A confirmar" (um toque no ✓ confirma); o que ele não sabe, com o selo vermelho "A identificar". Confirmar ou corrigir um vale para todos da mesma origem, com Desfazer, e a tela "A confirmar" agrupa por origem.',
+    'Conferência com o banco em três partes: contas e poupança, cartões (a fatura aberta, com vencimento e limite) e investimentos. Assinatura que você não vai renovar termina na data marcada, e o app avisa se cobrarem depois. "Locação de vídeo" e "CDs/DVDs" viraram "Streaming e mídias", e agora dá para renomear categorias.',
+    '"Segurança e aparelhos": uma tela larga (2 a 3 colunas no computador, 1 no celular) com seus dados, PIN e digital, seus aparelhos (com os apps de cada um), o robô do banco e sair. Abre pelo menu do perfil ("☁️ Dados salvos · hh:mm") e por Configurações. O selo "Tudo guardado" virou um ícone discreto no topo.',
+    'O PIN é da sua conta SolverONE e vale em todos os apps: quem já usa o OmniLifeONE aprova por um aparelho seu (pode ser o OmniLifeONE no mesmo celular) e usa o mesmo PIN. Pedidos de acesso dizem de qual app vêm.',
+    'Cadastrar cartão por foto: em "Cadastrar cartão", "📷 Fotografar cartão" ou "🖼️ Imagem ou print do cartão" (o cartão virtual no app do banco). O app lê a frente neste aparelho, sem internet, preenche final, bandeira, validade e banco, e você confere antes de salvar. A foto não é guardada; só os 4 últimos dígitos ficam. Se o final já aparece nas compras do robô, o cartão fica ligado a elas.'
+  ]},
   {v:'3.64.1', d:'2026-11-11', t:'Sair de verdade e criar o PIN da conta', itens:[
     '"Sair" no menu do perfil agora sai da conta de verdade: os dados somem da tela, e nem recarregar nem o "Voltar" do navegador mostram nada até você entrar de novo.',
     'Conta ainda sem PIN da conta: um aviso no topo, "Crie o PIN da sua conta SolverONE", leva a "Criar o PIN da conta" (PIN novo duas vezes, sem pedir o PIN antigo). Ele vale em todos os seus aparelhos e apps, e o PIN antigo deste aparelho deixa de abrir. Abrir com o PIN antigo não cria o PIN da conta sozinho. "Trocar o PIN" só aparece quando a conta já tem PIN.',

@@ -158,8 +158,8 @@ async function parteA(b, BASE) {
         return { c1, c2, n: Gasto.todos().length === n0, card, hist: SaldoBanco.contas()[0].hist.length, ab: SaldoBanco.contas()[0].abertura };
       });
       ok(sb.c1.dif === 0 && sb.c1.app === 1300, 'saldo: abertura 1.000 + 500 − 200 = 1.300 pelo app, igual ao banco (bate)');
-      ok(Math.abs(sb.c2.dif + 50) < 0.01 && sb.c2.desde === '2026-10-05' && /diferença de/.test(sb.card) && /05\/10/.test(sb.card) && /fatura em aberto/.test(sb.card),
-        'saldo: o banco diz 1.250 → "diferença de R$ -50 desde 05/10" no Painel, com o link para os lançamentos; cartão mostra a fatura em aberto');
+      ok(Math.abs(sb.c2.dif + 50) < 0.01 && sb.c2.desde === '2026-10-05' && /diferença de/.test(sb.card) && /05\/10/.test(sb.card) && /Fatura aberta R\$\s?830/.test(sb.card),
+        'saldo: o banco diz 1.250 → "diferença de R$ -50 desde 05/10" no Painel, com o link para os lançamentos; cartão mostra a fatura aberta positiva');
       ok(sb.n && sb.hist === 3 && sb.ab.saldo === 1000, "saldo nunca vira lançamento; histórico por conta; o primeiro saldo é o ajuste de abertura");
       /* ---- indicadores ---- */
       const ind = await p.evaluate(([mes, mesAnt]) => {
@@ -188,7 +188,7 @@ async function parteA(b, BASE) {
         if (g.confianca) g.revisar = true; Gasto.add(g);
         const tot0 = JSON.stringify(Gasto.porChave(Gasto.todos().filter((x) => x.fluxo === 'saida'), 'grupo'));
         bFiltro = { busca: '', grupos: [], subs: [], quem: [], formas: [], de: '', ate: '', fluxo: '', periodo: 'tudo', favoritos: false, revisar: true, irpf: false }; irPara('b-lanc');
-        const linha = (document.querySelector('[data-bid="rb_pp1"] .esp-palpite') || {}).textContent || '';
+        const linha = (document.querySelector('[data-bid="rb_pp1"] .or-selo') || {}).textContent || '';   /* 3.65: o selo "A confirmar" na coluna Categoria */
         document.querySelector('[data-bid="rb_pp1"] [data-acao="esp-confirmar"]').click();
         const depois = Gasto.todos().find((x) => x.id === 'rb_pp1');
         const tot1 = JSON.stringify(Gasto.porChave(Gasto.todos().filter((x) => x.fluxo === 'saida'), 'grupo'));
@@ -196,8 +196,8 @@ async function parteA(b, BASE) {
         return { conf: g.confianca, rev: g.revisar, velho: velho.confianca, linha, depois: [depois.confianca, depois.revisar], igual: tot0 === tot1, txt };
       });
       ok(pa.conf === 'palpite' && pa.rev && pa.velho === undefined, "palpite do robô: lançamento novo marcado para conferir; sem o campo (dado antigo) não é palpite");
-      ok(/palpite do robô/.test(pa.linha) && /Confirmar categoria/.test(pa.linha) && pa.depois[0] === undefined && pa.depois[1] === false && pa.igual,
-        'a linha mostra "palpite do robô · ✓ Confirmar categoria"; um toque confirma; Painel e gráficos não mudam');
+      ok(/A confirmar/.test(pa.linha) && pa.depois[0] === undefined && pa.depois[1] === false && pa.igual,
+        'a linha mostra o selo "A confirmar" com ✓; um toque confirma; Painel e gráficos não mudam');
       ok(pa.txt.regra && pa.txt.regra.confirmada === true && pa.txt.regra.desc === 'BAR NOVO' && pa.txt.id === 'pp1' && pa.txt.quem_editou === 'app' && pa.txt.valor === 70 && pa.txt.tipo === 'despesa',
         'o pacote da confirmação leva a regra {desc, grupo, categoria, confirmada: true} e o id do robô');
       const manual = await p.evaluate(() => { const g = Gasto.todos().find((x) => x.desc === 'FARMACIA TESTE'); return [Espelho.texto(g).id, Espelho.texto(g).para_quem, Espelho.linkValido('https://docs.google.com/spreadsheets/d/abc123/edit'), Espelho.linkValido('https://exemplo.com/spreadsheets/x'), Espelho.linkValido('javascript:alert(1)')]; });
@@ -331,14 +331,25 @@ async function reenvio(p) {
   const pub = db.money_caixa_chave[0] && db.money_caixa_chave[0].chave_publica;
   const pacotes = await p.evaluate(async ([pub, itens]) => { const out = []; for (const l of itens) out.push(await MoneyNuvem._teste.Cifra.selarPacote(pub, l)); return out; }, [pub, pre.itens]);
   pacotes.forEach((pk, i) => db.money_entrada.push({ id: crypto.randomUUID(), grupo_id: GID, pacote: pk, origem: 'robo', criado_em: new Date(Date.UTC(2026, 10, 11, 0, 0, 0, i)).toISOString(), consumido_em: null }));
+  await p.evaluate(() => { I18n.atual = 'pt'; abrirApp('budget'); irPara('b-painel'); window.scrollTo(0, 0); });
+  await p.evaluate(() => { window.__barra = []; window.__tBarra = setInterval(() => { const b = document.getElementById('barraAndamento');
+    __barra.push({ vis: !!b && !b.hidden, v: b && b.getAttribute('aria-valuenow'), t: b && b.title, role: b && b.getAttribute('role') }); }, 150); });
+  let fotoBarra = false;
   await p.evaluate(() => { window.__longas = []; try { new PerformanceObserver((l) => l.getEntries().forEach((e) => __longas.push(e.duration))).observe({ entryTypes: ['longtask'] }); } catch (e) {} });
   const t0 = Date.now();
   await p.evaluate(() => MoneyNuvem._teste.Caixa.esvaziar());
   while (db.money_entrada.some((r) => !r.consumido_em) && Date.now() - t0 < 240000) {
     await new Promise((r) => setTimeout(r, 1000));
+    if (!fotoBarra && await p.evaluate(() => { const b = document.getElementById('barraAndamento'); return !b.hidden && Number(b.getAttribute('aria-valuenow')) > 20; })) {
+      fotoBarra = true; await p.screenshot({ path: '/tmp/barra-andamento-1366.png', clip: { x: 0, y: 0, width: 1366, height: 120 } });
+    }
     await p.evaluate(() => { const C = MoneyNuvem._teste.Caixa; if (!C._rodando) C.esvaziar(); });
   }
   const seg = Math.round((Date.now() - t0) / 100) / 10;
+  await new Promise((r) => setTimeout(r, 1200));
+  const br = await p.evaluate(() => { clearInterval(__tBarra); const b = document.getElementById('barraAndamento'); return { amostras: __barra, fim: b.hidden }; });
+  const vals = br.amostras.filter((x) => x.vis && x.v != null).map((x) => Number(x.v));
+  const comTexto = br.amostras.find((x) => /Caixa do robô: [\d.]+ de 2\.330/.test(x.t || ''));
   const r = await p.evaluate(() => {
     const l = Gasto.todos().filter((g) => /^rb_vol-/.test(g.id)), ed = l.filter((g) => g.editadoPessoa), sem = l.filter((g) => !g.editadoPessoa);
     const t = (i) => Gasto.todos().find((g) => g.id === 'rb_vol-' + i);
@@ -350,6 +361,8 @@ async function reenvio(p) {
   ok(r.edSug === r.edN - 1 && r.edN >= 90, 'os editados pela pessoa ficaram como estavam, com a sugestão do robô em Revisar (' + r.edSug + ' de ' + r.edN + '; o outro virou transferência)');
   ok(r.t100 && r.t100.roboSugeriu && r.t100.roboSugeriu.tipo === 'transferencia' && !r.t101 && !r.t106 && r.n === N - 6,
     'gasto que o robô agora diz ser transferência: sem edição sai do livro (não conta em dobro); editado vira sugestão em Revisar');
+  ok(vals.length >= 3 && vals[vals.length - 1] > vals[0] && comTexto && comTexto.role === 'progressbar' && br.fim && fotoBarra,
+    'barra de andamento global: aparece com % (' + vals[0] + '% → ' + vals[vals.length - 1] + '%), "' + (comTexto || {}).t + '", role=progressbar, e some ao terminar');
   ok(r.longa < 1500, 'a tela não trava: a tarefa mais longa do navegador durou ' + Math.round(r.longa) + ' ms (' + r.nLongas + ' tarefas longas)');
 }
 

@@ -41,7 +41,7 @@
     faixaDividas: function (p) { return p == null ? '' : p <= 0.30 ? 'ok' : p <= 0.40 ? 'atencao' : 'alto'; },
     liquido: function () {
       var s = 0;
-      ((window.SaldoBanco && SaldoBanco.contas()) || []).forEach(function (r) { if (!r.cartao && (r.moeda || 'BRL') === 'BRL') s += Number(r.saldo) || 0; });
+      ((window.SaldoBanco && SaldoBanco.contas()) || []).forEach(function (r) { if ((r.tipo === 'conta' || r.tipo === 'poupanca' || (!r.tipo && !r.cartao)) && (r.moeda || 'BRL') === 'BRL') s += Number(r.saldo) || 0; });
       (ST.posicoes || []).forEach(function (p) {
         if (p.tipo === 'previdencia' || /fgts|previd/i.test(p.nome + ' ' + p.ticker)) return;
         var diaria = p.tipo === 'caixa' || /^d\s*\+\s*[01]$/i.test(String(p.liquidez || '')) || /selic|liquidez di[aá]ria|\bdi\b|poupan/i.test(String(p.nome || '') + ' ' + String(p.ticker || ''));

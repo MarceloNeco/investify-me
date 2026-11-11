@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.64">
+<link rel="stylesheet" href="estilo.css?v=3.65">
 </head>
 <body>
 
@@ -54,6 +54,7 @@
         <div class="perfil-menu hidden" id="perfilMenu" role="menu" aria-label="Perfil"></div>
       </div>
     </div>
+    <div id="barraAndamento" class="barra-and" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Andamento" hidden><i></i></div>
   </header>
 
   <div id="anuncioCaixa"></div>
@@ -628,7 +629,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.64.1"></script>
+<script src="textos/frases-en.js?v=3.65"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -3205,6 +3206,7 @@ const FORMAS_PGTO = [
   {id:'boleto',   nome:{pt:'Boleto',           en:'Bank slip'},      ico:'🧾',  pede:'banco'},
   {id:'transf',   nome:{pt:'Transferência',    en:'Transfer'},       ico:'↔️',  pede:'banco'},
   {id:'debaut',   nome:{pt:'Débito automático',en:'Direct debit'},   ico:'🔁',  pede:'banco'},
+  {id:'debconta', nome:{pt:'Débito em conta',  en:'Account debit'},  ico:'🏦',  pede:'banco'},   /* 3.65: Pix, boleto, encargos tirados da conta */
   {id:'especie',  nome:{pt:'Espécie',          en:'Cash'},           ico:'💵',  pede:''},
   {id:'vale',     nome:{pt:'Vale / benefício', en:'Meal voucher'},   ico:'🎟️', pede:''},
   {id:'outra',    nome:{pt:'Outra',            en:'Other'},          ico:'•',   pede:''}
@@ -7368,7 +7370,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.64.1"></script>
+<script src="textos/mudancas.js?v=3.65"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -7489,6 +7491,7 @@ const Gasto = {
     r.revisar = !!r.revisar;
     r.fluxo = GRUPOS[r.grupo].fluxo;
     if(window.Pessoas) Pessoas.ligarTudo(r);   /* 3.64: o texto que bate numa pessoa guarda o ID dela */
+    if(window.Categorias) Categorias.alias(r);  /* 3.65: nome antigo de categoria → o novo (nada recria a velha) */
     return r;
   },
 
@@ -7575,6 +7578,8 @@ const Gasto = {
       if(f.irpf   && !g.irpf) return false;
       if(f.favoritos && !g.favorito) return false;
       if(f.revisar   && !g.revisar) return false;
+      if(f.aconfirmar  && !(window.Origem && Origem.status(g) === 'confirmar')) return false;     /* 3.65 */
+      if(f.aidentificar && !(window.Origem && Origem.status(g) === 'identificar')) return false;
       if(f.busca){
         const alvo = (g.desc + ' ' + g.sub + ' ' + g.grupo).toLowerCase();
         if(alvo.indexOf(f.busca.toLowerCase()) < 0) return false;
@@ -7785,6 +7790,10 @@ const Gasto = {
     /* 3.39 (N24): Renda · Rescisão e Renda · FGTS (separado) existem mesmo sem lançamento */
     m.RENDA = m.RENDA || new Set(); ['Rescisão', 'FGTS'].forEach(x => m.RENDA.add(x));
     m.SAUDE = m.SAUDE || new Set(); m.SAUDE.add(SUB_TERAPIAS);   /* 3.64: TO, fono, psicopedagogia (com IR) */
+    /* 3.65: assinaturas de IA e software; seguro de vida; o IOF/TED/DOC dos bancos (o robô já manda nelas) */
+    m.PESSOAL = m.PESSOAL || new Set(); ['IA e software', 'Seguro de vida', 'Cursos'].forEach(x => m.PESSOAL.add(x));
+    m.BANCARIOS = m.BANCARIOS || new Set(); m.BANCARIOS.add('IOF / TED / DOC');
+    m.LAZER = m.LAZER || new Set(); m.LAZER.add('Streaming e mídias');
     const out = {};
     Object.keys(m).forEach(k => { out[k] = Array.from(m[k]).sort((a,b) => a.localeCompare(b,'pt')); });
     return out;
@@ -8179,6 +8188,7 @@ const Recorrente = {
          último dia do mês, dia 5…). O valor é que passa a ser a soma. */
     }
     if(window.Pessoas) Pessoas.ligarTudo(o);   /* 3.64 */
+    if(window.Categorias) Categorias.alias(o);  /* 3.65 */
     return o;
   },
 
@@ -9851,9 +9861,10 @@ function viewBLanc(){
                    '">💳 ' + fmtData(cb) + '</div>' : ''; })() + '</td>' +
       '<td><span class="t-main">' + esc(g.sub) + '</span>' +
         '<div class="t-sub">' + (G.ico || '') + ' ' + esc(G.nome || g.grupo) +
-        (g.per && g.per !== 'Pontual' ? ' · ' + PERIODICIDADES[g.per].nome.toLowerCase() : '') + '</div></td>' +
-      '<td class="desc-cel">' + esc((g.desc || '').slice(0,110)) +
-        ((g.desc || '').length > 110 ? '…' : '') +
+        (g.per && g.per !== 'Pontual' ? ' · ' + PERIODICIDADES[g.per].nome.toLowerCase() : '') + '</div>' +
+        (window.MoneyModulos ? MoneyModulos.html('lancamento.categoria', {g: g}) : '') + '</td>' +   /* 3.65: selo A confirmar / A identificar */
+      /* 3.65: a descrição fica na própria coluna (até 2 linhas, reticências); o texto inteiro no title e no detalhe */
+      '<td class="desc-cel"><span class="desc-txt" title="' + esc(g.desc || '') + '">' + esc(g.desc || '') + '</span>' +
         (g.grupo === 'RENDA' && Transferencia.daRenda(g.id).length ? '<div class="t-sub tf-cinza">↪ ' + esc((I18n.atual === 'pt' ? 'passou para outra conta em ' : 'moved to another account on ') +
           Transferencia.daRenda(g.id).map(t => I18n.data(t.data) + (t.banco ? ' (' + t.banco + ')' : '')).join(', ') + (I18n.atual === 'pt' ? ' — transferência, não conta de novo' : ' — transfer, not counted again')) + '</div>' : '') +
         (g.quem || g.paraQuem || g.forma ? '<div class="t-sub">' + esc([g.paraQuem && g.paraQuem !== g.quem ? (g.quem ? g.quem + ' → ' : '→ ') + g.paraQuem : g.quem, g.forma].filter(Boolean).join(' · ')) +
@@ -10040,6 +10051,7 @@ function recPessoas(){
 const SUB_TERAPIAS = 'Terapias (TO/Fono/Psicopedagogia)';
 const DICIO_REC = [
   [/terapia ocupacional|fonoaudi|\bfono\b|psicoped|reabilita/i, 'SAUDE', SUB_TERAPIAS, {irpf:true}],
+  [/anthropic|openai|chatgpt|claude\.ai|microsoft 365|office 365|github|google one|notion/i, 'PESSOAL', 'IA e software'],
   [/escola|col[eé]gio|faculdade|universidade|curso|ingl[eê]s|ballet|nata[cç][aã]o|ampliado|material escolar/i, 'DEPENDENTES', 'Escola', {irpf:true, anual:true}],
   [/aluguel/i, 'HABITACAO', 'Aluguel'], [/condom[ií]nio/i, 'HABITACAO', 'Condomínio'],
   [/\b(luz|energia|enel|cemig|light|copel)\b/i, 'HABITACAO', 'Energia'], [/\b(água|agua|sabesp|copasa)\b/i, 'HABITACAO', 'Água'],
@@ -10890,6 +10902,7 @@ function campoOndePagou(g){
 
   if(pede === 'cartao'){
     const cartoes = Banco.cartoes();
+    if(!cartoes.length && (g && g.formaId) !== 'credito') return '';   /* 3.65: o aviso de "nenhum cartão" só no crédito */
     if(!cartoes.length)
       return '<div class="aviso-box"><p class="small">' + (pt
         ? 'Você ainda não cadastrou nenhum cartão. Dá para lançar assim mesmo — ou cadastrar agora, em Configurações, e o app passa a somar a fatura de cada um.'
@@ -10984,6 +10997,9 @@ function salvarLancamento(){
   else criado = Gasto.add(dados);
   /* 3.64: a edição da pessoa vai para a planilha espelho do robô (modulos/espelho.js) */
   if(window.Espelho){ const gEsp = criado || Gasto.todos().find(x => x.id === bEditando); if(gEsp){ delete gEsp.confianca; Espelho.registrar(gEsp, antesEsp); } }
+  /* 3.65: corrigiu (ou confirmou) um lançamento do robô: vale para os outros da mesma origem que ainda estão pendentes */
+  if(window.Origem && antesEsp && antesEsp.origem === 'robo'){ const gO = Gasto.todos().find(x => x.id === bEditando);
+    if(gO && (Origem.pendente(antesEsp) || ['grupo','sub','paraQuem','irpf'].some(k => (antesEsp[k] || '') !== (gO[k] || '')))) Origem.depoisDe(gO, antesEsp); }
   Gasto._idx = null;
   bProj = null;                       /* a projeção envelheceu */
   Store.salvar(); fechar('assetModal'); render();
@@ -11679,7 +11695,7 @@ function bLista(extra){
 function bTemFiltro(){
   return !!(bFiltro.busca || bFiltro.grupos.length || bFiltro.subs.length ||
             bFiltro.quem.length || bFiltro.formas.length ||
-            bFiltro.favoritos || bFiltro.revisar || bFiltro.irpf ||
+            bFiltro.favoritos || bFiltro.revisar || bFiltro.irpf || bFiltro.aconfirmar || bFiltro.aidentificar ||
             (bFiltro.periodo !== 'tudo' && bFiltro.periodo !== '12m'));
 }
 
@@ -11763,6 +11779,10 @@ function barraFiltros(op){
       '<button class="chip click' + (bFiltro.revisar ? ' on' : '') + '" data-bmarca="revisar">🚩 ' +
         (I18n.atual === 'pt' ? 'Para revisar' : 'To review') + '</button>' +
       '<button class="chip click' + (bFiltro.irpf ? ' on' : '') + '" data-bmarca="irpf">🧾 IRPF</button>' +
+      /* 3.65: o que o robô deixou para a pessoa (modulos/origem.js) */
+      (window.Origem ? (() => { let a = 0, b = 0; Gasto.todos().forEach(g => { const s = Origem.status(g); if(s === 'confirmar') a++; else if(s === 'identificar') b++; });
+        return '<button class="chip click or-chip' + (bFiltro.aconfirmar ? ' on' : '') + '" data-bmarca="aconfirmar"><span class="or-selo or-amarelo">' + (I18n.atual === 'pt' ? 'A confirmar' : 'To confirm') + '</span> ' + a + '</button>' +
+          '<button class="chip click or-chip' + (bFiltro.aidentificar ? ' on' : '') + '" data-bmarca="aidentificar"><span class="or-selo or-vermelho">' + (I18n.atual === 'pt' ? 'A identificar' : 'To identify') + '</span> ' + b + '</button>'; })() : '') +
       '</div></div>';
 
     h += '<div class="bf-bloco bf-datas">' +
@@ -12551,6 +12571,38 @@ const Fundo = {
     toast(t.msg + (I18n.atual === 'pt' ? ' — toque na pílula para ver' : ' — tap the pill to see'));
   },
   limpar(id){ delete this.tarefas[id]; this.soltar(); this.render(); },
+
+  /* 3.65: a BARRA DE ANDAMENTO global, fina, logo abaixo do cabeçalho. Mostra tudo o que processa: as tarefas
+     do Fundo (ler foto/PDF, importar…) e os trabalhos curtos da plataforma (caixa do robô, sincronizar a nuvem,
+     espelho) que avisam por aqui. Com total conhecido, o %; sem total, indeterminada. Só aparece se o trabalho
+     passar de 400 ms (a busca da nuvem a cada 20 s não pisca) e some com fade. Uma barra só, para o app todo. */
+  leves: {},        /* id -> {rotulo, frac (null = sem total)} */
+  mostrar(id, frac, rotulo){
+    this.leves[id] = {frac: frac == null ? null : Math.max(0, Math.min(1, frac)), rotulo: rotulo || '', desde: (this.leves[id] || {}).desde || Date.now()};
+    this.renderBarra();
+  },
+  esconder(id){ if(this.leves[id]){ delete this.leves[id]; this.renderBarra(); } },
+  renderBarra(){
+    const b = document.getElementById('barraAndamento'); if(!b) return;
+    const itens = Object.values(this.leves).concat(Object.values(this.tarefas).filter(t => !t.pronto).map(t => ({frac: t.frac > 0 ? t.frac : null, rotulo: t.msg, desde: 0})));
+    clearTimeout(this._tBarra);
+    if(!itens.length){
+      if(!b.hidden && !b.classList.contains('some')){ b.classList.add('some'); this._tBarra = setTimeout(() => { b.hidden = true; b.classList.remove('some'); }, 400); }
+      return;
+    }
+    const cedo = itens.every(x => x.desde && Date.now() - x.desde < 400);
+    if(b.hidden && cedo){ this._tBarra = setTimeout(() => this.renderBarra(), 400 - Math.max(0, ...itens.map(x => Date.now() - x.desde))); return; }
+    const comTotal = itens.filter(x => x.frac != null);
+    const det = comTotal.length > 0;   /* com algum total conhecido (ex.: a caixa), a barra mostra o % dele */
+    const frac = det ? comTotal.reduce((s, x) => s + x.frac, 0) / comTotal.length : null;
+    b.hidden = false; b.classList.remove('some');
+    b.classList.toggle('indet', !det);
+    const txt = itens.map(x => x.rotulo).filter(Boolean).join(' · ');
+    b.setAttribute('aria-label', txt || (I18n.atual === 'pt' ? 'Processando' : 'Working'));
+    b.title = txt;
+    if(det){ const pc = Math.round(frac * 100); b.setAttribute('aria-valuenow', pc); b.setAttribute('aria-valuetext', (txt ? txt + ' · ' : '') + pc + '%'); b.firstChild.style.width = pc + '%'; }
+    else { b.removeAttribute('aria-valuenow'); b.removeAttribute('aria-valuetext'); b.firstChild.style.width = ''; }
+  },
   ativa(id){ return id ? !!(this.tarefas[id] && !this.tarefas[id].pronto) : Object.values(this.tarefas).some(t => !t.pronto); },
   estado(id){ return this.tarefas[id] || null; },
 
@@ -12585,6 +12637,7 @@ const Fundo = {
   },
 
   render(){
+    this.renderBarra();
     const pill = $('#fundoPill'); if(!pill) return;
     const id = Object.keys(this.tarefas)[0]; const t = this.tarefas[id];
     if(!t){ pill.classList.add('hidden'); return; }
@@ -13117,7 +13170,8 @@ function agendarEscaneado(){
    app procura o motor em três lugares, nesta ordem:
 
      1. Embutido no próprio arquivo (window.TESSERACT_EMBUTIDO)
-     2. Um arquivo ao lado, em assets/ocr/tesseract.min.js
+     2. Um arquivo ao lado, em leitor/tesseract/tesseract.min.js (3.65: a MESMA pasta do motor do
+        Leitor OCR, que o cartão por foto usa; uma cópia só no aparelho)
      3. A CDN, na primeira vez, e depois o cache do navegador
 
    Com qualquer um dos três o OCR funciona igual. Sem nenhum,
@@ -13132,7 +13186,7 @@ function agendarEscaneado(){
 
 const FONTES_OCR = [
   {nome:'embutido', url:null},
-  {nome:'local',    url:'assets/ocr/tesseract.min.js'},
+  {nome:'local',    url:'leitor/tesseract/tesseract.min.js'},
   {nome:'cdn',      url:'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js'}
 ];
 
@@ -13144,13 +13198,13 @@ const Ocr = {
   disponivel(){ return !!(this.motor || window.Tesseract || window.TESSERACT_EMBUTIDO); },
 
   /* onde o Tesseract procura o trabalhador, o núcleo e o idioma. Quando o
-     motor veio de assets/ocr/ (o normal, publicado junto com o app), tudo
+     motor veio de leitor/tesseract/ (o normal, publicado junto com o app), tudo
      vem de lá também — e fica guardado no aparelho pelo sw.js. Se veio da
      CDN, usa os endereços padrão da biblioteca. Só o português está em
-     assets/ocr/; "por+eng" (documentos em inglês) busca o idioma na rede. */
+     leitor/tesseract/; "por+eng" (documentos em inglês) busca o idioma na rede. */
   opcoesTrabalhador(idioma){
     if(this.origem !== 'local') return {};
-    const base = new URL('assets/ocr/', document.baseURI).href;
+    const base = new URL('leitor/tesseract/', document.baseURI).href;
     const o = {workerPath: base + 'worker.min.js', corePath: base};
     if(idioma === 'por') o.langPath = base;
     return o;
@@ -13178,6 +13232,9 @@ const Ocr = {
         }
       }
       if(!window.Tesseract) throw new Error('semMotor');
+      /* 3.65: o motor do Leitor OCR (cartão por foto) já carregou o MESMO tesseract.min.js de leitor/tesseract/:
+         então o trabalhador, o núcleo e o português também vêm de lá (e não da CDN) */
+      if(!this.origem && document.querySelector('script[src*="leitor/tesseract/tesseract.min.js"]')) this.origem = 'local';
       this.motor = window.Tesseract;
       return this.motor;
     })();
@@ -13483,8 +13540,8 @@ const CupomTexto = {
         senão oferece os candidatos para a pessoa tocar no certo
      5. lê QR code e código de barras (ZXing + jsQR)
 
-   Os arquivos do motor (Tesseract, português, ZXing, jsQR) moram em
-   assets/ocr/, ao lado deste index.html, e ficam guardados no
+   O Tesseract e o português moram em leitor/tesseract/ (a pasta do motor do Leitor OCR,
+   uma cópia só); ZXing e jsQR em assets/ocr/. Tudo fica guardado no
    aparelho pelo sw.js. Nenhuma foto sai do aparelho.
    ========================================================= */
 const Leitor = (() => {
@@ -18227,6 +18284,8 @@ let assistBusca = '';
 
 const Assist = {
   abrir(aba){
+    /* 3.65: o tutorial virou o passeio de verdade, com spotlight (modulos/tour.js) */
+    if(aba === 'tutorial' && window.Tour){ this.fechar(); tutorialPasso = 0; Tour.iniciar(0); return; }
     assistAba = aba || 'tela';
     this.render();
     abrir('assistModal');
@@ -18244,7 +18303,7 @@ const Assist = {
     if(this.jaViuTutorial()) return;
     tutorialPasso = 0;
     setTimeout(() => {
-      if(this.jaViuTutorial()) return;
+      if(this.jaViuTutorial() || (window.Tour && Tour.aberto())) return;   /* 3.65: com o passeio aberto, o "Olá" não aparece por cima */
       if(typeof AssistOne !== 'undefined' && AssistOne.ligado()) AssistOne.abrir('ola');
       else this.abrir('tutorial');
     }, 900);
@@ -18541,6 +18600,7 @@ function blocoBancosCartoes(){
   }
   h += '<button class="btn sm" data-acao="cartao-novo" style="margin-top:8px">' +
        (pt ? '+ Cadastrar cartão' : '+ Add card') + '</button>';
+  h += (window.MoneyModulos ? MoneyModulos.html('cartoes.config', {}) : '');   /* 3.65: cartões encontrados, "de qual cartão?", finais novos */
 
   h += '<p class="tiny muted" style="margin-top:12px">' + (pt
     ? 'O selo colorido é desenhado pelo próprio app, com a cor da instituição. Não uso a marca de nenhum banco.'
@@ -18635,9 +18695,10 @@ function salvarBanco(){
 }
 
 /* ---------- formulário do cartão ---------- */
-function abrirCartao(id){
+function abrirCartao(id, semente){
   const pt = I18n.atual !== 'en';
   const c = id ? Banco.acharCartao(id) : null;
+  const sm = !c && semente ? semente : null;   /* 3.65: "Cartões encontrados" abre o cadastro já preenchido */
   const bancos = Banco.todos();
   const dias = n => { let o = '<option value="0">—</option>';
     for(let i = 1; i <= 31; i++) o += '<option value="' + i + '"' + (n === i ? ' selected' : '') + '>' + i + '</option>';
@@ -18646,13 +18707,14 @@ function abrirCartao(id){
   $('#assetModalTitle').textContent = pt ? (c ? 'Editar cartão' : 'Cadastrar cartão')
                                          : (c ? 'Edit card' : 'Add card');
   $('#assetModalBody').innerHTML = Verter.html(
+    (!c && window.MoneyModulos ? MoneyModulos.html('cartao.topo', {semente: sm}) : '') +   /* 3.65: cadastrar por foto (modulos/cartao-foto.js) */
     '<div class="grid g2">' +
       campo(pt ? 'Apelido' : 'Nickname',
         '<input id="ctApelido" placeholder="' + (pt ? 'Cartão do dia a dia' : 'Everyday card') + '" value="' +
-        (c ? esc(c.apelido) : '') + '">') +
+        (c ? esc(c.apelido) : (sm ? esc(sm.apelido || '') : '')) + '">') +
       campo(pt ? 'Últimos 4 dígitos' : 'Last 4 digits',
         '<input id="ctFim" inputmode="numeric" maxlength="4" placeholder="1234" value="' +
-        (c ? esc(c.fim) : '') + '">') +
+        (c ? esc(c.fim) : (sm ? esc(sm.fim || '') : '')) + '">') +
     '</div>' +
     '<div class="grid g2">' +
       campo(pt ? 'Crédito ou débito' : 'Credit or debit',
@@ -18663,12 +18725,12 @@ function abrirCartao(id){
             (pt ? 'Débito' : 'Debit') + '</option></select>') +
       campo(pt ? 'Bandeira' : 'Brand',
         '<select id="ctBandeira">' + BANDEIRAS.map(b =>
-          '<option value="' + b.id + '"' + (c && c.bandeira === b.id ? ' selected' : '') + '>' +
+          '<option value="' + b.id + '"' + ((c ? c.bandeira : sm && sm.bandeira) === b.id ? ' selected' : '') + '>' +
           esc(b.nome) + '</option>').join('') + '</select>') +
     '</div>' +
     campo(pt ? 'De qual banco' : 'Which bank',
       '<select id="ctBanco"><option value="">—</option>' +
-      bancos.map(b => '<option value="' + b.id + '"' + (c && c.bancoId === b.id ? ' selected' : '') + '>' +
+      bancos.map(b => '<option value="' + b.id + '"' + ((c ? c.bancoId : sm && sm.bancoId) === b.id ? ' selected' : '') + '>' +
         esc(Banco.rotulo(b.id)) + '</option>').join('') + '</select>',
       null, bancos.length ? '' : (pt ? 'Cadastre um banco antes, se quiser ligar os dois.'
                                      : 'Add a bank first if you want to link them.')) +
@@ -18681,6 +18743,7 @@ function abrirCartao(id){
     campo(pt ? 'Limite' : 'Limit',
       '<input type="number" inputmode="decimal" data-dinheiro="1" id="ctLimite" step="0.01" min="0" placeholder="' +
       (pt ? 'opcional' : 'optional') + '" value="' + (c && c.limite ? c.limite : '') + '">') +
+    (window.MoneyModulos ? MoneyModulos.html('cartao.form', {c: c, semente: sm}) : '') +   /* 3.65: titular, quem usa, finais (modulos/cartoes.js) */
     '<div id="ctPrevia" class="bk-previa"></div>' +
     '<p class="tiny muted">' + (pt
       ? 'Guardo só os quatro últimos dígitos, que é o que aparece no comprovante. O número inteiro do cartão não entra aqui e nunca deve ser digitado em nenhum app.'
@@ -18715,13 +18778,14 @@ function salvarCartao(id){
     toast(I18n.atual === 'pt' ? 'O final do cartão tem 4 dígitos.' : 'The card ending has 4 digits.', 'warn');
     return;
   }
-  Banco.salvarCartao({
+  const c = Banco.salvarCartao({
     id: id || '', apelido: $('#ctApelido').value.trim(), tipo: $('#ctTipo').value,
     bandeira: $('#ctBandeira').value, fim: fim, bancoId: $('#ctBanco').value,
     fecha: $('#ctFecha').value, vence: $('#ctVence').value, limite: $('#ctLimite').value
   });
+  const ligados = c && window.Cartoes ? Cartoes.lerForm(c) : 0;   /* 3.65: finais, titular, quem usa; e os lançamentos daqueles finais ganham o cartão */
   Store.salvar(); fechar('assetModal'); render();
-  toast(I18n.atual === 'pt' ? 'Cartão salvo.' : 'Card saved.');
+  toast((I18n.atual === 'pt' ? 'Cartão salvo.' : 'Card saved.') + (ligados ? ' ' + ligados + (I18n.atual === 'pt' ? ' compra(s) ligada(s) a ele.' : ' purchase(s) linked to it.') : ''));
 }
 
 </script>
@@ -21902,6 +21966,7 @@ function abrirDeclaracao(d, nova){
     ? (pt ? 'Li ' + txDec.achados + ' dos 7 números principais. Confira cada um com o PDF e complete o que ficou em branco antes de salvar.'
           : 'Read ' + txDec.achados + ' of 7 key figures. Check and complete before saving.')
     : (pt ? 'Não achei os números neste arquivo — preencha à mão com o PDF ao lado.' : 'Could not read the figures — fill them in.')) + '</p></div>';
+  if(nova && window.MoneyModulos) h += MoneyModulos.html('declaracao.escolhas', {d: txDec});   /* 3.65: importar com escolhas, logo no topo (modulos/declaracao-escolhas.js) */
   h += '<div class="grid g2">' + CAMPOS_DEC.map(c => campo(pt ? c[1] : c[2],
       '<input type="number" ' + (c[3] === 'ano' ? 'step="1" min="2000" max="2100"' : c[3] === 'pct' ? 'step="0.01"' : 'inputmode="decimal" step="0.01"') + ' data-txc="' + c[0] + '" value="' +
       (txDec[c[0]] != null ? txDec[c[0]] : '') + '"' + (txDec[c[0]] == null && nova ? ' class="tx-falta"' : '') + '>')).join('') + '</div>' +
@@ -21984,12 +22049,17 @@ function salvarDeclaracaoTela(){
   if(!d.anoCalendario) d.anoCalendario = d.exercicio - 1;
   const escolhidas = $$('#assetModalBody [data-txprop]').filter(c => c.checked).map(c => (d._propostas || [])[Number(c.dataset.txprop)]).filter(Boolean);
   delete d._propostas;
+  const escolhasDec = window.DeclEscolhas ? DeclEscolhas.ler() : null;   /* 3.65 */
   Tax.salvarDeclaracao(d);
+  const resDec = escolhasDec ? DeclEscolhas.aplicar(d, escolhasDec) : null;
   let n = 0;
   escolhidas.forEach(p => { if(!Gasto.jaExiste(p.g)){ Gasto.add(p.g); n++; } });
   Gasto._idx = null;
   Store.salvar(); fechar('assetModal'); render();
-  toast((pt ? 'Declaração guardada.' : 'Return saved.') + (n ? (pt ? ' ' + n + ' lançamento' + (n > 1 ? 's' : '') + ' no BudgetONE.' : ' ' + n + ' entries in BudgetONE.') : ''));
+  toast((pt ? 'Declaração guardada.' : 'Return saved.') + (n ? (pt ? ' ' + n + ' lançamento' + (n > 1 ? 's' : '') + ' no BudgetONE.' : ' ' + n + ' entries in BudgetONE.') : '') +
+    (resDec && (resDec.bens + resDec.novos) ? (pt ? ' Patrimônio: ' : ' Net worth: ') + (resDec.bens + resDec.novos) + (pt ? ' bem(ns).' : ' asset(s).') : '') +
+    (resDec && resDec.rest ? (pt ? ' Restituição prevista.' : ' Refund expected.') : '') + (resDec && resDec.quotas ? (pt ? ' Imposto em ' + resDec.quotas + ' compromisso(s).' : ' Tax as commitments.') : ''));
+  if(resDec && resDec.conf) DeclEscolhas.mostrarConferencia(resDec.conf);
 }
 
 /* aceita vários arquivos de uma vez: a declaração e o recibo de entrega */
@@ -26142,6 +26212,10 @@ function viewConfig(){
       '<button class="btn sm" data-acao="aone-recomecar">Recomeçar o passo a passo e as dicas</button></div>') +
     campo('Atualizar cotações a cada', selectHTML('cAuto', [[5,'5 minutos'],[10,'10 minutos'],[30,'30 minutos'],[0,'só quando eu clicar']], String(cfg.autoRefreshMin))) +
   '</div></div>';
+  if(window.MoneyNuvem && MoneyNuvem.iniciado && !MoneyNuvem.local)   /* 3.65: a mesma tela do menu do perfil */
+    h += '<div class="card cfg-sec" data-sec="todos" id="cfgSeguranca"><div class="card-head"><h3>🔐 Segurança e aparelhos</h3>' +
+      '<button class="btn sm" data-acao="nuvem-painel">Abrir</button></div>' +
+      '<p class="small muted">PIN da conta, digital, os seus aparelhos, o robô do banco e sair da conta.</p></div>';
   h += (window.MoneyModulos ? MoneyModulos.html('config.todos') : '');   /* 3.64: Pessoas da família, planilha espelho */
 
   /* fita e notícias */
@@ -27425,6 +27499,8 @@ function htmlPerfilMenu(){
     (id.desde ? '<span>' + esc(pt ? 'conectado desde ' : 'signed in since ') + esc(fmtData(id.desde.slice(0, 10))) + '</span>' : '') +
     '</div></div>';
   h += op('config', '⚙️', pt ? 'Configurações' : 'Settings');
+  const nv = window.MoneyNuvem && MoneyNuvem.itemMenu ? MoneyNuvem.itemMenu() : null;   /* 3.65: "☁️ Dados salvos · hh:mm" → Segurança e aparelhos */
+  if(nv) h += op('nuvem', nv.ico, nv.txt, '<span class="perfil-sub">' + esc(pt ? 'Segurança e aparelhos' : 'Security and devices') + '</span>', 'nv-est-' + nv.estado);
   h += op('tema', ST.tema === 'light' ? '☀️' : '🌙', pt ? 'Tema claro' : 'Light theme',
           '<span class="tog' + (ST.tema === 'light' ? ' on' : '') + '" aria-hidden="true"></span>');
   h += '<button type="button" role="menuitem" class="perfil-op' + (cotacoesAtualizando ? ' spinning' : '') +
@@ -27474,6 +27550,7 @@ function acaoPerfil(qual){
     case 'atualizar':
       atualizarCotacoes(true); renderPerfilMenu(); break;
     case 'ajuda':     fecharPerfilMenu(); Assist.abrir('tela'); break;
+    case 'nuvem':     fecharPerfilMenu(); if(window.MoneyNuvem && MoneyNuvem.abrirPainel) MoneyNuvem.abrirPainel(); break;   /* 3.65 */
     case 'espelho': {   /* 3.64: abre a planilha numa aba nova; sem link, vai para onde se cola o link */
       fecharPerfilMenu();
       const l = ST.config && ST.config.espelhoLink;
@@ -28694,6 +28771,8 @@ function ligarEventos(){
         Assist.fechar();
         if((ST.appAtual || 'investify') !== 'budget') abrirApp('budget');
         irPara('b-lanc'); abrirEscanear(); break;
+      case 'nuvem-painel':   /* 3.65 */
+        if(window.MoneyNuvem && MoneyNuvem.abrirPainel) MoneyNuvem.abrirPainel(); break;
       case 'aone-abrir':
         if(ST.config.assistOne === false){ ST.config.assistOne = true; Store.salvar(); AssistOne.aplicar(); render(); }
         AssistOne.abrir('tela'); break;
@@ -28766,7 +28845,7 @@ function ligarEventos(){
           Store.salvar(); fechar('assetModal'); render(); renderFita(); toast('Compromisso excluído.'); }
         break;
       case 'b-limpar-filtro':
-        bFiltro = {busca:'', grupos:[], subs:[], quem:[], formas:[], de:'', ate:'', fluxo:'', periodo:'12m', favoritos:false, revisar:false, irpf:false};
+        bFiltro = {busca:'', grupos:[], subs:[], quem:[], formas:[], de:'', ate:'', fluxo:'', periodo:'12m', favoritos:false, revisar:false, irpf:false, aconfirmar:false, aidentificar:false};
         bAplicarPeriodo('12m'); render(); break;
       case 'gl-salvar': salvarLancamento(); break;
       case 'robo-aceitar': case 'robo-manter': {
@@ -28788,7 +28867,7 @@ function ligarEventos(){
       case 'banco-novo':    abrirBanco(); break;
       case 'banco-salvar':  salvarBanco(); break;
       case 'cartao-novo':   abrirCartao(); break;
-      case 'cartao-salvar': salvarCartao(bt.dataset.id || ''); break;
+      case 'cartao-salvar': salvarCartao(d.id || '')   /* 3.65: era bt.dataset.id (bt não existe aqui): salvar o cartão dava erro */; break;
       case 'salario':       abrirSalario('liquido'); break;
       case 'pj-clt':        abrirSalario('pjclt'); break;
       case 'sal-mais':      salOutros.push({nome:'', valor:''}); desenharSalario(); break;
@@ -29497,21 +29576,28 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/arquivos.js?v=1.0.0"></script>
 <script src="modulos/agendamentos.js?v=1.0.0"></script>
 <script src="modulos/nf-ir.js?v=1.0.1"></script>
-<script src="modulos/profissionais.js?v=1.1.0"></script>
+<script src="modulos/profissionais.js?v=1.2.0"></script>
 <script src="modulos/saude.js?v=1.1.0"></script>
 <script src="modulos/ponte-omnilife.js?v=1.0.0"></script>
 <script src="modulos/patrimonio-iliquido.js?v=1.1.1"></script>
 <script src="modulos/fgts.js?v=1.0.0"></script>
 <script src="modulos/importar-posicoes.js?v=1.0.0"></script>
-<script src="modulos/assinaturas.js?v=1.0.0"></script>
-<script src="modulos/compromisso-de.js?v=1.6.0"></script>
+<script src="modulos/assinaturas.js?v=1.1.0"></script>
+<script src="modulos/compromisso-de.js?v=1.7.0"></script>
 <script src="modulos/previsto.js?v=1.0.0"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
-<script src="modulos/calendario-menu.js?v=1.0.0"></script>
-<script src="modulos/pessoas.js?v=1.0.0"></script>
+<script src="modulos/calendario-menu.js?v=1.1.0"></script>
+<script src="modulos/pessoas.js?v=1.1.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
-<script src="modulos/saldo-banco.js?v=1.0.0"></script>
-<script src="modulos/espelho.js?v=1.0.0"></script>
-<script src="nuvem.js?v=1.11.1"></script>
+<script src="modulos/saldo-banco.js?v=2.0.0"></script>
+<script src="modulos/espelho.js?v=1.1.0"></script>
+<script src="modulos/tour.js?v=1.0.0"></script>
+<script src="modulos/cartoes.js?v=1.0.0"></script>
+<script src="modulos/cartao-foto.js?v=1.0.0"></script>
+<script src="modulos/contraparte.js?v=1.0.0"></script>
+<script src="modulos/declaracao-escolhas.js?v=1.0.0"></script>
+<script src="modulos/origem.js?v=1.0.0"></script>
+<script src="modulos/categorias.js?v=1.0.0"></script>
+<script src="nuvem.js?v=1.12.0"></script>
 </body>
 </html>

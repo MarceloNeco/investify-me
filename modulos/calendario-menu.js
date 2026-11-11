@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/calendario-menu.js — recolher e abrir o calendário do menu   1.0.0 · 06/Nov/2026
+   modulos/calendario-menu.js — recolher e abrir o calendário do menu   1.1.0 · 11/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      O calendário pequeno no pé do menu (BudgetONE; barra lateral no computador, menu ☰ no celular) ganha um
@@ -7,6 +7,9 @@
      Tocar na etiqueta abre de novo. O padrão é aberto; a escolha fica lembrada neste aparelho.
      Acessível: botões de verdade, aria-expanded, aria-controls, foco visível; depois de trocar, o foco vai para
      o botão que aparece no lugar (quem usa teclado não se perde).
+     1.1.0 (3.65): abre e fecha com animação de altura (~220 ms, ease) e o chevron gira junto (a seta mostra a ação:
+     aberto = para cima, recolher; recolhido = para baixo, abrir). Com "reduzir movimento", troca sem animar. A barra
+     lateral recalcula a altura no FIM da animação.
    API (window.CalendarioMenu)
      recolhido() → true/false · alternar(valor?) · aplicar(elemento #navCal)   (chamado por renderCalendarioMenu)
    DADOS
@@ -46,9 +49,18 @@
       topo.appendChild(b);
     },
     alternar: function (v) {
-      gravar(v === undefined ? !ler() : !!v);
+      var cal = document.getElementById('navCal'), antes = cal ? cal.getBoundingClientRect().height : 0;
+      var fecha = v === undefined ? !ler() : !!v;
+      gravar(fecha);
       if (typeof renderCalendarioMenu === 'function') renderCalendarioMenu();
-      if (typeof pedirLateral === 'function') pedirLateral();
+      var fim = function () { if (typeof pedirLateral === 'function') pedirLateral(); };
+      var calmo = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!cal || calmo || !cal.animate || !antes) return fim();
+      var depois = cal.getBoundingClientRect().height;
+      var seta = cal.querySelector('[data-calmenu] svg');
+      if (seta && seta.animate) seta.animate([{ transform: 'rotate(180deg)' }, { transform: 'rotate(0deg)' }], { duration: 220, easing: 'ease' });
+      var a = cal.animate([{ height: antes + 'px', overflow: 'hidden' }, { height: depois + 'px', overflow: 'hidden' }], { duration: 220, easing: 'ease' });
+      a.onfinish = fim; a.oncancel = fim;
     }
   };
   document.addEventListener('click', function (e) {
@@ -58,6 +70,6 @@
     if (novo) novo.focus({ preventScroll: true });   /* o botão foi redesenhado: o foco vai para o que ficou no lugar, sem pular a página */
   });
 
-  MoneyModulos.registrar({ id: 'calendario-menu', versao: '1.0.0' });
+  MoneyModulos.registrar({ id: 'calendario-menu', versao: '1.1.0' });
   window.CalendarioMenu = API;
 })();
