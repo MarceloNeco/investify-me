@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.10.0 · 11/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.10.1 · 11/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -27,6 +27,8 @@
       confere v = PBKDF2(PIN, sal da conta) (guarda só SHA-256(v)), conta as tentativas (espera do 5º erro; 24 h por erro do
       10º em diante) e entrega o segredo do aparelho. L.pin (PBKDF2 do PIN) abre sem internet; L.srv (segredo + chave não
       extraível do navegador) abre com internet e acompanha a troca de PIN feita em outro aparelho. Migração dos PINs antigos.
+  11. 1.10.1 — as telas da nuvem (.nv-portao, .nv-painel) com overscroll-behavior:contain: o fim da rolagem não passa para a
+      página de trás (a trava do fundo é o html:has(#nvPortao / .nv-painel) do estilo.css 3.63).
    6. Tranca sozinho: 15 min sem uso (avisa 1 min antes) ou 10 min fora do app; nunca no meio de um trabalho; sem recarregar.
    Nunca grava nada de finanças em claro: o localStorage 'investifyme.dados.v1' (do app principal) só é LIDO, para
    oferecer "levar para a nuvem". Só a URL e a publishable key do Supabase ficam aqui (públicas por desenho).
@@ -37,7 +39,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.10.0';
+  var VERSAO = '1.10.1';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -1299,7 +1301,7 @@
     '<path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>' +
     '<path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>';
   var CSS = '' +
-    '.nv-portao{position:fixed;inset:0;z-index:99990;background:var(--bg,#0b0f14);color:var(--txt,#e7edf5);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}' +
+    '.nv-portao{position:fixed;inset:0;z-index:99990;overscroll-behavior:contain;background:var(--bg,#0b0f14);color:var(--txt,#e7edf5);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}' +
     '.nv-card{width:100%;max-width:440px;background:var(--card,#151c26);border:1px solid var(--line,#243040);border-radius:16px;padding:20px;box-sizing:border-box;margin-top:4vh}' +
     '.nv-card h1{font-size:1.25rem;margin:0 0 6px}.nv-card h2{font-size:1.05rem;margin:14px 0 6px}' +
     '.nv-card p{margin:8px 0}.nv-muted{color:var(--txt2,#9fb0c4);font-size:.92rem}.nv-tiny{color:var(--txt3,#6f8299);font-size:.82rem}' +
@@ -1320,7 +1322,7 @@
     '.nv-selo{position:fixed;left:12px;bottom:84px;z-index:9990;border-radius:999px;padding:8px 12px;background:var(--card,#151c26);border:1px solid var(--line2,#2e3c4f);color:var(--txt,#e7edf5);font:13px system-ui,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:calc(100vw - 24px)}' +
     '@media(min-width:900px){.nv-selo{bottom:16px}}' +
     '.nv-aviso{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:99995;background:var(--card2,#1b2430);color:var(--txt,#e7edf5);border:1px solid var(--line2,#2e3c4f);border-radius:12px;padding:10px 14px;max-width:calc(100vw - 32px);display:none;font:14px system-ui,sans-serif}.nv-aviso.on{display:block}' +
-    '.nv-painel{position:fixed;inset:0;z-index:99980;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 16px}' +
+    '.nv-painel{position:fixed;inset:0;z-index:99980;overscroll-behavior:contain;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 16px}' +
     '.nv-aviso.alto{z-index:2147483000}.nv-nota.fixa{position:relative;padding-right:36px}.nv-x{position:absolute;top:6px;right:6px;background:none;border:0;color:inherit;font-size:16px;cursor:pointer;padding:4px 8px}.nv-sub{font-size:.95rem;margin:10px 0 4px}' +
     '.nv-lista button{margin:6px 0}.nv-cod{font-family:ui-monospace,monospace;letter-spacing:.04em}';
 

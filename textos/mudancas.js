@@ -1,11 +1,15 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.62 · 11/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.63 · 11/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.63', d:'2026-11-11', t:'Janela aberta: a tela de trás fica parada', itens:[
+    'Com uma janela aberta (detalhe de um lançamento, novo compromisso, explicação ⓘ, "Conferir o que foi lido", as telas da nuvem e o menu ☰ no celular), a roda do mouse ou o dedo rolam só a janela; chegando ao fim, a página de trás não anda mais.',
+    'Ao fechar a janela, a lista está exatamente onde você deixou, na mesma linha.'
+  ]},
   {v:'3.62', d:'2026-11-11', t:'Um PIN só para a conta', itens:[
     'O PIN agora é da conta, igual em todos os seus aparelhos (como a senha do banco). Trocou num, vale em todos. Num aparelho novo, depois de aprovado pelo outro, é só digitar o PIN que você já tem.',
     'Quem tinha um PIN diferente em cada aparelho: o primeiro aparelho que você destravar define o PIN da conta; nos outros, o app pede uma vez o PIN da conta.',

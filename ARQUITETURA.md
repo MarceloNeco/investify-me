@@ -644,6 +644,14 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.63 (`estilo.css` 3.63, `nuvem.js` 1.10.1): **janela aberta trava o fundo** (diretriz "janela.js"). Só CSS, no fim do estilo.css:
+  `html:has(.modal-wrap:not(.hidden) | #nvPortao | .nv-painel | .lock-wrap:not(.hidden) | .popup-an | dialog[open]){overflow:hidden;
+  scrollbar-gutter:stable}` e, até 760 px, `html:has(.sidenav.open)` (o menu ☰); a trava fica só no `<html>`, nunca no `<body>`, e
+  como `overflow:hidden` não mexe no `scrollY`, ao fechar a página está onde estava (nada de guardar e devolver a posição por JS).
+  `overscroll-behavior:contain` em `.modal-wrap/.modal/.modal-body/.lock-wrap/.popup-an/.sidenav/#navLista/dialog` e nas telas da nuvem.
+  A faixa do anúncio, com janela aberta, fica `visibility:hidden` (antes `display:none` encolhia a página 44 px e a lista pulava).
+  Janela nova: se cobre a tela, acrescente o seletor dela nessa regra. Teste: `teste/teste-desktop.js` ("janelas", 1366, 1920 e 390,
+  com roda do mouse e dedo, 5 janelas + o menu no celular).
 - 3.62 (`nuvem.js` 1.10.0, seção `Pin`): **PIN da conta**, igual em todos os aparelhos. Plataforma: `supabase/2026-11-11-sol-pin-conta.sql`
   (sol_pin_conta, sol_aparelho_pin; RPCs sol_pin_info / sol_pin_conferir / sol_pin_definir; "primeiro" só na conta sem aparelho).
   v = PBKDF2-SHA256(PIN, sal da conta, 600 mil), base64url; o banco guarda SHA-256(v) e as tentativas (espera do 5º erro; 24 h por erro

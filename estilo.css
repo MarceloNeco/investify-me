@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.60 · 06/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.63 · 11/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -1671,8 +1671,8 @@ label.campo > span, .campo > span{font-size:.78rem; color:var(--txt2)}
   .faixa .anuncio{flex-basis:100%; order:9}
   .faixa .anuncio-sub{display:none}
 }
-/* em tela cheia (modal aberto) a faixa some sozinha */
-body:has(.modal-wrap:not(.hidden)) .faixa{display:none}
+/* em tela cheia (modal aberto) a faixa some sozinha — sem tirar o lugar dela (3.63: senão a página de trás pula 44 px) */
+body:has(.modal-wrap:not(.hidden)) .faixa{visibility:hidden}
 
 /* ---- o pop-up de anúncio com contagem ---- */
 .popup-an{position:fixed; inset:0; z-index:400; display:grid; place-items:center; background:rgba(0,0,0,.55); backdrop-filter:blur(3px)}
@@ -2411,3 +2411,10 @@ body:has(.modal-wrap:not(.hidden)) .nv-selo{display:none}
 .cdl-corpo{display:flex; flex-direction:column; gap:8px}
 .cdl-i, .cdl-alerta{display:inline-block; font-size:.85rem; cursor:help; color:var(--txt3)}
 .cdl-alerta{color:var(--warn)}
+
+/* 3.63 — janela aberta: a tela de trás não rola (diretriz "janela.js": a trava só no <html>, nunca no <body>;
+   o fim da rolagem dentro da janela não passa para o fundo). Fechou, a página está onde estava. */
+html:has(.modal-wrap:not(.hidden)), html:has(#nvPortao), html:has(.nv-painel), html:has(.lock-wrap:not(.hidden)),
+html:has(.popup-an), html:has(dialog[open]){overflow:hidden; scrollbar-gutter:stable}   /* a barra some com a trava; o lugar dela fica, nada pula para o lado */
+@media (max-width:760px){ html:has(.sidenav.open){overflow:hidden; scrollbar-gutter:stable} }
+.modal-wrap, .modal, .modal-body, .lock-wrap, .popup-an, .sidenav, #navLista, dialog{overscroll-behavior:contain}
