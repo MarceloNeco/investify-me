@@ -203,6 +203,22 @@ begin
   return found;
 end $$;
 
+-- depois que a família tem as chaves do MoneyTRIO (a migração), o banco só aceita registro fechado com elas
+-- ('{"c":1,"m":…'): um aparelho ou app antigo nunca mais grava nada fechado com a CF (que o membro "casa" também tem)
+create or replace function public.money_docs_so_chave_nova() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if new.dados_cifrado is not null and new.dados_cifrado not like '{"c":1,"m":%'
+     and exists (select 1 from public.money_chaves k where k.grupo_id = new.grupo_id) then
+    raise exception 'Este aparelho precisa das chaves novas do MoneyTRIO: abra pelo PIN.' using errcode = '42501';
+  end if;
+  return new;
+end $$;
+drop trigger if exists money_docs_so_chave_nova on public.money_docs;
+create trigger money_docs_so_chave_nova before insert or update of dados_cifrado on public.money_docs
+  for each row execute function public.money_docs_so_chave_nova();
+revoke all on function public.money_docs_so_chave_nova() from public, anon, authenticated;
+
 -- -------------------------------------------------------------------------------------
 -- 4) A caixa do robô por escopo
 -- -------------------------------------------------------------------------------------
@@ -373,6 +389,7 @@ union all select 'money_chaves', to_regclass('public.money_chaves') is not null
 union all select 'money_entrada.escopo', exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'money_entrada' and column_name = 'escopo')
 union all select 'caixa por escopo', exists (select 1 from pg_catalog.pg_constraint c where c.conrelid = 'public.money_caixa_chave'::regclass and c.conname = 'money_caixa_chave_pkey' and pg_catalog.array_length(c.conkey, 1) = 2)
 union all select 'comprovantes: apagar só quem vê tudo', exists (select 1 from pg_catalog.pg_policies p where p.schemaname = 'storage' and p.tablename = 'objects' and p.policyname = 'money_arquivos_apagar')
+union all select 'só chave nova depois da migração', exists (select 1 from pg_catalog.pg_trigger t where t.tgname = 'money_docs_so_chave_nova')
 union all select 'RLS docs por escopo', exists (select 1 from pg_catalog.pg_policies p where p.tablename = 'money_docs' and p.policyname = 'money_docs_ler' and p.qual like '%escopo%');
 
 commit;

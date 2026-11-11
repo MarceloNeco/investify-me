@@ -84,8 +84,11 @@ SELECT pg_temp.ok(NOT EXISTS (SELECT 1 FROM public.money_docs WHERE grupo_id = p
 DO $$ BEGIN INSERT INTO public.money_docs (grupo_id, colecao, id, dados_cifrado, escopo) VALUES (pg_temp.g(), 'gastos', 'r.dela', repeat('X', 40), 'reservado');
   RAISE EXCEPTION 'FALHOU: ela gravou reservado';
 EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: ela não grava reservado'; END $$;
-UPDATE public.money_docs SET dados_cifrado = repeat('Z', 40) WHERE grupo_id = pg_temp.g() AND id = 'g1';
-SELECT pg_temp.ok((SELECT dados_cifrado FROM public.money_docs WHERE grupo_id = pg_temp.g() AND id = 'g1') = repeat('Z', 40), 'ela edita um lançamento da casa');
+UPDATE public.money_docs SET dados_cifrado = '{"c":1,"m":"c",' || repeat('Z', 40) WHERE grupo_id = pg_temp.g() AND id = 'g1';
+SELECT pg_temp.ok((SELECT dados_cifrado FROM public.money_docs WHERE grupo_id = pg_temp.g() AND id = 'g1') = '{"c":1,"m":"c",' || repeat('Z', 40), 'ela edita um lançamento da casa');
+DO $$ BEGIN UPDATE public.money_docs SET dados_cifrado = '{"c":1,"kv":1,' || repeat('Z', 40) WHERE grupo_id = pg_temp.g() AND id = 'g1';
+  RAISE EXCEPTION 'FALHOU: gravou fechado com a CF depois da migração';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: depois das chaves novas, nada fechado com a CF entra'; END $$;
 SELECT pg_temp.ok((SELECT count(*) FROM public.money_chaves WHERE grupo_id = pg_temp.g()) = 1, 'ela lê só a CC dela');
 DO $$ BEGIN PERFORM public.money_chave_guardar(pg_temp.g(), 'b4000000-0000-0000-0000-000000000001', 'casa', 2, pg_temp.emb()); RAISE EXCEPTION 'FALHOU: ela guardou chave';
 EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: ela não guarda chaves'; END $$;
