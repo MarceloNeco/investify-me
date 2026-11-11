@@ -15,8 +15,10 @@
 -- O segredo sozinho não abre nada: ele fecha uma camada de um arquivo que só existe dentro do aparelho.
 --
 -- Tentativas: contadas POR CONTA (o PIN é um só) e por aparelho. A partir do 5º erro seguido, espera crescente
--- (30 s, 1 min, 5 min, 15 min, 30 min); no 10º, BLOQUEADO. Bloqueado só sai com sol_pin_definir depois de uma aprovação
--- PRÓPRIA (outro aparelho da pessoa, passkey ou kit) há menos de 10 minutos. Aprovação da família NUNCA troca o PIN.
+-- (30 s, 1 min, 5 min, 15 min, 30 min); do 10º em diante, CADA erro novo dá 24 h de espera (não existe bloqueio
+-- definitivo: decisão do dono, 11/Nov/2026). A aprovação por outro aparelho da própria pessoa desbloqueia NA HORA
+-- (sol_pin_definir sem o atual, em até 10 min). Aprovação da família NUNCA troca o PIN.
+-- (A coluna "bloqueado" fica só por compatibilidade: sempre false.)
 --
 -- Regras: SECURITY DEFINER + search_path = '' + nomes qualificados; sem acesso direto às tabelas; GRANTs; conferência.
 -- =====================================================================================
@@ -70,7 +72,7 @@ grant execute on function public.sol_pin_hash(text) to service_role;
 
 create or replace function public.sol_pin_espera(p_erros integer) returns interval
 language sql immutable set search_path = '' as $$
-  select case when p_erros >= 9 then interval '30 minutes' when p_erros = 8 then interval '15 minutes' when p_erros = 7 then interval '5 minutes'
+  select case when p_erros >= 10 then interval '24 hours' when p_erros = 9 then interval '30 minutes' when p_erros = 8 then interval '15 minutes' when p_erros = 7 then interval '5 minutes'
               when p_erros = 6 then interval '1 minute' when p_erros = 5 then interval '30 seconds' else interval '0' end;
 $$;
 revoke all on function public.sol_pin_espera(integer) from public, anon, authenticated;
@@ -117,21 +119,19 @@ begin
   if not public.sol_pin_meu_ap(p_ap) then return jsonb_build_object('ok', false, 'erro', 'aparelho'); end if;
   select * into p from public.sol_pin_conta where user_id = auth.uid() for update;
   if not found then return jsonb_build_object('ok', false, 'erro', 'sempin'); end if;
-  if p.bloqueado then return jsonb_build_object('ok', false, 'erro', 'bloqueado'); end if;
-  if p.espera_ate is not null and p.espera_ate > now() then return jsonb_build_object('ok', false, 'erro', 'espera', 'espera_ate', p.espera_ate); end if;
+  if p.espera_ate is not null and p.espera_ate > now() then return jsonb_build_object('ok', false, 'erro', 'espera', 'espera_ate', p.espera_ate, 'tentativas', p.tentativas); end if;
   if public.sol_pin_hash(p_v) = p.hv then
     update public.sol_pin_conta set tentativas = 0, espera_ate = null where user_id = auth.uid();
     update public.sol_aparelho_pin set tentativas = 0 where ap_id = p_ap;
     return jsonb_build_object('ok', true, 'versao', p.versao, 'segredo', public.sol_pin_segredo(p_ap));
   end if;
   v_erros := p.tentativas + 1;
-  update public.sol_pin_conta set tentativas = v_erros, bloqueado = v_erros >= 10,
-         espera_ate = case when v_erros >= 10 then null when public.sol_pin_espera(v_erros) > interval '0' then now() + public.sol_pin_espera(v_erros) end
+  update public.sol_pin_conta set tentativas = v_erros, bloqueado = false,
+         espera_ate = case when public.sol_pin_espera(v_erros) > interval '0' then now() + public.sol_pin_espera(v_erros) end
    where user_id = auth.uid();
   perform public.sol_pin_segredo(p_ap);
   update public.sol_aparelho_pin set tentativas = tentativas + 1 where ap_id = p_ap;
-  if v_erros >= 10 then return jsonb_build_object('ok', false, 'erro', 'bloqueado'); end if;
-  return jsonb_build_object('ok', false, 'erro', 'pin', 'restam', 10 - v_erros,
+  return jsonb_build_object('ok', false, 'erro', 'pin', 'tentativas', v_erros, 'restam', greatest(10 - v_erros, 0),
     'espera_ate', case when public.sol_pin_espera(v_erros) > interval '0' then now() + public.sol_pin_espera(v_erros) end);
 end $$;
 revoke all on function public.sol_pin_conferir(text, uuid) from public, anon;
@@ -202,7 +202,7 @@ begin
   if has_function_privilege('anon', 'public.sol_pin_conferir(text,uuid)', 'execute') then v_erros := v_erros || ' função aberta para visitante'; end if;
   if has_function_privilege('authenticated', 'public.sol_pin_segredo(uuid)', 'execute') then v_erros := v_erros || ' segredo do aparelho aberto direto'; end if;
   if v_erros <> '' then raise exception 'sol_pin_conta: conferência falhou:%', v_erros; end if;
-  raise notice 'sol_pin_conta: PIN da conta (só o verificador), segredo por aparelho só com o PIN certo, espera a partir do 5º erro e bloqueio no 10º. Tudo certo.';
+  raise notice 'sol_pin_conta: PIN da conta (só o verificador), segredo por aparelho só com o PIN certo, espera a partir do 5º erro e 24 h por erro do 10º em diante. Tudo certo.';
 end $$;
 
 commit;
