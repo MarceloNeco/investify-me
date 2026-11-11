@@ -670,6 +670,16 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   `app`) e `sol_pin_info` antes de mostrar; já usa outro app → "Você já usa o OmniLifeONE. Aprove por um aparelho seu…" (+ aviso de que o
   PIN escolhido também vale lá, se a conta não tem PIN); `novoPin` → "Crie o PIN da sua conta SolverONE. Ele vale no MoneyTRIO, no
   OmniLifeONE e nos próximos apps". Os textos ficam no `nuvem.js` para o OmniLifeONE reaproveitar. Teste: `teste/teste-seguranca.js`.
+  **Cartão por foto** (`modulos/cartao-foto.js` 1.0.0, ponto novo `cartao.topo` no `abrirCartao`, só no cadastro novo): "📷 Fotografar cartão"
+  (`capture="environment"`) e "🖼️ Imagem ou print do cartão" (galeria). O motor do Leitor OCR (cópia SEM alterar do leitor-ocr 0.9.4,
+  motor 1.11.0, em `leitor/`: `leitura.js`, `leitura/`, `leitores/cartao-plastico.js`, `tesseract/`) carrega só no toque, em ordem
+  (`leitura.js`, `leitura/catalogo.js`, `leitura/texto.js`, `leitores/cartao-plastico.js`; o `foto.js` o motor carrega sozinho);
+  `Leitura.lerCartao(file, {aviso, progresso})` → `{final, bandeira, nome, validade, emissor, conferido, virtual}`. Preenche o vazio; o
+  final já de um cartão → "Abrir esse cartão"; o final nas compras do robô (`Cartoes.encontrados`) → reabre o cadastro com a semente da
+  conta; virtual com final novo → "Juntar a" um cartão do robô do mesmo banco. Segurança: o arquivo vai direto ao motor e o input é limpo
+  (`input.value = ''`); nada no IndexedDB, histórico ou fila; sem IA e sem internet; só a frente. `sw.js`: os .js do motor no básico;
+  `leitor/tesseract/` no cache do OCR (1º uso). Atualizar o motor: copiar de novo do leitor-ocr (mudanças lá só pelo PEDIDOS.md).
+  Teste: `teste/teste-cartao-foto.js` (cartões fictícios com os números de teste públicos das bandeiras).
   **Declaração com escolhas** (`modulos/declaracao-escolhas.js`, ponto `declaracao.escolhas`): bens sem liquidez com dono e dívida,
   restituição prevista (desmarcada), imposto em compromissos (dia −1), conferência de deduções. Testes: `teste/teste-tour.js`,
   `teste/teste-cartoes-contraparte.js`; teste-desktop (descrição longa, calendário animado); teste-pessoas-espelho (barra com %).

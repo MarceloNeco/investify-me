@@ -23,7 +23,9 @@ var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './aju
   './modulos/compromisso-de.js?v=1.7.0',
   './modulos/previsto.js?v=1.0.0',
   './modulos/conciliacao.js?v=1.0.0', './modulos/calendario-menu.js?v=1.1.0',
-  './modulos/pessoas.js?v=1.1.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=2.0.0', './modulos/espelho.js?v=1.1.0', './modulos/tour.js?v=1.0.0', './modulos/cartoes.js?v=1.0.0', './modulos/contraparte.js?v=1.0.0', './modulos/declaracao-escolhas.js?v=1.0.0', './modulos/origem.js?v=1.0.0', './modulos/categorias.js?v=1.0.0',
+  './modulos/pessoas.js?v=1.1.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=2.0.0', './modulos/espelho.js?v=1.1.0', './modulos/tour.js?v=1.0.0', './modulos/cartoes.js?v=1.0.0', './modulos/cartao-foto.js?v=1.0.0',
+  /* 3.65: o motor do Leitor OCR para o cartão por foto (cópia do leitor-ocr; leitor/tesseract/ é guardado no 1º uso) */
+  './leitor/leitura.js', './leitor/leitura/catalogo.js', './leitor/leitura/texto.js', './leitor/leitura/foto.js', './leitor/leitores/cartao-plastico.js', './modulos/contraparte.js?v=1.0.0', './modulos/declaracao-escolhas.js?v=1.0.0', './modulos/origem.js?v=1.0.0', './modulos/categorias.js?v=1.0.0',
   './nuvem.js?v=1.12.0'];
 /* O motor de leitura de fotos (assets/ocr: Tesseract, português, ZXing,
    jsQR — uns 10 MB) tem cache próprio, que NÃO muda a cada versão do app:
@@ -58,7 +60,7 @@ self.addEventListener('fetch', function (e) {
   if (url.pathname.indexOf('/solverone-dados/') >= 0) return;
 
   /* o motor de leitura: cache primeiro e para sempre; só busca na rede o que ainda não tem */
-  if (url.pathname.indexOf('/assets/ocr/') >= 0) {
+  if (url.pathname.indexOf('/assets/ocr/') >= 0 || url.pathname.indexOf('/leitor/tesseract/') >= 0) {
     e.respondWith(
       caches.open(CACHE_OCR).then(function (c) {
         return c.match(req).then(function (r) {

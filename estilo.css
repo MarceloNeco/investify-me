@@ -2503,3 +2503,12 @@ html.sem-animacao .barra-and.indet > i{animation:none; width:100%; opacity:.55}
 .sb-tbl td.num{width:132px}
 .sb-tbl td:first-child .t-sub, .sb-tbl .t-main{white-space:normal; overflow:visible; text-overflow:clip; max-width:none}
 @media (max-width:560px){ .sb-tbl td.num{width:104px} .sb-pill{display:table; margin-top:3px} }
+
+/* 3.65: cadastrar cartão por foto (modulos/cartao-foto.js) */
+.ctf{border:1px dashed var(--linha-suave, #2e3c4f); border-radius:12px; padding:10px 12px; margin-bottom:12px}
+.ctf .row{display:flex; gap:8px; flex-wrap:wrap}
+.ctf label.btn{cursor:pointer}
+.ctf-status:empty{display:none}
+.ctf-status{margin-top:8px; font-size:.92rem; line-height:1.45}
+.ctf-status.atencao{color:var(--warn)}
+.ctf-status .btn{margin:4px 4px 0 0}

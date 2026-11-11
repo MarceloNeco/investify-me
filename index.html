@@ -18703,6 +18703,7 @@ function abrirCartao(id, semente){
   $('#assetModalTitle').textContent = pt ? (c ? 'Editar cartão' : 'Cadastrar cartão')
                                          : (c ? 'Edit card' : 'Add card');
   $('#assetModalBody').innerHTML = Verter.html(
+    (!c && window.MoneyModulos ? MoneyModulos.html('cartao.topo', {semente: sm}) : '') +   /* 3.65: cadastrar por foto (modulos/cartao-foto.js) */
     '<div class="grid g2">' +
       campo(pt ? 'Apelido' : 'Nickname',
         '<input id="ctApelido" placeholder="' + (pt ? 'Cartão do dia a dia' : 'Everyday card') + '" value="' +
@@ -29588,6 +29589,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/espelho.js?v=1.1.0"></script>
 <script src="modulos/tour.js?v=1.0.0"></script>
 <script src="modulos/cartoes.js?v=1.0.0"></script>
+<script src="modulos/cartao-foto.js?v=1.0.0"></script>
 <script src="modulos/contraparte.js?v=1.0.0"></script>
 <script src="modulos/declaracao-escolhas.js?v=1.0.0"></script>
 <script src="modulos/origem.js?v=1.0.0"></script>
