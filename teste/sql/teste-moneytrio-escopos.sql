@@ -57,6 +57,11 @@ EXCEPTION WHEN check_violation THEN RAISE NOTICE 'ok: reservado precisa do id "r
 SELECT pg_temp.ok(public.money_reservar_apagar(pg_temp.g(), 'gastos', array['velho']) = 1, 'antes de existir visão da casa: a cópia antiga (casa) sai de verdade');
 SELECT pg_temp.ok(NOT EXISTS (SELECT 1 FROM public.money_docs WHERE grupo_id = pg_temp.g() AND id = 'velho'), 'sem rastro (nem apagado_em)');
 
+SELECT pg_temp.ok((SELECT count(*) FROM public.money_docs_recifrar(pg_temp.g(), jsonb_build_array(
+  jsonb_build_object('colecao','gastos','id','g1','versao',(SELECT versao FROM public.money_docs WHERE grupo_id = pg_temp.g() AND id = 'g1'),'dados',repeat('N',40)),
+  jsonb_build_object('colecao','gastos','id','g2','versao',99,'dados',repeat('N',40))))) = 1, 'recifrar em lote: só a versão certa muda (trava otimista)');
+SELECT pg_temp.ok((SELECT dados_cifrado FROM public.money_docs WHERE grupo_id = pg_temp.g() AND id = 'g1') = repeat('N',40), 'o pacote novo está lá');
+
 -- 3) as chaves: CC para ela; CR não
 SELECT public.money_visao_definir(pg_temp.g(), 'b4000000-0000-0000-0000-000000000001', 'casa');
 SELECT pg_temp.ok(public.money_chave_guardar(pg_temp.g(), 'a4000000-0000-0000-0000-000000000001', 'casa', 1, pg_temp.emb()), 'chefe guarda a CC para si');
@@ -84,6 +89,8 @@ SELECT pg_temp.ok((SELECT dados_cifrado FROM public.money_docs WHERE grupo_id = 
 SELECT pg_temp.ok((SELECT count(*) FROM public.money_chaves WHERE grupo_id = pg_temp.g()) = 1, 'ela lê só a CC dela');
 DO $$ BEGIN PERFORM public.money_chave_guardar(pg_temp.g(), 'b4000000-0000-0000-0000-000000000001', 'casa', 2, pg_temp.emb()); RAISE EXCEPTION 'FALHOU: ela guardou chave';
 EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: ela não guarda chaves'; END $$;
+DO $$ BEGIN PERFORM * FROM public.money_docs_recifrar(pg_temp.g(), '[]'::jsonb); RAISE EXCEPTION 'FALHOU: ela recifrou';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: ela não recifra em lote'; END $$;
 DO $$ BEGIN PERFORM public.money_reservar_apagar(pg_temp.g(), 'gastos', array['r.g3']); RAISE EXCEPTION 'FALHOU: ela apagou';
 EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: ela não apaga de verdade'; END $$;
 SELECT pg_temp.ok(NOT public.money_posso_ver(pg_temp.g()), 'money_posso_ver (robô, espelho, caixa reservada) é falso para ela');

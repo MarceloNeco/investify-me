@@ -142,6 +142,25 @@ begin
   return v_n;
 end $$;
 
+-- recifrar em lote (a migração: cada linha da casa passa da CF para a CC). Só quem vê tudo; trava otimista por versão.
+-- p_itens = [{"colecao": "...", "id": "...", "versao": 3, "dados": "..."}] (até 200). Devolve as que mudaram (colecao, id, versao nova).
+create or replace function public.money_docs_recifrar(p_grupo uuid, p_itens jsonb)
+returns table (colecao text, id text, versao bigint) language plpgsql security definer set search_path = '' as $$
+declare v_item jsonb;
+begin
+  if not public.money_vejo_tudo(p_grupo) then raise exception 'Só quem vê tudo.' using errcode = '42501'; end if;
+  if p_itens is null or jsonb_typeof(p_itens) <> 'array' then raise exception 'p_itens: lista.' using errcode = '22023'; end if;
+  if jsonb_array_length(p_itens) > 200 then raise exception 'No máximo 200 por vez.' using errcode = '22023'; end if;
+  for v_item in select x from jsonb_array_elements(p_itens) as t(x) loop
+    if length(coalesce(v_item->>'dados', '')) < 16 then raise exception 'Item sem dados.' using errcode = '22023'; end if;
+    return query
+      update public.money_docs d set dados_cifrado = v_item->>'dados'
+       where d.grupo_id = p_grupo and d.colecao = v_item->>'colecao' and d.id = v_item->>'id'
+         and d.versao = (v_item->>'versao')::bigint and d.apagado_em is null
+      returning d.colecao, d.id, d.versao;
+  end loop;
+end $$;
+
 -- -------------------------------------------------------------------------------------
 -- 3) As chaves do MoneyTRIO (CC da casa, CR reservada), embrulhadas para cada pessoa
 -- -------------------------------------------------------------------------------------
@@ -330,7 +349,7 @@ begin
   foreach f in array array['money_visao(uuid)', 'money_vejo_tudo(uuid)', 'money_vejo_casa(uuid)', 'money_posso_ver(uuid)',
     'money_visao_definir(uuid, uuid, text)', 'money_visoes(uuid)', 'money_reservar_apagar(uuid, text, text[])',
     'money_chave_guardar(uuid, uuid, text, integer, text)', 'money_entrada_consumir(uuid, text[])', 'money_robo_depositar(uuid, jsonb)',
-    'money_entrada_limpar(uuid)', 'money_arquivo_posso(text)'] loop
+    'money_entrada_limpar(uuid)', 'money_arquivo_posso(text)', 'money_arquivo_grupo(text)', 'money_docs_recifrar(uuid, jsonb)'] loop
     execute format('revoke all on function public.%s from public, anon', f);
     execute format('grant execute on function public.%s to authenticated, service_role', f);
   end loop;
