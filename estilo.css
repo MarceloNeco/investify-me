@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.63 · 11/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.64 · 11/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2418,3 +2418,26 @@ html:has(.modal-wrap:not(.hidden)), html:has(#nvPortao), html:has(.nv-painel), h
 html:has(.popup-an), html:has(dialog[open]){overflow:hidden; scrollbar-gutter:stable}   /* a barra some com a trava; o lugar dela fica, nada pula para o lado */
 @media (max-width:760px){ html:has(.sidenav.open){overflow:hidden; scrollbar-gutter:stable} }
 .modal-wrap, .modal, .modal-body, .lock-wrap, .popup-an, .sidenav, #navLista, dialog{overscroll-behavior:contain}
+
+/* 3.64 — pessoas da família, indicadores do mês, conferência com o banco, palpite do robô */
+.ps-novo{display:inline-block; margin-left:6px; padding:1px 8px; border-radius:999px; font-size:.7rem; font-weight:600;
+  color:var(--warn); border:1px solid color-mix(in srgb, var(--warn) 45%, transparent); vertical-align:middle}
+.ps-q{display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:8px 0; border-top:1px solid var(--line)}
+.ps-q:first-of-type{border-top:0}
+.ps-q > span{flex:1 1 220px; min-width:0}
+.ps-grupo .row .btn{white-space:nowrap}
+.ps-dica{display:block; margin-top:4px; min-height:0}
+.ps-dica:empty{display:none}
+.ps-form [hidden]{display:none}
+.esp-palpite{margin-top:2px}
+.esp-palpite .linkinho{font-size:inherit}
+.ind-grade{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px}
+.ind{padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:var(--card2); display:flex; flex-direction:column; gap:4px; min-width:0}
+.ind-t{font-size:.8rem; color:var(--txt2)}
+.ind-v{font-size:1.45rem; font-weight:680; font-variant-numeric:tabular-nums; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap}
+.ind-seta{font-size:.8rem; font-weight:600; color:var(--txt2)}
+.ind-faixa.atencao{color:var(--warn)}
+.ind-faixa.alto{color:var(--down, #ff6b6b)}
+.sb-card .tbl td{vertical-align:top}
+.sb-dif{font-weight:600}
+.ind-seta.up{color:var(--up)} .ind-seta.down{color:var(--down)}

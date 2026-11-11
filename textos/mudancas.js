@@ -1,11 +1,18 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.63 · 11/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.64 · 11/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.64', d:'2026-11-11', t:'Pessoas da família, planilha espelho e conferência com o banco', itens:[
+    'Pessoas da família (⚙ Configurações): da casa (responsáveis e dependentes), outras pessoas e empresas. Nome, sobrenome, apelido e como o nome aparece no extrato. Mudou o nome, muda em tudo na hora. CPF o app não pede.',
+    'Nos lançamentos, "Quem pagou" e "Para quem é" (o beneficiário, que importa na saúde, na escola e no IR). O campo aceita texto livre; nome parecido, mas sem certeza, o app pergunta uma vez.',
+    'O que o robô manda com "IRPF" agora chega marcado para o imposto de renda. Estorno vira valor negativo na categoria da compra (não é mais renda). Palpite do robô aparece para você confirmar com um toque.',
+    'Planilha espelho: o que você muda aqui vai para o robô e para a planilha dele (fechado, só o robô abre). O link fica no menu do perfil.',
+    'No Painel: taxa de poupança, peso de dívidas e parcelas na renda, meses de reserva, o peso de cada grupo na renda e a conferência com o saldo do banco.'
+  ]},
   {v:'3.63', d:'2026-11-11', t:'Janela aberta: a tela de trás fica parada', itens:[
     'Com uma janela aberta (detalhe de um lançamento, novo compromisso, explicação ⓘ, "Conferir o que foi lido", as telas da nuvem e o menu ☰ no celular), a roda do mouse ou o dedo rolam só a janela; chegando ao fim, a página de trás não anda mais.',
     'Ao fechar a janela, a lista está exatamente onde você deixou, na mesma linha.'

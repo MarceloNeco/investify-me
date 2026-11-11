@@ -55,3 +55,14 @@ Resultado em 11/Nov/2026 (Postgres 16): rodou duas vezes sem erro; 37 "ok", nenh
 aparelho, "passkey" não troca o PIN, migração com PINs diferentes, troca que vale em todos, espera a partir do 5º erro, 24 h por erro do
 10º em diante (sem bloqueio definitivo), aprovação própria desbloqueia na hora, família não troca, outra pessoa e aparelho tirado não
 conferem, o banco guarda só SHA-256(v)).
+
+**Planilha espelho + memória do robô (MoneyTRIO v5, 11/Nov/2026)** — `supabase/2026-11-11b-moneytrio-espelho.sql` (depois do v1, v2 e v3)
+e `teste/sql/teste-moneytrio-espelho.sql`.
+```
+for i in 1 2; do psql -d lab -v ON_ERROR_STOP=1 -f investify-me/supabase/2026-11-11b-moneytrio-espelho.sql; done
+psql -d lab -f investify-me/teste/sql/teste-moneytrio-espelho.sql 2>&1 | grep -E "ok:|FALHOU"
+```
+Resultado em 11/Nov/2026 (Postgres 16): rodou duas vezes sem erro; 30 "ok", nenhuma falha (só o robô publica a chave e nunca com
+"d"; chefe/responsável leem a chave e depositam, membro e pessoa de fora não; até 200 por vez; só o robô lê e marca; lidos há mais
+de 7 dias somem; memória só do robô, até 512 KB; robô desligado perde tudo; nada legível direto).
+O vetor do pacote fica em `teste/espelho/vetor-espelho.json` (`node teste/espelho/gerar-vetor.js`).

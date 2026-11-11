@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/profissionais.js — profissionais conhecidos (N39)        1.0.0 · 06/Nov/2026
+   modulos/profissionais.js — profissionais conhecidos (N39)        1.1.0 · 11/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      Reconhece o mesmo médico, dentista, pediatra, escola… no extrato pelo nome, SEM IA:
@@ -9,6 +9,9 @@
        IR). Nunca mais pergunta.
      · Nome novo de saúde/educação, ou parecido mas sem certeza → aparece em Custos → Revisar, em
        "Profissionais para confirmar", uma vez por nome (não por lançamento).
+     · 1.1.0 (3.64): "para quem é" é o BENEFICIÁRIO (paraQuem + paraQuemId, a pessoa do cadastro); quem pagou continua
+       vindo da conta. Outra pessoa da casa pagar o mesmo profissional muda só o "quem pagou"; categoria e beneficiário seguem.
+       Os classificados antes (o "quem" tinha virado o beneficiário) passam o nome para "Para quem" uma vez.
    API (window.Profissionais)
      norm(texto)               → palavras que contam do nome (array)
      parecido(a, b)            → 0..1 (palavras iguais ou com 1 letra de diferença, sobre a maior)
@@ -18,7 +21,8 @@
      ignorar(chave)            → "não é profissional": não pergunta mais
      perguntas()               → [{chave, exemplo, n, total, sugestao}] (um por nome)
    DADOS
-     Store.estado.profissionais = [{id, nome, apelidos: [chave], grupo, sub, quem, irpf}  |  {id, ignorar: true, apelidos}]
+     Store.estado.profissionais = [{id, nome, apelidos: [chave], grupo, sub, paraQuem, paraQuemId, irpf}  |  {id, ignorar: true, apelidos}]
+     (quem = o nome antigo do campo, lido como paraQuem)
      (chave = as palavras normalizadas do nome no extrato, juntas por espaço)
    PONTOS QUE USA
      evento gasto.novo · custos.revisar (cartão das perguntas) · tela b-profissionais · ações prof-*
@@ -79,12 +83,15 @@
     },
     aplicar: function (g, p) {
       var muda = {};
-      ['grupo', 'sub', 'quem'].forEach(function (k) { if (p[k] && g[k] !== p[k]) muda[k] = p[k]; });
+      ['grupo', 'sub'].forEach(function (k) { if (p[k] && g[k] !== p[k]) muda[k] = p[k]; });
+      var benef = p.paraQuem || p.quem || '';
+      if (benef && g.paraQuem !== benef) { muda.paraQuem = benef; if (p.paraQuemId) muda.paraQuemId = p.paraQuemId; }
       if (p.irpf != null && !!g.irpf !== !!p.irpf) muda.irpf = !!p.irpf;
       if (!Object.keys(muda).length) return false;
       muda.profissional = p.id;
       /* no próprio objeto (quem acabou de criar o lançamento continua com a referência certa) */
       Object.assign(g, muda); g.fluxo = (GRUPOS[g.grupo] || GRUPOS.OUTROS).fluxo; Gasto._idx = null;
+      if (window.Pessoas) Pessoas.ligar(g, 'paraQuem', 'paraQuemId');
       return true;
     },
     classificar: function (g) {
@@ -118,9 +125,11 @@
       var p = d.id ? lista().find(function (x) { return x.id === d.id; }) : null;
       if (!p) {
         p = { id: 'pr' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), nome: String(d.nome || chave).trim().slice(0, 80),
-              apelidos: [], grupo: d.grupo || 'SAUDE', sub: String(d.sub || '').trim(), quem: String(d.quem || '').trim(), irpf: !!d.irpf };
+              apelidos: [], grupo: d.grupo || 'SAUDE', sub: String(d.sub || '').trim(), irpf: !!d.irpf };
         lista().push(p);
       }
+      var benef = String(d.paraQuem != null ? d.paraQuem : (d.quem || '')).trim();
+      if (benef || !p.paraQuem) { p.paraQuem = benef; delete p.quem; if (window.Pessoas) Pessoas.ligar(p, 'paraQuem', 'paraQuemId'); }
       if (p.apelidos.indexOf(chave) < 0) p.apelidos.push(chave);
       var n = 0;
       Gasto.todos().slice().forEach(function (g) { if (!g.editadoPessoa && API.parecido(API.norm(API.textoDe(g)), chave.split(' ')) >= SURE && API.aplicar(g, p)) n++; });
@@ -139,7 +148,7 @@
     if (!q.length && !conhecidos.length) return '';
     var opcoes = function (sel) {
       return '<option value="">' + (pt() ? '— novo profissional —' : '— new professional —') + '</option>' + conhecidos.map(function (p) {
-        return '<option value="' + esc(p.id) + '"' + (sel && sel.id === p.id ? ' selected' : '') + '>' + esc(p.nome + ' (' + [p.sub, p.quem].filter(Boolean).join(' · ') + ')') + '</option>';
+        return '<option value="' + esc(p.id) + '"' + (sel && sel.id === p.id ? ' selected' : '') + '>' + esc(p.nome + ' (' + [p.sub, p.paraQuem || p.quem].filter(Boolean).join(' · ') + ')') + '</option>';
       }).join('');
     };
     var h = '<div class="card prof-card"><div class="card-head"><h3>🩺 ' + (pt() ? 'Profissionais para confirmar' : 'Professionals to confirm') + (q.length ? ' <b>' + q.length + '</b>' : '') + '</h3>' +
@@ -148,6 +157,7 @@
     h += '<p class="small muted" style="margin:0 0 8px">' + (pt()
       ? 'Nomes de saúde ou educação que o app ainda não conhece. Confirme uma vez: daqui em diante, todo lançamento com esse nome já entra com a categoria, a pessoa e o IR certos.'
       : 'Health or education names the app does not know yet. Confirm once: from then on every entry with that name is classified automatically.') + '</p>';
+    if (window.Pessoas) h += Pessoas.opcoes('profQuemLista');
     q.slice(0, 12).forEach(function (x, i) {
       var g = x.exemplo, s = x.sugestao;
       h += '<div class="prof-q" data-i="' + i + '"><div class="t-main">' + esc(g.desc.slice(0, 60)) + '</div>' +
@@ -156,7 +166,7 @@
           '<label class="f"><span class="lb">' + (pt() ? 'É' : 'Is') + '</span><select class="prof-sel">' + opcoes(s) + '</select></label>' +
           '<label class="f"><span class="lb">' + (pt() ? 'Nome' : 'Name') + '</span><input class="prof-nome" value="' + esc(s ? s.nome : API.norm(g.desc).map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ')) + '"></label>' +
           '<label class="f"><span class="lb">' + esc(t('fin.categoria')) + '</span><input class="prof-sub" value="' + esc(s ? s.sub : (g.sub || '')) + '"></label>' +
-          '<label class="f"><span class="lb">' + (pt() ? 'Para quem é' : 'Who it is for') + '</span><input class="prof-quem" value="' + esc(s ? s.quem : (g.quem || '')) + '"></label>' +
+          '<label class="f"><span class="lb">' + (pt() ? 'Para quem é' : 'Who it is for') + '</span><input class="prof-quem" data-pessoa list="profQuemLista" autocomplete="off" value="' + esc(s ? (s.paraQuem || s.quem || '') : (g.paraQuem || '')) + '"></label>' +
         '</div>' +
         '<label class="linha-check"><input type="checkbox" class="prof-ir"' + ((s ? s.irpf : (g.irpf || g.grupo === 'SAUDE')) ? ' checked' : '') + '> ' + (pt() ? 'Entra no imposto de renda' : 'Counts for income tax') + '</label>' +
         '<div class="row" style="gap:6px"><button class="btn sm primary" data-acao="prof-confirmar" data-chave="' + esc(x.chave) + '" data-grupo="' + esc(s ? s.grupo : (g.grupo === 'OUTROS' ? 'SAUDE' : g.grupo)) + '">' + (pt() ? 'Confirmar' : 'Confirm') + '</button>' +
@@ -171,7 +181,7 @@
     if (!l.length) return h + '<div class="card"><p class="muted small" style="margin:0">' + (pt() ? 'Nenhum ainda. Eles aparecem para confirmar em Custos → Revisar.' : 'None yet.') + '</p></div>';
     return h + '<div class="card sem-pad"><table class="tbl"><tbody>' + l.map(function (p) {
       var n = Gasto.todos().filter(function (g) { return g.profissional === p.id; }).length;
-      return '<tr><td><span class="t-main">' + esc(p.nome) + '</span><div class="t-sub">' + esc([(GRUPOS[p.grupo] || {}).nome, p.sub, p.quem, p.irpf ? 'IR' : ''].filter(Boolean).join(' · ')) + '</div>' +
+      return '<tr><td><span class="t-main">' + esc(p.nome) + '</span><div class="t-sub">' + esc([(GRUPOS[p.grupo] || {}).nome, p.sub, p.paraQuem || p.quem, p.irpf ? 'IR' : ''].filter(Boolean).join(' · ')) + '</div>' +
         '<div class="t-sub">' + esc(p.apelidos.join(' | ')) + '</div></td><td class="num">' + n + '</td>' +
         '<td class="num"><button class="btn sm" data-acao="prof-esquecer" data-id="' + esc(p.id) + '">' + (pt() ? 'esquecer' : 'forget') + '</button></td></tr>';
     }).join('') + '</tbody></table></div>';
@@ -179,8 +189,20 @@
 
   MoneyModulos.registrar({
     id: 'profissionais',
-    versao: '1.0.0',
+    versao: '1.1.0',
     colecoes: [COL],
+    /* 1.1.0: uma vez, o nome que o profissional tinha posto no "quem" passa para "Para quem" */
+    iniciar: function () {
+      try {
+        var cfg = (ST.config = ST.config || {}); if (cfg.profParaQuem) return;
+        var n = 0, por = {}; lista().forEach(function (p) { por[p.id] = p; if (p.quem && !p.paraQuem) { p.paraQuem = p.quem; delete p.quem; } });
+        Gasto.todos().forEach(function (g) {
+          var p = por[g.profissional]; if (!p || !p.paraQuem || g.paraQuem) return;
+          if (g.quem === p.paraQuem) { g.paraQuem = g.quem; g.quem = ''; delete g.quemId; if (window.Pessoas) Pessoas.ligar(g, 'paraQuem', 'paraQuemId'); n++; }
+        });
+        cfg.profParaQuem = 1; if (n || lista().length) Store.salvar();
+      } catch (e) { console.warn('profissionais', e); }
+    },
     ouvir: {
       'gasto.novo': function (g) { API.classificar(g); }
     },
@@ -192,7 +214,8 @@
       'prof-confirmar': function (el) {
         var cx = el.closest('.prof-q'); if (!cx) return;
         var q = function (c) { var e = cx.querySelector(c); return e ? (e.type === 'checkbox' ? e.checked : e.value) : ''; };
-        var r = API.confirmar(el.dataset.chave, { id: q('.prof-sel'), nome: q('.prof-nome'), sub: q('.prof-sub'), quem: q('.prof-quem'), irpf: q('.prof-ir'), grupo: el.dataset.grupo });
+        var r = API.confirmar(el.dataset.chave, { id: q('.prof-sel'), nome: q('.prof-nome'), sub: q('.prof-sub'), paraQuem: q('.prof-quem'), irpf: q('.prof-ir'), grupo: el.dataset.grupo });
+        if (window.Espelho) Espelho.regraProfissional(r.p, el.dataset.chave);
         Store.salvar(); render();
         toast((pt() ? 'Confirmado: ' : 'Confirmed: ') + r.p.nome + (r.n ? ' · ' + r.n + (pt() ? ' lançamento(s) classificado(s).' : ' entr(ies) classified.') : '.'));
       },

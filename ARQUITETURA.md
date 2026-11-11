@@ -644,6 +644,27 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.64 (`nuvem.js` 1.11.0; módulos novos `pessoas` 1.0.0, `espelho` 1.0.0, `saldo-banco` 1.0.0, `indicadores` 1.0.0; `profissionais` 1.1.0).
+  **Pessoas** (`modulos/pessoas.js`, coleção `pessoas`): da casa (responsável/dependente), outras pessoas, empresas (CNPJ opcional; nunca
+  CPF). Cada registro guarda o ID ao lado do texto nos pares `quem/quemId`, `paraQuem/paraQuemId`, `pagador/pagadorId` (`Gasto.arruma`
+  e `Recorrente.arruma` chamam `Pessoas.ligarTudo`); renomear reescreve o texto em todas as listas do Store (`Pessoas.propagar`).
+  Texto livre continua valendo; parecido sem certeza → "É a mesma pessoa?" (uma vez por nome); sem parecido → "A identificar".
+  Migração única (`ST.config.pessoasV`): os "quem" de hoje viram pessoas, "PJ" vira empresa, o texto antigo fica nos apelidos do
+  extrato; pré-preenche com `sol_grupo_membros` (`MoneyNuvem.membros()`) e com as pessoas da ponte do OmniLife. Lançamento: "Quem
+  pagou" (`quem`; vazio → o dono da conta/cartão, `Pessoas.donoDe`) e "Para quem é" (`paraQuem`). Pagamento de compromisso: `quem` =
+  "Quem paga", `paraQuem` = "Para quem é". IR (`Tax.daPessoa`): beneficiário adulto → a declaração dele; dependente → quem pagou.
+  Profissionais 1.1.0: "para quem é" = `paraQuem` (o pagante continua da conta). Categoria Saúde "Terapias (TO/Fono/Psicopedagogia)".
+  **Caixa do robô** (nuvem.js 1.11.0): `irDe` ("IRPF…" marca o IR; `irTexto`), `TIPOS` (desconhecido → ignorado e anotado em
+  `Caixa.desconhecidos`), `saldo` → `SaldoBanco.receber`, estorno → `estornar` (negativo, na categoria do original de até 120 dias;
+  `Gasto.arruma` mantém o sinal com `estorno: true`; `migrarEstornos` uma vez), `confianca` (só lançamento novo), `para_quem`,
+  `descRobo`, `contaRobo`. **Espelho** (`modulos/espelho.js` + `Espelho` no nuvem.js): a edição da PESSOA (formulário, apagar,
+  confirmar palpite, confirmar profissional) vira o texto do contrato v1, entra na fila do IndexedDB fechada com a CF e vai fechada para
+  a chave do robô (`money_espelho_chave_de` → ECDH P-256 efêmero → HKDF "money-espelho-v1|grupo" → AES-256-GCM, AAD grupo) em lotes de
+  200 (`money_espelho_depositar`); correção do robô não gera pacote; `regra` só quando a pessoa mudou grupo/categoria/para quem de um
+  lançamento do robô (ou confirmou: `confirmada: true`). Link da planilha em `ST.config.espelhoLink` (só docs.google.com/spreadsheets),
+  no menu do perfil. **Painel**: `budget.painel` (ponto novo) com os indicadores do mês e a conferência com o saldo do banco; "Peso na
+  renda" no "Para onde foi". Configurações: ponto novo `config.todos`. Teste: `teste/teste-pessoas-espelho.js` (45 verificações;
+  o vetor do espelho em `teste/espelho/vetor-espelho.json`).
 - 3.63 (`estilo.css` 3.63, `nuvem.js` 1.10.1): **janela aberta trava o fundo** (diretriz "janela.js"). Só CSS, no fim do estilo.css:
   `html:has(.modal-wrap:not(.hidden) | #nvPortao | .nv-painel | .lock-wrap:not(.hidden) | .popup-an | dialog[open]){overflow:hidden;
   scrollbar-gutter:stable}` e, até 760 px, `html:has(.sidenav.open)` (o menu ☰); a trava fica só no `<html>`, nunca no `<body>`, e
