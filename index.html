@@ -10357,7 +10357,7 @@ function abrirRecorrente(id, semente, op){
 
     '<div class="grid g2">' +
       campo(de('Conta de acesso', 'Login account'), '<input id="rcConta" autocomplete="off" value="' + esc(r.conta || '') + '" placeholder="' + de('ex.: o e-mail usado no serviço', 'e.g. the e-mail used on the service') + '">') +
-      campo(de('Cartão ou forma de pagamento', 'Card or payment method'), '<input id="rcCartao" autocomplete="off" value="' + esc(r.cartao || '') + '" placeholder="' + de('ex.: Itaú Black final 6514', 'e.g. Visa ending 6514') + '">') +
+      campo(de('Cartão ou forma de pagamento', 'Card or payment method'), '<input id="rcCartao" autocomplete="off" value="' + esc(r.cartao || '') + '" placeholder="' + de('ex.: Itaú Black final 1101', 'e.g. Visa ending 1101') + '">') +
     '</div>' +
     campo(de('Observação', 'Note'), '<textarea id="rcObs" rows="2">' + esc(r.obs || '') + '</textarea>') +
     (window.MoneyModulos ? MoneyModulos.html('compromisso.detalhes', {r: r}) : '') +

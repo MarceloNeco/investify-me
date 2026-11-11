@@ -76,7 +76,7 @@ A classificação é feita no aparelho do chefe, numa regra só (`Escopo.de(regi
 - compromissos e recorrentes (todos), Futuro, seguros (vida inclusive), contas fixas, escola, condomínio;
 - **lançamentos:**
   - os de quem/quemId = ela;
-  - os do cartão cujo "Quem usa" = ela (o Visa final 4189);
+  - os do cartão cujo "Quem usa" é ela;
   - as transferências "Entre a família" (as dele para ela e as dela para ele);
   - **os que pagam um compromisso** (ligados a ele, mesmo que saiam do débito do chefe);
 - a **renda dela** (o aluguel do apto: "quem recebe" = ela);
@@ -140,7 +140,7 @@ pagamentos dele (item 9).
 
 **Robô** (com a sessão principal):
 - em cada item, `escopo`:
-  - `casa` se quem = Beta (PLUGGY_ITENS_FAMILIA), se o cartão tem CARTAO_QUEM = Beta (final 4189) ou se é transferência entre a família;
+  - `casa` se quem = Beta (PLUGGY_ITENS_FAMILIA), se o cartão cujo "Quem usa" é ela (CARTAO_QUEM = Beta) ou se é transferência entre a família;
   - **senão, `reservado`** (seguro por padrão);
 - fecha o pacote com a chave pública daquele escopo (lê as duas em `money_caixa_chave`);
 - `money_robo_depositar` passa a aceitar `escopo` em cada item; sem o campo, vale `reservado`;

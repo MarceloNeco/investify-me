@@ -31,19 +31,19 @@ const LOCAL = { v: 1, config: {}, posicoes: [], gastos: [], recorrentes: [], pes
   const c1 = await p.evaluate(() => {
     const C = MoneyNuvem._teste.Caixa, add = (l) => Gasto.add(C.converter(Object.assign({ tipo: 'despesa', grupo: 'LAZER', categoria: 'Restaurante', banco: 'Banco Teste', cartao: 'MASTERCARD', quem: 'Cacá' }, l)));
     const conta = { id: 'acc-black-1', nome: 'BLACK TESTE MULT' };
-    ['6514', '9506', '8341'].forEach((f, i) => add({ id: 'k' + i, data: '2026-10-0' + (i + 1), valor: 100 + i, descricao: 'LOJA ' + i, final: f, conta_cartao: conta }));
-    add({ id: 'k9', data: '2026-10-05', valor: 50, descricao: 'LOJA VISA', final: '9392', cartao: 'VISA', conta_cartao: { id: 'acc-visa-2', nome: 'VISA TESTE' } });
+    ['1101', '2202', '3303'].forEach((f, i) => add({ id: 'k' + i, data: '2026-10-0' + (i + 1), valor: 100 + i, descricao: 'LOJA ' + i, final: f, conta_cartao: conta }));
+    add({ id: 'k9', data: '2026-10-05', valor: 50, descricao: 'LOJA VISA', final: '4404', cartao: 'VISA', conta_cartao: { id: 'acc-visa-2', nome: 'VISA TESTE' } });
     add({ id: 'k10', data: '2026-10-06', valor: 70, descricao: 'LOJA ANTIGA', final: '7777' });   /* sem conta_cartao (dado antigo) */
     const enc = Cartoes.encontrados(); render(); irPara('b-painel');
     return { enc: enc.map((x) => (x.nome || '?') + ':' + x.finais.join(',')), dica: (document.querySelector('.ct-dica') || {}).textContent || '' };
   });
-  ok(c1.enc.indexOf('BLACK TESTE MULT:6514,9506,8341') >= 0 && c1.enc.some((x) => /9392/.test(x)), '3 finais da mesma conta viram 1 cartão em "Cartões encontrados" (' + c1.enc.join(' | ') + ')');
-  ok(/Encontrei/.test(c1.dica) && /finais 6514, 9506, 8341/.test(c1.dica), 'dica no Painel: "' + c1.dica.slice(0, 110) + '…"');
+  ok(c1.enc.indexOf('BLACK TESTE MULT:1101,2202,3303') >= 0 && c1.enc.some((x) => /4404/.test(x)), '3 finais da mesma conta viram 1 cartão em "Cartões encontrados" (' + c1.enc.join(' | ') + ')');
+  ok(/Encontrei/.test(c1.dica) && /finais 1101, 2202, 3303/.test(c1.dica), 'dica no Painel: "' + c1.dica.slice(0, 110) + '…"');
   /* cadastrar pelo "Dar nome": o formulário vem preenchido; Quem usa = Rita no Visa */
   await p.evaluate(() => { const s = Cartoes.semente(Cartoes.encontrados().find((x) => x.contaId === 'acc-black-1').chave); abrirCartao(null, s); });
   await p.waitForTimeout(200);
   const form = await p.evaluate(() => ({ ap: document.getElementById('ctApelido').value, fins: [...document.querySelectorAll('.ct-f-fim')].map((x) => x.value).join(','), conta: document.getElementById('ctContaId').value, tipos: [...document.querySelectorAll('.ct-f-tipo')].map((x) => x.value).join(',') }));
-  ok(form.ap === 'BLACK TESTE MULT' && form.fins === '6514,9506,8341' && form.conta === 'acc-black-1' && /virtual/.test(form.tipos), 'o cadastro abre preenchido (apelido, os 3 finais como virtuais, a conta do cartão)');
+  ok(form.ap === 'BLACK TESTE MULT' && form.fins === '1101,2202,3303' && form.conta === 'acc-black-1' && /virtual/.test(form.tipos), 'o cadastro abre preenchido (apelido, os 3 finais como virtuais, a conta do cartão)');
   await p.fill('#ctApelido', 'Black'); await p.fill('#ctTitular', 'Carlos');
   await p.selectOption('#ctFecha', '5'); await p.selectOption('#ctVence', '12');
   await p.selectOption('.ct-final:nth-child(1) .ct-f-tipo', 'fisico');
@@ -56,7 +56,7 @@ const LOCAL = { v: 1, config: {}, posicoes: [], gastos: [], recorrentes: [], pes
     const c = Banco.cartoes().find((x) => x.contaId === 'acc-black-1'), gs = ['k0', 'k1', 'k2'].map((i) => Gasto.todos().find((g) => g.idRobo === i));
     return { n: Banco.cartoes().length, fins: Cartoes.finais(c).map((f) => f.fim + ':' + f.tipo).join(','), ligados: gs.every((g) => g.cartaoId === c.id), quem: gs.map((g) => g.quem).join(','), id: c.id };
   });
-  ok(c2.n === 1 && c2.ligados && c2.fins === '6514:fisico,9506:virtual,8341:virtual,4455:adicional', 'um cartão só para os 3 finais (+ o adicional); as compras antigas ganham o cartão (' + c2.fins + ')');
+  ok(c2.n === 1 && c2.ligados && c2.fins === '1101:fisico,2202:virtual,3303:virtual,4455:adicional', 'um cartão só para os 3 finais (+ o adicional); as compras antigas ganham o cartão (' + c2.fins + ')');
   ok(c2.quem === 'Cacá,Cacá,Cacá', '"Quem pagou" das compras = o titular (Carlos → mostra o apelido Cacá)');
   const c3 = await p.evaluate((cid) => {
     const C = MoneyNuvem._teste.Caixa;
@@ -81,7 +81,7 @@ const LOCAL = { v: 1, config: {}, posicoes: [], gastos: [], recorrentes: [], pes
     const s = Cartoes.semente(Cartoes.encontrados().find((x) => x.contaId === 'acc-visa-2').chave);
     const c = Banco.salvarCartao({ apelido: 'Visa', fim: s.fim, bandeira: 'visa' }); c.contaId = 'acc-visa-2'; c.titular = 'Carlos'; c.usa = 'Rita'; Pessoas.ligar(c, 'titular', 'titularId'); Pessoas.ligar(c, 'usa', 'usaId'); Cartoes.ligarRetro(c);
     const C = MoneyNuvem._teste.Caixa;
-    const g = Gasto.add(C.converter({ id: 'nat8', tipo: 'despesa', data: '2026-11-10', valor: 180, grupo: 'DEPENDENTES', categoria: 'Esportes/Uniformes', descricao: 'ESCOLA DE NATACAO EXEMPLO PARC 08/12', final: '9392', conta_cartao: { id: 'acc-visa-2' }, quem: 'Cacá', para_quem: 'Nina' }));
+    const g = Gasto.add(C.converter({ id: 'nat8', tipo: 'despesa', data: '2026-11-10', valor: 180, grupo: 'DEPENDENTES', categoria: 'Esportes/Uniformes', descricao: 'ESCOLA DE NATACAO EXEMPLO PARC 08/12', final: '4404', conta_cartao: { id: 'acc-visa-2' }, quem: 'Cacá', para_quem: 'Nina' }));
     const sem = CompromissoDe.doLancamento(g);
     return { quem: g.quem, para: g.paraQuem, antigo: Gasto.todos().find((x) => x.idRobo === 'k9').quem, sem };
   });
@@ -103,7 +103,7 @@ const LOCAL = { v: 1, config: {}, posicoes: [], gastos: [], recorrentes: [], pes
     const g3 = conv({ id: 'pr4', descricao: 'PIX', contraparte: { nome: 'CARLOS DE SOUZA', meio: 'PIX' } });
     const g4 = conv({ id: 'pr5', descricao: 'PIX', contraparte: { nome: 'FULANO DESCONHECIDO', meio: 'PIX' } });
     /* MCC: só palpite */
-    const g5 = conv({ id: 'mc1', descricao: 'COMPRA 123', final: '6514', contraparte: { mcc: '5912' } });
+    const g5 = conv({ id: 'mc1', descricao: 'COMPRA 123', final: '1101', contraparte: { mcc: '5912' } });
     const p = Profissionais.lista ? null : (Store.estado.profissionais || []).find((x) => x.id === r.p.id);
     return { g1: [g1.grupo, g1.sub, g1.paraQuem, g1.irpf, g1.reconhecidoPor], g2: [g2.contato, g2.contatoId === amigo.id, g2.reconhecidoPor], g3: [g3.contato, g3.reconhecidoPor], g4: [g4.contato, !!g4.contatoId],
       g5: [g5.grupo, g5.sub, g5.confianca], cnpjs: (p || {}).cnpjs, nomes: Pessoas.nomesDoBanco(Pessoas.porId('psA')), ficha: (() => { irPara('cfg-pessoas'); return document.getElementById('view-cfg-pessoas').textContent; })() };

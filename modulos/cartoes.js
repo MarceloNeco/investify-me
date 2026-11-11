@@ -8,9 +8,9 @@
      · O robô manda, em cada compra no cartão, final, bandeira, banco e conta_cartao {id, nome} (a conta na Pluggy).
        Final novo com o mesmo conta_cartao.id → entra SOZINHO no cartão, como "virtual (novo)", com um aviso discreto
        para confirmar ou mudar o tipo uma vez. Final novo sem conta_cartao (dado antigo, planilha) → pergunta uma vez
-       "Este final 8341 é de qual cartão?" (os cartões + "novo cartão").
+       "Este final 3303 é de qual cartão?" (os cartões + "novo cartão").
      · "Cartões encontrados": os finais que vieram do robô e ainda não são de nenhum cartão, agrupados por
-       conta_cartao ("Black (finais 6514, 9506, 8341)"); um toque abre o cadastro já preenchido. Ao cadastrar, os
+       conta_cartao ("Black (finais 1101, 2202, 3303)"); um toque abre o cadastro já preenchido. Ao cadastrar, os
        lançamentos daqueles finais ganham o cartão (para trás também). Fatura e relatórios por CARTÃO (todos os finais).
      · "Quem pagou" das compras: o titular do final (adicional) → "Quem usa" do cartão → o titular do cartão.
      · Nunca o número inteiro, o CVV nem a senha: só os 4 últimos dígitos (a validade, opcional, vai cifrada com o resto).
