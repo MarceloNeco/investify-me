@@ -663,6 +663,15 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   **Declaração com escolhas** (`modulos/declaracao-escolhas.js`, ponto `declaracao.escolhas`): bens sem liquidez com dono e dívida,
   restituição prevista (desmarcada), imposto em compromissos (dia −1), conferência de deduções. Testes: `teste/teste-tour.js`,
   `teste/teste-cartoes-contraparte.js`; teste-desktop (descrição longa, calendário animado); teste-pessoas-espelho (barra com %).
+  **Origem** (`modulos/origem.js`): selos "A confirmar"/"A identificar" na coluna Categoria (ponto `lancamento.categoria`), filtros
+  `bFiltro.aconfirmar/aidentificar`, mesma origem = cnpj → id_pessoa → chave da descrição (NFKD, A–Z, sem palavras de 1 letra);
+  `Origem.depoisDe` replica grupo/sub/paraQuem/irpf nos pendentes da mesma origem (nunca nos editados/confirmados), com Desfazer, e
+  manda cada um ao espelho sem regra (`semRegra`); tela `b-confirmar` agrupada. Caixa: `marcarConfianca` põe a confiança também no
+  lançamento já existente que ninguém tocou. "Debito" do robô = `debconta` (ou Pix/TED/boleto pela contraparte). **Categorias**
+  (`modulos/categorias.js`): `ST.config.subAlias` aplicado no `Gasto.arruma`/`Recorrente.arruma`; migração única para "Streaming e
+  mídias"; "Renomear categoria" em Configurações. **Assinaturas 1.1.0**: "Não vou renovar" (fim → `r.ate`), "já paga até" (sem
+  cobrança), cobrança depois do fim → aviso. **Conferência com o banco 2.0.0**: conta_id/categoria_conta/final_conta; três seções;
+  cartão com a fatura positiva; itens `investimento` (`SaldoBanco.receberInvest`). Teste: `teste/teste-origem.js`.
 - 3.64 (`nuvem.js` 1.11.0; módulos novos `pessoas` 1.0.0, `espelho` 1.0.0, `saldo-banco` 1.0.0, `indicadores` 1.0.0; `profissionais` 1.1.0).
   **Pessoas** (`modulos/pessoas.js`, coleção `pessoas`): da casa (responsável/dependente), outras pessoas, empresas (CNPJ opcional; nunca
   CPF). Cada registro guarda o ID ao lado do texto nos pares `quem/quemId`, `paraQuem/paraQuemId`, `pagador/pagadorId` (`Gasto.arruma`

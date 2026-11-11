@@ -11,7 +11,9 @@ const MUDANCAS = [
     'Contatos e profissionais reconhecidos pelo CNPJ ou pela identificação do banco, mesmo que o nome mude. O nome completo gera os nomes no banco. O código da loja (MCC) vira só um palpite de categoria.',
     'Importar a declaração do IR com escolhas: patrimônio com os bens, restituição prevista, imposto em compromissos e conferência das deduções com o app.',
     'Um passeio de verdade, que mostra cada parte da tela. Uma barra fina abaixo do cabeçalho mostra o andamento de tudo o que está processando. O calendário do menu abre e fecha com animação.',
-    'Descrição longa nos lançamentos não passa mais por cima do valor. Parcela ("08/12") vira compromisso até a última. Categorias novas: IA e software, Seguro de vida, IOF / TED / DOC. Salvar cartão voltou a funcionar.'
+    'Descrição longa nos lançamentos não passa mais por cima do valor. Parcela ("08/12") vira compromisso até a última. Categorias novas: IA e software, Seguro de vida, IOF / TED / DOC. Salvar cartão voltou a funcionar.',
+    'O que o robô só supõe aparece com o selo amarelo "A confirmar" (um toque no ✓ confirma); o que ele não sabe, com o selo vermelho "A identificar". Confirmar ou corrigir um vale para todos da mesma origem, com Desfazer, e a tela "A confirmar" agrupa por origem.',
+    'Conferência com o banco em três partes: contas e poupança, cartões (a fatura aberta, com vencimento e limite) e investimentos. Assinatura que você não vai renovar termina na data marcada, e o app avisa se cobrarem depois. "Locação de vídeo" e "CDs/DVDs" viraram "Streaming e mídias", e agora dá para renomear categorias.'
   ]},
   {v:'3.64', d:'2026-11-11', t:'Pessoas da família, planilha espelho e conferência com o banco', itens:[
     'Pessoas da família (⚙ Configurações): da casa (responsáveis e dependentes), outras pessoas e empresas. Nome, sobrenome, apelido e como o nome aparece no extrato. Mudou o nome, muda em tudo na hora. CPF o app não pede.',
