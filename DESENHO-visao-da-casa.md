@@ -1,4 +1,4 @@
-# Desenho — "visão da casa" (dois cofres) no MoneyTRIO · 3.66 (rascunho para OK, nada construído)
+# Desenho — "visão da casa" (dois cofres) no MoneyTRIO · 3.66 (aprovado em 11/Nov/2026; construído na 3.66)
 
 Pedido do dono, 11/Nov/2026: um membro da família (a esposa, "Beta" nos exemplos) entra e vê só a parte da casa. Ela não vê
 os lançamentos do chefe um a um, a renda dele, investimentos, patrimônio e IR, **e não percebe que há algo escondido**.
