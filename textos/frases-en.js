@@ -1,10 +1,16 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.65.2 · 11/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.66 · 12/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.66 */
+  'A família no MoneyTRIO: a parte da casa e a parte só sua':'Family in MoneyTRIO: the household part and the part that is yours only',
+  'A família no MoneyTRIO: o chefe pode deixar alguém da família ver só a parte da casa (compromissos, contas da casa, os lançamentos dessa pessoa e os totais da família). O resto fica com outra chave e nem chega ao aparelho dela.':'Family in MoneyTRIO: the head can let someone in the family see only the household part (commitments, household bills, that person\'s own entries and the family totals). The rest uses another key and never reaches their device.',
+  'Em Configurações → "Família no MoneyTRIO": marcar quem é da casa, "Preparar a visão da família" (feito uma vez, em segundo plano) e "Liberar" cada pessoa com "Só a casa" ou "Tudo".':'In Settings → "Family in MoneyTRIO": mark who belongs to the household, "Prepare the family view" (done once, in the background) and "Grant" each person "Household only" or "Everything".',
+  'Compromissos de PJ (contador, DAS, TFE e afins) ficam sempre só com o chefe, mesmo pagos por outra conta.':'Business commitments (accountant, taxes and the like) always stay with the head only, even when paid from another account.',
+  'Quem vê só a casa usa o BudgetONE, com "Gastos da família" no Painel (com a data da última atualização).':'Who sees only the household uses BudgetONE, with "Family spending" on the Panel (with the date of the last update).',
   /* 3.65.2 */
   'Gráficos que cabem na tela, investimentos e o lançamento mais claro':'Charts that fit the screen, investments and a clearer entry',
   'Gráficos que cabem na tela: desenhados na largura da tela, com altura que acompanha a janela, números do eixo legíveis nos dois temas ("R$ 150 mil") e a linha do zero sempre à vista. No Fluxo, dois blocos com título próprio ("O que você tem" e "Entrou e saiu, mês a mês") e a linha roxa do saldo do mês. No Painel, "Para onde foi" e "Mês a mês" lado a lado no computador e os meses do ano em colunas.':'Charts that fit the screen: drawn at the screen width, with a height that follows the window, axis numbers readable in both themes ("R$ 150 k") and the zero line always visible. In Flow, two blocks with their own title ("What you own" and "In and out, month by month") and the purple line of the month balance. In the Panel, "Where it went" and "Month by month" side by side on the computer and the months of the year as columns.',

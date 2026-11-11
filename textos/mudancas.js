@@ -1,11 +1,17 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.65.2 · 11/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.66 · 12/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.66', d:'2026-11-12', t:'A família no MoneyTRIO: a parte da casa e a parte só sua', itens:[
+    'A família no MoneyTRIO: o chefe pode deixar alguém da família ver só a parte da casa (compromissos, contas da casa, os lançamentos dessa pessoa e os totais da família). O resto fica com outra chave e nem chega ao aparelho dela.',
+    'Em Configurações → "Família no MoneyTRIO": marcar quem é da casa, "Preparar a visão da família" (feito uma vez, em segundo plano) e "Liberar" cada pessoa com "Só a casa" ou "Tudo".',
+    'Compromissos de PJ (contador, DAS, TFE e afins) ficam sempre só com o chefe, mesmo pagos por outra conta.',
+    'Quem vê só a casa usa o BudgetONE, com "Gastos da família" no Painel (com a data da última atualização).'
+  ]},
   {v:'3.65.2', d:'2026-11-11', t:'Gráficos que cabem na tela, investimentos e o lançamento mais claro', itens:[
     'Gráficos que cabem na tela: desenhados na largura da tela, com altura que acompanha a janela, números do eixo legíveis nos dois temas ("R$ 150 mil") e a linha do zero sempre à vista. No Fluxo, dois blocos com título próprio ("O que você tem" e "Entrou e saiu, mês a mês") e a linha roxa do saldo do mês. No Painel, "Para onde foi" e "Mês a mês" lado a lado no computador e os meses do ano em colunas.',
     'Aplicação e resgate que o robô manda ("APLICACAO …", "RESGATE …") agora contam como dinheiro que foi para o investimento e que voltou, nunca como renda ou gasto. "Foi para investimento" deixou de mostrar R$ 0,00.',
