@@ -96,6 +96,14 @@ A classificação é feita no aparelho do chefe, numa regra só (`Escopo.de(regi
 **Mudou de escopo depois:** por exemplo, ela passa a usar outro cartão. O aparelho do chefe move o item: cria no outro escopo e
 apaga no antigo. Ela vê o item aparecer ou sumir, nunca o conteúdo reservado.
 
+**Reclassificar** (revisão da sessão principal): o gatilho proíbe mudar o escopo de uma linha. Então "o app do chefe reclassifica para
+casa" é **criar a linha casa (id sem `r.`, CC) e apagar DE VERDADE a `r.`**, pela função `money_reservar_mover(grupo, colecao, id, para)`, só
+para visão `tudo`. Casa → reservado deixa tombstone na casa (ela já tinha visto); reservado → casa apaga a `r.` sem tombstone. Teste próprio
+nos dois sentidos: ela vê aparecer, o conteúdo reservado nunca chega, nada fica em dobro.
+
+**Resumo velho:** o `resumo` guarda `atualizado_em`; o Painel dela mostra "Totais da família · atualizado em dd/mm" (se o chefe ficar dias sem
+abrir o app, ela sabe que os totais são de antes).
+
 **Um compromisso só dele** (ex.: o contador da PJ): proponho um interruptor "Só eu vejo" no compromisso, que vale também para os
 pagamentos dele (item 9).
 
