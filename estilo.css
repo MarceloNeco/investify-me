@@ -2477,3 +2477,28 @@ html.sem-animacao .barra-and.indet > i{animation:none; width:100%; opacity:.55}
 .tour-seta.esq{border-right:0; border-top:0}
 .tour.calmo .tour-furo, .tour.calmo .tour-balao{transition:none}
 @media (prefers-reduced-motion:reduce){ .tour-furo, .tour-balao{transition:none} }
+
+/* 3.65 — selos "A confirmar" (amarelo) e "A identificar" (vermelho) na coluna Categoria (modulos/origem.js) */
+.or-selo{display:inline-block; padding:1px 7px; border-radius:999px; font-size:.7rem; font-weight:650; line-height:1.5; white-space:nowrap; vertical-align:middle}
+.or-amarelo{background:color-mix(in srgb, var(--warn) 22%, transparent); color:var(--warn); border:1px solid color-mix(in srgb, var(--warn) 50%, transparent)}
+.or-vermelho{background:color-mix(in srgb, var(--down) 18%, transparent); color:var(--down); border:1px solid color-mix(in srgb, var(--down) 50%, transparent)}
+.or-ok{margin-left:4px; min-width:28px; min-height:28px; padding:0 6px; border-radius:8px; border:1px solid var(--line2); background:var(--card2); color:var(--up); font-weight:700; cursor:pointer; vertical-align:middle}
+.or-ok:hover{border-color:var(--up)}
+.or-chip .or-selo{margin-right:2px}
+.or-aviso{display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin:0 0 12px}
+.or-toast .linkinho{color:inherit; text-decoration:underline; font-weight:700}
+.tbl-lanc td .or-selo{margin-top:3px}
+
+/* 3.65 — conferência com o banco em três seções */
+.sb-sec{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin:14px 0 4px; padding-bottom:4px; border-bottom:1px solid var(--line); font-size:.92rem}
+.sb-sec:first-of-type{margin-top:4px}
+.sb-sec b{font-variant-numeric:tabular-nums}
+.sb-tbl td{vertical-align:top}
+.sb-tbl td.num{white-space:nowrap}
+.sb-pill{display:inline-block; padding:1px 8px; border-radius:999px; font-size:.7rem; font-weight:600; background:color-mix(in srgb, var(--accent2) 18%, transparent); color:var(--accent2); vertical-align:middle}
+.sb-zeradas summary{cursor:pointer; color:var(--txt2); margin-top:6px}
+.sb-tbl{table-layout:fixed; width:100%}
+.sb-tbl td:first-child{overflow-wrap:anywhere}
+.sb-tbl td.num{width:132px}
+.sb-tbl td:first-child .t-sub, .sb-tbl .t-main{white-space:normal; overflow:visible; text-overflow:clip; max-width:none}
+@media (max-width:560px){ .sb-tbl td.num{width:104px} .sb-pill{display:table; margin-top:3px} }

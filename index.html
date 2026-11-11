@@ -3206,6 +3206,7 @@ const FORMAS_PGTO = [
   {id:'boleto',   nome:{pt:'Boleto',           en:'Bank slip'},      ico:'🧾',  pede:'banco'},
   {id:'transf',   nome:{pt:'Transferência',    en:'Transfer'},       ico:'↔️',  pede:'banco'},
   {id:'debaut',   nome:{pt:'Débito automático',en:'Direct debit'},   ico:'🔁',  pede:'banco'},
+  {id:'debconta', nome:{pt:'Débito em conta',  en:'Account debit'},  ico:'🏦',  pede:'banco'},   /* 3.65: Pix, boleto, encargos tirados da conta */
   {id:'especie',  nome:{pt:'Espécie',          en:'Cash'},           ico:'💵',  pede:''},
   {id:'vale',     nome:{pt:'Vale / benefício', en:'Meal voucher'},   ico:'🎟️', pede:''},
   {id:'outra',    nome:{pt:'Outra',            en:'Other'},          ico:'•',   pede:''}
@@ -7490,6 +7491,7 @@ const Gasto = {
     r.revisar = !!r.revisar;
     r.fluxo = GRUPOS[r.grupo].fluxo;
     if(window.Pessoas) Pessoas.ligarTudo(r);   /* 3.64: o texto que bate numa pessoa guarda o ID dela */
+    if(window.Categorias) Categorias.alias(r);  /* 3.65: nome antigo de categoria → o novo (nada recria a velha) */
     return r;
   },
 
@@ -7576,6 +7578,8 @@ const Gasto = {
       if(f.irpf   && !g.irpf) return false;
       if(f.favoritos && !g.favorito) return false;
       if(f.revisar   && !g.revisar) return false;
+      if(f.aconfirmar  && !(window.Origem && Origem.status(g) === 'confirmar')) return false;     /* 3.65 */
+      if(f.aidentificar && !(window.Origem && Origem.status(g) === 'identificar')) return false;
       if(f.busca){
         const alvo = (g.desc + ' ' + g.sub + ' ' + g.grupo).toLowerCase();
         if(alvo.indexOf(f.busca.toLowerCase()) < 0) return false;
@@ -7789,6 +7793,7 @@ const Gasto = {
     /* 3.65: assinaturas de IA e software; seguro de vida; o IOF/TED/DOC dos bancos (o robô já manda nelas) */
     m.PESSOAL = m.PESSOAL || new Set(); ['IA e software', 'Seguro de vida', 'Cursos'].forEach(x => m.PESSOAL.add(x));
     m.BANCARIOS = m.BANCARIOS || new Set(); m.BANCARIOS.add('IOF / TED / DOC');
+    m.LAZER = m.LAZER || new Set(); m.LAZER.add('Streaming e mídias');
     const out = {};
     Object.keys(m).forEach(k => { out[k] = Array.from(m[k]).sort((a,b) => a.localeCompare(b,'pt')); });
     return out;
@@ -8183,6 +8188,7 @@ const Recorrente = {
          último dia do mês, dia 5…). O valor é que passa a ser a soma. */
     }
     if(window.Pessoas) Pessoas.ligarTudo(o);   /* 3.64 */
+    if(window.Categorias) Categorias.alias(o);  /* 3.65 */
     return o;
   },
 
@@ -9855,7 +9861,8 @@ function viewBLanc(){
                    '">💳 ' + fmtData(cb) + '</div>' : ''; })() + '</td>' +
       '<td><span class="t-main">' + esc(g.sub) + '</span>' +
         '<div class="t-sub">' + (G.ico || '') + ' ' + esc(G.nome || g.grupo) +
-        (g.per && g.per !== 'Pontual' ? ' · ' + PERIODICIDADES[g.per].nome.toLowerCase() : '') + '</div></td>' +
+        (g.per && g.per !== 'Pontual' ? ' · ' + PERIODICIDADES[g.per].nome.toLowerCase() : '') + '</div>' +
+        (window.MoneyModulos ? MoneyModulos.html('lancamento.categoria', {g: g}) : '') + '</td>' +   /* 3.65: selo A confirmar / A identificar */
       /* 3.65: a descrição fica na própria coluna (até 2 linhas, reticências); o texto inteiro no title e no detalhe */
       '<td class="desc-cel"><span class="desc-txt" title="' + esc(g.desc || '') + '">' + esc(g.desc || '') + '</span>' +
         (g.grupo === 'RENDA' && Transferencia.daRenda(g.id).length ? '<div class="t-sub tf-cinza">↪ ' + esc((I18n.atual === 'pt' ? 'passou para outra conta em ' : 'moved to another account on ') +
@@ -10895,6 +10902,7 @@ function campoOndePagou(g){
 
   if(pede === 'cartao'){
     const cartoes = Banco.cartoes();
+    if(!cartoes.length && (g && g.formaId) !== 'credito') return '';   /* 3.65: o aviso de "nenhum cartão" só no crédito */
     if(!cartoes.length)
       return '<div class="aviso-box"><p class="small">' + (pt
         ? 'Você ainda não cadastrou nenhum cartão. Dá para lançar assim mesmo — ou cadastrar agora, em Configurações, e o app passa a somar a fatura de cada um.'
@@ -10989,6 +10997,9 @@ function salvarLancamento(){
   else criado = Gasto.add(dados);
   /* 3.64: a edição da pessoa vai para a planilha espelho do robô (modulos/espelho.js) */
   if(window.Espelho){ const gEsp = criado || Gasto.todos().find(x => x.id === bEditando); if(gEsp){ delete gEsp.confianca; Espelho.registrar(gEsp, antesEsp); } }
+  /* 3.65: corrigiu (ou confirmou) um lançamento do robô: vale para os outros da mesma origem que ainda estão pendentes */
+  if(window.Origem && antesEsp && antesEsp.origem === 'robo'){ const gO = Gasto.todos().find(x => x.id === bEditando);
+    if(gO && (Origem.pendente(antesEsp) || ['grupo','sub','paraQuem','irpf'].some(k => (antesEsp[k] || '') !== (gO[k] || '')))) Origem.depoisDe(gO, antesEsp); }
   Gasto._idx = null;
   bProj = null;                       /* a projeção envelheceu */
   Store.salvar(); fechar('assetModal'); render();
@@ -11684,7 +11695,7 @@ function bLista(extra){
 function bTemFiltro(){
   return !!(bFiltro.busca || bFiltro.grupos.length || bFiltro.subs.length ||
             bFiltro.quem.length || bFiltro.formas.length ||
-            bFiltro.favoritos || bFiltro.revisar || bFiltro.irpf ||
+            bFiltro.favoritos || bFiltro.revisar || bFiltro.irpf || bFiltro.aconfirmar || bFiltro.aidentificar ||
             (bFiltro.periodo !== 'tudo' && bFiltro.periodo !== '12m'));
 }
 
@@ -11768,6 +11779,10 @@ function barraFiltros(op){
       '<button class="chip click' + (bFiltro.revisar ? ' on' : '') + '" data-bmarca="revisar">🚩 ' +
         (I18n.atual === 'pt' ? 'Para revisar' : 'To review') + '</button>' +
       '<button class="chip click' + (bFiltro.irpf ? ' on' : '') + '" data-bmarca="irpf">🧾 IRPF</button>' +
+      /* 3.65: o que o robô deixou para a pessoa (modulos/origem.js) */
+      (window.Origem ? (() => { let a = 0, b = 0; Gasto.todos().forEach(g => { const s = Origem.status(g); if(s === 'confirmar') a++; else if(s === 'identificar') b++; });
+        return '<button class="chip click or-chip' + (bFiltro.aconfirmar ? ' on' : '') + '" data-bmarca="aconfirmar"><span class="or-selo or-amarelo">' + (I18n.atual === 'pt' ? 'A confirmar' : 'To confirm') + '</span> ' + a + '</button>' +
+          '<button class="chip click or-chip' + (bFiltro.aidentificar ? ' on' : '') + '" data-bmarca="aidentificar"><span class="or-selo or-vermelho">' + (I18n.atual === 'pt' ? 'A identificar' : 'To identify') + '</span> ' + b + '</button>'; })() : '') +
       '</div></div>';
 
     h += '<div class="bf-bloco bf-datas">' +
@@ -28813,7 +28828,7 @@ function ligarEventos(){
           Store.salvar(); fechar('assetModal'); render(); renderFita(); toast('Compromisso excluído.'); }
         break;
       case 'b-limpar-filtro':
-        bFiltro = {busca:'', grupos:[], subs:[], quem:[], formas:[], de:'', ate:'', fluxo:'', periodo:'12m', favoritos:false, revisar:false, irpf:false};
+        bFiltro = {busca:'', grupos:[], subs:[], quem:[], formas:[], de:'', ate:'', fluxo:'', periodo:'12m', favoritos:false, revisar:false, irpf:false, aconfirmar:false, aidentificar:false};
         bAplicarPeriodo('12m'); render(); break;
       case 'gl-salvar': salvarLancamento(); break;
       case 'robo-aceitar': case 'robo-manter': {
@@ -29550,19 +29565,21 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/patrimonio-iliquido.js?v=1.1.1"></script>
 <script src="modulos/fgts.js?v=1.0.0"></script>
 <script src="modulos/importar-posicoes.js?v=1.0.0"></script>
-<script src="modulos/assinaturas.js?v=1.0.0"></script>
+<script src="modulos/assinaturas.js?v=1.1.0"></script>
 <script src="modulos/compromisso-de.js?v=1.7.0"></script>
 <script src="modulos/previsto.js?v=1.0.0"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
 <script src="modulos/calendario-menu.js?v=1.1.0"></script>
 <script src="modulos/pessoas.js?v=1.1.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
-<script src="modulos/saldo-banco.js?v=1.0.0"></script>
-<script src="modulos/espelho.js?v=1.0.0"></script>
+<script src="modulos/saldo-banco.js?v=2.0.0"></script>
+<script src="modulos/espelho.js?v=1.1.0"></script>
 <script src="modulos/tour.js?v=1.0.0"></script>
 <script src="modulos/cartoes.js?v=1.0.0"></script>
 <script src="modulos/contraparte.js?v=1.0.0"></script>
 <script src="modulos/declaracao-escolhas.js?v=1.0.0"></script>
+<script src="modulos/origem.js?v=1.0.0"></script>
+<script src="modulos/categorias.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.12.0"></script>
 </body>
 </html>

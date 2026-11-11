@@ -158,8 +158,8 @@ async function parteA(b, BASE) {
         return { c1, c2, n: Gasto.todos().length === n0, card, hist: SaldoBanco.contas()[0].hist.length, ab: SaldoBanco.contas()[0].abertura };
       });
       ok(sb.c1.dif === 0 && sb.c1.app === 1300, 'saldo: abertura 1.000 + 500 − 200 = 1.300 pelo app, igual ao banco (bate)');
-      ok(Math.abs(sb.c2.dif + 50) < 0.01 && sb.c2.desde === '2026-10-05' && /diferença de/.test(sb.card) && /05\/10/.test(sb.card) && /fatura em aberto/.test(sb.card),
-        'saldo: o banco diz 1.250 → "diferença de R$ -50 desde 05/10" no Painel, com o link para os lançamentos; cartão mostra a fatura em aberto');
+      ok(Math.abs(sb.c2.dif + 50) < 0.01 && sb.c2.desde === '2026-10-05' && /diferença de/.test(sb.card) && /05\/10/.test(sb.card) && /Fatura aberta R\$\s?830/.test(sb.card),
+        'saldo: o banco diz 1.250 → "diferença de R$ -50 desde 05/10" no Painel, com o link para os lançamentos; cartão mostra a fatura aberta positiva');
       ok(sb.n && sb.hist === 3 && sb.ab.saldo === 1000, "saldo nunca vira lançamento; histórico por conta; o primeiro saldo é o ajuste de abertura");
       /* ---- indicadores ---- */
       const ind = await p.evaluate(([mes, mesAnt]) => {

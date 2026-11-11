@@ -19,11 +19,11 @@ var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './aju
   './modulos/patrimonio-iliquido.js?v=1.1.1',
   './modulos/fgts.js?v=1.0.0',
   './modulos/importar-posicoes.js?v=1.0.0',
-  './modulos/assinaturas.js?v=1.0.0',
+  './modulos/assinaturas.js?v=1.1.0',
   './modulos/compromisso-de.js?v=1.7.0',
   './modulos/previsto.js?v=1.0.0',
   './modulos/conciliacao.js?v=1.0.0', './modulos/calendario-menu.js?v=1.1.0',
-  './modulos/pessoas.js?v=1.1.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=1.0.0', './modulos/espelho.js?v=1.0.0', './modulos/tour.js?v=1.0.0', './modulos/cartoes.js?v=1.0.0', './modulos/contraparte.js?v=1.0.0', './modulos/declaracao-escolhas.js?v=1.0.0',
+  './modulos/pessoas.js?v=1.1.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=2.0.0', './modulos/espelho.js?v=1.1.0', './modulos/tour.js?v=1.0.0', './modulos/cartoes.js?v=1.0.0', './modulos/contraparte.js?v=1.0.0', './modulos/declaracao-escolhas.js?v=1.0.0', './modulos/origem.js?v=1.0.0', './modulos/categorias.js?v=1.0.0',
   './nuvem.js?v=1.12.0'];
 /* O motor de leitura de fotos (assets/ocr: Tesseract, português, ZXing,
    jsQR — uns 10 MB) tem cache próprio, que NÃO muda a cada versão do app:

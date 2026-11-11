@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/espelho.js — planilha espelho: as edições da pessoa vão para o robô (3.64)        1.0.0 · 11/Nov/2026
+   modulos/espelho.js — planilha espelho: as edições da pessoa vão para o robô (3.64)        1.1.0 · 11/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      Quando a PESSOA cria, edita ou apaga um lançamento, ou confirma o palpite do robô, o app monta o texto do
@@ -13,6 +13,8 @@
        Painel e gráficos não mudam.
      · "📄 Planilha espelho" no menu do perfil abre a planilha numa aba nova; o link fica nas configurações da
        família (que vão fechadas para a nuvem). Só aceita docs.google.com/spreadsheets.
+     · 1.1.0 (3.65): o "palpite do robô" saiu da descrição: virou o selo "A confirmar" na coluna Categoria
+       (modulos/origem.js); confirmar vale para a mesma origem. opt.semRegra: a planilha acompanha, sem repetir a regra.
    TEXTO ABERTO (contrato v1)
      {v:1, acao:'upsert'|'apagar', id: idRobo | 'app_'+id, em: ISO, quem_editou:'app', data, valor (positivo), tipo,
       grupo, categoria, descricao, freq, quem, para_quem, forma, cartao, ir, banco, regra?: {desc, grupo, categoria, para_quem, confirmada?}}
@@ -58,7 +60,7 @@
       opt = opt || {};
       var n = nuvem(); if (!g || !n) return false;
       var regra = null;
-      if (g.origem === 'robo' && (opt.confirmada || (antes && (antes.grupo !== g.grupo || antes.sub !== g.sub || (antes.paraQuem || '') !== (g.paraQuem || '')))))
+      if (!opt.semRegra && g.origem === 'robo' && (opt.confirmada || (antes && (antes.grupo !== g.grupo || antes.sub !== g.sub || (antes.paraQuem || '') !== (g.paraQuem || '')))))
         regra = API.regraDe(g, !!(opt.confirmada || (antes && antes.confianca)));
       n.enfileirar(API.texto(g, 'upsert', { regra: regra })).catch(function (e) { console.warn('espelho', e); });
       return true;
@@ -82,14 +84,8 @@
 
   MoneyModulos.registrar({
     id: 'espelho',
-    versao: '1.0.0',
+    versao: '1.1.0',
     pontos: {
-      'lancamento.linha': function (ctx) {
-        var g = ctx && ctx.g; if (!g || !g.confianca) return '';
-        var ai = g.confianca === 'desconhecido';
-        return '<div class="t-sub esp-palpite"><span class="muted">' + esc(ai ? tr('A identificar', 'To identify') : tr('palpite do robô', 'robot\'s guess')) + '</span> · ' +
-          '<button type="button" class="linkinho" data-acao="esp-confirmar" data-id="' + esc(g.id) + '">✓ ' + esc(tr('Confirmar categoria', 'Confirm category')) + '</button></div>';
-      },
       'config.todos': function () {
         var l = cfg().espelhoLink || '';
         return '<div class="card cfg-sec" data-sec="todos"><div class="card-head"><h3>📄 ' + esc(tr('Planilha espelho', 'Mirror spreadsheet')) + '</h3></div>' +
@@ -101,8 +97,11 @@
     },
     acoes: {
       'esp-confirmar': function (el) {
+        var antes = Gasto.todos().find(function (x) { return x.id === el.dataset.id; }); antes = antes && Object.assign({}, antes);
         var g = API.confirmar(el.dataset.id); if (!g) return;
-        Store.salvar(); render(); toast(tr('Categoria confirmada: ', 'Category confirmed: ') + g.sub);
+        toast(tr('Categoria confirmada: ', 'Category confirmed: ') + g.sub);
+        if (window.Origem) Origem.depoisDe(g, antes);   /* vale para a mesma origem */
+        Store.salvar(); render();
       },
       'esp-link': function () {
         var v = String((document.getElementById('espLink') || {}).value || '').trim();

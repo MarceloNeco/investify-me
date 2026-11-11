@@ -1174,7 +1174,7 @@
     ligada: null, sk: null, kid: '', erros: new Set(), ultimos: null,
     /* transforma o lançamento do robô no formato do BudgetONE. null = não vira lançamento (transferência, fatura) */
     /* 1.11.0: só estes tipos viram lançamento; 'saldo' vai para a conferência; qualquer outro é ignorado (e anotado), nunca vira gasto */
-    TIPOS: { '': 1, despesa: 1, receita: 1, transferencia: 1, fatura: 1, saldo: 1 },
+    TIPOS: { '': 1, despesa: 1, receita: 1, transferencia: 1, fatura: 1, saldo: 1, investimento: 1 },
     desconhecidos: [],
     irDe: function (ir) {
       if (ir === true) return true;
@@ -1184,7 +1184,7 @@
     converter: function (l) {
       if (!l || typeof l !== 'object' || !l.id) throw new Error('sem id');
       var tipo = String(l.tipo || '').toLowerCase();
-      if (tipo === 'transferencia' || tipo === 'fatura' || tipo === 'saldo' || !this.TIPOS[tipo]) return null;
+      if (tipo === 'transferencia' || tipo === 'fatura' || tipo === 'saldo' || tipo === 'investimento' || !this.TIPOS[tipo]) return null;
       var valor = Number(l.valor); if (!isFinite(valor) || valor === 0) throw new Error('valor');
       var G = typeof GRUPOS !== 'undefined' ? GRUPOS : {}, grupoRobo = String(l.grupo || '').toUpperCase().trim();
       var g = {
@@ -1241,6 +1241,11 @@
       else { var fim = String(l.final || '').replace(/\D/g, '').slice(-4); if (fim) { var ca = (Store.estado.cartoes || []).find(function (c) { return String(c.fim || '').replace(/\D/g, '').slice(-4) === fim; }); if (ca) g.cartaoId = ca.id; } }
       if (l.cartao) g.cartaoNome = String(l.cartao).slice(0, 60);
       try { if (g.forma && typeof Banco !== 'undefined' && Banco.formaDoTextoAntigo) g.formaId = Banco.formaDoTextoAntigo(g.forma); } catch (e) {}
+      /* 1.12.0: o "Debito" do robô é débito NA CONTA (Pix, boleto, encargos), não cartão de débito; o meio da contraparte diz qual */
+      if (/^d[eé]bito$/i.test(g.forma) && !g.finalCartao) {
+        var meio = (g.contraparte || {}).meio, mf = { PIX: ['pix', 'Pix'], TED: ['transf', 'TED'], TEF: ['transf', 'TEF'], BOLETO: ['boleto', 'Boleto'] }[meio];
+        g.formaId = mf ? mf[0] : 'debconta'; g.forma = mf ? mf[1] : 'Débito em conta';
+      }
       if (window.Pessoas) Pessoas.ligarTudo(g);   /* "Neco" → a pessoa do cadastro (o mesmo nome que o lançamento guardado tem) */
       if (window.Contraparte) Contraparte.aplicar(g);   /* 1.12.0: contato/profissional pelo CNPJ → id_pessoa → nome; MCC = palpite */
       return g;
@@ -1253,6 +1258,10 @@
       if (q.feitos % 10 && q.feitos !== q.total) return;   /* a cada 10, para não redesenhar à toa */
       var f = function (n) { return Number(n).toLocaleString(tt('pt-BR', 'en-US')); };
       Fundo.mostrar('caixa', q.feitos / q.total, tt('Caixa do robô: ', 'Robot inbox: ') + f(q.feitos) + tt(' de ', ' of ') + f(q.total));
+    },
+    marcarConfianca: function (at, g) {
+      if (!at || !g || !g.confianca || at.editadoPessoa || at.confirmadoEm || at.confianca === g.confianca) return false;
+      at.confianca = g.confianca; at.revisar = true; return true;
     },
     idDe: function (l) { return 'rb_' + String(l.id).replace(/[^A-Za-z0-9_.:@-]/g, '_').slice(0, 70); },
     /* sem edição da pessoa: sai do livro (vira só a movimentação entre contas, que não conta no "Para onde foi");
@@ -1371,8 +1380,8 @@
           var l;
           try { l = await Cifra.abrirPacote(this.sk, rows[i].pacote); } catch (e) { this.erros.add(rows[i].id); continue; }   /* não abre com esta chave: fica na caixa */
           var tp = l ? String(l.tipo || '').toLowerCase() : '';
-          if (tp === 'saldo') {                    /* 1.11.0: a conferência com o saldo do banco; nunca vira lançamento */
-            if (window.SaldoBanco && SaldoBanco.receber(l)) mudou = true; else ignorados++;
+          if (tp === 'saldo' || tp === 'investimento') {   /* a conferência com o banco (1.11.0) e os investimentos (1.12.0); nunca viram lançamento */
+            if (window.SaldoBanco && (tp === 'saldo' ? SaldoBanco.receber(l) : SaldoBanco.receberInvest(l))) mudou = true; else ignorados++;
             prontos.push(rows[i].id); continue;
           }
           if (l && !this.TIPOS[tp]) {              /* tipo que este app não conhece: anota e deixa de lado */
@@ -1398,6 +1407,9 @@
             var r = this.corrigir(ja, g);
             if (r === 'corrigido') corrigidos++; else if (r === 'sugerido') sugeridos++;
             if (r) mudou = true;
+            /* 1.12.0: o já existente que a pessoa nunca tocou nem confirmou também ganha a confiança do robô ("A confirmar") */
+            var at = Gasto.todos().find(function (x) { return x.id === ja.id; }) || ja;
+            if (this.marcarConfianca(at, g)) { mudou = true; ids[g.id] = at; }
           }
           prontos.push(rows[i].id);
           this.andamento(1);
