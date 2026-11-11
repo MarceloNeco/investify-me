@@ -644,6 +644,19 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.62 (`nuvem.js` 1.10.0, seção `Pin`): **PIN da conta**, igual em todos os aparelhos. Plataforma: `supabase/2026-11-11-sol-pin-conta.sql`
+  (sol_pin_conta, sol_aparelho_pin; RPCs sol_pin_info / sol_pin_conferir / sol_pin_definir; "primeiro" só na conta sem aparelho).
+  v = PBKDF2-SHA256(PIN, sal da conta, 600 mil), base64url; o banco guarda SHA-256(v) e as tentativas (espera do 5º erro; 24 h por erro
+  do 10º em diante; aprovação por outro aparelho próprio, como='aparelho' há < 10 min, troca o PIN sem o atual e desbloqueia). Com o PIN
+  certo o banco entrega o segredo do aparelho. A DUK fica fechada duas vezes: `L.pin` (PBKDF2 do PIN da conta, abre sem internet, limite
+  local de 10) e `L.srv` (AES(HKDF(segredo, "sol-pin-v1"), AES(chave não extraível 'chaveAp|uid' do IndexedDB, DUK)), abre com internet).
+  `L.pinVersao` = a versão do PIN que o L.pin conhece; versão diferente no banco → o aparelho aberto tranca ("trocado em outro aparelho").
+  `Pin.abrir`: sem internet/sem SQL → o PIN local; conta sem PIN → este PIN vira o da conta; migração: `pinConta` (o PIN antigo daqui
+  abriu, a conta tem outro → digite o da conta) e `pinAntigo` (o da conta está certo, falta o antigo daqui uma vez, ou a digital, ou
+  aprovar). Aparelho aprovado/passkey/código antigo: `Pin.pedir` → "Digite o PIN da sua conta" (ou "Escolha o PIN da conta" se a conta
+  não tem). "Esqueci o PIN" → aprovação → "Não lembro o PIN da conta: escolher outro" (sol_pin_definir sem o atual); o lugar antigo do
+  aparelho na lista sai. Teste: `teste/teste-pin-conta.js` (ponta a ponta) e `teste/sql/teste-sol-pin-conta.sql`; o banco de mentira
+  comum dos testes da plataforma fica em `teste/mock-sol.js`.
 - 3.61 (`nuvem.js` 1.9.0, seção `Aparelhos`): **sem código de recuperação**. Plataforma: `supabase/2026-11-07-sol-aparelhos.sql`
   (sol_aparelhos, sol_acesso_pedidos, sol_passkeys; só funções, nenhuma regra de acesso direto). Formato v2 (o mesmo no OmniLifeONE):
   B (aparelho novo) cria o pedido com pubB (ECDH P-256 efêmero, não extraível, guardado no IndexedDB para continuar se recarregar)

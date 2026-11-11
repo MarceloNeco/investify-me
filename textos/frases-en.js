@@ -1,10 +1,15 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.61 · 06/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.62 · 11/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.62 */
+  'Um PIN só para a conta':'One PIN for the account',
+  'O PIN agora é da conta, igual em todos os seus aparelhos (como a senha do banco). Trocou num, vale em todos. Num aparelho novo, depois de aprovado pelo outro, é só digitar o PIN que você já tem.':'The PIN now belongs to the account, the same on all your devices (like a bank password). Change it on one, it works on all. On a new device, after approval from the other one, just type the PIN you already have.',
+  'Quem tinha um PIN diferente em cada aparelho: o primeiro aparelho que você destravar define o PIN da conta; nos outros, o app pede uma vez o PIN da conta.':'If you had a different PIN on each device: the first device you unlock sets the account PIN; on the others, the app asks once for the account PIN.',
+  'PIN errado 10 vezes: espere 24 h ou aprove por outro aparelho seu ("Esqueci o PIN"). A digital continua valendo em cada aparelho.':'Wrong PIN 10 times: wait 24 h or approve from another device of yours ("I forgot the PIN"). The fingerprint still works on each device.',
   /* 3.61 */
   'Entrar num aparelho novo sem código de recuperação':'Sign in on a new device without a recovery code',
   'Primeira vez num celular ou computador: em vez do código de recuperação, aprove pelo outro aparelho onde você já entra (os dois mostram os mesmos 6 números; confira e digite o seu PIN) ou peça para alguém responsável da família aprovar.':'First time on a phone or computer: instead of the recovery code, approve from your other device where you are already in (both show the same 6 numbers; check them and type your PIN) or ask a family guardian to approve.',
