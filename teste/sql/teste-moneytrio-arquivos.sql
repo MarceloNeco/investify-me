@@ -50,9 +50,13 @@ EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: arquivo fora de <gr
 DO $$ BEGIN UPDATE storage.objects SET name = pg_temp.g() || '/foutro001' WHERE bucket_id = 'money-arquivos';
   IF FOUND THEN RAISE EXCEPTION 'FALHOU: mudou'; END IF; RAISE NOTICE 'ok: ninguém muda arquivo pelo app';
 EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: ninguém muda arquivo pelo app'; END $$;
+-- (com o SQL v4 "escopos", quem vê tudo apaga: a migração tira as cópias antigas; o apagar é desfeito aqui)
 DO $$ BEGIN DELETE FROM storage.objects WHERE bucket_id = 'money-arquivos';
-  IF FOUND THEN RAISE EXCEPTION 'FALHOU: apagou'; END IF; RAISE NOTICE 'ok: ninguém apaga arquivo pelo app';
-EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: ninguém apaga arquivo pelo app'; END $$;
+  IF FOUND AND to_regprocedure('public.money_arquivo_apagar_posso(text)') IS NULL THEN RAISE EXCEPTION 'FALHOU: apagou'; END IF;
+  IF FOUND THEN RAISE EXCEPTION USING ERRCODE = 'P0009', MESSAGE = 'desfaz'; END IF;
+  RAISE NOTICE 'ok: ninguém apaga arquivo pelo app';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: ninguém apaga arquivo pelo app';
+  WHEN SQLSTATE 'P0009' THEN RAISE NOTICE 'ok: com o v4, quem vê tudo apaga (desfeito)'; END $$;
 RESET ROLE; SET ROLE anon;
 DO $$ BEGIN PERFORM public.money_arquivo_posso('x'); RAISE EXCEPTION 'FALHOU: anon chamou';
 EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: visitante não chama a função'; END $$;

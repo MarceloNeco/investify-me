@@ -95,6 +95,7 @@ DO $$ BEGIN PERFORM public.money_reservar_apagar(pg_temp.g(), 'gastos', array['r
 EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: ela não apaga de verdade'; END $$;
 SELECT pg_temp.ok(NOT public.money_posso_ver(pg_temp.g()), 'money_posso_ver (robô, espelho, caixa reservada) é falso para ela');
 SELECT pg_temp.ok(public.money_arquivo_posso(pg_temp.g()::text || '/arquivo1') AND NOT public.money_arquivo_posso(pg_temp.g()::text || '/r/arquivo2'), 'comprovante da casa sim; "/r/" não');
+SELECT pg_temp.ok(NOT public.money_arquivo_apagar_posso(pg_temp.g()::text || '/arquivo1'), 'ela não apaga comprovante');
 
 -- 6) caixa do robô por escopo
 SELECT pg_temp.ana();

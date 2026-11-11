@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.13.0 · 11/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.14.0 · 12/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -48,6 +48,13 @@
   15. 1.13.0 (3.65.2) — aplicação/resgate do robô (transferência "APLICACAO …"/"RESGATE …", grupo INVESTIMENTO) vira APORTE
       (Caixa.aporte/comoAporte; fluxo 'aplicacao'; resgate = valor negativo, g.resgate); as já guardadas como transferência
       migram uma vez (migrarAplicacoes, config.aportesV); "Por qual banco" pelo banco do robô (Banco.palpite, só o cadastrado).
+  16. 1.14.0 (3.66) — "dois cofres". Chaves próprias do MoneyTRIO: CC (casa) e CR (reservada), em money_chaves, embrulhadas
+      para cada pessoa (Cifra.embrulhar) e guardadas no aparelho em L.fam[gid].mk (chave do aparelho) e no Vale. Registro:
+      {c:1, m:'c'|'r', mv, iv, ct}; o reservado tem id "r.<id>" (modulos/visao-casa.js decide). Sem as chaves: a CF (antes da
+      migração); com registro do MoneyTRIO e sem as chaves (precisaMk), o aparelho não grava. Reservado que sai: apagado de verdade
+      (money_reservar_apagar). Caixa do robô por escopo (config|caixa_casa, config|r.caixa_robo). Comprovantes 'MTA2' (r/ = reservado).
+      CF: a de versão mais alta (buscarMinha), conferida ao abrir pelo PIN (conferirCf) e antes de aprovar pela família; a ponte
+      percebe uma CF mais nova (cfNova). Aprovação pela família leva a CC (e a CR só para quem tem visão "Tudo").
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
       conta" sem o PIN antigo (sol_pin_definir com o atual nulo); "Trocar o PIN" só quando a conta já tem PIN. Conta sem PIN da
@@ -63,7 +70,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.13.0';
+  var VERSAO = '1.14.0';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -1147,6 +1154,7 @@
       clearTimeout(this._tReg); this._sujo = false;
       if (!Cadeado.aberto() || !Nuvem.iniciado || typeof Store === 'undefined' || this._recusou) return 0;
       if (Cadeado.precisaMk && !Cadeado.mk) return 0;   /* 1.14.0: sem as chaves do MoneyTRIO, este aparelho não grava (Painel avisa) */
+      if (separa() && Escopo.antesDeSubir) { try { Escopo.antesDeSubir(Store.estado); } catch (e) { console.warn('nuvem: resumo', e); } }   /* os totais da família */
       var agora = mapear(Store.estado), muda = [], self = this;
       agora.forEach(function (j, k) { if (self.ultimo.get(k) !== j) muda.push([k, j]); });
       this.ultimo.forEach(function (j, k) { if (!agora.has(k)) muda.push([k, null]); });

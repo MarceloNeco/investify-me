@@ -18,7 +18,8 @@
 --     depósito vale 'reservado' (seguro por padrão).
 --   * money_reservar_apagar: apagar DE VERDADE (sem rastro) linhas "r." e, só antes de existir alguém com visão casa, as
 --     cópias antigas (migração).
---   * Comprovantes reservados: "<grupo>/r/<id>" só para quem vê tudo.
+--   * Comprovantes reservados: "<grupo>/r/<id>" só para quem vê tudo; só quem vê tudo apaga um comprovante (a migração tira as
+--     cópias antigas, fechadas com a CF).
 -- =====================================================================================
 
 begin;
@@ -335,6 +336,14 @@ language sql stable security definer set search_path = '' as $$
   select case when p_nome like '%/r/%' then coalesce(public.money_vejo_tudo(public.money_arquivo_grupo(p_nome)), false)
               else coalesce(public.money_vejo_casa(public.money_arquivo_grupo(p_nome)), false) end;
 $$;
+-- quem vê tudo apaga (a migração apaga as cópias antigas, fechadas com a CF, depois de guardá-las em "r/" com a chave reservada)
+create or replace function public.money_arquivo_apagar_posso(p_nome text) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select coalesce(public.money_vejo_tudo(public.money_arquivo_grupo(p_nome)), false);
+$$;
+drop policy if exists money_arquivos_apagar on storage.objects;
+create policy money_arquivos_apagar on storage.objects for delete to authenticated
+  using (bucket_id = 'money-arquivos' and public.money_arquivo_apagar_posso(name));
 
 -- -------------------------------------------------------------------------------------
 -- 6) Permissões
@@ -349,7 +358,7 @@ begin
   foreach f in array array['money_visao(uuid)', 'money_vejo_tudo(uuid)', 'money_vejo_casa(uuid)', 'money_posso_ver(uuid)',
     'money_visao_definir(uuid, uuid, text)', 'money_visoes(uuid)', 'money_reservar_apagar(uuid, text, text[])',
     'money_chave_guardar(uuid, uuid, text, integer, text)', 'money_entrada_consumir(uuid, text[])', 'money_robo_depositar(uuid, jsonb)',
-    'money_entrada_limpar(uuid)', 'money_arquivo_posso(text)', 'money_arquivo_grupo(text)', 'money_docs_recifrar(uuid, jsonb)'] loop
+    'money_entrada_limpar(uuid)', 'money_arquivo_posso(text)', 'money_arquivo_apagar_posso(text)', 'money_arquivo_grupo(text)', 'money_docs_recifrar(uuid, jsonb)'] loop
     execute format('revoke all on function public.%s from public, anon', f);
     execute format('grant execute on function public.%s to authenticated, service_role', f);
   end loop;
@@ -363,6 +372,7 @@ union all select 'money_visao', to_regclass('public.money_visao') is not null
 union all select 'money_chaves', to_regclass('public.money_chaves') is not null
 union all select 'money_entrada.escopo', exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'money_entrada' and column_name = 'escopo')
 union all select 'caixa por escopo', exists (select 1 from pg_catalog.pg_constraint c where c.conrelid = 'public.money_caixa_chave'::regclass and c.conname = 'money_caixa_chave_pkey' and pg_catalog.array_length(c.conkey, 1) = 2)
+union all select 'comprovantes: apagar só quem vê tudo', exists (select 1 from pg_catalog.pg_policies p where p.schemaname = 'storage' and p.tablename = 'objects' and p.policyname = 'money_arquivos_apagar')
 union all select 'RLS docs por escopo', exists (select 1 from pg_catalog.pg_policies p where p.tablename = 'money_docs' and p.policyname = 'money_docs_ler' and p.qual like '%escopo%');
 
 commit;
