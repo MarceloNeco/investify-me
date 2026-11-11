@@ -68,13 +68,13 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       await p.click('[data-rcmes="7"]');
       ok(await p.inputValue('#rcFora') === '7' && /menos Jul/.test(await p.textContent('#rcResumo')), 'tirar julho: fileira de 12 meses e o resumo diz "menos Jul"');
       /* N29 */
-      await p.fill('#rcConta', 'outro.email@exemplo.com'); await p.fill('#rcCartao', 'Itaú Black final 6514'); await p.fill('#rcObs', 'renova em fevereiro');
+      await p.fill('#rcConta', 'outro.email@exemplo.com'); await p.fill('#rcCartao', 'Itaú Black final 1101'); await p.fill('#rcObs', 'renova em fevereiro');
       /* (k) Salvar e copiar */
       await p.click('[data-acao="rec-salvar-copiar"]');
       await p.waitForSelector('#assetModal:not(.hidden) #rcNome');
       ok(/cópia/.test(await p.textContent('#assetModalTitle')) && await p.inputValue('#rcNome') === 'Escola Bia', '"Salvar e copiar" salva e abre outro igual');
       let R = await recs(); const esc = R.find((r) => r.nome === 'Escola Bia');
-      ok(esc && esc.fora.join() === '7' && esc.conta === 'outro.email@exemplo.com' && esc.cartao === 'Itaú Black final 6514' && esc.obs === 'renova em fevereiro' && esc.pagador === '', 'salvo com meses de fora, conta de acesso, cartão e observação');
+      ok(esc && esc.fora.join() === '7' && esc.conta === 'outro.email@exemplo.com' && esc.cartao === 'Itaú Black final 1101' && esc.obs === 'renova em fevereiro' && esc.pagador === '', 'salvo com meses de fora, conta de acesso, cartão e observação');
       ok(await p.evaluate((a) => Recorrente.datasNoMes(Recorrente.achar(Store.estado.recorrentes.find((r) => r.nome === 'Escola Bia').id), a, 7).length === 0, anoEsc), 'julho não tem vencimento');
       /* (n) repetido — 3.54: pergunta NA HORA, antes de criar; números diferentes no nome (1º × 2º) não são repetidos */
       await p.fill('#rcNome', 'Ampliado Bia 2º sem'); await p.fill('#rcValor', '900');

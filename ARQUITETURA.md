@@ -644,6 +644,25 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.66 (`nuvem.js` 1.14.0; módulo novo `visao-casa` 1.0.0; `espelho` 1.1.2; SQL `supabase/2026-11-12-moneytrio-escopos.sql`).
+  **Dois cofres** (desenho: `DESENHO-visao-da-casa.md`; contrato do robô: `supabase/CONTRATO-robo-escopos.md`):
+  - **Chaves próprias do MoneyTRIO:** CC (casa) e CR (reservada), AES-256, em `money_chaves` embrulhadas (RSA-OAEP, `Cifra.embrulhar`)
+    para cada pessoa; no aparelho em `L.fam[gid].mk` (chave do aparelho) e no Vale. A CF da plataforma continua só para abrir o
+    cadeado e a ponte; nenhum registro vivo do MoneyTRIO abre com ela (conferido na migração e por `money_migracao_concluir`).
+  - **Registro:** `{c:1, m:'c'|'r', mv, iv, ct}`. Reservado = id `r.<id>` e escopo `reservado` (a regra é `Escopo.de`, em
+    `modulos/visao-casa.js`; PJ é sempre reservado; o chefe muda um item com `escopo` no lançamento ou compromisso). O
+    reservado que sai é apagado de verdade (`money_reservar_apagar`). Config reservada `r.<chave>` vale por cima da da casa.
+  - **Banco:** visão por pessoa (`money_visao`: só o chefe é "tudo" sem linha); RLS por escopo; "casa" só depois da migração
+    concluída (`money_migracao`); gatilhos: só chave nova depois da migração; grupo, coleção, id e escopo fixos.
+  - **Migração** (`Escopos.migrar`, pelo `Fundo`, retomável): caixa vazia → chaves → recifra a casa, move o reservado para `r.` →
+    rastros fora → duas caixas (`config|caixa_casa`, `config|r.caixa_robo`) → comprovantes `MTA2` em `r/` → marcador
+    `config|r.escopos` (os outros aparelhos baixam tudo de novo) → conferência → `money_migracao_concluir`.
+  - **Visão da casa:** `appsVisiveis()` = só o BudgetONE; Painel sem "Sobrou", com "Gastos da família" (coleção `resumo`, por mês,
+    calculada no aparelho do chefe); sem robô, espelho, ponte nem "Família no MoneyTRIO".
+  - **CF:** a de versão mais alta (`buscarMinha`), conferida ao abrir pelo PIN (`conferirCf`) e antes de aprovar pela família
+    (nunca repassa uma CF velha); a ponte percebe uma CF mais nova (`cfNova`). Girar a CF é com o OmniLifeONE.
+
+  Teste: `teste/teste-visao-casa.js` (mock `teste/mock-escopos.js`, duas pessoas) e `teste/sql/teste-moneytrio-escopos.sql`.
 - 3.65.2 (`nuvem.js` 1.13.0; módulo novo `lancamento-form` 1.0.0; `saldo-banco` 2.1.0).
   **Gráficos** (regra do app, vale para todo gráfico novo):
   1. **Largura real e altura que cabe:** todo gráfico em SVG passa por `Viz.auto(fn(W, H), {frac, min, max})`. O desenho é feito na

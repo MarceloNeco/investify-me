@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.13.0 · 11/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.14.0 · 12/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -48,6 +48,13 @@
   15. 1.13.0 (3.65.2) — aplicação/resgate do robô (transferência "APLICACAO …"/"RESGATE …", grupo INVESTIMENTO) vira APORTE
       (Caixa.aporte/comoAporte; fluxo 'aplicacao'; resgate = valor negativo, g.resgate); as já guardadas como transferência
       migram uma vez (migrarAplicacoes, config.aportesV); "Por qual banco" pelo banco do robô (Banco.palpite, só o cadastrado).
+  16. 1.14.0 (3.66) — "dois cofres". Chaves próprias do MoneyTRIO: CC (casa) e CR (reservada), em money_chaves, embrulhadas
+      para cada pessoa (Cifra.embrulhar) e guardadas no aparelho em L.fam[gid].mk (chave do aparelho) e no Vale. Registro:
+      {c:1, m:'c'|'r', mv, iv, ct}; o reservado tem id "r.<id>" (modulos/visao-casa.js decide). Sem as chaves: a CF (antes da
+      migração); com registro do MoneyTRIO e sem as chaves (precisaMk), o aparelho não grava. Reservado que sai: apagado de verdade
+      (money_reservar_apagar). Caixa do robô por escopo (config|caixa_casa, config|r.caixa_robo). Comprovantes 'MTA2' (r/ = reservado).
+      CF: a de versão mais alta (buscarMinha), conferida ao abrir pelo PIN (conferirCf) e antes de aprovar pela família; a ponte
+      percebe uma CF mais nova (cfNova). Aprovação pela família leva a CC (e a CR só para quem tem visão "Tudo").
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
       conta" sem o PIN antigo (sol_pin_definir com o atual nulo); "Trocar o PIN" só quando a conta já tem PIN. Conta sem PIN da
@@ -63,7 +70,7 @@
   var SB = 'https://qvdvkqydhnadhewcidia.supabase.co';
   var KEY = 'sb_publishable_oRJmeUwlBbOP_HoOXf0xLw_4O8v43EA';
   var APP = 'moneytrio';
-  var VERSAO = '1.13.0';
+  var VERSAO = '1.14.0';
   var ITER = 600000;
   var K_SESSAO = 'solverone.sessao.v1', K_CONTADOR = 'ch_solverone_sessao';
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
@@ -183,6 +190,11 @@
     desembrulhar: async function (sk, txt) {
       var o = JSON.parse(deUtf8(new Uint8Array(await crypto.subtle.decrypt({ name: 'RSA-OAEP' }, sk, unb64(String(txt).replace(/^1\./, ''))))));
       return { kv: o.kv, fk: o.fk, raw: unb64(o.k) };
+    },
+    /* 1.14.0: o contrário de desembrulhar (o mesmo formato do OmniLifeONE), para as chaves do MoneyTRIO (money_chaves) */
+    embrulhar: async function (pub, raw, kv, fk) {
+      var pk = await crypto.subtle.importKey('jwk', { kty: 'RSA', n: pub.n, e: pub.e, alg: 'RSA-OAEP-256', ext: true }, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt']);
+      return '1.' + b64(await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, pk, utf8(JSON.stringify({ v: 1, kv: kv, fk: fk, k: b64(raw) }))));
     },
     /* par de chaves da CAIXA do robô: RSA-OAEP 3072, SHA-256 */
     novoParCaixa: async function () {
@@ -324,7 +336,8 @@
     K: function (uid) { return 'vale|' + (uid || Conta.uid()); },
     guardar: async function () {
       if (!Cadeado.cf || Cadeado.cf.extractable) return;
-      this._o = { cf: Cadeado.cf, kv: Cadeado.kv, fk: Cadeado.fk, gid: Cadeado.gid, ate: Date.now() + OCIOSO_MS };
+      this._o = { cf: Cadeado.cf, kv: Cadeado.kv, fk: Cadeado.fk, gid: Cadeado.gid, ate: Date.now() + OCIOSO_MS,
+        mk: Cadeado.mk ? { v: Cadeado.mk.v, c: Cadeado.mk.c, r: Cadeado.mk.r } : null };
       this._gravou = Date.now();
       try { await IDB.set('kv', this.K(), this._o); } catch (e) {}
     },
@@ -345,6 +358,7 @@
       var bom = v.gid === gid && v.ate > Date.now() && v.cf && typeof CryptoKey !== 'undefined' && v.cf instanceof CryptoKey && !v.cf.extractable;
       if (!bom) { await this.apagar(); return false; }
       Cadeado.usarChave(v.cf, v.kv, v.fk, gid);
+      Cadeado.mk = v.mk && v.mk.c instanceof CryptoKey ? { v: v.mk.v, c: v.mk.c, r: v.mk.r instanceof CryptoKey ? v.mk.r : null } : null;
       this._o = v; this.renovar();
       return true;
     },
@@ -354,9 +368,29 @@
     }
   };
 
+  /* ---------------- 1.14.0 (3.66): a visão de cada pessoa no MoneyTRIO (money_visao) ---------------- */
+  var Visao = {
+    /* a minha: 'tudo' | 'casa' | null. Sem o SQL v4: 'tudo' (como antes) */
+    minha: async function (gid) {
+      try { var v = await Conta.rpc('money_visao', { p_grupo: gid }); return v || null; }
+      catch (e) { return (e.status === 404 || /money_visao|PGRST202/i.test(e.message + ' ' + e.code)) ? 'tudo' : undefined; }   /* undefined = não deu para saber */
+    },
+    /* a de outra pessoa (só o chefe lê a lista); quem não consegue ler responde 'casa' (seguro por padrão) */
+    de: async function (gid, uid) {
+      try { var l = await Conta.rpc('money_visoes', { p_grupo: gid }); var x = (l || []).filter(function (r) { return r.user_id === uid; })[0]; return x && x.visao || 'casa'; }
+      catch (e) { return 'casa'; }
+    },
+    lista: function (gid) { return Conta.rpc('money_visoes', { p_grupo: gid }); },
+    definir: function (gid, uid, visao) { return Conta.rpc('money_visao_definir', { p_grupo: gid, p_user: uid, p_visao: visao }); }
+  };
+
   /* ---------------- Cadeado: PIN, digital, código de recuperação ---------------- */
   var Cadeado = {
     cf: null, cfRaw: null, kv: 0, fk: '', gid: null, dukRaw: null,
+    /* 1.14.0 (3.66, "dois cofres"): as chaves do MoneyTRIO. mk = {v, c: chave da casa, r: chave reservada | null} (CryptoKey,
+       não extraíveis); mkRaw = os bytes (só quando abriu pelo PIN/digital, para liberar a outra pessoa). Sem mk: tudo com a CF
+       (antes da migração). precisaMk: chegou um registro fechado com as chaves do MoneyTRIO e este aparelho não as tem. */
+    mk: null, mkRaw: null, precisaMk: false,
     K: function (uid) { return 'cadeado|' + (uid || Conta.uid()); },
     local: function (uid) { return IDB.get('kv', this.K(uid)).catch(function () { return null; }); },
     gravar: function (L, uid) { return IDB.set('kv', this.K(uid), L); },
@@ -399,8 +433,9 @@
         como: como, ap: ap || null, avisosAte: new Date().toISOString() };
       if (pkcs8) pkcs8.fill(0);
       L.fam[gid] = Object.assign({ kv: r.kv, fk: r.fk }, await Cifra.cifrar(duk, r.raw));
+      if (fam && fam.mk) await this.guardarMk(L, duk, gid, fam.mk);   /* a família aprovou e mandou as chaves do MoneyTRIO */
       await this.gravar(L); this.dukRaw = dukRaw;
-      await this.usar(r.raw, r.kv, r.fk, gid);
+      await this.usar(r.raw, r.kv, r.fk, gid, L);
       return { ok: true };
     },
     porDigital: async function (gid) {
@@ -413,7 +448,7 @@
     },
     comChaveDoAparelho: async function (L, raw, gid) {
       var duk = await Cifra.aes(raw), f = (L.fam || {})[gid];
-      if (f) { this.dukRaw = raw; await this.usar(await Cifra.decifrar(duk, f), f.kv, f.fk, gid); return { ok: true }; }
+      if (f) { this.dukRaw = raw; await this.usar(await Cifra.decifrar(duk, f), f.kv, f.fk, gid, L); return { ok: true }; }
       /* a chave desta família ainda não está neste aparelho: vem do banco, embrulhada para mim (precisa de internet) */
       if (!L.sk) return { erro: 'semliberar' };
       if (!navigator.onLine) return { erro: 'offline' };
@@ -421,12 +456,16 @@
       if (!r) return { erro: 'semliberar' };
       L.fam = Object.assign({}, L.fam); L.fam[gid] = Object.assign({ kv: r.kv, fk: r.fk }, await Cifra.cifrar(duk, r.raw));
       await this.gravar(L); this.dukRaw = raw;
-      await this.usar(r.raw, r.kv, r.fk, gid); return { ok: true };
+      await this.usar(r.raw, r.kv, r.fk, gid, L); return { ok: true };
     },
     buscarMinha: async function (sk, gid) {
       var rows = await Conta.rpc('sol_minha_chave_grupo', { p_grupo: gid });
-      for (var i = 0; i < (rows || []).length; i++) { try { return await Cifra.desembrulhar(sk, rows[i].chave_embrulhada); } catch (e) {} }
-      return null;
+      /* 1.14.0: a de versão (kv) mais alta que abre — nunca uma CF velha */
+      var melhor = null;
+      for (var i = 0; i < (rows || []).length; i++) {
+        try { var r = await Cifra.desembrulhar(sk, rows[i].chave_embrulhada); if (!melhor || (r.kv || 0) > (melhor.kv || 0)) { if (melhor) melhor.raw.fill(0); melhor = r; } else r.raw.fill(0); } catch (e) {}
+      }
+      return melhor;
     },
     /* primeira vez neste aparelho (ou esqueci o PIN): o código de recuperação do OmniLifeONE abre a chave privada */
     pelaPrimeiraVez: async function (codigo, pin, gid) {
@@ -445,29 +484,101 @@
       pkcs8.fill(0);
       L.fam[gid] = Object.assign({ kv: r.kv, fk: r.fk }, await Cifra.cifrar(duk, r.raw));
       await this.gravar(L); this.dukRaw = dukRaw;
-      await this.usar(r.raw, r.kv, r.fk, gid);
+      await this.usar(r.raw, r.kv, r.fk, gid, L);
       return { ok: true, tinhaDigital: !!(antigo && antigo.prf) };
     },
-    usar: async function (raw, kv, fk, gid) {
+    usar: async function (raw, kv, fk, gid, L) {
       this.cfRaw = new Uint8Array(raw); this.kv = kv; this.fk = fk; this.gid = gid;
       this.cf = await Cifra.aes(this.cfRaw);   /* não extraível: o navegador nunca devolve os bytes desta chave */
+      if (L && this.dukRaw) { try { await this.carregarMk(L); } catch (e) { console.warn('nuvem: chaves do MoneyTRIO', e); } }
       await Vale.guardar();
     },
+    /* 1.14.0: as chaves do MoneyTRIO deste aparelho (L.fam[gid].mk, fechadas com a chave do aparelho). Com internet e com a
+       chave privada pessoal, confere o banco (money_chaves): versão mais nova ou a reservada que chegou depois. */
+    carregarMk: async function (L) {
+      var gid = this.gid, duk = await Cifra.aes(this.dukRaw);
+      if (await this.conferirCf(L, duk, gid)) { var nf = L.fam[gid]; await this.usarSoCf(await Cifra.decifrar(duk, nf), nf.kv, nf.fk); }
+      var f = (L.fam || {})[gid] || {}, m = f.mk || null;
+      if (L.sk && navigator.onLine && Conta.on()) {
+        var rows = null;
+        try { rows = await Conta.rest('GET', 'money_chaves?grupo_id=eq.' + gid + '&user_id=eq.' + Conta.uid() + '&select=escopo,versao,embrulhada&order=versao.desc'); }
+        catch (e) { rows = null; }   /* sem o SQL v4 (404): fica como está */
+        var v = rows && rows[0] ? rows[0].versao : 0;
+        var faltaR = m && !m.r && (rows || []).some(function (x) { return x.versao === v && x.escopo === 'reservado'; });
+        if (v && (!m || v > m.v || faltaR)) {
+          var sk = await Cifra.importarSk(await Cifra.decifrar(duk, L.sk)), novo = { v: v };
+          for (var i = 0; i < rows.length; i++) {
+            if (rows[i].versao !== v) continue;
+            try { novo[rows[i].escopo === 'reservado' ? 'r' : 'c'] = (await Cifra.desembrulhar(sk, rows[i].embrulhada)).raw; } catch (e) {}
+          }
+          if (novo.c) { await this.guardarMk(L, duk, gid, novo); await this.gravar(L); m = L.fam[gid].mk; }
+        }
+      }
+      if (!m) { this.mk = null; this.mkRaw = null; return; }
+      var c = await Cifra.decifrar(duk, m.c), r = m.r ? await Cifra.decifrar(duk, m.r) : null;
+      this.mkRaw = { v: m.v, c: c, r: r };
+      this.mk = { v: m.v, c: await Cifra.aes(c), r: r ? await Cifra.aes(r) : null };
+      this.precisaMk = false;
+    },
+    /* 1.14.0: a CF girou na plataforma (versão nova em sol_minha_chave_grupo)? Atualiza a cópia deste aparelho e grava.
+       true = mudou. Só com a chave privada pessoal e internet; sem isso, fica a que está (e nunca é repassada como nova). */
+    conferirCf: async function (L, duk, gid) {
+      if (!L.sk || !navigator.onLine || !Conta.on()) return false;
+      var f = (L.fam || {})[gid], r = null;
+      try { r = await this.buscarMinha(await Cifra.importarSk(await Cifra.decifrar(duk, L.sk)), gid); } catch (e) { return false; }
+      if (!r || !f || (r.fk === f.fk && r.kv === f.kv) || (r.kv || 0) < (f.kv || 0)) return false;
+      L.fam = Object.assign({}, L.fam); L.fam[gid] = Object.assign({}, f, { kv: r.kv, fk: r.fk }, await Cifra.cifrar(duk, r.raw));
+      await this.gravar(L); r.raw.fill(0);
+      return true;
+    },
+    usarSoCf: async function (raw, kv, fk) { if (this.cfRaw) this.cfRaw.fill(0); this.cfRaw = new Uint8Array(raw); this.kv = kv; this.fk = fk; this.cf = await Cifra.aes(this.cfRaw); },
+    /* grava {v, c: bytes, r: bytes|null} em L.fam[gid].mk, fechado com a chave do aparelho (não grava L: quem chama grava) */
+    guardarMk: async function (L, duk, gid, mk) {
+      L.fam = Object.assign({}, L.fam); L.fam[gid] = Object.assign({}, L.fam[gid]);
+      L.fam[gid].mk = { v: mk.v, c: await Cifra.cifrar(duk, mk.c), r: mk.r ? await Cifra.cifrar(duk, mk.r) : null };
+    },
+    /* a migração (aparelho do chefe): passa a usar as chaves novas e guarda neste aparelho */
+    adotarMk: async function (mk) {
+      var L = await this.local(); if (!L || !this.dukRaw) throw new Error('abra pelo PIN');
+      await this.guardarMk(L, await Cifra.aes(this.dukRaw), this.gid, mk); await this.gravar(L);
+      this.mkRaw = { v: mk.v, c: mk.c, r: mk.r || null };
+      this.mk = { v: mk.v, c: await Cifra.aes(mk.c), r: mk.r ? await Cifra.aes(mk.r) : null };
+      this.precisaMk = false; await Vale.guardar();
+    },
+    /* "r.<id>" é reservado; o resto é da casa */
+    escopoDa: function (k) { var i = String(k).indexOf('|'); return String(k).slice(i + 1, i + 3) === 'r.' ? 'r' : 'c'; },
+    vejoTudo: function () { return !this.mk || !!this.mk.r; },
     /* 3.35: abrir com a chave guardada pelo Vale (recarregou dentro dos 15 min) — sem os bytes, só a chave do navegador */
-    usarChave: function (cf, kv, fk, gid) { this.cf = cf; this.cfRaw = null; this.dukRaw = null; this.kv = kv; this.fk = fk; this.gid = gid; },
+    usarChave: function (cf, kv, fk, gid) { this.cf = cf; this.cfRaw = null; this.dukRaw = null; this.kv = kv; this.fk = fk; this.gid = gid; this.mkRaw = null; },
     trancar: function () {
       if (this.cfRaw) this.cfRaw.fill(0); if (this.dukRaw) this.dukRaw.fill(0);
+      if (this.mkRaw) { this.mkRaw.c.fill(0); if (this.mkRaw.r) this.mkRaw.r.fill(0); }
       this.cf = null; this.cfRaw = null; this.dukRaw = null; this.kv = 0; this.fk = ''; this.gid = null;
+      this.mk = null; this.mkRaw = null; this.precisaMk = false;
       return Vale.apagar();
     },
     /* um registro (texto JSON) ↔ pacote fechado com a CF, no mesmo formato do cofre do OmniLifeONE */
-    selar: async function (txt) {
+    /* 1.14.0: k = 'colecao|id' diz o escopo. Com as chaves do MoneyTRIO: {c:1, m:'c'|'r', mv, iv, ct}. Sem elas (antes da
+       migração): a CF, como antes. Depois da migração, um aparelho sem as chaves NÃO grava (nunca volta nada para a CF). */
+    selar: async function (txt, k) {
       if (!this.cf) throw new Error('fechado');
+      if (this.mk) {
+        var m = this.escopoDa(k || ''), key = this.mk[m];
+        if (!key) { var e = new Error('sem a chave deste escopo'); e.codigo = 'escopo'; throw e; }
+        return JSON.stringify(Object.assign({ c: 1, m: m, mv: this.mk.v }, await Cifra.cifrar(key, utf8(txt))));
+      }
+      if (this.precisaMk) { var e2 = new Error('sem as chaves do MoneyTRIO'); e2.codigo = 'semmk'; throw e2; }
       return JSON.stringify(Object.assign({ c: 1, kv: this.kv, fk: this.fk }, await Cifra.cifrar(this.cf, utf8(txt))));
     },
     abrir: async function (cif) {
       var o; try { o = JSON.parse(cif); } catch (e) { return null; }
-      if (!this.cf || !o || (o.fk && o.fk !== this.fk)) return null;
+      if (!this.cf || !o) return null;
+      if (o.m) {
+        if (!this.mk) { this.precisaMk = true; return null; }
+        var key = this.mk[o.m]; if (!key || o.mv !== this.mk.v) return null;
+        try { return JSON.parse(deUtf8(await Cifra.decifrar(key, o))); } catch (e) { return null; }
+      }
+      if (o.fk && o.fk !== this.fk) return null;
       try { return JSON.parse(deUtf8(await Cifra.decifrar(this.cf, o))); } catch (e) { return null; }
     },
     /* digital/rosto: WebAuthn com PRF — a digital libera um segredo que abre a chave do aparelho */
@@ -620,7 +731,7 @@
         Portao.carregando(tt('Preparando o cadeado deste aparelho…', 'Preparing the lock on this device…'));
         try {
           if (o.tipo === 'pessoal') return await Cadeado.montar(unb64(o.sk), null, pin, fam.grupo_id, o.como || 'aparelho', apId);
-          return await Cadeado.montar(null, { raw: unb64(o.cf), kv: o.kv, fk: o.fk }, pin, o.gid || fam.grupo_id, 'familia', apId);
+          return await Cadeado.montar(null, { raw: unb64(o.cf), kv: o.kv, fk: o.fk, mk: o.mk && o.mk.c ? { v: o.mk.v, c: unb64(o.mk.c), r: o.mk.r ? unb64(o.mk.r) : null } : null }, pin, o.gid || fam.grupo_id, 'familia', apId);
         } catch (e) { return { erro: 'rede', e: e }; }
       }, function (r) {
         if (!r.ok) return Portao.mensagem(tt('Não deu', 'It did not work'), r.erro === 'semliberar' ? tt('O cadeado desta família ainda não foi liberado para você.', 'This family lock has not been released to you yet.') : esc(Conta.explicar(r.e)), [[tt('Voltar', 'Back'), function () { Portao.primeiraVez(fam, false); }]]);
@@ -703,8 +814,14 @@
           if (d.erro) return Tela.erro(d.erro === 'pin' ? tt('PIN errado.', 'Wrong PIN.') : d.erro === 'espera' ? tt('Espere um pouco para tentar de novo.', 'Wait a bit to try again.') : tt('Não conferiu.', 'Could not verify.'));
           var duk = await Cifra.aes(d.raw), carga;
           if (p.tipo === 'familia') {
+            await Cadeado.conferirCf(d.L, duk, p.grupo_id);   /* 1.14.0: nunca passa adiante uma CF velha */
             var f = (d.L.fam || {})[p.grupo_id]; if (!f) return Tela.erro(tt('Esta família não está aberta neste aparelho.', 'This family is not open on this device.'));
             var cf = await Cifra.decifrar(duk, f); carga = { v: 2, tipo: 'familia', gid: p.grupo_id, kv: f.kv, fk: f.fk, cf: b64(cf) }; cf.fill(0);
+            /* 1.14.0: as chaves do MoneyTRIO vão junto: a da casa sempre; a reservada só para quem o chefe marcou "Tudo" */
+            if (f.mk) {
+              var mc = await Cifra.decifrar(duk, f.mk.c); carga.mk = { v: f.mk.v, c: b64(mc) }; mc.fill(0);
+              if (f.mk.r && await Visao.de(p.grupo_id, p.quem) === 'tudo') { var mr = await Cifra.decifrar(duk, f.mk.r); carga.mk.r = b64(mr); mr.fill(0); }
+            }
           } else {
             if (!d.L.sk) return Tela.erro(tt('Este aparelho entrou pela família e não guarda a sua chave pessoal: aprove por outro aparelho seu.', 'This device joined through the family and does not keep your personal key: approve from another device of yours.'));
             var sk = await Cifra.decifrar(duk, d.L.sk); carga = { v: 2, tipo: 'pessoal', sk: b64(sk) }; sk.fill(0);
@@ -935,7 +1052,7 @@
     return extra.length ? ITENS.concat(extra) : ITENS;
   }
   var FORA = { atualizadoEm: 1, gastosZ: 1 };
-  var RESERVADOS = { caixa_robo: 1 };
+  var RESERVADOS = { caixa_robo: 1, 'r.caixa_robo': 1, caixa_casa: 1, 'r.escopos': 1 };
   function chaveItem(x) {
     if (!x || typeof x !== 'object') return null;
     if (x.id != null && x.id !== '') return String(x.id);
@@ -957,19 +1074,25 @@
     if (col.indexOf('tax_') === 0) { var t = est.tax || {}; return Array.isArray(t[col.slice(4)]) ? t[col.slice(4)] : null; }
     return Array.isArray(est[col]) ? est[col] : null;
   }
+  /* 1.14.0 (3.66): no aparelho de quem vê tudo, depois da migração, o que é reservado (window.Escopo, modulos/visao-casa.js)
+     vai com o id "r.<id>" e fecha com a chave reservada. Quem vê só a casa nunca separa: tudo o que ele tem é da casa. */
+  function separa() { return !!(Cadeado.mk && Cadeado.mk.r && window.Escopo); }
   function mapear(est) {
-    var out = new Map();
-    itens().forEach(function (c) { idsDaLista(Array.isArray(est[c]) ? est[c] : []).forEach(function (p) { out.set(c + '|' + p[0], p[1]); }); });
+    var out = new Map(), sep = separa();
+    var pre = function (c, x) { return sep && Escopo.de(c, x) === 'reservado' ? 'r.' : ''; };
+    var lista = function (c, l, nome) { idsDaLista(l).forEach(function (p, i) { out.set(nome + '|' + pre(c, l[i]) + p[0], p[1]); }); };
+    if (sep) Escopo.preparar(est);
+    itens().forEach(function (c) { lista(c, Array.isArray(est[c]) ? est[c] : [], c); });
     var tax = est.tax && typeof est.tax === 'object' ? est.tax : {}, resto = {};
-    TAX_ITENS.forEach(function (c) { idsDaLista(Array.isArray(tax[c]) ? tax[c] : []).forEach(function (p) { out.set('tax_' + c + '|' + p[0], p[1]); }); });
+    TAX_ITENS.forEach(function (c) { lista('tax_' + c, Array.isArray(tax[c]) ? tax[c] : [], 'tax_' + c); });
     Object.keys(tax).forEach(function (k) { if (TAX_ITENS.indexOf(k) < 0) resto[k] = tax[k]; });
-    out.set('config|tax', JSON.stringify({ v: resto }));
+    out.set('config|' + (sep ? 'r.' : '') + 'tax', JSON.stringify({ v: resto }));
     Object.keys(est).forEach(function (k) {
       if (itens().indexOf(k) >= 0 || k === 'tax' || FORA[k] || RESERVADOS[k] || est[k] === undefined) return;
       if (!RX_ID.test(k)) return;
       var v = est[k];
       if (k === 'config' && v && typeof v === 'object') { v = Object.assign({}, v); delete v.chaves; }   /* chaves de API nunca sobem */
-      out.set('config|' + k, JSON.stringify({ v: v }));
+      out.set('config|' + (sep && Escopo.deConfig(k) === 'reservado' ? 'r.' : '') + k, JSON.stringify({ v: v }));
     });
     return out;
   }
@@ -977,10 +1100,16 @@
   function reconstruir(regs) {
     var est = {}, tax = { declaracoes: [], processos: [], docs: [] }, resto = {};
     itens().forEach(function (c) { est[c] = []; });
+    /* 1.14.0: a config reservada ("r.<chave>") vale por cima da da casa com o mesmo nome (quem vê só a casa grava a dela) */
+    regs = regs.slice().sort(function (a, b) { return (a[0] === 'config' && /^r\./.test(a[1]) ? 1 : 0) - (b[0] === 'config' && /^r\./.test(b[1]) ? 1 : 0); });
+    /* o mesmo item vivo nos dois escopos (passou de reservado para a casa em outro aparelho; o "r." saiu sem rastro): fica o da casa */
+    var casa = {}; regs.forEach(function (r) { if (r[0] !== 'config' && r[2] && r[1].slice(0, 2) !== 'r.') casa[r[0] + '|' + r[1]] = 1; });
+    regs = regs.filter(function (r) { return r[0] === 'config' || r[1].slice(0, 2) !== 'r.' || !casa[r[0] + '|' + r[1].slice(2)]; });
     regs.forEach(function (r) {
       var col = r[0], id = r[1], o = r[2]; if (!o) return;
       if (col === 'config') {
         if (RESERVADOS[id]) return;
+        if (id.slice(0, 2) === 'r.') id = id.slice(2);
         if (id === 'tax') Object.assign(resto, o.v || {}); else est[id] = o.v;
       } else if (itens().indexOf(col) >= 0) est[col].push(o);
       else if (col.indexOf('tax_') === 0 && tax[col.slice(4)]) tax[col.slice(4)].push(o);
@@ -1000,7 +1129,7 @@
       (await IDB.prefixo('fila', p)).forEach(function (e) { self.fila.set(e[0].slice(p.length), e[1]); });
       this.cursor = (await IDB.get('kv', 'cursor|' + gid)) || '';
     },
-    vivos: function () { var n = 0; this.docs.forEach(function (d, k) { if (d.cif && k !== 'config|caixa_robo') n++; }); return n; },
+    vivos: function () { var n = 0; this.docs.forEach(function (d, k) { if (d.cif && !RESERVADOS[k.slice(k.indexOf('|') + 1)]) n++; }); return n; },
     /* abre tudo da cópia local → lista [colecao, id, objeto] */
     abrirTudo: async function (aoAndar) {
       var regs = [], falhas = 0, i = 0, total = this.docs.size, self = this;
@@ -1024,6 +1153,9 @@
     _registrar: async function () {
       clearTimeout(this._tReg); this._sujo = false;
       if (!Cadeado.aberto() || !Nuvem.iniciado || typeof Store === 'undefined' || this._recusou) return 0;
+      if (Cadeado.precisaMk && !Cadeado.mk) return 0;   /* 1.14.0: sem as chaves do MoneyTRIO, este aparelho não grava (Painel avisa) */
+      if (Escopos.rodando) return 0;                      /* a migração cuida de tudo enquanto roda */
+      if (separa() && Escopo.antesDeSubir) { try { Escopo.antesDeSubir(Store.estado); } catch (e) { console.warn('nuvem: resumo', e); } }   /* os totais da família */
       var agora = mapear(Store.estado), muda = [], self = this;
       agora.forEach(function (j, k) { if (self.ultimo.get(k) !== j) muda.push([k, j]); });
       this.ultimo.forEach(function (j, k) { if (!agora.has(k)) muda.push([k, null]); });
@@ -1041,7 +1173,7 @@
       for (var i = 0; i < muda.length; i++) {
         var k = muda[i][0], j = muda[i][1], d = this.docs.get(k) || { versao: null, srv: null, cif: null };
         if (j === null && d.versao == null) { this.docs.delete(k); this.fila.delete(k); pd.push([this.k(k), undefined]); pf.push([this.k(k), undefined]); continue; }
-        var cif = j === null ? null : await Cadeado.selar(j);
+        var cif = j === null ? null : await Cadeado.selar(j, k);
         var nd = { versao: d.versao, srv: d.srv || null, cif: cif };
         this.docs.set(k, nd); pd.push([this.k(k), nd]);
         var f = { cif: cif, t: Date.now() }; this.fila.set(k, f); pf.push([this.k(k), f]);
@@ -1086,7 +1218,7 @@
       }
     },
     lote: async function (ks, tent) {
-      var self = this, corpo = ks.map(function (k) { var c = k.indexOf('|'); return { grupo_id: self.gid, colecao: k.slice(0, c), id: k.slice(c + 1), dados_cifrado: self.fila.get(k).cif }; });
+      var self = this, corpo = ks.map(function (k) { var c = k.indexOf('|'); var o = { grupo_id: self.gid, colecao: k.slice(0, c), id: k.slice(c + 1), dados_cifrado: self.fila.get(k).cif }; if (Cadeado.mk) o.escopo = Cadeado.escopoDa(k) === 'r' ? 'reservado' : 'casa'; return o; });   /* 1.14.0: com as chaves do MoneyTRIO o SQL v4 já está lá; todas as linhas com o mesmo formato */
       var cifs = ks.map(function (k) { return self.fila.get(k).cif; });
       var rows;
       try { rows = await Conta.rest('POST', 'money_docs?on_conflict=grupo_id,colecao,id', corpo, 'return=representation,resolution=ignore-duplicates'); }
@@ -1099,6 +1231,7 @@
     },
     um: async function (k, tent) {
       var f = this.fila.get(k), d = this.docs.get(k); if (!f || !d) return;
+      if (!f.cif && Cadeado.escopoDa(k) === 'r') return this.apagarReservado(k);
       var c = k.indexOf('|'), q = 'money_docs?grupo_id=eq.' + this.gid + '&colecao=eq.' + encodeURIComponent(k.slice(0, c)) + '&id=eq.' + encodeURIComponent(k.slice(c + 1)) + '&versao=eq.' + d.versao;
       var corpo = f.cif ? { dados_cifrado: f.cif, apagado_em: null } : { dados_cifrado: null, apagado_em: new Date().toISOString() };
       var rows;
@@ -1106,6 +1239,13 @@
       catch (e) { if (e.status && e.status < 500 && e.status !== 401) { await this.recusar([k], e); return; } throw e; }
       if (rows && rows[0]) await this.ok(k, rows[0], f.cif);
       else await this.conflito(k, tent);
+    },
+    /* 1.14.0: o reservado que sai (apagado ou passou para a casa) sai DE VERDADE, sem rastro (money_reservar_apagar) */
+    apagarReservado: async function (k) {
+      var c = k.indexOf('|');
+      try { await Conta.rpc('money_reservar_apagar', { p_grupo: this.gid, p_colecao: k.slice(0, c), p_ids: [k.slice(c + 1)] }); }
+      catch (e) { if (e.status && e.status < 500 && e.status !== 401) { await this.recusar([k], e); return; } throw e; }
+      this.docs.delete(k); this.fila.delete(k); await IDB.del('docs', this.k(k)); await IDB.del('fila', this.k(k));
     },
     ok: async function (k, row, cifEnviado) {
       var d = { versao: row.versao, srv: cifEnviado, cif: cifEnviado }, f = this.fila.get(k);
@@ -1149,7 +1289,7 @@
         Nuvem.aplicar([[k, deles]]);
         return;
       }
-      var cif = fimTxt === null ? null : await Cadeado.selar(fimTxt);
+      var cif = fimTxt === null ? null : await Cadeado.selar(fimTxt, k);
       var nd2 = { versao: row.versao, srv: row.dados_cifrado || null, cif: cif };
       this.docs.set(k, nd2); await IDB.set('docs', this.k(k), nd2);
       var nf = { cif: cif, t: Date.now() }; this.fila.set(k, nf); await IDB.set('fila', this.k(k), nf);
@@ -1194,6 +1334,185 @@
     });
     return r;
   }
+
+  /* ---------------- 1.14.0 (3.66): a migração para os dois cofres (aparelho de quem vê tudo, pelo Fundo) ----------------
+     1) caixa do robô vazia e fila em dia; 2) gera a CC e a CR e embrulha para mim e para quem vê tudo (money_chaves: daqui
+     em diante o banco só aceita registro fechado com elas); 3) cada registro: da casa → recifra com a CC (mesmo id); reservado
+     → "r.<id>" com a CR e o antigo sai de verdade; os rastros de apagados saem; 4) caixas novas (casa e reservada), a antiga
+     sai, os pacotes lidos saem; 5) comprovantes: "r/" com a CR, a cópia antiga sai; 6) marcador config|r.escopos (os outros
+     aparelhos baixam tudo de novo); 7) conferência. Retomável: rodar de novo continua do ponto em que parou. */
+  var Escopos = {
+    rodando: false,
+    feito: function () { return Sinc.docs.has('config|r.escopos'); },
+    /* a cópia deste aparelho é de antes da migração (outro aparelho migrou): apaga e recarrega */
+    copiaVelha: async function () {
+      if (!this.feito() || this.rodando) return false;
+      if (await IDB.get('kv', 'escopos|' + Sinc.gid)) return false;
+      await IDB.set('kv', 'escopos|' + Sinc.gid, 1);
+      if (Cadeado.mk) return false;   /* este aparelho já tem as chaves (foi ele que migrou, ou já baixou) */
+      await Sinc.apagarFamilia(Sinc.gid); await IDB.set('kv', 'escopos|' + Sinc.gid, 1);
+      alertaERecarrega(tt('A família passou a ter a parte da casa e a parte reservada. Este aparelho vai baixar tudo de novo.', 'The family now has a household part and a private part. This device will download everything again.'));
+      return true;
+    },
+    porId: function (lista) { var m = {}; lista.forEach(function (x) { (m[x[0]] = m[x[0]] || []).push(x[1]); }); return m; },
+    apagarDeVerdade: async function (pares) {   /* pares: [[colecao, id]] */
+      var m = this.porId(pares), cols = Object.keys(m);
+      for (var i = 0; i < cols.length; i++) for (var j = 0; j < m[cols[i]].length; j += 500)
+        await Conta.rpc('money_reservar_apagar', { p_grupo: Sinc.gid, p_colecao: cols[i], p_ids: m[cols[i]].slice(j, j + 500) });
+      for (var k = 0; k < pares.length; k++) { var kk = pares[k][0] + '|' + pares[k][1]; Sinc.docs.delete(kk); await IDB.del('docs', Sinc.k(kk)); }
+    },
+    escopoDoDoc: function (col, id, o) {
+      if (col === 'config') return Escopo.deConfig(id);
+      if (col.indexOf('tax_') === 0) return 'reservado';
+      return Escopo.de(col, o);
+    },
+    migrar: async function (andar) {
+      andar = andar || function () {};
+      if (!Cadeado.aberto() || !Sinc.gid) throw new Error(tt('Abra o cadeado.', 'Unlock first.'));
+      if (!Cadeado.dukRaw) { var e0 = new Error(tt('Para preparar, abra pelo PIN ou pela digital (não vale a reabertura automática).', 'To prepare, unlock with the PIN or fingerprint.')); e0.codigo = 'pin'; throw e0; }
+      if (!navigator.onLine) throw new Error(tt('Ligue a internet.', 'Connect to the internet.'));
+      if (!window.Escopo) throw new Error('modulos/visao-casa.js');
+      if (await Visao.minha(Sinc.gid) !== 'tudo') throw new Error(tt('Só quem vê tudo prepara a família.', 'Only who sees everything can prepare the family.'));
+      var gid = Sinc.gid, self = this, antes = 0;
+      this.rodando = true;
+      try {
+        /* 1) em dia */
+        andar(tt('Conferindo a fila e a caixa do robô', 'Checking the queue and the robot inbox'));
+        this.rodando = false; await Sinc.registrar(); await Sinc.enviar(); this.rodando = true;
+        if (Sinc.fila.size) throw new Error(tt('Ainda há mudanças deste aparelho esperando para subir. Tente de novo em instantes.', 'There are changes from this device still waiting to upload. Try again shortly.'));
+        if (!Cadeado.mk) {
+          await Caixa.esvaziar();
+          var resta = await Conta.rest('GET', 'money_entrada?grupo_id=eq.' + gid + '&consumido_em=is.null&select=id&limit=1');
+          if (resta && resta.length) throw new Error(tt('A caixa do robô ainda tem lançamentos para entrar. Espere esvaziar e tente de novo.', 'The robot inbox still has entries. Wait for it to empty and try again.'));
+        }
+        var novos = await Sinc.buscar(); if (novos.length) throw new Error(tt('Chegaram mudanças de outro aparelho. Tente de novo.', 'Changes arrived from another device. Try again.'));
+        var base = Sinc.ultimo;   /* o retrato que bate com o banco (a fila está vazia): o que mudar durante a migração sobe depois */
+        Sinc.docs.forEach(function (d, k) { if (d.cif && !RESERVADOS[k.slice(k.indexOf('|') + 1)]) antes++; });
+        /* 2) as chaves */
+        if (!Cadeado.mk) {
+          andar(tt('Criando as chaves da casa e reservada', 'Creating the household and private keys'));
+          var mk = { v: 1, c: Cifra.rnd(32), r: Cifra.rnd(32) };
+          var pubs = await Conta.rpc('sol_chaves_publicas_do_grupo', { p_grupo: gid }), vis = {};
+          try { (await Visao.lista(gid) || []).forEach(function (x) { vis[x.user_id] = x.visao; }); } catch (e) {}
+          var eu = Conta.uid(), meu = false;
+          for (var i = 0; i < (pubs || []).length; i++) {
+            var p = pubs[i]; if (!p.chave_publica || !p.chave_publica.n) continue;
+            if (p.user_id !== eu && vis[p.user_id] !== 'tudo') continue;
+            await Conta.rpc('money_chave_guardar', { p_grupo: gid, p_user: p.user_id, p_escopo: 'casa', p_versao: mk.v, p_embrulhada: await Cifra.embrulhar(p.chave_publica, mk.c, mk.v, 'mt-casa') });
+            await Conta.rpc('money_chave_guardar', { p_grupo: gid, p_user: p.user_id, p_escopo: 'reservado', p_versao: mk.v, p_embrulhada: await Cifra.embrulhar(p.chave_publica, mk.r, mk.v, 'mt-reservado') });
+            if (p.user_id === eu) meu = true;
+          }
+          if (!meu) throw new Error(tt('Sua chave pública não está na plataforma: abra o OmniLifeONE uma vez e tente de novo.', 'Your public key is not on the platform: open OmniLifeONE once and try again.'));
+          await Cadeado.adotarMk(mk);
+        }
+        /* 3) os registros */
+        Escopo.preparar(Store.estado);
+        var casa = [], res = [], rastros = [], falhas = 0, total = Sinc.docs.size, n = 0;
+        for (var par of Array.from(Sinc.docs)) {
+          var k = par[0], d = par[1], c = k.indexOf('|'), col = k.slice(0, c), id = k.slice(c + 1); n++;
+          if (n % 200 === 0) andar(tt('Separando: ', 'Sorting: ') + n + ' / ' + total);
+          if (RESERVADOS[id]) continue;
+          if (!d.cif) { if (d.versao != null && id.slice(0, 2) !== 'r.') rastros.push([col, id]); continue; }
+          var env; try { env = JSON.parse(d.cif); } catch (e) { env = null; }
+          if (!env || env.m) continue;                          /* já está com as chaves novas */
+          var o = await Cadeado.abrir(d.cif); if (!o) { falhas++; continue; }
+          var txt = JSON.stringify(o);
+          if (self.escopoDoDoc(col, id, o) === 'casa') casa.push({ k: k, colecao: col, id: id, versao: d.versao, dados: await Cadeado.selar(txt, k) });
+          else res.push({ k: k, colecao: col, id: id, nk: col + '|r.' + id, dados: await Cadeado.selar(txt, col + '|r.' + id) });
+        }
+        for (var a = 0; a < casa.length; a += 200) {
+          andar(tt('Fechando a parte da casa: ', 'Sealing the household part: ') + Math.min(a + 200, casa.length) + ' / ' + casa.length);
+          var lote = casa.slice(a, a + 200), por = {};
+          lote.forEach(function (x) { por[x.colecao + '|' + x.id] = x; });
+          var feitos = await Conta.rpc('money_docs_recifrar', { p_grupo: gid, p_itens: lote.map(function (x) { return { colecao: x.colecao, id: x.id, versao: x.versao, dados: x.dados }; }) });
+          for (var f = 0; f < (feitos || []).length; f++) {
+            var kk = feitos[f].colecao + '|' + feitos[f].id, nd = { versao: feitos[f].versao, srv: por[kk].dados, cif: por[kk].dados };
+            Sinc.docs.set(kk, nd); await IDB.set('docs', Sinc.k(kk), nd);
+          }
+          if ((feitos || []).length !== lote.length) falhas += lote.length - (feitos || []).length;   /* mudou no meio: a próxima rodada pega */
+        }
+        for (var b2 = 0; b2 < res.length; b2 += 200) {
+          andar(tt('Fechando a parte reservada: ', 'Sealing the private part: ') + Math.min(b2 + 200, res.length) + ' / ' + res.length);
+          var lr = res.slice(b2, b2 + 200);
+          var rows = await Conta.rest('POST', 'money_docs?on_conflict=grupo_id,colecao,id', lr.map(function (x) { return { grupo_id: gid, colecao: x.colecao, id: 'r.' + x.id, dados_cifrado: x.dados, escopo: 'reservado' }; }), 'return=representation,resolution=ignore-duplicates');
+          var veio = {}; (rows || []).forEach(function (r) { veio[r.colecao + '|' + r.id] = r; });
+          for (var g = 0; g < lr.length; g++) { var r1 = veio[lr[g].nk]; if (r1) { var nd2 = { versao: r1.versao, srv: lr[g].dados, cif: lr[g].dados }; Sinc.docs.set(lr[g].nk, nd2); await IDB.set('docs', Sinc.k(lr[g].nk), nd2); } }
+          await this.apagarDeVerdade(lr.map(function (x) { return [x.colecao, x.id]; }));
+        }
+        if (rastros.length) { andar(tt('Tirando os rastros de apagados', 'Removing deletion traces')); await this.apagarDeVerdade(rastros); }
+        /* 4) caixas novas */
+        andar(tt('Trocando a caixa do robô', 'Replacing the robot inbox'));
+        if (!Sinc.docs.has(Caixa.DOC_CAIXA.casa)) await Caixa.criarCaixa('casa');
+        if (!Sinc.docs.has(Caixa.DOC_CAIXA.reservado)) await Caixa.criarCaixa('reservado');
+        if (Sinc.docs.has('config|caixa_robo')) await this.apagarDeVerdade([['config', 'caixa_robo']]);
+        try { await Conta.rpc('money_entrada_limpar', { p_grupo: gid }); } catch (e) {}
+        Caixa.sk = null;
+        /* 5) comprovantes */
+        var arqs = (Store.estado.arquivos || []).filter(function (m) { return m && m.nuvem; }), ca = 0;
+        for (var q = 0; q < arqs.length; q++) {
+          andar(tt('Comprovantes: ', 'Receipts: ') + (q + 1) + ' / ' + arqs.length);
+          try { if (await Arquivos.migrar(arqs[q].id)) ca++; } catch (e) { falhas++; console.warn('nuvem: comprovante', e); }
+        }
+        /* 6) marcador e o retrato novo (o Sinc volta a funcionar com "r.") */
+        if (!this.feito()) {
+          var mc = await Cadeado.selar(JSON.stringify({ v: { v: 1, em: new Date().toISOString() } }), 'config|r.escopos');
+          var rm = await Conta.rest('POST', 'money_docs', { grupo_id: gid, colecao: 'config', id: 'r.escopos', dados_cifrado: mc, escopo: 'reservado' }, 'return=representation');
+          var ndm = { versao: rm[0].versao, srv: mc, cif: mc }; Sinc.docs.set('config|r.escopos', ndm); await IDB.set('docs', Sinc.k('config|r.escopos'), ndm);
+        }
+        await IDB.set('kv', 'escopos|' + gid, 1);
+        Escopo.preparar(Store.estado);
+        var novoUlt = new Map();
+        base.forEach(function (j, k) {
+          var c2 = k.indexOf('|'), col2 = k.slice(0, c2), id2 = k.slice(c2 + 1), o2 = null;
+          if (id2.slice(0, 2) !== 'r.') { try { o2 = JSON.parse(j); } catch (e) {} if (self.escopoDoDoc(col2, id2, col2 === 'config' ? null : o2) === 'reservado') id2 = 'r.' + id2; }
+          novoUlt.set(col2 + '|' + id2, j);
+        });
+        Sinc.ultimo = novoUlt;
+        this.rodando = false;
+        await Sinc.registrar();   /* os totais da família (resumo) e o que mais faltar */
+        await Sinc.enviar();
+        /* 7) conferência */
+        andar(tt('Conferindo', 'Checking'));
+        var conf = await this.conferir();
+        conf.antes = antes; conf.falhas = falhas; conf.comprovantes = ca;
+        /* só com a conferência limpa o chefe marca a migração como concluída (o banco confere de novo); antes disso, o
+           banco não aceita dar a visão "casa" a ninguém */
+        if (conf.ok && !falhas) { await Conta.rpc('money_migracao_concluir', { p_grupo: gid }); conf.concluida = true; }
+        return conf;
+      } finally { this.rodando = false; Painel.atualizar(); }
+    },
+    /* lê TODAS as linhas vivas do banco: nenhuma abre com a CF; casa só com a CC; "r." só com a CR */
+    conferir: async function () {
+      var out = { vivos: 0, casa: 0, reservado: 0, cfAbre: 0, semChaveNova: 0, erradas: 0 }, gid = Sinc.gid;
+      for (var off = 0; ; off += 1000) {
+        var rows = await Conta.rest('GET', 'money_docs?grupo_id=eq.' + gid + '&apagado_em=is.null&select=colecao,id,escopo,dados_cifrado&order=colecao.asc,id.asc&limit=1000&offset=' + off);
+        for (var i = 0; i < (rows || []).length; i++) {
+          var r = rows[i], o; out.vivos++;
+          try { o = JSON.parse(r.dados_cifrado); } catch (e) { out.erradas++; continue; }
+          try { await Cifra.decifrar(Cadeado.cf, o); out.cfAbre++; } catch (e) {}
+          if (!o.m) { out.semChaveNova++; continue; }
+          var res = r.id.slice(0, 2) === 'r.';
+          if (res !== (o.m === 'r') || res !== (r.escopo === 'reservado')) { out.erradas++; continue; }
+          try { await Cifra.decifrar(Cadeado.mk[o.m], o); out[res ? 'reservado' : 'casa']++; } catch (e) { out.erradas++; }
+        }
+        if (!rows || rows.length < 1000) break;
+      }
+      out.ok = out.cfAbre === 0 && out.semChaveNova === 0 && out.erradas === 0;
+      return out;
+    },
+    /* liberar o MoneyTRIO para uma pessoa da família: a visão e as chaves (a reservada só para "tudo") */
+    liberar: async function (uid, visao) {
+      if (!Cadeado.mkRaw) { var e0 = new Error(tt('Abra pelo PIN ou pela digital para liberar.', 'Unlock with the PIN or fingerprint to grant access.')); e0.codigo = 'pin'; throw e0; }
+      await Visao.definir(Sinc.gid, uid, visao);
+      var pubs = await Conta.rpc('sol_chaves_publicas_do_grupo', { p_grupo: Sinc.gid });
+      var p = (pubs || []).filter(function (x) { return x.user_id === uid; })[0];
+      if (!p || !p.chave_publica || !p.chave_publica.n) { var e1 = new Error(tt('Essa pessoa ainda não abriu o OmniLifeONE: a chave dela não existe. Peça para ela entrar lá uma vez.', 'This person has not opened OmniLifeONE yet: ask them to sign in there once.')); e1.codigo = 'sempub'; throw e1; }
+      var mk = Cadeado.mkRaw;
+      await Conta.rpc('money_chave_guardar', { p_grupo: Sinc.gid, p_user: uid, p_escopo: 'casa', p_versao: mk.v, p_embrulhada: await Cifra.embrulhar(p.chave_publica, mk.c, mk.v, 'mt-casa') });
+      if (visao === 'tudo' && mk.r) await Conta.rpc('money_chave_guardar', { p_grupo: Sinc.gid, p_user: uid, p_escopo: 'reservado', p_versao: mk.v, p_embrulhada: await Cifra.embrulhar(p.chave_publica, mk.r, mk.v, 'mt-reservado') });
+      return true;
+    }
+  };
 
   /* ---------------- Caixa do robô (money_entrada) ---------------- */
   var Caixa = {
@@ -1403,6 +1722,7 @@
     },
     /* a chave da caixa: lê a pública; a privada está no money_docs (config/caixa_robo), fechada com a CF */
     preparar: async function () {
+      if (Cadeado.mk) return this.prepararEscopos();
       var rows;
       try { rows = await Conta.rest('GET', 'money_caixa_chave?grupo_id=eq.' + Sinc.gid + '&select=chave_publica'); }
       catch (e) { if (e.status === 404 || /money_caixa_chave|schema cache|PGRST20/i.test(e.message + ' ' + e.code)) { this.ligada = false; return false; } throw e; }
@@ -1425,6 +1745,41 @@
       this.sk = await Cifra.importarSk(unb64(priv.pkcs8)); this.kid = priv.kid; this.problema = '';
       return true;
     },
+    /* 1.14.0 (3.66): depois da migração, uma caixa por escopo. A parte secreta da casa fica em config|caixa_casa (chave da casa);
+       a reservada em config|r.caixa_robo (chave reservada). Quem vê só a casa abre só a caixa da casa. */
+    DOC_CAIXA: { casa: 'config|caixa_casa', reservado: 'config|r.caixa_robo' },
+    sks: {},
+    prepararEscopos: async function () {
+      var rows, self = this;
+      try { rows = await Conta.rest('GET', 'money_caixa_chave?grupo_id=eq.' + Sinc.gid + '&select=escopo,chave_publica'); }
+      catch (e) { if (e.status === 404 || /money_caixa_chave|schema cache|PGRST20/i.test(e.message + ' ' + e.code)) { this.ligada = false; return false; } throw e; }
+      this.ligada = true; this.problema = '';
+      var esc = Cadeado.vejoTudo() ? ['casa', 'reservado'] : ['casa'], algum = false;
+      for (var i = 0; i < esc.length; i++) {
+        var e1 = esc[i], pub = (rows || []).filter(function (r) { return r.escopo === e1; }).map(function (r) { return r.chave_publica; })[0];
+        var d = Sinc.docs.get(this.DOC_CAIXA[e1]), priv = d && d.cif ? await Cadeado.abrir(d.cif) : null;
+        if (pub && priv && priv.kid === pub.kid) {
+          if (!this.sks[e1] || this.sks[e1].kid !== priv.kid) this.sks[e1] = { kid: priv.kid, sk: await Cifra.importarSk(unb64(priv.pkcs8)) };
+          algum = true; continue;
+        }
+        if (pub) { this.problema = priv ? 'diferente' : 'semsecreta'; continue; }
+        if (Cadeado.vejoTudo()) { await this.criarCaixa(e1); algum = true; }   /* só quem vê tudo cria (a migração cria as duas) */
+      }
+      return algum;
+    },
+    /* cria a caixa de um escopo: a parte secreta primeiro (para nunca ficar só a pública) */
+    criarCaixa: async function (escopo) {
+      var par = await Cifra.novoParCaixa(), k = this.DOC_CAIXA[escopo];
+      var priv = { v: 1, kid: par.pub.kid, pub: par.pub, pkcs8: b64(par.pkcs8), criado: new Date().toISOString() }; par.pkcs8.fill(0);
+      var cif = await Cadeado.selar(JSON.stringify(priv), k), c = k.indexOf('|'), d = Sinc.docs.get(k), r;
+      if (d && d.versao != null) r = await Conta.rest('PATCH', 'money_docs?grupo_id=eq.' + Sinc.gid + '&colecao=eq.config&id=eq.' + encodeURIComponent(k.slice(c + 1)) + '&versao=eq.' + d.versao, { dados_cifrado: cif, apagado_em: null }, 'return=representation');
+      else r = await Conta.rest('POST', 'money_docs', { grupo_id: Sinc.gid, colecao: 'config', id: k.slice(c + 1), dados_cifrado: cif, escopo: escopo }, 'return=representation');
+      if (!r || !r[0]) throw new Error('caixa: outro aparelho mexeu ao mesmo tempo');
+      var nd = { versao: r[0].versao, srv: cif, cif: cif }; Sinc.docs.set(k, nd); await IDB.set('docs', Sinc.k(k), nd);
+      await Conta.rest('POST', 'money_caixa_chave?on_conflict=grupo_id,escopo', { grupo_id: Sinc.gid, escopo: escopo, chave_publica: priv.pub }, 'resolution=merge-duplicates,return=minimal');
+      this.sks[escopo] = { kid: priv.kid, sk: await Cifra.importarSk(unb64(priv.pkcs8)) };
+    },
+    skDe: function (row) { if (!Cadeado.mk) return this.sk; var x = this.sks[row.escopo || 'reservado']; return x ? x.sk : null; },
     /* esvazia a caixa: abre, vira lançamento, grava fechado no money_docs e só então marca como aproveitado */
     esvaziar: async function () {
       if (this._rodando || !navigator.onLine || !Nuvem.iniciado || !Cadeado.aberto()) return;
@@ -1433,7 +1788,7 @@
         if (!(await this.preparar())) return;
         if (this.migrarEstornos()) Store.salvar();   /* 1.11.0: uma vez */
         if (this.migrarAplicacoes()) Store.salvar();   /* 1.13.0: uma vez */
-        var rows = await Conta.rest('GET', 'money_entrada?grupo_id=eq.' + Sinc.gid + '&consumido_em=is.null&select=id,pacote,origem&order=criado_em.asc&limit=200');
+        var rows = await Conta.rest('GET', 'money_entrada?grupo_id=eq.' + Sinc.gid + '&consumido_em=is.null&select=id,pacote,origem' + (Cadeado.mk ? ',escopo' : '') + '&order=criado_em.asc&limit=200');
         if (!rows || !rows.length) { this.andamento(null); return; }
         /* 1.12.0: a barra de andamento global ("Caixa do robô: x de N"); com lote cheio, conta quantos esperam */
         if (!this._seq) {
@@ -1445,7 +1800,7 @@
         (ST.gastos || []).forEach(function (g) { ids[g.id] = g; if (g.idRobo) ids['rb_' + g.idRobo] = g; });
         for (var i = 0; i < rows.length; i++) {
           var l;
-          try { l = await Cifra.abrirPacote(this.sk, rows[i].pacote); } catch (e) { this.erros.add(rows[i].id); continue; }   /* não abre com esta chave: fica na caixa */
+          try { l = await Cifra.abrirPacote(this.skDe(rows[i]), rows[i].pacote); } catch (e) { this.erros.add(rows[i].id); continue; }   /* não abre com esta chave: fica na caixa */
           var tp = l ? String(l.tipo || '').toLowerCase() : '';
           if (tp === 'saldo' || tp === 'investimento') {   /* a conferência com o banco (1.11.0) e os investimentos (1.12.0); nunca viram lançamento */
             if (window.SaldoBanco && (tp === 'saldo' ? SaldoBanco.receber(l) : SaldoBanco.receberInvest(l))) mudou = true; else ignorados++;
@@ -1539,8 +1894,8 @@
     },
     /* guarda a edição (fechada com a CF) e tenta mandar */
     enfileirar: async function (obj) {
-      if (!Sinc.gid || !Cadeado.aberto() || !obj || !obj.id) return false;
-      var f = await this.fila(), cif = await Cadeado.selar(JSON.stringify(obj));
+      if (!Sinc.gid || !Cadeado.aberto() || !obj || !obj.id || !Cadeado.vejoTudo()) return false;
+      var f = await this.fila(), cif = await Cadeado.selar(JSON.stringify(obj), 'espelho|r.' + obj.id);
       f = f.filter(function (x) { return x.id !== obj.id; }); f.push({ id: obj.id, cif: cif });
       await IDB.set('kv', this.k(), f);
       var self = this; setTimeout(function () { self.enviar(); }, 0);
@@ -1751,6 +2106,9 @@
       var dica = function (t) { return '<p class="nv-tiny">' + t + '</p>'; };
       /* 1. seus dados */
       var s1 = '<div class="nv-nota nv-est"><span id="nvStatus">' + esc(this.frase()) + '</span></div>' +
+        /* 1.14.0: este aparelho não tem as chaves do MoneyTRIO (a família foi preparada depois) ou a chave da família girou */
+        (Cadeado.precisaMk && !Cadeado.mk ? '<div class="nv-nota nv-alerta" id="nvSemMk">⚠️ ' + tt('Este aparelho ainda não tem as chaves novas da família no MoneyTRIO, por isso não guarda nada. Abra pelo PIN ou pela digital (🔒 Bloquear agora e abrir de novo). Se continuar, aprove este aparelho por outro aparelho seu.', 'This device does not have the family\'s new MoneyTRIO keys yet, so it saves nothing. Unlock with the PIN or fingerprint (🔒 Lock now and open again). If it persists, approve this device from another device of yours.') + '</div>' : '') +
+        (Cadeado.cfNova ? '<div class="nv-nota nv-alerta" id="nvCfNova">🔑 ' + tt('A chave da família mudou. Abra pelo PIN ou pela digital para este aparelho buscar a nova.', 'The family key changed. Unlock with the PIN or fingerprint so this device fetches the new one.') + '</div>' : '') +
         (Sinc.recusados ? '<button class="nv-btn" id="nvDeNovo">' + tt('Tentar de novo os não aceitos', 'Retry the ones not accepted') + '</button>' : '') +
         '<details class="nv-av" id="nvDadosDet"' + (abertos.nvDadosDet ? ' open' : '') + '><summary>' + tt('Ver detalhes', 'See details') + '</summary>' +
         dica(Sinc.vivos() + tt(' registros guardados, fechados com o cadeado da família.', ' records saved, locked with the family lock.') + '<br>' +
@@ -1797,7 +2155,7 @@
           sec('nvSecDados', '☁️ ' + tt('Seus dados', 'Your data'), s1) +
           sec('nvSecPin', '🔢 ' + tt('PIN e digital', 'PIN and fingerprint'), s2) +
           sec('nvSecAps', '📱 ' + tt('Seus aparelhos', 'Your devices'), s3) +
-          sec('nvSecRobo', '🤖 ' + tt('Robô do banco', 'Bank robot'), s4) +
+          (Cadeado.vejoTudo() ? sec('nvSecRobo', '🤖 ' + tt('Robô do banco', 'Bank robot'), s4) : '') +   /* 1.14.0: o robô é de quem vê tudo */
           sec('nvSecSair', '⏏ ' + tt('Sair', 'Sign out'), s5) +
         '</div></div>';
       var $ = function (s) { return el.querySelector(s); };
@@ -2408,8 +2766,17 @@
   var BUCKET = 'money-arquivos', RX_ARQ = /^[A-Za-z0-9_-]{6,80}$/;
   var Arquivos = {
     ativo: function () { return !!(Nuvem.iniciado && Cadeado.aberto() && Sinc.gid); },
+    /* 1.14.0: com as chaves do MoneyTRIO, 'MTA2' + escopo (1 byte: c|r) + versão (4) + iv (12) + AES-GCM. Quem vê tudo guarda
+       como reservado ("<grupo>/r/<id>"); quem vê só a casa, como da casa. */
     cifrar: async function (bytes) {
       if (!Cadeado.aberto()) throw new Error('cadeado fechado');
+      if (Cadeado.mk) {
+        var m = Cadeado.vejoTudo() ? 'r' : 'c', iv2 = Cifra.rnd(12), ct2 = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv2 }, Cadeado.mk[m], bytes));
+        var o2 = new Uint8Array(21 + ct2.length);
+        o2.set([77, 84, 65, 50, m.charCodeAt(0)], 0); new DataView(o2.buffer).setUint32(5, Cadeado.mk.v >>> 0); o2.set(iv2, 9); o2.set(ct2, 21);
+        return o2;
+      }
+      if (Cadeado.precisaMk) throw new Error('sem as chaves do MoneyTRIO');
       var iv = Cifra.rnd(12), ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, Cadeado.cf, bytes));
       var out = new Uint8Array(4 + 4 + 12 + ct.length);
       out.set([77, 84, 65, 49], 0); new DataView(out.buffer).setUint32(4, Cadeado.kv >>> 0); out.set(iv, 8); out.set(ct, 20);
@@ -2417,20 +2784,41 @@
     },
     decifrar: async function (bytes) {
       var b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+      if (b.length > 21 && b[0] === 77 && b[1] === 84 && b[2] === 65 && b[3] === 50) {
+        var m = String.fromCharCode(b[4]), mv = new DataView(b.buffer, b.byteOffset).getUint32(5);
+        if (!Cadeado.mk || !Cadeado.mk[m] || mv !== (Cadeado.mk.v >>> 0)) { var e2 = new Error('chave de outra versão'); e2.codigo = 'kv'; throw e2; }
+        return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b.slice(9, 21) }, Cadeado.mk[m], b.slice(21)));
+      }
       if (b.length < 21 || b[0] !== 77 || b[1] !== 84 || b[2] !== 65 || b[3] !== 49) throw new Error('formato');
       if (!Cadeado.aberto()) throw new Error('cadeado fechado');
       var kv = new DataView(b.buffer, b.byteOffset).getUint32(4);
       if (kv !== (Cadeado.kv >>> 0)) { var e = new Error('chave de outra versão'); e.codigo = 'kv'; throw e; }
       return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b.slice(8, 20) }, Cadeado.cf, b.slice(20)));
     },
-    url: function (id, ler) {
+    url: function (id, ler, r) {
       if (!RX_ARQ.test(String(id))) throw new Error('id do arquivo');
-      return SB + '/storage/v1/object/' + (ler ? 'authenticated/' : '') + BUCKET + '/' + Sinc.gid + '/' + id;
+      return SB + '/storage/v1/object/' + (ler ? 'authenticated/' : '') + BUCKET + '/' + Sinc.gid + '/' + (r ? 'r/' : '') + id;
+    },
+    reservado: function (b) { return b && b[3] === 50 && b[4] === 114; },   /* 'MTA2' + 'r' */
+    /* 1.14.0: a migração — o comprovante antigo (CF, caminho da casa) vai para "r/" com a CR e a cópia antiga sai. true = mexeu */
+    migrar: async function (id) {
+      var t = await Conta.token(); if (!t) throw new Error('sem sessão');
+      var h = { apikey: KEY, Authorization: 'Bearer ' + t };
+      var r = await fetch(this.url(id, true), { headers: h });
+      if (r.status === 404 || r.status === 400) return false;
+      if (!r.ok) throw new Error('Storage ' + r.status);
+      var b = new Uint8Array(await r.arrayBuffer());
+      if (b[3] === 49) await this.subir(id, b);   /* subir recifra (MTA1 → MTA2 r) e guarda em "r/" */
+      var d = await fetch(this.url(id), { method: 'DELETE', headers: h });
+      if (!d.ok && d.status !== 404 && d.status !== 400) throw new Error('Storage apagar ' + d.status);
+      return true;
     },
     /* sobe os bytes JÁ cifrados. true = guardado (ou já estava); erro com .codigo 'sembucket' se o SQL ainda não foi aplicado */
     subir: async function (id, cifrados) {
       var t = await Conta.token(); if (!t) throw new Error('sem sessão');
-      var r = await fetch(this.url(id), { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + t, 'Content-Type': 'application/octet-stream', 'x-upsert': 'false' }, body: cifrados });
+      /* 1.14.0: guardado neste aparelho com a CF antes da migração: sobe já com as chaves do MoneyTRIO (nada novo com a CF) */
+      if (Cadeado.mk && cifrados[3] === 49) cifrados = await this.cifrar(await this.decifrar(cifrados));
+      var r = await fetch(this.url(id, false, this.reservado(cifrados)), { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + t, 'Content-Type': 'application/octet-stream', 'x-upsert': 'false' }, body: cifrados });
       if (r.ok) return true;
       var txt = await r.text().catch(function () { return ''; });
       if (r.status === 409 || /duplicate|already exists/i.test(txt)) return true;
@@ -2441,7 +2829,9 @@
     /* baixa os bytes cifrados; null se não existe */
     baixar: async function (id) {
       var t = await Conta.token(); if (!t) throw new Error('sem sessão');
-      var r = await fetch(this.url(id, true), { headers: { apikey: KEY, Authorization: 'Bearer ' + t } });
+      /* quem vê tudo procura primeiro em "r/" (o dele) e depois no da casa */
+      var r = Cadeado.mk && Cadeado.vejoTudo() ? await fetch(this.url(id, true, true), { headers: { apikey: KEY, Authorization: 'Bearer ' + t } }) : null;
+      if (!r || r.status === 404 || r.status === 400) r = await fetch(this.url(id, true), { headers: { apikey: KEY, Authorization: 'Bearer ' + t } });
       if (r.status === 404 || r.status === 400) return null;
       if (!r.ok) { var e = new Error('Storage ' + r.status); e.status = r.status; throw e; }
       return new Uint8Array(await r.arrayBuffer());
@@ -2452,13 +2842,15 @@
   var Ponte = {
     vistos: new Set(),
     buscar: async function () {
-      if (!window.MoneyModulos || !Cadeado.aberto()) return [];
+      if (!window.MoneyModulos || !Cadeado.aberto() || !Cadeado.vejoTudo()) return [];   /* 1.14.0: a ponte é só de quem vê tudo */
       var rows; try { rows = await Conta.rpc('sol_ponte_minha_caixa', { p_app: APP, p_so_nao_lidas: true, p_limite: 50 }); } catch (e) { return []; }
       var out = [];
       for (var i = 0; i < (rows || []).length; i++) {
         var r = rows[i]; if (this.vistos.has(r.id) || (r.grupo_id && r.grupo_id !== Cadeado.gid)) continue;
         this.vistos.add(r.id);
         var d = r.dados || {}, cif = d.cif == null ? null : (typeof d.cif === 'string' ? d.cif : JSON.stringify(d.cif));
+        /* 1.14.0: fechada com uma CF mais nova (a família girou a chave): este aparelho precisa abrir pelo PIN para buscá-la */
+        try { var pc = cif && JSON.parse(cif); if (pc && pc.fk && pc.fk !== Cadeado.fk && (pc.kv || 0) > (Cadeado.kv || 0)) { Cadeado.cfNova = true; this.vistos.delete(r.id); continue; } } catch (e) {}
         out.push({ id: r.id, de_app: r.de_app, tipo: r.tipo, criado_em: r.criado_em, conteudo: cif ? await Cadeado.abrir(cif) : null });
       }
       if (out.length) MoneyModulos.emitir('ponte.recebida', out);
@@ -2469,6 +2861,14 @@
 
   var Nuvem = {
     ponte: { marcarLido: function (id) { return Ponte.marcarLido(id); } },
+    /* 1.14.0 (3.66): os dois cofres — para a tela "Família no MoneyTRIO" (modulos/visao-casa.js) */
+    escopos: {
+      feito: function () { return Escopos.feito(); }, migrar: function (andar) { return Escopos.migrar(andar); },
+      conferir: function () { return Escopos.conferir(); }, liberar: function (uid, v) { return Escopos.liberar(uid, v); },
+      visoes: function () { return Visao.lista(Sinc.gid); }, minha: function () { return Visao.minha(Sinc.gid); },
+      definir: function (uid, v) { return Visao.definir(Sinc.gid, uid, v); },
+      estado: function () { return { mk: !!Cadeado.mk, tudo: Cadeado.vejoTudo(), precisaMk: !!Cadeado.precisaMk, cfNova: !!Cadeado.cfNova, pin: !!Cadeado.dukRaw, rodando: Escopos.rodando, feito: Escopos.feito() }; }
+    },
     /* 1.11.0: planilha espelho e os membros da família (para o cadastro de pessoas) */
     espelho: { enfileirar: function (o) { return Espelho.enfileirar(o); }, enviar: function () { return Espelho.enviar(); },
       pendentes: function () { return Espelho.pendentes(); }, selar: function (t, j, g, o) { return Espelho.selar(t, j, g, o); },
@@ -2558,6 +2958,9 @@
         if (!lista) return Portao.mensagem(tt('Sem internet', 'No internet'), tt('Para a primeira vez neste ' + apN() + ', ligue a internet.', 'For the first time on this ' + apN() + ', connect to the internet.'), [[tt('Tentar de novo', 'Try again'), function () { Nuvem.depoisDaConta(); }]]);
       }
       var minhas = (lista || []).filter(function (g) { return g.meu_papel === 'chefe' || g.meu_papel === 'responsavel'; });
+      /* 1.14.0 (3.66): o membro que o chefe liberou com a visão "Só a casa" também entra (vê só a parte da casa) */
+      var outras = (lista || []).filter(function (g) { return minhas.indexOf(g) < 0; });
+      for (var oi = 0; oi < outras.length && navigator.onLine; oi++) { if (await Visao.minha(outras[oi].grupo_id) === 'casa') { outras[oi].visao = 'casa'; minhas.push(outras[oi]); } }
       if (!minhas.length) {
         return Portao.mensagem(tt('Nenhuma família para as finanças', 'No family for finances'), tt('As finanças ficam com a família, e só chefe ou responsável veem. Esta conta (', 'Finances belong to the family, and only heads or guardians see them. This account (') + esc(Conta.email()) + tt(') não é chefe nem responsável de nenhuma família. Crie ou entre na família pelo OmniLifeONE e volte aqui.', ') is not head or guardian of any family. Create or join the family in OmniLifeONE and come back.'),
           [[tt('Sair da conta', 'Sign out'), function () { Nuvem.sair(false); }], [tt('Tentar de novo', 'Try again'), function () { Nuvem.depoisDaConta(); }]]);
@@ -2633,13 +3036,14 @@
       try { return await this._buscarAgora.apply(this, arguments); } finally { if (typeof Fundo !== 'undefined' && Fundo.esconder) Fundo.esconder('nuvem'); }
     },
     _buscarAgora: async function () {
-      if (!this.iniciado || !Cadeado.aberto() || this._buscando) return;
+      if (!this.iniciado || !Cadeado.aberto() || this._buscando || Escopos.rodando) return;
       this._buscando = true;
       try {
         if (!navigator.onLine || !Conta.on()) return;
         await Sinc.registrar();
         await Sinc.enviar();
         var mudou = await Sinc.buscar();
+        if (await Escopos.copiaVelha()) return;   /* 1.14.0: a família migrou depois desta cópia: baixa tudo de novo */
         if (mudou.length) {
           var abertos = [];
           for (var i = 0; i < mudou.length; i++) abertos.push([mudou[i][0], mudou[i][1] ? await Cadeado.abrir(mudou[i][1]) : null]);
@@ -2655,11 +3059,15 @@
     },
     /* mudanças que vieram de outro aparelho → dentro do Store, sem recarregar */
     aplicar: function (lista) {
-      var est = Store.estado, mexeu = false, idx = {};
+      var est = Store.estado, mexeu = false, idx = {}, sep = separa();
+      /* 1.14.0: o que saiu antes do que entrou (um item que trocou de escopo chega como "saiu daqui, entrou ali") */
+      lista = lista.slice().sort(function (a, b) { return (a[1] ? 1 : 0) - (b[1] ? 1 : 0); });
       lista.forEach(function (p) {
         var k = p[0], o = p[1], c = k.indexOf('|'), col = k.slice(0, c), id = k.slice(c + 1);
         if (col === 'config') {
           if (RESERVADOS[id]) return;
+          if (id.slice(0, 2) === 'r.') id = id.slice(2);
+          else if (sep && Escopo.deConfig(id) === 'reservado') return;   /* a da casa com o mesmo nome não passa por cima da minha */
           if (id === 'tax') { if (o) { est.tax = est.tax || {}; Object.keys(o.v || {}).forEach(function (x) { est.tax[x] = o.v[x]; }); } }
           else if (o) { var v = o.v; if (id === 'config' && v && typeof v === 'object') { v = Object.assign({}, v, { chaves: (est.config && est.config.chaves) || {} }); } est[id] = v; }
           mexeu = true; return;
@@ -2671,6 +3079,7 @@
           else return;   /* coleção que esta versão não conhece: fica guardada, não aparece */
         }
         if (!idx[col]) { idx[col] = {}; idsDaLista(lista2).forEach(function (q, i) { idx[col][q[0]] = i; }); }
+        if (id.slice(0, 2) === 'r.') id = id.slice(2);
         var i = idx[col][id];
         if (o) { if (i == null) { lista2.push(o); idx[col][id] = lista2.length - 1; } else lista2[i] = o; }
         else if (i != null) { lista2.splice(i, 1); idx[col] = null; }
@@ -2695,6 +3104,7 @@
       var lista; try { lista = await Conta.rpc('sol_meus_grupos'); } catch (e) { return; }
       var g = (lista || []).find(function (x) { return x.grupo_id === Sinc.gid; });
       if (g && (g.meu_papel === 'chefe' || g.meu_papel === 'responsavel')) return;
+      if (g) { var vm = await Visao.minha(Sinc.gid); if (vm === 'casa' || vm === undefined) return; }   /* 1.14.0: membro com a visão da casa (ou sem resposta: não apaga) */
       await Sinc.apagarFamilia(Sinc.gid);
       var L = await Cadeado.local(); if (L && L.fam) { delete L.fam[Sinc.gid]; await Cadeado.gravar(L); }
       await Cadeado.trancar(); lsDel(K_FAM);
@@ -2741,7 +3151,7 @@
       lsDel(K_FAM);
     },
     /* para os testes automáticos (teste/nuvem.js): as peças, sem estado aberto */
-    _teste: { Pin: Pin, Painel: Painel, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao, Espelho: Espelho }
+    _teste: { Pin: Pin, Painel: Painel, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao, Espelho: Espelho, Escopos: Escopos, Visao: Visao, Arquivos: Arquivos }
   };
   function nomeConta() { var s = Conta.ler() || {}, d = Conta.dados(s.access_token).user_metadata || {}; return String(s.nome || d.full_name || d.name || '').trim() || String(Conta.email() || '').split('@')[0]; }
   function confirmar(t) { try { return window.confirm(t); } catch (e) { return false; } }

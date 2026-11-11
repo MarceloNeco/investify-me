@@ -629,7 +629,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.65.2"></script>
+<script src="textos/frases-en.js?v=3.66"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7493,7 +7493,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.65.2"></script>
+<script src="textos/mudancas.js?v=3.66"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -9564,6 +9564,9 @@ const APPS = {
            itens:['Imposto do salário, no mês e no ano','PJ × CLT com Simples e Fator R','Declarações, restituição e protocolos']}
 };
 
+/* 3.66: quem vê só a parte da casa (modulos/visao-casa.js) usa só o BudgetONE: os outros dois nem aparecem */
+function appsVisiveis(){ return (window.Escopo && Escopo.soCasa && Escopo.soCasa()) ? ['budget'] : ['budget','investify','tax']; }
+
 /* as abas de cada app — a barra lateral e a de baixo saem daqui */
 const ABAS = {
   budget: [
@@ -9637,7 +9640,7 @@ function viewHub(){
       '<p class="hub-frase">' + esc(t('app.trio')) + '</p>' +
     '</div><div class="hub-grade">';
 
-  ['budget','investify','tax'].forEach(k => {
+  appsVisiveis().forEach(k => {
     const a = APPS[k];
     h += '<button class="hub-card' + (a.pronto ? '' : ' hub-em-breve') + '" data-app="' + k + '"' +
          (a.pronto ? '' : ' disabled') + ' style="--ccard:var(' + a.cor + ')">' +
@@ -9662,6 +9665,7 @@ function viewHub(){
 }
 
 function abrirApp(k){
+  if(appsVisiveis().indexOf(k) < 0) k = 'budget';
   if(!APPS[k] || !APPS[k].pronto) return;
   ST.appAtual = k;
   Store.salvar();
@@ -9673,6 +9677,7 @@ function abrirApp(k){
 }
 
 function mostrarHub(){
+  if(appsVisiveis().length === 1) return abrirApp(appsVisiveis()[0]);
   $('#app').classList.add('hidden');
   const t = $('#hubTela');
   t.innerHTML = Verter.html(viewHub());
@@ -9720,7 +9725,7 @@ function menuDeApps(){
      MoneyTRIO, com o seletor dos três) e os OUTROS sub-apps */
   const atual = ST.appAtual || 'investify';
   const pt = I18n.atual !== 'en';
-  const outros = Object.keys(APPS).filter(k => APPS[k].pronto && k !== atual);
+  const outros = Object.keys(APPS).filter(k => APPS[k].pronto && k !== atual && appsVisiveis().indexOf(k) >= 0);
   return '<div class="app-menu" id="appMenu">' +
   '<button class="app-op app-op-inicio" role="menuitem" data-trocaapp="__hub">' +
     '<span class="app-op-ico">⌂</span>' +
@@ -9787,9 +9792,10 @@ function viewBPainel(){
   h += '<div class="kpis">' +
     kpiB('Entrou por mês', fmt(real.entrada), 'renda-mensal', 'média dos 12 meses', '', 'b-renda') +
     kpiB('Saiu por mês', fmt(real.saida), 'gasto-mensal', c.n + ' lançamentos no período', '', 'b-lanc') +
+    ((window.Escopo && Escopo.soCasa && Escopo.soCasa()) ? '' :   /* 3.66: na visão da casa, "Sobrou" não teria sentido (a renda dela menos o gasto da família) */
     kpiB('Sobrou por mês', fmt(real.entrada - real.saida), 'sobra-mensal',
          real.entrada ? pnum((real.entrada - real.saida) / real.entrada * 100, 0) + '% do que entrou' : '—',
-         (real.entrada - real.saida) >= 0 ? 'up' : 'down', 'b-fluxo') +
+         (real.entrada - real.saida) >= 0 ? 'up' : 'down', 'b-fluxo')) +
     kpiB('Custo de viver', fmt(fixo.mensal), 'custo-fixo', fixo.itens.length + ' compromissos fixos', '', 'b-custos') +
     '</div>';
   /* 3.64: indicadores do mês e a conferência com o saldo do banco (modulos/indicadores.js, modulos/saldo-banco.js) */
@@ -10351,7 +10357,7 @@ function abrirRecorrente(id, semente, op){
 
     '<div class="grid g2">' +
       campo(de('Conta de acesso', 'Login account'), '<input id="rcConta" autocomplete="off" value="' + esc(r.conta || '') + '" placeholder="' + de('ex.: o e-mail usado no serviço', 'e.g. the e-mail used on the service') + '">') +
-      campo(de('Cartão ou forma de pagamento', 'Card or payment method'), '<input id="rcCartao" autocomplete="off" value="' + esc(r.cartao || '') + '" placeholder="' + de('ex.: Itaú Black final 6514', 'e.g. Visa ending 6514') + '">') +
+      campo(de('Cartão ou forma de pagamento', 'Card or payment method'), '<input id="rcCartao" autocomplete="off" value="' + esc(r.cartao || '') + '" placeholder="' + de('ex.: Itaú Black final 1101', 'e.g. Visa ending 1101') + '">') +
     '</div>' +
     campo(de('Observação', 'Note'), '<textarea id="rcObs" rows="2">' + esc(r.obs || '') + '</textarea>') +
     (window.MoneyModulos ? MoneyModulos.html('compromisso.detalhes', {r: r}) : '') +
@@ -26328,7 +26334,7 @@ function viewConfig(){
     {id:'investify', nome:'InvestifyONE',   desc:'Cotações, chaves e fita'},
     {id:'budget',    nome:'BudgetONE',      desc:'Avisos e orçamento'},
     {id:'tax',       nome:'TaxONE',         desc:'Salário e barra de baixo'}
-  ];
+  ].filter(x => x.id === 'todos' || appsVisiveis().indexOf(x.id) >= 0);   /* 3.66: na visão da casa, só as do BudgetONE */
   let h = '<div class="card-head"><h1>Configurações</h1></div>' +
     '<div class="cfg-abas">' + ABAS_CFG.map(x =>
       '<button class="cfg-aba' + (sec === x.id ? ' on' : '') + '" data-cfgsec="' + x.id + '">' +
@@ -27348,6 +27354,7 @@ function toast(msg, tipo){
 }
 
 function irPara(v){
+  if(v !== 'config' && appsVisiveis().indexOf(appDaView(v)) < 0) v = 'b-painel';   /* 3.66: visão da casa */
   /* clicou numa aba do outro app: troca de app junto */
   const dono = appDaView(v);
   if(v !== 'config' && dono !== (ST.appAtual || 'investify')){
@@ -29736,7 +29743,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/pessoas.js?v=1.1.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=2.1.0"></script>
-<script src="modulos/espelho.js?v=1.1.1"></script>
+<script src="modulos/espelho.js?v=1.1.2"></script>
 <script src="modulos/tour.js?v=1.0.0"></script>
 <script src="modulos/cartoes.js?v=1.0.0"></script>
 <script src="modulos/cartao-foto.js?v=1.0.0"></script>
@@ -29745,6 +29752,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/origem.js?v=1.0.1"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
-<script src="nuvem.js?v=1.13.0"></script>
+<script src="modulos/visao-casa.js?v=1.0.0"></script>
+<script src="nuvem.js?v=1.14.0"></script>
 </body>
 </html>

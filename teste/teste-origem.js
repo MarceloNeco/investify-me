@@ -136,8 +136,8 @@ const LOCAL = { v: 1, config: { pessoasV: 2 }, posicoes: [], recorrentes: [], ga
       SaldoBanco.receber({ tipo: 'saldo', id: 'saldo-x-2026-11-01', banco: 'Banco Alfa', conta: 'alfa', saldo: 3.7, data: '2026-11-01' });   /* o antigo (sem conta_id) */
       SaldoBanco.receber({ tipo: 'saldo', id: 's1', banco: 'Banco Alfa', conta: 'Conta corrente', conta_id: 'ca1', categoria_conta: 'conta', final_conta: '1234', saldo: 3.7, data: '2026-11-10' });
       SaldoBanco.receber({ tipo: 'saldo', id: 's2', banco: 'Banco Alfa', conta: 'Poupança', conta_id: 'ca2', categoria_conta: 'poupanca', final_conta: '5678', saldo: 0, data: '2026-11-10' });
-      SaldoBanco.receber({ tipo: 'saldo', id: 's3', banco: 'Banco Alfa', conta: 'BLACK TESTE', conta_id: 'cc1', categoria_conta: 'cartao', final_conta: '6514', saldo: -22725.83, fatura_aberta: -22725.83, vence: '2026-11-25', fecha: '2026-11-18', limite: 50000, disponivel: 27274.17, data: '2026-11-10' });
-      SaldoBanco.receber({ tipo: 'saldo', id: 's4', banco: 'Banco Beta', conta: 'VISA TESTE', conta_id: 'cc2', categoria_conta: 'cartao', final_conta: '9392', saldo: -830, data: '2026-11-10' });
+      SaldoBanco.receber({ tipo: 'saldo', id: 's3', banco: 'Banco Alfa', conta: 'BLACK TESTE', conta_id: 'cc1', categoria_conta: 'cartao', final_conta: '1101', saldo: -22725.83, fatura_aberta: -22725.83, vence: '2026-11-25', fecha: '2026-11-18', limite: 50000, disponivel: 27274.17, data: '2026-11-10' });
+      SaldoBanco.receber({ tipo: 'saldo', id: 's4', banco: 'Banco Beta', conta: 'VISA TESTE', conta_id: 'cc2', categoria_conta: 'cartao', final_conta: '4404', saldo: -830, data: '2026-11-10' });
       SaldoBanco.receber({ tipo: 'saldo', id: 's5', banco: 'Banco Gama', conta: 'Conta Investimento', conta_id: 'ci1', categoria_conta: 'conta', saldo: 0, data: '2026-11-10' });
       SaldoBanco.receberInvest({ tipo: 'investimento', id: 'i1', banco: 'Banco Gama', conta: 'CDB EXEMPLO 2028', conta_id: 'iv1', classe: 'renda fixa', saldo: 15000, data: '2026-11-10', vencimento: '2028-01-15' });
       Store.salvar(); irPara('b-painel');
