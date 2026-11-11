@@ -149,7 +149,12 @@
       };
       if (!limpo.nome) throw new Error(tr('Escreva o nome.', 'Type the name.'));
       if (d.uid) limpo.uid = String(d.uid); if (d.perfil) limpo.perfil = String(d.perfil);
-      if (p) { Object.assign(p, limpo); delete p.revisar; }
+      if (p) {
+        var velho = API.rotulo(p);
+        Object.assign(p, limpo); delete p.revisar;
+        /* o nome de antes continua achando a pessoa (registro que chega de outro aparelho com o nome velho) */
+        if (velho && N(velho) !== N(API.rotulo(p)) && chaves(p).indexOf(N(velho)) < 0) p.banco.push(velho);
+      }
       else { p = Object.assign({ id: novoId(), criadoEm: new Date().toISOString() }, limpo); lista().push(p); }
       API.religar(); API.propagar(p.id);
       return p;

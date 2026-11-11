@@ -80,9 +80,12 @@ async function parteA(b, BASE) {
         const z = Pessoas.achar('Zeca'); Pessoas.salvar({ id: z.id, tipo: 'casa', papel: 'responsavel', nome: 'Carlos', sobrenome: 'Exemplo', apelido: '', banco: (z.banco || []).concat(['ZECA']) });
         const l = Pessoas.achar('Lulu'); Pessoas.salvar({ id: l.id, tipo: 'casa', papel: 'dependente', nome: 'Lulu', banco: l.banco });
         Store.salvar(); render();
-        return { g1: Gasto.todos().find((g) => g.id === 'a1').quem, g2: Gasto.todos().find((g) => g.id === 'a2').quem, rec: Recorrente.todos()[0].pagador, achaZeca: Pessoas.rotulo(Pessoas.achar('zeca')) };
+        const l2 = Pessoas.achar('Lulu'); Pessoas.salvar({ id: l2.id, tipo: 'casa', papel: 'dependente', nome: 'Luiza', apelido: 'Lu', banco: [] });
+        const velho = Gasto.arruma({ data: '2026-09-09', valor: 1, grupo: 'PESSOAL', sub: 'X', desc: 'Y', quem: 'Lulu' });   /* chega de outro aparelho com o nome velho */
+        Pessoas.salvar({ id: l2.id, tipo: 'casa', papel: 'dependente', nome: 'Lulu', apelido: '', banco: Pessoas.porId(l2.id).banco });
+        return { g1: Gasto.todos().find((g) => g.id === 'a1').quem, g2: Gasto.todos().find((g) => g.id === 'a2').quem, rec: Recorrente.todos()[0].pagador, achaZeca: Pessoas.rotulo(Pessoas.achar('zeca')), velho: [velho.quem, velho.quemId === l2.id] };
       });
-      ok(ren.g1 === 'Carlos' && ren.g2 === 'Carlos' && ren.rec === 'Carlos' && ren.achaZeca === 'Carlos', 'renomear "Zeca" para "Carlos" muda nos lançamentos e no compromisso na hora; "zeca" (o apelido do banco) continua achando a pessoa');
+      ok(ren.g1 === 'Carlos' && ren.g2 === 'Carlos' && ren.rec === 'Carlos' && ren.achaZeca === 'Carlos' && ren.velho.join('|') === 'Lu|true', 'renomear "Zeca" para "Carlos" muda nos lançamentos e no compromisso na hora; "zeca" (o apelido do banco) continua achando a pessoa; o nome de antes também (registro que chega de outro aparelho)');
       /* ---- "é a mesma pessoa?" e "A identificar" ---- */
       await p.evaluate(() => { Gasto.add({ data: '2026-09-08', valor: 25, grupo: 'PESSOAL', sub: 'Presente', desc: 'PIX AVULSO', quem: 'Fulano Tal' }); Store.salvar(); irPara('cfg-pessoas'); }); await p.waitForTimeout(300);
       const tel = await p.evaluate(() => ({ q: [...document.querySelectorAll('#view-cfg-pessoas .ps-q')].map((x) => x.textContent.replace(/\s+/g, ' ').trim()), rev: !!document.querySelector('.ps-revise') }));
