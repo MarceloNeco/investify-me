@@ -44,3 +44,13 @@ psql -d lab -f investify-me/teste/sql/teste-sol-aparelhos.sql 2>&1 | grep -E "ok
 Resultado em 06/Nov/2026 (Postgres 16): rodou duas vezes sem erro; 46 "ok", nenhuma falha (tabelas fechadas, desafio e
 revelar uma vez, resposta uma vez e apagada ao ler, vencido sem resposta, até 3 pedidos, responsável aprova, membro não,
 tirar aparelho, passkeys só da própria pessoa); `sql-grants.js`: OK.
+
+**PIN da conta (plataforma, 11/Nov/2026)** — `supabase/2026-11-11-sol-pin-conta.sql` (depois do `2026-11-07-sol-aparelhos.sql`) e
+`teste/sql/teste-sol-pin-conta.sql`.
+```
+for i in 1 2; do psql -d lab -v ON_ERROR_STOP=1 -f investify-me/supabase/2026-11-11-sol-pin-conta.sql; done
+psql -d lab -f investify-me/teste/sql/teste-sol-pin-conta.sql 2>&1 | grep -E "ok:|FALHOU"
+```
+Resultado em 11/Nov/2026 (Postgres 16): rodou duas vezes sem erro; 31 "ok", nenhuma falha (migração com PINs diferentes, troca que
+vale em todos, espera a partir do 5º erro, bloqueio no 10º, desbloquear por aprovação própria em até 10 min, família não troca,
+outra pessoa e aparelho tirado não conferem, o banco guarda só SHA-256(v)).
