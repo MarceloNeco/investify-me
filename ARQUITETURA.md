@@ -682,6 +682,10 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   `leitor/tesseract/`; de `assets/ocr/` saiu tudo menos ZXing e jsQR; `CACHE_OCR` foi para `moneytrio-ocr-2` e a ativação apaga o
   `ocr-1` (quem já tinha baixa o Tesseract uma vez, de `leitor/`). Atualizar o motor: copiar de novo do leitor-ocr (mudanças lá só pelo PEDIDOS.md).
   Teste: `teste/teste-cartao-foto.js` (cartões fictícios com os números de teste públicos das bandeiras).
+  **Reenvio do robô** (`Caixa.corrigir`, 1.12.0): lançamento editado OU confirmado pela pessoa (`editadoPessoa` ou `confirmadoEm`) fica
+  como ela deixou; os campos que ela não vê nem edita (`CAMPOS_META`: `finalCartao`, `contaCartao`, `contraparte`) entram sem perguntar; o
+  resto vira `roboSugeriu` (e só ele marca para conferir). Intocado: ganha tudo, mais a `confianca` (`marcarConfianca`). O id do robô
+  (`rb_…`) evita dobra. Teste: `teste/teste-nuvem.js` (reenvio de tudo).
   **Declaração com escolhas** (`modulos/declaracao-escolhas.js`, ponto `declaracao.escolhas`): bens sem liquidez com dono e dívida,
   restituição prevista (desmarcada), imposto em compromissos (dia −1), conferência de deduções. Testes: `teste/teste-tour.js`,
   `teste/teste-cartoes-contraparte.js`; teste-desktop (descrição longa, calendário animado); teste-pessoas-espelho (barra com %).

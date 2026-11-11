@@ -385,6 +385,35 @@ let BASE = '';
     await A.click('[data-acao="robo-aceitar"]');
     gc = await A.evaluate(() => JSON.parse(JSON.stringify(Store.estado.gastos.find((g) => g.id === 'rb_pluggy-e2e-1'))));
     ok(gc && gc.valor === 95 && !gc.roboSugeriu && !gc.editadoPessoa && !gc.revisar, '"Usar o do robô" aplica e limpa a marca');
+    /* 3.65: o robô reenvia TUDO o que já entregou, agora com final, conta_cartao, contraparte e confianca */
+    const entregar = async (l) => {
+      let row = db.money_entrada.find((e) => e.id === l.id);
+      if (!row) { row = { grupo_id: GID, id: l.id, pacote: '', origem: 'pluggy', criado_em: agora(), consumido_em: null }; db.money_entrada.push(row); }
+      row.pacote = selarPy(l); row.consumido_em = null;
+      await A.evaluate(() => MoneyNuvem._teste.Caixa.esvaziar()); for (let i = 0; i < 40 && !row.consumido_em; i++) await esperar(250);
+    };
+    const base3 = (n) => Object.assign({}, lanc, { id: 'pluggy-re-' + n, descricao: 'Posto reenvio ' + n, valor: 40 + n, final: '', cartao: '' });
+    for (const n of [1, 2, 3]) await entregar(base3(n));
+    await A.evaluate(() => {
+      Gasto.atualizar('rb_pluggy-re-2', { desc: 'Meu posto (editado)', sub: 'Pedágio', editadoPessoa: true });
+      Gasto.atualizar('rb_pluggy-re-3', { confirmadoEm: '2026-11-10T12:00:00Z' }); Store.salvar();
+    });
+    const extra = { final: '9876', cartao: 'Visa', conta_cartao: { id: 'acc-re-1', nome: 'CARTAO REENVIO' }, contraparte: { cnpj: '11222333000181', nome: 'POSTO REENVIO LTDA' }, confianca: 'palpite' };
+    for (const n of [1, 2, 3]) await entregar(Object.assign(base3(n), extra, n === 3 ? { categoria: 'Estacionamento' } : {}));
+    const re = await A.evaluate(() => JSON.parse(JSON.stringify(Store.estado.gastos.filter((g) => /^rb_pluggy-re-/.test(g.id)))));
+    const r1 = re.find((g) => g.id === 'rb_pluggy-re-1'), r2 = re.find((g) => g.id === 'rb_pluggy-re-2'), r3 = re.find((g) => g.id === 'rb_pluggy-re-3');
+    ok(re.length === 3, 'reenvio de tudo: nada criado em dobro (3 lançamentos, 3 reenvios)');
+    ok(r1 && r1.confianca === 'palpite' && r1.finalCartao === '9876' && r1.contaCartao && r1.contaCartao.id === 'acc-re-1' && r1.contraparte && r1.contraparte.cnpj === '11222333000181' && !r1.roboSugeriu,
+      'intocado: ganha a confiança ("A confirmar"), o final, a conta do cartão e a contraparte');
+    ok(r2 && r2.desc === 'Meu posto (editado)' && r2.sub === 'Pedágio' && !r2.confianca && r2.finalCartao === '9876' && r2.contraparte && r2.contraparte.cnpj === '11222333000181',
+      'editado pela pessoa: a edição fica; o final, a conta do cartão e a contraparte (que ela não vê) entram; não vira "A confirmar"');
+    ok(r2 && r2.roboSugeriu && !('finalCartao' in r2.roboSugeriu) && !('contraparte' in r2.roboSugeriu), 'editado: o final e a contraparte não viram "o robô sugeriu outra coisa"');
+    ok(r3 && r3.sub === 'Combustível' && !r3.confianca && r3.finalCartao === '9876' && r3.roboSugeriu && r3.roboSugeriu.sub === 'Estacionamento' && r3.revisar,
+      'confirmado pela pessoa: a categoria dela fica (o robô mudou para Estacionamento: vira sugestão); ganha o final e a contraparte');
+    /* limpa: os passos seguintes contam os lançamentos e as linhas da caixa */
+    await A.evaluate(() => { ['rb_pluggy-re-1', 'rb_pluggy-re-2', 'rb_pluggy-re-3'].forEach((id) => Gasto.excluir(id)); Store.salvar(); });
+    await A.evaluate(async () => { await MoneyNuvem._teste.Sinc.registrar(); await MoneyNuvem._teste.Sinc.enviar(); });
+    for (let i = db.money_entrada.length - 1; i >= 0; i--) if (/^pluggy-re-/.test(db.money_entrada[i].id)) db.money_entrada.splice(i, 1);
     /* 3.39 (N24): transferência do robô não some: fica guardada (em cinza) e não vira lançamento */
     const tf = { id: 'pluggy-tf-1', data: '2026-11-03', valor: 95, tipo: 'transferencia', grupo: '', categoria: '', descricao: 'TED para Itaú', quem: '', forma: 'Pix', cartao: '', final: '', banco: 'BTG', ir: false, freq: 'Pontual', origem: 'pluggy', cat_pluggy: 'Transfer' };
     db.money_entrada.push({ grupo_id: GID, id: 'pluggy-tf-1', pacote: selarPy(tf), origem: 'pluggy', criado_em: agora(), consumido_em: null });

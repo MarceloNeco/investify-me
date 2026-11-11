@@ -1342,6 +1342,7 @@
        A pessoa não mexeu nele: atualiza. A pessoa editou: a edição dela vence; guarda o que o robô
        sugeriu (roboSugeriu) e marca para conferir, para ela decidir. Devolve 'corrigido', 'sugerido' ou ''. */
     CAMPOS_ROBO: ['data', 'valor', 'grupo', 'sub', 'desc', 'quem', 'forma', 'conta', 'irpf', 'per', 'cartaoId', 'cartaoNome', 'formaId', 'catPluggy', 'origemRobo', 'irTexto', 'estorno', 'finalCartao', 'contaCartao', 'contraparte'],
+    CAMPOS_META: ['finalCartao', 'contaCartao', 'contraparte'],
     corrigir: function (ja, g) {
       var muda = {}, n = 0;
       if (g.paraQuem && g.paraQuem !== ja.paraQuem) { muda.paraQuem = g.paraQuem; n++; }   /* "para_quem" só quando o robô manda */
@@ -1350,10 +1351,16 @@
         if (JSON.stringify(a) !== JSON.stringify(b)) { muda[k] = g[k]; n++; }
       });
       if (!n) { if (ja.roboSugeriu) { delete ja.roboSugeriu; return 'corrigido'; } return ''; }
-      if (ja.editadoPessoa) {
+      if (ja.editadoPessoa || ja.confirmadoEm) {   /* 1.12.0: confirmado pela pessoa vale como editado */
+        /* o que a pessoa não vê nem edita (o final, a conta do cartão, a contraparte) entra sem perguntar;
+           o resto vira sugestão, e só ele marca para conferir */
+        var meta = {}, nm = 0;
+        this.CAMPOS_META.forEach(function (k) { if (k in muda) { meta[k] = muda[k]; delete muda[k]; nm++; n--; } });
+        if (nm) ja = Gasto.atualizar(ja.id, meta) || ja;   /* atualizar troca o objeto: segue com o novo */
+        if (!n) return nm ? 'corrigido' : '';
         var antes = JSON.stringify(ja.roboSugeriu || null);
         ja.roboSugeriu = muda; ja.revisar = true;
-        return antes === JSON.stringify(muda) ? '' : 'sugerido';
+        return antes === JSON.stringify(muda) ? (nm ? 'corrigido' : '') : 'sugerido';
       }
       Gasto.atualizar(ja.id, Object.assign({}, muda, { revisar: !!(ja.revisar || g.revisar), corrigidoRoboEm: new Date().toISOString() }));
       return 'corrigido';
