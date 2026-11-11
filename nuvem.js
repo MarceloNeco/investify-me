@@ -373,7 +373,7 @@
     /* a minha: 'tudo' | 'casa' | null. Sem o SQL v4: 'tudo' (como antes) */
     minha: async function (gid) {
       try { var v = await Conta.rpc('money_visao', { p_grupo: gid }); return v || null; }
-      catch (e) { return (e.status === 404 || /money_visao|PGRST202/i.test(e.message + ' ' + e.code)) ? 'tudo' : null; }
+      catch (e) { return (e.status === 404 || /money_visao|PGRST202/i.test(e.message + ' ' + e.code)) ? 'tudo' : undefined; }   /* undefined = não deu para saber */
     },
     /* a de outra pessoa (só o chefe lê a lista); quem não consegue ler responde 'casa' (seguro por padrão) */
     de: async function (gid, uid) {
@@ -1154,6 +1154,7 @@
       clearTimeout(this._tReg); this._sujo = false;
       if (!Cadeado.aberto() || !Nuvem.iniciado || typeof Store === 'undefined' || this._recusou) return 0;
       if (Cadeado.precisaMk && !Cadeado.mk) return 0;   /* 1.14.0: sem as chaves do MoneyTRIO, este aparelho não grava (Painel avisa) */
+      if (Escopos.rodando) return 0;                      /* a migração cuida de tudo enquanto roda */
       if (separa() && Escopo.antesDeSubir) { try { Escopo.antesDeSubir(Store.estado); } catch (e) { console.warn('nuvem: resumo', e); } }   /* os totais da família */
       var agora = mapear(Store.estado), muda = [], self = this;
       agora.forEach(function (j, k) { if (self.ultimo.get(k) !== j) muda.push([k, j]); });
@@ -1333,6 +1334,182 @@
     });
     return r;
   }
+
+  /* ---------------- 1.14.0 (3.66): a migração para os dois cofres (aparelho de quem vê tudo, pelo Fundo) ----------------
+     1) caixa do robô vazia e fila em dia; 2) gera a CC e a CR e embrulha para mim e para quem vê tudo (money_chaves: daqui
+     em diante o banco só aceita registro fechado com elas); 3) cada registro: da casa → recifra com a CC (mesmo id); reservado
+     → "r.<id>" com a CR e o antigo sai de verdade; os rastros de apagados saem; 4) caixas novas (casa e reservada), a antiga
+     sai, os pacotes lidos saem; 5) comprovantes: "r/" com a CR, a cópia antiga sai; 6) marcador config|r.escopos (os outros
+     aparelhos baixam tudo de novo); 7) conferência. Retomável: rodar de novo continua do ponto em que parou. */
+  var Escopos = {
+    rodando: false,
+    feito: function () { return Sinc.docs.has('config|r.escopos'); },
+    /* a cópia deste aparelho é de antes da migração (outro aparelho migrou): apaga e recarrega */
+    copiaVelha: async function () {
+      if (!this.feito() || this.rodando) return false;
+      if (await IDB.get('kv', 'escopos|' + Sinc.gid)) return false;
+      await IDB.set('kv', 'escopos|' + Sinc.gid, 1);
+      if (Cadeado.mk) return false;   /* este aparelho já tem as chaves (foi ele que migrou, ou já baixou) */
+      await Sinc.apagarFamilia(Sinc.gid); await IDB.set('kv', 'escopos|' + Sinc.gid, 1);
+      alertaERecarrega(tt('A família passou a ter a parte da casa e a parte reservada. Este aparelho vai baixar tudo de novo.', 'The family now has a household part and a private part. This device will download everything again.'));
+      return true;
+    },
+    porId: function (lista) { var m = {}; lista.forEach(function (x) { (m[x[0]] = m[x[0]] || []).push(x[1]); }); return m; },
+    apagarDeVerdade: async function (pares) {   /* pares: [[colecao, id]] */
+      var m = this.porId(pares), cols = Object.keys(m);
+      for (var i = 0; i < cols.length; i++) for (var j = 0; j < m[cols[i]].length; j += 500)
+        await Conta.rpc('money_reservar_apagar', { p_grupo: Sinc.gid, p_colecao: cols[i], p_ids: m[cols[i]].slice(j, j + 500) });
+      for (var k = 0; k < pares.length; k++) { var kk = pares[k][0] + '|' + pares[k][1]; Sinc.docs.delete(kk); await IDB.del('docs', Sinc.k(kk)); }
+    },
+    escopoDoDoc: function (col, id, o) {
+      if (col === 'config') return Escopo.deConfig(id);
+      if (col.indexOf('tax_') === 0) return 'reservado';
+      return Escopo.de(col, o);
+    },
+    migrar: async function (andar) {
+      andar = andar || function () {};
+      if (!Cadeado.aberto() || !Sinc.gid) throw new Error(tt('Abra o cadeado.', 'Unlock first.'));
+      if (!Cadeado.dukRaw) { var e0 = new Error(tt('Para preparar, abra pelo PIN ou pela digital (não vale a reabertura automática).', 'To prepare, unlock with the PIN or fingerprint.')); e0.codigo = 'pin'; throw e0; }
+      if (!navigator.onLine) throw new Error(tt('Ligue a internet.', 'Connect to the internet.'));
+      if (!window.Escopo) throw new Error('modulos/visao-casa.js');
+      if (await Visao.minha(Sinc.gid) !== 'tudo') throw new Error(tt('Só quem vê tudo prepara a família.', 'Only who sees everything can prepare the family.'));
+      var gid = Sinc.gid, self = this, antes = 0;
+      this.rodando = true;
+      try {
+        /* 1) em dia */
+        andar(tt('Conferindo a fila e a caixa do robô', 'Checking the queue and the robot inbox'));
+        this.rodando = false; await Sinc.registrar(); await Sinc.enviar(); this.rodando = true;
+        if (Sinc.fila.size) throw new Error(tt('Ainda há mudanças deste aparelho esperando para subir. Tente de novo em instantes.', 'There are changes from this device still waiting to upload. Try again shortly.'));
+        if (!Cadeado.mk) {
+          await Caixa.esvaziar();
+          var resta = await Conta.rest('GET', 'money_entrada?grupo_id=eq.' + gid + '&consumido_em=is.null&select=id&limit=1');
+          if (resta && resta.length) throw new Error(tt('A caixa do robô ainda tem lançamentos para entrar. Espere esvaziar e tente de novo.', 'The robot inbox still has entries. Wait for it to empty and try again.'));
+        }
+        var novos = await Sinc.buscar(); if (novos.length) throw new Error(tt('Chegaram mudanças de outro aparelho. Tente de novo.', 'Changes arrived from another device. Try again.'));
+        var base = Sinc.ultimo;   /* o retrato que bate com o banco (a fila está vazia): o que mudar durante a migração sobe depois */
+        Sinc.docs.forEach(function (d, k) { if (d.cif && !RESERVADOS[k.slice(k.indexOf('|') + 1)]) antes++; });
+        /* 2) as chaves */
+        if (!Cadeado.mk) {
+          andar(tt('Criando as chaves da casa e reservada', 'Creating the household and private keys'));
+          var mk = { v: 1, c: Cifra.rnd(32), r: Cifra.rnd(32) };
+          var pubs = await Conta.rpc('sol_chaves_publicas_do_grupo', { p_grupo: gid }), vis = {};
+          try { (await Visao.lista(gid) || []).forEach(function (x) { vis[x.user_id] = x.visao; }); } catch (e) {}
+          var eu = Conta.uid(), meu = false;
+          for (var i = 0; i < (pubs || []).length; i++) {
+            var p = pubs[i]; if (!p.chave_publica || !p.chave_publica.n) continue;
+            if (p.user_id !== eu && vis[p.user_id] !== 'tudo') continue;
+            await Conta.rpc('money_chave_guardar', { p_grupo: gid, p_user: p.user_id, p_escopo: 'casa', p_versao: mk.v, p_embrulhada: await Cifra.embrulhar(p.chave_publica, mk.c, mk.v, 'mt-casa') });
+            await Conta.rpc('money_chave_guardar', { p_grupo: gid, p_user: p.user_id, p_escopo: 'reservado', p_versao: mk.v, p_embrulhada: await Cifra.embrulhar(p.chave_publica, mk.r, mk.v, 'mt-reservado') });
+            if (p.user_id === eu) meu = true;
+          }
+          if (!meu) throw new Error(tt('Sua chave pública não está na plataforma: abra o OmniLifeONE uma vez e tente de novo.', 'Your public key is not on the platform: open OmniLifeONE once and try again.'));
+          await Cadeado.adotarMk(mk);
+        }
+        /* 3) os registros */
+        Escopo.preparar(Store.estado);
+        var casa = [], res = [], rastros = [], falhas = 0, total = Sinc.docs.size, n = 0;
+        for (var par of Array.from(Sinc.docs)) {
+          var k = par[0], d = par[1], c = k.indexOf('|'), col = k.slice(0, c), id = k.slice(c + 1); n++;
+          if (n % 200 === 0) andar(tt('Separando: ', 'Sorting: ') + n + ' / ' + total);
+          if (RESERVADOS[id]) continue;
+          if (!d.cif) { if (d.versao != null && id.slice(0, 2) !== 'r.') rastros.push([col, id]); continue; }
+          var env; try { env = JSON.parse(d.cif); } catch (e) { env = null; }
+          if (!env || env.m) continue;                          /* já está com as chaves novas */
+          var o = await Cadeado.abrir(d.cif); if (!o) { falhas++; continue; }
+          var txt = JSON.stringify(o);
+          if (self.escopoDoDoc(col, id, o) === 'casa') casa.push({ k: k, colecao: col, id: id, versao: d.versao, dados: await Cadeado.selar(txt, k) });
+          else res.push({ k: k, colecao: col, id: id, nk: col + '|r.' + id, dados: await Cadeado.selar(txt, col + '|r.' + id) });
+        }
+        for (var a = 0; a < casa.length; a += 200) {
+          andar(tt('Fechando a parte da casa: ', 'Sealing the household part: ') + Math.min(a + 200, casa.length) + ' / ' + casa.length);
+          var lote = casa.slice(a, a + 200), por = {};
+          lote.forEach(function (x) { por[x.colecao + '|' + x.id] = x; });
+          var feitos = await Conta.rpc('money_docs_recifrar', { p_grupo: gid, p_itens: lote.map(function (x) { return { colecao: x.colecao, id: x.id, versao: x.versao, dados: x.dados }; }) });
+          for (var f = 0; f < (feitos || []).length; f++) {
+            var kk = feitos[f].colecao + '|' + feitos[f].id, nd = { versao: feitos[f].versao, srv: por[kk].dados, cif: por[kk].dados };
+            Sinc.docs.set(kk, nd); await IDB.set('docs', Sinc.k(kk), nd);
+          }
+          if ((feitos || []).length !== lote.length) falhas += lote.length - (feitos || []).length;   /* mudou no meio: a próxima rodada pega */
+        }
+        for (var b2 = 0; b2 < res.length; b2 += 200) {
+          andar(tt('Fechando a parte reservada: ', 'Sealing the private part: ') + Math.min(b2 + 200, res.length) + ' / ' + res.length);
+          var lr = res.slice(b2, b2 + 200);
+          var rows = await Conta.rest('POST', 'money_docs?on_conflict=grupo_id,colecao,id', lr.map(function (x) { return { grupo_id: gid, colecao: x.colecao, id: 'r.' + x.id, dados_cifrado: x.dados, escopo: 'reservado' }; }), 'return=representation,resolution=ignore-duplicates');
+          var veio = {}; (rows || []).forEach(function (r) { veio[r.colecao + '|' + r.id] = r; });
+          for (var g = 0; g < lr.length; g++) { var r1 = veio[lr[g].nk]; if (r1) { var nd2 = { versao: r1.versao, srv: lr[g].dados, cif: lr[g].dados }; Sinc.docs.set(lr[g].nk, nd2); await IDB.set('docs', Sinc.k(lr[g].nk), nd2); } }
+          await this.apagarDeVerdade(lr.map(function (x) { return [x.colecao, x.id]; }));
+        }
+        if (rastros.length) { andar(tt('Tirando os rastros de apagados', 'Removing deletion traces')); await this.apagarDeVerdade(rastros); }
+        /* 4) caixas novas */
+        andar(tt('Trocando a caixa do robô', 'Replacing the robot inbox'));
+        if (!Sinc.docs.has(Caixa.DOC_CAIXA.casa)) await Caixa.criarCaixa('casa');
+        if (!Sinc.docs.has(Caixa.DOC_CAIXA.reservado)) await Caixa.criarCaixa('reservado');
+        if (Sinc.docs.has('config|caixa_robo')) await this.apagarDeVerdade([['config', 'caixa_robo']]);
+        try { await Conta.rpc('money_entrada_limpar', { p_grupo: gid }); } catch (e) {}
+        Caixa.sk = null;
+        /* 5) comprovantes */
+        var arqs = (Store.estado.arquivos || []).filter(function (m) { return m && m.nuvem; }), ca = 0;
+        for (var q = 0; q < arqs.length; q++) {
+          andar(tt('Comprovantes: ', 'Receipts: ') + (q + 1) + ' / ' + arqs.length);
+          try { if (await Arquivos.migrar(arqs[q].id)) ca++; } catch (e) { falhas++; console.warn('nuvem: comprovante', e); }
+        }
+        /* 6) marcador e o retrato novo (o Sinc volta a funcionar com "r.") */
+        if (!this.feito()) {
+          var mc = await Cadeado.selar(JSON.stringify({ v: { v: 1, em: new Date().toISOString() } }), 'config|r.escopos');
+          var rm = await Conta.rest('POST', 'money_docs', { grupo_id: gid, colecao: 'config', id: 'r.escopos', dados_cifrado: mc, escopo: 'reservado' }, 'return=representation');
+          var ndm = { versao: rm[0].versao, srv: mc, cif: mc }; Sinc.docs.set('config|r.escopos', ndm); await IDB.set('docs', Sinc.k('config|r.escopos'), ndm);
+        }
+        await IDB.set('kv', 'escopos|' + gid, 1);
+        Escopo.preparar(Store.estado);
+        var novoUlt = new Map();
+        base.forEach(function (j, k) {
+          var c2 = k.indexOf('|'), col2 = k.slice(0, c2), id2 = k.slice(c2 + 1), o2 = null;
+          if (id2.slice(0, 2) !== 'r.') { try { o2 = JSON.parse(j); } catch (e) {} if (self.escopoDoDoc(col2, id2, col2 === 'config' ? null : o2) === 'reservado') id2 = 'r.' + id2; }
+          novoUlt.set(col2 + '|' + id2, j);
+        });
+        Sinc.ultimo = novoUlt;
+        this.rodando = false;
+        await Sinc.registrar();   /* os totais da família (resumo) e o que mais faltar */
+        await Sinc.enviar();
+        /* 7) conferência */
+        andar(tt('Conferindo', 'Checking'));
+        var conf = await this.conferir();
+        conf.antes = antes; conf.falhas = falhas; conf.comprovantes = ca;
+        return conf;
+      } finally { this.rodando = false; Painel.atualizar(); }
+    },
+    /* lê TODAS as linhas vivas do banco: nenhuma abre com a CF; casa só com a CC; "r." só com a CR */
+    conferir: async function () {
+      var out = { vivos: 0, casa: 0, reservado: 0, cfAbre: 0, semChaveNova: 0, erradas: 0 }, gid = Sinc.gid;
+      for (var off = 0; ; off += 1000) {
+        var rows = await Conta.rest('GET', 'money_docs?grupo_id=eq.' + gid + '&apagado_em=is.null&select=colecao,id,escopo,dados_cifrado&order=colecao.asc,id.asc&limit=1000&offset=' + off);
+        for (var i = 0; i < (rows || []).length; i++) {
+          var r = rows[i], o; out.vivos++;
+          try { o = JSON.parse(r.dados_cifrado); } catch (e) { out.erradas++; continue; }
+          try { await Cifra.decifrar(Cadeado.cf, o); out.cfAbre++; } catch (e) {}
+          if (!o.m) { out.semChaveNova++; continue; }
+          var res = r.id.slice(0, 2) === 'r.';
+          if (res !== (o.m === 'r') || res !== (r.escopo === 'reservado')) { out.erradas++; continue; }
+          try { await Cifra.decifrar(Cadeado.mk[o.m], o); out[res ? 'reservado' : 'casa']++; } catch (e) { out.erradas++; }
+        }
+        if (!rows || rows.length < 1000) break;
+      }
+      out.ok = out.cfAbre === 0 && out.semChaveNova === 0 && out.erradas === 0;
+      return out;
+    },
+    /* liberar o MoneyTRIO para uma pessoa da família: a visão e as chaves (a reservada só para "tudo") */
+    liberar: async function (uid, visao) {
+      if (!Cadeado.mkRaw) { var e0 = new Error(tt('Abra pelo PIN ou pela digital para liberar.', 'Unlock with the PIN or fingerprint to grant access.')); e0.codigo = 'pin'; throw e0; }
+      await Visao.definir(Sinc.gid, uid, visao);
+      var pubs = await Conta.rpc('sol_chaves_publicas_do_grupo', { p_grupo: Sinc.gid });
+      var p = (pubs || []).filter(function (x) { return x.user_id === uid; })[0];
+      if (!p || !p.chave_publica || !p.chave_publica.n) { var e1 = new Error(tt('Essa pessoa ainda não abriu o OmniLifeONE: a chave dela não existe. Peça para ela entrar lá uma vez.', 'This person has not opened OmniLifeONE yet: ask them to sign in there once.')); e1.codigo = 'sempub'; throw e1; }
+      var mk = Cadeado.mkRaw;
+      await Conta.rpc('money_chave_guardar', { p_grupo: Sinc.gid, p_user: uid, p_escopo: 'casa', p_versao: mk.v, p_embrulhada: await Cifra.embrulhar(p.chave_publica, mk.c, mk.v, 'mt-casa') });
+      if (visao === 'tudo' && mk.r) await Conta.rpc('money_chave_guardar', { p_grupo: Sinc.gid, p_user: uid, p_escopo: 'reservado', p_versao: mk.v, p_embrulhada: await Cifra.embrulhar(p.chave_publica, mk.r, mk.v, 'mt-reservado') });
+      return true;
+    }
+  };
 
   /* ---------------- Caixa do robô (money_entrada) ---------------- */
   var Caixa = {
@@ -2617,6 +2794,19 @@
       return SB + '/storage/v1/object/' + (ler ? 'authenticated/' : '') + BUCKET + '/' + Sinc.gid + '/' + (r ? 'r/' : '') + id;
     },
     reservado: function (b) { return b && b[3] === 50 && b[4] === 114; },   /* 'MTA2' + 'r' */
+    /* 1.14.0: a migração — o comprovante antigo (CF, caminho da casa) vai para "r/" com a CR e a cópia antiga sai. true = mexeu */
+    migrar: async function (id) {
+      var t = await Conta.token(); if (!t) throw new Error('sem sessão');
+      var h = { apikey: KEY, Authorization: 'Bearer ' + t };
+      var r = await fetch(this.url(id, true), { headers: h });
+      if (r.status === 404 || r.status === 400) return false;
+      if (!r.ok) throw new Error('Storage ' + r.status);
+      var b = new Uint8Array(await r.arrayBuffer());
+      if (b[3] === 49) await this.subir(id, b);   /* subir recifra (MTA1 → MTA2 r) e guarda em "r/" */
+      var d = await fetch(this.url(id), { method: 'DELETE', headers: h });
+      if (!d.ok && d.status !== 404 && d.status !== 400) throw new Error('Storage apagar ' + d.status);
+      return true;
+    },
     /* sobe os bytes JÁ cifrados. true = guardado (ou já estava); erro com .codigo 'sembucket' se o SQL ainda não foi aplicado */
     subir: async function (id, cifrados) {
       var t = await Conta.token(); if (!t) throw new Error('sem sessão');
@@ -2665,6 +2855,14 @@
 
   var Nuvem = {
     ponte: { marcarLido: function (id) { return Ponte.marcarLido(id); } },
+    /* 1.14.0 (3.66): os dois cofres — para a tela "Família no MoneyTRIO" (modulos/visao-casa.js) */
+    escopos: {
+      feito: function () { return Escopos.feito(); }, migrar: function (andar) { return Escopos.migrar(andar); },
+      conferir: function () { return Escopos.conferir(); }, liberar: function (uid, v) { return Escopos.liberar(uid, v); },
+      visoes: function () { return Visao.lista(Sinc.gid); }, minha: function () { return Visao.minha(Sinc.gid); },
+      definir: function (uid, v) { return Visao.definir(Sinc.gid, uid, v); },
+      estado: function () { return { mk: !!Cadeado.mk, tudo: Cadeado.vejoTudo(), precisaMk: !!Cadeado.precisaMk, cfNova: !!Cadeado.cfNova, pin: !!Cadeado.dukRaw, rodando: Escopos.rodando, feito: Escopos.feito() }; }
+    },
     /* 1.11.0: planilha espelho e os membros da família (para o cadastro de pessoas) */
     espelho: { enfileirar: function (o) { return Espelho.enfileirar(o); }, enviar: function () { return Espelho.enviar(); },
       pendentes: function () { return Espelho.pendentes(); }, selar: function (t, j, g, o) { return Espelho.selar(t, j, g, o); },
@@ -2754,6 +2952,9 @@
         if (!lista) return Portao.mensagem(tt('Sem internet', 'No internet'), tt('Para a primeira vez neste ' + apN() + ', ligue a internet.', 'For the first time on this ' + apN() + ', connect to the internet.'), [[tt('Tentar de novo', 'Try again'), function () { Nuvem.depoisDaConta(); }]]);
       }
       var minhas = (lista || []).filter(function (g) { return g.meu_papel === 'chefe' || g.meu_papel === 'responsavel'; });
+      /* 1.14.0 (3.66): o membro que o chefe liberou com a visão "Só a casa" também entra (vê só a parte da casa) */
+      var outras = (lista || []).filter(function (g) { return minhas.indexOf(g) < 0; });
+      for (var oi = 0; oi < outras.length && navigator.onLine; oi++) { if (await Visao.minha(outras[oi].grupo_id) === 'casa') { outras[oi].visao = 'casa'; minhas.push(outras[oi]); } }
       if (!minhas.length) {
         return Portao.mensagem(tt('Nenhuma família para as finanças', 'No family for finances'), tt('As finanças ficam com a família, e só chefe ou responsável veem. Esta conta (', 'Finances belong to the family, and only heads or guardians see them. This account (') + esc(Conta.email()) + tt(') não é chefe nem responsável de nenhuma família. Crie ou entre na família pelo OmniLifeONE e volte aqui.', ') is not head or guardian of any family. Create or join the family in OmniLifeONE and come back.'),
           [[tt('Sair da conta', 'Sign out'), function () { Nuvem.sair(false); }], [tt('Tentar de novo', 'Try again'), function () { Nuvem.depoisDaConta(); }]]);
@@ -2829,13 +3030,14 @@
       try { return await this._buscarAgora.apply(this, arguments); } finally { if (typeof Fundo !== 'undefined' && Fundo.esconder) Fundo.esconder('nuvem'); }
     },
     _buscarAgora: async function () {
-      if (!this.iniciado || !Cadeado.aberto() || this._buscando) return;
+      if (!this.iniciado || !Cadeado.aberto() || this._buscando || Escopos.rodando) return;
       this._buscando = true;
       try {
         if (!navigator.onLine || !Conta.on()) return;
         await Sinc.registrar();
         await Sinc.enviar();
         var mudou = await Sinc.buscar();
+        if (await Escopos.copiaVelha()) return;   /* 1.14.0: a família migrou depois desta cópia: baixa tudo de novo */
         if (mudou.length) {
           var abertos = [];
           for (var i = 0; i < mudou.length; i++) abertos.push([mudou[i][0], mudou[i][1] ? await Cadeado.abrir(mudou[i][1]) : null]);
@@ -2896,6 +3098,7 @@
       var lista; try { lista = await Conta.rpc('sol_meus_grupos'); } catch (e) { return; }
       var g = (lista || []).find(function (x) { return x.grupo_id === Sinc.gid; });
       if (g && (g.meu_papel === 'chefe' || g.meu_papel === 'responsavel')) return;
+      if (g) { var vm = await Visao.minha(Sinc.gid); if (vm === 'casa' || vm === undefined) return; }   /* 1.14.0: membro com a visão da casa (ou sem resposta: não apaga) */
       await Sinc.apagarFamilia(Sinc.gid);
       var L = await Cadeado.local(); if (L && L.fam) { delete L.fam[Sinc.gid]; await Cadeado.gravar(L); }
       await Cadeado.trancar(); lsDel(K_FAM);
@@ -2942,7 +3145,7 @@
       lsDel(K_FAM);
     },
     /* para os testes automáticos (teste/nuvem.js): as peças, sem estado aberto */
-    _teste: { Pin: Pin, Painel: Painel, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao, Espelho: Espelho }
+    _teste: { Pin: Pin, Painel: Painel, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao, Espelho: Espelho, Escopos: Escopos, Visao: Visao, Arquivos: Arquivos }
   };
   function nomeConta() { var s = Conta.ler() || {}, d = Conta.dados(s.access_token).user_metadata || {}; return String(s.nome || d.full_name || d.name || '').trim() || String(Conta.email() || '').split('@')[0]; }
   function confirmar(t) { try { return window.confirm(t); } catch (e) { return false; } }
