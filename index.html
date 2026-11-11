@@ -10920,11 +10920,20 @@ function campoOndePagou(g){
 
 /* 3.39 (N24): o robô mandou outra versão de um lançamento que a pessoa já tinha editado */
 const ROTULOS_ROBO = {data:'Data', valor:'Valor', grupo:'Grupo', sub:'Categoria', desc:'Descrição', quem:'Quem', forma:'Forma',
-  conta:'Conta', irpf:'IR', per:'Frequência', cartaoId:'Cartão', cartaoNome:'Cartão', formaId:'Forma', catPluggy:'Categoria do banco', origemRobo:'Origem'};
+  conta:'Conta', irpf:'IR', per:'Frequência', cartaoId:'Cartão', cartaoNome:'Cartão', formaId:'Forma', catPluggy:'Categoria do banco', origemRobo:'Origem',
+  paraQuem:'Para quem', irTexto:'IR (texto do banco)', estorno:'Estorno', tipo:'Tipo'};
 function blocoRoboSugeriu(g){
   if(!g || !g.roboSugeriu || !Object.keys(g.roboSugeriu).length) return '';
   const pt = I18n.atual === 'pt';
   const mostra = (k, v) => k === 'valor' ? fmt(v) : k === 'data' ? I18n.data(v) : k === 'grupo' ? ((GRUPOS[v] || {}).nome || v) : k === 'irpf' ? (v ? (pt ? 'sim' : 'yes') : (pt ? 'não' : 'no')) : String(v == null || v === '' ? '—' : v);
+  /* 3.64: o robô diz que um gasto que você editou é transferência entre vocês (ou pagamento de fatura) */
+  const virou = g.roboSugeriu.tipo;
+  if(virou) return '<div class="aviso-box robo-sug"><b>🤖 ' + (virou === 'fatura' ? (pt ? 'O robô diz que isto é pagamento de fatura' : 'The robot says this is a card bill payment')
+      : (pt ? 'O robô diz que isto é transferência entre vocês' : 'The robot says this is a transfer between you')) + '</b>' +
+    '<p class="small" style="margin:6px 0 4px">' + (pt ? 'Se for, não é gasto: sai do livro e não conta em dobro no "Para onde foi". Você editou este lançamento, então só sai se você confirmar.'
+      : 'If so, it is not spending: it leaves the book and is not counted twice. You edited this entry, so it only leaves if you confirm.') + '</p>' +
+    '<div class="row"><button type="button" class="btn sm primary" data-acao="robo-aceitar">' + (pt ? 'É isso: tirar dos gastos' : 'Yes: remove from spending') + '</button>' +
+    '<button type="button" class="btn sm" data-acao="robo-manter">' + (pt ? 'Manter como gasto' : 'Keep as spending') + '</button></div></div>';
   const linhas = Object.keys(g.roboSugeriu).filter(k => !/^(cartaoId|formaId|origemRobo|catPluggy)$/.test(k)).map(k =>
     '<li><b>' + esc(ROTULOS_ROBO[k] || k) + ':</b> ' + esc(mostra(k, g[k])) + ' → ' + esc(mostra(k, g.roboSugeriu[k])) + '</li>').join('');
   return '<div class="aviso-box robo-sug"><b>🤖 ' + (pt ? 'O robô sugeriu outra coisa' : 'The robot suggested something else') + '</b>' +
@@ -28760,6 +28769,11 @@ function ligarEventos(){
       case 'robo-aceitar': case 'robo-manter': {
         const g = bEditando ? Gasto.todos().find(x => x.id === bEditando) : null;
         if(!g || !g.roboSugeriu) break;
+        if(d.acao === 'robo-aceitar' && g.roboSugeriu.tipo){   /* 3.64: era transferência/fatura: sai dos gastos */
+          if(window.Espelho) Espelho.apagar(g);
+          Gasto.excluir(g.id); Gasto._idx = null; bProj = null; Store.salvar(); fechar('assetModal'); render();
+          toast(I18n.atual === 'pt' ? 'Tirado dos gastos.' : 'Removed from spending.'); bEditando = null; break;
+        }
         const dados = d.acao === 'robo-aceitar' ? Object.assign({}, g.roboSugeriu, {editadoPessoa: false}) : {};
         dados.roboSugeriu = null; dados.revisar = false;
         Gasto.atualizar(g.id, dados); Gasto._idx = null;

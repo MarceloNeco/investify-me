@@ -32,7 +32,8 @@
   12. 1.11.0 (3.64) — CAIXA DO ROBÔ: "IRPF…" marca o IR (antes só "sim"; o texto fica em irTexto); só os tipos conhecidos viram
       lançamento ('saldo' vai para modulos/saldo-banco.js; tipo desconhecido é ignorado e anotado); estorno = valor negativo na
       categoria do gasto de origem (120 dias; os antigos "Renda · Estorno" migram uma vez); confianca 'palpite'/'desconhecido'
-      marca para conferir só o lançamento NOVO; para_quem; "Neco" → a pessoa do cadastro (modulos/pessoas.js).
+      marca para conferir só o lançamento NOVO; para_quem; o apelido do extrato → a pessoa do cadastro (modulos/pessoas.js); gasto
+      que o robô reclassifica como transferência/fatura sai do livro (editado: sugestão em Revisar).
       PLANILHA ESPELHO (Espelho; supabase/2026-11-11b-moneytrio-espelho.sql): fila no IndexedDB fechada com a CF, pacote
       ECDH P-256 + HKDF + AES-GCM para a chave do robô, lotes de 200; sem permissão ou sem a chave do robô, a fila espera.
       Nuvem.membros(): os membros da família (sol_grupo_membros) para o cadastro de pessoas.
@@ -1228,6 +1229,18 @@
       if (window.Pessoas) Pessoas.ligarTudo(g);   /* "Neco" → a pessoa do cadastro (o mesmo nome que o lançamento guardado tem) */
       return g;
     },
+    idDe: function (l) { return 'rb_' + String(l.id).replace(/[^A-Za-z0-9_.:@-]/g, '_').slice(0, 70); },
+    /* sem edição da pessoa: sai do livro (vira só a movimentação entre contas, que não conta no "Para onde foi");
+       editado pela pessoa: fica, com a sugestão em Revisar ("o robô diz que isto é transferência") */
+    virouTransferencia: function (ja, tp) {
+      if (!ja || ja.fluxo === 'entrada' && tp === 'fatura') return '';
+      if (ja.editadoPessoa) {
+        if (ja.roboSugeriu && ja.roboSugeriu.tipo === tp) return '';
+        ja.roboSugeriu = { tipo: tp }; ja.revisar = true; return 'sugerido';
+      }
+      Gasto.excluir(ja.id); Gasto._idx = null;
+      return 'removido';
+    },
     /* acha o gasto de origem: mesma descrição e mesmo valor (ou maior, estorno parcial) nos 120 dias antes */
     origemDoEstorno: function (g, lista) {
       var alvo = Math.abs(g.valor), d0 = g.data ? new Date(Date.parse(g.data) - 120 * 86400000).toISOString().slice(0, 10) : '';
@@ -1336,6 +1349,11 @@
             if (this.desconhecidos.length > 50) this.desconhecidos.shift();
             console.warn('nuvem: caixa do robô — tipo desconhecido ignorado:', tp);
             ignorados++; prontos.push(rows[i].id); continue;
+          }
+          /* 1.11.0: um gasto já entregue que o robô agora diz ser transferência ou fatura: não conta em dobro */
+          if (l && (tp === 'transferencia' || tp === 'fatura') && ids[this.idDe(l)]) {
+            var rv = this.virouTransferencia(ids[this.idDe(l)], tp);
+            if (rv === 'removido') { delete ids[this.idDe(l)]; corrigidos++; mudou = true; } else if (rv === 'sugerido') { sugeridos++; mudou = true; }
           }
           if (l && tp === 'transferencia' && typeof Transferencia !== 'undefined') {
             var rt = Transferencia.receber(l, true); if (rt) { mudou = true; transf++; } else ignorados++;

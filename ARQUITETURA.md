@@ -657,13 +657,14 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   **Caixa do robô** (nuvem.js 1.11.0): `irDe` ("IRPF…" marca o IR; `irTexto`), `TIPOS` (desconhecido → ignorado e anotado em
   `Caixa.desconhecidos`), `saldo` → `SaldoBanco.receber`, estorno → `estornar` (negativo, na categoria do original de até 120 dias;
   `Gasto.arruma` mantém o sinal com `estorno: true`; `migrarEstornos` uma vez), `confianca` (só lançamento novo), `para_quem`,
-  `descRobo`, `contaRobo`. **Espelho** (`modulos/espelho.js` + `Espelho` no nuvem.js): a edição da PESSOA (formulário, apagar,
+  `descRobo`, `contaRobo`; gasto já entregue que o robô reclassifica como transferência/fatura (`virouTransferencia`): sem edição sai do
+  livro (a transferência fica só em Movimentações, sem contar em dobro), editado vira sugestão em Revisar. **Espelho** (`modulos/espelho.js` + `Espelho` no nuvem.js): a edição da PESSOA (formulário, apagar,
   confirmar palpite, confirmar profissional) vira o texto do contrato v1, entra na fila do IndexedDB fechada com a CF e vai fechada para
   a chave do robô (`money_espelho_chave_de` → ECDH P-256 efêmero → HKDF "money-espelho-v1|grupo" → AES-256-GCM, AAD grupo) em lotes de
   200 (`money_espelho_depositar`); correção do robô não gera pacote; `regra` só quando a pessoa mudou grupo/categoria/para quem de um
   lançamento do robô (ou confirmou: `confirmada: true`). Link da planilha em `ST.config.espelhoLink` (só docs.google.com/spreadsheets),
   no menu do perfil. **Painel**: `budget.painel` (ponto novo) com os indicadores do mês e a conferência com o saldo do banco; "Peso na
-  renda" no "Para onde foi". Configurações: ponto novo `config.todos`. Teste: `teste/teste-pessoas-espelho.js` (45 verificações;
+  renda" no "Para onde foi". Configurações: ponto novo `config.todos`. Teste: `teste/teste-pessoas-espelho.js` (51 verificações, inclusive o reenvio de 2.330 itens pela caixa: ~27 s, a tela não trava;
   o vetor do espelho em `teste/espelho/vetor-espelho.json`).
 - 3.63 (`estilo.css` 3.63, `nuvem.js` 1.10.1): **janela aberta trava o fundo** (diretriz "janela.js"). Só CSS, no fim do estilo.css:
   `html:has(.modal-wrap:not(.hidden) | #nvPortao | .nv-painel | .lock-wrap:not(.hidden) | .popup-an | dialog[open]){overflow:hidden;

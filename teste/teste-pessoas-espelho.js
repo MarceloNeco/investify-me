@@ -15,7 +15,7 @@
 'use strict';
 const http = require('http'), fs = require('fs'), path = require('path'), crypto = require('crypto');
 const { chromium } = require('playwright');
-const { SB, M, db, supabase, prepararChaves, PESSOAS, ANA, GID } = require('./mock-sol');
+const { SB, M, db, rpcs, supabase, prepararChaves, PESSOAS, ANA, GID } = require('./mock-sol');
 const RAIZ = path.join(__dirname, '..');
 const VETOR = JSON.parse(fs.readFileSync(path.join(__dirname, 'espelho', 'vetor-espelho.json'), 'utf8'));
 let falhas = 0, oks = 0;
@@ -306,8 +306,51 @@ async function parteB(b, BASE) {
   /* membros da família no cadastro */
   const mb = await p.evaluate(async () => { delete ST.config.pessoasPre; const n = await Pessoas.trazerDaFamilia(); const teo = Pessoas.achar('Teo'), ana = Pessoas.achar('Ana'); return { n, teo: teo && [teo.tipo, teo.papel, teo.perfil], ana: ana && [ana.papel, !!ana.uid] }; });
   ok(mb.teo && mb.teo.join('|') === 'casa|dependente|pf-teo' && mb.ana && mb.ana.join('|') === 'responsavel|true', 'cadastro pré-preenchido com os membros da família na plataforma (criança = dependente, chefe = responsável)');
+  await reenvio(p);
   ok(erros.length === 0, 'sem erro de página (nuvem)' + (erros.length ? ': ' + erros.join(' | ') : ''));
   await ctx.close();
+}
+
+/* C. o robô reenvia tudo (~2.330 itens) com o texto do IR: os sem edição atualizam sozinhos, os editados viram sugestão,
+   o gasto que virou transferência sai (ou vira sugestão, se editado); a tela não trava */
+async function reenvio(p) {
+  console.log('C. reenvio de ~2.330 itens pela caixa do robô');
+  const N = 2330;
+  db.money_caixa_chave = db.money_caixa_chave || []; db.money_entrada = db.money_entrada || [];
+  rpcs.money_entrada_consumir = (me, c) => { let n = 0; db.money_entrada.forEach((r) => { if (c.p_ids.indexOf(r.id) >= 0 && !r.consumido_em) { r.consumido_em = new Date().toISOString(); n++; } }); return n; };
+  const pre = await p.evaluate(async (N) => {
+    const C = MoneyNuvem._teste.Caixa; if (!(await C.preparar())) return { erro: C.problema || 'sem caixa' };
+    const base = (i) => ({ id: 'vol-' + i, data: '2026-0' + (1 + (i % 9)) + '-' + String(1 + (i % 28)).padStart(2, '0'), valor: 10 + (i % 500), tipo: 'despesa', grupo: 'SAUDE', categoria: 'Consultas', descricao: 'CLINICA VOLUME ' + (i % 40), quem: 'Ana' });
+    for (let i = 0; i < N; i++) { const g = Gasto.add(C.converter(base(i))); if (i % 25 === 0) { g.editadoPessoa = true; g.sub = 'Exames'; } }
+    Store.salvar();
+    const reenvio = [];
+    for (let i = 0; i < N; i++) { const l = Object.assign(base(i), { ir: 'IRPF (saúde)' }); if (i >= 100 && i < 107) { l.tipo = 'transferencia'; l.grupo = ''; l.categoria = 'Entre a família'; } reenvio.push(l); }
+    return { ok: true, n: Gasto.todos().filter((g) => /^rb_vol-/.test(g.id)).length, itens: reenvio };
+  }, N);
+  ok(pre.ok && pre.n === N, 'antes: ' + N + ' lançamentos do robô no app, sem IR (' + (pre.erro || '') + ')');
+  const pub = db.money_caixa_chave[0] && db.money_caixa_chave[0].chave_publica;
+  const pacotes = await p.evaluate(async ([pub, itens]) => { const out = []; for (const l of itens) out.push(await MoneyNuvem._teste.Cifra.selarPacote(pub, l)); return out; }, [pub, pre.itens]);
+  pacotes.forEach((pk, i) => db.money_entrada.push({ id: crypto.randomUUID(), grupo_id: GID, pacote: pk, origem: 'robo', criado_em: new Date(Date.UTC(2026, 10, 11, 0, 0, 0, i)).toISOString(), consumido_em: null }));
+  await p.evaluate(() => { window.__longas = []; try { new PerformanceObserver((l) => l.getEntries().forEach((e) => __longas.push(e.duration))).observe({ entryTypes: ['longtask'] }); } catch (e) {} });
+  const t0 = Date.now();
+  await p.evaluate(() => MoneyNuvem._teste.Caixa.esvaziar());
+  while (db.money_entrada.some((r) => !r.consumido_em) && Date.now() - t0 < 240000) {
+    await new Promise((r) => setTimeout(r, 1000));
+    await p.evaluate(() => { const C = MoneyNuvem._teste.Caixa; if (!C._rodando) C.esvaziar(); });
+  }
+  const seg = Math.round((Date.now() - t0) / 100) / 10;
+  const r = await p.evaluate(() => {
+    const l = Gasto.todos().filter((g) => /^rb_vol-/.test(g.id)), ed = l.filter((g) => g.editadoPessoa), sem = l.filter((g) => !g.editadoPessoa);
+    const t = (i) => Gasto.todos().find((g) => g.id === 'rb_vol-' + i);
+    return { n: l.length, semIr: sem.filter((g) => !(g.irpf && g.irTexto === 'IRPF (saúde)')).length, semN: sem.length, edSug: ed.filter((g) => g.roboSugeriu && g.roboSugeriu.irpf === true && g.revisar && !g.irpf).length, edN: ed.length,
+      t100: t(100), t101: !!t(101), t106: !!t(106), longa: Math.max(0, ...(window.__longas || [])), nLongas: (window.__longas || []).length };
+  });
+  ok(!db.money_entrada.some((r) => !r.consumido_em), 'os ' + N + ' itens saíram da caixa em ' + seg + ' s (lotes de 200)');
+  ok(r.semIr === 0 && r.semN > 2000, 'os ' + r.semN + ' sem edição da pessoa ficaram com o IR ("IRPF (saúde)") sozinhos');
+  ok(r.edSug === r.edN - 1 && r.edN >= 90, 'os editados pela pessoa ficaram como estavam, com a sugestão do robô em Revisar (' + r.edSug + ' de ' + r.edN + '; o outro virou transferência)');
+  ok(r.t100 && r.t100.roboSugeriu && r.t100.roboSugeriu.tipo === 'transferencia' && !r.t101 && !r.t106 && r.n === N - 6,
+    'gasto que o robô agora diz ser transferência: sem edição sai do livro (não conta em dobro); editado vira sugestão em Revisar');
+  ok(r.longa < 1500, 'a tela não trava: a tarefa mais longa do navegador durou ' + Math.round(r.longa) + ' ms (' + r.nLongas + ' tarefas longas)');
 }
 
 (async () => {
