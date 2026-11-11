@@ -32,7 +32,7 @@
   function tr(a, b) { return pt() ? a : b; }
   function so4(f) { return String(f || '').replace(/\D/g, '').slice(-4); }
   function cartoes() { return (typeof ST !== 'undefined' && ST && ST.cartoes) || []; }
-  function cfg() { return (ST.config = ST.config || {}); }
+  function cfg() { return typeof ST !== 'undefined' && ST ? (ST.config = ST.config || {}) : {}; }
   function N(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
   function bandeiraDe(t) {
     var x = N(t);
@@ -77,7 +77,7 @@
     /* os finais do robô que ainda não são de nenhum cartão, agrupados pela conta do cartão */
     encontrados: function () {
       var grupos = {};
-      (ST.gastos || []).forEach(function (g) {
+      ((typeof ST !== 'undefined' && ST && ST.gastos) || []).forEach(function (g) {
         if (g.cartaoId || !g.finalCartao) return;
         if (API.doFinal(g.finalCartao) || (g.contaCartao && API.daConta(g.contaCartao.id))) return;
         var k = g.contaCartao && g.contaCartao.id ? 'c:' + g.contaCartao.id : 'f:' + g.finalCartao;

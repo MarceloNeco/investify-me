@@ -188,7 +188,7 @@ async function parteA(b, BASE) {
         if (g.confianca) g.revisar = true; Gasto.add(g);
         const tot0 = JSON.stringify(Gasto.porChave(Gasto.todos().filter((x) => x.fluxo === 'saida'), 'grupo'));
         bFiltro = { busca: '', grupos: [], subs: [], quem: [], formas: [], de: '', ate: '', fluxo: '', periodo: 'tudo', favoritos: false, revisar: true, irpf: false }; irPara('b-lanc');
-        const linha = (document.querySelector('[data-bid="rb_pp1"] .esp-palpite') || {}).textContent || '';
+        const linha = (document.querySelector('[data-bid="rb_pp1"] .or-selo') || {}).textContent || '';   /* 3.65: o selo "A confirmar" na coluna Categoria */
         document.querySelector('[data-bid="rb_pp1"] [data-acao="esp-confirmar"]').click();
         const depois = Gasto.todos().find((x) => x.id === 'rb_pp1');
         const tot1 = JSON.stringify(Gasto.porChave(Gasto.todos().filter((x) => x.fluxo === 'saida'), 'grupo'));
@@ -196,8 +196,8 @@ async function parteA(b, BASE) {
         return { conf: g.confianca, rev: g.revisar, velho: velho.confianca, linha, depois: [depois.confianca, depois.revisar], igual: tot0 === tot1, txt };
       });
       ok(pa.conf === 'palpite' && pa.rev && pa.velho === undefined, "palpite do robô: lançamento novo marcado para conferir; sem o campo (dado antigo) não é palpite");
-      ok(/palpite do robô/.test(pa.linha) && /Confirmar categoria/.test(pa.linha) && pa.depois[0] === undefined && pa.depois[1] === false && pa.igual,
-        'a linha mostra "palpite do robô · ✓ Confirmar categoria"; um toque confirma; Painel e gráficos não mudam');
+      ok(/A confirmar/.test(pa.linha) && pa.depois[0] === undefined && pa.depois[1] === false && pa.igual,
+        'a linha mostra o selo "A confirmar" com ✓; um toque confirma; Painel e gráficos não mudam');
       ok(pa.txt.regra && pa.txt.regra.confirmada === true && pa.txt.regra.desc === 'BAR NOVO' && pa.txt.id === 'pp1' && pa.txt.quem_editou === 'app' && pa.txt.valor === 70 && pa.txt.tipo === 'despesa',
         'o pacote da confirmação leva a regra {desc, grupo, categoria, confirmada: true} e o id do robô');
       const manual = await p.evaluate(() => { const g = Gasto.todos().find((x) => x.desc === 'FARMACIA TESTE'); return [Espelho.texto(g).id, Espelho.texto(g).para_quem, Espelho.linkValido('https://docs.google.com/spreadsheets/d/abc123/edit'), Espelho.linkValido('https://exemplo.com/spreadsheets/x'), Espelho.linkValido('javascript:alert(1)')]; });
