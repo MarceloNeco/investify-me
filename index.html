@@ -21946,6 +21946,7 @@ function abrirDeclaracao(d, nova){
     ? (pt ? 'Li ' + txDec.achados + ' dos 7 números principais. Confira cada um com o PDF e complete o que ficou em branco antes de salvar.'
           : 'Read ' + txDec.achados + ' of 7 key figures. Check and complete before saving.')
     : (pt ? 'Não achei os números neste arquivo — preencha à mão com o PDF ao lado.' : 'Could not read the figures — fill them in.')) + '</p></div>';
+  if(nova && window.MoneyModulos) h += MoneyModulos.html('declaracao.escolhas', {d: txDec});   /* 3.65: importar com escolhas, logo no topo (modulos/declaracao-escolhas.js) */
   h += '<div class="grid g2">' + CAMPOS_DEC.map(c => campo(pt ? c[1] : c[2],
       '<input type="number" ' + (c[3] === 'ano' ? 'step="1" min="2000" max="2100"' : c[3] === 'pct' ? 'step="0.01"' : 'inputmode="decimal" step="0.01"') + ' data-txc="' + c[0] + '" value="' +
       (txDec[c[0]] != null ? txDec[c[0]] : '') + '"' + (txDec[c[0]] == null && nova ? ' class="tx-falta"' : '') + '>')).join('') + '</div>' +
@@ -22006,7 +22007,6 @@ function abrirDeclaracao(d, nova){
         (pt ? ' parecido' + (p.jaTem > 1 ? 's' : '') : ' similar') + ')</span>' : '') + '</label>').join('');
   }
 
-  if(nova && window.MoneyModulos) h += MoneyModulos.html('declaracao.escolhas', {d: txDec});   /* 3.65: importar com escolhas (modulos/declaracao-escolhas.js) */
   h += '<div class="f-actions">' +
     (!nova && txDec.id ? '<button class="btn danger" data-acao="tx-dec-excluir">' + (pt ? 'Excluir' : 'Delete') + '</button>' : '') +
     '<button class="btn" data-close="assetModal">' + (pt ? 'Cancelar' : 'Cancel') + '</button>' +
@@ -28835,7 +28835,7 @@ function ligarEventos(){
       case 'banco-novo':    abrirBanco(); break;
       case 'banco-salvar':  salvarBanco(); break;
       case 'cartao-novo':   abrirCartao(); break;
-      case 'cartao-salvar': salvarCartao(bt.dataset.id || ''); break;
+      case 'cartao-salvar': salvarCartao(d.id || '')   /* 3.65: era bt.dataset.id (bt não existe aqui): salvar o cartão dava erro */; break;
       case 'salario':       abrirSalario('liquido'); break;
       case 'pj-clt':        abrirSalario('pjclt'); break;
       case 'sal-mais':      salOutros.push({nome:'', valor:''}); desenharSalario(); break;
