@@ -1,0 +1,17 @@
+{
+  "_o_que_e": "Vetor de teste do pacote da planilha espelho (app → robô), contrato v1. Tudo fictício (senha de teste, grupo e lançamento inventados).",
+  "robo_senha_de_teste": "senha-de-teste-do-robo-NAO-E-REAL",
+  "robo_privada_hex": "705a301579c628ddea8257f8e2eede585f7615c34488ad17faca4cb483cf3698",
+  "robo_publica_jwk": {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "pUMq9TuAZskm4OqdccGvtdNW9f2cgxplujsJcSe8pWM",
+    "y": "rXSjIzl3pa1giuakdhwIhzFYBV7GyYz8l8NLdfgx3-k"
+  },
+  "grupo_id": "22222222-2222-2222-2222-222222222222",
+  "efemera_privada_hex": "6a1f3c2e9b8d7a6f5e4d3c2b1a0918273645546372819a0b1c2d3e4f5a6b7c8d",
+  "iv_hex": "0102030405060708090a0b0c",
+  "chave_aes_hex": "d2f3ea7fd03b0bfd298bd4dedbe3be07367527d1578c3a9d249b9b0beb5b3616",
+  "pacote": "{\"v\":1,\"epk\":{\"x\":\"JgaV1T6xUBNbZRC_1KEAdw1HJg_HZHsJX4ZOeXmX1aw\",\"y\":\"7jwU7pe9jJUMUq4PupoyvugvJHOUBGheS0ddrPSmtiI\"},\"iv\":\"AQIDBAUGBwgJCgsM\",\"ct\":\"rWPNrMx18ixWucIbYhKGPYWx8+h1c8B3SuwGS/q2yf0byf3k6/4f9kJjYLEkQWQ3KSFjeU1mkEZ+SZciOxoxCfmGkK6c3uppqsDTp9FxaWX2dMM1/hJDBg7LqORvtawRACL/AeMCfa18qBcPkECsxCGlCgd6UNNktKAB4TW1cghJUTuAcV2sRE/LoYXhMoDgSktwZXCB7cSx9YKTyOhGZGvRsXV+f/t0b7AV8RclrLBI0iMFmMNswCal3ALgsnx1ZAiJ53HLiBSbqa12+dT5aEpTeASb3oBgut3fJ9UfaZukRNdmFWiyzXcZx11EYZPLO/lg17/6UKmgZenT2dG12SOtN82PxabmKWFf9YbtHSYb1H8+dQlFeoLrOd96gHx+f+VAIrD5UGaPO5cMqoGO0VxCJCp5lYr8LxSuU+ZZ0CjukIiyRjSfFoSAUMvJlQTTA7daNFGbcEmV/5vgufEUFlnDlL0syDNty+ycslbMNUMcFkLvWoojQTQayXLHTWtudrlduxazUGE58Vo3HuaQMV2ruwTGOAMpi2YbWb32QO175tCh1KzCFpaF4iBqXQVBRBi2WMDP6ZMpR0nUN7mH\"}",
+  "texto_aberto": "{\"v\":1,\"acao\":\"upsert\",\"id\":\"rb_pluggy-teste-0001\",\"em\":\"2026-11-11T12:00:00.000Z\",\"quem_editou\":\"app\",\"data\":\"2026-11-10\",\"valor\":87.4,\"tipo\":\"despesa\",\"grupo\":\"HABITACAO\",\"categoria\":\"Supermercado\",\"descricao\":\"Mercado do bairro\",\"freq\":\"Pontual\",\"quem\":\"\",\"forma\":\"Credito\",\"cartao\":\"Visa final 1234\",\"ir\":\"\",\"banco\":\"Banco X\",\"regra\":{\"desc\":\"COMPRA CARTAO MERCADO EXEMPLO LTDA\",\"grupo\":\"HABITACAO\",\"categoria\":\"Supermercado\"}}"
+}
