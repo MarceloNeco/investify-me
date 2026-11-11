@@ -234,6 +234,10 @@ do $$ begin
   end if;
 end $$;
 -- a chave pública da casa pode ser gravada por quem vê só a casa? Não: só quem vê tudo cria as chaves (a migração).
+-- quem vê só a casa lê só a chave pública da casa (nem fica sabendo que há outra caixa); o robô lê as duas
+drop policy if exists money_caixa_chave_ler on public.money_caixa_chave;
+create policy money_caixa_chave_ler on public.money_caixa_chave for select to authenticated
+  using (public.money_vejo_tudo(grupo_id) or public.money_sou_robo(grupo_id) or (escopo = 'casa' and public.money_vejo_casa(grupo_id)));
 alter table public.money_entrada add column if not exists escopo text not null default 'reservado';
 do $$ begin
   if not exists (select 1 from pg_catalog.pg_constraint c where c.conrelid = 'public.money_entrada'::regclass and c.conname = 'money_entrada_escopo') then

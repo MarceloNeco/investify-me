@@ -69,7 +69,7 @@ SELECT pg_temp.ok((SELECT chave_publica->>'kid' FROM public.money_caixa_chave) =
 DO $$ BEGIN DELETE FROM public.money_caixa_chave; RAISE EXCEPTION 'FALHOU: apagou a chave';
 EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: ninguém apaga a chave da caixa pelo app'; END $$;
 SELECT pg_temp.quem('c1000000-0000-0000-0000-000000000001');
-SELECT pg_temp.ok((SELECT count(*) FROM public.money_caixa_chave) = 1, 'membro da família lê a chave pública');
+SELECT pg_temp.ok((SELECT count(*) FROM public.money_caixa_chave) = CASE WHEN to_regprocedure('public.money_vejo_casa(uuid)') IS NULL THEN 1 ELSE 0 END, 'membro da família lê a chave pública (com o SQL v4 "escopos": só quem tem visão no MoneyTRIO)');
 SELECT pg_temp.quem('e1000000-0000-0000-0000-000000000001');
 SELECT pg_temp.ok((SELECT count(*) FROM public.money_caixa_chave) = 0, 'pessoa de fora não lê a chave pública');
 SELECT pg_temp.quem('f1000000-0000-0000-0000-000000000001');

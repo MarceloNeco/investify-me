@@ -123,7 +123,7 @@ SELECT pg_temp.ok(public.money_robo_depositar(pg_temp.g(), jsonb_build_array(jso
 SELECT pg_temp.beta();
 SELECT pg_temp.ok((SELECT string_agg(id, ',' ORDER BY id) FROM public.money_entrada WHERE grupo_id = pg_temp.g()) = 'e1,e3', 'ela lê na caixa só os da casa (e1, e3)');
 SELECT pg_temp.ok(public.money_entrada_consumir(pg_temp.g(), array['e1','e2']) = 1, 'ela marca como aproveitado só o da casa');
-SELECT pg_temp.ok((SELECT count(*) FROM public.money_caixa_chave WHERE grupo_id = pg_temp.g()) = 2, 'ela lê as chaves públicas (para nada: o pacote se abre com a privada)');
+SELECT pg_temp.ok((SELECT string_agg(escopo, ',') FROM public.money_caixa_chave WHERE grupo_id = pg_temp.g()) = 'casa', 'ela lê só a chave pública da casa (nem fica sabendo que há outra caixa)');
 SELECT pg_temp.ana();
 SELECT pg_temp.ok((SELECT consumido_em FROM public.money_entrada WHERE grupo_id = pg_temp.g() AND id = 'e2') IS NULL, 'o reservado continua esperando o chefe');
 SELECT pg_temp.ok(public.money_entrada_limpar(pg_temp.g()) = 1, 'o chefe limpa os já aproveitados');
