@@ -1,5 +1,5 @@
 /* =====================================================================
-   teste/teste-desktop.js — layout no computador (N35, regra da plataforma)   3.58
+   teste/teste-desktop.js — layout no computador (N35, regra da plataforma)   3.63
    ---------------------------------------------------------------------
    Em 1280×720, 1366×768, 1920×1080 e 2560×1440 (e trocando a largura com a página aberta):
    · a barra lateral fica colada à esquerda da tela, ocupa a altura toda abaixo do topo e não passa do fim da tela;
@@ -9,7 +9,8 @@
    · sem rolagem para o lado e sem erro de página;
    · 3.57: o calendário do menu recolhe numa etiqueta (teclado e toque), fica lembrado ao recarregar e abre de novo;
      o mesmo no celular (390×800, dentro do menu ☰);
-   · 3.58: no celular, com o menu ☰ aberto, o selo "Entrar na nuvem" fica ao lado do menu (nunca em cima do calendário).
+   · 3.58: no celular, com o menu ☰ aberto, o selo "Entrar na nuvem" fica ao lado do menu (nunca em cima do calendário);
+   · 3.63: toda janela que cobre a tela trava o fundo (roda do mouse e dedo) e, ao fechar, a mesma linha fica no mesmo lugar.
    Uso (na pasta raiz): node teste/teste-desktop.js
    ===================================================================== */
 'use strict';
@@ -62,6 +63,46 @@ async function recolherAbrir(p, nome, antesDeMedir) {
   ok((await cal()).grade, nome + ': depois de recarregar continua aberto');
 }
 
+
+/* 3.63: toda janela que cobre a tela TRAVA o fundo (diretriz "janela.js": html:has(...) {overflow:hidden} + overscroll-behavior:contain).
+   Lista longa rolada até o meio; abre a janela; roda do mouse (e dedo, no celular) até o fim e mais um pouco; o fundo não pode mexer;
+   ao fechar, a mesma linha no mesmo lugar. */
+const JANELAS = [
+  ['detalhe de um lançamento', () => abrirLancamento(Gasto.todos()[40].id), () => fechar('assetModal')],
+  ['novo compromisso', () => abrirRecorrente(), () => fechar('assetModal')],
+  ['explicação ⓘ', () => abrirInfo((GLOSSARIO[0] || {}).k), () => fechar('infoModal')],
+  ['"Conferir o que foi lido"', () => CompromissoDe.mostrarPlano({ ano: 2027, aluno: 'Ana', escola: 'Escola Exemplo', itens: [], gasto: { data: '2026-10-30', valor: 100, desc: 'Matrícula 2027', obs: '', grupo: 'DEPENDENTES', sub: 'Escola' } }), () => fechar('genModal')],
+  ['tela da nuvem', () => MoneyNuvem._teste.Portao.mensagem('Teste', Array.from({ length: 60 }, (x, i) => 'Linha longa de explicação ' + i + '.').join('<br>'), [['Ok', function () {}]]), () => { const e = document.getElementById('nvPortao'); if (e) e.remove(); MoneyNuvem._teste.Portao && 0; }]
+];
+async function janelasTravam(p, nome, celular) {
+  await p.evaluate(() => { abrirApp('budget'); irPara('b-lanc'); bFiltro.periodo = 'tudo'; render(); });
+  await p.evaluate(() => new Promise((ok) => { let h = -1, n = 0; const t = setInterval(() => { const a = document.documentElement.scrollHeight; n = a === h ? n + 1 : 0; h = a; if (n >= 6) { clearInterval(t); ok(); } }, 100); }));   /* a página parou de crescer (faixa, anúncio) */
+  const lista = JANELAS.slice();
+  if (celular) lista.push(['menu ☰', () => document.getElementById('btnMenu').click(), () => document.getElementById('navBackdrop').click()]);
+  const cdp = celular ? await p.context().newCDPSession(p) : null;
+  for (const [jn, abre, fecha] of lista) {
+    const antes = await p.evaluate(() => { window.scrollTo(0, Math.min(900, document.documentElement.scrollHeight - innerHeight - 50)); const linhas = [...document.querySelectorAll('#view-b-lanc tbody tr, #view-b-lanc .lanc-item, #view-b-lanc [data-bid]')];
+      const ref = linhas.find((r) => r.getBoundingClientRect().top > 120) || linhas[0]; if (ref) ref.setAttribute('data-ref-teste', '1'); window.__refBid = ref && (ref.dataset.bid || (ref.querySelector('[data-bid]') || {}).dataset?.bid) || ''; return { y: scrollY, top: ref ? Math.round(ref.getBoundingClientRect().top) : null }; });
+    await p.waitForTimeout(150);
+    const y0 = await p.evaluate(() => scrollY);
+    await p.evaluate(abre); await p.waitForTimeout(350);
+    const W = await p.evaluate(() => [innerWidth, innerHeight]);
+    for (const [x, y] of [[W[0] / 2, W[1] / 2], [8, W[1] - 40]]) {
+      await p.mouse.move(x, y); for (let i = 0; i < 6; i++) { await p.mouse.wheel(0, 900); await p.waitForTimeout(40); }
+      await p.mouse.wheel(0, -200);
+    }
+    if (cdp) {
+      await cdp.send('Input.synthesizeScrollGesture', { x: Math.round(W[0] / 2), y: Math.round(W[1] * 0.7), yDistance: -2500, gestureSourceType: 'touch', speed: 3000 });
+      await cdp.send('Input.synthesizeScrollGesture', { x: 6, y: Math.round(W[1] * 0.5), yDistance: -1500, gestureSourceType: 'touch', speed: 3000 });
+    }
+    await p.waitForTimeout(250);
+    const yAberta = await p.evaluate(() => scrollY);
+    await p.evaluate(fecha); await p.waitForTimeout(350);
+    const depois = await p.evaluate(() => { const r = document.querySelector('[data-ref-teste]') || (window.__refBid ? document.querySelector('[data-bid="' + window.__refBid + '"]') : null);   /* a lista pode ter sido redesenhada: a mesma linha pelo id */ const t = r ? Math.round(r.getBoundingClientRect().top) : null; if (r) r.removeAttribute('data-ref-teste'); return { y: scrollY, top: t }; });
+    ok(y0 > 0 && yAberta === y0 && depois.y === y0 && depois.top === antes.top, nome + ': ' + jn + ' trava o fundo (rolagem ' + y0 + ' → ' + yAberta + ' com a janela → ' + depois.y + ' ao fechar; a linha ' + antes.top + ' → ' + depois.top + ')');
+  }
+}
+
 (async () => {
   const srv = http.createServer((q, s) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'); if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404); return s.end(); } s.writeHead(200, { 'Content-Type': TIPOS[path.extname(p)] || 'application/octet-stream' }); fs.createReadStream(p).pipe(s); });
   await new Promise((r) => srv.listen(0, '127.0.0.1', r));
@@ -102,6 +143,7 @@ async function recolherAbrir(p, nome, antesDeMedir) {
       await p.waitForTimeout(200); await p.mouse.move(m.W - 200, m.H / 2); await p.mouse.wheel(0, 900); await p.waitForTimeout(300);
       const r2 = await medir(p), sy = await p.evaluate(() => scrollY);
       ok(sy > 0 && r2.navBot <= r2.H + 1 && r2.navBot >= r2.H - 2 && r2.calBot <= r2.H + 1, 'rolando a página (' + sy + ' px): a barra vai até o fim da tela e o calendário continua inteiro (' + r2.navTop + '–' + r2.navBot + ')');
+      if (vp.width === 1366 || vp.width === 1920) await janelasTravam(p, 'janelas ' + vp.width, false);
       await p.evaluate(() => scrollTo(0, 0));
       await recolherAbrir(p, 'calendário ' + vp.width, () => p.evaluate(() => { I18n.atual = 'pt'; abrirApp('budget'); irPara('b-custos'); }));
       ok(erros.length === 0, 'sem erro de página' + (erros.length ? ': ' + erros.join(' | ') : ''));
@@ -131,6 +173,8 @@ async function recolherAbrir(p, nome, antesDeMedir) {
       const s3 = await selo();
       ok(s3 && s3.left <= 16, 'celular, menu fechado: o selo volta ao canto de sempre (left ' + (s3 && s3.left) + ')');
       await recolherAbrir(p, 'celular', abrirMenu);
+      await p.evaluate(() => { const sn = document.getElementById('sidenav'); if (sn.classList.contains('open')) document.getElementById('navBackdrop').click(); });
+      await janelasTravam(p, 'janelas celular', true);
       const en = await p.evaluate(() => { I18n.atual = 'en'; renderCalendarioMenu(); const b1 = document.querySelector('#navCal .calm-rec').getAttribute('aria-label');
         CalendarioMenu.alternar(true); const e = document.querySelector('#navCal .calm-etq'); const r = [b1, e.textContent, e.title]; CalendarioMenu.alternar(false); I18n.atual = 'pt'; return r; });
       ok(en[0] === 'Collapse the calendar' && /^[A-Z][a-z]+ 20\d\d$/.test(en[1]) && en[2] === 'Show the calendar', 'em inglês: "' + en.join('" · "') + '"');

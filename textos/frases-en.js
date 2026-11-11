@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.62 · 11/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.63 · 11/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.63 */
+  'Janela aberta: a tela de trás fica parada':'Window open: the screen behind stays still',
+  'Com uma janela aberta (detalhe de um lançamento, novo compromisso, explicação ⓘ, "Conferir o que foi lido", as telas da nuvem e o menu ☰ no celular), a roda do mouse ou o dedo rolam só a janela; chegando ao fim, a página de trás não anda mais.':'With a window open (entry details, new commitment, ⓘ explanation, "Check what was read", the cloud screens and the ☰ menu on the phone), the mouse wheel or your finger scroll only the window; at its end, the page behind no longer moves.',
+  'Ao fechar a janela, a lista está exatamente onde você deixou, na mesma linha.':'When you close the window, the list is exactly where you left it, on the same row.',
   /* 3.62 */
   'Um PIN só para a conta':'One PIN for the account',
   'O PIN agora é da conta, igual em todos os seus aparelhos (como a senha do banco). Trocou num, vale em todos. Num aparelho novo, depois de aprovado pelo outro, é só digitar o PIN que você já tem.':'The PIN now belongs to the account, the same on all your devices (like a bank password). Change it on one, it works on all. On a new device, after approval from the other one, just type the PIN you already have.',
