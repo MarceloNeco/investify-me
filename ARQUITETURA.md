@@ -648,7 +648,10 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   `Sessao.sair()` antigo; com a nuvem ligada agora chamam `MoneyNuvem.sair(false)` (tela "Saindo…", tranca, sai, `location.replace`;
   `pageshow` com página guardada pelo navegador → recarrega). "Criar o PIN da conta" (`Portao.criarPinConta`): conta sem PIN da conta e
   cadeado aberto (PIN ou digital: a DUK fica na memória) → `sol_pin_definir` com o atual nulo + `Pin.gravar` (L.pin e L.srv); o painel
-  mostra "Criar" ou "Trocar" conforme `Pin.info().tem`. Teste: `teste/teste-sair-pin.js` (digital simulada: autenticador virtual com PRF).
+  mostra "Criar" ou "Trocar" conforme `Pin.info().tem`. Conta sem PIN da conta: `Pin.abrir` abre com o PIN do aparelho e **não** cria o
+  PIN da conta em silêncio (só nasce quando a pessoa cria de propósito); `Aparelhos.aoAbrir` mostra no topo `#nvAvisoPin` "Crie o PIN da
+  sua conta SolverONE … · Criar agora"; criado, o L.pin é refeito e o PIN antigo dá "PIN errado". "🔒 Fechar agora" → "🔒 Bloquear
+  agora". Mesma regra para o OmniLifeONE. Teste: `teste/teste-sair-pin.js` (digital simulada: autenticador virtual com PRF).
 - 3.64 (`nuvem.js` 1.11.0; módulos novos `pessoas` 1.0.0, `espelho` 1.0.0, `saldo-banco` 1.0.0, `indicadores` 1.0.0; `profissionais` 1.1.0).
   **Pessoas** (`modulos/pessoas.js`, coleção `pessoas`): da casa (responsável/dependente), outras pessoas, empresas (CNPJ opcional; nunca
   CPF). Cada registro guarda o ID ao lado do texto nos pares `quem/quemId`, `paraQuem/paraQuemId`, `pagador/pagadorId` (`Gasto.arruma`

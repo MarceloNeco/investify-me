@@ -39,7 +39,9 @@
       Nuvem.membros(): os membros da família (sol_grupo_membros) para o cadastro de pessoas.
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
-      conta" sem o PIN antigo (sol_pin_definir com o atual nulo); "Trocar o PIN" só quando a conta já tem PIN.
+      conta" sem o PIN antigo (sol_pin_definir com o atual nulo); "Trocar o PIN" só quando a conta já tem PIN. Conta sem PIN da
+      conta: Pin.abrir abre com o PIN do aparelho e NÃO cria o PIN da conta em silêncio; o aviso no topo (Aparelhos.avisoCriarPin)
+      leva a criarPinConta; depois disso o PIN antigo do aparelho não abre mais (L.pin refeito). "Fechar agora" → "Bloquear agora".
    6. Tranca sozinho: 15 min sem uso (avisa 1 min antes) ou 10 min fora do app; nunca no meio de um trabalho; sem recarregar.
    Nunca grava nada de finanças em claro: o localStorage 'investifyme.dados.v1' (do app principal) só é LIDO, para
    oferecer "levar para a nuvem". Só a URL e a publishable key do Supabase ficam aqui (públicas por desenho).
@@ -720,8 +722,9 @@
           return this.tirado();
         }
         /* 1.10.0: o PIN da conta foi trocado em outro aparelho → tranca e pede o PIN novo (conferido no banco) */
-        var pi = L.srv ? await Pin.info() : null;
-        if (pi && pi.tem && L.pinVersao && pi.versao !== L.pinVersao && Cadeado.aberto()) { Nuvem.trancar('pinTrocado'); return; }
+        var pi = await Pin.info();
+        if (pi && pi.tem && L.srv && L.pinVersao && pi.versao !== L.pinVersao && Cadeado.aberto()) { Nuvem.trancar('pinTrocado'); return; }
+        if (pi && !pi.tem && Cadeado.aberto()) this.avisoCriarPin();   /* 1.11.1: conta sem PIN da conta → aviso no topo, não escondido no painel */
         var lista = (await this.rpc('sol_aparelhos_meus')) || [], ate = L.avisosAte || '', eu = Conta.uid();
         var novos = lista.filter(function (a) { return a.id !== L.ap && a.como === 'familia' && a.aprovado_por !== eu && String(a.criado_em) > ate; });
         if (novos.length) {
@@ -739,6 +742,17 @@
       var self = this;
       el.querySelector('#nvAvisoX').onclick = function () { el.remove(); };
       el.querySelector('#nvAvisoTirar').onclick = async function () { try { await self.rpc('sol_aparelho_tirar', { p_id: a.id }); aviso('✓ ' + tt('Aparelho tirado da sua conta.', 'Device removed from your account.')); } catch (e) {} el.remove(); };
+    },
+    /* 1.11.1: "Crie o PIN da sua conta SolverONE" no topo do app (o ✕ esconde só até abrir de novo) */
+    avisoCriarPin: function () {
+      if (document.getElementById('nvAvisoPin')) return;
+      var el = document.createElement('div');
+      el.id = 'nvAvisoPin'; el.className = 'nv-pedido'; el.setAttribute('role', 'status');
+      el.innerHTML = '<span>🔢 ' + esc(tt('Crie o PIN da sua conta SolverONE: vale em todos os seus aparelhos e apps', 'Create your SolverONE account PIN: it works on all your devices and apps')) + '</span>' +
+        '<button class="nv-btn pri" id="nvAvisoPinOk">' + tt('Criar agora', 'Create now') + '</button><button class="nv-x" id="nvAvisoPinX" aria-label="' + tt('Depois', 'Later') + '">✕</button>';
+      document.body.appendChild(el);
+      el.querySelector('#nvAvisoPinX').onclick = function () { el.remove(); };
+      el.querySelector('#nvAvisoPinOk').onclick = function () { el.remove(); Portao.criarPinConta(); };
     },
     /* este aparelho foi tirado da conta em outro aparelho: o cadeado local e a cópia daqui saem */
     tirado: async function () {
@@ -842,10 +856,10 @@
       var L = await Cadeado.local(); if (!L) return { erro: 'novo' };
       var info = L.ap ? await this.info() : null;
       if (!info) return Cadeado.porPin(pin, gid);                          /* sem internet ou sem o SQL: o PIN deste aparelho */
-      if (!info.tem) {                                                      /* conta sem PIN: o deste aparelho vira o da conta */
+      if (!info.tem) {                                                      /* 1.11.1: conta sem PIN: abre com o PIN deste aparelho e pronto. O PIN da
+                                                                               conta só nasce quando a pessoa cria um de propósito (aviso no topo) */
         var r = await Cadeado.duk(pin); if (r.erro) return r;
-        try { var d = await this.definir(pin, null, null, L.ap); if (d && d.ok) await this.gravar(r.L, pin, r.raw, d.segredo, d.versao); } catch (e) {}
-        return Cadeado.comChaveDoAparelho(await Cadeado.local(), r.raw, gid);
+        return Cadeado.comChaveDoAparelho(r.L, r.raw, gid);
       }
       if (info.espera_ate && Date.parse(info.espera_ate) > Date.now()) return { erro: 'espera', ate: Date.parse(info.espera_ate), muitas: info.tentativas >= 10, conta: true };
       var local = !L.srv ? await Cadeado.duk(pin) : null;                   /* migração: o PIN antigo daqui primeiro (não gasta tentativa da conta) */
@@ -1494,7 +1508,7 @@
     '.nv-hidden{display:none!important}.nv-row{display:flex;gap:8px;flex-wrap:wrap}.nv-row .nv-btn{flex:1 1 140px}' +
     '.nv-sas{font:700 2.2rem/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;text-align:center;margin:12px 0;padding:10px;border-radius:12px;background:var(--card2,#1b2430);border:1px solid var(--line2,#2e3c4f)}' +
     '.nv-pedido{position:fixed;left:50%;transform:translateX(-50%);top:12px;z-index:99980;display:flex;align-items:center;gap:8px;flex-wrap:wrap;max-width:calc(100vw - 24px);padding:10px 12px;border-radius:12px;background:var(--card,#151c26);border:1px solid var(--warn,#ffb84d);color:var(--txt,#e7edf5);font:14px system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.35)}' +
-    '.nv-pedido span{flex:1 1 220px}.nv-pedido .nv-btn{width:auto;margin:0}' +
+    '.nv-pedido span{flex:1 1 220px}.nv-pedido .nv-btn{width:auto;margin:0}.nv-pedido .nv-x{position:static}' +
     '.nv-selo{position:fixed;left:12px;bottom:84px;z-index:9990;border-radius:999px;padding:8px 12px;background:var(--card,#151c26);border:1px solid var(--line2,#2e3c4f);color:var(--txt,#e7edf5);font:13px system-ui,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:calc(100vw - 24px)}' +
     '@media(min-width:900px){.nv-selo{bottom:16px}}' +
     '.nv-aviso{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:99995;background:var(--card2,#1b2430);color:var(--txt,#e7edf5);border:1px solid var(--line2,#2e3c4f);border-radius:12px;padding:10px 14px;max-width:calc(100vw - 32px);display:none;font:14px system-ui,sans-serif}.nv-aviso.on{display:block}' +
@@ -1570,7 +1584,7 @@
         '<h2>🤖 ' + tt('Caixa do robô', 'Robot inbox') + '</h2>' + cx +
         (Caixa.ligada !== false ? this.htmlRobo() : '') +
         '<h2>🔒 ' + tt('Cadeado', 'Lock') + '</h2>' +
-        '<div class="nv-row"><button class="nv-btn" id="nvTrancar">🔒 ' + tt('Fechar agora', 'Lock now') + '</button><button class="nv-btn nv-hidden" id="nvPin">' + tt('Trocar o PIN', 'Change PIN') + '</button>' +
+        '<div class="nv-row"><button class="nv-btn" id="nvTrancar">🔒 ' + tt('Bloquear agora', 'Lock now') + ' <span class="nv-tiny">' + tt('(pede o PIN ou a digital para abrir de novo)', '(asks for the PIN or fingerprint to open again)') + '</span></button><button class="nv-btn nv-hidden" id="nvPin">' + tt('Trocar o PIN', 'Change PIN') + '</button>' +
         '<button class="nv-btn nv-hidden" id="nvPinCriar">🔢 ' + tt('Criar o PIN da conta', 'Create the account PIN') + '</button></div>' +
         (dig ? (L && L.prf ? '<button class="nv-btn" id="nvDigOff">' + tt('Não abrir mais com a digital', 'Stop opening with fingerprint') + '</button>' : '<button class="nv-btn" id="nvDigOn">👆 ' + tt('Abrir também com a digital', 'Also open with fingerprint') + '</button>') : '') +
         '<h2>📱 ' + tt('Aparelhos', 'Devices') + '</h2><div id="nvAps" class="nv-lista"><p class="nv-tiny">' + tt('Carregando…', 'Loading…') + '</p></div>' +
@@ -1594,9 +1608,9 @@
         if (info && !info.tem) b2.classList.remove('nv-hidden'); else b1.classList.remove('nv-hidden');
       }).catch(function () { var b1 = el.querySelector('#nvPin'); if (b1) b1.classList.remove('nv-hidden'); });
       $('#nvPinCriar').onclick = function () { if (!Cadeado.dukRaw) return aviso(tt('Abra o cadeado (com o PIN ou a digital) para criar o PIN da conta.', 'Open the lock (PIN or fingerprint) to create the account PIN.')); Painel.fechar(); Portao.criarPinConta(); };
-      $('#nvPin').onclick = function () { if (!Cadeado.dukRaw) return aviso(tt('Para trocar o PIN, feche o cadeado (🔒 Fechar agora) e abra de novo com o PIN.', 'To change the PIN, lock (🔒 Lock now) and open again with the PIN.')); Painel.fechar(); Portao.trocarPinConta(); };
+      $('#nvPin').onclick = function () { if (!Cadeado.dukRaw) return aviso(tt('Para trocar o PIN, toque em 🔒 Bloquear agora e abra de novo com o PIN.', 'To change the PIN, lock (🔒 Lock now) and open again with the PIN.')); Painel.fechar(); Portao.trocarPinConta(); };
       if ($('#nvDeNovo')) $('#nvDeNovo').onclick = function () { Sinc.tentarDeNovo(); };
-      if ($('#nvDigOn')) $('#nvDigOn').onclick = async function () { if (!Cadeado.dukRaw) return aviso(tt('Para ligar a digital, feche o cadeado (🔒 Fechar agora) e abra de novo com o PIN.', 'To turn on the fingerprint, lock (🔒 Lock now) and open again with the PIN.')); var r = await Cadeado.ligarDigital(); aviso(r.ok ? '✓ ' + tt('Pronto: abre com a digital neste ' + apN() + '.', 'Done: opens with your fingerprint on this ' + apN() + '.') : tt('A digital não foi ligada. Continue usando o PIN.', 'Fingerprint was not turned on. Keep using the PIN.')); Painel.desenhar(); };
+      if ($('#nvDigOn')) $('#nvDigOn').onclick = async function () { if (!Cadeado.dukRaw) return aviso(tt('Para ligar a digital, toque em 🔒 Bloquear agora e abra de novo com o PIN.', 'To turn on the fingerprint, lock (🔒 Lock now) and open again with the PIN.')); var r = await Cadeado.ligarDigital(); aviso(r.ok ? '✓ ' + tt('Pronto: abre com a digital neste ' + apN() + '.', 'Done: opens with your fingerprint on this ' + apN() + '.') : tt('A digital não foi ligada. Continue usando o PIN.', 'Fingerprint was not turned on. Keep using the PIN.')); Painel.desenhar(); };
       if ($('#nvDigOff')) $('#nvDigOff').onclick = async function () { await Cadeado.desligarDigital(); Painel.desenhar(); };
       if ($('#nvLevar')) $('#nvLevar').onclick = function () { Painel.fechar(); Nuvem.levarDeNovo(); };
       if ($('#nvCaixaJa')) $('#nvCaixaJa').onclick = function () { Caixa.esvaziar(); };
@@ -1604,7 +1618,7 @@
       if (!this._pediuRobos) { this._pediuRobos = true; this.robos(); }
       $('#nvApPedidos').onclick = async function () { Aparelhos._vistos = {}; await Aparelhos.olharPedidos(); if (!(Aparelhos.pendentes || []).length) aviso(tt('Nenhum pedido de acesso agora.', 'No access request right now.')); else Painel.fechar(); };
       if ($('#nvApPk')) $('#nvApPk').onclick = async function () {
-        if (!Cadeado.dukRaw) return aviso(tt('Para isso, feche o cadeado (🔒 Fechar agora) e abra de novo com o PIN.', 'For this, lock (🔒 Lock now) and open again with the PIN.'));
+        if (!Cadeado.dukRaw) return aviso(tt('Para isso, toque em 🔒 Bloquear agora e abra de novo com o PIN.', 'For this, lock (🔒 Lock now) and open again with the PIN.'));
         var r = await Aparelhos.criarPasskey();
         aviso(r.ok ? '✓ ' + tt('Pronto: a digital (passkey) abre o MoneyTRIO nos seus outros aparelhos.', 'Done: the fingerprint (passkey) opens MoneyTRIO on your other devices.')
           : r.erro === 'semprf' ? tt('Este aparelho ou navegador ainda não oferece isso. Use a aprovação pelo outro aparelho.', 'This device or browser does not offer this yet. Use approval from another device.')
@@ -1888,6 +1902,7 @@
           var d; try { d = await Pin.definir(a, null, null, L.ap); } catch (e) { return Tela.erro(Conta.explicar(e)); }
           if (!d || !d.ok) return Tela.erro(tt('A conta já tem PIN: use "Trocar o PIN".', 'The account already has a PIN: use "Change PIN".'));
           await Pin.gravar(L, a, Cadeado.dukRaw, d.segredo, d.versao, L.ap);
+          var av = document.getElementById('nvAvisoPin'); if (av) av.remove();
           Tela.fechar(); aviso('✓ ' + tt('PIN da conta criado. Vale em todos os seus aparelhos.', 'Account PIN created. It works on all your devices.'));
         });
       };

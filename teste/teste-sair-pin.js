@@ -2,8 +2,9 @@
    teste/teste-sair-pin.js — 3.64.1: "Sair" sai de verdade, e "Criar o PIN da conta" sem o PIN antigo (nuvem.js 1.11.1)
    ---------------------------------------------------------------------
    Com o "Supabase de mentira" (teste/mock-sol.js) e a digital simulada (autenticador virtual com PRF):
-     1. a conta SEM PIN da conta; o computador abre com a DIGITAL; o painel mostra "Criar o PIN da conta" (e não "Trocar");
-        cria sem o PIN antigo → fecha → abre com o PIN novo; um segundo aparelho, aprovado, entra com esse PIN; sem internet,
+     1. a conta SEM PIN da conta; abrir com o PIN antigo NÃO cria o PIN da conta e mostra o aviso no topo; o computador abre
+        com a DIGITAL; o aviso "Criar agora" e o painel mostram "Criar o PIN da conta" (e não "Trocar");
+        cria sem o PIN antigo → fecha → o PIN antigo dá "PIN errado" → abre com o PIN novo; um segundo aparelho, aprovado, entra com esse PIN; sem internet,
         o computador abre pelo L.pin;
      2. "Sair" do menu do perfil: nenhum dado na tela; recarregar continua na tela de entrar; o "Voltar" do navegador não mostra
         dados; entrar de novo funciona.
@@ -58,6 +59,14 @@ const PIN_VELHO = '736251', PIN_NOVO = '582914';
     await PC.waitForSelector('#nvSelo', { timeout: 90000 });
     M.semPin = false;
     ok(!conta() && (await PC.evaluate(() => MoneyNuvem._teste.Cadeado.local())).prf, 'antes: a conta sem PIN da conta; a digital ligada neste computador');
+    /* abre com o PIN ANTIGO deste aparelho: abre, mas NÃO cria o PIN da conta em silêncio; o aviso aparece no topo */
+    await PC.evaluate(() => MoneyNuvem._teste.Vale.apagar()); await PC.reload();
+    await PC.waitForSelector('#nvPin', { timeout: 60000 }); await PC.fill('#nvPin', PIN_VELHO); await PC.click('#nvPinOk');
+    await PC.waitForSelector('#nvSelo', { timeout: 60000 });
+    await PC.waitForSelector('#nvAvisoPin', { timeout: 20000 }).catch(() => {});
+    ok(!conta(), 'abrir com o PIN antigo do aparelho NÃO cria o PIN da conta (sol_pin_conta continua vazio)');
+    ok(/Crie o PIN da sua conta SolverONE: vale em todos os seus aparelhos e apps/.test(await PC.textContent('#nvAvisoPin').catch(() => '')), 'aviso no topo: "Crie o PIN da sua conta SolverONE … · Criar agora"');
+    await PC.screenshot({ path: '/tmp/aviso-pin.png' });
     /* tranca e abre pela DIGITAL (o PIN antigo não é digitado) */
     await PC.evaluate(() => MoneyNuvem._teste.Vale.apagar()); await PC.reload();
     await PC.waitForSelector('#nvDig', { timeout: 60000 }); await PC.click('#nvDig');
@@ -66,7 +75,12 @@ const PIN_VELHO = '736251', PIN_NOVO = '582914';
     await PC.waitForFunction(() => { const a = document.querySelector('#nvPinCriar'), b = document.querySelector('#nvPin'); return a && b && (!a.classList.contains('nv-hidden') || !b.classList.contains('nv-hidden')); }, null, { timeout: 20000 });
     const bts = await PC.evaluate(() => ({ criar: !document.querySelector('#nvPinCriar').classList.contains('nv-hidden'), trocar: !document.querySelector('#nvPin').classList.contains('nv-hidden') }));
     ok(bts.criar && !bts.trocar, 'aberto pela digital, conta sem PIN: o painel mostra "Criar o PIN da conta" (e não "Trocar o PIN")');
-    await PC.click('#nvPinCriar'); await PC.waitForSelector('#nvC1');
+    ok(/Bloquear agora/.test(await PC.textContent('#nvTrancar')) && /pede o PIN ou a digital/.test(await PC.textContent('#nvTrancar')), 'o botão diz "🔒 Bloquear agora (pede o PIN ou a digital para abrir de novo)"');
+    await PC.click('#nvFechar');
+    await PC.waitForSelector('#nvAvisoPin', { timeout: 20000 });
+    ok(true, 'aberto pela digital: o aviso "Crie o PIN da sua conta" também aparece no topo');
+    await PC.click('#nvAvisoPinOk'); await PC.waitForSelector('#nvC1');
+    ok(!(await PC.$('#nvAvisoPin')), '"Criar agora" leva à tela "Criar o PIN da conta"');
     ok(!(await PC.$('#nvTA')), 'não pede o PIN antigo');
     await PC.fill('#nvC1', '111111'); await PC.fill('#nvC2', '111111'); await PC.click('#nvCOk');
     ok(/fácil de adivinhar/.test(await PC.textContent('#nvErro')), 'PIN fácil é recusado (as mesmas regras)');
@@ -77,8 +91,13 @@ const PIN_VELHO = '736251', PIN_NOVO = '582914';
     await PC.click('#nvSelo'); await PC.waitForSelector('.nv-painel #nvTrancar');
     await PC.waitForFunction(() => !document.querySelector('#nvPin').classList.contains('nv-hidden'), null, { timeout: 20000 });
     ok(await PC.evaluate(() => document.querySelector('#nvPinCriar').classList.contains('nv-hidden')), 'agora a conta tem PIN: aparece "Trocar o PIN" e some o "Criar"');
-    /* fecha e abre com o PIN novo */
-    await PC.click('#nvTrancar'); await PC.waitForSelector('#nvPin');
+    ok(!(await PC.$('#nvAvisoPin')), 'o aviso do topo sumiu');
+    /* fecha; o PIN ANTIGO do aparelho não abre mais; abre com o PIN novo */
+    await PC.click('#nvTrancar'); await PC.waitForSelector('input#nvPin');
+    await PC.fill('input#nvPin', PIN_VELHO); await PC.click('#nvPinOk');
+    await PC.waitForFunction(() => /PIN errado/.test(document.body.innerText), null, { timeout: 30000 }).catch(() => {});
+    ok(/PIN errado/.test(await PC.evaluate(() => document.body.innerText)) && await PC.$('#nvPin'), 'depois de criar o PIN da conta, o PIN antigo do aparelho dá "PIN errado"');
+    await PC.fill('input#nvPin', '');
     await PC.fill('#nvPin', PIN_NOVO); await PC.click('#nvPinOk');
     await PC.waitForFunction(() => !document.querySelector('#nvPin'), null, { timeout: 60000 });
     ok(true, 'fechou e abriu com o PIN novo da conta');
