@@ -104,7 +104,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [
       ok(await p.evaluate(() => NfIr.faltam().length) === 0 && /Nenhuma NF faltando/.test(await p.textContent('#view-b-nfs')), '"Recebi" com um toque: nada mais faltando');
       /* pasta do IR */
       await p.evaluate(() => { abrirApp('tax'); irPara('t-deducoes'); });
-      ok(/Pasta do IR \d{4}: 1 arquivo/.test(await p.textContent('#view-t-deducoes')), 'TaxONE → Deduções mostra "Pasta do IR"');
+      ok(/Pasta do IR \d{4}: 1 arquivo/.test(await p.textContent('#view-t-deducoes')), 'FiscalONE → Deduções mostra "Pasta do IR"');
       await p.evaluate(() => irPara('t-pasta-ir'));
       await p.waitForSelector('#view-t-pasta-ir');
       await p.waitForFunction(() => window.scrollY === 0);

@@ -1,11 +1,20 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.76 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.78 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.78', d:'2026-11-13', t:'TaxONE agora se chama FiscalONE', itens:[
+    'O app de imposto de renda e da empresa (PJ) agora se chama FiscalONE, em todo lugar: tela inicial, menu, títulos, passeio, glossário e ajuda. A cor, o ícone e os seus dados continuam iguais; a busca acha pelos dois nomes.'
+  ]},
+  {v:'3.77', d:'2026-11-13', t:'Saldo previsto da conta, aviso de débito automático e Cofre da empresa', itens:[
+    'Saldo previsto da conta: no Painel e em Contas fixas, a linha do saldo de cada conta corrente nos próximos 45 dias, dia a dia (o saldo de hoje que o banco mandou, menos as contas fixas, boletos e faturas do cartão que essa conta paga, mais as rendas). O zero fica sempre à vista e a parte abaixo dele em vermelho.',
+    'Se a conta vai ficar negativa, o app avisa em "Precisa da sua atenção" e no 📥: "Sua conta fica negativa em DD/MM (−R$ X). Resgate R$ Y até DD/MM", com o valor arredondado (o buraco + 5% de folga) e de onde tirar: o investimento mais líquido (cai no mesmo dia, ou no dia seguinte: peça um dia antes). "Já resgatei / já agendei" refaz a linha.',
+    '"NÃO PAGUE: ESTÁ EM DÉBITO AUTOMÁTICO": quando chega um boleto (PDF, contrato ou uma conta fixa nova) de quem já tem uma conta fixa em débito automático, o app mostra um aviso vermelho com o banco e o dia, para você não pagar em dobro.',
+    'TaxONE: novo "Cofre da empresa", com o cartão CNPJ, a razão social, o regime (Simples, Fator R…), o contador, as contas bancárias e as chaves Pix da empresa e os documentos (contrato social, alvará) com validade e lembrete no 📥. Tudo fechado no cofre reservado; sem senhas.'
+  ]},
   {v:'3.76', d:'2026-11-13', t:'Pendências no 📥, Contas fixas e Gastos planejados, Projeção', itens:[
     '📥 Pendências: o sino agora é a lista do que precisa de você, em grupos (Confirmar classificação, Contas atrasadas, Parece conta fixa, Documentos para subir, Foi viagem?, Família e segurança, Avisos do app), cada item com uma frase e o botão para resolver ali mesmo. O número do sino é a soma da lista.',
     'Contas fixas: um botão só, "+ Adicionar", com cada jeito de cadastrar explicado numa linha. Sem renda cadastrada, a tela não mostra mais "Sobrou" negativo: convida a cadastrar a renda. "Todos" e "Revisar" saíram; o que era para revisar está no 📥.',

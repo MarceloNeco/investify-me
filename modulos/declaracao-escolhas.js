@@ -2,7 +2,7 @@
    modulos/declaracao-escolhas.js — importar a declaração do IR COM ESCOLHAS (3.65)        1.1.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (leitura por texto, como já era; nada de IA)
-     Ao importar a declaração (TaxONE → Declarações), antes de salvar, uma lista de escolhas, cada uma com uma frase:
+     Ao importar a declaração (FiscalONE → Declarações), antes de salvar, uma lista de escolhas, cada uma com uma frase:
      [x] Patrimônio com os Bens e Direitos de 31/12: imóveis, veículos, consórcio e previdência entram como patrimônio
          SEM LIQUIDEZ (modulos/patrimonio-iliquido.js), com "de quem é" e a dívida do financiamento ao lado (se a
          declaração trouxer). Os que já existem são atualizados; os novos vêm desmarcados, para confirmar um a um.

@@ -709,6 +709,29 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **3.78 — TaxONE → FiscalONE (só o nome).** O nome exibido mudou em todo lugar (APPS.tax.nome, títulos, ajuda, glossário, passeio, textos);
+  o id interno continua 'tax' (ABAS.tax, VIEWS_TAX, t-*, coleções, `ST.appAtual`), a cor `--c-tax` e o ícone 🧾 também. As Novidades antigas
+  (textos/mudancas.js) não mudam. `buscarConteudo` troca "taxone" por "fiscalone" na busca. Teste: `teste/teste-fiscalone.js`.
+  **3.77 — Saldo previsto da conta, aviso de débito automático, Cofre da empresa.**
+  Saldo previsto (`modulos/saldo-previsto.js` 1.0.0, `window.SaldoPrevisto`): para cada `ST.saldos_banco` tipo 'conta' (fora da visão da casa),
+  `linha(c)` = 46 pontos (hoje + 45 dias) a partir do saldo do robô, com `eventos(c)`: ocorrências em aberto de `Recorrente` (estado que "conta";
+  saída −, `fluxo` 'entrada' +; o que é pago no cartão fica de fora e entra pela fatura), a fatura aberta de cada `saldos_banco` tipo 'cartao' no dia
+  `cartao.vence`, as parcelas futuras de `Parcelados.compras()` depois de 31 dias, e `ST.saldo_ajustes` ("já resgatei / já agendei", reservado).
+  Conta de cada evento: uma conta só = ela; senão a que tem a 1ª palavra do banco no texto (conta/forma/pagador/nome; banco do cartão); senão a de
+  maior saldo. `alerta(c)` → 1º dia negativo, `resgate` = ⌈|pior| × 1,05 / 100⌉ × 100, `de` = `deOnde` (posições com `liquidez(p)`: campo da
+  posição; caixa e CDB/LCI/LCA de liquidez diária D+0; Tesouro Selic e fundo DI D+1), `ate` = véspera, `pedirAte` = véspera − dias. Pontos:
+  `budget.painel` e `custos.contas` (cartão com SVG: linha do zero, `.sp-pos`/`.sp-neg` por clipPath), `budget.atencao`, `inbox.grupos` (grupo novo
+  'saldo' em `INBOX_GRUPOS`). Teste: `teste/teste-saldo-previsto.js`.
+  Débito automático (`modulos/debito-auto.js` 1.0.0, `window.DebitoAuto`): `conflito({nome, cnpj, texto}, ignorarId)` procura conta fixa ativa de
+  saída com `estadoPadrao` 'automatico' (ou forma débito automático) do mesmo CNPJ (só números; `cnpj`, `contraparte.cnpj` ou no nome/obs) ou com
+  uma palavra não genérica do nome (≥ 4 letras, uma começa com a outra). `aviso()` = caixa `.aviso-vermelho`; usado no "Chegou um boleto"
+  (previsto 1.0.2, que agora lê o CNPJ do boleto) e no gasto do contrato (compromisso-de 1.7.2). `perguntar()` no `salvarRecorrente` (antes do
+  "parece repetido"): conta fixa nova/editada que não é débito automático → pergunta; "Salvar mesmo assim" (`da-salvar`) chama de novo com
+  `debitoOk`. Teste: `teste/teste-debito-auto.js`.
+  Cofre da empresa (`modulos/cofre-empresa.js` 1.0.0, `window.CofreEmpresa`, tela `t-empresa` no TaxONE, `ABAS.tax`): `ST.empresas = [{id, cnpj,
+  razao, regime, contador:{nome, contato}, contas:[{banco, agencia, conta}], pix:[], docs:[{id, tipo, nome, arquivoId, validade}]}]` (reservado;
+  fora de `CASA_COLS`). Arquivos pelo `ArquivosFamilia.guardar` (tipo 'empresa', `ligado` = id da empresa). `vencendo()` (≤ 60 dias) → 📥 Avisos
+  com "ok, entendi" (`inb-visto`, chave `emp|doc|validade`). Sem campo de senha. Teste: `teste/teste-cofre-empresa.js`.
   **3.76 — 📥 de pendências, Contas fixas, Gastos planejados, Projeção.**
   📥: `inboxGrupos()` (index.html) junta os grupos em `INBOX_GRUPOS` (confirmar, atrasadas, contafixa, docs, viagem, familia, avisos);
   o núcleo põe as origens "A confirmar" (`Origem.grupos`, ✓ `or-confirmar-grupo`, Corrigir `or-mudar`), os `g.revisar` (`data-grev`), as atrasadas

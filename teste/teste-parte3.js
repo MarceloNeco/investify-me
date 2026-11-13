@@ -60,7 +60,7 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       /* N25 */
       await p.evaluate(() => { abrirApp('tax'); irPara('t-deducoes'); });
       await p.waitForSelector('.aviso-ir-data');
-      ok(/data do PAGAMENTO/.test(await p.textContent('.aviso-ir-data')) && new RegExp('matrícula da escola de ' + (ANO + 1) + ' paga em 30/10/' + ANO + ' entra na declaração de ' + (ANO + 1)).test(await p.textContent('.aviso-ir-data')), 'TaxONE avisa: conta a data do pagamento (matrícula de ' + (ANO + 1) + ' paga em 30/10/' + ANO + ')');
+      ok(/data do PAGAMENTO/.test(await p.textContent('.aviso-ir-data')) && new RegExp('matrícula da escola de ' + (ANO + 1) + ' paga em 30/10/' + ANO + ' entra na declaração de ' + (ANO + 1)).test(await p.textContent('.aviso-ir-data')), 'FiscalONE avisa: conta a data do pagamento (matrícula de ' + (ANO + 1) + ' paga em 30/10/' + ANO + ')');
 
       /* N31 */
       await p.evaluate(() => { abrirApp('budget'); irPara('b-lanc'); abrirLancamento(null); });

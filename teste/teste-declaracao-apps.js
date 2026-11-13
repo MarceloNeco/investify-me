@@ -121,7 +121,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, gastos: [], recorrentes: []
       return { durante, depois, abriu: ST.appAtual === 'tax' && !document.getElementById('assetModal').classList.contains('hidden') && !!document.querySelector('.dec-esc'), limpo: !Fundo.estado('declaracao') }; }, TEXTO);
     ok(f.durante.ativa && f.durante.pilula, 'enquanto lê, a tarefa está no Fundo e a pílula aparece (' + JSON.stringify(f.durante) + ')');
     ok(f.depois.pronta && f.depois.app === 'budget', 'a pessoa saiu para o BudgetONE: a leitura termina mesmo assim e fica pronta na pílula');
-    ok(f.abriu && f.limpo, 'tocar na pílula leva de volta ao TaxONE, com a declaração e as escolhas abertas');
+    ok(f.abriu && f.limpo, 'tocar na pílula leva de volta ao FiscalONE, com a declaração e as escolhas abertas');
     console.log('6) os ajustes vistos com a declaração real (dados fictícios)');
     const tp = await p.evaluate((dd) => DeclEscolhas.bens(dd).map((x) => x.b.grupo + '.' + x.b.codigo + '=' + x.tipo + '|' + x.nome), d);
     const tipo = (pre) => (tp.find((x) => x.indexOf(pre) === 0) || '');

@@ -2,7 +2,7 @@
    teste/teste-parte8.js — 3.44: N38 plano de saúde, reembolso estimado e IR (Chromium headless, Playwright)
    Confere: tipo e especialidade do gasto sem IA; reembolso = menor entre gasto e tabela (especialidade ganha
    do tipo); sem reembolso, volta 0 e tudo fica para o IR; quem o plano cobre; leitura da apólice (PDF) por
-   modelo, com a pessoa conferindo; pontos em Lançamentos, Custos e TaxONE → Deduções; 390 e 1366.
+   modelo, com a pessoa conferindo; pontos em Lançamentos, Custos e FiscalONE → Deduções; 390 e 1366.
    Uso (na pasta raiz): node teste/teste-parte8.js
    ===================================================================== */
 'use strict';
@@ -79,7 +79,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, recorrentes: [], gastos: [
       await p.evaluate(() => { irPara('b-lanc'); bFiltro.periodo = 'tudo'; bFiltro.de = ''; bFiltro.ate = ''; render(); });
       ok(/volta ~R\$\s?220,00 · IR R\$\s?230,00 \(estimado\)/.test(await p.textContent('#view-b-lanc')), 'Lançamentos: "↩ volta ~R$ 220,00 · IR R$ 230,00 (estimado)"');
       await p.evaluate(() => { abrirApp('tax'); irPara('t-deducoes'); });
-      ok(/Saúde \d{4}: R\$\s?1\.070,00 · volta ~R\$\s?460,00 · fica para o IR ~R\$\s?610,00/.test(await p.textContent('#view-t-deducoes')), 'TaxONE → Deduções mostra saúde, reembolso e o que fica para o IR');
+      ok(/Saúde \d{4}: R\$\s?1\.070,00 · volta ~R\$\s?460,00 · fica para o IR ~R\$\s?610,00/.test(await p.textContent('#view-t-deducoes')), 'FiscalONE → Deduções mostra saúde, reembolso e o que fica para o IR');
       /* sem reembolso: volta 0 */
       ok(await p.evaluate(() => { Store.estado.saude_planos[0].reembolso = false; const e = Saude.estimar(Gasto.todos()[0]); Store.estado.saude_planos[0].reembolso = true; return e.volta === 0 && e.ir === 450; }), 'plano sem reembolso: nada volta, os R$ 450 ficam para o IR');
       ok(await p.evaluate(() => { const r = Saude.lerApolice('Alice Saude\nEste plano nao possui reembolso\nConsulta R$ 100,00'); return r.operadora === 'Alice' && r.reembolso === false; }), 'modelo "sem reembolso" (Alice)');

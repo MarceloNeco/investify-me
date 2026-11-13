@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.76 · 13/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.77 · 13/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2710,3 +2710,16 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .proj-tbl tfoot th, .proj-tbl tfoot td{font-weight:700}
 .proj-g{font:inherit; color:inherit; text-align:left}
 .proj-card .card-head{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap}
+/* 3.77: o saldo previsto da conta (modulos/saldo-previsto.js) */
+.sp-conta{margin-top:10px}
+.sp-graf{display:block; width:100%; height:110px; margin-top:6px}
+.sp-zero{stroke:var(--txt3); stroke-width:1; stroke-dasharray:4 3}
+.sp-pos, .sp-neg{fill:none; stroke-width:2; vector-effect:non-scaling-stroke}
+.sp-pos{stroke:var(--accent)}
+.sp-neg{stroke:var(--down)}
+.sp-alerta{margin-top:6px}
+.aviso-vermelho{border:1px solid var(--down); background:color-mix(in srgb, var(--down) 12%, transparent); color:var(--txt); border-radius:10px; padding:10px 12px; margin:8px 0}
+/* 3.77: o cofre da empresa (modulos/cofre-empresa.js) */
+.em-card .card-head{display:flex; justify-content:space-between; align-items:center; gap:8px}
+.em-lin{margin:4px 0}
+.em-ul{margin:4px 0 6px 18px; padding:0}
