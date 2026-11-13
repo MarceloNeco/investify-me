@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.73 · 13/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.74 · 13/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2647,3 +2647,6 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .dv-prev{margin-top:12px}
 .dv-itens td{font-size:.85em}
 .dv-tag{font-size:.75em}
+
+/* 3.74: "Mês a mês" refeito (modulos/mes-a-mes.js) — as duas vistas */
+.mm-modos{display:inline-flex; gap:6px; margin:0 0 10px; flex-wrap:wrap}

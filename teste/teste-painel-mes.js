@@ -85,11 +85,12 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recor
       return { linhas, rodape: c.textContent.replace(/\s+/g, ' ') };
     });
     const resc = mm.linhas.find((l) => /★/.test(l.t)), comum = mm.linhas.find((l) => !/★/.test(l.t));
-    ok(resc && /\+R\$ 33\.850,00/.test(resc.t) && /sem a rescisão\/FGTS: \+R\$ 3\.850,00/.test(resc.t) && resc.extra && resc.quebra,
-      'o mês da rescisão: a barra mostra o total real (+R$ 33.850,00) com a parte amarela cortada na borda (⫽); embaixo, "sem a rescisão/FGTS: +R$ 3.850,00"');
-    ok(comum && /\+R\$ 3\.850,00/.test(comum.t) && !comum.extra && !comum.quebra, 'os meses comuns continuam com a barra inteira (a escala é feita sem a extraordinária)');
-    ok(/★ inclui renda extraordinária \(rescisão, FGTS\), em amarelo\. As médias do Painel ficam sem ela\./.test(mm.rodape) && /Entrou recorrente R\$ 5\.000,00 · entrou extraordinária R\$ 30\.000,00 · saiu R\$ 1\.150,00 · foi para investimento/.test(resc.det),
-      'rodapé com a ★; tocar no mês mostra entrou recorrente, extraordinária, saiu e investimento');
+    /* 3.74: fora da visão da casa, o "Mês a mês" refeito (modulos/mes-a-mes.js): sem parte amarela; ★ no nome; escala 2,5× p75 */
+    ok(resc && /\+R\$ 33\.850,00/.test(resc.t) && !resc.extra && resc.quebra,
+      'o mês da rescisão: a barra mostra o que sobrou na conta (+R$ 33.850,00), numa cor só, cortada na borda (⫽)');
+    ok(comum && /\+R\$ 3\.850,00/.test(comum.t) && !comum.extra && !comum.quebra, 'os meses comuns continuam com a barra inteira');
+    ok(/★ renda extraordinária/.test(mm.rodape) && /^Entrou R\$ 35\.000,00 · gastou R\$ 1\.150,00 · foi para investimento R\$ 0,00 \(líquido\) · ★ rescisão R\$ 30\.000,00/.test(resc.det),
+      'rodapé com a ★; tocar no mês mostra entrou, gastou, investimento e a rescisão (' + resc.det + ')');
     /* o caso do dono (maio): recorrente −37.084,57 e rescisão + FGTS de 137.656 → o mês fica positivo */
     const maio = await p.evaluate(() => { const d = document.createElement('div'); d.innerHTML = vizMesAMes([{ nome: '05/2026', rec: -37084.57, extra: 137656, entRec: 11250, saida: 48334.57, aplic: 60000 }, { nome: '04/2026', rec: 2000, extra: 0, entRec: 11000, saida: 9000, aplic: 0 }], fmt);
       const r = d.querySelector('.mm-mes'); return { t: r.querySelector('summary').textContent.replace(/\s+/g, ' '), down: !!r.querySelector('.mm-down'), extra: !!r.querySelector('.mm-extra'), quebra: r.querySelectorAll('.mm-quebra').length, cls: r.querySelector('.mm-valor div').className }; });

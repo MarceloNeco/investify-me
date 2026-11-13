@@ -1,11 +1,17 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.73 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.74 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.74', d:'2026-11-13', t:'"Mês a mês" refeito', itens:[
+    '"Mês a mês" refeito: a barra de cada mês é o que sobrou na conta, tudo o que entrou menos o que foi gasto e o que foi para investimento (aportes menos resgates), numa cor só.',
+    'Marcas no mês: ★ renda extraordinária, 📈 investiu mais que a renda média do mês e 🔗 quando as duas estão ligadas (por exemplo, "rescisão investida no mês seguinte"). Toque no mês para ver os números numa linha.',
+    'Duas vistas, com a escolha guardada: "Sobrou na conta" e "Dia a dia" (a renda que se repete menos o que foi gasto). A escala ignora o mês fora da curva, que aparece cortado (⫽) com o valor inteiro.',
+    'Quando entra um valor maior que o dobro da sua renda de sempre, o app pergunta em "Precisa da sua atenção" (e no 📥) se é renda extraordinária.'
+  ]},
   {v:'3.73', d:'2026-11-13', t:'Dívidas, fatura do cartão Porto e seguro', itens:[
     'Novo cartão "Dívidas" no Painel do InvestifyONE e no do BudgetONE: consórcio, financiamento ou outra dívida, cada uma com uma barra (cheia = o que já foi pago, tracejada = o que falta), o saldo, a parcela e "quita em ~mm/aaaa (estimativa)", agrupadas pelo bem a que pertencem. O bem mostra "valor − dívida = parte sua".',
     'O patrimônio total (no Painel do InvestifyONE e no Fluxo) agora desconta as dívidas, com a linha "dívidas: −R$ X" à vista. Cada parcela paga que o app reconhece baixa o saldo (estimativa) até a próxima atualização; a parcela continua como gasto fixo no orçamento.',

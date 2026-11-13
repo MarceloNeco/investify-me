@@ -1,10 +1,16 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.73 · 13/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.74 · 13/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.74 */
+  '"Mês a mês" refeito':'"Month by month" redone',
+  '"Mês a mês" refeito: a barra de cada mês é o que sobrou na conta, tudo o que entrou menos o que foi gasto e o que foi para investimento (aportes menos resgates), numa cor só.':'"Month by month" redone: each month\'s bar is what was left in the account, everything that came in minus spending and what went to investments (contributions minus redemptions), in a single colour.',
+  'Marcas no mês: ★ renda extraordinária, 📈 investiu mais que a renda média do mês e 🔗 quando as duas estão ligadas (por exemplo, "rescisão investida no mês seguinte"). Toque no mês para ver os números numa linha.':'Month marks: ★ extraordinary income, 📈 invested more than the average monthly income and 🔗 when both are linked (e.g. "severance invested the following month"). Tap a month to see the numbers in one line.',
+  'Duas vistas, com a escolha guardada: "Sobrou na conta" e "Dia a dia" (a renda que se repete menos o que foi gasto). A escala ignora o mês fora da curva, que aparece cortado (⫽) com o valor inteiro.':'Two views, your choice remembered: "Left in the account" and "Day to day" (the income that repeats minus spending). The scale ignores the outlier month, which shows cut (⫽) with the full value.',
+  'Quando entra um valor maior que o dobro da sua renda de sempre, o app pergunta em "Precisa da sua atenção" (e no 📥) se é renda extraordinária.':'When an amount above twice your usual income comes in, the app asks in "Needs your attention" (and in 📥) whether it is extraordinary income.',
   /* 3.73 */
   'Dívidas, fatura do cartão Porto e seguro':'Debts, Porto card bill and insurance',
   'Novo cartão "Dívidas" no Painel do InvestifyONE e no do BudgetONE: consórcio, financiamento ou outra dívida, cada uma com uma barra (cheia = o que já foi pago, tracejada = o que falta), o saldo, a parcela e "quita em ~mm/aaaa (estimativa)", agrupadas pelo bem a que pertencem. O bem mostra "valor − dívida = parte sua".':'New "Debts" card on the InvestifyONE and BudgetONE Panels: consortium, financing or other debt, each with a bar (solid = paid, dashed = what is left), the balance, the instalment and "paid off ~mm/yyyy (estimate)", grouped by the asset they belong to. The asset shows "value − debt = your share".',

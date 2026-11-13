@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.73">
+<link rel="stylesheet" href="estilo.css?v=3.74">
 </head>
 <body>
 
@@ -633,7 +633,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.73"></script>
+<script src="textos/frases-en.js?v=3.74"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -1177,13 +1177,16 @@ function textoGlossario(chave, nivel){
       'Income and investment contributions are left out — spending only.'}},
 
     {k:'caixa-mensal', t:'Mês a mês', te:'Month by month', c:'BudgetONE', ce:'BudgetONE',
-     pt:{medio:'Para cada mês: tudo o que entrou menos o que saiu (o que foi para investimento não conta como saída). Barra para a direita, o mês fechou no azul (sobrou); para a esquerda, ' +
-      'gastou mais do que entrou. Um mês vermelho sozinho costuma ser conta anual (IPVA, seguro); vários seguidos pedem atenção. ' +
-      'A renda extraordinária (rescisão, FGTS, indenização, ou a entrada que você marcou como "Renda extraordinária") aparece em amarelo com ★: ' +
-      'a escala é feita sem ela, e a barra que passa da borda é cortada (⫽); embaixo do valor vem o resultado sem ela. As médias do Painel não a usam. ' +
-      'Toque no mês para ver o que entrou, saiu e foi para investimento.'},
-     en:{medio:'For each month: everything that came in minus spending (money sent to investments is not spending). A bar to the right means money was left over; to the left, you spent more than came in. ' +
-      'Extraordinary income (severance, FGTS, compensation, or an entry you marked as "Extraordinary income") shows in yellow with ★: the scale ignores it, a bar past the edge is cut (⫽), and the result without it is shown below the value. The Panel averages leave it out. Tap a month to see what came in, went out and was invested.'}},
+     pt:{medio:'Para cada mês, o que sobrou na conta: tudo o que entrou menos o que foi gasto e o que foi para investimento (aportes menos resgates). Barra para a direita, sobrou; para a esquerda, saiu mais do que entrou. ' +
+      'Marcas no mês: ★ teve renda extraordinária (rescisão, FGTS, indenização, ou a entrada que você marcou); 📈 investiu mais que a renda média do mês; 🔗 a renda extraordinária e o investimento grande estão ligados (por exemplo, a rescisão investida no mês seguinte). ' +
+      '"Dia a dia" mostra só a renda que se repete menos o que foi gasto, sem renda extraordinária e sem investimento: é o seu mês comum. A escolha fica guardada. ' +
+      'A escala vai até 2,5 vezes o valor típico; um mês fora da curva é cortado na borda (⫽) e o número mostra o valor inteiro. Toque no mês para ver os números. ' +
+      'Na parte da casa, a barra é o que entrou menos o que foi gasto, com a renda extraordinária em amarelo.'},
+     en:{medio:'For each month, what was left in the account: everything that came in minus spending and what went to investments (contributions minus redemptions). A bar to the right means money was left; to the left, more went out than came in. ' +
+      'Month marks: ★ extraordinary income (severance, FGTS, compensation, or an entry you marked); 📈 invested more than the average monthly income; 🔗 the extraordinary income and the large investment are linked (e.g. severance invested the following month). ' +
+      '"Day to day" shows only the income that repeats minus spending, without extraordinary income and investments: your ordinary month. Your choice is remembered. ' +
+      'The scale goes up to 2.5 times the typical value; an outlier month is cut at the edge (⫽) and the number shows the full value. Tap a month to see the numbers. ' +
+      'In the household view, the bar is income minus spending, with extraordinary income in yellow.'}},
 
     {k:'renda-extra', t:'Renda extraordinária', te:'Extraordinary income', c:'BudgetONE', ce:'BudgetONE',
      pt:{medio:'Renda que não se repete: rescisão, FGTS, indenização. Ela fica fora das médias do Painel ("Entrou por mês", "Sobrou por mês") e da projeção do mês, ' +
@@ -7604,7 +7607,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.73"></script>
+<script src="textos/mudancas.js?v=3.74"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -9964,6 +9967,12 @@ function viewBPainel(){
   if(meses.length >= 2){
     /* 3.68: a barra é o resultado real do mês; a renda extraordinária aparece em amarelo (★), fora da escala; as médias continuam sem ela */
     const extraMes = {}; doze.filter(rendaExtra).forEach(g => { const t = String(g.data || '').slice(0, 7); extraMes[t] = (extraMes[t] || 0) + (Number(g.valor) || 0); });
+    /* 3.74: fora da visão da casa, o "Mês a mês" refeito (modulos/mes-a-mes.js): sobrou na conta | dia a dia, ★ 📈 🔗 */
+    const casaMm = !!(window.Escopo && Escopo.soCasa && Escopo.soCasa());
+    if(window.MesAMes && !casaMm)
+      h += '<div class="card mm-card"><div class="card-head"><h3>Mês a mês</h3>' +
+           '<button class="info-dot" data-info="caixa-mensal">i</button>' + tagP + '</div>' + MesAMes.html(doze) + '</div>';
+    else
     h += '<div class="card"><div class="card-head"><h3>Mês a mês</h3>' +
          '<button class="info-dot" data-info="caixa-mensal">i</button>' + tagP + '</div>' +
          vizMesAMes(meses.map(m => { const ex = extraMes[m.t] || 0, ent = m.entrada - ex;
@@ -29965,6 +29974,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/patrimonio-mes.js?v=1.1.0"></script>
 <script src="modulos/dividas.js?v=1.0.0"></script>
 <script src="modulos/seguros.js?v=1.0.0"></script>
+<script src="modulos/mes-a-mes.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.14.2"></script>
 </body>
 </html>

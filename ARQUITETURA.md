@@ -709,7 +709,15 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
-  **Topo**: o ✨ IA saiu da faixa (`Anuncio.html`) para a barra de cima (`#btnIA`, `.ia-ico`, antes da 🔍; `ia-off` posto no
+  **Mês a mês refeito (3.74)** (`modulos/mes-a-mes.js` 1.0.0, `window.MesAMes`): fora da visão da casa, o cartão `.mm-card` do Painel usa
+  `MesAMes.html(doze)` (a casa continua com `vizMesAMes`). `itens(lista)` por mês: `conta` = entrada − saída − aplicação (líquida: o resgate é
+  aplicação negativa), `dia` = entrada recorrente (sem `rendaExtra`) − saída; `estrela` (renda extraordinária), `invest` (aplicação > média da renda
+  recorrente nos meses com renda), `par` (🔗: a ★ de X com o 📈 de X−1, X ou X+1, o maior; frase em `frasePar`). Escala: 2,5 × p75 dos |valores|
+  da vista (`escala`), ⫽ no que passa. `ST.config.mesAMesModo` = 'conta'|'dia' (ação `mm-modo`). `perguntas()`: entrada dos últimos 12 meses,
+  sem `g.extra` decidido e sem a regra automática, maior que 2× a média da renda recorrente dos 6 meses anteriores (com ≥3 meses) → cartão
+  `.mm-atencao` em `budget.atencao` e item no 📥; `mm-extra-sim`/`mm-extra-nao` gravam `g.extra`. Verbete `caixa-mensal` reescrito. Teste:
+  `teste/teste-mes-a-mes.js`; `teste-painel-mes.js` ajustado.
+ (`Anuncio.html`) para a barra de cima (`#btnIA`, `.ia-ico`, antes da 🔍; `ia-off` posto no
   `Anuncio.render`). A faixa só existe com anúncio ou com a tarja do modo de teste (senão `html()` devolve '' e o `medirTopo` mede de novo).
   No celular o nome do app encolhe (`.brand-caixa{flex:1 1 0}`) para o topo não quebrar de linha (quebrar fazia o fundo pular ao abrir
   uma janela, pelo `scrollbar-gutter`); abaixo de 360 px o ✨ some da barra e fica no menu 👤. Teste: `teste/teste-topo-ia.js`; a fumaça
