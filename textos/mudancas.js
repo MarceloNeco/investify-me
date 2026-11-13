@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.70 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.71 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.71', d:'2026-11-13', t:'Textos da tela inicial mais diretos', itens:[
+    'Os três cartões da tela inicial dizem o que cada app faz, sem frase de efeito, e o rodapé diz como os dados são guardados: criptografados no aparelho antes de ir para a nuvem, ou só neste aparelho, sem conta.'
+  ]},
   {v:'3.70', d:'2026-11-13', t:'A declaração do IR preenche os três apps', itens:[
     'Ao importar a declaração no TaxONE, a tela mostra o que fazer com ela, sempre como escolha: montar ou atualizar a carteira do InvestifyONE com os investimentos de 31/12 (ações e ETFs no exterior com a quantidade, fundos, poupança, contas), cadastrar os dependentes em Pessoas, as fontes pagadoras em Rendas e, se quiser, a escola e o plano de saúde como contas fixas em Custos. O que já existe vem desmarcado; nada é gravado sem você confirmar.',
     '"De quem é": a conta ou o bem com "cônjuge" ou com o nome de alguém do cadastro já vem com essa pessoa escolhida.',

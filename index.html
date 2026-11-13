@@ -333,14 +333,14 @@ const TEXTOS = {
   'nav.t.docs':        {pt:'Documentos do IR',  en:'Tax documents'},
 
   /* o conjunto */
-  'app.trio':          {pt:'Três ferramentas, um dinheiro só. Escolha por onde começar — dá para trocar a qualquer momento pelo nome lá em cima.',
-                        en:'Three tools, one wallet. Pick where to start — you can switch any time using the name up top.'},
-  'app.budget.frase':  {pt:'Quanto entra, quanto sai, e quanto isso vai custar daqui a cinco anos.',
-                        en:'What comes in, what goes out, and what it will cost five years from now.'},
-  'app.investify.frase':{pt:'Onde o seu dinheiro está, quanto ele rendeu de verdade e o que fazer com o próximo aporte.',
-                        en:'Where your money is, what it actually returned, and what to do with the next contribution.'},
-  'app.tax.frase':     {pt:'O imposto de renda montado a partir do que os outros dois já sabem.',
-                        en:'Your tax return, built from what the other two already know.'},
+  'app.trio':          {pt:'Três ferramentas, três visões, o mesmo dinheiro.',
+                        en:'Three tools, three views, the same money.'},
+  'app.budget.frase':  {pt:'O orçamento da casa: o que entra, o que sai e o que vem pela frente.',
+                        en:'The household budget: what comes in, what goes out and what lies ahead.'},
+  'app.investify.frase':{pt:'Os investimentos no Brasil e no exterior, com o retorno real e o próximo aporte.',
+                        en:'Investments in Brazil and abroad, with the real return and the next contribution.'},
+  'app.tax.frase':     {pt:'Visão avançada de imposto de renda e da PJ, com base no que o BudgetONE e o InvestifyONE já registram.',
+                        en:'An advanced view of income tax and the company (PJ), based on what BudgetONE and InvestifyONE already record.'},
   'app.embreve':       {pt:'em breve',           en:'coming soon'},
   'app.trocar':        {pt:'Trocar de app',      en:'Switch app'},
 
@@ -633,7 +633,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.70"></script>
+<script src="textos/frases-en.js?v=3.71"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7596,7 +7596,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.70"></script>
+<script src="textos/mudancas.js?v=3.71"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -9659,13 +9659,13 @@ const Orcamento = {
 const APPS = {
   budget: {nome:'BudgetONE', ico:'🧮', cor:'--c-budget', pronto:true,
            chaveFrase:'app.budget.frase',
-           itens:['Custos fixos e do dia a dia','Renda de todo tipo','Projeção pelo IPCA de cada grupo']},
+           itens:['Gastos e contas fixas','Rendas','Previsão do mês e do ano, corrigida pelo IPCA']},
   investify:{nome:'InvestifyONE', ico:'📈', cor:'--c-investify', pronto:true,
            chaveFrase:'app.investify.frase',
            itens:['Brasil e exterior no mesmo lugar','Retorno do bolso e da estratégia','Perfil de risco e prognóstico']},
   tax:     {nome:'TaxONE', ico:'🧾', cor:'--c-tax', pronto:true,
            chaveFrase:'app.tax.frase',
-           itens:['Imposto do salário, no mês e no ano','PJ × CLT com Simples e Fator R','Declarações, restituição e protocolos']}
+           itens:['IR da pessoa física: declaração, restituição e deduções','PJ: Simples, Fator R, pró-labore e DAS','Declarações e protocolos']}
 };
 
 /* 3.66: quem vê só a parte da casa (modulos/visao-casa.js) usa só o BudgetONE: os outros dois nem aparecem */
@@ -9759,11 +9759,11 @@ function viewHub(){
   h += '</div>' +
     '<p class="hub-pe tiny muted">' + ((window.MoneyNuvem && MoneyNuvem.iniciado && !MoneyNuvem.local)
       ? (I18n.atual === 'pt'
-        ? 'Fica guardado na nuvem, fechado com o cadeado da família, e uma cópia fechada neste aparelho.'
-        : 'Kept in the cloud, closed with the family lock, plus a closed copy on this device.')
+        ? 'Dados criptografados no seu aparelho antes de ir para a nuvem. Acesso com a sua conta, PIN pessoal e aparelho aprovado.'
+        : 'Data is encrypted on your device before it goes to the cloud. Access with your account, personal PIN and an approved device.')
       : (I18n.atual === 'pt'
-        ? 'Tudo fica guardado no seu navegador e no arquivo que você baixa. Nada sai daqui sem você mandar.'
-        : 'Everything stays in your browser and in the file you download. Nothing leaves without you.')) +
+        ? 'Dados guardados só neste aparelho, sem conta e sem nuvem.'
+        : 'Data stored only on this device, with no account and no cloud.')) +
     '</p></div>';
   return h;
 }
