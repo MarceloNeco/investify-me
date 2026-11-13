@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/previsto.js — valor que varia: época do ano e boleto que chegou (N28)   1.0.1 · 13/Nov/2026
+   modulos/previsto.js — valor que varia: época do ano e boleto que chegou (N28)   1.0.2 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · Época do ano (sazonalidade): com 12 meses ou mais de histórico de um compromisso "o valor varia",
@@ -71,6 +71,7 @@
       if ((m = s.match(/vencimento[^\n\d]*?(\d{2})\/(\d{2})\/(\d{4})/))) out.venc = m[3] + '-' + m[2] + '-' + m[1];
       if (!out.venc && (m = t.match(/\b(\d{2})\/(\d{2})\/(\d{4})\b/))) out.venc = m[3] + '-' + m[2] + '-' + m[1];
       if ((m = t.match(/benefici[aá]rio\s*:?\s*([^\n]{3,80})/i)) || (m = t.match(/cedente\s*:?\s*([^\n]{3,80})/i))) out.beneficiario = m[1].replace(/\s*(cnpj|cpf).*/i, '').trim();
+      if ((m = t.match(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/))) out.cnpj = m[0];   /* 1.0.2 (3.77): para o aviso de débito automático */
       return out;
     },
     candidatos: function (b) {
@@ -94,6 +95,7 @@
     achado = { b: b, arquivo: arquivoId, cs: cs };
     $('#genTitle').textContent = pt() ? 'Boleto que chegou' : 'Bill received';
     $('#genBody').innerHTML = Verter.html('<p class="small">' + (pt() ? 'O app leu: ' : 'Read: ') + '<b>' + fmt(b.valor) + '</b>' + (b.venc ? (pt() ? ', vence ' : ', due ') + esc(I18n.data(b.venc)) : '') + (b.beneficiario ? ' · ' + esc(b.beneficiario) : '') + '</p>' +
+      (window.DebitoAuto ? DebitoAuto.aviso({ nome: b.beneficiario, cnpj: b.cnpj }) : '') +   /* 1.0.2 (3.77) */
       '<div class="grid g2">' + campo(pt() ? 'Valor (R$)' : 'Amount', '<input type="number" id="pvValor" step="0.01" min="0" value="' + (b.valor || '') + '">') +
         campo(pt() ? 'É de qual vencimento' : 'Which due date', '<select id="pvOc">' + (cs.length ? cs.map(function (c, i) {
           return '<option value="' + i + '"' + (i === 0 ? ' selected' : '') + '>' + esc(c.r.nome + ' · ' + I18n.data(c.data) + ' · ' + (pt() ? 'previsto ' : 'forecast ') + fmt(c.previsto)) + '</option>'; }).join('')
@@ -105,7 +107,7 @@
 
   MoneyModulos.registrar({
     id: 'previsto',
-    versao: '1.0.1',
+    versao: '1.0.2',
     colecoes: [CFG, BOL],
     pontos: {
       'compromisso.varia': function (ctx) {

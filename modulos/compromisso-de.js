@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.7.1 · 13/Nov/2026
+   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.7.2 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · No formulário de um lançamento: "📌 Virar compromisso" abre o "Novo compromisso" já preenchido
@@ -445,6 +445,7 @@
         '<h4 class="cdl-tit" id="cdlTG">' + esc(titGasto(g.valor, g.data)) + '</h4></label>' + botaoDetalhe('cdlDG', abertoG) + '</div>' +
         (jl ? '<div class="cdl-ja cdl-ja-um cdl-jalancado"><span class="cdl-ja-txt">' + esc((pt() ? 'Já está no livro: ' : 'Already in your book: ') + I18n.data(jl.data) + ' · ' + (jl.desc || jl.sub) + ' · ' + fmt(jl.valor)) + '</span></div>' : '') +
         '<div class="cdl-corpo" id="cdlDG"' + (abertoG ? '' : ' hidden') + '>' +
+        (window.DebitoAuto ? DebitoAuto.aviso({ nome: g.desc }) : '') +   /* 1.7.2 (3.77) */
         (g.confira ? '<div class="cdl-nota cdl-confira small">' + esc(pt() ? '⚠ O boleto não deixou claro o valor a pagar: confira.' : '⚠ The bill did not make the amount due clear: check it.') + '</div>' : '') +
         '<label class="cdl-lin"><span class="cdl-rot">' + esc(pt() ? 'Nome do lançamento' : 'Entry name') + '</span><input id="cdlGDesc" maxlength="80" value="' + esc(g.desc) + '"></label>' +
         '<div class="cdl-campos"><div class="cdl-lin"><span class="cdl-rot">' + esc(pt() ? 'Data' : 'Date') + '</span>' + Cal.campo('cdlGData', g.data, {}) + '</div>' +
@@ -611,7 +612,7 @@
 
   MoneyModulos.registrar({
     id: 'compromisso-de',
-    versao: '1.7.1',
+    versao: '1.7.2',
     pontos: {
       'lancamento.form': function (ctx) {
         if (!ctx.g || ctx.g.fluxo === 'entrada' && ctx.g.grupo !== 'RENDA') return '';
