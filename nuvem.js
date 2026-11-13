@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.1 · 13/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.2 · 13/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -59,6 +59,7 @@
       PreAut.receber (modulos/pre-autorizacao.js, com "caucao_provavel"); a cada lote, PreAut.entrega() e PreAut.limpar()
       (o definitivo que chegou substitui o pendente; o que sumiu da entrega há 7 dias é liberado).
   18. 1.15.1 (3.81) — MoneyNuvem.converterRobo(l): a conversão da caixa do robô, para o importador do extrato BS2 no app.
+  19. 1.15.2 (3.84) — N10: depois de abrir da nuvem, cartões, metas, bancos e empresas em ordem alfabética (estável entre aparelhos).
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
       conta" sem o PIN antigo (sol_pin_definir com o atual nulo); "Trocar o PIN" só quando a conta já tem PIN. Conta sem PIN da
@@ -1119,6 +1120,9 @@
       else if (col.indexOf('tax_') === 0 && tax[col.slice(4)]) tax[col.slice(4)].push(o);
     });
     est.tax = Object.assign(resto, tax);
+    /* 1.15.2 (3.84, N10): a nuvem devolve na ordem dos ids; as listas sem ordem própria ficam em ordem alfabética, igual em todo aparelho */
+    var nomeDe = function (x) { return String((x && (x.apelido || x.nome || x.razao)) || '').toLowerCase(); };
+    ['cartoes', 'metas', 'bancos', 'empresas'].forEach(function (c) { if (Array.isArray(est[c])) est[c].sort(function (a, b) { return nomeDe(a).localeCompare(nomeDe(b), 'pt') || String(a.id).localeCompare(String(b.id)); }); });
     return Store.migrar(est);
   }
 

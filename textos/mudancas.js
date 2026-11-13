@@ -1,11 +1,15 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.83 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.84 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.84', d:'2026-11-13', t:'Ordem das listas e cabeçalhos fixos', itens:[
+    'Depois de abrir os dados da nuvem, cartões, metas, bancos e empresas aparecem sempre na mesma ordem (alfabética), em qualquer aparelho.',
+    'No computador, a tabela "Próximos 90 dias" da PJ mantém o cabeçalho à vista ao rolar, e a prévia do extrato do BS2 rola dentro da janela com o cabeçalho preso.'
+  ]},
   {v:'3.83', d:'2026-11-13', t:'FiscalONE: Oportunidades, DRE e pacote do contador', itens:[
     '"Oportunidades" na tela PJ, por regras e sem IA, cada uma com a conta, o porquê e a fonte oficial: Fator R (quanto de pró-labore a mais leva a 28% e quanto o DAS cai, já descontando INSS e IR), exportação de serviço (o DAS parece não ter separado?), despesas de casa (no Simples não reduzem o DAS), mistura entre PF e PJ e a reforma tributária, com a data de revisar no 📥.',
     'DRE simples do mês e do ano pelo plano de contas (impostos, contador e taxas, software e IA, internet e telefone, equipamentos, bancos e câmbio), com o que foi para você e o que ficou na PJ; e o "Pacote do contador": o resumo e os lançamentos para baixar ou mandar por e-mail.',

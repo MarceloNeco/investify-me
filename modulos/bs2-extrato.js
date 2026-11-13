@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/bs2-extrato.js — importar o extrato do BS2 (PJ) no app (3.81)        1.0.0 · 13/Nov/2026
+   modulos/bs2-extrato.js — importar o extrato do BS2 (PJ) no app (3.81)        1.0.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026: "para não depender do principal")
      · CSV nacional ("Extrato Bancário - Empresas"; UTF-8 com BOM; ';'; colunas DataContabil; Data Operação; Tipo; Detalhe;
@@ -184,14 +184,14 @@
     $('#genTitle').textContent = tr('Extrato do BS2: prévia', 'BS2 statement: preview');
     var lin = function (g, ja) { return '<tr' + (ja ? ' class="muted"' : '') + '><td>' + esc(I18n.data(g.data)) + '</td><td>' + esc(g.desc) + '<span class="t-sub">' + esc((g.transf ? g.banco : g.conta) + ' · ' + (g.rotulo || g.sub)) + '</span></td><td class="num">' + fmt(g.valor) + '</td><td>' + esc(ja ? tr('já existe', 'already there') : tr('novo', 'new')) + '</td></tr>'; };
     $('#genBody').innerHTML = Verter.html('<p class="small bs2-conta">' + esc(tr(p.novos.length + ' novo(s); ' + p.ja.length + ' já estavam no app (o robô mandou); ' + p.ignorados.length + ' de fora.', p.novos.length + ' new; ' + p.ja.length + ' already in the app; ' + p.ignorados.length + ' left out.')) + '</p>' +
-      '<div class="tbl-wrap" style="max-height:50vh;overflow:auto"><table class="tbl bs2-previa"><tbody>' + p.novos.map(function (g) { return lin(g, false); }).join('') + p.ja.map(function (g) { return lin(g, true); }).join('') + '</tbody></table></div>' +
+      '<div class="tbl-wrap tbl-fixa" style="max-height:50vh;overflow:auto"><table class="tbl bs2-previa"><thead><tr><th>' + esc(tr('Data', 'Date')) + '</th><th>' + esc(tr('Lançamento', 'Entry')) + '</th><th class="num">' + esc(tr('Valor', 'Amount')) + '</th><th></th></tr></thead><tbody>' + p.novos.map(function (g) { return lin(g, false); }).join('') + p.ja.map(function (g) { return lin(g, true); }).join('') + '</tbody></table></div>' +
       '<div class="f-actions"><button class="btn" data-close="genModal">' + esc(t('ac.cancelar')) + '</button><button class="btn primary" data-acao="bs2-gravar"' + (p.novos.length ? '' : ' disabled') + '>' + esc(tr('Importar ', 'Import ') + p.novos.length) + '</button></div>');
     abrir('genModal');
   }
   API._previa = previa;
 
   MoneyModulos.registrar({
-    id: 'bs2-extrato', versao: '1.0.0',
+    id: 'bs2-extrato', versao: '1.0.1',
     acoes: {
       'bs2-importar': function () {
         var i = document.createElement('input'); i.type = 'file'; i.accept = '.csv,.ofx,text/csv,application/x-ofx'; i.multiple = true; i.style.display = 'none'; i.id = 'bs2Arq';
