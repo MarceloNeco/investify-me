@@ -1,6 +1,6 @@
 /* =====================================================================
    modulos/pj-gestao.js — FiscalONE, gestão da PJ: gráficos, contas a pagar e receber, fluxo de caixa e os custos do
-   negócio pagos no CPF (3.82)        1.0.0 · 13/Nov/2026
+   negócio pagos no CPF (3.82)        1.0.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedidos do dono, 13/Nov/2026; dentro da tela PJ, por empresa, pelo ponto pj.empresa do modulos/pj.js)
      · Gráficos (12 meses e o ano): receita mês a mês em R$ (e a moeda de origem, quando há), custos por tipo (impostos,
@@ -206,7 +206,7 @@
       '<table class="tbl"><thead><tr><th>' + esc(tr('Realizado', 'Actual')) + '</th><th class="num">' + esc(tr('Entrou', 'In')) + '</th><th class="num">' + esc(tr('Saiu', 'Out')) + '</th></tr></thead><tbody>' +
       f.realizado.map(function (r) { return '<tr><td>' + esc(mesCurto(r.t)) + '</td><td class="num up">' + fmt(r.entrou) + '</td><td class="num down">' + fmt(r.saiu) + '</td></tr>'; }).join('') + '</tbody></table>' +
       '<p class="small" style="margin:10px 0 4px"><b>' + esc(tr('Próximos 90 dias', 'Next 90 days')) + '</b> · ' + esc(tr('saldo de hoje nas contas da PJ ', 'today\'s balance in the company accounts ') + fmt(f.saldo)) + '</p>' +
-      (f.proximos.length ? '<table class="tbl pjg-prox"><tbody>' + f.proximos.map(function (p) { return '<tr><td>' + esc(I18n.data(p.data)) + '</td><td>' + esc(p.desc) + '</td><td class="num ' + (p.entra ? 'up' : 'down') + '">' + (p.aprox ? '≈ ' : '') + fmt(p.valor) + '</td><td class="num' + (p.saldo < 0 ? ' down' : '') + '">' + fmt(p.saldo) + '</td></tr>'; }).join('') + '</tbody></table>' : '<p class="small muted">' + esc(tr('Nada previsto.', 'Nothing expected.')) + '</p>') +
+      (f.proximos.length ? '<div class="tbl-wrap"><table class="tbl pjg-prox"><thead><tr><th>' + esc(tr('Data', 'Date')) + '</th><th>' + esc(tr('O quê', 'What')) + '</th><th class="num">' + esc(tr('Valor', 'Amount')) + '</th><th class="num">' + esc(tr('Saldo', 'Balance')) + '</th></tr></thead><tbody>' + f.proximos.map(function (p) { return '<tr><td>' + esc(I18n.data(p.data)) + '</td><td>' + esc(p.desc) + '</td><td class="num ' + (p.entra ? 'up' : 'down') + '">' + (p.aprox ? '≈ ' : '') + fmt(p.valor) + '</td><td class="num' + (p.saldo < 0 ? ' down' : '') + '">' + fmt(p.saldo) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="small muted">' + esc(tr('Nada previsto.', 'Nothing expected.')) + '</p>') +
       '<p class="small">' + esc(tr('Saldo previsto em 90 dias: ', 'Forecast balance in 90 days: ')) + '<b class="pjg-fim' + (f.fim < 0 ? ' down' : '') + '">' + fmt(f.fim) + '</b></p></div>';
   }
   function blocoCpf() {
@@ -248,7 +248,7 @@
   function val(id) { var x = document.getElementById(id); return x ? String(x.value || '').trim() : ''; }
 
   MoneyModulos.registrar({
-    id: 'pj-gestao', versao: '1.0.0', colecoes: [COL, CPF],
+    id: 'pj-gestao', versao: '1.0.1', colecoes: [COL, CPF],
     pontos: { 'pj.empresa': bloco },
     acoes: {
       'pjg-nova': function (el) { var e = (ST.empresas || []).find(function (x) { return x.id === el.dataset.id; }); if (e) abrirNova(e, el.dataset.tipo); },

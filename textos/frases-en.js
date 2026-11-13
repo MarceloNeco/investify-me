@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.83 · 13/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.84 · 13/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.84 */
+  'Ordem das listas e cabeçalhos fixos':'List order and sticky headers',
+  'Depois de abrir os dados da nuvem, cartões, metas, bancos e empresas aparecem sempre na mesma ordem (alfabética), em qualquer aparelho.':'After opening your data from the cloud, cards, goals, banks and companies always show in the same (alphabetical) order, on any device.',
+  'No computador, a tabela "Próximos 90 dias" da PJ mantém o cabeçalho à vista ao rolar, e a prévia do extrato do BS2 rola dentro da janela com o cabeçalho preso.':'On a computer, the company "Next 90 days" table keeps its header in view while scrolling, and the BS2 statement preview scrolls inside the window with its header pinned.',
   /* 3.83 */
   'FiscalONE: Oportunidades, DRE e pacote do contador':'FiscalONE: Opportunities, P&L and accountant pack',
   '"Oportunidades" na tela PJ, por regras e sem IA, cada uma com a conta, o porquê e a fonte oficial: Fator R (quanto de pró-labore a mais leva a 28% e quanto o DAS cai, já descontando INSS e IR), exportação de serviço (o DAS parece não ter separado?), despesas de casa (no Simples não reduzem o DAS), mistura entre PF e PJ e a reforma tributária, com a data de revisar no 📥.':'"Opportunities" on the Company screen, rule-based and without AI, each with the numbers, the reason and the official source: Fator R (how much more pro-labore reaches 28% and how much the DAS drops, after INSS and income tax), service exports (does the DAS seem not to separate them?), home costs (under Simples they do not reduce the DAS), personal × company mix and the tax reform, with a review date in 📥.',

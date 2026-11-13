@@ -709,6 +709,10 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **3.84 — N10 e N35.** nuvem.js 1.15.2: no fim do `reconstruir`, `cartoes`, `metas`, `bancos` e `empresas` em ordem alfabética (apelido/nome/razão,
+  depois o id), a mesma em todo aparelho (as coleções com data não mudam). Tabelas novas com `<thead>`: "próximos 90 dias" (pj-gestao 1.0.1, dentro de
+  `.tbl-wrap`, ganha `tbl-topo` pelo `UX.cabecalhoFixo`) e a prévia do BS2 (bs2-extrato 1.0.1, `.tbl-fixa`: cabeçalho preso na rolagem da janela).
+  Teste: `teste/teste-ordem-tabelas.js`.
   **3.83 — FiscalONE, gestor de CNPJ (itens 2, 3, 4, 8, 10 e 11).** `textos/pj-textos.js` (const `PJ_TEXTOS`, carregado depois do glossário): TODOS
   os textos das regras (PT/EN, `{chaves}` trocadas pelos números), as fontes oficiais, as tabelas dos Anexos III e V da LC 123 (teto, alíquota, parcela a
   deduzir), a parte de ISS+PIS+COFINS que zera na exportação (aproximada), os parâmetros do Fator R (28%, folga 31%, INSS 11%, IR marginal 27,5%), a
