@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/mes-a-mes.js — o "Mês a mês" do Painel do BudgetONE, refeito (3.74)        1.0.0 · 13/Nov/2026
+   modulos/mes-a-mes.js — o "Mês a mês" do Painel do BudgetONE, refeito (3.73)        1.0.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · A barra de cada mês é o que SOBROU NA CONTA: tudo o que entrou − o que foi gasto − o que foi para investimento

@@ -85,7 +85,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recor
       return { linhas, rodape: c.textContent.replace(/\s+/g, ' ') };
     });
     const resc = mm.linhas.find((l) => /★/.test(l.t)), comum = mm.linhas.find((l) => !/★/.test(l.t));
-    /* 3.74: fora da visão da casa, o "Mês a mês" refeito (modulos/mes-a-mes.js): sem parte amarela; ★ no nome; escala 2,5× p75 */
+    /* 3.73: fora da visão da casa, o "Mês a mês" refeito (modulos/mes-a-mes.js): sem parte amarela; ★ no nome; escala 2,5× p75 */
     ok(resc && /\+R\$ 33\.850,00/.test(resc.t) && !resc.extra && resc.quebra,
       'o mês da rescisão: a barra mostra o que sobrou na conta (+R$ 33.850,00), numa cor só, cortada na borda (⫽)');
     ok(comum && /\+R\$ 3\.850,00/.test(comum.t) && !comum.extra && !comum.quebra, 'os meses comuns continuam com a barra inteira');

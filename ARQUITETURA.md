@@ -709,7 +709,7 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
-  **Mês a mês refeito (3.74)** (`modulos/mes-a-mes.js` 1.0.0, `window.MesAMes`): fora da visão da casa, o cartão `.mm-card` do Painel usa
+  **Mês a mês refeito (3.73)** (`modulos/mes-a-mes.js` 1.0.0, `window.MesAMes`): fora da visão da casa, o cartão `.mm-card` do Painel usa
   `MesAMes.html(doze)` (a casa continua com `vizMesAMes`). `itens(lista)` por mês: `conta` = entrada − saída − aplicação (líquida: o resgate é
   aplicação negativa), `dia` = entrada recorrente (sem `rendaExtra`) − saída; `estrela` (renda extraordinária), `invest` (aplicação > média da renda
   recorrente nos meses com renda), `par` (🔗: a ★ de X com o 📈 de X−1, X ou X+1, o maior; frase em `frasePar`). Escala: 2,5 × p75 dos |valores|

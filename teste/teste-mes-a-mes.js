@@ -1,5 +1,5 @@
 /* =====================================================================
-   teste/teste-mes-a-mes.js — 3.74: o "Mês a mês" refeito (modulos/mes-a-mes.js). Dados FICTÍCIOS.
+   teste/teste-mes-a-mes.js — 3.73: o "Mês a mês" refeito (modulos/mes-a-mes.js). Dados FICTÍCIOS.
    Confere: a barra = entrou − gastou − investimento líquido (resgate desconta); sem parte amarela; ★ 📈 🔗 e a frase
    "rescisão investida no mês seguinte"; a linha do toque; a escala de 2,5× o p75 com ⫽; "Sobrou na conta | Dia a dia"
    guardado; a pergunta da ★ (entrada > 2× a média recorrente de 6 meses) no Painel e no 📥, e a resposta; a visão da

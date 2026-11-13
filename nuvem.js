@@ -1502,7 +1502,7 @@
     },
     /* liberar o MoneyTRIO para uma pessoa da família: a visão e as chaves (a reservada só para "tudo") */
     liberar: async function (uid, visao) {
-      if (!Cadeado.mkRaw) { var e0 = new Error(tt('Abra pelo PIN ou pela digital para liberar.', 'Unlock with the PIN or fingerprint to grant access.')); e0.codigo = 'pin'; throw e0; }
+      if (!Cadeado.mkRaw) { var e0 = new Error(tt('Desbloqueie com o PIN ou a digital para liberar.', 'Unlock with the PIN or fingerprint to grant access.')); e0.codigo = 'pin'; throw e0; }
       await Visao.definir(Sinc.gid, uid, visao);
       var pubs = await Conta.rpc('sol_chaves_publicas_do_grupo', { p_grupo: Sinc.gid });
       var p = (pubs || []).filter(function (x) { return x.user_id === uid; })[0];
@@ -2107,8 +2107,8 @@
       /* 1. seus dados */
       var s1 = '<div class="nv-nota nv-est"><span id="nvStatus">' + esc(this.frase()) + '</span></div>' +
         /* 1.14.0: este aparelho não tem as chaves do MoneyTRIO (a família foi preparada depois) ou a chave da família girou */
-        (Cadeado.precisaMk && !Cadeado.mk ? '<div class="nv-nota nv-alerta" id="nvSemMk">⚠️ ' + tt('Este aparelho ainda não tem as chaves novas da família no MoneyTRIO, por isso não guarda nada. Abra pelo PIN ou pela digital (🔒 Bloquear agora e abrir de novo). Se continuar, aprove este aparelho por outro aparelho seu.', 'This device does not have the family\'s new MoneyTRIO keys yet, so it saves nothing. Unlock with the PIN or fingerprint (🔒 Lock now and open again). If it persists, approve this device from another device of yours.') + '</div>' : '') +
-        (Cadeado.cfNova ? '<div class="nv-nota nv-alerta" id="nvCfNova">🔑 ' + tt('A chave da família mudou. Abra pelo PIN ou pela digital para este aparelho buscar a nova.', 'The family key changed. Unlock with the PIN or fingerprint so this device fetches the new one.') + '</div>' : '') +
+        (Cadeado.precisaMk && !Cadeado.mk ? '<div class="nv-nota nv-alerta" id="nvSemMk">⚠️ ' + tt('Este aparelho ainda não tem as chaves novas da família no MoneyTRIO, por isso não guarda nada. Desbloqueie com o PIN ou a digital (🔒 Bloquear agora e abrir de novo). Se continuar, aprove este aparelho por outro aparelho seu.', 'This device does not have the family\'s new MoneyTRIO keys yet, so it saves nothing. Unlock with the PIN or fingerprint (🔒 Lock now and open again). If it persists, approve this device from another device of yours.') + '</div>' : '') +
+        (Cadeado.cfNova ? '<div class="nv-nota nv-alerta" id="nvCfNova">🔑 ' + tt('A chave da família mudou. Desbloqueie com o PIN ou a digital para este aparelho buscar a nova.', 'The family key changed. Unlock with the PIN or fingerprint so this device fetches the new one.') + '</div>' : '') +
         (Sinc.recusados ? '<button class="nv-btn" id="nvDeNovo">' + tt('Tentar de novo os não aceitos', 'Retry the ones not accepted') + '</button>' : '') +
         '<details class="nv-av" id="nvDadosDet"' + (abertos.nvDadosDet ? ' open' : '') + '><summary>' + tt('Ver detalhes', 'See details') + '</summary>' +
         dica(Sinc.vivos() + tt(' registros guardados, criptografados.', ' records saved, encrypted.') + '<br>' +
@@ -2120,11 +2120,11 @@
       var s2 = '<div class="nv-row"><button class="nv-btn nv-hidden" id="nvPinCriar">🔢 ' + tt('Criar o PIN da conta', 'Create the account PIN') + '</button>' +
         '<button class="nv-btn nv-hidden" id="nvPin">🔢 ' + tt('Trocar o PIN', 'Change PIN') + '</button></div>' +
         '<p class="nv-tiny" id="nvPinDica"></p>' +
-        '<button class="nv-btn" id="nvTrancar">🔒 ' + tt('Bloquear agora', 'Lock now') + ' <span class="nv-tiny">' + tt('(pede o PIN ou a digital para abrir de novo)', '(asks for the PIN or fingerprint to open again)') + '</span></button>' +
+        '<button class="nv-btn" id="nvTrancar">🔒 ' + tt('Bloquear agora', 'Lock now') + ' <span class="nv-tiny">' + tt('(pede o PIN ou a digital para desbloquear)', '(asks for the PIN or fingerprint to unlock)') + '</span></button>' +
         dica(tt('Use quando for emprestar o aparelho ou deixá-lo sozinho. Seus dados continuam salvos.', 'Use it when you lend the device or leave it alone. Your data stays saved.')) +
         (dig ? (L && L.prf
-          ? '<button class="nv-sw on" role="switch" aria-checked="true" id="nvDigOff"><span>👆 ' + tt('Abrir com a digital neste aparelho', 'Open with the fingerprint on this device') + '</span><i aria-hidden="true"></i></button>'
-          : '<button class="nv-sw" role="switch" aria-checked="false" id="nvDigOn"><span>👆 ' + tt('Abrir com a digital neste aparelho', 'Open with the fingerprint on this device') + '</span><i aria-hidden="true"></i></button>')
+          ? '<button class="nv-sw on" role="switch" aria-checked="true" id="nvDigOff"><span>👆 ' + tt('Desbloquear com a digital neste aparelho', 'Unlock with the fingerprint on this device') + '</span><i aria-hidden="true"></i></button>'
+          : '<button class="nv-sw" role="switch" aria-checked="false" id="nvDigOn"><span>👆 ' + tt('Desbloquear com a digital neste aparelho', 'Unlock with the fingerprint on this device') + '</span><i aria-hidden="true"></i></button>')
           : dica(tt('Este aparelho (ou este navegador) não tem leitor de digital.', 'This device (or browser) has no fingerprint reader.')));
       /* 3. seus aparelhos */
       var pk = dig && Aparelhos.ligado !== false && L && L.sk;
@@ -2174,9 +2174,9 @@
         else { b1.classList.remove('nv-hidden'); if (d) d.textContent = tt('O PIN da sua conta vale em todos os seus aparelhos e apps.', 'Your account PIN works on all your devices and apps.'); }
       }).catch(function () { var b1 = el.querySelector('#nvPin'); if (b1) b1.classList.remove('nv-hidden'); });
       $('#nvPinCriar').onclick = function () { if (!Cadeado.dukRaw) return aviso(tt('Desbloqueie com o PIN ou a digital para criar o PIN da conta.', 'Unlock with the PIN or fingerprint to create the account PIN.')); Painel.fechar(); Portao.criarPinConta(); };
-      $('#nvPin').onclick = function () { if (!Cadeado.dukRaw) return aviso(tt('Para trocar o PIN, toque em 🔒 Bloquear agora e abra de novo com o PIN.', 'To change the PIN, lock (🔒 Lock now) and open again with the PIN.')); Painel.fechar(); Portao.trocarPinConta(); };
+      $('#nvPin').onclick = function () { if (!Cadeado.dukRaw) return aviso(tt('Para trocar o PIN, toque em 🔒 Bloquear agora e desbloqueie de novo com o PIN.', 'To change the PIN, lock (🔒 Lock now) and unlock again with the PIN.')); Painel.fechar(); Portao.trocarPinConta(); };
       if ($('#nvDeNovo')) $('#nvDeNovo').onclick = function () { Sinc.tentarDeNovo(); };
-      if ($('#nvDigOn')) $('#nvDigOn').onclick = async function () { if (!Cadeado.dukRaw) return aviso(tt('Para ligar a digital, toque em 🔒 Bloquear agora e abra de novo com o PIN.', 'To turn on the fingerprint, lock (🔒 Lock now) and open again with the PIN.')); var r = await Cadeado.ligarDigital(); aviso(r.ok ? '✓ ' + tt('Pronto: abre com a digital neste ' + apN() + '.', 'Done: opens with your fingerprint on this ' + apN() + '.') : tt('A digital não foi ligada. Continue usando o PIN.', 'Fingerprint was not turned on. Keep using the PIN.')); Painel.desenhar(); };
+      if ($('#nvDigOn')) $('#nvDigOn').onclick = async function () { if (!Cadeado.dukRaw) return aviso(tt('Para ligar a digital, toque em 🔒 Bloquear agora e desbloqueie de novo com o PIN.', 'To turn on the fingerprint, lock (🔒 Lock now) and unlock again with the PIN.')); var r = await Cadeado.ligarDigital(); aviso(r.ok ? '✓ ' + tt('Pronto: abre com a digital neste ' + apN() + '.', 'Done: opens with your fingerprint on this ' + apN() + '.') : tt('A digital não foi ligada. Continue usando o PIN.', 'Fingerprint was not turned on. Keep using the PIN.')); Painel.desenhar(); };
       if ($('#nvDigOff')) $('#nvDigOff').onclick = async function () { await Cadeado.desligarDigital(); Painel.desenhar(); };
       if ($('#nvLevar')) $('#nvLevar').onclick = function () { Painel.fechar(); Nuvem.levarDeNovo(); };
       this.ligarRobo(el);
@@ -2184,7 +2184,7 @@
       this.avisoPedidos();
       $('#nvApPedidos').onclick = async function () { Aparelhos._vistos = {}; await Aparelhos.olharPedidos(); if (!(Aparelhos.pendentes || []).length) aviso(tt('Nenhum pedido de acesso agora.', 'No access request right now.')); else Painel.fechar(); };
       if ($('#nvApPk')) $('#nvApPk').onclick = async function () {
-        if (!Cadeado.dukRaw) return aviso(tt('Para isso, toque em 🔒 Bloquear agora e abra de novo com o PIN.', 'For this, lock (🔒 Lock now) and open again with the PIN.'));
+        if (!Cadeado.dukRaw) return aviso(tt('Para isso, toque em 🔒 Bloquear agora e desbloqueie de novo com o PIN.', 'For this, lock (🔒 Lock now) and unlock again with the PIN.'));
         var r = await Aparelhos.criarPasskey();
         aviso(r.ok ? '✓ ' + tt('Pronto: a digital (passkey) abre o MoneyTRIO nos seus outros aparelhos.', 'Done: the fingerprint (passkey) opens MoneyTRIO on your other devices.')
           : r.erro === 'semprf' ? tt('Este aparelho ou navegador ainda não oferece isso. Use a aprovação pelo outro aparelho.', 'This device or browser does not offer this yet. Use approval from another device.')
@@ -2417,7 +2417,7 @@
     /* o jeito antigo: o código de recuperação do OmniLifeONE (só para quem já tem) */
     codigo: function (fam, esqueci) {
       var el = Tela.mostrar(Tela.topo() +
-        '<h2>🔐 ' + (esqueci ? tt('Abrir com o código de recuperação', 'Open with the recovery code') : tt('Primeira vez neste ' + apN(), 'First time on this ' + apN())) + '</h2>' +
+        '<h2>🔐 ' + (esqueci ? tt('Desbloquear com o código de recuperação', 'Unlock with the recovery code') : tt('Primeira vez neste ' + apN(), 'First time on this ' + apN())) + '</h2>' +
         '<p>' + tt('Digite o <b>código de recuperação</b>: aquele código em pedaços (ex.: ABCDE-FGH23-…) que o OmniLifeONE mostrou na primeira vez e você anotou num papel.', 'Type the <b>recovery code</b>: the code in parts (e.g. ABCDE-FGH23-…) that OmniLifeONE showed the first time and you wrote on paper.') + '</p>' +
         '<label class="nv-fld"><span>' + tt('Código de recuperação (pode ser sem os tracinhos)', 'Recovery code (dashes optional)') + '</span><input type="text" id="nvCod" class="nv-cod" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>' +
         '<div class="nv-nota atencao">⚠️ ' + tt('Importante: sem o código de recuperação e sem o PIN, os dados não voltam. Nem a SolverONE consegue abrir.', 'Important: without the recovery code and without the PIN, the data cannot come back. Not even SolverONE can open it.') + '</div>' +
@@ -2606,7 +2606,7 @@
       el.querySelector('#nvDigSim').onclick = function () { Tela.ocupar(el.querySelector('#nvDigSim'), async function () {
         var r = await Cadeado.ligarDigital();
         if (r.ok) { aviso('✓ ' + tt('Pronto: abre com a digital neste ' + apN() + '.', 'Done: opens with your fingerprint on this ' + apN() + '.')); return seguir(); }
-        Tela.erro(r.erro === 'semprf' ? tt('Neste ' + apN() + ' (ou neste navegador) a digital ainda não consegue abrir com segurança. Continue com o PIN. Dica: no Chrome atualizado costuma funcionar.', 'On this ' + apN() + ' (or browser) the fingerprint cannot open securely yet. Keep using the PIN. Tip: an up-to-date Chrome usually works.') : tt('A digital não foi ligada. Pode tentar de novo ou tocar em "Agora não".', 'Fingerprint was not turned on. Try again or tap "Not now".'));
+        Tela.erro(r.erro === 'semprf' ? tt('Neste ' + apN() + ' (ou neste navegador) a digital ainda não consegue desbloquear com segurança. Continue com o PIN. Dica: no Chrome atualizado costuma funcionar.', 'On this ' + apN() + ' (or browser) the fingerprint cannot open securely yet. Keep using the PIN. Tip: an up-to-date Chrome usually works.') : tt('A digital não foi ligada. Pode tentar de novo ou tocar em "Agora não".', 'Fingerprint was not turned on. Try again or tap "Not now".'));
       }); };
     },
     pin: async function (fam, motivo) {
@@ -2623,7 +2623,7 @@
         '<p class="nv-muted" id="nvConectado">' + tt('Você continua conectado como ', 'You are still signed in as ') + '<b>' + esc(nomeConta()) + '</b>. ' + tt('Só falta desbloquear.', 'You only need to unlock.') + '<br>' + tt('Família ', 'Family ') + '<b>' + esc(fam.nome) + '</b></p>' +
         (L && L.bloqueado ? '<div class="nv-nota erro">' + tt('O PIN errou muitas vezes e ficou bloqueado neste ' + apN() + '. Toque em "Esqueci o PIN" e aprove pelo outro aparelho.', 'The PIN failed too many times and is blocked on this ' + apN() + '. Tap "I forgot the PIN" and approve from your other device.') + '</div>'
           : '<label class="nv-fld"><span>PIN</span><input type="text" class="nv-pinc" id="nvPin" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label><button class="nv-btn pri" id="nvPinOk">' + tt('Abrir', 'Open') + '</button>' +
-            (dig ? '<button class="nv-btn" id="nvDig">👆 ' + tt('Abrir com a digital', 'Open with fingerprint') + '</button>' : '')) +
+            (dig ? '<button class="nv-btn" id="nvDig">👆 ' + tt('Desbloquear com a digital', 'Unlock with fingerprint') + '</button>' : '')) +
         '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div>' +
         '<div class="nv-row"><button class="nv-lnk" id="nvEsqPin">' + tt('Esqueci o PIN', 'I forgot the PIN') + '</button><button class="nv-lnk" id="nvSairP">' + tt('Entrar com outra conta', 'Sign in with another account') + '</button></div>');
       var $ = function (s) { return el.querySelector(s); };

@@ -559,6 +559,10 @@ let BASE = '';
       const ruins = msgs.filter((m) => /cadeado|family lock|the lock\b|this lock\b/i.test(m));
       ok(msgs.length > 100 && ruins.length === 0, 'mensagens da nuvem sem "cadeado" (' + msgs.length + ' conferidas' + (ruins.length ? '; sobrou: ' + ruins.slice(0, 2).join(' | ') : '') + ')');
       ok(/Desbloqueie|desbloquear/.test(src) && /O acesso desta família ainda não foi liberado/.test(src), 'as mensagens novas estão lá ("Desbloqueie…", "O acesso desta família…")');
+      /* 3.73: os botões e avisos que faltavam também dizem desbloquear */
+      const abrir = msgs.filter((m) => /Abrir com a digital|Abrir com o código de recuperação|Abra pelo PIN ou pela digital|abra de novo com o PIN|para abrir de novo|consegue abrir com segurança|Open with (the )?fingerprint|open again with the PIN/.test(m));
+      ok(abrir.length === 0 && /Desbloquear com a digital neste aparelho/.test(src) && /Desbloquear com o código de recuperação/.test(src) && /pede o PIN ou a digital para desbloquear/.test(src),
+        'sem "abrir com a digital / abra de novo" no portão: "Desbloquear com a digital", "Desbloquear com o código de recuperação"' + (abrir.length ? '; sobrou: ' + abrir[0] : ''));
     }
     console.log('8) cadeado (relógio falso)');
     const C = await abrirPagina(browser, { width: 390, height: 800 }, 'C', false);
