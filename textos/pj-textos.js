@@ -1,6 +1,6 @@
 /* =====================================================================
    textos/pj-textos.js — os textos da gestão da PJ (FiscalONE): Oportunidades, reforma, troca de empresas e o glossário
-   fiscal, NUM ARQUIVO SÓ, para revisar quando a lei mudar (3.83)        3.83 · 13/Nov/2026
+   fiscal, NUM ARQUIVO SÓ, para revisar quando a lei mudar (3.83)        3.85 · 13/Nov/2026
    ---------------------------------------------------------------------
    · Cada regra tem frase, "por quê" e a fonte oficial, em PT e EN. {chaves} são trocadas pelos números da conta.
    · Os números das tabelas do Simples (LC 123/2006, Anexos III e V) e as faixas ficam aqui também.
@@ -14,6 +14,8 @@ const PJ_TEXTOS = {
     ec132: 'https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc132.htm',
     lc214: 'https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm',
     reforma: 'https://www.gov.br/receitafederal/pt-br/assuntos/reforma-tributaria',
+    /* 3.85: o aviso oficial da escolha do regime do IBS/CBS no Simples (janela de setembro para o 1º semestre, março para o 2º) */
+    simplesIbsCbs: 'https://www8.receita.fazenda.gov.br/simplesnacional/noticias/NoticiaCompleta.aspx?id=c739e03c-8482-473f-8e82-f38ec3b13637',
     civil: 'https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm',
     lucroReal: 'https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/tributos/irpj'
   },
@@ -25,6 +27,8 @@ const PJ_TEXTOS = {
   /* a parte de ISS + PIS + COFINS dentro do DAS (repartição das 1ª e 2ª faixas; aproximada): é a que zera na exportação */
   partesExportacao: { III: 0.491, V: 0.3115 },
   fatorR: { limite: 0.28, folga: 0.31, inss: 0.11, irrfMarginal: 0.275 },
+  /* 3.85: revisar antes da janela de março de 2027 (a de set/2026, para o 1º semestre de 2027, já passou) */
+  reformaRevisar: '2027-02-15',
   regras: {
     fatorRAbaixo: {
       pt: { t: 'Fator R abaixo de 28%: a empresa paga pelo Anexo V (mais caro)', f: 'Com {extraMes}/mês a mais de pró-labore (12 meses: {extraAno}), o Fator R chega a 28% e o DAS cai de {dasV} para {dasIII} no ano (−{economiaDas}). Descontando o INSS (11%: {inss}) e o IR do pró-labore a mais (no pior caso, 27,5%: {irrf}), sobra {liquida} no ano.', p: 'No Simples, serviço do Anexo V vai para o Anexo III quando a folha (com o pró-labore) dos 12 meses é pelo menos 28% da receita dos 12 meses (LC 123/2006, art. 18, §5º-J e §5º-M).' },
@@ -55,8 +59,8 @@ const PJ_TEXTOS = {
       en: { t: 'Personal × company mix: {n} entr(ies)', f: '{total} in company bills paid personally or personal bills paid from the company account ({exemplos}). Mixing can become "commingling of assets": pay company bills from the company account and yours from yours.', p: 'Civil Code, art. 50 (commingling of assets).' }
     },
     reforma: {
-      pt: { t: 'Reforma tributária: o que muda e quando', f: '2026: ano de teste (CBS 0,9% e IBS 0,1% destacados na nota, sem pagar a mais). 2027: começa a CBS e o Simples pode escolher entre recolher IBS/CBS dentro do DAS ou no regime híbrido (fora do DAS, com crédito). 2029 a 2032: o ICMS e o ISS diminuem aos poucos. 2033: só IBS e CBS. Revisar em: {revisar}.', p: 'EC 132/2023 e LC 214/2025.' },
-      en: { t: 'Tax reform: what changes and when', f: '2026: test year (CBS 0.9% and IBS 0.1% shown on invoices, nothing extra paid). 2027: CBS starts and Simples companies may choose between paying IBS/CBS inside the DAS or the hybrid regime (outside the DAS, with credits). 2029 to 2032: ICMS and ISS phase down. 2033: only IBS and CBS. Review on: {revisar}.', p: 'EC 132/2023 and LC 214/2025.' }
+      pt: { t: 'Reforma tributária: o que muda e quando', f: '2026: ano de teste (CBS 0,9% e IBS 0,1% destacados na nota, sem pagar a mais). 2027: começa a CBS e o Simples pode escolher entre recolher IBS/CBS dentro do DAS ou no regime híbrido (fora do DAS, com crédito). 2029 a 2032: o ICMS e o ISS diminuem aos poucos. 2033: só IBS e CBS. A escolha é feita por semestre no Portal do Simples Nacional (setembro para o 1º semestre, março para o 2º). Quem não escolhe paga IBS/CBS dentro do DAS. Revisar em: {revisar}.', p: 'EC 132/2023 e LC 214/2025.' },
+      en: { t: 'Tax reform: what changes and when', f: '2026: test year (CBS 0.9% and IBS 0.1% shown on invoices, nothing extra paid). 2027: CBS starts and Simples companies may choose between paying IBS/CBS inside the DAS or the hybrid regime (outside the DAS, with credits). 2029 to 2032: ICMS and ISS phase down. 2033: only IBS and CBS. The choice is made per half-year on the Simples Nacional portal (September for the first half, March for the second). Whoever does not choose pays IBS/CBS inside the DAS. Review on: {revisar}.', p: 'EC 132/2023 and LC 214/2025.' }
     },
     contador: { pt: 'Confirme com o seu contador.', en: 'Confirm with your accountant.' }
   },
