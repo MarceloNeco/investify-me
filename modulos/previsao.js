@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/previsao.js — previsto × realizado por categoria (3.69)        1.2.0 · 13/Nov/2026
+   modulos/previsao.js — previsto × realizado por categoria (3.69)        1.2.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (regra aprovada pelo dono, 13/Nov/2026)
      Para cada grupo › categoria de saída, o PREVISTO do mês M é a soma de três partes:
@@ -159,6 +159,8 @@
       if (c.real == null) aVir.push({ nome: c.nome, dia: +c.data.slice(8, 10), data: c.data, valor: c.valor });
       if (c.data <= h) fixoAteHoje += c.real != null ? c.real : c.valor;
     });
+    /* 1.2.1 (3.80): o pendente no cartão é comprometido da categoria (a caução não) */
+    if (window.PreAut) PreAut.comprometidos(grupo, sub, mes).forEach(function (c) { fixo += c.valor; aVir.push(c); });
     var v = variavel(grupo, sub, mes), ev = eventoNoMes(grupo, sub, mes);
     var gasto = 0; saidas().forEach(function (g) { if (g.grupo === grupo && g.sub === sub && mesDe(g.data) === mes) gasto += Number(g.valor) || 0; });
     var f = mes < h.slice(0, 7) ? 1 : mes > h.slice(0, 7) ? 0 : (+h.slice(8, 10)) / diasNoMes(mes);
@@ -302,7 +304,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'previsao', versao: '1.2.0', colecoes: [COL],
+    id: 'previsao', versao: '1.2.1', colecoes: [COL],
     pontos: {
       'planejados.viagens': cartaoEventos, 'budget.atencao': cartaoAtencao,
       'inbox.grupos': function () { var s = suspeitas(); return s.length ? [{ id: 'viagem', n: s.length, html: itensViagem(s, true) }] : []; },   /* 1.2.0 (3.76) */   /* 1.2.0 (3.76): as viagens saíram do Futuro para Contas fixas → Gastos planejados */

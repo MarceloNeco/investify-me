@@ -151,7 +151,7 @@ const LOCAL = { v: 1, config: { pessoasV: 2 }, posicoes: [], recorrentes: [], ga
     ok(sb.alfa === 1 && sb.poup && sb.n === 6, W + ': o duplicado sumiu: "Banco Alfa · Conta corrente ···1234" e "Poupança ···5678" (o registro antigo sem conta_id saiu)');
     ok(sb.fat && !sb.neg && sb.pill && sb.semVence, W + ': cartão: pílula, fatura aberta POSITIVA, vence e fecha dd/mm, limite disponível; sem vencimento: "cadastre o dia no cartão"');
     ok(sb.inv && sb.aviso && sb.zeradas, W + ': investimentos por banco com "Ver no InvestifyONE" (a conta-investimento vai para lá); aviso do banco que não compartilhou; contas zeradas recolhidas');
-    const card = await p.$('.sb-card'); await card.scrollIntoViewIfNeeded(); await card.screenshot({ path: '/tmp/banco-' + W + '.png' });
+    try { const card = p.locator('.sb-card').first(); await card.scrollIntoViewIfNeeded({ timeout: 5000 }); await card.screenshot({ path: '/tmp/banco-' + W + '.png', timeout: 5000 }); } catch (e) { console.log('  (foto do cartão não saiu: ' + String(e.message).split('\n')[0] + ')'); }   /* 3.80: a foto é só para ver; não é verificação */
     const larg = await p.evaluate(() => document.documentElement.scrollWidth);
     ok(larg <= W + 1, W + ': sem rolagem para o lado');
     ok(erros.length === 0, W + ': sem erro de página' + (erros.length ? ': ' + erros.join(' | ') : ''));

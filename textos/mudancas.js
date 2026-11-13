@@ -1,11 +1,16 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.79 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.80 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.80', d:'2026-11-13', t:'Pré-autorizações do cartão: pendentes e cauções', itens:[
+    'O que o cartão ainda não cobrou de verdade (pendente no banco) aparece em Lançamentos com o selo "⏳ Pendente no cartão". Ele entra no saldo previsto, na fatura aberta e no previsto da categoria, mas não no "gastou" do mês até virar definitivo.',
+    'Caução de locadora, hotel ou pousada aparece com "🔒 Caução (valor bloqueado no limite)": entra só no limite usado e no saldo previsto da fatura, com a nota "costuma ser liberado; o valor final vem depois".',
+    'Quando o banco cobra de verdade, o lançamento definitivo toma o lugar do pendente, sem contar duas vezes. O que sumiu do banco e não foi cobrado em 7 dias sai com a nota "liberado (não foi cobrado)"; na caução, o 📥 avisa que ela foi liberada.'
+  ]},
   {v:'3.79', d:'2026-11-13', t:'Valores a receber: estornos, reembolsos e contestações', itens:[
     'Nova tela "A receber" (Contas fixas → "+ Adicionar", e o cartão no topo de Contas fixas): de quem, o quê (estorno, reembolso do plano, contestação, restituição, devolução), o valor à vista ou em parcelas, onde deve cair, a data prometida e o protocolo. No lançamento, "↩ Pedi estorno disto" já preenche tudo, até o parcelado.',
     'O app vigia o cartão e a conta: quando cai o crédito de quem você pediu, marca "recebido" (ou "recebido em parte: X de Y") e avisa "Caiu o estorno". Se passar da data prometida (ou 30 dias), avisa em "Precisa da sua atenção" e no 📥, todo mês, com "Já recebi", "Cobrei de novo" e "Desisti".',

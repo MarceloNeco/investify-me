@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.79">
+<link rel="stylesheet" href="estilo.css?v=3.80">
 </head>
 <body>
 
@@ -635,7 +635,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.79"></script>
+<script src="textos/frases-en.js?v=3.80"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -3590,6 +3590,14 @@ const Banco = {
       if(!por[f.vencimento]) por[f.vencimento] = {vencimento: f.vencimento, total: 0, n: 0};
       por[f.vencimento].total += Number(g.valor) || 0;
       por[f.vencimento].n++;
+    });
+    /* 3.80: as pré-autorizações (pendente e caução) entram na fatura aberta, à parte (modulos/pre-autorizacao.js) */
+    (window.PreAut ? PreAut.ativos() : []).forEach(p => {
+      if(p.cartaoId !== cartaoId) return;
+      const f = this.faturaDe(cartaoId, p.data); if(!f) return;
+      if(!por[f.vencimento]) por[f.vencimento] = {vencimento: f.vencimento, total: 0, n: 0};
+      por[f.vencimento].total += Number(p.valor) || 0;
+      por[f.vencimento].pendente = (por[f.vencimento].pendente || 0) + (Number(p.valor) || 0);
     });
     return Object.keys(por).sort().map(k => por[k]);
   },
@@ -7609,7 +7617,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.79"></script>
+<script src="textos/mudancas.js?v=3.80"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -29991,7 +29999,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/calendario-menu.js?v=1.2.0"></script>
 <script src="modulos/pessoas.js?v=1.3.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
-<script src="modulos/saldo-banco.js?v=2.1.0"></script>
+<script src="modulos/saldo-banco.js?v=2.1.1"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
 <script src="modulos/tour.js?v=1.0.2"></script>
 <script src="modulos/cartoes.js?v=1.0.0"></script>
@@ -30002,8 +30010,8 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/apelido.js?v=1.1.0"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
-<script src="modulos/visao-casa.js?v=1.1.2"></script>
-<script src="modulos/previsao.js?v=1.2.0"></script>
+<script src="modulos/visao-casa.js?v=1.1.3"></script>
+<script src="modulos/previsao.js?v=1.2.1"></script>
 <script src="modulos/orcamento.js?v=1.1.1"></script>
 <script src="modulos/patrimonio-mes.js?v=1.1.0"></script>
 <script src="modulos/dividas.js?v=1.0.0"></script>
@@ -30014,10 +30022,11 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/documentos.js?v=1.0.2"></script>
 <script src="modulos/contas-mes.js?v=1.0.1"></script>
 <script src="modulos/planejados.js?v=1.0.0"></script>
-<script src="modulos/saldo-previsto.js?v=1.0.0"></script>
+<script src="modulos/saldo-previsto.js?v=1.0.1"></script>
 <script src="modulos/debito-auto.js?v=1.0.0"></script>
 <script src="modulos/cofre-empresa.js?v=1.0.0"></script>
 <script src="modulos/a-receber.js?v=1.0.0"></script>
-<script src="nuvem.js?v=1.14.3"></script>
+<script src="modulos/pre-autorizacao.js?v=1.0.0"></script>
+<script src="nuvem.js?v=1.15.0"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.0.0 · 13/Nov/2026
+   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.0.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · Para cada conta corrente com saldo vindo do robô (SaldoBanco): parte do saldo de hoje e soma, dia a dia, nos
@@ -69,6 +69,14 @@
         var dia = Number(k.cartao.vence) || 0, v = Number(k.cartao.fatura) || 0; if (!dia || !(v > 0)) return;
         var d = h.slice(0, 8) + ('0' + dia).slice(-2); if (d <= h) d = mais(d.slice(0, 8) + '01', 32).slice(0, 8) + ('0' + dia).slice(-2);
         if (d <= fim) ev.push({ data: d, valor: n2(-v), nome: tr('Fatura ', 'Bill ') + (k.conta || k.banco) });
+      });
+      /* 1.0.1 (3.80): as pré-autorizações do cartão (pendente e caução) saem no vencimento da fatura em que caem */
+      if (window.PreAut) PreAut.ativos().forEach(function (p) {
+        var ct = p.cartaoId && typeof Banco !== 'undefined' ? Banco.acharCartao(p.cartaoId) : null, f = ct ? Banco.faturaDe(p.cartaoId, p.data) : null;
+        var bn = ct && ct.bancoId && Banco.achar(ct.bancoId) ? Banco.achar(ct.bancoId).nome : (ct ? ct.apelido : p.conta);
+        var c = contaPara(bn); if (!c || c.id !== id || !f) return;
+        var d = f.vencimento > h ? f.vencimento : mais(h, 1);
+        if (d <= fim) ev.push({ data: d, valor: n2(-p.valor), nome: (p.caucao ? '🔒 ' : '⏳ ') + PreAut.quem(p) });
       });
       if (window.Parcelados) Parcelados.compras().forEach(function (pc) {
         var ct = pc.cartaoId && typeof Banco !== 'undefined' ? Banco.acharCartao(pc.cartaoId) : null;
@@ -148,7 +156,7 @@
   function alertas() { return API.contas().map(function (c) { var a = API.alerta(c); return a ? { c: c, a: a } : null; }).filter(Boolean); }
 
   MoneyModulos.registrar({
-    id: 'saldo-previsto', versao: '1.0.0', colecoes: [COL],
+    id: 'saldo-previsto', versao: '1.0.1', colecoes: [COL],
     pontos: {
       'budget.painel': cartao, 'custos.contas': cartao,
       'budget.atencao': function () {

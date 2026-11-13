@@ -709,6 +709,16 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **3.80 — Pré-autorizações do cartão.** O robô manda `pendente: true` e `caucao_provavel` nos lançamentos de cartão PENDING (não
+  vão para a planilha). nuvem.js 1.15.0: no lote da caixa, o pendente vai para `PreAut.receber(g, l)` (não para `ST.gastos`); no fim do lote,
+  `PreAut.entrega()` e `PreAut.limpar()`. `modulos/pre-autorizacao.js` 1.0.0 (`window.PreAut`): `ST.cartao_pendentes` (id `pa_<idRobo>`,
+  `caucao`, `vistoEm`, `estado` pendente|cobrado|liberado, `gastoId`, `nota`). O definitivo casa por mesmo cartão (ou final), mesmo recebedor
+  (CNPJ → `Origem.origemDe` → `Profissionais.parecido` ≥ 0,8), valor igual ou ±10%, de 1 dia antes a 15 dias depois — pelo evento `gasto.novo`,
+  no `receber` (definitivo que chegou antes) e no `limpar`; nunca pelo id. Liberado: não apareceu numa entrega posterior (`ST.config.preEntrega`)
+  e já passaram 7 dias do último `vistoEm`. Entra em `Banco.faturas` (campo `pendente`), no `previstoMes` da previsao 1.2.1 (só o que não é
+  caução, como comprometido), nos eventos do saldo-previsto 1.0.1 (no vencimento da fatura) e no cartão do saldo-banco 2.1.1 ("limite usado por
+  pendentes/cauções"). Lista em `lancamentos.topo`; 📥 Avisos "A caução de … foi liberada". Escopo: `cartao_pendentes` = regra dos gastos
+  (visao-casa 1.1.3). Testes: `teste/teste-pre-autorizacao.js` e um passo no `teste-nuvem.js` (pela caixa de verdade).
   **3.79 — Valores a receber.** `modulos/a-receber.js` 1.0.0 (`window.AReceber`, tela `b-receber`): `ST.a_receber = [{id, quem, cnpj, origem,
   tipo, total, parcelas, valorParcela, ondeCartaoId, ondeBancoId, pedidoEm, prometido, protocolo, gastoId, estado, recebidos:[{gid, valor, data,
   manual?}], adiadoAte}]`. `vigiar()` liga créditos (`g.estorno`/valor negativo ou `fluxo` 'entrada') a partir do `pedidoEm`, de valor até o que
