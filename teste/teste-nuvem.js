@@ -276,7 +276,7 @@ let BASE = '';
     await L.click('#nvSoAqui');
     await L.waitForFunction(() => typeof Store !== 'undefined' && Store.estado.gastos.length === 3);
     ok(/Entrar na nuvem/.test(await L.textContent('#nvSelo')), 'local: abre o app com os dados do aparelho e o botão "Entrar na nuvem"');
-    ok(/Tudo fica guardado no seu navegador/.test(await L.textContent('.hub-pe')), 'local: o rodapé continua dizendo que fica no navegador');
+    ok(/Dados guardados só neste aparelho, sem conta e sem nuvem/.test(await L.textContent('.hub-pe')), 'local: o rodapé continua dizendo que fica no navegador');
     ok(!/^dono$/i.test((await L.textContent('#perfilNome').catch(() => '')).trim()), 'local: o topo continua como era (sem o nome da conta)');
     await L.evaluate(() => { Store.estado.gastos[0].desc = 'mudado no modo local'; Store.salvar(); });
     ok(/mudado no modo local/.test(await L.evaluate(() => localStorage.getItem('investifyme.dados.v1'))), 'local: salvar grava no aparelho, como sempre');
@@ -316,7 +316,7 @@ let BASE = '';
     await A.evaluate(() => MoneyNuvem.buscarNome());
     ok((await A.textContent('#perfilNome')) === 'Paulo Souza' && (await A.textContent('#perfilAv')) === 'PS', 'A: com o nome do perfil SolverONE, o topo mostra "Paulo Souza" e as iniciais "PS"');
     db.user_settings.length = 0;
-    ok(/Fica guardado na nuvem/.test(await A.textContent('.hub-pe')), 'A: rodapé da tela inicial diz que fica na nuvem');
+    ok(/Dados criptografados no seu aparelho antes de ir para a nuvem\. Acesso com a sua conta, PIN pessoal e aprovação de cada aparelho novo/.test(await A.textContent('.hub-pe')), 'A: rodapé da tela inicial diz que fica na nuvem');
     await A.screenshot({ path: path.join(SAIDA, 'A-app.png') });
 
     /* 3.33: importar compromissos com a nuvem: grava pelo caminho normal (fechado) */

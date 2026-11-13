@@ -1,10 +1,20 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.70 · 13/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.71 · 13/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.71: os cartões da tela inicial */
+  'Textos da tela inicial mais diretos':'Clearer home screen texts',
+  'As telas da nuvem e a dica "Onde ficam os seus dados" dizem o mesmo, sem a expressão "cadeado da família".':'The cloud screens and the "Where your data is kept" tip say the same, without the "family lock" wording.',
+  'Os três cartões da tela inicial dizem o que cada app faz, sem frase de efeito, e o rodapé diz como os dados são guardados: criptografados no aparelho antes de ir para a nuvem, ou só neste aparelho, sem conta.':'The three home screen cards say what each app does, without slogans, and the footer says how data is stored: encrypted on the device before going to the cloud, or only on this device, without an account.',
+  'Gastos e contas fixas':'Spending and fixed bills',
+  'Rendas':'Income',
+  'Previsão do mês e do ano, corrigida pelo IPCA':'Month and year forecast, adjusted by IPCA',
+  'IR da pessoa física: declaração, restituição e deduções':'Personal income tax: return, refund and deductions',
+  'PJ: Simples, Fator R, pró-labore e DAS':'Company (PJ): Simples, Fator R, owner\'s salary and DAS',
+  'Declarações e protocolos':'Returns and filings',
   /* 3.70 */
   'A declaração do IR preenche os três apps':'The tax return fills in all three apps',
   'Ao importar a declaração no TaxONE, a tela mostra o que fazer com ela, sempre como escolha: montar ou atualizar a carteira do InvestifyONE com os investimentos de 31/12 (ações e ETFs no exterior com a quantidade, fundos, poupança, contas), cadastrar os dependentes em Pessoas, as fontes pagadoras em Rendas e, se quiser, a escola e o plano de saúde como contas fixas em Custos. O que já existe vem desmarcado; nada é gravado sem você confirmar.':'When you import the return in TaxONE, the screen shows what to do with it, always as a choice: build or update the InvestifyONE portfolio with the investments of 31/12 (foreign shares and ETFs with their quantity, funds, savings, accounts), add the dependants to People, the paying sources to Income and, if you want, school and health plan as fixed bills in Costs. What already exists comes unticked; nothing is saved until you confirm.',
@@ -234,7 +244,6 @@ const FRASES_EN = {
   'Lista dos robôs autorizados, com a data e o botão "Remover acesso" (com confirmação). Se o e-mail já está autorizado, o app avisa e não muda nada; os erros ficam em vermelho no painel, sem apagar o que foi digitado.':'List of authorized robots, with the date and a "Remove access" button (with confirmation). If the e-mail is already authorized, the app says so and changes nothing; errors stay in red in the panel, without erasing what was typed.',
   'O PIN não é mais tratado como senha pelo navegador, e logo depois de criar o PIN o app oferece abrir com a digital.':'The PIN is no longer treated as a password by the browser, and right after creating the PIN the app offers to open with the fingerprint.',
   /* 3.30: rodapé com a nuvem */
-  'Fica guardado na nuvem, fechado com o cadeado da família, e uma cópia fechada neste aparelho.':'Kept in the cloud, closed with the family lock, plus a closed copy on this device.',
   /* 3.27 */
   'Ajuda mais curta, sem obviedades':'Shorter help, without the obvious',
   'Textos de ajuda mais curtos: a ajuda de cada tela e o balão do AssistONE deixaram de explicar o óbvio ("toque para entrar", "toque na linha para editar") e ficaram só com o que ajuda de verdade. O balão mostra "📍" e o nome da tela, sem o "Você está em".':'Shorter help texts: each screen’s help and the AssistONE bubble no longer explain the obvious ("tap to enter", "tap the row to edit") and keep only what actually helps. The bubble shows "📍" and the screen name, without "You are in".',
@@ -736,8 +745,6 @@ const FRASES_EN = {
   'Todas as instituições':'All institutions',
   'Token da brapi':'brapi token',
   'Trocou de dia':'Swapped day',
-  'Três ferramentas, um dinheiro só. Escolha por onde começar — dá para trocar a qualquer momento pelo nome lá em cima.':'Three tools, one set of money. Pick where to start — you can switch any time using the name up top.',
-  'Tudo fica guardado no seu navegador e no arquivo que você baixa. Nada sai daqui sem você mandar.':'Everything is kept in your browser and in the file you download. Nothing leaves here unless you send it.',
   'Twelve Data (EUA':'Twelve Data (US',
   'Twelve Data (EUA — libera ações e ETFs americanos)':'Twelve Data (US — unlocks US stocks and ETFs)',
   'Twelve Data (ou Finnhub / Alpha Vantage)':'Twelve Data (or Finnhub / Alpha Vantage)',

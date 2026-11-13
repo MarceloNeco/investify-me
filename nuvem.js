@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.14.0 · 12/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.14.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -2111,7 +2111,7 @@
         (Cadeado.cfNova ? '<div class="nv-nota nv-alerta" id="nvCfNova">🔑 ' + tt('A chave da família mudou. Abra pelo PIN ou pela digital para este aparelho buscar a nova.', 'The family key changed. Unlock with the PIN or fingerprint so this device fetches the new one.') + '</div>' : '') +
         (Sinc.recusados ? '<button class="nv-btn" id="nvDeNovo">' + tt('Tentar de novo os não aceitos', 'Retry the ones not accepted') + '</button>' : '') +
         '<details class="nv-av" id="nvDadosDet"' + (abertos.nvDadosDet ? ' open' : '') + '><summary>' + tt('Ver detalhes', 'See details') + '</summary>' +
-        dica(Sinc.vivos() + tt(' registros guardados, fechados com o cadeado da família.', ' records saved, locked with the family lock.') + '<br>' +
+        dica(Sinc.vivos() + tt(' registros guardados, criptografados.', ' records saved, encrypted.') + '<br>' +
           tt('Conta: ', 'Account: ') + '<b>' + esc(Conta.email()) + '</b><br>' + tt('Família: ', 'Family: ') + '<b>' + esc(fam.nome || '') + '</b> · ' +
           esc(fam.meu_papel === 'chefe' ? tt('chefe', 'head') : tt('responsável', 'guardian')) + '<br>nuvem ' + VERSAO) +
         (Nuvem.podeLevar ? '<button class="nv-btn" id="nvLevar">' + tt('Levar para a nuvem os dados guardados só neste aparelho', 'Move the data kept only on this device to the cloud') + '</button>' : '') +
@@ -2311,7 +2311,7 @@
     entrar: function () {
       var loc = this.dadosLocais();
       var el = Tela.mostrar(Tela.topo() +
-        '<p class="nv-muted">' + tt('Entre com a sua conta SolverONE (a mesma do OmniLifeONE). Os seus dados de finanças ficam guardados na nuvem, fechados com o cadeado da família: só quem tem o código ou o PIN abre.', 'Sign in with your SolverONE account (the same as OmniLifeONE). Your finance data is kept in the cloud, closed with the family lock: only someone with the code or the PIN can open it.') + '</p>' +
+        '<p class="nv-muted">' + tt('Entre com a sua conta SolverONE (a mesma do OmniLifeONE). Os seus dados de finanças ficam guardados na nuvem, criptografados no seu aparelho antes de sair: só abre com a sua conta, o seu PIN e um aparelho aprovado.', 'Sign in with your SolverONE account (the same as OmniLifeONE). Your finance data is kept in the cloud, encrypted on your device before it leaves: it only opens with your account, your PIN and an approved device.') + '</p>' +
         (loc ? '<div class="nv-nota atencao">📦 ' + tt('Este aparelho tem dados do MoneyTRIO guardados só aqui. Depois de entrar e abrir o cadeado, você poderá levá-los para a nuvem. Nada é apagado deste aparelho.', 'This device has MoneyTRIO data kept only here. After signing in and opening the lock, you can move it to the cloud. Nothing is erased from this device.') + '</div>' : '') +
         (Conta._erroRetorno ? '<div class="nv-nota erro">' + esc(tt('Não deu para entrar: ', 'Could not sign in: ') + Conta._erroRetorno) + '</div>' : '') +
         '<button class="nv-btn google" id="nvGo">' + G_GOOGLE + '<span>' + tt('Entrar com Google', 'Sign in with Google') + '</span></button>' +
@@ -2418,7 +2418,7 @@
     codigo: function (fam, esqueci) {
       var el = Tela.mostrar(Tela.topo() +
         '<h2>🔐 ' + (esqueci ? tt('Abrir com o código de recuperação', 'Open with the recovery code') : tt('Primeira vez neste ' + apN(), 'First time on this ' + apN())) + '</h2>' +
-        '<p>' + tt('Digite o <b>código de recuperação</b>: aquele código em pedaços (ex.: ABCDE-FGH23-…) que o OmniLifeONE mostrou na primeira vez e você anotou num papel. É o mesmo cadeado da família ', 'Type the <b>recovery code</b>: the code in parts (e.g. ABCDE-FGH23-…) that OmniLifeONE showed the first time and you wrote on paper. It is the same family lock ') + '<b>' + esc(fam.nome) + '</b>.</p>' +
+        '<p>' + tt('Digite o <b>código de recuperação</b>: aquele código em pedaços (ex.: ABCDE-FGH23-…) que o OmniLifeONE mostrou na primeira vez e você anotou num papel.', 'Type the <b>recovery code</b>: the code in parts (e.g. ABCDE-FGH23-…) that OmniLifeONE showed the first time and you wrote on paper.') + '</p>' +
         '<label class="nv-fld"><span>' + tt('Código de recuperação (pode ser sem os tracinhos)', 'Recovery code (dashes optional)') + '</span><input type="text" id="nvCod" class="nv-cod" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>' +
         '<div class="nv-nota atencao">⚠️ ' + tt('Importante: sem o código de recuperação e sem o PIN, os dados não voltam. Nem a SolverONE consegue abrir.', 'Important: without the recovery code and without the PIN, the data cannot come back. Not even SolverONE can open it.') + '</div>' +
         '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div>' +
@@ -2662,7 +2662,7 @@
       if (loc.movimentos) partes.push(loc.movimentos + tt(' movimentações', ' transactions'));
       var el = Tela.mostrar(Tela.topo() + '<h2>📦 ' + tt('Levar para a nuvem?', 'Move to the cloud?') + '</h2>' +
         '<p>' + tt('Este aparelho tem dados do MoneyTRIO guardados só aqui', 'This device has MoneyTRIO data kept only here') + (partes.length ? ': <b>' + esc(partes.join(', ')) + '</b>' : '') + '.</p>' +
-        '<p>' + tt('A nuvem desta família ainda está vazia. Quer levar esses dados para lá? Eles vão fechados com o cadeado da família, e continuam também neste aparelho (no MoneyTRIO sem nuvem).', "This family's cloud is still empty. Move this data there? It goes closed with the family lock, and also stays on this device (in MoneyTRIO without cloud).") + '</p>' +
+        '<p>' + tt('A nuvem desta família ainda está vazia. Quer levar esses dados para lá? Eles vão criptografados e continuam também neste aparelho (no MoneyTRIO sem nuvem).', "This family's cloud is still empty. Move this data there? It goes encrypted and also stays on this device (in MoneyTRIO without cloud).") + '</p>' +
         '<p class="nv-muted">' + tt('Antes, baixe uma cópia de segurança (um arquivo) e guarde no computador.', 'First, download a backup copy (a file) and keep it on your computer.') + '</p>' +
         '<button class="nv-btn" id="nvCopia">⬇️ ' + tt('Baixar a cópia de segurança', 'Download the backup copy') + '</button>' +
         '<button class="nv-btn pri" id="nvLevarOk">☁️ ' + tt('Levar para a nuvem', 'Move to the cloud') + '</button>' +
