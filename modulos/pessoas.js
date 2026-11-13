@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.1.0 · 11/Nov/2026
+   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.2.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      Um cadastro só de "quem": Da casa (responsáveis e dependentes), Outras pessoas (pai, amigo, sócio) e
@@ -19,7 +19,7 @@
        antes (migração, renomear) ficam em "aliases" (também chamado no app). Contatos guardam cnpjs/idps
        (modulos/contraparte.js; o idp nunca aparece). Pares novos: contato, titular e "quem usa" do cartão.
    API (window.Pessoas)
-     todas() · ativas() · porId(id) · rotulo(p) · nomeCompleto(p)
+     todas() · ativas() · porId(id) · rotulo(p) · nomeCompleto(p) · nomeVer(texto) (3.68: o nome mostrado do "quem")
      achar(texto)                → pessoa (nome, apelido, nome completo ou apelido do banco, sem acento) | null
      parecida(texto)             → {p, nota} quando parece mas não é certo (0,5 ≤ nota < 1) | null
      ligar(obj, campo, campoId)  → acha a pessoa do texto e grava o ID (e o nome do cadastro); sem pessoa, tira o ID
@@ -102,6 +102,13 @@
       out.push(ws[0] + ' ' + ult[0]);
       if (ini.length >= 2) out.push(ini.join(' ') + ' ' + ult);
       return out.filter(function (x, i, a) { return a.indexOf(x) === i; });
+    },
+    /* 1.2.0 (3.68): o nome que a tela mostra para o "quem" gravado. O código gravado (o apelido da casa, que o robô usa)
+       NÃO muda; quem é da casa aparece pelo primeiro nome do cadastro, igual em PT e EN. Texto sem pessoa fica como está. */
+    nomeVer: function (texto) {
+      var t = String(texto || '').trim(); if (!t) return '';
+      var p = API.achar(t), nome = p && p.tipo === 'casa' ? String(p.nome || '').trim() : '';
+      return nome || t;
     },
     nomeCompleto: function (p) { return p ? [p.nome, p.meio, p.sobrenome].map(function (x) { return String(x || '').trim(); }).filter(Boolean).join(' ') : ''; },
     achar: function (texto) {
@@ -419,7 +426,7 @@
 
   MoneyModulos.registrar({
     id: 'pessoas',
-    versao: '1.1.0',
+    versao: '1.2.0',
     colecoes: [COL],
     iniciar: function () {
       try { if (ST && !cfg().pessoasV && (ST.gastos || []).length + (ST.recorrentes || []).length) { API.migrar(); Store.salvar(); } } catch (e) { console.warn('pessoas', e); }

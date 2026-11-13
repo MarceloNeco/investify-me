@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.67">
+<link rel="stylesheet" href="estilo.css?v=3.68">
 </head>
 <body>
 
@@ -631,7 +631,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.67"></script>
+<script src="textos/frases-en.js?v=3.68"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -1175,9 +1175,20 @@ function textoGlossario(chave, nivel){
       'Income and investment contributions are left out — spending only.'}},
 
     {k:'caixa-mensal', t:'Mês a mês', te:'Month by month', c:'BudgetONE', ce:'BudgetONE',
-     pt:{medio:'Para cada mês: o que entrou menos o que saiu. Barra para a direita, o mês fechou no azul (sobrou); para a esquerda, ' +
-      'gastou mais do que entrou. Um mês vermelho sozinho costuma ser conta anual (IPVA, seguro); vários seguidos pedem atenção.'},
-     en:{medio:'For each month: income minus spending. A bar to the right means money was left over; to the left, you spent more than came in.'}},
+     pt:{medio:'Para cada mês: tudo o que entrou menos o que saiu (o que foi para investimento não conta como saída). Barra para a direita, o mês fechou no azul (sobrou); para a esquerda, ' +
+      'gastou mais do que entrou. Um mês vermelho sozinho costuma ser conta anual (IPVA, seguro); vários seguidos pedem atenção. ' +
+      'A renda extraordinária (rescisão, FGTS, indenização, ou a entrada que você marcou como "Renda extraordinária") aparece em amarelo com ★: ' +
+      'a escala é feita sem ela, e a barra que passa da borda é cortada (⫽); embaixo do valor vem o resultado sem ela. As médias do Painel não a usam. ' +
+      'Toque no mês para ver o que entrou, saiu e foi para investimento.'},
+     en:{medio:'For each month: everything that came in minus spending (money sent to investments is not spending). A bar to the right means money was left over; to the left, you spent more than came in. ' +
+      'Extraordinary income (severance, FGTS, compensation, or an entry you marked as "Extraordinary income") shows in yellow with ★: the scale ignores it, a bar past the edge is cut (⫽), and the result without it is shown below the value. The Panel averages leave it out. Tap a month to see what came in, went out and was invested.'}},
+
+    {k:'renda-extra', t:'Renda extraordinária', te:'Extraordinary income', c:'BudgetONE', ce:'BudgetONE',
+     pt:{medio:'Renda que não se repete: rescisão, FGTS, indenização. Ela fica fora das médias do Painel ("Entrou por mês", "Sobrou por mês") e da projeção do mês, ' +
+      'e no "Mês a mês" aparece em amarelo com ★. O app reconhece sozinho quando a categoria ou a descrição falam em rescisão, FGTS ou indenização. ' +
+      'Para outra renda (um prêmio, a venda de um bem), marque aqui; para tirar a marca de uma que o app reconheceu, desmarque. Resgate de investimento não é renda: é a volta do que você aplicou.'},
+     en:{medio:'Income that does not repeat: severance, FGTS, compensation. It stays out of the Panel averages and the month projection, and shows in yellow with ★ in "Month by month". ' +
+      'The app recognizes it by itself when the category or description mentions severance, FGTS or compensation. Tick it for other income (a prize, selling something); untick to undo. Redeeming an investment is not income.'}},
 
     {k:'sazonalidade', t:'Os meses caros do ano', te:'The expensive months', c:'BudgetONE', ce:'BudgetONE',
      pt:{medio:'A média de gasto de cada mês do calendário, usando todos os anos que você registrou. Mostra o que se repete: ' +
@@ -2771,6 +2782,45 @@ function vizDivergente(itens, fmt){
       '<div class="small mono ' + (pos ? 'up' : 'down') + '" style="text-align:right">' +
         (pos ? '+' : '') + fmt(i.valor) + '</div>' +
     '</div>';
+  });
+  return h + '</div>';
+}
+
+/* 3.68: "Mês a mês" do Painel. A barra mostra o resultado REAL do mês (tudo o que entrou − o que saiu; o que foi para
+   investimento não é "saiu"), dividida: a parte recorrente na cor de sempre e a renda extraordinária em amarelo (★).
+   A escala sai da parte recorrente, para os meses comuns não virarem um risco; o que passa da borda é cortado com ⫽ e o
+   número à direita mostra o total. Tocar no mês abre: entrou recorrente, entrou extraordinária, saiu, foi para investimento.
+   itens: [{nome, rec, extra, entRec, saida, aplic}] (rec = entRec − saida; total = rec + extra) */
+function vizMesAMes(itens, fmt){
+  if(!itens.length) return '<p class="muted small">Sem dados ainda.</p>';
+  const pt = I18n.atual !== 'en';
+  /* com renda extraordinária, a escala deixa 15% de folga: o amarelo sempre aparece até a borda, mesmo no maior mês */
+  const max = (Math.max(...itens.map(i => Math.abs(i.rec))) || 1) * (itens.some(i => i.extra) ? 1 / 0.85 : 1);
+  const umLado = itens.every(i => i.rec >= 0 && i.rec + i.extra >= 0);
+  const H = umLado ? 100 : 50, Z = umLado ? 0 : 50;
+  const px = v => v / max * H;                                     /* % da largura, a partir do zero */
+  const seg = (a, b, cls) => {                                     /* um pedaço de a até b (valores), cortado na borda */
+    let x1 = Math.max(-H, Math.min(H, px(Math.min(a, b)))), x2 = Math.max(-H, Math.min(H, px(Math.max(a, b))));
+    if(x2 - x1 <= 0) return '';
+    return '<div class="mm-seg ' + cls + '" style="left:' + (Z + x1).toFixed(2) + '%;width:' + (x2 - x1).toFixed(2) + '%"></div>';
+  };
+  let h = '<div class="viz-div mm">';
+  itens.forEach(i => {
+    const tot = i.rec + i.extra, pos = tot >= 0;
+    let barra = '<div class="viz-div-zero" style="left:' + Z + '%"></div>';
+    if(i.rec >= 0){ barra += seg(0, i.rec, 'mm-up') + seg(i.rec, tot, 'mm-extra'); }
+    else if(tot >= 0){ barra += seg(i.rec, 0, 'mm-down') + seg(0, tot, 'mm-extra'); }   /* a extraordinária cobriu o mês */
+    else { barra += seg(tot, 0, 'mm-down') + seg(i.rec, tot, 'mm-extra'); }
+    if(Math.max(px(tot), px(i.rec)) > H) barra += '<span class="mm-quebra" style="right:-2px" aria-hidden="true">⫽</span>';
+    if(Math.min(px(tot), px(i.rec)) < -H) barra += '<span class="mm-quebra" style="left:-2px" aria-hidden="true">⫽</span>';
+    const det = (pt ? 'Entrou recorrente ' : 'Recurring income ') + fmt(i.entRec) + ' · ' + (pt ? 'entrou extraordinária ' : 'extraordinary income ') + fmt(i.extra) +
+                ' · ' + (pt ? 'saiu ' : 'spent ') + fmt(i.saida) + ' · ' + (pt ? 'foi para investimento ' : 'went to investments ') + fmt(i.aplic);
+    h += '<details class="mm-mes"><summary title="' + esc(det) + '">' +
+      '<div class="mm-linha"><div class="small mm-nome">' + esc(i.nome) + (i.extra ? ' ★' : '') + '</div>' +
+      '<div class="mm-trilho">' + barra + '</div>' +
+      '<div class="mm-valor"><div class="small mono ' + (pos ? 'up' : 'down') + '">' + (pos ? '+' : '−') + fmt(Math.abs(tot)) + '</div>' +
+        (i.extra ? '<div class="tiny muted mono">' + (pt ? 'sem a rescisão/FGTS: ' : 'without severance/FGTS: ') + '<span class="nowrap" style="white-space:nowrap">' + (i.rec >= 0 ? '+' : '−') + fmt(Math.abs(i.rec)) + '</span></div>' : '') +
+      '</div></div></summary><p class="tiny muted mm-det">' + esc(det) + '</p></details>';
   });
   return h + '</div>';
 }
@@ -7515,7 +7565,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.67"></script>
+<script src="textos/mudancas.js?v=3.68"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -7726,7 +7776,8 @@ const Gasto = {
       if(f.aconfirmar  && !(window.Origem && Origem.status(g) === 'confirmar')) return false;     /* 3.65 */
       if(f.aidentificar && !(window.Origem && Origem.status(g) === 'identificar')) return false;
       if(f.busca){
-        const alvo = (g.desc + ' ' + g.sub + ' ' + g.grupo).toLowerCase();
+        const alvo = (g.desc + ' ' + g.sub + ' ' + g.grupo + (window.Apelido ? ' ' + Apelido.de(g) : '') +
+          ' ' + [g.quem, quemVer(g.quem), g.paraQuem, quemVer(g.paraQuem)].filter(Boolean).join(' ')).toLowerCase();   /* 3.68: o apelido e o nome original; o quem pelo código e pelo nome */
         if(alvo.indexOf(f.busca.toLowerCase()) < 0) return false;
       }
       return true;
@@ -9795,6 +9846,8 @@ function fecharMenuApps(){
 /* 3.67: a renda extraordinária (rescisão, FGTS, indenização, ou marcada à mão em "extra") não entra na média do mês.
    Resgate de investimento NÃO é renda nenhuma: é a volta de um aporte (fluxo 'aplicacao', negativo; 3.65.2). */
 const RX_RENDA_EXTRA = /rescis|fgts|indeniza/i;
+/* 3.68: o "quem" na tela: o código gravado (Neco, Beta… o robô depende dele) aparece pelo nome do cadastro de Pessoas */
+function quemVer(t){ return window.Pessoas && Pessoas.nomeVer ? Pessoas.nomeVer(t) : String(t || ''); }
 function rendaExtra(g){
   if(!g || g.fluxo !== 'entrada') return false;
   if(g.extra === true) return true;
@@ -9870,16 +9923,15 @@ function viewBPainel(){
   /* o caixa mês a mês */
   const meses = Gasto.porMes(doze);
   if(meses.length >= 2){
-    /* 3.67: o resultado do mês sem a renda extraordinária; ela aparece ao lado, em separado */
+    /* 3.68: a barra é o resultado real do mês; a renda extraordinária aparece em amarelo (★), fora da escala; as médias continuam sem ela */
     const extraMes = {}; doze.filter(rendaExtra).forEach(g => { const t = String(g.data || '').slice(0, 7); extraMes[t] = (extraMes[t] || 0) + (Number(g.valor) || 0); });
     h += '<div class="card"><div class="card-head"><h3>Mês a mês</h3>' +
          '<button class="info-dot" data-info="caixa-mensal">i</button>' + tagP + '</div>' +
-         vizDivergente(meses.map(m => ({nome: m.t.split('-').reverse().join('/') + (extraMes[m.t] ? ' ★' : ''),
-                                        valor: m.entrada - (extraMes[m.t] || 0) - m.saida})), fmt) +
-         (extra ? '<p class="small pn-extra" style="margin-top:8px">★ ' + esc((I18n.atual === 'en' ? 'Extraordinary income (severance, FGTS), outside the bars: ' : 'Renda extraordinária (rescisão, FGTS), fora das barras: ') +
-           Object.keys(extraMes).sort().map(t => t.split('-').reverse().join('/') + ' +' + fmt(extraMes[t])).join(' · ')) + '</p>' : '') +
+         vizMesAMes(meses.map(m => { const ex = extraMes[m.t] || 0, ent = m.entrada - ex;
+           return {nome: m.t.split('-').reverse().join('/'), rec: ent - m.saida, extra: ex, entRec: ent, saida: m.saida, aplic: m.aplicacao || 0}; }), fmt) +
          '<p class="tiny muted" style="margin-top:8px">Para a direita, o mês fechou no azul; ' +
-         'para a esquerda, você gastou mais do que entrou.</p>' +
+         'para a esquerda, você gastou mais do que entrou. Toque no mês para ver o que entrou, saiu e foi investido.' +
+         (extra ? ' ★ inclui renda extraordinária (rescisão, FGTS), em amarelo. As médias do Painel ficam sem ela.' : '') + '</p>' +
          '</div>';
   }
   h += '</div>';
@@ -10046,10 +10098,11 @@ function viewBLanc(){
         (g.per && g.per !== 'Pontual' ? ' · ' + PERIODICIDADES[g.per].nome.toLowerCase() : '') + '</div>' +
         (window.MoneyModulos ? MoneyModulos.html('lancamento.categoria', {g: g}) : '') + '</td>' +   /* 3.65: selo A confirmar / A identificar */
       /* 3.65: a descrição fica na própria coluna (até 2 linhas, reticências); o texto inteiro no title e no detalhe */
-      '<td class="desc-cel"><span class="desc-txt" title="' + esc(g.desc || '') + '">' + esc(g.desc || '') + '</span>' +
+      /* 3.68: o apelido da origem no lugar do nome do banco; o nome original no title (e na busca, no detalhe) */
+      '<td class="desc-cel"><span class="desc-txt" title="' + esc(g.desc || '') + '">' + esc(window.Apelido ? Apelido.texto(g) : (g.desc || '')) + '</span>' +
         (g.grupo === 'RENDA' && Transferencia.daRenda(g.id).length ? '<div class="t-sub tf-cinza">↪ ' + esc((I18n.atual === 'pt' ? 'passou para outra conta em ' : 'moved to another account on ') +
           Transferencia.daRenda(g.id).map(t => I18n.data(t.data) + (t.banco ? ' (' + t.banco + ')' : '')).join(', ') + (I18n.atual === 'pt' ? ' — transferência, não conta de novo' : ' — transfer, not counted again')) + '</div>' : '') +
-        (g.quem || g.paraQuem || g.forma ? '<div class="t-sub">' + esc([g.paraQuem && g.paraQuem !== g.quem ? (g.quem ? g.quem + ' → ' : '→ ') + g.paraQuem : g.quem, g.forma].filter(Boolean).join(' · ')) +
+        (g.quem || g.paraQuem || g.forma ? '<div class="t-sub">' + esc([g.paraQuem && g.paraQuem !== g.quem ? (g.quem ? quemVer(g.quem) + ' → ' : '→ ') + quemVer(g.paraQuem) : quemVer(g.quem), g.forma].filter(Boolean).join(' · ')) +
           (g.irpf ? ' · <span class="badge-irpf">IRPF</span>' : '') + '</div>' : '') +
         (window.MoneyModulos ? MoneyModulos.html('lancamento.linha', {g: g}) : '') + '</td>' +
       '<td class="num ' + sinal + '">' + (g.fluxo === 'entrada' ? '+' : '') + fmt(g.valor) + Abat.marca(g) + '</td></tr>';
@@ -10163,7 +10216,7 @@ const ImportRec = {
         '<td>' + esc(Recorrente.explicar(r)) + '</td>' +
         '<td>' + esc(per(r)) + '</td>' +
         '<td>' + esc((g.ico || '') + ' ' + (g.nome || r.grupo)) + ' · ' + esc(r.sub) + '</td>' +
-        '<td>' + esc(r.quem || '—') + '</td>' +
+        '<td>' + esc(quemVer(r.quem) || '—') + '</td>' +
         '<td>' + (r.irpf ? '✓' : '') + '</td></tr>';
     }).join('');
     const nOk = this.lista.filter(x => x.marcado).length;
@@ -10312,6 +10365,7 @@ const Sugestor = {
 function recOpcoesPessoa(listaId){
   const cad = window.Pessoas ? Pessoas.ativas().map(p => Pessoas.rotulo(p)) : [];   /* 3.64: as cadastradas primeiro */
   return '<datalist id="' + listaId + '">' + [CASA_TODA[I18n.atual] || CASA_TODA.pt].concat(cad, recPessoas().filter(q => cad.indexOf(q) < 0))
+    .map(quemVer).filter((q, i, l) => l.indexOf(q) === i)   /* 3.68: o nome do cadastro (o código volta ao salvar) */
     .map(q => '<option value="' + esc(q) + '"></option>').join('') + '</datalist>';
 }
 
@@ -10398,7 +10452,7 @@ function abrirRecorrente(id, semente, op){
     '</div>' +
 
     '<div class="grid g2">' +
-      campo(de('Para quem é', 'Who it is for'), '<input id="rcQuem" data-pessoa list="rcQuemLista" autocomplete="off" value="' + esc(r.quem || '') + '" placeholder="' + de('a pessoa, ou a casa', 'the person, or the home') + '">' + recOpcoesPessoa('rcQuemLista'),
+      campo(de('Para quem é', 'Who it is for'), '<input id="rcQuem" data-pessoa list="rcQuemLista" autocomplete="off" value="' + esc(quemVer(r.quem)) + '" placeholder="' + de('a pessoa, ou a casa', 'the person, or the home') + '">' + recOpcoesPessoa('rcQuemLista'),
         null, de('Quem usa. O nome de quem recebe (a escola, a diarista) fica no nome do compromisso.', 'Who uses it. Whoever gets paid (school, cleaner) goes in the name.')) +
       campo(de('Quem paga', 'Who pays'), '<input id="rcPagador" data-pessoa list="rcPagaLista" autocomplete="off" value="' + esc(r.pagador || '') + '" placeholder="' + de('opcional', 'optional') + '">' + recOpcoesPessoa('rcPagaLista').replace('rcQuemLista', 'rcPagaLista')) +
     '</div>' +
@@ -10990,6 +11044,13 @@ function abrirLancamento(id){
     '<div id="glSal"></div>' +
     campo('Descrição', '<input id="glDesc" placeholder="O que foi, com detalhe" value="' +
           (g ? esc(g.desc) : '') + '">') +
+    /* 3.68: apelido da loja/pessoa (modulos/apelido.js), guardado na origem do lançamento */
+    (window.Apelido && g ? campo(I18n.atual === 'pt' ? 'Apelido' : 'Nickname', '<input id="glApelido" maxlength="60" placeholder="' +
+      (I18n.atual === 'pt' ? 'Ex.: Padaria do bairro' : 'E.g.: Corner bakery') + '" value="' + esc(Apelido.de(g)) + '">', null,
+      (Apelido.origem(g).indexOf('u:') === 0
+        ? (I18n.atual === 'pt' ? 'A descrição do banco é genérica: o apelido vale só para este lançamento.' : 'The bank description is generic: the nickname applies to this entry only.')
+        : (I18n.atual === 'pt' ? 'Aparece na lista no lugar do nome do banco, neste e nos outros lançamentos da mesma origem (antigos e novos). O nome original continua na busca.'
+                               : 'Shown in the list instead of the bank name, on this and the other entries from the same source (old and new). The original name still works in search.'))) : '') +
     '<div class="grid g2">' +
       campo('Com que frequência',
         '<select id="glPer">' + ORDEM_PERIODICIDADES.map(k =>
@@ -11007,9 +11068,9 @@ function abrirLancamento(id){
     '<div id="glFixo"></div>' +
     '<div class="grid g2">' +
       campo('Quem pagou/recebeu', '<input id="glQuem" data-pessoa list="glQuemLista" autocomplete="off" placeholder="' + esc(I18n.atual === 'pt' ? 'opcional · vem da conta ou do cartão' : 'optional · from the account or card') + '" value="' +
-        (g ? esc(g.quem) : '') + '">' + recOpcoesPessoa('glQuemLista')) +
+        (g ? esc(quemVer(g.quem)) : '') + '">' + recOpcoesPessoa('glQuemLista')) +   /* 3.68: o nome; ao salvar volta para o código (Pessoas.ligar) */
       campo(I18n.atual === 'pt' ? 'Para quem é' : 'Who it is for', '<input id="glParaQuem" data-pessoa list="glParaLista" autocomplete="off" placeholder="' + esc(I18n.atual === 'pt' ? 'opcional · saúde, escola, IR' : 'optional · health, school, tax') + '" value="' +
-        (g ? esc(g.paraQuem || '') : '') + '">' + recOpcoesPessoa('glParaLista'), null,
+        (g ? esc(quemVer(g.paraQuem)) : '') + '">' + recOpcoesPessoa('glParaLista'), null,
         I18n.atual === 'pt' ? 'Quem usou (a filha na terapia). No IR, gasto de dependente vale para quem pagou.' : 'Who used it. For tax, a dependant\'s expense counts for whoever paid.') +
     '</div><div class="grid g2">' +
       campo('Observação da conta', '<input id="glConta" placeholder="opcional" value="' +
@@ -11019,6 +11080,10 @@ function abrirLancamento(id){
     (window.MoneyModulos ? MoneyModulos.html('lancamento.form', {g: g}) : '') +
     '<label class="linha-check"><input type="checkbox" id="glIrpf"' + (g && g.irpf ? ' checked' : '') + '> ' +
       (I18n.atual === 'pt' ? 'Entra no imposto de renda' : 'Counts for income tax') + '</label>' +
+    /* 3.68: renda extraordinária à mão (g.extra); sem marcar, vale a regra automática (rescisão, FGTS, indenização) */
+    '<label class="linha-check" id="glExtraLbl"' + ((g ? g.grupo : '') === 'RENDA' ? '' : ' hidden') + '><input type="checkbox" id="glExtra"' + (g && rendaExtra(Object.assign({}, g, {fluxo: 'entrada'})) ? ' checked' : '') + '> ' +
+      (I18n.atual === 'pt' ? '★ Renda extraordinária (fica fora das médias)' : '★ Extraordinary income (left out of the averages)') +
+      ' <button type="button" class="info-dot" data-info="renda-extra">i</button></label>' +
     '<label class="linha-check"><input type="checkbox" id="glFav"' + (g && g.favorito ? ' checked' : '') + '> ' +
       (I18n.atual === 'pt' ? '★ Favorito' : '★ Favourite') + '</label>' +
     '<label class="linha-check"><input type="checkbox" id="glRev"' + (g && g.revisar ? ' checked' : '') + '> ' +
@@ -11054,6 +11119,13 @@ function abrirLancamento(id){
   ['change', 'input'].forEach(ev => janela.addEventListener(ev, e => {
     if(['glGrupo', 'glSub', 'glValor', 'glCalcIR'].indexOf(e.target.id) >= 0 || e.target.name === 'glBase') blocoSal();
     if(e.target.id === 'glPer' || e.target.id === 'glGrupo' || e.target.id === 'glSub') blocoFixo();
+    /* 3.68: o interruptor de renda extraordinária só aparece em Renda; enquanto não for mexido, segue a regra automática */
+    const cxE = $('#glExtra');
+    if(cxE && e.target === cxE) cxE.dataset.mexeu = '1';
+    else if(cxE && ['glGrupo', 'glSub', 'glDesc'].indexOf(e.target.id) >= 0){
+      $('#glExtraLbl').hidden = $('#glGrupo').value !== 'RENDA';
+      if(!cxE.dataset.mexeu && !(g && typeof g.extra === 'boolean')) cxE.checked = RX_RENDA_EXTRA.test($('#glSub').value + ' ' + (($('#glDesc') || {}).value || ''));
+    }
   }));
   blocoSal(); blocoFixo();
 
@@ -11171,6 +11243,11 @@ function salvarLancamento(){
     conta: $('#glConta').value, irpf: $('#glIrpf').checked,
     favorito: !!($('#glFav') || {}).checked, revisar: !!($('#glRev') || {}).checked
   };
+  /* 3.68: a marca "renda extraordinária" só é gravada quando difere da regra automática (assim, mudar a categoria continua valendo) */
+  if($('#glGrupo').value === 'RENDA' && $('#glExtra')){
+    const auto = RX_RENDA_EXTRA.test((dados.sub || '') + ' ' + (dados.desc || ''));
+    dados.extra = $('#glExtra').checked === auto ? undefined : $('#glExtra').checked;
+  } else dados.extra = undefined;
   if(!Abat.aplicar(dados, dados.valor, Abat.ler('gl'))){
     toast(I18n.atual === 'pt' ? 'O abatimento passou do preço cheio.' : 'The offset is larger than the full price.', 'warn'); return;
   }
@@ -11186,6 +11263,7 @@ function salvarLancamento(){
   /* 3.65: corrigiu (ou confirmou) um lançamento do robô: vale para os outros da mesma origem que ainda estão pendentes */
   if(window.Origem && antesEsp && antesEsp.origem === 'robo'){ const gO = Gasto.todos().find(x => x.id === bEditando);
     if(gO && (Origem.pendente(antesEsp) || ['grupo','sub','paraQuem','irpf'].some(k => (antesEsp[k] || '') !== (gO[k] || '')))) Origem.depoisDe(gO, antesEsp); }
+  if(window.Apelido && $('#glApelido')){ const gA = criado || Gasto.todos().find(x => x.id === bEditando); if(gA) Apelido.salvar(gA, $('#glApelido').value); }   /* 3.68 */
   Gasto._idx = null;
   bProj = null;                       /* a projeção envelheceu */
   Store.salvar(); fechar('assetModal'); render();
@@ -11951,7 +12029,7 @@ function barraFiltros(op){
     if(pessoas.length > 1)
       h += '<div class="bf-bloco"><span class="bf-tit">Quem pagou/recebeu</span><div class="chips">' +
         pessoas.map(p => '<button class="chip click' + (bFiltro.quem.indexOf(p.chave) >= 0 ? ' on' : '') +
-          '" data-bquem="' + esc(p.chave) + '">' + esc(p.chave) + '</button>').join('') + '</div></div>';
+          '" data-bquem="' + esc(p.chave) + '">' + esc(quemVer(p.chave)) + '</button>').join('') + '</div></div>';   /* 3.68: o nome do cadastro; o filtro usa o código */
     if(formas.length > 1)
       h += '<div class="bf-bloco"><span class="bf-tit">Como pagou</span><div class="chips">' +
         formas.map(f => '<button class="chip click' + (bFiltro.formas.indexOf(f.chave) >= 0 ? ' on' : '') +
@@ -17265,7 +17343,7 @@ function blocoRecorrentes(){
           (r.aConfirmar ? ' <span class="tag-conf" title="' + esc(r.origem === 'contrato' ? (I18n.atual === 'pt' ? 'criado a partir do contrato: confira valor e dia' : 'created from the contract: check amount and day') : (I18n.atual === 'pt' ? 'criado ao rolar o ano: confira valor e nome' : 'created by rolling the year: check amount and name')) + '">⚠ ' + (I18n.atual === 'pt' ? 'a confirmar' : 'to confirm') + '</span>' : '') +
           (r.ativo !== false && Recorrente.sobreposicoes(r).length ? ' <span class="tag-rep" title="' + esc((I18n.atual === 'pt' ? 'Parece repetido com: ' : 'Looks repeated with: ') + Recorrente.sobreposicoes(r).map(x => x.r.nome).join(', ')) + '">⚠ ' + (I18n.atual === 'pt' ? 'repetido?' : 'repeated?') + '</span>' : '') +
           '<div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) +
-          (r.quem ? ' · ' + esc(r.quem) : '') +
+          (r.quem ? ' · ' + esc(quemVer(r.quem)) : '') +
           (r.varia ? ' · ' + esc(I18n.atual === 'pt' ? 'valor varia' : 'amount varies') : '') + '</div>' +
           (window.MoneyModulos ? MoneyModulos.html('recorrente.linha', {r: r}) : '') + '</td>' +
         '<td class="nowrap t-sub">' + esc(Recorrente.explicar(r)) +
@@ -17367,7 +17445,7 @@ function blocoTodos(){
   rec.forEach(r => {
     const G = GRUPOS[r.grupo] || {}, per = Recorrente.periodoCurto(r);
     h += '<tr class="linha-click" data-recedit="' + r.id + '"><td title="' + esc(t('per.recorrentes')) + '">🔁</td>' +
-      '<td><span class="t-main">' + esc(r.nome) + '</span><div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) + (r.quem ? ' · ' + esc(r.quem) : '') + '</div></td>' +
+      '<td><span class="t-main">' + esc(r.nome) + '</span><div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) + (r.quem ? ' · ' + esc(quemVer(r.quem)) : '') + '</div></td>' +
       '<td class="t-sub">' + esc(Recorrente.explicar(r)) + (per ? '<div class="t-sub rec-periodo">' + esc(per) + '</div>' : '') + '</td>' +
       '<td class="num ' + (r.fluxo === 'entrada' ? 'up' : '') + '">' + (r.fluxo === 'entrada' ? '+' : '') +
         fmt(r.porVisita ? Recorrente.mediaDoServico(r) : Recorrente.valorEm(r, hojeISO())) + '</td></tr>';
@@ -17822,7 +17900,7 @@ function abrirOcorrencia(chave){
   let h = '<div class="oc-topo">' +
     '<div><span class="t-main">' + esc(r.nome) + '</span>' +
       '<div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) +
-      (r.quem ? ' · ' + esc(r.quem) : '') + '</div></div>' +
+      (r.quem ? ' · ' + esc(quemVer(r.quem)) : '') + '</div></div>' +
     '<div class="oc-valor-g ' + (ent ? 'up' : 'down') + '">' +
       (ent ? '+' : '−') + fmt(o.valor) + '</div>' +
     '</div>' +
@@ -20849,7 +20927,7 @@ function blocoOutrasRendas(){
     '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>' + (pt ? 'Renda' : 'Income') + '</th><th>' + (pt ? 'Quando' : 'When') + '</th><th class="num" data-principal>' + (pt ? 'Valor' : 'Amount') + '</th></tr></thead><tbody>' +
     lista.map(r => { const c = Rendas.cat((r.renda || {}).tipo || 'outro'); const vig = r.ativo !== false && Salarios.vigenteEm(r, hojeISO());
       return '<tr class="linha-click' + (vig ? '' : ' linha-off') + '" data-acao="renda-editar" data-id="' + r.id + '">' +
-        '<td><span class="t-main">' + c.ico + ' ' + esc(r.nome) + '</span><div class="t-sub">' + esc(r.quem || '') + ((r.renda || {}).bancoId ? (r.quem ? ' · ' : '') + esc(Banco.curto(r.renda.bancoId)) : '') +
+        '<td><span class="t-main">' + c.ico + ' ' + esc(r.nome) + '</span><div class="t-sub">' + esc(quemVer(r.quem)) + ((r.renda || {}).bancoId ? (r.quem ? ' · ' : '') + esc(Banco.curto(r.renda.bancoId)) : '') +
           (vig ? '' : ' · <span class="badge">' + (pt ? 'encerrada' : 'ended') + '</span>') + '</div></td>' +
         '<td class="tiny">' + esc(Recorrente.explicar(r)) + '</td>' +
         '<td class="num"><b class="up">' + fmt(Recorrente.valorEm(r, hojeISO())) + '</b>' + (r.regra === 'anual' ? '<span class="t-sub">' + (pt ? 'por ano' : 'per year') + '</span>' : '') + '</td></tr>'; }).join('') +
@@ -29794,7 +29872,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/previsto.js?v=1.0.0"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
 <script src="modulos/calendario-menu.js?v=1.1.0"></script>
-<script src="modulos/pessoas.js?v=1.1.0"></script>
+<script src="modulos/pessoas.js?v=1.2.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=2.1.0"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
@@ -29804,9 +29882,10 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/contraparte.js?v=1.0.0"></script>
 <script src="modulos/declaracao-escolhas.js?v=1.0.0"></script>
 <script src="modulos/origem.js?v=1.0.1"></script>
+<script src="modulos/apelido.js?v=1.0.0"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
-<script src="modulos/visao-casa.js?v=1.0.1"></script>
+<script src="modulos/visao-casa.js?v=1.0.2"></script>
 <script src="modulos/orcamento.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.14.0"></script>
 </body>

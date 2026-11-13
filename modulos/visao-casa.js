@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.0.1 · 13/Nov/2026
+   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.0.2 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 11/Nov/2026; desenho em DESENHO-visao-da-casa.md)
      Um membro da família com a visão "Só a casa" vê a parte da casa; o resto fica RESERVADO e nem chega ao aparelho dele
@@ -17,6 +17,7 @@
      Coleção `resumo` (da casa), um por mês ('AAAA-MM'): {grupos: {GRUPO: valor}, total, n, atualizadoEm} de TODOS os
      gastos da família (sem renda, investimento nem transferência). Quem calcula é o aparelho de quem vê tudo, logo antes
      de subir (Escopo.antesDeSubir).
+     · 3.68 (1.0.2): o apelido da origem (modulos/apelido.js) é da casa quando algum lançamento dessa origem é da casa.
    API (window.Escopo)
      de(colecao, item) → 'casa' | 'reservado'      deConfig(chave) → 'casa' | 'reservado'
      preparar(estado)  · ehPJ(item)  · pessoasDela()  · antesDeSubir(estado)
@@ -34,7 +35,7 @@
   var CASA_COLS = { pessoas: 1, profissionais: 1, saude_planos: 1, agendamentos: 1, precos: 1, bancos: 1, resumo: 1, orcamentos: 1 };   /* 3.67: o orçamento por categoria vale para a família */
   var CASA_CONFIG = { visaoCasa: 1, categorias: 1, moedaBase: 1 };
 
-  var C = { dela: {}, cartoes: {}, rec: {} };
+  var C = { dela: {}, cartoes: {}, rec: {}, origCasa: {} };
   function tem(o, k) { return !!(k && o[k]); }
   function ehPJ(x) {
     if (!x || typeof x !== 'object') return false;
@@ -57,7 +58,9 @@
         if (manual(c) === 'casa' || (quem && dela[quem]) || (c.finais || []).some(function (f) { return f.titularId && dela[f.titularId]; })) cartoes[c.id] = 1;
       });
       (est.recorrentes || []).forEach(function (r) { if (recCasa(r)) { rec[r.id] = 1; if (r.cartaoId) cartoes[r.cartaoId] = 1; } });
-      C = { dela: dela, cartoes: cartoes, rec: rec };
+      C = { dela: dela, cartoes: cartoes, rec: rec, origCasa: {} };
+      /* 3.68: o apelido é da casa quando algum lançamento da mesma origem é da casa (modulos/apelido.js) */
+      if (window.Apelido) (est.gastos || []).forEach(function (g) { if (API.de('gastos', g) === 'casa') { var k = Apelido.origem(g); if (k) C.origCasa[k] = 1; } });
     },
     de: function (col, x) {
       if (CASA_COLS[col]) return 'casa';
@@ -72,6 +75,7 @@
         case 'pagamentos': return tem(C.rec, x.rid) ? 'casa' : 'reservado';
         case 'cartoes': return C.cartoes[x.id] ? 'casa' : 'reservado';
         case 'assinaturas': return manual(x) || (ehPJ(x) ? 'reservado' : 'casa');
+        case 'apelidos': return C.origCasa && C.origCasa[x.origem] ? 'casa' : 'reservado';   /* 3.68 */
         default: return 'reservado';
       }
     },
@@ -173,7 +177,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'visao-casa', versao: '1.0.1', colecoes: [COL],
+    id: 'visao-casa', versao: '1.0.2', colecoes: [COL],
     pontos: {
       'budget.painel': function () { return API.soCasa() ? gastosDaFamilia() : ''; },
       'config.todos': function () { return cartaoChefe(); }

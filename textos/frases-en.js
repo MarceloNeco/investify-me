@@ -1,10 +1,19 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.67 · 13/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.68 · 13/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.68 */
+  'Mês a mês de verdade, apelidos e nomes':'Real month by month, nicknames and names',
+  '"Mês a mês" mostra o resultado real de cada mês (tudo o que entrou menos o que saiu; o que foi para investimento fica de fora). A parte da renda extraordinária (rescisão, FGTS) aparece em amarelo com ★ e a régua não se deixa levar por ela; toque no mês para ver o que entrou, saiu e foi para investimento.':'"Month by month" shows each month\'s real result (everything that came in minus what went out; what went to investments is left out). The extraordinary income part (severance, FGTS) shows in yellow with ★ and does not stretch the scale; tap a month to see what came in, went out and was invested.',
+  'Na edição de uma entrada: "★ Renda extraordinária (fica fora das médias)". Rescisão, FGTS e indenização já vêm marcadas; marque outra (um prêmio, a venda de algo) ou desmarque.':'When editing an income entry: "★ Extraordinary income (left out of the averages)". Severance, FGTS and compensation come ticked; tick another one (a prize, selling something) or untick.',
+  'Apelido: dê um nome fácil a uma loja ou pessoa ("PANIFICADORA …" → "Padaria do bairro"). Vale para todos os lançamentos dessa origem, antigos e novos; o nome do banco continua no detalhe e na busca.':'Nickname: give a shop or person an easy name ("BAKERY …" → "Corner bakery"). It applies to every entry from that source, old and new; the bank name stays in the detail and in search.',
+  '"Quem pagou/recebeu" aparece pelo nome do cadastro de Pessoas, em todas as telas. A busca aceita o nome e o apelido.':'"Who paid/received" shows the name from People on every screen. Search accepts both the name and the nickname.',
+  'Para a direita, o mês fechou no azul; para a esquerda, você gastou mais do que entrou. Toque no mês para ver o que entrou, saiu e foi investido.':'To the right, the month ended in the black; to the left, you spent more than came in. Tap a month to see what came in, went out and was invested.',
+  'Para a direita, o mês fechou no azul; para a esquerda, você gastou mais do que entrou. Toque no mês para ver o que entrou, saiu e foi investido. ★ inclui renda extraordinária (rescisão, FGTS), em amarelo. As médias do Painel ficam sem ela.':'To the right, the month ended in the black; to the left, you spent more than came in. Tap a month to see what came in, went out and was invested. ★ includes extraordinary income (severance, FGTS), in yellow. The Panel averages leave it out.',
+  'Apelido':'Nickname',
   /* 3.67 */
   'Painel mais claro: período, drill-down, orçamento e projeção':'Clearer Panel: period, drill-down, budget and projection',
   'Painel do BudgetONE: cada bloco diz o período que mostra, e todos usam o mesmo período do filtro. O "por mês" divide pelos meses do período, não mais por 12 fixos.':'BudgetONE Panel: each block says the period it shows, and all of them use the same period as the filter. "Per month" divides by the months in the period, no longer by a fixed 12.',

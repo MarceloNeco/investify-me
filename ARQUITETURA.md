@@ -644,6 +644,21 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.68 (módulo novo `apelido` 1.0.0; `pessoas` 1.2.0; `visao-casa` 1.0.2; o layout do Painel continua o mesmo, fora o "Mês a mês").
+  **"Mês a mês"** (`vizMesAMes(itens, fmt)`, itens `{nome, rec, extra, entRec, saida, aplic}`): a barra é o resultado real (entrou − saiu;
+  aplicação fora), em dois pedaços — o recorrente (`.mm-up`/`.mm-down`) e o extraordinário (`.mm-extra`, amarelo listrado, ★). A régua é
+  só do recorrente (+15% de folga quando há extraordinária); o que passa da borda é cortado com `⫽` (`.mm-quebra`) e o número diz o total;
+  embaixo "sem a rescisão/FGTS: ±R$ X". Cada mês é um `<details>` com entrou recorrente / extraordinária / saiu / foi para investimento.
+  **Renda extraordinária à mão**: `#glExtra` na edição (só no grupo Renda); grava `g.extra` só quando difere da regra automática
+  (`RX_RENDA_EXTRA`), senão apaga (volta a valer a regra). Verbete `renda-extra`.
+  **`modulos/apelido.js`** (`window.Apelido`): `ST.apelidos = [{id, origem, nome}]`, a origem é `Origem.origemDe(g)` (CNPJ → idp → chave
+  da descrição; genérica = `u:<id>`, só aquele lançamento). Campo `#glApelido` na edição; a lista mostra `Apelido.texto(g)` (o nome do
+  banco no `title`); a busca (`Gasto.filtrar`) olha o apelido e a descrição. Cofre: `Escopo.de('apelidos')` = casa quando algum
+  lançamento da casa tem essa origem (`C.origCasa`, montado no `preparar`), senão reservado.
+  **Quem pelo nome**: `Pessoas.nomeVer(texto)` / `quemVer(t)` no index: o código gravado (o apelido da casa, que o robô usa) NÃO muda;
+  quem é da casa aparece pelo `nome` do cadastro (lista, chips do filtro, edição, Custos, Rendas, compromissos), igual em PT e EN. A edição
+  mostra o nome e o `Pessoas.ligar` do `arruma` devolve o código ao salvar; a busca aceita os dois. O backup guarda os códigos.
+  Testes: `teste/teste-painel-mes.js` (3 e 3b), `teste/teste-apelido.js`, `teste/teste-quem-nome.js`.
 - 3.67 (módulo novo `orcamento` 1.0.0; o layout do Painel não muda — o dono vai colher propostas).
   **Painel do BudgetONE** (`viewBPainel`): um período só para o Painel inteiro (`periodoPainel(lista)`: o filtro, ou os últimos 12
   meses; o nome vem de `periodosProntos`), rótulo `.pn-periodo` em cada bloco; todo "por mês" divide por `P.meses`; os quatro números
