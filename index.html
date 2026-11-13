@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.72">
+<link rel="stylesheet" href="estilo.css?v=3.73">
 </head>
 <body>
 
@@ -633,7 +633,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.72"></script>
+<script src="textos/frases-en.js?v=3.73"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -1191,6 +1191,14 @@ function textoGlossario(chave, nivel){
       'Para outra renda (um prêmio, a venda de um bem), marque aqui; para tirar a marca de uma que o app reconheceu, desmarque. Resgate de investimento não é renda: é a volta do que você aplicou.'},
      en:{medio:'Income that does not repeat: severance, FGTS, compensation. It stays out of the Panel averages and the month projection, and shows in yellow with ★ in "Month by month". ' +
       'The app recognizes it by itself when the category or description mentions severance, FGTS or compensation. Tick it for other income (a prize, selling something); untick to undo. Redeeming an investment is not income.'}},
+
+    {k:'dividas', t:'Dívidas e consórcios', te:'Debts and consortiums', c:'InvestifyONE', ce:'InvestifyONE',
+     pt:{medio:'O que você ainda deve: consórcio, financiamento ou outra dívida. O saldo devedor sai do patrimônio total (no Painel do InvestifyONE e no Fluxo) e aparece à vista como "dívidas: −R$ X". ' +
+      'Cada barra mostra cheio o que já foi pago e tracejado o que falta; "quita em" é uma estimativa pelo saldo dividido pela parcela. Cada parcela paga que o app reconhece (no extrato ou na fatura do cartão Porto) baixa o saldo até a próxima atualização, ' +
+      'que pode vir à mão ou pelo arquivo CSV das posições do consórcio. A parcela continua como gasto fixo no orçamento. Ligada a um bem (imóvel, carro), mostra o valor do bem menos a dívida: a parte sua.'},
+     en:{medio:'What you still owe: consortium, financing or other debt. The balance owed is subtracted from total net worth (InvestifyONE Panel and Flow) and shown as "debts: −R$ X". ' +
+      'Each bar is solid for what is paid and dashed for what is left; "paid off" is an estimate (balance divided by the instalment). Each paid instalment the app recognizes (in the statement or the Porto card bill) lowers the balance until the next update, ' +
+      'by hand or from the consortium positions CSV. The instalment stays a fixed expense in the budget. Linked to an asset (home, car), it shows the asset value minus the debt: your share.'}},
 
     {k:'sazonalidade', t:'Os meses caros do ano', te:'The expensive months', c:'BudgetONE', ce:'BudgetONE',
      pt:{medio:'A média de gasto de cada mês do calendário, usando todos os anos que você registrou. Mostra o que se repete: ' +
@@ -7596,7 +7604,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.72"></script>
+<script src="textos/mudancas.js?v=3.73"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -12114,9 +12122,11 @@ function patrimonioHoje(){
   const partes = [];
   if(rb && rb.contas) partes.push('saldos das contas');
   partes.push(temCart ? 'carteira do InvestifyONE' : (rb && rb.invests ? 'investimentos do banco' : ''));
-  return {valor: caixa + invest, caixa, invest,
+  /* 3.73: as dívidas (modulos/dividas.js) saem do patrimônio, à vista */
+  const dividas = window.Dividas ? Dividas.total() : 0;
+  return {valor: caixa + invest - dividas, caixa, invest, dividas,
           rotulo: 'patrimônio de hoje',
-          sub: partes.filter(Boolean).join(' + ') + (rb && rb.data ? ' · ' + fmtData(rb.data) : '')};
+          sub: partes.filter(Boolean).join(' + ') + (dividas ? ' · dívidas: −' + fmt(dividas) : '') + (rb && rb.data ? ' · ' + fmtData(rb.data) : '')};
 }
 
 function viewBFluxo(){
@@ -24692,9 +24702,10 @@ function viewPainel(){
 
   /* 3.45: o que não dá para sacar (módulos, ex.: FGTS) entra no total, separado do líquido */
   const semLiq = (window.MoneyModulos ? MoneyModulos.itens('patrimonio.extra') : []).reduce((s2, x) => s2 + (Number(x.valor) || 0), 0);
+  const dividas = window.Dividas ? Dividas.total() : 0;   /* 3.73: as dívidas saem do total, à vista */
   h += '<div class="grid g4" style="margin-bottom:14px">' +
-    kpi('Patrimônio total', fmt(t.valor + semLiq), 'patrimonio',
-        semLiq ? 'Líquido: ' + fmt(t.valor) + ' · 🔒 sem liquidez: ' + fmt(semLiq) : 'Investido: ' + fmt(t.custo), 'hero') +
+    kpi('Patrimônio total', fmt(t.valor + semLiq - dividas), 'patrimonio',
+        (semLiq ? 'Líquido: ' + fmt(t.valor) + ' · 🔒 sem liquidez: ' + fmt(semLiq) : 'Investido: ' + fmt(t.custo)) + (dividas ? ' · dívidas: −' + fmt(dividas) : ''), 'hero') +
     kpi('Lucro / prejuízo', fmt(t.pl), 'lucro-prejuizo',
         '<span class="' + cls(t.pl) + '">' + fmtPct(t.plPct, true) + '</span>') +
     kpi('Hoje', fmt(t.dia), null,
@@ -29951,7 +29962,9 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/visao-casa.js?v=1.0.2"></script>
 <script src="modulos/previsao.js?v=1.0.0"></script>
 <script src="modulos/orcamento.js?v=1.1.0"></script>
-<script src="modulos/patrimonio-mes.js?v=1.0.0"></script>
+<script src="modulos/patrimonio-mes.js?v=1.1.0"></script>
+<script src="modulos/dividas.js?v=1.0.0"></script>
+<script src="modulos/seguros.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.14.2"></script>
 </body>
 </html>

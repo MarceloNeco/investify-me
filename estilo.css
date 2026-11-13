@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.72 · 13/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.73 · 13/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2633,3 +2633,17 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .mm-valor{text-align:right}
 .mm-det{margin:4px 0 6px 102px}
 @media (max-width:560px){ .mm-linha{grid-template-columns:78px 1fr 118px; gap:6px} .mm-nome{overflow:visible; text-overflow:clip} .mm-det{margin-left:0} }
+
+/* 3.73: Dívidas (modulos/dividas.js) — barra cheia = pago, tracejada = o que falta */
+.dv-linha{padding:10px 0; border-top:1px solid var(--line)}
+.dv-linha:first-of-type{border-top:0}
+.dv-topo{display:flex; justify-content:space-between; gap:10px; align-items:baseline}
+.dv-saldo{font-weight:600; white-space:nowrap}
+.dv-barra{position:relative; height:12px; margin:6px 0 4px; border:1.5px dashed var(--muted); border-radius:6px; overflow:hidden; box-sizing:border-box}
+.dv-pago{position:absolute; left:0; top:0; bottom:0; background:var(--accent); border-radius:4px 0 0 4px}
+.dv-bem{margin:12px 0 2px; padding-top:8px; border-top:1px solid var(--line)}
+.dv-acoes{margin:12px 0 4px}
+.dv-dif{color:var(--warn, #d9822b)}
+.dv-prev{margin-top:12px}
+.dv-itens td{font-size:.85em}
+.dv-tag{font-size:.75em}

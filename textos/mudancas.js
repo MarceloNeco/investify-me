@@ -1,11 +1,18 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.72 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.73 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.73', d:'2026-11-13', t:'Dívidas, fatura do cartão Porto e seguro', itens:[
+    'Novo cartão "Dívidas" no Painel do InvestifyONE e no do BudgetONE: consórcio, financiamento ou outra dívida, cada uma com uma barra (cheia = o que já foi pago, tracejada = o que falta), o saldo, a parcela e "quita em ~mm/aaaa (estimativa)", agrupadas pelo bem a que pertencem. O bem mostra "valor − dívida = parte sua".',
+    'O patrimônio total (no Painel do InvestifyONE e no Fluxo) agora desconta as dívidas, com a linha "dívidas: −R$ X" à vista. Cada parcela paga que o app reconhece baixa o saldo (estimativa) até a próxima atualização; a parcela continua como gasto fixo no orçamento.',
+    'Posições do consórcio por arquivo CSV (grupo e cota, % pago, saldo, parcela): uma prévia antes de importar; a cota que já existe é atualizada e o saldo antigo fica no histórico.',
+    'Fatura do cartão Porto (planilha .xlsx ou PDF): o app lê as compras e as guarda como detalhe do pagamento "PORTOSEG" que veio do banco, sem gasto em dobro, e mostra a diferença se houver. As parcelas "PORTO SEGURO CONSORCIO" vão para a cota certa pela parcela; se houver dúvida, fica "A confirmar" para você escolher.',
+    'Em Custos, "🛡️ Seguro (apólice)": leia a apólice (PDF ou foto) ou preencha à mão; o seguro vira um compromisso com as parcelas do prêmio, e 30 dias antes do fim da vigência o app lembra de renovar.'
+  ]},
   {v:'3.72', d:'2026-11-13', t:'Mensagens da nuvem mais claras', itens:[
     'As mensagens de entrar e de segurança falam em desbloquear, chave e acesso, em vez de "cadeado" (por exemplo: "Desbloqueie com o PIN ou a digital", "O acesso desta família ainda não foi liberado para você", "Você bloqueou o app").',
     'As telas de entrar, de PIN e de "MoneyTRIO bloqueado" mostram a mesma imagem de fundo do app, nos dois temas.'

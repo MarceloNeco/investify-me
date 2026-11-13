@@ -687,6 +687,28 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   Fluxo: patrimônio de hoje, variação (real se o 1º e o último ponto são reais), sobrou, foi para investimento. Visão da casa: só o bloco de
   baixo, sem aporte; o balão sem patrimônio/investimento. Verbetes `fluxo-patrimonio`, `patrimonio-planilha`, `saldo-acumulado`. Teste:
   `teste/teste-fluxo.js`.
+  **Dívidas e consórcios (3.73)** (`modulos/dividas.js` 1.0.0, `window.Dividas`): `ST.dividas = [{id, nome, tipo: consorcio|financiamento|outro,
+  instituicao, grupo, cota, contrato, bemRef (id do patrimonio_iliquido), pctPago, saldo, parcela, diaVenc, formaPgto, contemplada, atualizadoEm,
+  historico: [{data, saldo, pctPago, fonte: manual|csv}], pagas: [{mes, data, valor, fonte: 'fatura', fatura}]}]` e `ST.faturas_cartao = [{id:
+  'porto-AAAA-MM-DD', venc, final, total, totalArquivo, itens, pagIds, pago, dif}]` (as duas no cofre reservado). `estado(d)`: o saldo da última
+  atualização menos UMA parcela por mês pago depois dela (linha da fatura em `d.pagas`, `g.dividaId`, ou lançamento com "consorc"/"financ" a ±3%
+  da parcela); % pago pelo total implícito (saldo/(1−pct)); `quitaEm` = hoje + ⌈saldo/parcela⌉ meses. `total()` (0 na visão da casa), `emMes(mes)`
+  (a última atualização até o mês; antes da primeira, a primeira). O patrimônio desconta: `patrimonioHoje()` ganha `dividas` e "dívidas: −R$ X"
+  no `sub` (Fluxo); o KPI "Patrimônio total" do Painel do InvestifyONE; `PatrimonioMes.realDe` (1.1.0) tira `emMes` no valor remontado. Pontos:
+  `investify.painel` e `budget.painel` (cartão `.dv-card`: `.dv-barra` tracejada com `.dv-pago` cheio, agrupado por bem), `iliquido.valor` (a nota
+  "valor − dívida = parte sua", sem mudar o valor), `lancamento.linha` (selo `.dv-tag` 🧾 no pagamento detalhado). CSV: `lerCsv(tabela)` acha as
+  colunas por nome (grupo/cota juntos ou separados, % pago ou % a pagar, saldo/devedor, parcela/prestação, situação "contemplada"); `aplicarCsv`
+  atualiza a mesma grupo+cota com histórico. Fatura Porto: `lerPortoTabela` (XLSX, 1ª aba "nacional": [DD/MM, desc, crédito, débito], TOTAL no fim,
+  final na linha 2; ano pelo nome `Fatura_Porto_Seguro_AAAA-MM-DD`, mês maior que o do vencimento = ano anterior; data do Excel aceita) e
+  `lerPortoTexto` (PDF); `consorcios(f)` (parcela ±3%, empate ou nenhuma = a confirmar); `pagamentoDe(f)` (lançamentos "PORTOSEG"/"PORTO SEG" sem
+  "consorc" a ±10 dias do vencimento, somados); `aplicarFatura` guarda o detalhe, marca `g.faturaId` e lança `d.pagas` — nenhum gasto novo. A
+  leitura roda no Fundo (`dividas-csv`, `dividas-fatura`). Verbete `dividas`. Teste: `teste/teste-dividas.js` (amostras de
+  `teste/amostras/gerar-dividas.py`).
+  **Seguro (3.73)** (`modulos/seguros.js` 1.0.0, `window.Seguros`): `ST.seguros = [{id, nome, tipo: auto|residencial|vida|outro, seguradora, apolice,
+  inicio, fim, premio, parcelas, recId}]` (reservado). `lerApolice(texto)` por modelo, sem IA (seguradora, nº, vigência "de… a…", prêmio total,
+  parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
+  categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
+  (`custos.topo`) e no 📥 (`inbox.itens`).
   **Topo**: o ✨ IA saiu da faixa (`Anuncio.html`) para a barra de cima (`#btnIA`, `.ia-ico`, antes da 🔍; `ia-off` posto no
   `Anuncio.render`). A faixa só existe com anúncio ou com a tarja do modo de teste (senão `html()` devolve '' e o `medirTopo` mede de novo).
   No celular o nome do app encolhe (`.brand-caixa{flex:1 1 0}`) para o topo não quebrar de linha (quebrar fazia o fundo pular ao abrir

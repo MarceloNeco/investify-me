@@ -1,10 +1,17 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.72 · 13/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.73 · 13/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.73 */
+  'Dívidas, fatura do cartão Porto e seguro':'Debts, Porto card bill and insurance',
+  'Novo cartão "Dívidas" no Painel do InvestifyONE e no do BudgetONE: consórcio, financiamento ou outra dívida, cada uma com uma barra (cheia = o que já foi pago, tracejada = o que falta), o saldo, a parcela e "quita em ~mm/aaaa (estimativa)", agrupadas pelo bem a que pertencem. O bem mostra "valor − dívida = parte sua".':'New "Debts" card on the InvestifyONE and BudgetONE Panels: consortium, financing or other debt, each with a bar (solid = paid, dashed = what is left), the balance, the instalment and "paid off ~mm/yyyy (estimate)", grouped by the asset they belong to. The asset shows "value − debt = your share".',
+  'O patrimônio total (no Painel do InvestifyONE e no Fluxo) agora desconta as dívidas, com a linha "dívidas: −R$ X" à vista. Cada parcela paga que o app reconhece baixa o saldo (estimativa) até a próxima atualização; a parcela continua como gasto fixo no orçamento.':'Total net worth (InvestifyONE Panel and Flow) now subtracts debts, with the line "debts: −R$ X" in view. Each paid instalment the app recognizes lowers the balance (estimate) until the next update; the instalment stays a fixed expense in the budget.',
+  'Posições do consórcio por arquivo CSV (grupo e cota, % pago, saldo, parcela): uma prévia antes de importar; a cota que já existe é atualizada e o saldo antigo fica no histórico.':'Consortium positions from a CSV file (group and quota, % paid, balance, instalment): a preview before importing; an existing quota is updated and the old balance stays in the history.',
+  'Fatura do cartão Porto (planilha .xlsx ou PDF): o app lê as compras e as guarda como detalhe do pagamento "PORTOSEG" que veio do banco, sem gasto em dobro, e mostra a diferença se houver. As parcelas "PORTO SEGURO CONSORCIO" vão para a cota certa pela parcela; se houver dúvida, fica "A confirmar" para você escolher.':'Porto card bill (.xlsx sheet or PDF): the app reads the purchases and keeps them as the detail of the "PORTOSEG" payment from the bank, without double spending, and shows any difference. "PORTO SEGURO CONSORCIO" instalments go to the right quota by amount; when in doubt, it stays "To confirm" for you to choose.',
+  'Em Custos, "🛡️ Seguro (apólice)": leia a apólice (PDF ou foto) ou preencha à mão; o seguro vira um compromisso com as parcelas do prêmio, e 30 dias antes do fim da vigência o app lembra de renovar.':'In Costs, "🛡️ Insurance (policy)": read the policy (PDF or photo) or fill in by hand; the insurance becomes a commitment with the premium instalments, and 30 days before it ends the app reminds you to renew.',
   /* 3.72 */
   'As telas de entrar, de PIN e de "MoneyTRIO bloqueado" mostram a mesma imagem de fundo do app, nos dois temas.':'The sign-in, PIN and "MoneyTRIO is locked" screens show the same background image as the app, in both themes.',
   'Mensagens da nuvem mais claras':'Clearer cloud messages',
