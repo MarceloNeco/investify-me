@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/documentos.js — "Documentos que o app pede" (3.74)        1.0.2 · 13/Nov/2026
+   modulos/documentos.js — "Documentos que o app pede" (3.74)        1.1.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      Uma lista de pedidos periódicos de documento. Cada pedido: nome, para que serve, de quanto em quanto tempo
@@ -7,7 +7,7 @@
      Quando o ciclo vence, entra em "Precisa da sua atenção" (Painel) e no 📥; abre um passo a passo com o botão de
      subir o arquivo, que vai direto para o importador certo. Some quando o arquivo chega (o app vê o dado importado).
      Pode adiar 7 dias. O botão "Copiar o pedido para o Claude in Chrome" copia um prompt GENÉRICO, sem números pessoais.
-     Os pedidos nascem só quando existe um cartão Porto ou uma dívida de consórcio Porto. Visão da casa não vê.
+     Os pedidos nascem só quando existe um cartão Porto ou uma dívida de consórcio Porto (e, 1.1.0, o extrato do BS2 quando há conta BS2 da PJ no Cofre). Visão da casa não vê.
    API (window.DocsPedidos)
      pedidos() → [{id, nome, para, periodo, passos, importador, cicloAtual, venceEm, recebido, adiadoAte}]
      atencao() → os que estão vencidos, não recebidos e não adiados · PROMPT (o texto genérico do Claude in Chrome)
@@ -56,8 +56,20 @@
       passos: [tr('Só no App Porto (celular): Documentos → Informe de IR.', 'Only in the Porto app (phone): Documents → Tax statement.'), tr('Guarde o PDF. Quando for declarar, suba no FiscalONE.', 'Keep the PDF. Upload it in FiscalONE at tax time.')],
       recebido: function () { return false; }
     });
+    /* 1.1.0 (3.81): o extrato mensal das contas BS2 da PJ (modulos/bs2-extrato.js) */
+    if (contasBs2().length) out.push({
+      id: 'bs2-extrato', nome: tr('Extrato do BS2 das contas da PJ (CSV e OFX)', 'BS2 statement of the company accounts (CSV and OFX)'), para: tr('conferir o que o robô trouxe e completar o que faltou', 'check what the robot brought and fill the gaps'),
+      periodo: { tipo: 'mensal', dia: 5 }, importador: 'bs2',
+      passos: [tr('Entre no internet banking do BS2 Empresas (bs2.com) com o seu acesso.', 'Log in to BS2 Empresas internet banking (bs2.com).'),
+        tr('Conta em reais: Extrato → escolha o mês anterior → Exportar → CSV.', 'Account in reais: Statement → pick last month → Export → CSV.'),
+        tr('Conta internacional (US$): Conta global → Extrato → mês anterior → Exportar → OFX.', 'International account (US$): Global account → Statement → last month → Export → OFX.'),
+        tr('Volte aqui e toque em "Subir o arquivo" (pode escolher os dois de uma vez).', 'Come back and tap "Upload the file" (you can pick both at once).')],
+      recebido: function (mes) { var ant = mesAnterior(mes); return (ST.gastos || []).some(function (g) { return String(g.id || '').indexOf('rb_bs2') === 0 && String(g.data).slice(0, 7) === ant; }); }
+    });
     return out;
   }
+  function contasBs2() { return (Array.isArray(ST.empresas) ? ST.empresas : []).filter(function (e) { return (e.contas || []).some(function (c) { return /bs2/i.test((c.rotuloRobo || '') + ' ' + (c.banco || '') + ' ' + (c.bancoNome || '')); }) || (e.contasRobo || []).some(function (c) { return /bs2/i.test(c); }); }); }
+  function mesAnterior(mes) { var a = +mes.slice(0, 4), m = +mes.slice(5, 7) - 1; if (m < 1) { m = 12; a--; } return a + '-' + ('0' + m).slice(-2); }
 
   var API = {
     _hoje: null, PROMPT: PROMPT,
@@ -104,7 +116,7 @@
   function adiar(idc) { var c = cfg(); c.docsAdiados = c.docsAdiados || {}; var x = new Date(hoje() + 'T12:00:00'); x.setDate(x.getDate() + 7); c.docsAdiados[idc] = x.toISOString().slice(0, 10); }
 
   MoneyModulos.registrar({
-    id: 'documentos', versao: '1.0.2',
+    id: 'documentos', versao: '1.1.0',
     pontos: {
       'budget.atencao': cartaoAtencao,
       'inbox.grupos': function () {   /* 1.0.1 (3.76): no 📥, com o passo a passo e o botão de subir */
@@ -122,6 +134,7 @@
       'doc-subir': function (el) {
         var imp = el.dataset.imp;
         if (typeof fechar === 'function') fechar('genModal');
+        if (imp === 'bs2') { if (typeof abrirApp === 'function') abrirApp('tax'); if (typeof irPara === 'function') irPara('t-pj'); if (typeof render === 'function') render(); if (window.MoneyModulos) setTimeout(function () { var b = document.querySelector('[data-acao="bs2-importar"]'); if (b) b.click(); }, 120); return; }   /* 1.1.0 (3.81) */
         if (imp === 'apolice') { if (typeof abrirApp === 'function') abrirApp('budget'); if (typeof irPara === 'function') irPara('b-custos'); }
         else { if (typeof abrirApp === 'function') abrirApp('budget'); if (typeof irPara === 'function') irPara('b-painel'); }
         if (typeof render === 'function') render();

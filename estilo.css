@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.80 · 13/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.83 · 13/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2732,3 +2732,21 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .pa-selo.pa-caucao{color:var(--txt)}
 .pa-lista{list-style:none; margin:0; padding:0}
 .pa-lista li{padding:6px 0; border-top:1px solid var(--line)}
+/* 3.81: a PJ (modulos/pj.js) e os dados para receber (modulos/cofre-empresa.js 1.1.0) */
+.pj-abas{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 12px}
+.pj-tbl td:first-child{color:var(--txt2)}
+.pj-fr{font-size:1.4em}
+.em-receber td{vertical-align:middle; word-break:break-word}
+/* 3.82: gestão da PJ (modulos/pj-gestao.js) */
+.pjg-tbl th, .pjg-tbl td{white-space:nowrap}
+.pjg-tbl .pjg-ano th, .pjg-tbl .pjg-ano td{font-weight:700}
+.pjg-atrasado b{color:var(--down)}
+.pjg-feito{opacity:.7}
+.pjg-cpf .inb-acoes{display:inline-flex; gap:6px; flex-wrap:wrap; margin-left:6px}
+/* 3.83: Oportunidades, DRE, troca de empresas (modulos/pj-oportunidades.js) */
+.pjo-item{border-top:1px solid var(--line); padding:10px 0}
+.pjo-item:first-of-type{border-top:0}
+.pjo-oportunidade b{color:var(--up)}
+.pjo-atencao b{color:var(--warn)}
+.pjo-dre .pjo-res td, .pjo-dre .pjo-rec td{font-weight:700}
+.pjo-pre{white-space:pre-wrap; font-size:.85em; max-height:45vh; overflow:auto; background:var(--card2); padding:10px; border-radius:8px}

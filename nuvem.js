@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.0 · 13/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -58,6 +58,7 @@
   17. 1.15.0 (3.80) — PRÉ-AUTORIZAÇÕES: o lançamento de cartão que o robô manda com "pendente": true não vira gasto; vai para
       PreAut.receber (modulos/pre-autorizacao.js, com "caucao_provavel"); a cada lote, PreAut.entrega() e PreAut.limpar()
       (o definitivo que chegou substitui o pendente; o que sumiu da entrega há 7 dias é liberado).
+  18. 1.15.1 (3.81) — MoneyNuvem.converterRobo(l): a conversão da caixa do robô, para o importador do extrato BS2 no app.
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
       conta" sem o PIN antigo (sol_pin_definir com o atual nulo); "Trocar o PIN" só quando a conta já tem PIN. Conta sem PIN da
@@ -3160,6 +3161,8 @@
       await IDB.del('kv', 'cadeado|' + uid); await IDB.del('kv', 'familias|' + uid);
       lsDel(K_FAM);
     },
+    /* 1.15.1 (3.81): o importador de extrato do app (modulos/bs2-extrato.js) usa a MESMA conversão do robô */
+    converterRobo: function (l) { return Caixa.converter(l); },
     /* para os testes automáticos (teste/nuvem.js): as peças, sem estado aberto */
     _teste: { Pin: Pin, Painel: Painel, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao, Espelho: Espelho, Escopos: Escopos, Visao: Visao, Arquivos: Arquivos }
   };
