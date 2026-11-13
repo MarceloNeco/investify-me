@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.1.0 · 11/Nov/2026
+   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.1.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      O robô manda, na mesma caixa (money_entrada), itens que NUNCA viram lançamento (nuvem.js desvia para cá):
@@ -161,6 +161,9 @@
     else if (cad && cad.vence) pedaco.push(tr('vence dia ', 'due on day ') + cad.vence);
     if (k.fecha) pedaco.push(tr('fecha ', 'closes ') + dm(k.fecha));
     if (k.disponivel !== null && k.disponivel !== undefined) pedaco.push(tr('limite disponível ', 'available limit ') + fmt(k.disponivel));
+    /* 2.1.1 (3.80): o que está pendente ou em caução no cartão já usa o limite */
+    var pa = window.PreAut && cad ? PreAut.doCartao(cad.id) : 0;
+    if (pa > 0) pedaco.push(tr('limite usado por pendentes/cauções ', 'limit used by pending/holds ') + fmt(pa));
     return '<tr><td><span class="t-main">' + esc(API.rotulo(r)) + '</span> <span class="sb-pill">' + esc(tr('Cartão de crédito', 'Credit card')) + '</span>' +
       '<div class="t-sub">' + esc(tr('Fatura aberta ', 'Open bill ') + fmt(k.fatura || 0)) + (pedaco.length ? ' · ' + esc(pedaco.join(' · ')) : '') + '</div>' +
       (!vence ? '<div class="t-sub">' + esc(tr('vence: ', 'due: ')) + '<button class="linkinho" data-acao="sb-cartao" data-id="' + esc(r.id) + '">' + esc(tr('cadastre o dia no cartão', 'add the day to the card')) + '</button></div>' : '') +
@@ -190,7 +193,7 @@
 
   MoneyModulos.registrar({
     id: 'saldo-banco',
-    versao: '2.1.0',
+    versao: '2.1.1',
     colecoes: [COL],
     pontos: { 'budget.painel': cartao },
     acoes: {

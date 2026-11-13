@@ -1,10 +1,15 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.79 · 13/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.80 · 13/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.80 */
+  'Pré-autorizações do cartão: pendentes e cauções':'Card pre-authorisations: pending charges and holds',
+  'O que o cartão ainda não cobrou de verdade (pendente no banco) aparece em Lançamentos com o selo "⏳ Pendente no cartão". Ele entra no saldo previsto, na fatura aberta e no previsto da categoria, mas não no "gastou" do mês até virar definitivo.':'What the card has not really charged yet (pending at the bank) shows in Entries with the badge "⏳ Pending on the card". It counts in the forecast balance, the open bill and the category forecast, but not in what you spent this month until it becomes final.',
+  'Caução de locadora, hotel ou pousada aparece com "🔒 Caução (valor bloqueado no limite)": entra só no limite usado e no saldo previsto da fatura, com a nota "costuma ser liberado; o valor final vem depois".':'A hold from a car rental, hotel or inn shows as "🔒 Hold (amount blocked on the limit)": it only counts in the used limit and in the bill in the forecast balance, with the note "usually released; the final amount comes later".',
+  'Quando o banco cobra de verdade, o lançamento definitivo toma o lugar do pendente, sem contar duas vezes. O que sumiu do banco e não foi cobrado em 7 dias sai com a nota "liberado (não foi cobrado)"; na caução, o 📥 avisa que ela foi liberada.':'When the bank really charges it, the final entry takes the place of the pending one, without counting twice. What disappeared from the bank and was not charged within 7 days leaves with the note "released (not charged)"; for a hold, 📥 tells you it was released.',
   /* 3.79 */
   'Valores a receber: estornos, reembolsos e contestações':'Money to receive: refunds, reimbursements and disputes',
   'Nova tela "A receber" (Contas fixas → "+ Adicionar", e o cartão no topo de Contas fixas): de quem, o quê (estorno, reembolso do plano, contestação, restituição, devolução), o valor à vista ou em parcelas, onde deve cair, a data prometida e o protocolo. No lançamento, "↩ Pedi estorno disto" já preenche tudo, até o parcelado.':'New "To receive" screen (Fixed bills → "+ Add", and the card at the top of Fixed bills): from whom, what (refund, plan reimbursement, dispute, tax refund, return), the amount at once or in parts, where it should land, the promised date and the reference. On an entry, "↩ I asked for a refund" fills it all in, instalments included.',

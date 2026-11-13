@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.14.3 · 13/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -55,6 +55,9 @@
       (money_reservar_apagar). Caixa do robô por escopo (config|caixa_casa, config|r.caixa_robo). Comprovantes 'MTA2' (r/ = reservado).
       CF: a de versão mais alta (buscarMinha), conferida ao abrir pelo PIN (conferirCf) e antes de aprovar pela família; a ponte
       percebe uma CF mais nova (cfNova). Aprovação pela família leva a CC (e a CR só para quem tem visão "Tudo").
+  17. 1.15.0 (3.80) — PRÉ-AUTORIZAÇÕES: o lançamento de cartão que o robô manda com "pendente": true não vira gasto; vai para
+      PreAut.receber (modulos/pre-autorizacao.js, com "caucao_provavel"); a cada lote, PreAut.entrega() e PreAut.limpar()
+      (o definitivo que chegou substitui o pendente; o que sumiu da entrega há 7 dias é liberado).
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
       conta" sem o PIN antigo (sol_pin_definir com o atual nulo); "Trocar o PIN" só quando a conta já tem PIN. Conta sem PIN da
@@ -1828,6 +1831,8 @@
             prontos.push(rows[i].id); continue;
           }
           var g; try { g = this.converter(l); } catch (e) { this.erros.add(rows[i].id); continue; }
+          /* 1.15.0 (3.80): pré-autorização do cartão (pendente no banco): não entra no livro; vai para modulos/pre-autorizacao.js */
+          if (g && l.pendente === true) { if (window.PreAut && PreAut.receber(g, l)) mudou = true; prontos.push(rows[i].id); this.andamento(1); continue; }
           if (g && l._resgate) g.resgate = true;
           if (g === null) { ignorados++; prontos.push(rows[i].id); continue; }
           var ja = ids[g.id];
@@ -1844,6 +1849,7 @@
           this.andamento(1);
         }
         if ((novos || transf) && typeof Transferencia !== 'undefined' && Transferencia.todas().length) Transferencia.ligarTudo();   /* uma vez por lote (3.40) */
+        if (window.PreAut) { PreAut.entrega(); if (PreAut.limpar().length) mudou = true; }   /* 1.15.0 (3.80): o definitivo chegou ou o pendente sumiu */
         if (novos || mudou) { Store.salvar(); }
         await Sinc.registrar(); await Sinc.enviar();
         /* só marca o que já está guardado no banco */
