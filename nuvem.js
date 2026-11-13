@@ -2747,7 +2747,7 @@
       if (this.ocupado() === 'pesado') { this.ultimo = Date.now(); return; }   /* trabalho da pessoa rodando: conta de novo */
       if (!this.aviso) {
         var d = document.createElement('div'); d.className = 'nv-painel nv-avisotr'; d.setAttribute('role', 'alertdialog');
-        d.innerHTML = '<div class="nv-card" style="margin-top:20vh;text-align:center"><h2>🔒 ' + tt('Por segurança, o MoneyTRIO vai trancar em ', 'For safety, MoneyTRIO will lock in ') + '<span id="nvConta">60</span> s</h2>' +
+        d.innerHTML = '<div class="nv-card" style="margin-top:20vh;text-align:center"><h2>🔒 ' + tt('Por segurança, o MoneyTRIO vai bloquear em ', 'For safety, MoneyTRIO will lock in ') + '<span id="nvConta">60</span> s</h2>' +
           '<p class="nv-muted">' + tt('Ficou 14 minutos sem uso.', 'It has been idle for 14 minutes.') + '</p>' +
           '<button class="nv-btn pri" id="nvContinuar" style="font-size:18px;padding:16px">' + tt('Continuar usando', 'Keep using') + '</button></div>';
         document.body.appendChild(d); this.aviso = d;

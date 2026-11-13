@@ -580,7 +580,7 @@ let BASE = '';
     ok(!(await trancado()) && !(await C.$('.nv-avisotr')), 'C: 13 min e 50 s sem uso: não tranca nem avisa');
     await C.clock.fastForward('00:20'); await C.clock.runFor(1500);
     if (!(await C.$('.nv-avisotr'))) console.log('    (depuração) último uso por:', await C.evaluate(() => MoneyNuvem._teste.Trava.porque), 'parado (s):', await C.evaluate(() => (Date.now() - MoneyNuvem._teste.Trava.ultimo) / 1000));
-    ok(!(await trancado()) && /vai trancar em/.test(await C.textContent('.nv-avisotr', { timeout: 3000 }).catch(() => '')), 'C: aos 14 min aparece o aviso "vai trancar em … s"');
+    ok(!(await trancado()) && /vai bloquear em/.test(await C.textContent('.nv-avisotr', { timeout: 3000 }).catch(() => '')), 'C: aos 14 min aparece o aviso "vai trancar em … s"');
     await C.evaluate(() => document.querySelector('#nvContinuar').click());   /* sem mexer o mouse (mexer já conta como uso) */
     ok(!(await C.$('.nv-avisotr')), 'C: "Continuar usando" tira o aviso e zera o tempo');
     await C.clock.fastForward('14:10'); await C.clock.runFor(1500);
