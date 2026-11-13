@@ -131,7 +131,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [], recorrentes: [],
 
       await p.evaluate(() => { abrirApp('budget'); irPara('b-custos'); custosAba = 'recorrentes'; render(); });
       await p.waitForFunction(() => window.scrollY === 0); await semToasts();
-      const [fc] = await Promise.all([p.waitForEvent('filechooser'), p.click('#view-b-custos [data-acao="cdl-contrato"]')]);
+      const [fc] = await Promise.all([p.waitForEvent('filechooser'), p.click('#view-b-custos [data-acao="cf-adicionar"]').then(() => p.click('#genBody [data-acao="cdl-contrato"]'))]);   /* 3.76: "+ Adicionar" */
       await fc.setFiles([fEsc, fAmp, fBol]); await p.waitForSelector('#genModal:not(.hidden) .cdl-item');
       ok(await p.$$eval('#genBody .cdl-item', (l) => l.length) === 2 && await p.isChecked('#cdlGasto') && await p.inputValue('#cdlGValor') === '1413' && await p.inputValue('#genBody .cdl-item[data-k="0"] .cdl-op') === '0', 'prévia: escola (1º ao 5º já escolhido) + período ampliado + 1ª parcela (R$ 1.413, marcada)');
       ok(/Qual opção vocês contrataram/.test(await p.textContent('#genBody')), 'o período ampliado sem X pergunta qual opção');

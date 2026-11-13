@@ -17524,37 +17524,6 @@ document.addEventListener('change', e => {
   if(b){ b.textContent = rotuloDetectados(n); b.disabled = !n; }
 });
 
-/* ---------- todos juntos: o que se repete e o que foi pontual ---------- */
-function blocoTodos(){
-  const pt = I18n.atual === 'pt';
-  const rec = Recorrente.ativos();
-  const pont = bLista({fluxo:'saida'})
-    .filter(g => !g.recorrenteId && (!g.per || g.per === 'Pontual' || g.per === 'Frequente'))
-    .sort((a,b) => (b.data || '').localeCompare(a.data || '')).slice(0, 80);
-  if(!rec.length && !pont.length)
-    return '<div class="card"><p class="muted small" style="margin:0">' + (pt ? 'Nada cadastrado ainda.' : 'Nothing here yet.') + '</p></div>';
-  let h = '<div class="card sem-pad"><table class="tbl tbl-todos"><thead><tr><th></th>' +
-    '<th>' + (pt ? 'O quê' : 'What') + '</th><th>' + (pt ? 'Quando' : 'When') + '</th>' +
-    '<th class="num">' + esc(t('fin.valor')) + '</th></tr></thead><tbody>';
-  rec.forEach(r => {
-    const G = GRUPOS[r.grupo] || {}, per = Recorrente.periodoCurto(r);
-    h += '<tr class="linha-click" data-recedit="' + r.id + '"><td title="' + esc(t('per.recorrentes')) + '">🔁</td>' +
-      '<td><span class="t-main">' + esc(r.nome) + '</span><div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) + (r.quem ? ' · ' + esc(quemVer(r.quem)) : '') + '</div></td>' +
-      '<td class="t-sub">' + esc(Recorrente.explicar(r)) + (per ? '<div class="t-sub rec-periodo">' + esc(per) + '</div>' : '') + '</td>' +
-      '<td class="num ' + (r.fluxo === 'entrada' ? 'up' : '') + '">' + (r.fluxo === 'entrada' ? '+' : '') +
-        fmt(r.porVisita ? Recorrente.mediaDoServico(r) : Recorrente.valorEm(r, hojeISO())) + '</td></tr>';
-  });
-  if(pont.length) h += '<tr class="tr-sep"><td colspan="4">' + esc(pt ? 'Pontuais (os 80 mais recentes)' : 'One-offs (80 most recent)') + '</td></tr>';
-  pont.forEach(g => {
-    const G = GRUPOS[g.grupo] || {};
-    h += '<tr class="linha-click" data-bid="' + g.id + '"><td title="' + esc(t('per.pontuais')) + '">📍</td>' +
-      '<td><span class="t-main">' + esc(g.sub) + '</span><div class="t-sub">' + (G.ico || '') + ' ' + esc((g.desc || '').slice(0,70)) + '</div></td>' +
-      '<td class="nowrap t-sub">' + (g.data ? esc(I18n.data(g.data)) : '—') + '</td>' +
-      '<td class="num down">' + fmt(g.valor) + Abat.marca(g) + '</td></tr>';
-  });
-  return h + '</tbody></table></div>';
-}
-
 /* ---------- o que foi pontual ---------- */
 function blocoPontuais(){
   const lista = bLista({fluxo:'saida'})
@@ -17596,65 +17565,6 @@ function blocoPontuais(){
     h += '<p class="tiny muted">' + (I18n.atual === 'pt'
       ? 'Mostrando os 80 mais recentes. Use os filtros para achar o resto.'
       : 'Showing the 80 most recent. Use the filters to find the rest.') + '</p>';
-  return h;
-}
-
-/* ---------- o que merece um olhar ---------- */
-function blocoRevisar(paraRevisar, atrasados){
-  let h = (window.MoneyModulos ? MoneyModulos.html('custos.revisar', {}) : '');
-
-  if(atrasados.length){
-    h += '<div class="card"><div class="card-head"><h3>' +
-      (I18n.atual === 'pt' ? 'Venceu e ninguém marcou' : 'Due and unmarked') + '</h3></div>' +
-      '<div class="oc-lista">' + atrasados.map(o => linhaOcorrencia(o)).join('') + '</div></div>';
-  }
-
-  if(paraRevisar.length){
-    h += '<div class="card sem-pad"><div class="card-head" style="padding:14px 16px 0"><h3>🚩 ' +
-      (I18n.atual === 'pt' ? 'Marcados para conferir' : 'Flagged to check') + '</h3></div>' +
-      '<table class="tbl"><tbody>' + paraRevisar.slice(0,40).map(g =>
-        '<tr class="linha-click" data-bid="' + g.id + '">' +
-        '<td class="nowrap">' + (g.data ? esc(I18n.data(g.data)) : '—') + '</td>' +
-        '<td><span class="t-main">' + esc(g.sub) + '</span>' + (g.roboSugeriu ? ' <span class="tag-rep" title="' + esc(I18n.atual === 'pt' ? 'o robô sugeriu outra coisa: abra para decidir' : 'the robot suggested something else: open to decide') + '">🤖 ' + (I18n.atual === 'pt' ? 'robô sugeriu outra coisa' : 'robot suggests') + '</span>' : '') +
-          '<div class="t-sub">' + esc((g.desc || '').slice(0,70)) + '</div></td>' +
-        '<td class="num">' + fmt(g.valor) + '</td>' +
-        '<td class="num"><button class="btn sm" data-grev="' + g.id + '">' +
-          (I18n.atual === 'pt' ? 'resolvido' : 'resolved') + '</button></td></tr>').join('') +
-      '</tbody></table></div>';
-  }
-
-  /* lançamentos que parecem ser de uma categoria que se repete */
-  const candidatos = [];
-  const vistos = new Set();
-  Gasto.todos().slice(-400).forEach(g => {
-    const k = g.grupo + '|' + g.sub;
-    if(vistos.has(k)) return;
-    vistos.add(k);
-    const s = Recorrente.pareceRecorrente(g);
-    if(s) candidatos.push(s);
-  });
-  /* o que parou (ex.: um contrato que acabou) não é conta fixa */
-  const vivos = new Set(Recorrente.detectar().map(x => x.chave));
-  for(let i = candidatos.length - 1; i >= 0; i--)
-    if(!vivos.has(candidatos[i].grupo + '|' + String(candidatos[i].sub).trim().toLowerCase())) candidatos.splice(i, 1);
-  if(candidatos.length){
-    h += '<div class="card"><div class="card-head"><h3>' +
-      (I18n.atual === 'pt' ? 'Isto parece ser conta fixa' : 'These look like fixed bills') + '</h3></div>' +
-      '<p class="small muted" style="margin:0 0 12px">' +
-      (I18n.atual === 'pt'
-        ? 'Apareceu em vários meses seguidos e não está cadastrado como compromisso. Se for conta fixa, cadastre para entrar na agenda.'
-        : 'Showed up several months in a row and is not registered as a commitment.') + '</p>' +
-      '<div class="chips">' + candidatos.slice(0,10).map(x =>
-        '<button class="chip click" data-recsug="' + esc(x.grupo + '|' + x.sub) + '">' +
-        (GRUPOS[x.grupo] || {}).ico + ' ' + esc(x.sub) + ' · ' + x.meses + ' ' +
-        (I18n.atual === 'pt' ? 'meses' : 'months') + '</button>').join('') + '</div></div>';
-  }
-
-  if(!h) h = '<div class="card"><div class="vazio"><div class="vazio-ico">✅</div><h3>' +
-    (I18n.atual === 'pt' ? 'Nada pendente' : 'Nothing pending') + '</h3><p>' +
-    (I18n.atual === 'pt'
-      ? 'Nenhum vencimento em aberto e nada marcado para conferir.'
-      : 'No open due dates and nothing flagged.') + '</p></div></div>';
   return h;
 }
 
@@ -27566,6 +27476,7 @@ function sairDoWizard(idDoModal){
 }
 
 function abrir(id){ const el = $('#' + id); el.classList.remove('hidden'); el.classList.remove('larga'); if(id === 'assetModal') delete el.dataset.fixo;
+  if(id === 'genModal') delete $('#genBody').dataset.inbox;   /* 3.76: só o 📥 marca de novo, logo depois */
   setTimeout(() => { try{ if(typeof UX !== 'undefined'){ UX.envolverTabelas(el); UX.cabecalhoFixo(el, true); } }catch(e){} }, 0); }   /* larga: quem precisa põe depois de abrir */
 function fechar(id){ $('#' + id).classList.add('hidden'); }
 const MAX_TOASTS = 3;
@@ -28003,15 +27914,57 @@ function inboxItens(){
   return itens;
 }
 
+/* 3.76: o 📥 é a lista de PENDÊNCIAS, em grupos, cada item com a ação ali mesmo (sem levar a outra tela sem explicar).
+   Os módulos entram pelo ponto inbox.grupos: [{id, n, html}] (id = um dos grupos abaixo; html = os itens, com os botões).
+   O contador do sino é a soma dos itens (os avisos só enquanto não forem vistos). inboxItens() continua (lista simples). */
+const INBOX_GRUPOS = [
+  ['confirmar', '✅', 'Confirmar classificação', 'Confirm categories', 'O que o banco mandou e o app não tem certeza da categoria: confirme ou corrija aqui mesmo.', 'What the bank sent and the app is unsure about: confirm or fix right here.'],
+  ['atrasadas', '⚠️', 'Contas atrasadas', 'Overdue bills', 'Passaram do vencimento e ninguém marcou: se já pagou, marque; senão, pague.', 'Past due and unmarked: if paid, mark it; if not, pay it.'],
+  ['contafixa', '📌', 'Parece conta fixa: cadastrar?', 'Looks like a fixed bill: add it?', 'O mesmo recebedor se repete todo mês. Cadastrando, ele entra na agenda e no previsto.', 'The same payee repeats every month. Adding it puts it in the schedule and the forecast.'],
+  ['docs', '📄', 'Documentos para subir', 'Documents to upload', 'Arquivos que o app pede de tempos em tempos para manter os números certos.', 'Files the app asks for from time to time to keep the numbers right.'],
+  ['viagem', '🧳', 'Foi viagem?', 'Was it a trip?', 'Combustível acima do normal em poucos dias. Se foi viagem, sai da média.', 'Fuel above normal in a few days. If it was a trip, it leaves the average.'],
+  ['familia', '👪', 'Família e segurança', 'Family and security', 'Os passos, na ordem, para a família usar o app com segurança.', 'The steps, in order, for the family to use the app safely.'],
+  ['avisos', '🔔', 'Avisos do app', 'App notices', 'Só informação: contas que vencem logo, o que entra hoje.', 'Information only: bills due soon, what lands today.']
+];
+function inboxVistos(){ ST.config = ST.config || {}; return (ST.config.inboxVistos = ST.config.inboxVistos || {}); }
+function inboxGrupos(){
+  const pt = I18n.atual !== 'en', por = {};
+  const add = (id, n, html) => { if(!n) return; por[id] = por[id] || {n: 0, html: ''}; por[id].n += n; por[id].html += html; };
+  /* confirmar: as origens "A confirmar"/"A identificar" e os marcados para conferir */
+  if(window.Origem){
+    Origem.grupos().forEach(x => add('confirmar', 1, '<li class="inb-item"><div><b>' + esc(x.rotulo) + '</b><span class="t-sub">' +
+      esc(x.itens.length + (pt ? ' lançamento(s) · ' : ' entr(ies) · ') + ((GRUPOS[x.grupo] || {}).nome || x.grupo) + ' › ' + x.sub) + '</span></div><span class="inb-acoes">' +
+      (x.status === 'confirmar' ? '<button class="btn sm primary" data-acao="or-confirmar-grupo" data-chave="' + esc(x.chave) + '">✓ ' + esc(pt ? 'Confirmar' : 'Confirm') + '</button>' : '') +
+      '<button class="btn sm" data-acao="or-mudar" data-id="' + esc(x.itens[0].id) + '">' + esc(pt ? 'Corrigir' : 'Fix') + '</button></span></li>'));
+  }
+  Gasto.todos().filter(g => g.revisar).slice(0, 40).forEach(g => add('confirmar', 1, '<li class="inb-item"><div><b>🚩 ' + esc(g.sub || '') + ' · ' + fmt(g.valor) + '</b><span class="t-sub">' +
+    esc((g.data ? I18n.data(g.data) + ' · ' : '') + String(g.desc || '').slice(0, 60)) + '</span></div><span class="inb-acoes">' +
+    '<button class="btn sm primary" data-grev="' + esc(g.id) + '">✓ ' + esc(pt ? 'Conferido' : 'Checked') + '</button><button class="btn sm" data-acao="or-mudar" data-id="' + esc(g.id) + '">' + esc(pt ? 'Corrigir' : 'Fix') + '</button></span></li>'));
+  /* contas atrasadas, com a mesma linha (e os mesmos botões) da agenda */
+  try{ (Recorrente.atrasados() || []).forEach(o => add('atrasadas', 1, '<li class="inb-item"><div><b>' + esc(o.r.nome) + ' · ' + fmt(o.valor) + '</b><span class="t-sub">' +
+    esc((pt ? 'venceu em ' : 'was due on ') + I18n.data(o.data)) + '</span></div><span class="inb-acoes">' +
+    '<button class="btn sm primary" data-acao="inb-pago" data-rid="' + esc(o.r.id) + '" data-data="' + esc(o.data) + '">✓ ' + esc(pt ? 'Já paguei' : 'Already paid') + '</button>' +
+    '<button class="btn sm" data-acao="inb-nao-pago" data-rid="' + esc(o.r.id) + '" data-data="' + esc(o.data) + '">' + esc(pt ? 'Não vou pagar' : 'Will not pay') + '</button></span></li>')); }catch(e){}
+  /* avisos: o que vence logo e o que entra hoje (só informação; "ok, entendi" tira) */
+  const vistos = inboxVistos();
+  inboxItens().filter(x => x.tipo === 'vencer' || x.tipo === 'entrada').forEach(x => {
+    const k = x.tipo + '|' + x.nome + '|' + x.data; if(vistos[k]) return;
+    add('avisos', 1, '<li class="inb-item"><div><b>' + x.ico + ' ' + esc(x.nome) + ' · ' + fmt(x.valor) + '</b><span class="t-sub">' + esc(x.sub) + '</span></div>' +
+      '<span class="inb-acoes"><button class="btn sm" data-acao="inb-visto" data-k="' + esc(k) + '">' + esc(pt ? 'ok, entendi' : 'ok, got it') + '</button></span></li>');
+  });
+  if(window.MoneyModulos) MoneyModulos.itens('inbox.grupos', {}).forEach(g => g && add(g.id, g.n || 0, g.html || ''));
+  return INBOX_GRUPOS.filter(g => por[g[0]]).map(g => ({id: g[0], ico: g[1], titulo: pt ? g[2] : g[3], explica: pt ? g[4] : g[5], n: por[g[0]].n, html: por[g[0]].html}));
+}
+function inboxContagem(){ return inboxGrupos().reduce((s, g) => s + g.n, 0); }
+
 function renderInboxN(){
   const n = $('#inboxN'), bt = $('#btnInbox');
   if(!n || !bt) return;
-  const itens = inboxItens();
-  const q = itens.filter(x => x.tipo !== 'entrada').length;
+  const q = inboxContagem();   /* 3.76: o mesmo número da lista */
   n.textContent = q > 99 ? '99+' : String(q);
   n.classList.toggle('hidden', !q);
   const pt = I18n.atual !== 'en';
-  const rotulo = (pt ? 'Mensagens' : 'Messages') + (q ? (pt ? ' — ' + q + ' pendente' + (q > 1 ? 's' : '') : ' — ' + q + ' pending') : '');
+  const rotulo = (pt ? 'Pendências' : 'To do') + (q ? (pt ? ' — ' + q + ' pendente' + (q > 1 ? 's' : '') : ' — ' + q + ' pending') : '');
   bt.setAttribute('aria-label', rotulo);
   const live = $('#inboxLive');
   if(live && live.textContent !== rotulo) live.textContent = rotulo;
@@ -28019,26 +27972,39 @@ function renderInboxN(){
 
 function abrirInbox(){
   const pt = I18n.atual !== 'en';
-  const itens = inboxItens();
+  const gs = inboxGrupos();
   let h = '';
-  if(!itens.length){
-    h += '<p class="small muted">' + esc(pt ? 'Nada pendente. Contas a vencer, atrasadas e entradas do dia aparecem aqui.'
-                                           : 'Nothing pending. Bills due, overdue bills and today\'s income show up here.') + '</p>';
+  if(!gs.length){
+    h += '<p class="small muted">' + esc(pt ? 'Nada pendente. O que precisar de você (confirmar uma categoria, uma conta atrasada, um documento) aparece aqui.'
+                                           : 'Nothing pending. Whatever needs you (confirm a category, an overdue bill, a document) shows up here.') + '</p>';
   }else{
-    h += '<ul class="inbox-lista">' + itens.map(x =>
-      '<li class="inbox-item ' + x.tipo + '"><i>' + x.ico + '</i><div><b>' + esc(x.nome) + '</b>' +
-      '<span class="t-sub">' + esc(x.sub) + '</span></div>' +
-      '<span class="inbox-val">' + fmt(x.valor) + '</span></li>').join('') + '</ul>';
+    h += gs.map(g => '<details class="inb-grupo" data-inbgrupo="' + g.id + '" open><summary><span>' + g.ico + ' <b>' + esc(g.titulo) + '</b></span>' +
+      '<span class="inb-n">' + g.n + '</span></summary><p class="tiny muted inb-explica">' + esc(g.explica) + '</p><ul class="inb-lista">' + g.html + '</ul></details>').join('');
   }
   h += '<div class="f-actions" style="margin-top:12px">' +
-    '<button class="btn sm" data-irpara="b-custos" data-close="genModal">📌 ' + esc(pt ? 'Ver compromissos' : 'See commitments') + '</button>' +
     '<button class="btn sm" data-irpara="config" data-close="genModal">🔔 ' + esc(pt ? 'Avisos' : 'Alerts') + '</button>' +
-    (window.MoneyModulos ? MoneyModulos.html('inbox.rodape', {}) : '') +   /* 3.75: ex.: "👪 Visão da família" (modulos/visao-casa.js) */
     '<button class="btn primary sm" data-close="genModal">' + esc(pt ? 'Fechar' : 'Close') + '</button></div>';
-  $('#genTitle').textContent = pt ? 'Mensagens' : 'Messages';
+  $('#genTitle').textContent = pt ? 'Pendências' : 'To do';
   $('#genBody').innerHTML = Verter.html(h);
   abrir('genModal');
+  $('#genBody').dataset.inbox = '1';
 }
+/* 3.76: a ação feita dentro do 📥 resolve ali mesmo: a lista e o contador se refazem (o grupo aberto continua aberto) */
+document.addEventListener('click', ev => {
+  const b = ev.target.closest && ev.target.closest('#genBody[data-inbox="1"] [data-acao], #genBody[data-inbox="1"] [data-grev], #genBody[data-inbox="1"] [data-ocestado], #genBody[data-inbox="1"] [data-pgest]');
+  if(!b || b.hasAttribute('data-close')) return;
+  setTimeout(() => {
+    const gm = $('#genModal'), corpo = $('#genBody');
+    if(!gm || gm.classList.contains('hidden') || !corpo || corpo.dataset.inbox !== '1') return;
+    const abertos = [...corpo.querySelectorAll('details.inb-grupo[open]')].map(d => d.dataset.inbgrupo);
+    const vistos = [...corpo.querySelectorAll('details.inb-grupo')].map(d => d.dataset.inbgrupo);
+    abrirInbox();
+    corpo.dataset.vistos = vistos.join(',');
+    const antes = corpo.dataset.vistos ? corpo.dataset.vistos.split(',') : [];
+    corpo.querySelectorAll('details.inb-grupo').forEach(d => { if(antes.indexOf(d.dataset.inbgrupo) >= 0 && abertos.indexOf(d.dataset.inbgrupo) < 0) d.open = false; });
+    renderInboxN();
+  }, 120);
+});
 
 function ligarTopoPadrao(){
   const bp = $('#btnPerfil');
@@ -29059,7 +29025,10 @@ function ligarEventos(){
         break;
       }
       case 'rec-novo': abrirRecorrente(null); break;
-      case 'cf-adicionar': abrirAdicionarConta(); break;   /* 3.76: o menu único de Contas fixas */
+      case 'cf-adicionar': abrirAdicionarConta(); break;
+      case 'inb-visto': inboxVistos()[d.k] = 1; Store.salvar(); renderInboxN(); break;   /* 3.76: aviso do 📥 visto */
+      case 'inb-pago': Pagamento.marcar(d.rid, d.data, 'pago'); Store.salvar(); render(); renderFita(); break;            /* 3.76: conta atrasada resolvida no 📥 */
+      case 'inb-nao-pago': Pagamento.marcar(d.rid, d.data, 'cancelado'); Store.salvar(); render(); renderFita(); break;   /* 3.76: o menu único de Contas fixas */
       case 'cf-secao': custosSecao = d.v === 'planejados' ? 'planejados' : 'contas'; if(d.parte) planejadosParte = d.parte; render(); break;
       case 'rec-importar': ImportRec.escolher(); break;
       case 'rec-importar-ok': ImportRec.importar(); break;
@@ -29982,7 +29951,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/arquivos.js?v=1.0.0"></script>
 <script src="modulos/agendamentos.js?v=1.0.0"></script>
 <script src="modulos/nf-ir.js?v=1.0.1"></script>
-<script src="modulos/profissionais.js?v=1.2.0"></script>
+<script src="modulos/profissionais.js?v=1.2.1"></script>
 <script src="modulos/saude.js?v=1.1.0"></script>
 <script src="modulos/ponte-omnilife.js?v=1.0.0"></script>
 <script src="modulos/patrimonio-iliquido.js?v=1.1.1"></script>
@@ -30006,17 +29975,17 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/apelido.js?v=1.1.0"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
-<script src="modulos/visao-casa.js?v=1.1.0"></script>
+<script src="modulos/visao-casa.js?v=1.1.1"></script>
 <script src="modulos/previsao.js?v=1.2.0"></script>
 <script src="modulos/orcamento.js?v=1.1.1"></script>
 <script src="modulos/patrimonio-mes.js?v=1.1.0"></script>
 <script src="modulos/dividas.js?v=1.0.0"></script>
 <script src="modulos/seguros.js?v=1.0.1"></script>
-<script src="modulos/mes-a-mes.js?v=1.0.0"></script>
+<script src="modulos/mes-a-mes.js?v=1.0.1"></script>
 <script src="modulos/parcelados.js?v=1.0.1"></script>
 <script src="modulos/contas-fixas.js?v=1.0.0"></script>
-<script src="modulos/documentos.js?v=1.0.0"></script>
-<script src="modulos/contas-mes.js?v=1.0.0"></script>
+<script src="modulos/documentos.js?v=1.0.1"></script>
+<script src="modulos/contas-mes.js?v=1.0.1"></script>
 <script src="modulos/planejados.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.14.3"></script>
 </body>

@@ -2687,3 +2687,16 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .pl-aj input{width:100%}
 .pl-ajustes summary{cursor:pointer}
 .pl-vazio .btn{margin-top:6px}
+
+/* 3.76: o 📥 de pendências — grupos com contador, cada item com a ação ao lado */
+.inb-grupo{border:1px solid var(--line); border-radius:10px; margin:0 0 10px; padding:6px 10px}
+.inb-grupo > summary{display:flex; justify-content:space-between; align-items:center; gap:10px; cursor:pointer; padding:4px 0}
+.inb-n{min-width:24px; text-align:center; border-radius:12px; padding:1px 8px; font-size:.8em; font-weight:700; background:var(--accent); color:#05150e}
+.inb-explica{margin:2px 0 6px}
+.inb-lista{list-style:none; margin:0; padding:0}
+.inb-item{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:8px 0; border-top:1px solid var(--line)}
+.inb-item:first-child{border-top:0}
+.inb-item > div{flex:1 1 200px; min-width:0}
+.inb-item .t-sub{display:block}
+.inb-acoes{display:flex; gap:6px; flex-wrap:wrap}
+.inb-oc{display:block}

@@ -46,8 +46,8 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       const p = await ctx.newPage(); const erros = []; p.on('pageerror', (e) => erros.push(String(e)));
       await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.recorrentes || []).length === 5);
       await p.evaluate(() => { I18n.atual = 'pt'; abrirApp('budget'); irPara('b-custos'); });
-      await p.waitForSelector('#view-b-custos [data-custaba="todos"]');
-      ok(true, 'Custos tem a aba "Todos"');
+      await p.waitForSelector('#view-b-custos [data-custaba="recorrentes"]');
+      ok(!(await p.$('#view-b-custos [data-custaba="todos"]')) && !(await p.$('#view-b-custos [data-custaba="revisar"]')), '3.76: Contas fixas sem as abas "Todos" e "Revisar" (o que era Revisar vai para o 📥)');
 
       /* (d) só o que vale neste mês */
       const sai = await p.evaluate(() => Recorrente.porMes().sai);
@@ -56,12 +56,8 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       ok(Math.abs(saiAno - (2700 + 3100 + 100 + 100 + 100)) < 0.01, 'em junho do ano que vem a Escola e o Curso já contam: ' + saiAno);
 
       /* (e) linha explicando a aba */
-      await p.click('#view-b-custos [data-custaba="revisar"]');
-      ok(/marcados para conferir/.test(await p.textContent('#view-b-custos .aba-explica')), 'Revisar explica: "marcados para conferir" + vencimentos');
-      await p.click('#view-b-custos [data-custaba="todos"]');
-      ok(/Tudo junto/.test(await p.textContent('#view-b-custos .aba-explica')), 'Todos tem a linha explicando');
-      const todos = await p.textContent('#view-b-custos .tbl-todos');
-      ok(/Condomínio Jardim/.test(todos) && /Mercado/.test(todos), 'Todos mostra recorrentes e pontuais juntos');
+      await p.click('#view-b-custos [data-custaba="pontuais"]');
+      ok(/uma vez e acabaram/.test(await p.textContent('#view-b-custos .aba-explica')), 'Pontuais tem a linha explicando');
 
       /* (f) período curto */
       await p.click('#view-b-custos [data-custaba="recorrentes"]');
@@ -99,8 +95,9 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       ok(det2.filter((t) => /já existe/.test(t)).length === 3, 'depois de cadastrar, os dois passam a "já existe"');
       ok(await p.evaluate(() => Recorrente.atrasados().filter((o) => o.r.nome === 'Aluguel').length === 0), 'o passado do novo não vira "atrasado"');
       /* Revisar não sugere o que parou */
-      await p.click('#view-b-custos [data-custaba="revisar"]');
-      ok(!/ClienteX/.test(await p.textContent('#view-b-custos')), 'Revisar também não sugere o que parou');
+      await p.evaluate(() => abrirInbox());
+      ok(!/ClienteX/.test(await p.textContent('#genBody')), 'o 📥 também não sugere o que parou');
+      await p.evaluate(() => fechar('genModal'));
       /* EN */
       await p.evaluate(() => { I18n.atual = 'en'; custosAba = 'recorrentes'; render(); });
       ok(/Found \d+ that repeat/.test(await p.textContent('#recDetectados h3')), 'em inglês: "Found N that repeat"');

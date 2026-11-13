@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/mes-a-mes.js — o "Mês a mês" do Painel do BudgetONE, refeito (3.73)        1.0.0 · 13/Nov/2026
+   modulos/mes-a-mes.js — o "Mês a mês" do Painel do BudgetONE, refeito (3.73)        1.0.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · A barra de cada mês é o que SOBROU NA CONTA: tudo o que entrou − o que foi gasto − o que foi para investimento
@@ -136,14 +136,17 @@
     }
   };
 
-  function cartaoAtencao() {
-    var q = API.perguntas(); if (!q.length) return '';
-    return '<div class="card mm-atencao"><div class="card-head"><h3>' + esc(tr('Precisa da sua atenção', 'Needs your attention')) + '</h3></div>' + q.map(function (g) {
+  function itensPergunta(q, li) {
+    return q.map(function (g) {
       return '<div class="mm-pergunta"><p class="small" style="margin:0 0 6px">★ ' + esc(tr('Entrou ', 'Received ') + fmt(g.valor) + tr(' em ', ' on ') + I18n.data(g.data) + ' (' + (g.desc || g.sub || '') + ')' +
         tr(': mais que o dobro da sua renda de sempre. É renda extraordinária (rescisão, prêmio, venda de um bem)? Se for, fica fora das médias.', ': more than twice your usual income. Is it extraordinary income (severance, prize, selling something)? If so, it stays out of the averages.')) + '</p>' +
         '<button type="button" class="btn sm primary" data-acao="mm-extra-sim" data-id="' + esc(g.id) + '">' + esc(tr('★ Sim, é extraordinária', '★ Yes, extraordinary')) + '</button> ' +
         '<button type="button" class="btn sm" data-acao="mm-extra-nao" data-id="' + esc(g.id) + '">' + esc(tr('Não, é renda normal', 'No, regular income')) + '</button></div>';
-    }).join('') + '</div>';
+    }).map(function (h) { return li ? '<li class="inb-item">' + h + '</li>' : h; }).join('');
+  }
+  function cartaoAtencao() {
+    var q = API.perguntas(); if (!q.length) return '';
+    return '<div class="card mm-atencao"><div class="card-head"><h3>' + esc(tr('Precisa da sua atenção', 'Needs your attention')) + '</h3></div>' + itensPergunta(q) + '</div>';
   }
   function responder(id, sim) {
     var g = Gasto.todos().filter(function (x) { return x.id === id; })[0]; if (!g) return;
@@ -152,9 +155,10 @@
   }
 
   MoneyModulos.registrar({
-    id: 'mes-a-mes', versao: '1.0.0',
+    id: 'mes-a-mes', versao: '1.0.1',
     pontos: {
       'budget.atencao': cartaoAtencao,
+      'inbox.grupos': function () { var q = API.perguntas(); return q.length ? [{ id: 'confirmar', n: q.length, html: itensPergunta(q, true) }] : []; },   /* 1.0.1 (3.76) */
       'inbox.itens': function () {
         return API.perguntas().map(function (g) {
           return { tipo: 'atencao', ico: '★', nome: tr('É renda extraordinária?', 'Is it extraordinary income?'), valor: g.valor, data: g.data,

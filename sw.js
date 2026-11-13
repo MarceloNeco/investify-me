@@ -13,7 +13,7 @@ var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './aju
   './modulos/arquivos.js?v=1.0.0',
   './modulos/agendamentos.js?v=1.0.0',
   './modulos/nf-ir.js?v=1.0.1',
-  './modulos/profissionais.js?v=1.2.0',
+  './modulos/profissionais.js?v=1.2.1',
   './modulos/saude.js?v=1.1.0',
   './modulos/ponte-omnilife.js?v=1.0.0',
   './modulos/patrimonio-iliquido.js?v=1.1.1',
@@ -25,7 +25,7 @@ var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './aju
   './modulos/conciliacao.js?v=1.0.0', './modulos/calendario-menu.js?v=1.2.0',
   './modulos/pessoas.js?v=1.3.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=2.1.0', './modulos/espelho.js?v=1.1.2', './modulos/tour.js?v=1.0.1', './modulos/cartoes.js?v=1.0.0', './modulos/cartao-foto.js?v=1.0.0',
   /* 3.65: o motor do Leitor OCR para o cartão por foto (cópia do leitor-ocr; leitor/tesseract/ é guardado no 1º uso) */
-  './leitor/leitura.js', './leitor/leitura/catalogo.js', './leitor/leitura/texto.js', './leitor/leitura/foto.js', './leitor/leitores/cartao-plastico.js', './modulos/contraparte.js?v=1.0.0', './modulos/declaracao-escolhas.js?v=1.1.0', './modulos/origem.js?v=1.0.1', './modulos/apelido.js?v=1.1.0', './modulos/lancamento-form.js?v=1.0.0', './modulos/categorias.js?v=1.0.0', './modulos/visao-casa.js?v=1.1.0', './modulos/previsao.js?v=1.2.0', './modulos/orcamento.js?v=1.1.1', './modulos/patrimonio-mes.js?v=1.1.0', './modulos/dividas.js?v=1.0.0', './modulos/seguros.js?v=1.0.1', './modulos/mes-a-mes.js?v=1.0.0', './modulos/parcelados.js?v=1.0.1', './modulos/contas-fixas.js?v=1.0.0', './modulos/documentos.js?v=1.0.0', './modulos/contas-mes.js?v=1.0.0', './modulos/planejados.js?v=1.0.0',
+  './leitor/leitura.js', './leitor/leitura/catalogo.js', './leitor/leitura/texto.js', './leitor/leitura/foto.js', './leitor/leitores/cartao-plastico.js', './modulos/contraparte.js?v=1.0.0', './modulos/declaracao-escolhas.js?v=1.1.0', './modulos/origem.js?v=1.0.1', './modulos/apelido.js?v=1.1.0', './modulos/lancamento-form.js?v=1.0.0', './modulos/categorias.js?v=1.0.0', './modulos/visao-casa.js?v=1.1.1', './modulos/previsao.js?v=1.2.0', './modulos/orcamento.js?v=1.1.1', './modulos/patrimonio-mes.js?v=1.1.0', './modulos/dividas.js?v=1.0.0', './modulos/seguros.js?v=1.0.1', './modulos/mes-a-mes.js?v=1.0.1', './modulos/parcelados.js?v=1.0.1', './modulos/contas-fixas.js?v=1.0.0', './modulos/documentos.js?v=1.0.1', './modulos/contas-mes.js?v=1.0.1', './modulos/planejados.js?v=1.0.0',
   './nuvem.js?v=1.14.3'];
 /* O motor de leitura de fotos (leitor/tesseract: Tesseract e português, uns 9 MB, a MESMA pasta do motor do
    Leitor OCR; assets/ocr: ZXing e jsQR) tem cache próprio, que NÃO muda a cada versão do app:

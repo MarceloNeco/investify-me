@@ -150,6 +150,11 @@
         return [{ ico: '🛡️', pt: 'Seguro (apólice)', en: 'Insurance (policy)', dpt: 'Leia a apólice (PDF ou foto) ou preencha: vira conta fixa e o app lembra de renovar.', den: 'Read the policy (PDF or photo) or fill it in: it becomes a fixed bill and the app reminds you to renew.', label: 'sgArq' },
           { ico: '🛡️', pt: 'Seguro, preencher à mão', en: 'Insurance, fill in by hand', dpt: 'Seguradora, vigência, prêmio e parcelas, sem arquivo.', den: 'Insurer, period, premium and instalments, no file.', acao: 'sg-novo' }];
       },
+      'inbox.grupos': function () {   /* 1.0.1 (3.76): o aviso de renovar, em "Avisos do app" */
+        var vis = (ST.config && ST.config.inboxVistos) || {}, l = API.renovar().filter(function (s) { return !vis['seguro|' + s.id + '|' + s.fim]; });
+        return l.length ? [{ id: 'avisos', n: l.length, html: l.map(function (s) { return '<li class="inb-item"><div><b>🛡️ ' + esc(tr('Renovar o seguro: ', 'Renew the insurance: ') + s.nome) + '</b><span class="t-sub">' +
+          esc(tr('a vigência acaba em ', 'it ends on ') + I18n.data(s.fim)) + '</span></div><span class="inb-acoes"><button class="btn sm" data-acao="inb-visto" data-k="' + esc('seguro|' + s.id + '|' + s.fim) + '">' + esc(tr('ok, entendi', 'ok, got it')) + '</button></span></li>'; }).join('') }] : [];
+      },
       'inbox.itens': function () {
         return API.renovar().map(function (s) {
           return { tipo: 'atencao', ico: '🛡️', nome: tr('Renovar o seguro', 'Renew the insurance'), valor: s.premio, data: s.fim,

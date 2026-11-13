@@ -287,21 +287,25 @@
       '<button type="button" class="btn sm primary" data-acao="pv-salvar">' + esc(tr('Registrar', 'Register')) + '</button></form></div>';
     return h;
   }
-  function cartaoAtencao() {
-    var s = suspeitas(); if (!s.length) return '';
-    return '<div class="card pv-atencao"><div class="card-head"><h3>' + esc(tr('Precisa da sua atenção', 'Needs your attention')) + '</h3></div>' + s.map(function (x) {
+  function itensViagem(s, li) {
+    return s.map(function (x) {
       return '<div class="pv-pergunta" data-chave="' + esc(x.chave) + '"><p class="small" style="margin:0 0 6px">🧳 ' + esc(tr('Parece que teve viagem entre ', 'Looks like there was a trip between ') + I18n.data(x.de) + tr(' e ', ' and ') + I18n.data(x.ate) +
         ' (' + fmt(x.valor) + tr(' de combustível). Foi viagem?', ' of fuel). Was it a trip?')) + '</p>' +
         '<input class="pv-dest" maxlength="60" placeholder="' + esc(tr('Destino (opcional)', 'Destination (optional)')) + '" aria-label="' + esc(tr('Destino (opcional)', 'Destination (optional)')) + '"> ' +
         '<button type="button" class="btn sm primary" data-acao="pv-sim" data-chave="' + esc(x.chave) + '">' + esc(tr('Sim, foi viagem', 'Yes, it was a trip')) + '</button> ' +
         '<button type="button" class="btn sm" data-acao="pv-nao" data-chave="' + esc(x.chave) + '">' + esc(tr('Não', 'No')) + '</button></div>';
-    }).join('') + '</div>';
+    }).map(function (h) { return li ? '<li class="inb-item">' + h + '</li>' : h; }).join('');
+  }
+  function cartaoAtencao() {
+    var s = suspeitas(); if (!s.length) return '';
+    return '<div class="card pv-atencao"><div class="card-head"><h3>' + esc(tr('Precisa da sua atenção', 'Needs your attention')) + '</h3></div>' + itensViagem(s) + '</div>';
   }
 
   MoneyModulos.registrar({
     id: 'previsao', versao: '1.2.0', colecoes: [COL],
     pontos: {
-      'planejados.viagens': cartaoEventos, 'budget.atencao': cartaoAtencao,   /* 1.2.0 (3.76): as viagens saíram do Futuro para Contas fixas → Gastos planejados */
+      'planejados.viagens': cartaoEventos, 'budget.atencao': cartaoAtencao,
+      'inbox.grupos': function () { var s = suspeitas(); return s.length ? [{ id: 'viagem', n: s.length, html: itensViagem(s, true) }] : []; },   /* 1.2.0 (3.76) */   /* 1.2.0 (3.76): as viagens saíram do Futuro para Contas fixas → Gastos planejados */
       'inbox.itens': function () {
         return suspeitas().map(function (x) {
           return { tipo: 'atencao', ico: '🧳', nome: tr('Foi viagem?', 'Was it a trip?'), valor: x.valor, data: x.de,
