@@ -709,6 +709,15 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **3.79 — Valores a receber.** `modulos/a-receber.js` 1.0.0 (`window.AReceber`, tela `b-receber`): `ST.a_receber = [{id, quem, cnpj, origem,
+  tipo, total, parcelas, valorParcela, ondeCartaoId, ondeBancoId, pedidoEm, prometido, protocolo, gastoId, estado, recebidos:[{gid, valor, data,
+  manual?}], adiadoAte}]`. `vigiar()` liga créditos (`g.estorno`/valor negativo ou `fluxo` 'entrada') a partir do `pedidoEm`, de valor até o que
+  falta, do mesmo recebedor (CNPJ → `g.estornoDe` = `gastoId` → `Origem.origemDe` → nome parecido pelo `Profissionais.parecido`); roda no 📥, na
+  tela e no evento `gasto.novo`. `prazo` = `adiadoAte` || `prometido` || pedido + 30 dias; `atrasados()` → `budget.atencao` e 📥 (grupo novo
+  'receber' em `INBOX_GRUPOS`) com `ar-recebi`/`ar-cobrei` (+30 dias)/`ar-desisti`. `sugestoes()`: crédito dos últimos 60 dias sem pedido, de quem
+  cobrou antes (`estornoDe` ou mesma origem) → `ar-marcar`/`ar-nao` (`ST.config.arRecusados`). Atalho `ar-pedir` no `lancamento.form` (`deGasto`:
+  parcela k/N → total = parcela × N). Também: `custos.topo` (cartão), `custos.adicionar`. Escopo: `Escopo.de('a_receber')` (visao-casa 1.1.2) segue o
+  lançamento de origem (`C.gCasa`); sem ele, `escopo` manual ou reservado. Teste: `teste/teste-a-receber.js`.
   **3.78 — TaxONE → FiscalONE (só o nome).** O nome exibido mudou em todo lugar (APPS.tax.nome, títulos, ajuda, glossário, passeio, textos);
   o id interno continua 'tax' (ABAS.tax, VIEWS_TAX, t-*, coleções, `ST.appAtual`), a cor `--c-tax` e o ícone 🧾 também. As Novidades antigas
   (textos/mudancas.js) não mudam. `buscarConteudo` troca "taxone" por "fiscalone" na busca. Teste: `teste/teste-fiscalone.js`.

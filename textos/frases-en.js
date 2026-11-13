@@ -1,10 +1,15 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.78 · 13/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.79 · 13/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.79 */
+  'Valores a receber: estornos, reembolsos e contestações':'Money to receive: refunds, reimbursements and disputes',
+  'Nova tela "A receber" (Contas fixas → "+ Adicionar", e o cartão no topo de Contas fixas): de quem, o quê (estorno, reembolso do plano, contestação, restituição, devolução), o valor à vista ou em parcelas, onde deve cair, a data prometida e o protocolo. No lançamento, "↩ Pedi estorno disto" já preenche tudo, até o parcelado.':'New "To receive" screen (Fixed bills → "+ Add", and the card at the top of Fixed bills): from whom, what (refund, plan reimbursement, dispute, tax refund, return), the amount at once or in parts, where it should land, the promised date and the reference. On an entry, "↩ I asked for a refund" fills it all in, instalments included.',
+  'O app vigia o cartão e a conta: quando cai o crédito de quem você pediu, marca "recebido" (ou "recebido em parte: X de Y") e avisa "Caiu o estorno". Se passar da data prometida (ou 30 dias), avisa em "Precisa da sua atenção" e no 📥, todo mês, com "Já recebi", "Cobrei de novo" e "Desisti".':'The app watches the card and the account: when the credit from whoever you asked lands, it marks "received" (or "partly received: X of Y") and says "Refund arrived". If the promised date (or 30 days) passes, it warns in "Needs your attention" and in 📥, every month, with "Received", "Chased again" and "Gave up".',
+  'Crédito que chegou sem cadastro, de quem antes cobrou uma compra, vira a pergunta "Parece um estorno de …. Marcar?". A tela mostra também a restituição do IR prevista e o reembolso de saúde estimado.':'A credit that arrived with no request, from someone who charged you before, becomes the question "Looks like a refund from …. Mark it?". The screen also shows the expected tax refund and the estimated health reimbursement.',
   /* 3.78 */
   'TaxONE agora se chama FiscalONE':'TaxONE is now called FiscalONE',
   'O app de imposto de renda e da empresa (PJ) agora se chama FiscalONE, em todo lugar: tela inicial, menu, títulos, passeio, glossário e ajuda. A cor, o ícone e os seus dados continuam iguais; a busca acha pelos dois nomes.':'The income tax and company app is now called FiscalONE everywhere: home screen, menu, titles, tour, glossary and help. The colour, the icon and your data stay the same; search finds it by either name.',
