@@ -7776,7 +7776,7 @@ const Gasto = {
       if(f.aconfirmar  && !(window.Origem && Origem.status(g) === 'confirmar')) return false;     /* 3.65 */
       if(f.aidentificar && !(window.Origem && Origem.status(g) === 'identificar')) return false;
       if(f.busca){
-        const alvo = (g.desc + ' ' + g.sub + ' ' + g.grupo).toLowerCase();
+        const alvo = (g.desc + ' ' + g.sub + ' ' + g.grupo + (window.Apelido ? ' ' + Apelido.de(g) : '')).toLowerCase();   /* 3.68: o apelido e o nome original */
         if(alvo.indexOf(f.busca.toLowerCase()) < 0) return false;
       }
       return true;
@@ -10095,7 +10095,8 @@ function viewBLanc(){
         (g.per && g.per !== 'Pontual' ? ' · ' + PERIODICIDADES[g.per].nome.toLowerCase() : '') + '</div>' +
         (window.MoneyModulos ? MoneyModulos.html('lancamento.categoria', {g: g}) : '') + '</td>' +   /* 3.65: selo A confirmar / A identificar */
       /* 3.65: a descrição fica na própria coluna (até 2 linhas, reticências); o texto inteiro no title e no detalhe */
-      '<td class="desc-cel"><span class="desc-txt" title="' + esc(g.desc || '') + '">' + esc(g.desc || '') + '</span>' +
+      /* 3.68: o apelido da origem no lugar do nome do banco; o nome original no title (e na busca, no detalhe) */
+      '<td class="desc-cel"><span class="desc-txt" title="' + esc(g.desc || '') + '">' + esc(window.Apelido ? Apelido.texto(g) : (g.desc || '')) + '</span>' +
         (g.grupo === 'RENDA' && Transferencia.daRenda(g.id).length ? '<div class="t-sub tf-cinza">↪ ' + esc((I18n.atual === 'pt' ? 'passou para outra conta em ' : 'moved to another account on ') +
           Transferencia.daRenda(g.id).map(t => I18n.data(t.data) + (t.banco ? ' (' + t.banco + ')' : '')).join(', ') + (I18n.atual === 'pt' ? ' — transferência, não conta de novo' : ' — transfer, not counted again')) + '</div>' : '') +
         (g.quem || g.paraQuem || g.forma ? '<div class="t-sub">' + esc([g.paraQuem && g.paraQuem !== g.quem ? (g.quem ? g.quem + ' → ' : '→ ') + g.paraQuem : g.quem, g.forma].filter(Boolean).join(' · ')) +
@@ -11039,6 +11040,13 @@ function abrirLancamento(id){
     '<div id="glSal"></div>' +
     campo('Descrição', '<input id="glDesc" placeholder="O que foi, com detalhe" value="' +
           (g ? esc(g.desc) : '') + '">') +
+    /* 3.68: apelido da loja/pessoa (modulos/apelido.js), guardado na origem do lançamento */
+    (window.Apelido && g ? campo(I18n.atual === 'pt' ? 'Apelido' : 'Nickname', '<input id="glApelido" maxlength="60" placeholder="' +
+      (I18n.atual === 'pt' ? 'Ex.: Padaria do bairro' : 'E.g.: Corner bakery') + '" value="' + esc(Apelido.de(g)) + '">', null,
+      (Apelido.origem(g).indexOf('u:') === 0
+        ? (I18n.atual === 'pt' ? 'A descrição do banco é genérica: o apelido vale só para este lançamento.' : 'The bank description is generic: the nickname applies to this entry only.')
+        : (I18n.atual === 'pt' ? 'Aparece na lista no lugar do nome do banco, neste e nos outros lançamentos da mesma origem (antigos e novos). O nome original continua na busca.'
+                               : 'Shown in the list instead of the bank name, on this and the other entries from the same source (old and new). The original name still works in search.'))) : '') +
     '<div class="grid g2">' +
       campo('Com que frequência',
         '<select id="glPer">' + ORDEM_PERIODICIDADES.map(k =>
@@ -11251,6 +11259,7 @@ function salvarLancamento(){
   /* 3.65: corrigiu (ou confirmou) um lançamento do robô: vale para os outros da mesma origem que ainda estão pendentes */
   if(window.Origem && antesEsp && antesEsp.origem === 'robo'){ const gO = Gasto.todos().find(x => x.id === bEditando);
     if(gO && (Origem.pendente(antesEsp) || ['grupo','sub','paraQuem','irpf'].some(k => (antesEsp[k] || '') !== (gO[k] || '')))) Origem.depoisDe(gO, antesEsp); }
+  if(window.Apelido && $('#glApelido')){ const gA = criado || Gasto.todos().find(x => x.id === bEditando); if(gA) Apelido.salvar(gA, $('#glApelido').value); }   /* 3.68 */
   Gasto._idx = null;
   bProj = null;                       /* a projeção envelheceu */
   Store.salvar(); fechar('assetModal'); render();
@@ -29869,9 +29878,10 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/contraparte.js?v=1.0.0"></script>
 <script src="modulos/declaracao-escolhas.js?v=1.0.0"></script>
 <script src="modulos/origem.js?v=1.0.1"></script>
+<script src="modulos/apelido.js?v=1.0.0"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
-<script src="modulos/visao-casa.js?v=1.0.1"></script>
+<script src="modulos/visao-casa.js?v=1.0.2"></script>
 <script src="modulos/orcamento.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.14.0"></script>
 </body>
