@@ -644,6 +644,7 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.68.1: o Enter global (keydown no `document`) escolhe o botão por prioridade de verdade: `.modal-foot .btn.primary`, senão `.f-actions .btn.primary`, senão o primeiro `.btn.primary` (uma lista com vírgula no `querySelector` devolve o primeiro na ordem do documento). Teste: `teste/teste-enter.js`.
 - 3.68 (módulo novo `apelido` 1.0.0; `pessoas` 1.2.0; `visao-casa` 1.0.2; o layout do Painel continua o mesmo, fora o "Mês a mês").
   **"Mês a mês"** (`vizMesAMes(itens, fmt)`, itens `{nome, rec, extra, entRec, saida, aplic}`): a barra é o resultado real (entrou − saiu;
   aplicação fora), em dois pedaços — o recorrente (`.mm-up`/`.mm-down`) e o extraordinário (`.mm-extra`, amarelo listrado, ★). A régua é

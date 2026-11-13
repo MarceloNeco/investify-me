@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.68 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.68.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.68.1', d:'2026-11-13', t:'O Enter agora sempre salva o que você editou', itens:[
+    'Numa janela de edição, o Enter aperta sempre o botão Salvar do rodapé. Antes, num lançamento "A confirmar", ele apertava o "✓ Confirmar como está" do alto e descartava o que você tinha mudado (apelido, categoria).'
+  ]},
   {v:'3.68', d:'2026-11-13', t:'Mês a mês de verdade, apelidos e nomes', itens:[
     '"Mês a mês" mostra o resultado real de cada mês (tudo o que entrou menos o que saiu; o que foi para investimento fica de fora). A parte da renda extraordinária (rescisão, FGTS) aparece em amarelo com ★ e a régua não se deixa levar por ela; toque no mês para ver o que entrou, saiu e foi para investimento.',
     'Na edição de uma entrada: "★ Renda extraordinária (fica fora das médias)". Rescisão, FGTS e indenização já vêm marcadas; marque outra (um prêmio, a venda de algo) ou desmarque.',
