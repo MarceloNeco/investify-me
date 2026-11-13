@@ -1,11 +1,22 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.68.1 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.69 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.69', d:'2026-11-13', t:'Previsto × realizado por categoria', itens:[
+    'O app prevê o gasto de cada categoria no mês: as contas certas de Custos pelo valor e pelo dia (antes de o banco mandar), a média dos últimos 6 meses com o peso da época do ano e a inflação do grupo, e as viagens registradas no Futuro. Quando a conta real chega, ela entra no lugar da prevista, sem contar duas vezes.',
+    'No Painel, cada categoria mostra o que já foi, o que ainda falta do previsto, o ritmo de hoje e a meta (o limite que você digitou). A Projeção do mês diz: previsto, já foi, ainda vem (quanto em contas certas) e quanto deve sobrar, e os 3 meses seguintes.',
+    'Futuro → "Viagens e eventos": registre uma viagem de carro e a gasolina extra entra no previsto.',
+    'Boleto sem nome do banco ("INT PAG TIT"): quando o valor e a data batem com uma conta fixa de Custos (o valor pode variar, como o condomínio), a lista mostra o nome da conta com "A confirmar". Um toque confirma e liga o pagamento à conta; se duas contas batem, o app mostra as duas para você escolher.',
+    'Viagem que passou: quando o combustível de poucos dias passa muito do normal, o app pergunta "Foi viagem?". Se foi, esses abastecimentos saem da média e o app aprende a distância do destino. Nunca marca sozinho.',
+    'Fluxo: a linha de cima agora é o seu patrimônio de verdade no fim de cada mês (contas + carteira), terminando no de hoje. Onde não há o valor real, ela é estimada de trás para frente pelo que sobrou em cada mês (tracejada, sem rendimentos). Daqui em diante o app guarda uma foto do patrimônio por mês.',
+    'Fluxo, embaixo: o que entrou (a renda extraordinária em amarelo com ★), o que foi gasto e o que foi para investimento, cada um na sua barra; a linha do saldo do mês é entrou menos gastou. Os quadrados do topo: patrimônio de hoje, variação do patrimônio, quanto sobrou e quanto foi para investimento.',
+    'O ✨ da IA foi para a barra de cima, ao lado da lupa. A faixa de cima só aparece quando há anúncio: sem ela, a tela começa mais no alto. Em telas muito estreitas, o ✨ fica no menu 👤.',
+    'Calendário do menu: a setinha agora aponta para onde ele vai. Aberto, a seta aponta para baixo (recolher); recolhido, para cima (abrir).',
+  ]},
   {v:'3.68.1', d:'2026-11-13', t:'O Enter agora sempre salva o que você editou', itens:[
     'Numa janela de edição, o Enter aperta sempre o botão Salvar do rodapé. Antes, num lançamento "A confirmar", ele apertava o "✓ Confirmar como está" do alto e descartava o que você tinha mudado (apelido, categoria).'
   ]},

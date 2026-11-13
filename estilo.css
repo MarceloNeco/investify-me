@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.68 · 13/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.69 · 13/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -20,7 +20,7 @@
   --r1:#86b6ef; --r2:#5598e7; --r3:#3987e5; --r4:#256abf; --r5:#184f95;
   --grid:#26313f;
   /* 3.65.2: gráficos — eixo legível (AA), zero sempre visível, saldo do mês em roxo-claro */
-  --viz-eixo:#a9b8ca; --viz-grade:#26313f; --viz-zero:#8a9bb0; --viz-saldo:#c4a7ff; --viz-trilho:#222c3a;
+  --viz-eixo:#a9b8ca; --viz-grade:#26313f; --viz-zero:#8a9bb0; --viz-saldo:#c4a7ff; --viz-trilho:#222c3a; --viz-aporte:#2bb3ff;
 }
 html[data-theme="light"]{
   --bg:#f2f5f9; --bg2:#ffffff; --card:#ffffff; --card2:#f6f9fc;
@@ -36,7 +36,7 @@ html[data-theme="light"]{
   /* escala ordinal de risco no modo claro: nenhum passo mais claro que o degrau 250 */
   --r1:#86b6ef; --r2:#5598e7; --r3:#2a78d6; --r4:#1c5cab; --r5:#104281;
   --grid:#e6ebf2;
-  --viz-eixo:#4f6178; --viz-grade:#e6ebf2; --viz-zero:#5c6b80; --viz-saldo:#6d3fd1; --viz-trilho:#e9eef5;
+  --viz-eixo:#4f6178; --viz-grade:#e6ebf2; --viz-zero:#5c6b80; --viz-saldo:#6d3fd1; --viz-trilho:#e9eef5; --viz-aporte:#1573d8;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -1108,6 +1108,17 @@ details.imp-arq.repetido{border-color:var(--warn)}
 .viz-duplo .viz-svg{width:100%; height:auto; display:block; overflow:visible}
 .viz-duplo .col-e{fill:var(--up)}
 .viz-duplo .col-s{fill:var(--down)}
+/* 3.69: o Fluxo novo — aporte separado do gasto, a renda extraordinária em amarelo, o patrimônio real × estimado */
+.viz-duplo .col-a{fill:var(--viz-aporte)}
+.viz-duplo .col-x-star{font-size:10px; fill:#c99400}
+.viz-duplo .pat-real{fill:none; stroke:var(--s1); stroke-width:2.6; stroke-linejoin:round; stroke-linecap:round}
+.viz-duplo .pat-est{fill:none; stroke:var(--s1); stroke-width:2; stroke-dasharray:6 5; opacity:.85}
+.viz-duplo .pat-p{fill:var(--s1); stroke:var(--card); stroke-width:1.5}
+.viz-duplo .pat-inv{fill:var(--s1); opacity:.14}
+.pat-inv-dot{background:color-mix(in srgb, var(--s1) 30%, transparent) !important}
+.dot-extra{background:repeating-linear-gradient(135deg, #e0b000 0 3px, #f2c94c 3px 5px) !important}
+.leg-trac{display:inline-block; width:18px; height:0; border-top:2px dashed var(--s1); vertical-align:middle; margin-right:6px}
+.kpis-2{grid-template-columns:repeat(2,1fr)}
 .viz-duplo .dup-cursor{stroke:var(--txt3); stroke-width:1; stroke-dasharray:3 3; pointer-events:none}
 .viz-duplo .dup-captura{cursor:crosshair}
 .viz-duplo .rot-dir{fill:var(--s1); font-size:10px; font-weight:600}
@@ -1668,6 +1679,7 @@ label.campo > span, .campo > span{font-size:.78rem; color:var(--txt2)}
 .ia-bt{border:1px solid var(--linha-suave); background:linear-gradient(135deg, color-mix(in srgb, var(--accent2) 18%, transparent), color-mix(in srgb, var(--s7) 18%, transparent));
   color:var(--txt); border-radius:999px; padding:5px 12px; font:inherit; font-size:.8rem; font-weight:620; cursor:pointer; min-height:30px}
 .ia-bt.ia-off{opacity:.65}
+.ia-ico.ia-off{opacity:.55}   /* 3.69: o ✨ na barra de cima, ao lado da 🔍 */
 .faixa .anuncio{flex:1; display:flex; align-items:center; gap:8px; min-width:0; margin:0; padding:0; border:0; background:none}
 .faixa .anuncio-a{display:flex; align-items:center; gap:10px; min-width:0; flex:1; text-decoration:none; color:inherit;
   background:var(--card); border:1px solid var(--linha-suave); border-radius:10px; padding:5px 10px}
@@ -1723,7 +1735,11 @@ body:has(.modal-wrap:not(.hidden)) .faixa{visibility:hidden}
   .topbar .brand{min-width:0; overflow:hidden; flex:1 1 auto}
   .topbar .brand-name{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:40vw}
   .topbar-actions{margin-left:auto; gap:6px; flex-wrap:nowrap; flex:0 0 auto}
+  /* 3.69: com o ✨ na barra, o nome do app encolhe (com …) em vez de jogar os ícones para outra linha */
+  .topbar .brand-caixa{flex:1 1 0; min-width:0}
 }
+/* 3.69: tela muito estreita (menos de 360 px): o ✨ sai da barra; fica no menu 👤 ("✨ Perguntar à IA") */
+@media (max-width:359px){ #btnIA{display:none} }
 
 /* ---- o seletor de ano tem tamanho de chip, não de campo ---- */
 .chips .chip-select, select.chip-select{width:auto !important; min-height:32px !important; height:32px; padding:0 28px 0 12px; margin:0; font-size:.82rem; line-height:1}
@@ -2579,6 +2595,21 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .orc-novo input{flex:0 1 160px; min-width:120px}
 .orc-proj-n{font-size:1.15rem; margin:4px 0}
 .orc-proj-n.up{color:var(--up)} .orc-proj-n.down{color:var(--down)}
+/* 3.69: a barra empilhada do previsto × realizado (o mínimo; o desenho final vem do Claude Design) */
+.pv-barra{position:relative; display:flex; height:12px; overflow:visible}
+.pv-barra i{border-radius:0; flex:none}
+.pv-barra i:first-child{border-radius:6px 0 0 6px}
+.pv-gasto{background:var(--up)}
+.pv-acima .pv-gasto, .orc-estourou .pv-gasto{background:var(--warn, #d99a00)}
+.pv-passou{background:var(--down); filter:saturate(1.4) brightness(.85)}
+.pv-falta{box-sizing:border-box; border:1.5px dashed var(--txt3, rgba(127,127,127,.7)); border-left:0; border-radius:0 6px 6px 0; background:transparent}
+.pv-ritmo{position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px; background:var(--txt, #222)}
+.pv-meta{position:absolute; top:-5px; bottom:-5px; width:0; border-left:2px dashed var(--down)}
+.pv-vem{margin-top:4px}
+.pv-frase{margin:4px 0}
+.pv-pergunta{padding:8px 0; border-bottom:1px solid var(--line, rgba(127,127,127,.18))}
+.pv-pergunta:last-child{border-bottom:0}
+.pv-pergunta .pv-dest{max-width:220px}
 
 /* 3.68: "Mês a mês" — a barra real, com a parte extraordinária em amarelo (★), cortada na borda (⫽); tocar abre o detalhe */
 .mm-mes{margin-bottom:5px}

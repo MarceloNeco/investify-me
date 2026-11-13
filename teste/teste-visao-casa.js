@@ -171,12 +171,12 @@ const CASA = ['MARCADOR-CASA-DELA', 'MARCADOR-CASA-COND', 'MARCADOR-CASA-CARTAO'
       const ts = []; const orig = window.toast; window.toast = (m) => ts.push(m);
       Gasto.add({ id: 'bNov', data: hojeISO(), valor: 20, grupo: 'LAZER', sub: 'Restaurante', desc: 'JANTAR DELA', quemId: 'pBeta', fluxo: 'saida' });
       window.toast = orig; const s2 = OrcamentoMes.situacao(OrcamentoMes.lista()[0] || {});
-      return { n: OrcamentoMes.lista().length, g: s.gasto, e: s.estado, card, ts, g2: s2.gasto, proj: !!document.querySelector('.orc-proj'), html: document.body.innerHTML };
+      return { n: OrcamentoMes.lista().length, g: s.gasto, e: s.estado, card, ts, g2: s2.gasto, proj: ((document.querySelector('.orc-proj') || {}).textContent || ''), html: document.body.innerHTML };
     });
-    ok(orcB.n === 1 && orcB.g === 90 && orcB.e === 'perto' && /R\$ 90,00 \/ R\$ 100,00/.test(orcB.card), 'ela vê o orçamento da família: Restaurante R$ 90 de R$ 100 (o total vem do resumo, sem o lançamento dele)');
+    ok(orcB.n === 1 && orcB.g === 90 && orcB.e === 'perto' && /R\$ 90,00 de R\$ [\d.]+,\d\d previsto · meta R\$ 100,00/.test(orcB.card), 'ela vê o orçamento da família: Restaurante R$ 90 de R$ 100 (o total vem do resumo, sem o lançamento dele)');
     ok(orcB.g2 === 110 && orcB.ts.some((m) => /Restaurante: estourou o limite do mês \(R\$ 110,00 \/ R\$ 100,00\)/.test(m)) && !orcB.ts.some((m) => /MARCADOR|RESERVADO/.test(m)),
       'o gasto dela estoura o limite da família: aviso "' + (orcB.ts[0] || '') + '", sem nada do lançamento dele');
-    ok(!orcB.proj && !/MARCADOR-RESERVADO-NOV|12\.345/.test(orcB.html), 'ela: sem a "Projeção do mês" (não usa a renda dele); nada reservado na tela');
+    ok(!/Sobra prevista|Falta prevista|sobrar|faltar|Entra /.test(orcB.proj) && !/MARCADOR-RESERVADO-NOV|12\.345/.test(orcB.html), 'ela: a projeção (3.69) sem renda e sem sobra (não usa a renda dele); nada reservado na tela');
     ok(!/12345|12\.345/.test(bst) && !bst.includes('50000'), 'a renda dele e o investimento não aparecem nem como número');
 
     /* "não percebe": as telas dela */

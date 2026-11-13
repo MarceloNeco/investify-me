@@ -1,15 +1,18 @@
 /* =====================================================================
-   modulos/calendario-menu.js — recolher e abrir o calendário do menu   1.1.0 · 11/Nov/2026
+   modulos/calendario-menu.js — recolher e abrir o calendário do menu   1.2.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      O calendário pequeno no pé do menu (BudgetONE; barra lateral no computador, menu ☰ no celular) ganha um
-     botão discreto no cabeçalho (seta para cima) que o recolhe numa etiqueta "📅 Novembro de 2026 ⌄".
+     botão discreto no cabeçalho (seta; ver 1.2.0) que o recolhe numa etiqueta "📅 Novembro de 2026 ⌄".
      Tocar na etiqueta abre de novo. O padrão é aberto; a escolha fica lembrada neste aparelho.
      Acessível: botões de verdade, aria-expanded, aria-controls, foco visível; depois de trocar, o foco vai para
      o botão que aparece no lugar (quem usa teclado não se perde).
      1.1.0 (3.65): abre e fecha com animação de altura (~220 ms, ease) e o chevron gira junto (a seta mostra a ação:
      aberto = para cima, recolher; recolhido = para baixo, abrir). Com "reduzir movimento", troca sem animar. A barra
      lateral recalcula a altura no FIM da animação.
+     1.2.0 (3.69): a seta foi invertida, a pedido do dono: o calendário mora no PÉ do menu, então recolher faz o
+     cabeçalho descer e abrir faz subir. Aberto: seta para BAIXO ("Recolher o calendário"); recolhido: seta para CIMA
+     ("Abrir o calendário").
    API (window.CalendarioMenu)
      recolhido() → true/false · alternar(valor?) · aplicar(elemento #navCal)   (chamado por renderCalendarioMenu)
    DADOS
@@ -37,7 +40,7 @@
       if (!alvo || !alvo.firstChild) return;
       if (ler()) {
         alvo.innerHTML = '<button type="button" class="calm-etq" data-calmenu="abrir" aria-expanded="false" aria-controls="navCal" title="' +
-          (pt() ? 'Mostrar o calendário' : 'Show the calendar') + '">' + ICONE + '<span class="calm-mes">' + esc(rotuloMes()) + '</span>' + SETA_BAIXO + '</button>';
+          (pt() ? 'Abrir o calendário' : 'Open the calendar') + '" aria-label="' + (pt() ? 'Abrir o calendário' : 'Open the calendar') + ' — ' + esc(rotuloMes()) + '">' + ICONE + '<span class="calm-mes">' + esc(rotuloMes()) + '</span>' + SETA_CIMA + '</button>';
         return;
       }
       var topo = alvo.querySelector('.cal-topo'); if (!topo) return;
@@ -45,7 +48,7 @@
       b.type = 'button'; b.className = 'calm-rec'; b.setAttribute('data-calmenu', 'recolher');
       b.setAttribute('aria-expanded', 'true'); b.setAttribute('aria-controls', 'navCal');
       b.setAttribute('aria-label', pt() ? 'Recolher o calendário' : 'Collapse the calendar');
-      b.title = b.getAttribute('aria-label'); b.innerHTML = SETA_CIMA;
+      b.title = b.getAttribute('aria-label'); b.innerHTML = SETA_BAIXO;
       topo.appendChild(b);
     },
     alternar: function (v) {
@@ -70,6 +73,6 @@
     if (novo) novo.focus({ preventScroll: true });   /* o botão foi redesenhado: o foco vai para o que ficou no lugar, sem pular a página */
   });
 
-  MoneyModulos.registrar({ id: 'calendario-menu', versao: '1.1.0' });
+  MoneyModulos.registrar({ id: 'calendario-menu', versao: '1.2.0' });
   window.CalendarioMenu = API;
 })();

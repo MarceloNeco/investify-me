@@ -644,6 +644,39 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.69 (módulo novo `previsao` 1.0.0; `orcamento` 1.1.0). **Previsto × realizado** (`window.Previsao`; o nome `Previsto` já é o
+  do módulo de sazonalidade/boletos): para cada grupo › categoria de saída, previsto do mês = contas certas (`Recorrente.ocorrencias` do
+  mês; o real — pagamento conciliado/pago ou lançamento com `recorrenteId` no mês — substitui o valor previsto) + variáveis (média dos 6
+  meses fechados antes, sem lançamentos de compromisso, sem os de evento e sem os meses com evento × peso do mês do ano anterior, só
+  com ≥ 12 meses de histórico, entre 0,6 e 1,5 × IPCA do grupo do cache do `Orcamento`, sem buscar nada) + eventos (`ST.eventos`, viagens
+  do Futuro: km × 2 ÷ consumo × preço, de `Desloc.veiculo()`, no combustível do mês da ida). Viagem descoberta: janelas de 4 dias de
+  combustível > 2× a mediana semanal (18 semanas) ou ≥ 2 abastecimentos quando o normal é 1; pergunta em `budget.atencao` (Painel) e
+  `inbox.itens` (📥); "sim" grava o evento (`detectado`), marca `g.evento` e aprende o km; "não" vai para `ST.config.viagensNao`.
+  `totalMes` → previsto/gasto/aVir/aVirCertas/rendaPrevista/sobra (renda e sobra `null` na visão da casa); `proximos(3)`.
+  `orcamento` 1.1.0: barra empilhada (`.pv-barra`: gasto, passou, falta tracejado, risquinho do ritmo, linha da meta) nas categorias com
+  limite + as 6 maiores pelo previsto; a "Projeção do mês" usa `Previsao.totalMes()`. Pontos novos no index: `futuro.topo`,
+  `budget.atencao`, itens `inbox.itens`. Teste: `teste/teste-previsao.js`.
+  **Conta fixa para boleto genérico** (`apelido` 1.1.0): `Apelido.contasFixas(g)` — saída de origem `u:` sem apelido e sem
+  `recorrenteId` × ocorrências de 10 dias antes a 5 dias depois (vencimento −5/+10), valor dentro de `Apelido.faixa(r)` (min/max dos 12
+  últimos pagamentos ±15%; sem histórico, valor ±25%), pulando vencimento que já tem `gastoId` conciliado. Uma: a lista mostra o nome
+  (ponto `lancamento.linha`, selo "A confirmar" + ✓); duas ou mais: botões para escolher. `ap-conta` → `ligarConta`: `recorrenteId`,
+  `Pagamento.conciliar` e o apelido só daquele lançamento. Teste: `teste/teste-apelido.js` (6).
+  **Fluxo com o patrimônio real** (`modulos/patrimonio-mes.js` 1.0.0, `window.PatrimonioMes`): `ST.patrimonio_mes = [{id:'AAAA-MM', mes,
+  valor, caixa, invest, em}]` — `registrar()` grava o `patrimonioHoje()` do mês, no máximo 1×/dia (vale a última do mês; nunca na visão da
+  casa; coleção reservada). `realDe(mes)`: a de hoje no mês atual; a foto do mês; senão remonta das fontes que o patrimônio de hoje usa (última
+  `ST.fotos` do mês para a carteira; último `saldos_banco.hist` do mês de cada conta — o robô guarda só 90 dias), e só se TODAS têm valor.
+  `serie(meses)`: sem real, de trás para frente P(m−1) = P(m) − (entrou(m) − gastou(m)), e para a frente depois do último real; sem nenhum
+  real, do zero. `vizFluxoPatrimonioDesenho` refeito: `.pat-real` (cheia) × `.pat-est` (tracejada), `.pat-inv` (área investida, só com fotos
+  da carteira), colunas `.col-e`/`.col-x` (padrão listrado + ★)/`.col-s`/`.col-a` (`--viz-aporte`); saldo do mês = entrou − gastou. KPIs do
+  Fluxo: patrimônio de hoje, variação (real se o 1º e o último ponto são reais), sobrou, foi para investimento. Visão da casa: só o bloco de
+  baixo, sem aporte; o balão sem patrimônio/investimento. Verbetes `fluxo-patrimonio`, `patrimonio-planilha`, `saldo-acumulado`. Teste:
+  `teste/teste-fluxo.js`.
+  **Topo**: o ✨ IA saiu da faixa (`Anuncio.html`) para a barra de cima (`#btnIA`, `.ia-ico`, antes da 🔍; `ia-off` posto no
+  `Anuncio.render`). A faixa só existe com anúncio ou com a tarja do modo de teste (senão `html()` devolve '' e o `medirTopo` mede de novo).
+  No celular o nome do app encolhe (`.brand-caixa{flex:1 1 0}`) para o topo não quebrar de linha (quebrar fazia o fundo pular ao abrir
+  uma janela, pelo `scrollbar-gutter`); abaixo de 360 px o ✨ some da barra e fica no menu 👤. Teste: `teste/teste-topo-ia.js`; a fumaça
+  tira o ✨ e a faixa vazia nas duas cópias. **Calendário do menu** (`calendario-menu` 1.2.0): seta invertida (aberto ⌄ "Recolher";
+  recolhido ⌃ "Abrir o calendário").
 - 3.68.1: o Enter global (keydown no `document`) escolhe o botão por prioridade de verdade: `.modal-foot .btn.primary`, senão `.f-actions .btn.primary`, senão o primeiro `.btn.primary` (uma lista com vírgula no `querySelector` devolve o primeiro na ordem do documento). Teste: `teste/teste-enter.js`.
 - 3.68 (módulo novo `apelido` 1.0.0; `pessoas` 1.2.0; `visao-casa` 1.0.2; o layout do Painel continua o mesmo, fora o "Mês a mês").
   **"Mês a mês"** (`vizMesAMes(itens, fmt)`, itens `{nome, rec, extra, entRec, saida, aplic}`): a barra é o resultado real (entrou − saiu;
