@@ -644,6 +644,18 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.70 (`declaracao-escolhas` 1.1.0). **A declaração preenche os três apps**: o leitor (`Tax.lerDeclaracao`) junta a discriminação
+  INTEIRA de cada bem até a linha da localização ("105 - Brasil", "249 - Estados Unidos da America") ou "Bem com usufruto" (antes: 4 linhas);
+  endereço/IPTU/matrícula depois dela continuam fora. `importarDeclaracao` roda no `Fundo` (id 'declaracao': pílula, Wake Lock, aviso
+  antes de fechar; a pílula reabre a declaração no TaxONE). `DeclEscolhas.posicoes(d)`: bens líquidos → itens do `ImportarPosicoes.preparar`
+  (03.01 com ticker depois da corretora e QTDE, inclusive "QTD" cortado em duas linhas → ação; 07.99 "(ETF XXX)" → ETF; no exterior USD com
+  o pm = R$ ÷ qtd ÷ dólar de hoje e o R$ na nota; 04.02 bond/renda fixa, conta de investimento → caixa; 07.01 fundo; 04.01 poupança (ix POUP);
+  06.xx caixa em R$ ou US$); 31/12 = 0 fica fora; `decRef`/CNPJ/ticker/nome acham o que já existe (desmarcado; marcado = atualiza a posição).
+  03.99 (SCP) passa a sem liquidez ('empresa'). "De quem é" (`donoDe`): nome de alguém da casa na descrição, ou "CONJUGE" = o outro
+  responsável. `budget(d)`: dependentes → `Pessoas.salvar` (casa, dependente, `irDependente`); fontes → `Recorrente` RENDA (÷ 12); pagamentos
+  01/02 (educação) e 26 (plano) → compromisso sugerido, desmarcado (÷ 12). `baseProxima(d)` = a linha "A declaração de <ano+1> já começa
+  com…" (a declaração salva no TaxONE já guarda bens, dependentes e fontes). Tudo o que nasce aqui leva `escopo: 'reservado'`.
+  Teste: `teste/teste-declaracao-apps.js` (texto fictício no formato do PdfTexto).
 - 3.69 (módulo novo `previsao` 1.0.0; `orcamento` 1.1.0). **Previsto × realizado** (`window.Previsao`; o nome `Previsto` já é o
   do módulo de sazonalidade/boletos): para cada grupo › categoria de saída, previsto do mês = contas certas (`Recorrente.ocorrencias` do
   mês; o real — pagamento conciliado/pago ou lançamento com `recorrenteId` no mês — substitui o valor previsto) + variáveis (média dos 6

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/declaracao-escolhas.js — importar a declaração do IR COM ESCOLHAS (3.65)        1.0.0 · 11/Nov/2026
+   modulos/declaracao-escolhas.js — importar a declaração do IR COM ESCOLHAS (3.65)        1.1.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (leitura por texto, como já era; nada de IA)
      Ao importar a declaração (TaxONE → Declarações), antes de salvar, uma lista de escolhas, cada uma com uma frase:
@@ -12,8 +12,23 @@
      [ ] Imposto a pagar → compromissos (cota única ou até 8 quotas, no último dia útil de cada mês, a partir de maio).
      [x] Conferir as deduções (saúde e educação) da declaração com os lançamentos marcados para IR no app: o que falta
          de um lado ou do outro.
+     1.1.0 (3.70, pedido do dono): a declaração preenche também o InvestifyONE e o BudgetONE, sempre como ESCOLHA:
+     [x] InvestifyONE: "Montar ou atualizar a carteira com os investimentos de 31/12/<ano>": os bens líquidos viram
+         posições no formato do modulos/importar-posicoes.js (ImportarPosicoes.preparar/importar): 03.01 com ticker e
+         QTDE → ação (no exterior: USD); 07.99 ETF → ETF; 04.02 → bond ou renda fixa (conta de investimento → caixa);
+         07.01 → fundo; 04.01 → poupança; 06.xx → caixa. Bem com 31/12 = 0 (vendido) não entra. O que já existe (o
+         mesmo bem da declaração, o mesmo ticker, o nome ou o CNPJ) vem desmarcado. Preço médio de ativo em dólar: o
+         R$ declarado ÷ qtd, convertido pelo dólar de hoje (a carteira guarda o preço médio na moeda do ativo); o valor
+         em R$ da declaração fica na nota. Imóvel, veículo, consórcio, previdência e participação (SCP) → sem liquidez.
+     "De quem é": a descrição com "CONJUGE" ou o nome de alguém do cadastro já vem com essa pessoa escolhida.
+     [x] Dependentes → Pessoas (só os que faltam; da casa; "dependente no IR").
+     [x] Fontes pagadoras → Rendas (desmarcada se já existir).
+     [ ] Pagamentos que parecem conta fixa (escola, plano de saúde) → compromisso em Custos, com o valor anual ÷ 12.
+     A linha "A declaração de <ano+1> já começa com N bens, N dependentes e N fontes desta" (Tax: baseProxima).
+     Tudo o que nasce daqui fica no cofre RESERVADO (escopo 'reservado'); a visão da casa não vê nada disso.
    API (window.DeclEscolhas)
      html(d) · ler() · aplicar(d, escolhas) → resumo · conferir(d) → {saude:{dec, app, so*}, educacao:{…}}
+     posicoes(d) → {lista (a do ImportarPosicoes, com bem e dono), conferir: [bens sem tipo]} · budget(d) · baseProxima(d)
    PONTOS QUE USA
      declaracao.escolhas (abrirDeclaracao, só quando é nova) · salvarDeclaracaoTela chama ler() e aplicar()
    ===================================================================== */
@@ -23,7 +38,57 @@
   function tr(a, b) { return pt() ? a : b; }
   function N(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
   var SEM_LIQUIDEZ = { '01': 'imovel', '02': 'outro', '99': 'outro' };
-  function tipoIliq(b) { if (/previd/i.test(b.desc)) return 'previdencia'; if (/cons[oó]rcio/i.test(b.desc)) return 'outro'; return SEM_LIQUIDEZ[b.grupo] || ''; }
+  function tipoIliq(b) { if (/previd/i.test(b.desc)) return 'previdencia'; if (/cons[oó]rcio/i.test(b.desc)) return 'outro'; if (b.grupo === '03' && b.codigo === '99') return 'empresa'; return SEM_LIQUIDEZ[b.grupo] || ''; }
+  function fora(b) { return /estados unidos|exterior|united states/i.test(b.local || '') || /\b(AVENUE|NOMAD|INTERACTIVE|SCHWAB|INTER US|WISE)\b/i.test(b.desc || ''); }
+  function num(t) { return Number(String(t).replace(/\./g, '').replace(',', '.')); }
+  function qtdDe(desc) { var m = /QTDE?\s*E?\s*:?\s*(\d+(?:\.\d{3})*(?:,\d+)?)/i.exec(String(desc).replace(/QTD\s+E\b/i, 'QTDE')); return m ? num(m[1]) : 0; }
+  function dolar() { return typeof Mercado !== 'undefined' && Mercado.cambio && Mercado.cambio.USD ? Number(Mercado.cambio.USD.p) || 0 : 0; }
+  function decRef(b) { return b.grupo + '.' + b.codigo + '|' + N(b.desc).slice(0, 40); }
+  /* o bem líquido da declaração no formato do importar-posicoes (null = não sabe o tipo: fica para conferir) */
+  function posicaoDe(b, d) {
+    var desc = String(b.desc || '').replace(/\s+/g, ' ').trim(), ex = fora(b), usd = dolar(), cod = b.grupo + '.' + b.codigo, v = b.depois;
+    var exe = d.exercicio || (d.anoCalendario + 1), data = (d.anoCalendario || exe - 1) + '-12-31';
+    var nota = tr('da declaração ', 'from the return ') + exe, emUsd = function (x) { return usd ? Math.round(x / usd * 100) / 100 : 0; };
+    var notaUsd = nota + tr(' · custo em R$ da declaração: ', ' · cost in R$ on the return: ') + fmt(v) + (usd ? tr(' (convertido pelo dólar de hoje)', ' (converted at today\'s dollar)') : '');
+    var primeira = desc.split(' ')[0] || '', q = qtdDe(desc);
+    if (cod === '03.01' || cod === '07.99') {
+      var m = cod === '07.99' ? (/\(ETF\s+([A-Z0-9.]{1,8})\)/i.exec(desc) || /\bETF\s+([A-Z][A-Z0-9.]{1,7})\b/.exec(desc)) : /^\S+\s+([A-Z][A-Z0-9.]{0,7})\s+-\s+/.exec(desc);
+      if (!m || !(q > 0)) return null;
+      var nome = desc.replace(/^\S+\s+/, '').replace(/\s*-?\s*QTDE?\s*E?\s*:?\s*[\d.,]+.*$/i, '').replace(/^[A-Z0-9.]+\s+-\s+/, '').replace(/^ETF\s*\([^)]*\)\s*-?\s*/i, '').trim();
+      if (ex) return { ticker: m[1], nome: nome, tipo: cod === '07.99' ? 'etf-us' : 'acao-us', inst: primeira, qtd: q, pm: emUsd(v / q), moeda: 'USD', data: data, notas: notaUsd };
+      return { ticker: m[1], nome: nome, tipo: cod === '07.99' ? 'etf-br' : 'acao-br', inst: primeira, qtd: q, pm: Math.round(v / q * 100) / 100, data: data, notas: nota };
+    }
+    var nomeLivre = desc.split(/\s+-\s+|[.;]/)[0].slice(0, 60);
+    if (b.grupo === '06' || (cod === '04.02' && /CONTA DE INVEST/i.test(desc)))
+      return ex ? { tipo: 'caixa', nome: nomeLivre, inst: primeira, moeda: 'USD', qtd: emUsd(v), pm: usd ? Math.round(usd * 10000) / 10000 : 0, data: data, notas: notaUsd }
+                : { tipo: 'caixa', nome: nomeLivre, inst: primeira, moeda: 'BRL', qtd: v, pm: 1, data: data, notas: nota };
+    if (cod === '04.02') return ex ? { tipo: 'bond-us', ticker: nomeLivre, nome: nomeLivre, inst: primeira, pm: emUsd(v), valorAtual: emUsd(v), data: data, notas: notaUsd }
+                                   : { tipo: 'renda-fixa', ticker: nomeLivre, nome: nomeLivre, inst: primeira, pm: v, ix: 'CDI', data: data, notas: nota };
+    if (cod === '04.01') return { tipo: 'renda-fixa', ticker: nomeLivre, nome: nomeLivre, inst: primeira, pm: v, ix: 'POUP', taxa: 0, data: data, notas: nota };
+    if (cod === '07.01') return { tipo: 'fundo', ticker: nomeLivre, nome: nomeLivre, inst: primeira, pm: v, valorAtual: v, data: data, notas: nota };
+    return null;
+  }
+  /* de quem é: o nome de alguém do cadastro na descrição; senão "CONJUGE" = a outra pessoa responsável da casa */
+  function donoDe(desc, d) {
+    if (!window.Pessoas) return '';
+    var t = ' ' + N(desc) + ' ', casa = Pessoas.ativas().filter(function (p) { return p.tipo === 'casa'; });
+    var achou = casa.find(function (p) { return [Pessoas.nomeCompleto(p), p.nome].concat(p.banco || []).some(function (n) { n = N(n); return n.length >= 3 && t.indexOf(' ' + n + ' ') >= 0; }); });
+    if (achou) return achou.id;
+    if (/CONJUGE|CONJUGUE|ESPOSA|MARIDO/i.test(N(desc).toUpperCase())) {
+      var tit = N(d.titular || ''), resp = casa.filter(function (p) { return p.papel === 'responsavel' && N(p.nome).split(' ')[0] !== tit; });
+      if (resp.length === 1) return resp[0].id;
+    }
+    return '';
+  }
+  function jaNaCarteira(it, b) {
+    var ref = decRef(b);
+    return (ST.posicoes || []).find(function (p) {
+      if (p.decRef && p.decRef === ref) return true;
+      if (b.cnpj && p.cnpj && p.cnpj === b.cnpj) return true;
+      if (it.tipo !== 'caixa' && it.ticker && N(p.ticker) === N(it.ticker) && p.tipo === it.tipo) return true;
+      return !!it.nome && N(p.nome) === N(it.nome) && N(p.inst) === N(it.inst);
+    }) || null;
+  }
   function nomeBem(b) { return String(b.desc || '').replace(/\s+/g, ' ').split(/[.,;]/)[0].slice(0, 60) || (tr('Bem ', 'Asset ') + b.grupo + '.' + b.codigo); }
   /* pagamentos da declaração: códigos de saúde (09–26) e educação (01–02) */
   function classe(cod) { var c = Number(cod); return c >= 1 && c <= 2 ? 'educacao' : (c >= 9 && c <= 26 ? 'saude' : ''); }
@@ -38,6 +103,44 @@
       }).filter(Boolean);
     },
     liquidos: function (d) { return (d.itensBens || []).filter(function (b) { return !tipoIliq(b) && b.depois > 0; }); },
+    /* 3.70: os bens líquidos → posições (prévia do ImportarPosicoes), com o bem e o dono ao lado */
+    posicoes: function (d) {
+      var liq = API.liquidos(d), itens = [], bensDe = [], conferir = [];
+      liq.forEach(function (b) { var it = posicaoDe(b, d); if (it) { itens.push(it); bensDe.push(b); } else conferir.push(b); });
+      if (!window.ImportarPosicoes || !itens.length) return { lista: [], conferir: conferir };
+      var r = ImportarPosicoes.preparar({ tipo: 'moneytrio-posicoes', versao: 1, itens: itens });
+      var lista = (r.lista || []).map(function (x, k) {
+        var b = bensDe[k], ja = x.item && !x.problema ? jaNaCarteira(x.item, b) : null;
+        if (ja && !x.jaExiste) x.jaExiste = (ja.ticker || ja.nome) + (ja.inst ? ' · ' + ja.inst : '');
+        x.marcado = !x.problema && !x.jaExiste;
+        if (x.item && !x.problema) { x.item.decRef = decRef(b); if (b.cnpj) x.item.cnpj = b.cnpj; x.item.escopo = 'reservado'; }
+        x.bem = b; x.dono = donoDe(b.desc, d);
+        return x;
+      });
+      return { lista: lista, conferir: conferir };
+    },
+    /* 3.70: o BudgetONE — dependentes, fontes pagadoras e pagamentos que parecem conta fixa */
+    budget: function (d) {
+      var deps = (d.dependentesNomes || []).map(function (n) { return { nome: n, ja: window.Pessoas ? !!Pessoas.achar(n) : false }; });
+      var rendas = typeof Recorrente !== 'undefined' ? Recorrente.todos().filter(function (r) { return r.grupo === 'RENDA'; }) : [];
+      var parecido = function (a, b) { var x = N(a).split(' ').filter(function (w) { return w.length > 2; }); var y = ' ' + N(b) + ' '; return x.length && x.filter(function (w) { return y.indexOf(' ' + w + ' ') >= 0; }).length >= Math.min(2, x.length); };
+      var fontes = (d.fontes || []).map(function (f) { return { nome: String(f.nome || '').trim(), valor: f.rendimentos || 0, ja: rendas.some(function (r) { return parecido(f.nome, r.nome) || parecido(f.nome, (r.sal || {}).fonte || ''); }) }; });
+      var porNome = {};
+      (d.pagamentos || []).forEach(function (p) {
+        var k = classe(p.codigo), plano = Number(p.codigo) === 26;
+        if (k !== 'educacao' && !plano) return;
+        var c = N(p.nome); porNome[c] = porNome[c] || { nome: p.nome, valor: 0, educacao: k === 'educacao', para: p.para };
+        porNome[c].valor += Number(p.valor) || 0;
+      });
+      var compromissos = Object.keys(porNome).map(function (c) { var x = porNome[c]; x.mes = Math.round(x.valor / 12 * 100) / 100;
+        x.ja = typeof Recorrente !== 'undefined' && Recorrente.todos().some(function (r) { return parecido(x.nome, r.nome); }); return x; });
+      return { deps: deps, fontes: fontes, compromissos: compromissos };
+    },
+    /* 3.70: a declaração salva é a base da próxima (bens pela situação de 31/12, dependentes e fontes) */
+    baseProxima: function (d) {
+      return { ano: (d.exercicio || (d.anoCalendario + 1)) + 1, bens: (d.itensBens || []).filter(function (b) { return b.depois > 0; }).length,
+        dependentes: (d.dependentesNomes || []).length || d.dependentesN || 0, fontes: (d.fontes || []).length };
+    },
     html: function (d) {
       if (!d) return '';
       var bens = API.bens(d), liq = API.liquidos(d), div = d.dividas || [], casa = casaOpcoes();
@@ -55,8 +158,37 @@
             '<span class="muted">' + esc(x.ja ? tr('(já existe: atualizar)', '(exists: update)') : tr('(novo: confirme)', '(new: confirm)')) + '</span></label>' + donos + dv + '</li>';
         }).join('') + '</ul>';
       }
-      if (liq.length) h += '<p class="tiny muted" style="margin:2px 0 8px">' + esc(tr('Contas e investimentos (' + liq.length + ') ficam para conferir no InvestifyONE: ', 'Accounts and investments (' + liq.length + ') to check in InvestifyONE: ') +
-        liq.slice(0, 6).map(function (b) { return nomeBem(b) + ' ' + fmt(b.depois); }).join(' · ')) + '</p>';
+      /* 3.70: InvestifyONE — a carteira com os investimentos de 31/12 */
+      var ps = API.posicoes(d), ano = d.anoCalendario || (exe - 1);
+      if (ps.lista.length) {
+        var nPos = ps.lista.filter(function (x) { return x.marcado; }).length;
+        h += '<label class="linha-check"><input type="checkbox" id="dePos"' + (nPos ? ' checked' : '') + '> <span><b>' + esc(tr('Montar ou atualizar a carteira com os investimentos de 31/12/', 'Build or update the portfolio with the investments of 31/12/') + ano) + '</b><br><span class="small muted">' +
+          esc(tr('No InvestifyONE. O que já existe vem desmarcado. Ação e ETF no exterior: o preço médio vai em dólar (o R$ da declaração fica na nota).', 'In InvestifyONE. What already exists comes unticked. Foreign shares and ETFs: the average price goes in dollars (the R$ on the return stays in the note).')) + '</span></span></label>';
+        h += '<div class="tbl-wrap" style="overflow-x:auto;max-width:100%"><table class="tbl imp-tbl dec-pos"><thead><tr><th></th><th>' + esc(tr('Investimento', 'Investment')) + '</th><th>' + esc(tr('Tipo', 'Type')) + '</th><th class="num">' + esc(tr('31/12', '31/12')) + '</th><th>' + esc(tr('De quem é', 'Whose')) + '</th></tr></thead><tbody>' +
+          ps.lista.map(function (x, k) {
+            var it = x.item || {}, nome = it.ticker && it.nome && it.ticker !== it.nome ? it.ticker + ' · ' + it.nome : (it.nome || it.ticker || '');
+            var qt = it.qtd && it.tipo !== 'caixa' && it.qtd !== 1 ? ' <span class="t-sub">' + esc(String(it.qtd).replace('.', ',')) + tr(' un.', ' units') + '</span>' : '';
+            var aviso = x.problema ? '<div class="t-sub" style="color:var(--down)">' + esc(x.problema) + '</div>' : x.jaExiste ? '<div class="t-sub" style="color:var(--warn)">' + esc(tr('já existe: ', 'already there: ') + x.jaExiste + tr(' — atualizar?', ' — update?')) + '</div>' : '';
+            var donos = '<select class="de-pos-dono" data-k="' + k + '" aria-label="' + esc(tr('De quem é', 'Whose')) + '"><option value="">' + esc(tr('titular', 'holder')) + '</option>' + casa.map(function (p) { return '<option value="' + esc(p.id) + '"' + (x.dono === p.id ? ' selected' : '') + '>' + esc(Pessoas.rotulo(p)) + '</option>'; }).join('') + '</select>';
+            return '<tr><td><input type="checkbox" class="de-pos" data-k="' + k + '"' + (x.marcado ? ' checked' : '') + (x.problema ? ' disabled' : '') + '></td><td><span class="t-main">' + esc(nome) + '</span>' + qt + aviso + '</td>' +
+              '<td>' + esc((TIPOS[it.tipo] || {}).curto || it.tipo || '') + '</td><td class="num">' + fmt(x.bem.depois) + '</td><td>' + donos + '</td></tr>';
+          }).join('') + '</tbody></table></div>';
+      }
+      if (ps.conferir.length) h += '<p class="tiny muted" style="margin:2px 0 8px">' + esc(tr('Para conferir à mão (' + ps.conferir.length + '): ', 'To check by hand (' + ps.conferir.length + '): ') +
+        ps.conferir.slice(0, 6).map(function (b) { return nomeBem(b) + ' ' + fmt(b.depois); }).join(' · ')) + '</p>';
+      /* 3.70: BudgetONE — dependentes, fontes e contas fixas */
+      var bg = API.budget(d), dNovos = bg.deps.filter(function (x) { return !x.ja; });
+      if (bg.deps.length) h += '<label class="linha-check"><input type="checkbox" id="deDeps"' + (dNovos.length ? ' checked' : ' disabled') + '> <span><b>' + esc(tr('Dependentes → Pessoas', 'Dependants → People')) + '</b> <span class="small muted">' +
+        esc(dNovos.length ? tr('cadastrar ' + dNovos.map(function (x) { return x.nome; }).join(', ') + ' (da casa, dependente no IR)', 'add ' + dNovos.map(function (x) { return x.nome; }).join(', ')) : tr('todos já estão no cadastro', 'all already registered')) + '</span></span></label>';
+      if (bg.fontes.length) h += '<div class="dec-sub"><b class="small">' + esc(tr('Fontes pagadoras → Rendas', 'Paying sources → Income')) + '</b>' + bg.fontes.map(function (f, k) {
+        return '<label class="linha-check small"><input type="checkbox" class="de-fonte" data-k="' + k + '"' + (f.ja ? '' : ' checked') + '> ' + esc(f.nome) + ' · ' + fmt(f.valor) + tr(' no ano', ' in the year') +
+          (f.ja ? ' <span class="muted">' + esc(tr('(já existe)', '(already there)')) + '</span>' : '') + '</label>'; }).join('') + '</div>';
+      if (bg.compromissos.length) h += '<div class="dec-sub"><b class="small">' + esc(tr('Contas fixas → Custos (sugestão)', 'Fixed bills → Costs (suggestion)')) + '</b>' + bg.compromissos.map(function (c, k) {
+        return '<label class="linha-check small"><input type="checkbox" class="de-comp" data-k="' + k + '"> ' + esc(c.nome) + ' · ' + fmt(c.mes) + tr('/mês (o ano ÷ 12)', '/month (year ÷ 12)') +
+          (c.ja ? ' <span class="muted">' + esc(tr('(parece já existir)', '(seems to exist)')) + '</span>' : '') + '</label>'; }).join('') + '</div>';
+      var bp = API.baseProxima(d);
+      h += '<p class="tiny muted dec-base">' + esc(tr('A declaração de ' + bp.ano + ' já começa com ' + bp.bens + ' bens, ' + bp.dependentes + ' dependentes e ' + bp.fontes + ' fontes desta.',
+        'The ' + bp.ano + ' return already starts with ' + bp.bens + ' assets, ' + bp.dependentes + ' dependants and ' + bp.fontes + ' sources from this one.')) + '</p>';
       h += '<label class="linha-check"><input type="checkbox" id="deRest"' + (d.restituir > 0 ? '' : ' disabled') + '> <span><b>' + esc(tr('Lançar a restituição como renda prevista', 'Add the refund as expected income')) + (d.restituir > 0 ? ' · ' + fmt(d.restituir) : '') + '</b><br><span class="small muted">' +
         esc(tr('Desmarcado de propósito: pode cair na malha, atrasar ou vir diferente. Marcando, entra na data do lote, a confirmar quando cair.', 'Off on purpose: it may be held, delayed or differ. If ticked, it goes in on the batch date, to confirm when it lands.')) + '</span>' +
         ' <input type="date" id="deRestData" value="' + exe + '-07-31" aria-label="' + esc(tr('data do lote', 'batch date')) + '"></span></label>';
@@ -77,7 +209,12 @@
         bens.push({ i: Number(i), dono: dn ? dn.value : '', divida: dv && dv.value !== '' ? Number(dv.value) : null });
       });
       return { bens: q('#deBens') && q('#deBens').checked ? bens : [], rest: !!(q('#deRest') && q('#deRest').checked), restData: (q('#deRestData') || {}).value || '',
-        pagar: !!(q('#dePagar') && q('#dePagar').checked), quotas: Number((q('#deQuotas') || {}).value) || 1, conf: !!(q('#deConf') && q('#deConf').checked) };
+        pagar: !!(q('#dePagar') && q('#dePagar').checked), quotas: Number((q('#deQuotas') || {}).value) || 1, conf: !!(q('#deConf') && q('#deConf').checked),
+        /* 3.70 */
+        pos: q('#dePos') && q('#dePos').checked ? Array.prototype.map.call(document.querySelectorAll('.de-pos'), function (c) { var dn = q('.de-pos-dono[data-k="' + c.dataset.k + '"]'); return { k: Number(c.dataset.k), ok: c.checked, dono: dn ? dn.value : '' }; }) : null,
+        deps: !!(q('#deDeps') && q('#deDeps').checked),
+        fontes: Array.prototype.filter.call(document.querySelectorAll('.de-fonte'), function (c) { return c.checked; }).map(function (c) { return Number(c.dataset.k); }),
+        comps: Array.prototype.filter.call(document.querySelectorAll('.de-comp'), function (c) { return c.checked; }).map(function (c) { return Number(c.dataset.k); }) };
     },
     aplicar: function (d, e) {
       if (!e) return null;
@@ -107,6 +244,31 @@
         r.quotas = n;
       }
       if (e.conf) r.conf = API.conferir(d);
+      /* 3.70: a carteira, as pessoas, as rendas e os compromissos (tudo reservado) */
+      r.pos = 0; r.deps = 0; r.fontes = 0; r.comps = 0;
+      if (e.pos && window.ImportarPosicoes) {
+        var ps = API.posicoes(d).lista;
+        e.pos.forEach(function (s) { var x = ps[s.k]; if (!x) return; x.marcado = s.ok && !x.problema; if (x.marcado && x.item) {
+          var p = s.dono && window.Pessoas ? Pessoas.porId(s.dono) : null; if (p) { x.item.dono = Pessoas.rotulo(p); x.item.donoId = p.id; } } });
+        /* "já existe: atualizar?" marcado: atualiza a posição que existe (valor de 31/12), não cria outra */
+        ps.forEach(function (x) { if (!x.marcado || !x.jaExiste || !x.item) return; var ja = jaNaCarteira(x.item, x.bem); if (!ja) return;
+          ['qtd', 'pm', 'data', 'notas', 'decRef', 'cnpj', 'dono', 'donoId'].forEach(function (k) { if (x.item[k] != null) ja[k] = x.item[k]; });
+          if (x.item.valorManual) { ja.valorManual = x.item.valorManual; ja.valorManualData = x.item.valorManualData; }
+          x.marcado = false; r.pos++; });
+        r.pos += ImportarPosicoes.importar(ps).liquidas;
+      }
+      var bg = API.budget(d), ano = d.anoCalendario || (exe - 1);
+      if (e.deps && window.Pessoas) bg.deps.forEach(function (x) { if (x.ja || Pessoas.achar(x.nome)) return; Pessoas.salvar({ tipo: 'casa', papel: 'dependente', nome: x.nome }).irDependente = true; r.deps++; });
+      if (typeof Recorrente !== 'undefined') {
+        (e.fontes || []).forEach(function (k) { var f = bg.fontes[k]; if (!f || !(f.valor > 0)) return;
+          Recorrente.add({ nome: f.nome, valor: Math.round(f.valor / 12 * 100) / 100, grupo: 'RENDA', sub: tr('Renda', 'Income'), regra: 'dia', dia: 5, desde: exe + '-01-01',
+            renda: { tipo: 'outro' }, escopo: 'reservado', obs: tr('da declaração ', 'from the return ') + exe + tr(': ', ': ') + fmt(f.valor) + tr(' em ', ' in ') + ano });
+          r.fontes++; });
+        (e.comps || []).forEach(function (k) { var c = bg.compromissos[k]; if (!c) return;
+          Recorrente.add({ nome: c.nome, valor: c.mes, grupo: c.educacao ? 'DEPENDENTES' : 'SAUDE', sub: c.educacao ? tr('Escola', 'School') : tr('Plano de saúde', 'Health plan'), regra: 'dia', dia: 10,
+            desde: exe + '-01-01', irpf: true, varia: true, escopo: 'reservado', obs: tr('valor de referência: o ano de ', 'reference: ') + ano + tr(' na declaração ÷ 12', ' on the return ÷ 12') });
+          r.comps++; });
+      }
       return r;
     },
     conferir: function (d) {
@@ -141,6 +303,6 @@
     }
   };
 
-  MoneyModulos.registrar({ id: 'declaracao-escolhas', versao: '1.0.0', pontos: { 'declaracao.escolhas': function (ctx) { return API.html(ctx.d); } } });
+  MoneyModulos.registrar({ id: 'declaracao-escolhas', versao: '1.1.0', pontos: { 'declaracao.escolhas': function (ctx) { return API.html(ctx.d); } } });
   window.DeclEscolhas = API;
 })();

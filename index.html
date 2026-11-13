@@ -633,7 +633,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.69"></script>
+<script src="textos/frases-en.js?v=3.70"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7596,7 +7596,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.69"></script>
+<script src="textos/mudancas.js?v=3.70"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -21370,7 +21370,7 @@ const Tax = {
       if(/^TOTAL\b/.test(x) || /^(DIVIDAS|DOACOES|DEMONSTRATIVO|RESUMO)/i.test(x)){ emBens = false; bem = null; continue; }
       const m = (comNumero ? RX_BEM_N : RX_BEM).exec(linhas[j]);
       if(m){
-        bem = {grupo: m[1], codigo: m[2], desc: this.semCpf(m[3]).trim(), antes: vals(m[4])[0], depois: vals(m[5])[0], local: '', cnpj: '', cont: 0};
+        bem = {grupo: m[1], codigo: m[2], desc: this.semCpf(m[3]).trim(), antes: vals(m[4])[0], depois: vals(m[5])[0], local: '', cnpj: ''};
         d.itensBens.push(bem);
         continue;
       }
@@ -21379,9 +21379,12 @@ const Tax = {
       if(loc && !bem.fechou){ bem.local = loc[2].trim(); bem.fechou = true; continue; }
       const cn = /^CNPJ:\s*(\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2})/i.exec(x);
       if(cn){ bem.cnpj = cn[1]; continue; }
-      if(!bem.fechou && bem.cont < 3){ bem.desc = (bem.desc + ' ' + this.semCpf(linhas[j])).slice(0, 220); bem.cont++; }
+      /* 3.70: a discriminação inteira (cotas de consórcio, saldo devedor por ano, valor do crédito), até a linha da
+         localização; antes cortava na 4ª linha. Depois da localização (endereço, IPTU, matrícula) nada entra */
+      if(/^Bem com usufruto/i.test(x)){ bem.fechou = true; continue; }
+      if(!bem.fechou) bem.desc = (bem.desc + ' ' + this.semCpf(linhas[j])).slice(0, 1500);
     }
-    d.itensBens.forEach(b => { delete b.fechou; delete b.cont; });
+    d.itensBens.forEach(b => { delete b.fechou; });
 
     /* ---- dívidas e ônus reais: "CC discriminação … 31/12 ant  31/12 ano  pago no ano" ---- */
     const RX_DIV = new RegExp('^(\\d{2})\\s+(.*?)\\s*' + V2 + '\\s+' + V2 + '(?:\\s+' + V2 + ')?$');
@@ -22392,9 +22395,16 @@ function salvarDeclaracaoTela(){
 async function importarDeclaracao(arquivos){
   const pt = ptT();
   const lista = Array.from(arquivos && arquivos.length != null ? arquivos : [arquivos]);
-  toast(pt ? 'Lendo ' + (lista.length > 1 ? lista.length + ' arquivos…' : 'a declaração…') : 'Reading…');
+  /* 3.70: a leitura (até 25 páginas) roda no Fundo: pílula de andamento, tela acesa, aviso antes de fechar; no fim, a
+     pílula leva de volta à tela da declaração, onde quer que a pessoa esteja */
+  if(Fundo.ativa('declaracao')){ toast(pt ? 'Ainda estou lendo a declaração anterior. Espere terminar.' : 'Still reading the previous return.', 'warn'); return; }
+  let pronta = null;
+  const mostrar = () => { if(!pronta) return; abrirApp('tax'); irPara('t-declaracoes'); abrirDeclaracao(pronta, true); };
+  Fundo.comecar({id: 'declaracao', titulo: pt ? 'Lendo a declaração…' : 'Reading the return…', aoAbrir: mostrar});
   const lidas = [];
-  for(const arq of lista){
+  for(let k = 0; k < lista.length; k++){
+    const arq = lista[k];
+    Fundo.passo('declaracao', (pt ? 'Lendo ' : 'Reading ') + arq.name + (lista.length > 1 ? ' (' + (k + 1) + '/' + lista.length + ')' : '') + '…', k / lista.length);
     try{
       let texto = '';
       if(/^image\//.test(arq.type)) texto = await Ocr.texto(arq, () => {});
@@ -22403,10 +22413,13 @@ async function importarDeclaracao(arquivos){
       lidas.push(Tax.lerDeclaracao(texto));
     }catch(e){ toast((pt ? 'Não consegui ler ' : 'Could not read ') + arq.name + ': ' + (e.message || e), 'warn'); }
   }
-  if(!lidas.length) return;
+  if(!lidas.length){ Fundo.limpar('declaracao'); return; }
   /* a mais completa manda; as outras completam o que faltar */
   lidas.sort((a, b) => (b.pagamentos.length + b.fontes.length + b.achados) - (a.pagamentos.length + a.fontes.length + a.achados));
-  abrirDeclaracao(Tax.juntarDeclaracoes(lidas), true);
+  pronta = Tax.juntarDeclaracoes(lidas);
+  Fundo.terminar('declaracao', pt ? 'Declaração lida' : 'Return read');
+  /* se a pessoa ficou na tela do TaxONE, já abre; senão a pílula leva até lá */
+  if(ST.appAtual === 'tax'){ Fundo.limpar('declaracao'); abrirDeclaracao(pronta, true); }
 }
 
 /* ---------- Restituição e processos ---------- */
@@ -29930,7 +29943,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/cartoes.js?v=1.0.0"></script>
 <script src="modulos/cartao-foto.js?v=1.0.0"></script>
 <script src="modulos/contraparte.js?v=1.0.0"></script>
-<script src="modulos/declaracao-escolhas.js?v=1.0.0"></script>
+<script src="modulos/declaracao-escolhas.js?v=1.1.0"></script>
 <script src="modulos/origem.js?v=1.0.1"></script>
 <script src="modulos/apelido.js?v=1.1.0"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
