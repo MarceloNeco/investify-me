@@ -2672,3 +2672,18 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .cm-grupo > summary{display:flex; justify-content:space-between; gap:10px; cursor:pointer; padding:6px 0}
 .cfs-item{padding:8px 0; border-top:1px solid var(--line)}
 .cfs-item:first-child{border-top:0}
+
+/* 3.76: "+ Adicionar" de Contas fixas — cada jeito de cadastrar numa linha explicada */
+.cf-add{list-style:none; margin:0; padding:0}
+.cf-add li{margin:0 0 6px}
+.cf-add-op{display:flex; gap:10px; align-items:flex-start; width:100%; text-align:left; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:transparent; color:inherit; cursor:pointer; font:inherit}
+.cf-add-op:hover, .cf-add-op:focus-visible{border-color:var(--accent)}
+.cf-add-ico{font-size:1.3em; line-height:1}
+.cf-add-op .t-sub{display:block}
+.cf-sem-renda .btn{margin-top:0}
+
+/* 3.76: Contas fixas → Gastos planejados */
+.pl-aj{display:flex; flex-direction:column; gap:2px; width:120px}
+.pl-aj input{width:100%}
+.pl-ajustes summary{cursor:pointer}
+.pl-vazio .btn{margin-top:6px}

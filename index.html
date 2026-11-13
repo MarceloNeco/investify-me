@@ -322,7 +322,7 @@ const TEXTOS = {
   'nav.custos.sub':    {pt:'e gastos recorrentes', en:'and recurring expenses'},
   'nav.renda':         {pt:'Renda',             en:'Income'},
   'nav.desloc':        {pt:'Deslocamentos',     en:'Commutes'},
-  'nav.futuro':        {pt:'Futuro',            en:'Forecast'},
+  'nav.futuro':        {pt:'Projeção',          en:'Projection'},   /* 3.76: antes "Futuro" */
   'nav.precos':        {pt:'Preços',            en:'Prices'},
   'nav.agenda':        {pt:'Agenda',            en:'Calendar'},
   'nav.mais':          {pt:'Mais',              en:'More'},
@@ -9696,9 +9696,10 @@ const ABAS = {
     {v:'b-painel',   ico:'📊', chave:'nav.painel',      mobile:true,  fixa:true},
     {v:'b-lanc',     ico:'🧾', chave:'nav.lancamentos', mobile:true},
     {v:'b-custos',   ico:'📌', chave:'nav.custos',      mobile:true, sub:'nav.custos.sub'},
-    {v:'b-fluxo',    ico:'📈', chave:'nav.fluxo',       mobile:true},
     {v:'b-renda',    ico:'💰', chave:'nav.renda',       mobile:false},
-    {v:'b-desloc',   ico:'🗺️', chave:'nav.desloc',      mobile:false},
+    {v:'b-fluxo',    ico:'📈', chave:'nav.fluxo',       mobile:true},
+    /* 3.76: "Deslocamentos" saiu do menu (virou Contas fixas → Gastos planejados → Carro e deslocamentos; o id b-desloc
+       continua e leva para lá); "Futuro" passou a se chamar "Projeção" (o id b-futuro continua) */
     {v:'b-futuro',   ico:'🔮', chave:'nav.futuro',      mobile:false},
     {v:'b-precos',   ico:'🏷️', chave:'nav.precos',      mobile:false},
     {v:'config',     ico:'⚙️', chave:'nav.config',      mobile:false}
@@ -10067,7 +10068,7 @@ const B_VAZIO = {
   'b-renda':  {h:'Renda',       ico:'💰', t:'Cadastre o que entra',
                p:'Salário, benefícios, aluguel recebido, freelance: é daqui que o app sabe quanto sobra no mês.',
                acoes:[['sal-cad-novo','💰 Cadastrar salário',true],['renda-nova','➕ Nova renda'],['ben-novo','🛒 Benefício']]},
-  'b-futuro': {h:'Futuro',      ico:'🔮', t:'O futuro se desenha com o histórico',
+  'b-futuro': {h:'Projeção',    ico:'🔮', t:'O futuro se desenha com o histórico',
                p:'Com alguns meses de lançamentos o app projeta os próximos. Comece por uma foto, pela planilha ou na mão.'}
 };
 const B_VAZIO_ACOES = [['b-escanear','📷 Ler comprovante',true],['wz-abrir','✨ Começar pelo básico'],['b-importar','📄 Importar arquivo'],['b-novo','+ Novo lançamento']];
@@ -17290,6 +17291,8 @@ function linhaOcorrencia(o, op){
    foi pontual. E o calendário do mês por cima de tudo.
    ========================================================= */
 
+let custosSecao = 'contas';       /* 3.76: contas | planejados */
+let planejadosParte = '';        /* 3.76: carro | viagens | parcelados | manutencao ('' = a primeira) */
 let custosAba = 'recorrentes';    /* todos | recorrentes | pontuais | calendario | revisar */
 
 function viewBCustos(){
@@ -17297,33 +17300,42 @@ function viewBCustos(){
 
   const dec = Recorrente.porMes();
   const atrasados = Recorrente.atrasados();
-  const paraRevisar = Gasto.todos().filter(g => g.revisar);
+  const pt = I18n.atual === 'pt';
+  /* 3.76: "Revisar" e "Todos" saíram daqui: o que é para conferir vai para o 📥 */
+  if(custosAba === 'todos' || custosAba === 'revisar') custosAba = 'recorrentes';
 
   const ABAS_C = [
-    {id:'todos',       ico:'📋', nome: I18n.atual === 'pt' ? 'Todos' : 'All'},
-    {id:'recorrentes', ico:'🔁', nome: t('per.recorrentes'), n: Recorrente.ativos().length},
+    {id:'recorrentes', ico:'🔁', nome: pt ? 'Todas as contas fixas' : 'All fixed bills', n: Recorrente.ativos().length},
     {id:'pontuais',    ico:'📍', nome: t('per.pontuais')},
-    {id:'calendario',  ico:'📅', nome: t('nav.agenda')},
-    {id:'revisar',     ico:'🚩', nome: t('cus.revisar'), n: paraRevisar.length + atrasados.length}
+    {id:'calendario',  ico:'📅', nome: t('nav.agenda')}
   ];
 
+  /* 3.76: um botão só, "+ Adicionar", com as opções explicadas (o menu junta as do app e as dos módulos) */
   let h = '<div class="card-head"><h1>' + esc(t('nav.custos')) + '</h1>' +
-    '<div class="head-acoes">' +
-      '<button class="btn sm" data-acao="wz-abrir">✨ ' +
-        (I18n.atual === 'pt' ? 'Passo a passo' : 'Step by step') + '</button>' +
-      '<button class="btn sm" data-acao="rec-importar">⬆ ' +
-        (I18n.atual === 'pt' ? 'Importar compromissos' : 'Import commitments') + '</button>' +
-      '<button class="btn primary sm" data-acao="rec-novo">+ ' +
-        (I18n.atual === 'pt' ? 'Novo compromisso' : 'New commitment') + '</button>' +
-    '</div></div>';
+    '<div class="head-acoes"><button class="btn primary sm" data-acao="cf-adicionar">+ ' + (pt ? 'Adicionar' : 'Add') + '</button></div></div>';
+  /* 3.76: duas partes — as contas que se repetem e os gastos que dá para prever (viagens, carro, parcelados) */
+  const sec = (s, rot) => '<button type="button" class="btn sm' + (custosSecao === s ? ' primary' : '') + '" data-acao="cf-secao" data-v="' + s + '" aria-pressed="' + (custosSecao === s) + '">' + rot + '</button>';
+  h += '<div class="seg cf-secoes" role="group" style="margin:0 0 12px">' + sec('contas', '📌 ' + esc(pt ? 'Contas fixas' : 'Fixed bills')) + sec('planejados', '🧭 ' + esc(pt ? 'Gastos planejados' : 'Planned expenses')) + '</div>';
+  if(custosSecao === 'planejados')
+    return h + (window.MoneyModulos ? MoneyModulos.html('custos.planejados', {parte: planejadosParte}) : '');
 
-  h += '<div class="kpis kpis-3">' +
-    kpiB(I18n.atual === 'pt' ? 'Entra todo mês' : 'In every month', fmt(dec.entra), null, null, 'up') +
-    kpiB(I18n.atual === 'pt' ? 'Sai todo mês' : 'Out every month', fmt(dec.sai), null, null, 'down') +
-    kpiB(t('fin.sobrou'), fmt(dec.sobra), null,
-         I18n.atual === 'pt' ? 'antes do gasto variável' : 'before variable spending',
-         dec.sobra >= 0 ? 'up' : 'down') +
-    '</div>';
+  /* sem renda cadastrada, "Sobrou" seria só o gasto com sinal trocado: no lugar, o convite para cadastrar a renda */
+  const temRenda = dec.entra > 0 || Recorrente.ativos().some(r => (GRUPOS[r.grupo] || {}).fluxo === 'entrada');
+  if(temRenda)
+    h += '<div class="kpis kpis-3">' +
+      kpiB(pt ? 'Entra todo mês' : 'In every month', fmt(dec.entra), null, pt ? 'a renda que se repete' : 'recurring income', 'up') +
+      kpiB(pt ? 'Sai todo mês' : 'Out every month', fmt(dec.sai), null, null, 'down') +
+      kpiB(t('fin.sobrou'), fmt(dec.sobra), null,
+           pt ? 'antes do gasto variável' : 'before variable spending',
+           dec.sobra >= 0 ? 'up' : 'down') +
+      '</div>';
+  else
+    h += '<div class="kpis kpis-2">' +
+      kpiB(pt ? 'Sai todo mês' : 'Out every month', fmt(dec.sai), null, null, 'down') +
+      '<div class="kpi cf-sem-renda"><div class="lbl">' + esc(pt ? 'Quanto sobra' : 'What is left') + '</div>' +
+        '<p class="small" style="margin:6px 0 8px">' + esc(pt ? 'Cadastre as suas rendas para ver quanto sobra.' : 'Add your income to see what is left.') + '</p>' +
+        '<button class="btn sm" data-irpara="b-renda">💰 ' + esc(pt ? 'Cadastrar renda' : 'Add income') + '</button></div>' +
+      '</div>';
 
   h += (window.MoneyModulos ? MoneyModulos.html('custos.contas', {}) : '');   /* 3.75: o mês com o status de cada conta (modulos/contas-mes.js) */
   h += (window.MoneyModulos ? MoneyModulos.html('custos.topo', {}) : '');
@@ -17333,42 +17345,50 @@ function viewBCustos(){
       ? 'Em ' + hojeISO().slice(0,4) + ' você economizou <b>' + fmt(econ.total) + '</b> com pontos, cashback e créditos (' + econ.n + (econ.n === 1 ? ' vez' : ' vezes') + ').'
       : 'In ' + hojeISO().slice(0,4) + ' you saved <b>' + fmt(econ.total) + '</b> with points, cashback and credits (' + econ.n + ' times).') + '</p>';
 
-  if(typeof Desloc !== 'undefined' && Flags.ligada('deslocamentos')){
-    const rd = Desloc.resumo(hojeISO());
-    h += '<button class="card card-link" data-irpara="b-desloc"><span>🗺️ ' + (I18n.atual === 'pt' ? 'Deslocamentos' : 'Commutes') + '</span>' +
-      '<span class="small muted">' + (Desloc.trajetos().length ? fmt(rd.total) + (I18n.atual === 'pt' ? ' por mês estimado em combustível, pedágio e transporte' : ' per month estimated')
-                                                              : (I18n.atual === 'pt' ? 'quanto custa ir e vir: cadastre lugares e trajetos' : 'what going back and forth costs')) + ' ›</span></button>';
-  }
   if(atrasados.length)
     h += '<div class="aviso-box"><b>' + atrasados.length + ' ' +
       (I18n.atual === 'pt' ? 'vencimentos passaram sem você marcar nada' : 'due dates went by unmarked') +
       '</b><p class="small" style="margin:6px 0 0">' +
       (I18n.atual === 'pt'
-        ? 'Pode ser que já tenham sido pagos e ninguém avisou o app. Veja em Revisar.'
-        : 'They may already be paid and nobody told the app. Check the Review tab.') + '</p></div>';
+        ? 'Pode ser que já tenham sido pagos e ninguém avisou o app. Veja no 📥 (Contas atrasadas).'
+        : 'They may already be paid and nobody told the app. Check 📥 (Overdue bills).') + '</p></div>';
 
   h += '<div class="abas-c">' + ABAS_C.map(a =>
     '<button class="aba-c' + (custosAba === a.id ? ' on' : '') + '" data-custaba="' + a.id + '">' +
     a.ico + ' ' + esc(a.nome) + (a.n ? ' <b>' + a.n + '</b>' : '') + '</button>').join('') + '</div>';
 
   /* uma linha dizendo o que é a aba aberta */
-  const pt = I18n.atual === 'pt';
   const EXPLICA_C = {
-    todos:       pt ? 'Tudo junto: os compromissos que se repetem e os gastos pontuais mais recentes.' : 'Everything together: recurring commitments and the latest one-off costs.',
     recorrentes: pt ? 'O que se repete (aluguel, escola, assinaturas), com o dia em que cai e o período em que vale.' : 'What repeats (rent, school, subscriptions), with the day it falls and the period it applies.',
     pontuais:    pt ? 'Gastos que aconteceram uma vez e acabaram.' : 'Costs that happened once and ended.',
-    calendario:  pt ? 'O mês no calendário: o que entra e o que sai em cada dia.' : 'The month on a calendar: what comes in and goes out each day.',
-    revisar:     pt ? 'Lançamentos marcados para conferir e vencimentos que passaram sem ninguém marcar.' : 'Entries flagged to check and due dates that went by unmarked.'
+    calendario:  pt ? 'O mês no calendário: o que entra e o que sai em cada dia.' : 'The month on a calendar: what comes in and goes out each day.'
   };
   h += '<p class="small muted aba-explica" style="margin:-8px 0 14px">' + esc(EXPLICA_C[custosAba] || EXPLICA_C.recorrentes) + '</p>';
 
-  if(custosAba === 'todos')           h += blocoTodos();
-  else if(custosAba === 'calendario') h += blocoCalendario();
+  if(custosAba === 'calendario')      h += blocoCalendario();
   else if(custosAba === 'pontuais')   h += blocoPontuais();
-  else if(custosAba === 'revisar')    h += blocoRevisar(paraRevisar, atrasados);
   else                                h += blocoRecorrentes();
 
   return h;
+}
+
+/* 3.76: "+ Adicionar" em Contas fixas — um menu com cada jeito de cadastrar, explicado numa linha.
+   Os módulos entram pelo ponto custos.adicionar: [{ico, pt, en, dpt, den, acao | label}] (label = id de um <input type=file>). */
+function abrirAdicionarConta(){
+  const pt = I18n.atual !== 'en';
+  const base = [
+    {ico:'📌', pt:'Nova conta fixa', en:'New fixed bill', dpt:'Digite uma conta que se repete: aluguel, escola, condomínio.', den:'Type a bill that repeats: rent, school, condo fee.', acao:'rec-novo'},
+    {ico:'✨', pt:'Passo a passo', en:'Step by step', dpt:'O app pergunta o que você paga todo mês e cadastra tudo de uma vez.', den:'The app asks what you pay every month and adds it all at once.', acao:'wz-abrir'},
+    {ico:'⬆', pt:'Importar de uma planilha', en:'Import from a spreadsheet', dpt:'Traz as contas de uma planilha (Excel ou CSV) que você já tem.', den:'Brings the bills from a spreadsheet (Excel or CSV) you already have.', acao:'rec-importar'}
+  ];
+  const itens = base.concat(window.MoneyModulos ? MoneyModulos.itens('custos.adicionar', {}) : []);
+  const h = '<ul class="cf-add">' + itens.map(x =>
+    '<li>' + (x.label ? '<label class="cf-add-op" for="' + esc(x.label) + '" data-close="genModal">' : '<button type="button" class="cf-add-op" data-acao="' + esc(x.acao) + '" data-close="genModal">') +
+      '<span class="cf-add-ico">' + x.ico + '</span><span><b>' + esc(pt ? x.pt : x.en) + '</b><span class="t-sub">' + esc(pt ? x.dpt : x.den) + '</span></span>' +
+    (x.label ? '</label>' : '</button>') + '</li>').join('') + '</ul>';
+  $('#genTitle').textContent = pt ? 'Adicionar' : 'Add';
+  $('#genBody').innerHTML = Verter.html(h);
+  abrir('genModal');
 }
 
 /* ---------- o calendário do mês ---------- */
@@ -18510,9 +18530,9 @@ const AJUDA_TELAS = {
          f:['The app finds each place on the map from its address.','Two people in the same car count once.','Post the estimate as a fixed cost so it counts in the cost of living.']}
   },
   'b-futuro': {
-    pt: {t:'Futuro', o:'Quanto a vida vai custar daqui a alguns anos, com a inflação de cada grupo (IPCA por grupo).',
+    pt: {t:'Projeção', o:'Quanto a vida vai custar daqui a alguns anos, com a inflação de cada grupo (IPCA por grupo, buscado sozinho).',
          f:['Saúde e educação sobem mais que a média; transporte e comunicação, menos.','Mostra quanto a renda precisa crescer só para ficar no lugar.']},
-    en: {t:'Future', o:'What life will cost a few years ahead, using each group’s own inflation (IPCA by group).',
+    en: {t:'Projection', o:'What life will cost a few years ahead, using each group’s own inflation (IPCA by group, fetched on its own).',
          f:['Health and education rise faster than average; transport and communication, slower.','Shows how much income must grow just to stand still.']}
   },
   'b-precos': {
@@ -27574,6 +27594,8 @@ function toast(msg, tipo){
 }
 
 function irPara(v){
+  /* 3.76: links antigos — Deslocamentos virou uma parte de Contas fixas (Gastos planejados → Carro e deslocamentos) */
+  if(v === 'b-desloc'){ custosSecao = 'planejados'; planejadosParte = 'carro'; v = 'b-custos'; }
   if(v !== 'config' && appsVisiveis().indexOf(appDaView(v)) < 0) v = 'b-painel';   /* 3.66: visão da casa */
   /* clicou numa aba do outro app: troca de app junto */
   const dono = appDaView(v);
@@ -29037,6 +29059,8 @@ function ligarEventos(){
         break;
       }
       case 'rec-novo': abrirRecorrente(null); break;
+      case 'cf-adicionar': abrirAdicionarConta(); break;   /* 3.76: o menu único de Contas fixas */
+      case 'cf-secao': custosSecao = d.v === 'planejados' ? 'planejados' : 'contas'; if(d.parte) planejadosParte = d.parte; render(); break;
       case 'rec-importar': ImportRec.escolher(); break;
       case 'rec-importar-ok': ImportRec.importar(); break;
       case 'rec-detectar-ok': {
@@ -29964,9 +29988,9 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/patrimonio-iliquido.js?v=1.1.1"></script>
 <script src="modulos/fgts.js?v=1.0.0"></script>
 <script src="modulos/importar-posicoes.js?v=1.0.0"></script>
-<script src="modulos/assinaturas.js?v=1.1.0"></script>
-<script src="modulos/compromisso-de.js?v=1.7.0"></script>
-<script src="modulos/previsto.js?v=1.0.0"></script>
+<script src="modulos/assinaturas.js?v=1.1.1"></script>
+<script src="modulos/compromisso-de.js?v=1.7.1"></script>
+<script src="modulos/previsto.js?v=1.0.1"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
 <script src="modulos/calendario-menu.js?v=1.2.0"></script>
 <script src="modulos/pessoas.js?v=1.3.0"></script>
@@ -29983,16 +30007,17 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
 <script src="modulos/visao-casa.js?v=1.1.0"></script>
-<script src="modulos/previsao.js?v=1.1.0"></script>
+<script src="modulos/previsao.js?v=1.2.0"></script>
 <script src="modulos/orcamento.js?v=1.1.1"></script>
 <script src="modulos/patrimonio-mes.js?v=1.1.0"></script>
 <script src="modulos/dividas.js?v=1.0.0"></script>
-<script src="modulos/seguros.js?v=1.0.0"></script>
+<script src="modulos/seguros.js?v=1.0.1"></script>
 <script src="modulos/mes-a-mes.js?v=1.0.0"></script>
-<script src="modulos/parcelados.js?v=1.0.0"></script>
+<script src="modulos/parcelados.js?v=1.0.1"></script>
 <script src="modulos/contas-fixas.js?v=1.0.0"></script>
 <script src="modulos/documentos.js?v=1.0.0"></script>
 <script src="modulos/contas-mes.js?v=1.0.0"></script>
+<script src="modulos/planejados.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.14.3"></script>
 </body>
 </html>

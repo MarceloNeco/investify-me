@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/parcelados.js — as compras parceladas no cartão: o que ainda vem (3.74)        1.0.0 · 13/Nov/2026
+   modulos/parcelados.js — as compras parceladas no cartão: o que ainda vem (3.74)        1.0.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · O lançamento de cartão traz a parcela no fim da descrição ("LOJA X 05/06", "CURSO (8/12) · nota"; o robô põe
@@ -18,7 +18,7 @@
      doMes('AAAA-MM') → [{grupo, sub, nome, data, valor, real}]   (as parcelas do mês: as que chegaram e as a vir)
      resumo() → {total, meses, porMes: [{mes, valor}]}
    PONTOS QUE USA
-     budget.painel · futuro.topo
+     budget.painel · planejados.parcelados (1.0.1, 3.76: saiu do Futuro para Contas fixas → Gastos planejados)
    ===================================================================== */
 (function () {
   'use strict';
@@ -101,8 +101,8 @@
   }
 
   MoneyModulos.registrar({
-    id: 'parcelados', versao: '1.0.0',
-    pontos: { 'budget.painel': cartao, 'futuro.topo': cartao }
+    id: 'parcelados', versao: '1.0.1',
+    pontos: { 'budget.painel': cartao, 'planejados.parcelados': cartao }   /* 1.0.1 (3.76): saiu do Futuro (agora Projeção) para Gastos planejados */
   });
   window.Parcelados = API;
 })();
