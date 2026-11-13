@@ -23,7 +23,7 @@ var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './aju
   './modulos/compromisso-de.js?v=1.7.0',
   './modulos/previsto.js?v=1.0.0',
   './modulos/conciliacao.js?v=1.0.0', './modulos/calendario-menu.js?v=1.1.0',
-  './modulos/pessoas.js?v=1.1.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=2.1.0', './modulos/espelho.js?v=1.1.2', './modulos/tour.js?v=1.0.0', './modulos/cartoes.js?v=1.0.0', './modulos/cartao-foto.js?v=1.0.0',
+  './modulos/pessoas.js?v=1.2.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=2.1.0', './modulos/espelho.js?v=1.1.2', './modulos/tour.js?v=1.0.0', './modulos/cartoes.js?v=1.0.0', './modulos/cartao-foto.js?v=1.0.0',
   /* 3.65: o motor do Leitor OCR para o cartão por foto (cópia do leitor-ocr; leitor/tesseract/ é guardado no 1º uso) */
   './leitor/leitura.js', './leitor/leitura/catalogo.js', './leitor/leitura/texto.js', './leitor/leitura/foto.js', './leitor/leitores/cartao-plastico.js', './modulos/contraparte.js?v=1.0.0', './modulos/declaracao-escolhas.js?v=1.0.0', './modulos/origem.js?v=1.0.1', './modulos/apelido.js?v=1.0.0', './modulos/lancamento-form.js?v=1.0.0', './modulos/categorias.js?v=1.0.0', './modulos/visao-casa.js?v=1.0.2', './modulos/orcamento.js?v=1.0.0',
   './nuvem.js?v=1.14.0'];

@@ -7776,7 +7776,8 @@ const Gasto = {
       if(f.aconfirmar  && !(window.Origem && Origem.status(g) === 'confirmar')) return false;     /* 3.65 */
       if(f.aidentificar && !(window.Origem && Origem.status(g) === 'identificar')) return false;
       if(f.busca){
-        const alvo = (g.desc + ' ' + g.sub + ' ' + g.grupo + (window.Apelido ? ' ' + Apelido.de(g) : '')).toLowerCase();   /* 3.68: o apelido e o nome original */
+        const alvo = (g.desc + ' ' + g.sub + ' ' + g.grupo + (window.Apelido ? ' ' + Apelido.de(g) : '') +
+          ' ' + [g.quem, quemVer(g.quem), g.paraQuem, quemVer(g.paraQuem)].filter(Boolean).join(' ')).toLowerCase();   /* 3.68: o apelido e o nome original; o quem pelo código e pelo nome */
         if(alvo.indexOf(f.busca.toLowerCase()) < 0) return false;
       }
       return true;
@@ -9845,6 +9846,8 @@ function fecharMenuApps(){
 /* 3.67: a renda extraordinária (rescisão, FGTS, indenização, ou marcada à mão em "extra") não entra na média do mês.
    Resgate de investimento NÃO é renda nenhuma: é a volta de um aporte (fluxo 'aplicacao', negativo; 3.65.2). */
 const RX_RENDA_EXTRA = /rescis|fgts|indeniza/i;
+/* 3.68: o "quem" na tela: o código gravado (Neco, Beta… o robô depende dele) aparece pelo nome do cadastro de Pessoas */
+function quemVer(t){ return window.Pessoas && Pessoas.nomeVer ? Pessoas.nomeVer(t) : String(t || ''); }
 function rendaExtra(g){
   if(!g || g.fluxo !== 'entrada') return false;
   if(g.extra === true) return true;
@@ -10099,7 +10102,7 @@ function viewBLanc(){
       '<td class="desc-cel"><span class="desc-txt" title="' + esc(g.desc || '') + '">' + esc(window.Apelido ? Apelido.texto(g) : (g.desc || '')) + '</span>' +
         (g.grupo === 'RENDA' && Transferencia.daRenda(g.id).length ? '<div class="t-sub tf-cinza">↪ ' + esc((I18n.atual === 'pt' ? 'passou para outra conta em ' : 'moved to another account on ') +
           Transferencia.daRenda(g.id).map(t => I18n.data(t.data) + (t.banco ? ' (' + t.banco + ')' : '')).join(', ') + (I18n.atual === 'pt' ? ' — transferência, não conta de novo' : ' — transfer, not counted again')) + '</div>' : '') +
-        (g.quem || g.paraQuem || g.forma ? '<div class="t-sub">' + esc([g.paraQuem && g.paraQuem !== g.quem ? (g.quem ? g.quem + ' → ' : '→ ') + g.paraQuem : g.quem, g.forma].filter(Boolean).join(' · ')) +
+        (g.quem || g.paraQuem || g.forma ? '<div class="t-sub">' + esc([g.paraQuem && g.paraQuem !== g.quem ? (g.quem ? quemVer(g.quem) + ' → ' : '→ ') + quemVer(g.paraQuem) : quemVer(g.quem), g.forma].filter(Boolean).join(' · ')) +
           (g.irpf ? ' · <span class="badge-irpf">IRPF</span>' : '') + '</div>' : '') +
         (window.MoneyModulos ? MoneyModulos.html('lancamento.linha', {g: g}) : '') + '</td>' +
       '<td class="num ' + sinal + '">' + (g.fluxo === 'entrada' ? '+' : '') + fmt(g.valor) + Abat.marca(g) + '</td></tr>';
@@ -10213,7 +10216,7 @@ const ImportRec = {
         '<td>' + esc(Recorrente.explicar(r)) + '</td>' +
         '<td>' + esc(per(r)) + '</td>' +
         '<td>' + esc((g.ico || '') + ' ' + (g.nome || r.grupo)) + ' · ' + esc(r.sub) + '</td>' +
-        '<td>' + esc(r.quem || '—') + '</td>' +
+        '<td>' + esc(quemVer(r.quem) || '—') + '</td>' +
         '<td>' + (r.irpf ? '✓' : '') + '</td></tr>';
     }).join('');
     const nOk = this.lista.filter(x => x.marcado).length;
@@ -10362,6 +10365,7 @@ const Sugestor = {
 function recOpcoesPessoa(listaId){
   const cad = window.Pessoas ? Pessoas.ativas().map(p => Pessoas.rotulo(p)) : [];   /* 3.64: as cadastradas primeiro */
   return '<datalist id="' + listaId + '">' + [CASA_TODA[I18n.atual] || CASA_TODA.pt].concat(cad, recPessoas().filter(q => cad.indexOf(q) < 0))
+    .map(quemVer).filter((q, i, l) => l.indexOf(q) === i)   /* 3.68: o nome do cadastro (o código volta ao salvar) */
     .map(q => '<option value="' + esc(q) + '"></option>').join('') + '</datalist>';
 }
 
@@ -10448,7 +10452,7 @@ function abrirRecorrente(id, semente, op){
     '</div>' +
 
     '<div class="grid g2">' +
-      campo(de('Para quem é', 'Who it is for'), '<input id="rcQuem" data-pessoa list="rcQuemLista" autocomplete="off" value="' + esc(r.quem || '') + '" placeholder="' + de('a pessoa, ou a casa', 'the person, or the home') + '">' + recOpcoesPessoa('rcQuemLista'),
+      campo(de('Para quem é', 'Who it is for'), '<input id="rcQuem" data-pessoa list="rcQuemLista" autocomplete="off" value="' + esc(quemVer(r.quem)) + '" placeholder="' + de('a pessoa, ou a casa', 'the person, or the home') + '">' + recOpcoesPessoa('rcQuemLista'),
         null, de('Quem usa. O nome de quem recebe (a escola, a diarista) fica no nome do compromisso.', 'Who uses it. Whoever gets paid (school, cleaner) goes in the name.')) +
       campo(de('Quem paga', 'Who pays'), '<input id="rcPagador" data-pessoa list="rcPagaLista" autocomplete="off" value="' + esc(r.pagador || '') + '" placeholder="' + de('opcional', 'optional') + '">' + recOpcoesPessoa('rcPagaLista').replace('rcQuemLista', 'rcPagaLista')) +
     '</div>' +
@@ -11064,9 +11068,9 @@ function abrirLancamento(id){
     '<div id="glFixo"></div>' +
     '<div class="grid g2">' +
       campo('Quem pagou/recebeu', '<input id="glQuem" data-pessoa list="glQuemLista" autocomplete="off" placeholder="' + esc(I18n.atual === 'pt' ? 'opcional · vem da conta ou do cartão' : 'optional · from the account or card') + '" value="' +
-        (g ? esc(g.quem) : '') + '">' + recOpcoesPessoa('glQuemLista')) +
+        (g ? esc(quemVer(g.quem)) : '') + '">' + recOpcoesPessoa('glQuemLista')) +   /* 3.68: o nome; ao salvar volta para o código (Pessoas.ligar) */
       campo(I18n.atual === 'pt' ? 'Para quem é' : 'Who it is for', '<input id="glParaQuem" data-pessoa list="glParaLista" autocomplete="off" placeholder="' + esc(I18n.atual === 'pt' ? 'opcional · saúde, escola, IR' : 'optional · health, school, tax') + '" value="' +
-        (g ? esc(g.paraQuem || '') : '') + '">' + recOpcoesPessoa('glParaLista'), null,
+        (g ? esc(quemVer(g.paraQuem)) : '') + '">' + recOpcoesPessoa('glParaLista'), null,
         I18n.atual === 'pt' ? 'Quem usou (a filha na terapia). No IR, gasto de dependente vale para quem pagou.' : 'Who used it. For tax, a dependant\'s expense counts for whoever paid.') +
     '</div><div class="grid g2">' +
       campo('Observação da conta', '<input id="glConta" placeholder="opcional" value="' +
@@ -12025,7 +12029,7 @@ function barraFiltros(op){
     if(pessoas.length > 1)
       h += '<div class="bf-bloco"><span class="bf-tit">Quem pagou/recebeu</span><div class="chips">' +
         pessoas.map(p => '<button class="chip click' + (bFiltro.quem.indexOf(p.chave) >= 0 ? ' on' : '') +
-          '" data-bquem="' + esc(p.chave) + '">' + esc(p.chave) + '</button>').join('') + '</div></div>';
+          '" data-bquem="' + esc(p.chave) + '">' + esc(quemVer(p.chave)) + '</button>').join('') + '</div></div>';   /* 3.68: o nome do cadastro; o filtro usa o código */
     if(formas.length > 1)
       h += '<div class="bf-bloco"><span class="bf-tit">Como pagou</span><div class="chips">' +
         formas.map(f => '<button class="chip click' + (bFiltro.formas.indexOf(f.chave) >= 0 ? ' on' : '') +
@@ -17339,7 +17343,7 @@ function blocoRecorrentes(){
           (r.aConfirmar ? ' <span class="tag-conf" title="' + esc(r.origem === 'contrato' ? (I18n.atual === 'pt' ? 'criado a partir do contrato: confira valor e dia' : 'created from the contract: check amount and day') : (I18n.atual === 'pt' ? 'criado ao rolar o ano: confira valor e nome' : 'created by rolling the year: check amount and name')) + '">⚠ ' + (I18n.atual === 'pt' ? 'a confirmar' : 'to confirm') + '</span>' : '') +
           (r.ativo !== false && Recorrente.sobreposicoes(r).length ? ' <span class="tag-rep" title="' + esc((I18n.atual === 'pt' ? 'Parece repetido com: ' : 'Looks repeated with: ') + Recorrente.sobreposicoes(r).map(x => x.r.nome).join(', ')) + '">⚠ ' + (I18n.atual === 'pt' ? 'repetido?' : 'repeated?') + '</span>' : '') +
           '<div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) +
-          (r.quem ? ' · ' + esc(r.quem) : '') +
+          (r.quem ? ' · ' + esc(quemVer(r.quem)) : '') +
           (r.varia ? ' · ' + esc(I18n.atual === 'pt' ? 'valor varia' : 'amount varies') : '') + '</div>' +
           (window.MoneyModulos ? MoneyModulos.html('recorrente.linha', {r: r}) : '') + '</td>' +
         '<td class="nowrap t-sub">' + esc(Recorrente.explicar(r)) +
@@ -17441,7 +17445,7 @@ function blocoTodos(){
   rec.forEach(r => {
     const G = GRUPOS[r.grupo] || {}, per = Recorrente.periodoCurto(r);
     h += '<tr class="linha-click" data-recedit="' + r.id + '"><td title="' + esc(t('per.recorrentes')) + '">🔁</td>' +
-      '<td><span class="t-main">' + esc(r.nome) + '</span><div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) + (r.quem ? ' · ' + esc(r.quem) : '') + '</div></td>' +
+      '<td><span class="t-main">' + esc(r.nome) + '</span><div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) + (r.quem ? ' · ' + esc(quemVer(r.quem)) : '') + '</div></td>' +
       '<td class="t-sub">' + esc(Recorrente.explicar(r)) + (per ? '<div class="t-sub rec-periodo">' + esc(per) + '</div>' : '') + '</td>' +
       '<td class="num ' + (r.fluxo === 'entrada' ? 'up' : '') + '">' + (r.fluxo === 'entrada' ? '+' : '') +
         fmt(r.porVisita ? Recorrente.mediaDoServico(r) : Recorrente.valorEm(r, hojeISO())) + '</td></tr>';
@@ -17896,7 +17900,7 @@ function abrirOcorrencia(chave){
   let h = '<div class="oc-topo">' +
     '<div><span class="t-main">' + esc(r.nome) + '</span>' +
       '<div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) +
-      (r.quem ? ' · ' + esc(r.quem) : '') + '</div></div>' +
+      (r.quem ? ' · ' + esc(quemVer(r.quem)) : '') + '</div></div>' +
     '<div class="oc-valor-g ' + (ent ? 'up' : 'down') + '">' +
       (ent ? '+' : '−') + fmt(o.valor) + '</div>' +
     '</div>' +
@@ -20923,7 +20927,7 @@ function blocoOutrasRendas(){
     '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>' + (pt ? 'Renda' : 'Income') + '</th><th>' + (pt ? 'Quando' : 'When') + '</th><th class="num" data-principal>' + (pt ? 'Valor' : 'Amount') + '</th></tr></thead><tbody>' +
     lista.map(r => { const c = Rendas.cat((r.renda || {}).tipo || 'outro'); const vig = r.ativo !== false && Salarios.vigenteEm(r, hojeISO());
       return '<tr class="linha-click' + (vig ? '' : ' linha-off') + '" data-acao="renda-editar" data-id="' + r.id + '">' +
-        '<td><span class="t-main">' + c.ico + ' ' + esc(r.nome) + '</span><div class="t-sub">' + esc(r.quem || '') + ((r.renda || {}).bancoId ? (r.quem ? ' · ' : '') + esc(Banco.curto(r.renda.bancoId)) : '') +
+        '<td><span class="t-main">' + c.ico + ' ' + esc(r.nome) + '</span><div class="t-sub">' + esc(quemVer(r.quem)) + ((r.renda || {}).bancoId ? (r.quem ? ' · ' : '') + esc(Banco.curto(r.renda.bancoId)) : '') +
           (vig ? '' : ' · <span class="badge">' + (pt ? 'encerrada' : 'ended') + '</span>') + '</div></td>' +
         '<td class="tiny">' + esc(Recorrente.explicar(r)) + '</td>' +
         '<td class="num"><b class="up">' + fmt(Recorrente.valorEm(r, hojeISO())) + '</b>' + (r.regra === 'anual' ? '<span class="t-sub">' + (pt ? 'por ano' : 'per year') + '</span>' : '') + '</td></tr>'; }).join('') +
@@ -29868,7 +29872,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/previsto.js?v=1.0.0"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
 <script src="modulos/calendario-menu.js?v=1.1.0"></script>
-<script src="modulos/pessoas.js?v=1.1.0"></script>
+<script src="modulos/pessoas.js?v=1.2.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=2.1.0"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
