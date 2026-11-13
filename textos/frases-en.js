@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.84 · 13/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.85 · 13/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.85 */
+  'Reforma tributária: a data de revisar':'Tax reform: the review date',
+  'FiscalONE, cartão da reforma: a escolha do regime do IBS/CBS no Simples é feita por semestre no Portal do Simples Nacional (setembro para o 1º semestre, março para o 2º); quem não escolhe paga IBS/CBS dentro do DAS. O "Revisar com o contador" passa a ser 15/02/2027, antes da janela de março, com o link do aviso oficial.':'FiscalONE, tax reform card: the IBS/CBS regime choice under Simples is made per half-year on the Simples Nacional portal (September for the first half, March for the second); whoever does not choose pays IBS/CBS inside the DAS. "Review with your accountant" moves to 15 Feb 2027, before the March window, with the link to the official notice.',
   /* 3.84 */
   'Ordem das listas e cabeçalhos fixos':'List order and sticky headers',
   'Depois de abrir os dados da nuvem, cartões, metas, bancos e empresas aparecem sempre na mesma ordem (alfabética), em qualquer aparelho.':'After opening your data from the cloud, cards, goals, banks and companies always show in the same (alphabetical) order, on any device.',

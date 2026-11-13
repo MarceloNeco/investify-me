@@ -709,6 +709,10 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **3.85 — a data de revisar a reforma.** `PJ_TEXTOS.reformaRevisar` = '2027-02-15' (antes da janela de março de 2027; a de setembro de 2026, para o 1º
+  semestre, já passou) e `fontes.simplesIbsCbs` (aviso oficial do Portal do Simples). `PJOport.revisarEm(e)` (pj-oportunidades 1.0.1): sem data gravada,
+  15/02/2027; a gravada mais cedo continua; a mais tarde cai para 15/02/2027 enquanto ela não chega; depois, vale a gravada. O texto da regra diz que a
+  escolha é por semestre (setembro → 1º, março → 2º) e que quem não escolhe paga IBS/CBS no DAS.
   **3.84 — N10 e N35.** nuvem.js 1.15.2: no fim do `reconstruir`, `cartoes`, `metas`, `bancos` e `empresas` em ordem alfabética (apelido/nome/razão,
   depois o id), a mesma em todo aparelho (as coleções com data não mudam). Tabelas novas com `<thead>`: "próximos 90 dias" (pj-gestao 1.0.1, dentro de
   `.tbl-wrap`, ganha `tbl-topo` pelo `UX.cabecalhoFixo`) e a prévia do BS2 (bs2-extrato 1.0.1, `.tbl-fixa`: cabeçalho preso na rolagem da janela).
@@ -720,7 +724,7 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   `modulos/pj-oportunidades.js` 1.0.0 (`window.PJOport`): `simples(anexo, rbt12)`; `regras.{fatorR, exportacao, despesasCasa, mistura, reforma}(e, mes)`
   → cartão `{k, nivel, titulo, frase, porque, fonte, valor}`; `plano(g)` e `dre(e, de, ate)`; `pacote(e, mes)` → `{texto, csv, assunto}` (baixar .txt e .csv;
   `mailto:` para o contador); `contextoIA(e)` pelo ponto novo `ia.contexto` (o `IA.contexto()` do index chama `MoneyModulos.itens('ia.contexto', {app,
-  tela})` e diz "FiscalONE"); a data de revisar a reforma (`empresa.reformaRevisar`, padrão = o dia em que apareceu + 30 dias, gravado na empresa; "Revisei" +6 meses) no 📥; a troca
+  tela})` e diz "FiscalONE"); a data de revisar a reforma (`empresa.reformaRevisar`, padrão 15/02/2027 desde a 3.85; "Revisei" +6 meses) no 📥; a troca
   (`empresa.troca[passo] = data`) quando há empresa "a encerrar"/"a reativar". Tudo no ponto `pj.empresa`. Teste: `teste/teste-pj-oportunidades.js`.
   **3.82 — FiscalONE, gestão da PJ (itens 1, 6, 7 e 9).** `modulos/pj-gestao.js` 1.0.0 (`window.PJGestao`), no ponto novo `pj.empresa` da tela
   `t-pj` (pj 1.1.0: as empresas pela `CofreEmpresa.ordenadas()`, a ativa primeiro). `serie(e, mesFim)`: 12 meses com receita (faturamento + entradas que

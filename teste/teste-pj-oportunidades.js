@@ -69,12 +69,17 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     const c3 = await p.evaluate(() => { const e = ST.empresas.find((x) => x.id === 'emA'); return { d: PJOport.regras.despesasCasa(e), m: PJOport.regras.mistura(e, '2026-11'), r: PJOport.regras.reforma(e), real: PJOport.regras.despesasCasa(Object.assign({}, e, { regime: 'real' })) }; });
     ok(/Simples Nacional, o imposto é sobre a RECEITA: passar a despesa para a PJ NÃO reduz o DAS/.test(c3.d.frase) && /Só no Lucro Real/.test(c3.d.frase) && c3.real === null, 'despesa de casa no Simples: "não reduz o DAS" (e no Lucro Real a regra não aparece)');
     ok(c3.m && /Mistura PF × PJ: 2 lançamento/.test(c3.m.titulo) && /DAS-SIMPLES/.test(c3.m.frase) && /RESTAURANTE EXEMPLO/.test(c3.m.frase) && /confusão patrimonial/.test(c3.m.frase), 'mistura: o DAS pago no CPF e o restaurante pago pela PJ → "confusão patrimonial"');
-    ok(/2027: começa a CBS/.test(c3.r.frase) && /planalto\.gov\.br|gov\.br\/receitafederal/.test(c3.r.fonte), 'reforma: o que muda e quando, com a fonte oficial');
-    ok(await p.evaluate(() => ST.empresas.find((x) => x.id === 'emA').reformaRevisar === '2026-12-13' && !/Revisar a reforma/.test((inboxGrupos().find((g) => g.id === 'pj') || { html: '' }).html)), 'a data de revisar nasce em hoje + 30 dias (13/12/2026) e ainda não está no 📥');
-    await p.evaluate(() => { PJOport._hoje = '2026-12-14'; });
-    ok(/Revisar a reforma tributária com o contador \(Exemplo Consultoria\)/.test(await p.evaluate(() => (inboxGrupos().find((g) => g.id === 'pj') || {}).html || '')), '📥: "Revisar a reforma tributária" quando a data chega');
+    ok(/2027: começa a CBS/.test(c3.r.frase), 'reforma: o que muda e quando');
+    const r3 = await p.evaluate(() => { const e = ST.empresas.find((x) => x.id === 'emA'), o = Object.assign({}, e);
+      const sem = PJOport.revisarEm(Object.assign({}, o, { reformaRevisar: '' })), cedo = PJOport.revisarEm(Object.assign({}, o, { reformaRevisar: '2026-12-13' })), tarde = PJOport.revisarEm(Object.assign({}, o, { reformaRevisar: '2027-05-13' }));
+      PJOport._hoje = '2027-03-01'; const depois = PJOport.revisarEm(Object.assign({}, o, { reformaRevisar: '2027-08-15' })); PJOport._hoje = '2026-11-13';
+      return { sem, cedo, tarde, depois, ib: /Revisar a reforma/.test((inboxGrupos().find((g) => g.id === 'pj') || { html: '' }).html) }; });
+    ok(r3.sem === '2027-02-15' && r3.cedo === '2026-12-13' && r3.tarde === '2027-02-15' && r3.depois === '2027-08-15' && !r3.ib, 'revisar: 15/02/2027 (antes da janela de março); a data mais cedo continua; a mais tarde cai para 15/02 até ela chegar; depois vale a gravada; hoje ainda não está no 📥');
+    ok(/A escolha é feita por semestre no Portal do Simples Nacional \(setembro para o 1º semestre, março para o 2º\)\. Quem não escolhe paga IBS\/CBS dentro do DAS\./.test(c3.r.frase) && /Revisar em: 15\/Fev\/2027/.test(c3.r.frase) && c3.r.fonte === 'https://www8.receita.fazenda.gov.br/simplesnacional/noticias/NoticiaCompleta.aspx?id=c739e03c-8482-473f-8e82-f38ec3b13637', 'o texto da escolha por semestre, a data e o link do aviso oficial');
+    await p.evaluate(() => { ST.empresas.find((x) => x.id === 'emA').reformaRevisar = ''; PJOport._hoje = '2027-02-16'; });
+    ok(/Revisar a reforma tributária com o contador \(Exemplo Consultoria\)/.test(await p.evaluate(() => (inboxGrupos().find((g) => g.id === 'pj') || {}).html || '')), '📥: "Revisar a reforma tributária" quando 15/02/2027 chega');
     await p.evaluate(() => abrirInbox()); await p.click('#genBody [data-acao="pjo-revisei"]');
-    ok(await p.evaluate(() => ST.empresas.find((x) => x.id === 'emA').reformaRevisar === '2027-06-14'), '"Revisei" → lembra de novo em 6 meses (14/06/2027)');
+    ok(await p.evaluate(() => ST.empresas.find((x) => x.id === 'emA').reformaRevisar === '2027-08-16'), '"Revisei" → lembra de novo em 6 meses (16/08/2027)');
     await p.evaluate(() => { fechar('genModal'); PJOport._hoje = '2026-11-13'; });
 
     console.log('4) a tela: Oportunidades, DRE, troca, glossário');

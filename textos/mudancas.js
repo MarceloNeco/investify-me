@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.84 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.85 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.85', d:'2026-11-13', t:'Reforma tributária: a data de revisar', itens:[
+    'FiscalONE, cartão da reforma: a escolha do regime do IBS/CBS no Simples é feita por semestre no Portal do Simples Nacional (setembro para o 1º semestre, março para o 2º); quem não escolhe paga IBS/CBS dentro do DAS. O "Revisar com o contador" passa a ser 15/02/2027, antes da janela de março, com o link do aviso oficial.'
+  ]},
   {v:'3.84', d:'2026-11-13', t:'Ordem das listas e cabeçalhos fixos', itens:[
     'Depois de abrir os dados da nuvem, cartões, metas, bancos e empresas aparecem sempre na mesma ordem (alfabética), em qualquer aparelho.',
     'No computador, a tabela "Próximos 90 dias" da PJ mantém o cabeçalho à vista ao rolar, e a prévia do extrato do BS2 rola dentro da janela com o cabeçalho preso.'

@@ -1,6 +1,6 @@
 /* =====================================================================
    modulos/pj-oportunidades.js — FiscalONE, gestor de CNPJ: Oportunidades (regras sem IA), DRE com plano de contas,
-   pacote do contador, troca de empresas, glossário fiscal e o contexto do ✨ (3.83)        1.0.0 · 13/Nov/2026
+   pacote do contador, troca de empresas, glossário fiscal e o contexto do ✨ (3.83)        1.0.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedidos do dono, 13/Nov/2026; os TEXTOS ficam em textos/pj-textos.js, num arquivo só)
      · Oportunidades: cada regra é uma função pequena (API.regras.<nome>(e, mes) → cartão | null) com frase, "por quê", o valor
@@ -98,10 +98,12 @@
         var tot = n2(l.reduce(function (s, x) { return s + Math.abs(x.g.valor); }, 0));
         return cartao('mistura', 'atencao', { n: l.length, total: fmt(tot), exemplos: l.slice(0, 3).map(function (x) { return String(x.g.desc || x.g.sub).slice(0, 30) + ' ' + I18n.data(x.g.data); }).join('; ') }, T.fontes.civil, tot);
       },
-      reforma: function (e) { return cartao('reforma', 'info', { revisar: I18n.data(API.revisarEm(e)) }, T.fontes.reforma); }
+      reforma: function (e) { return cartao('reforma', 'info', { revisar: I18n.data(API.revisarEm(e)) }, T.fontes.simplesIbsCbs); }
     },
     /* sem data na lei confirmada aqui: hoje + 30 dias, gravada na empresa na primeira vez (depois, "Revisei" empurra 6 meses) */
-    revisarEm: function (e) { if (!e.reformaRevisar) { var d = new Date(hoje() + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + 30); e.reformaRevisar = d.toISOString().slice(0, 10); } return e.reformaRevisar; },
+    /* 1.0.1 (3.85): 15/02/2027, antes da janela de março (o aviso oficial do Simples). A data gravada mais cedo continua; uma mais
+       tarde cai para 15/02/2027 enquanto ela não chega (ninguém perde a janela); depois dela, vale a gravada ("Revisei" + 6 meses) */
+    revisarEm: function (e) { var a = T.reformaRevisar, d = e.reformaRevisar; if (!d) return a; return hoje() < a && d > a ? a : d; },
     cartoes: function (e, mes) {
       if (casa() || !T) return [];
       mes = mes || hoje().slice(0, 7);
@@ -194,7 +196,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'pj-oportunidades', versao: '1.0.0',
+    id: 'pj-oportunidades', versao: '1.0.1',
     pontos: {
       'pj.empresa': function (ctx) { if (casa() || !ctx || !ctx.e || !T) return ''; var mes = ctx.mes || hoje().slice(0, 7); return blocoTroca(ctx.e) + blocoOport(ctx.e, mes) + blocoDre(ctx.e, mes) + blocoGlossario(); },
       'ia.contexto': function (ctx) {
