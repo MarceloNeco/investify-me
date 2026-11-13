@@ -115,7 +115,7 @@
       <section class="view hidden" id="view-b-desloc"></section>
       <section class="view hidden" id="view-b-futuro"></section>
       <section class="view hidden" id="view-b-precos"></section>
-      <!-- TaxONE -->
+      <!-- FiscalONE -->
       <section class="view hidden" id="view-t-painel"></section>
       <section class="view hidden" id="view-t-imposto"></section>
       <section class="view hidden" id="view-t-pjclt"></section>
@@ -635,7 +635,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.77"></script>
+<script src="textos/frases-en.js?v=3.78"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -1134,7 +1134,7 @@ function textoGlossario(chave, nivel){
       '<b>Cents</b>: use the field\'s own ▲▼ arrows (or the keyboard arrows) — each step is 0.01.<br>' +
       '<b>🎤 Speak</b>: tap the mic and say the amount. Works in Chrome and Edge on the published site (https).'}},
 
-    {k:'tx-modelos', t:'Completa ou simplificada', te:'Itemised or standard', c:'TaxONE', ce:'TaxONE',
+    {k:'tx-modelos', t:'Completa ou simplificada', te:'Itemised or standard', c:'FiscalONE', ce:'FiscalONE',
      pt:{medio:'Na declaração você escolhe um dos dois jeitos de abater o imposto. <b>Completa</b>: soma as deduções de verdade — INSS, ' +
       'R$ 2.275,08 por dependente, saúde sem limite, educação até R$ 3.561,50 por pessoa, previdência privada PGBL até 12% dos rendimentos e pensão judicial. ' +
       '<b>Simplificada</b>: troca tudo isso por 20% dos rendimentos tributáveis, até R$ 17.640. O programa da Receita já mostra qual dá menos imposto; ' +
@@ -1142,7 +1142,7 @@ function textoGlossario(chave, nivel){
       '<b>Novo em 2026</b>: quem teve até R$ 60 mil de rendimentos tributáveis no ano paga zero no ajuste; de R$ 60 mil a R$ 88,2 mil o imposto diminui aos poucos (Lei 15.270/2025). Vale para a declaração de 2027.'},
      en:{medio:'Itemised adds real deductions; standard replaces them with 20% of taxable income up to R$ 17,640. New for 2026: zero tax up to R$ 60k a year, reduced up to R$ 88.2k.'}},
 
-    {k:'doc-conferencia', t:'Conferência dos documentos', te:'Document check', c:'TaxONE', ce:'TaxONE',
+    {k:'doc-conferencia', t:'Conferência dos documentos', te:'Document check', c:'FiscalONE', ce:'FiscalONE',
      pt:{medio:'O app põe lado a lado o que os documentos dizem e o que foi declarado:<br>' +
       '✅ <b>bate</b> — mesmo valor (diferença abaixo de R$ 1);<br>⚠️ <b>diferente</b> — os dois existem, com valores diferentes;<br>' +
       '➕ <b>fora da declaração</b> — tem documento, não achei na declaração (pode ser de outra pessoa, ou ter ficado de fora);<br>' +
@@ -1151,7 +1151,7 @@ function textoGlossario(chave, nivel){
       'Nos bens, cada saldo do banco é comparado ao item da declaração daquele banco — atenção: previdência (PGBL) e alguns bens entram na declaração pelo valor aplicado, não pelo saldo.'},
      en:{medio:'Side by side: what the documents say and what was filed. Match, differs, missing from the return, or no document.'}},
 
-    {k:'patrimonio-ir', t:'Patrimônio declarado no IR', te:'Net worth in tax returns', c:'TaxONE', ce:'TaxONE',
+    {k:'patrimonio-ir', t:'Patrimônio declarado no IR', te:'Net worth in tax returns', c:'FiscalONE', ce:'FiscalONE',
      pt:{medio:'Cada declaração traz a ficha <b>Bens e Direitos</b> com dois retratos: o valor de cada bem em 31/12 do ano anterior e em 31/12 do ano. ' +
       'Juntando as declarações importadas, o app monta a série ano a ano, separada por grupo (imóveis, veículos, ações, aplicações, contas, fundos, cripto e outros), ' +
       'e tira as <b>Dívidas e Ônus</b> para chegar ao patrimônio líquido.<br><br>' +
@@ -1159,7 +1159,7 @@ function textoGlossario(chave, nivel){
       'Por isso o número da declaração costuma ser menor que o da carteira do InvestifyONE. Serve para ver a evolução e para conferir se a declaração bate com a vida.'},
      en:{medio:'Built from the Assets and Debts sections of each imported return, 31/12 to 31/12. Values at cost, as the tax return requires — not market value.'}},
 
-    {k:'tx-360', t:'O prazo de 360 dias da Receita', te:'The 360-day limit', c:'TaxONE', ce:'TaxONE',
+    {k:'tx-360', t:'O prazo de 360 dias da Receita', te:'The 360-day limit', c:'FiscalONE', ce:'FiscalONE',
      pt:{medio:'A <b>Lei 11.457/2007, art. 24</b>, obriga a Receita a decidir em até <b>360 dias</b> contados do protocolo de petição, defesa ou ' +
       'recurso do contribuinte. O STJ confirmou esse prazo em recurso repetitivo (Tema 269, REsp 1.138.206/RS). No e-Processo, o protocolo é a ' +
       'data em que você abriu o atendimento ou juntou os documentos.<br><br>' +
@@ -1616,7 +1616,7 @@ const Store = {
     st.beneficios.forEach(b => { if(!b.id) b.id = novoId('b'); });
     st.lugares.forEach(l => { if(!l.id) l.id = novoId('l'); });
     st.trajetos.forEach(t => { if(!t.id) t.id = novoId('t'); });
-    /* TaxONE: declarações e acompanhamentos (restituição, processos) */
+    /* FiscalONE: declarações e acompanhamentos (restituição, processos) */
     st.tax = (o.tax && typeof o.tax === 'object') ? o.tax : {};
     st.tax.declaracoes = Array.isArray(st.tax.declaracoes) ? st.tax.declaracoes : [];
     st.tax.processos = Array.isArray(st.tax.processos) ? st.tax.processos : [];
@@ -7609,7 +7609,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.77"></script>
+<script src="textos/mudancas.js?v=3.78"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -9128,7 +9128,7 @@ const Pagamento = {
       quem: o.r.pagador || o.r.quem, paraQuem: o.r.pagador && o.r.quem !== o.r.pagador ? o.r.quem : '', forma: o.r.forma, irpf: !!o.r.irpf,
       origem: 'recorrente', recorrenteId: o.r.id
     };
-    /* salário cadastrado: o lançamento leva o bruto junto, para o TaxONE */
+    /* salário cadastrado: o lançamento leva o bruto junto, para o FiscalONE */
     if(o.r.sal){ reg.bruto = Number(o.r.sal.bruto) || 0; reg.salBase = 'liquido'; }
     if(Gasto.jaExiste(reg)) return null;
     const g = Gasto.add(reg);
@@ -9706,7 +9706,7 @@ const APPS = {
   investify:{nome:'InvestifyONE', ico:'📈', cor:'--c-investify', pronto:true,
            chaveFrase:'app.investify.frase',
            itens:['Brasil e exterior no mesmo lugar','Retorno do bolso e da estratégia','Perfil de risco e prognóstico']},
-  tax:     {nome:'TaxONE', ico:'🧾', cor:'--c-tax', pronto:true,
+  tax:     {nome:'FiscalONE', ico:'🧾', cor:'--c-tax', pronto:true,
            chaveFrase:'app.tax.frase',
            itens:['IR da pessoa física: declaração, restituição e deduções','PJ: Simples, Fator R, pró-labore e DAS','Declarações e protocolos']}
 };
@@ -11166,8 +11166,8 @@ function abrirLancamento(id){
       (I18n.atual === 'pt' ? '🚩 Marcar para conferir depois' : '🚩 Flag to check later') + '</label>' +
     '<p class="tiny muted" style="margin:6px 0 0">' +
       (I18n.atual === 'pt'
-        ? 'Saúde, educação e previdência costumam ser dedutíveis. O TaxONE vai usar essa marca. Conta o ano em que foi PAGO: a matrícula do ano que vem paga agora entra no imposto deste ano.'
-        : 'Health, education and pension are usually deductible. TaxONE will use this flag. What counts is the year it was PAID: next year\'s enrolment paid now goes in this year\'s tax.') + '</p>' +
+        ? 'Saúde, educação e previdência costumam ser dedutíveis. O FiscalONE vai usar essa marca. Conta o ano em que foi PAGO: a matrícula do ano que vem paga agora entra no imposto deste ano.'
+        : 'Health, education and pension are usually deductible. FiscalONE will use this flag. What counts is the year it was PAID: next year\'s enrolment paid now goes in this year\'s tax.') + '</p>' +
     '<div class="f-actions">' +
       (g ? '<button class="btn danger" data-acao="gl-excluir">Excluir</button>' : '') +
       '<button class="btn" data-close="assetModal">Cancelar</button>' +
@@ -13898,7 +13898,7 @@ const CupomTexto = {
    testado com dezenas de comprovantes reais e trazido para cá sem
    mexer na lógica. É UM motor só para os três apps; o que muda é o
    atalho que chega até ele: Escanear no BudgetONE, Ler comprovante
-   no InvestifyONE, Documentos do IR no TaxONE.
+   no InvestifyONE, Documentos do IR no FiscalONE.
 
    O caminho de uma foto:
      1. mede a inclinação do papel e endireita (estimateAngles)
@@ -15132,7 +15132,7 @@ const Leitor = (() => {
     return (p.readings[i] || p.readings[0]).text || '';
   }
 
-  /* Lê um papel já em imagem (canvas ou <img>): o caminho do TaxONE,
+  /* Lê um papel já em imagem (canvas ou <img>): o caminho do FiscalONE,
      que só quer o texto. Fica com o leitor aberto; feche com fecharLote(). */
   async function lerPapel(img, op) {
     op = op || {};
@@ -18419,9 +18419,9 @@ const CHAVE_TUTORIAL = 'moneytrio.tutorial.v1';
 const AJUDA_TELAS = {
   hub: {
     pt: {t:'Início', o:'O mesmo dinheiro visto de três jeitos.',
-         f:['BudgetONE: o que entra e sai no mês.','InvestifyONE: o que está investido e quanto rendeu.','TaxONE: o que vai para o imposto de renda.']},
+         f:['BudgetONE: o que entra e sai no mês.','InvestifyONE: o que está investido e quanto rendeu.','FiscalONE: o que vai para o imposto de renda.']},
     en: {t:'Home', o:'The same money, seen three ways.',
-         f:['BudgetONE: what comes in and goes out each month.','InvestifyONE: what is invested and what it earned.','TaxONE: what goes into the tax return.']}
+         f:['BudgetONE: what comes in and goes out each month.','InvestifyONE: what is invested and what it earned.','FiscalONE: what goes into the tax return.']}
   },
   'b-painel': {
     pt: {t:'Painel do BudgetONE', o:'Quanto entrou, quanto saiu, quanto sobrou e para onde foi.',
@@ -18520,9 +18520,9 @@ const AJUDA_TELAS = {
          f:['The level at the bottom of the menu changes the text of every term.']}
   },
   't-painel': {
-    pt: {t:'Painel do TaxONE', o:'O imposto de renda do ano: previsão do ajuste, o que já foi retido, deduções e processos.',
+    pt: {t:'Painel do FiscalONE', o:'O imposto de renda do ano: previsão do ajuste, o que já foi retido, deduções e processos.',
          f:['Sem o salário cadastrado, a previsão sai errada.','A última declaração importada serve de conferência.']},
-    en: {t:'TaxONE dashboard', o:'The year’s income tax: expected balance, tax withheld, deductions and cases.',
+    en: {t:'FiscalONE dashboard', o:'The year’s income tax: expected balance, tax withheld, deductions and cases.',
          f:['Without the salary on file, the forecast is wrong.','Importing last year’s return gives you something to check against.']}
   },
   't-imposto': {
@@ -18571,8 +18571,8 @@ const AJUDA_TELAS = {
 
 /* ---------- o tutorial: cinco passos ---------- */
 const TUTORIAL = [
-  {ico:'👋', pt:{t:'Bem-vindo ao MoneyTRIO', x:'Três apps num lugar só: BudgetONE para o dia a dia, InvestifyONE para os investimentos, TaxONE para o imposto. Este passeio leva um minuto.'},
-             en:{t:'Welcome to MoneyTRIO', x:'Three apps in one place: BudgetONE for day-to-day money, InvestifyONE for investments, TaxONE for tax. This tour takes a minute.'}},
+  {ico:'👋', pt:{t:'Bem-vindo ao MoneyTRIO', x:'Três apps num lugar só: BudgetONE para o dia a dia, InvestifyONE para os investimentos, FiscalONE para o imposto. Este passeio leva um minuto.'},
+             en:{t:'Welcome to MoneyTRIO', x:'Three apps in one place: BudgetONE for day-to-day money, InvestifyONE for investments, FiscalONE for tax. This tour takes a minute.'}},
   {ico:'☰', pt:{t:'O menu e a barra de baixo', x:'No computador, o menu fica à esquerda. No celular, os botões mais usados ficam na barra de baixo — e você escolhe quais, em Configurações.'},
             en:{t:'The menu and the bottom bar', x:'On a computer the menu is on the left. On a phone the most used buttons sit in the bottom bar — and you choose which ones, in Settings.'}},
   {ico:'ⓘ', pt:{t:'O ⓘ explica', x:'Todo número que merece explicação tem um ⓘ do lado. O texto muda com o nível que você escolhe: Iniciante, Médio ou Expert.'},
@@ -19365,7 +19365,7 @@ function ligarSalario(){
      }
 
    r.valor é sempre o LÍQUIDO: é o que cai na conta, e é isso que o
-   caixa do BudgetONE soma. O bruto fica guardado para o TaxONE.
+   caixa do BudgetONE soma. O bruto fica guardado para o FiscalONE.
 
    Vigência: r.desde (obrigatório) e r.ate (vazio = até segunda ordem).
    Um cadastro novo da mesma pessoa, no mesmo período, pergunta:
@@ -19375,7 +19375,7 @@ function ligarSalario(){
    Quem lê daqui:
    - BudgetONE: Renda (a lista e os valores do mês)
    - InvestifyONE: Painel e Prognóstico (quanto sobra para investir)
-   - TaxONE: imposto do mês e do ano, e o ajuste anual
+   - FiscalONE: imposto do mês e do ano, e o ajuste anual
    ========================================================= */
 
 const TIPOS_SAL = {
@@ -19521,7 +19521,7 @@ const Salarios = {
   },
 
   /* ---------- o ano inteiro, mês a mês ----------
-     Para o TaxONE: rendimento tributável, INSS e IR retido no ano,
+     Para o FiscalONE: rendimento tributável, INSS e IR retido no ano,
      mais o 13º (tributado à parte) e o terço de férias de quem é CLT.
      Meses já passados usam os lançamentos reais de salário quando têm
      bruto; os que faltam usam o cadastro vigente. */
@@ -19657,7 +19657,7 @@ function somaDiasSal(iso, n){
    1. o cadastro (janela): quem recebe, quem paga, bruto ou líquido
       (obrigatório), calcular INSS e IR, holerite, vigência;
    2. o bloco "Salários" que aparece no BudgetONE, no InvestifyONE
-      e no TaxONE — o mesmo desenho nos três;
+      e no FiscalONE — o mesmo desenho nos três;
    3. o pedaço do salário dentro do lançamento avulso.
    ========================================================= */
 
@@ -19907,8 +19907,8 @@ function salvarCadastroSalario(modo){
   }
   Salarios.salvar(d, modo || 'complementar');
   Store.salvar(); fechar('assetModal'); render();
-  toast(pt ? 'Salário guardado. Aparece no BudgetONE, no InvestifyONE e no TaxONE.'
-           : 'Salary saved. It shows in BudgetONE, InvestifyONE and TaxONE.');
+  toast(pt ? 'Salário guardado. Aparece no BudgetONE, no InvestifyONE e no FiscalONE.'
+           : 'Salary saved. It shows in BudgetONE, InvestifyONE and FiscalONE.');
 }
 
 function excluirCadastroSalario(id){
@@ -19930,7 +19930,7 @@ function blocoSalarios(opcoes){
     '<button class="btn sm" data-acao="sal-cad-novo">+ ' + (pt ? 'Cadastrar' : 'Add') + '</button></div>';
   if(!todos.length){
     h += '<p class="small muted" style="margin:0">' + (pt
-      ? 'Nenhum salário cadastrado. Cadastre uma vez — bruto ou líquido, com o holerite se tiver — e ele passa a valer nos três apps: no caixa do BudgetONE, no quanto sobra para investir do InvestifyONE e no imposto do TaxONE.'
+      ? 'Nenhum salário cadastrado. Cadastre uma vez — bruto ou líquido, com o holerite se tiver — e ele passa a valer nos três apps: no caixa do BudgetONE, no quanto sobra para investir do InvestifyONE e no imposto do FiscalONE.'
       : 'No salary yet. Add it once and it counts in all three apps.') + '</p></div>';
     return h;
   }
@@ -19973,7 +19973,7 @@ function blocoSalarioLancamento(g){
     '</fieldset>' +
     '<label class="linha-check sal-toggle"><input type="checkbox" id="glCalcIR"' + (g && g.bruto && base === 'bruto' ? ' checked' : '') + '> <span><b>' +
       (pt ? 'Calcular INSS e imposto de renda' : 'Work out pension and income tax') + '</b><i>' +
-      (pt ? 'no caixa entra o líquido; o bruto fica guardado para o TaxONE' : 'the cash gets the net; the gross is kept for TaxONE') + '</i></span></label>' +
+      (pt ? 'no caixa entra o líquido; o bruto fica guardado para o FiscalONE' : 'the cash gets the net; the gross is kept for FiscalONE') + '</i></span></label>' +
     '<div id="glSalConta" class="sal-conta"></div>' +
     '<p class="tiny muted" style="margin:6px 0 0">' + (pt ? 'Recebe todo mês? ' : 'Monthly? ') +
       '<button type="button" class="link-bt" data-acao="sal-cad-novo">' + (pt ? 'Cadastre como salário fixo' : 'Add as a fixed salary') + '</button>' +
@@ -20993,7 +20993,7 @@ function lancamentoParaFixo(renda){
 </script>
 <script>
 /* =========================================================
-   TaxONE — o imposto de renda da pessoa física
+   FiscalONE — o imposto de renda da pessoa física
    Tudo aqui é conta e leitura; as telas ficam em tax-ui.js.
 
    De onde vêm os números:
@@ -21934,7 +21934,7 @@ const Tax = {
   },
   abertos(){ return this.estado().processos.filter(p => (ESTADOS_PROC[p.estado] || {}).aberto); },
 
-  /* avisos para a fita do topo, no TaxONE */
+  /* avisos para a fita do topo, no FiscalONE */
   avisos(){
     const pt = I18n.atual !== 'en';
     const l = [];
@@ -21961,7 +21961,7 @@ const Tax = {
 </script>
 <script>
 /* =========================================================
-   TaxONE — as telas
+   FiscalONE — as telas
    Painel · Imposto do ano · PJ × CLT · Declarações ·
    Restituição e processos · Deduções
    ========================================================= */
@@ -22002,7 +22002,7 @@ function viewTPainel(){
   const r = resultadoTxt(p.ajuste.saldo);
   const ult = Tax.estado().declaracoes[0];
   const abertos = Tax.abertos();
-  let h = '<div class="card-head"><h1>TaxONE</h1><span class="small muted">' +
+  let h = '<div class="card-head"><h1>FiscalONE</h1><span class="small muted">' +
     (pt ? 'O imposto de renda, do salário à declaração' : 'Income tax, from payslip to return') + '</span></div>' + seletorPessoa();
 
   h += '<div class="kpis kpis-4">' +
@@ -22397,7 +22397,7 @@ async function importarDeclaracao(arquivos){
   lidas.sort((a, b) => (b.pagamentos.length + b.fontes.length + b.achados) - (a.pagamentos.length + a.fontes.length + a.achados));
   pronta = Tax.juntarDeclaracoes(lidas);
   Fundo.terminar('declaracao', pt ? 'Declaração lida' : 'Return read');
-  /* se a pessoa ficou na tela do TaxONE, já abre; senão a pílula leva até lá */
+  /* se a pessoa ficou na tela do FiscalONE, já abre; senão a pílula leva até lá */
   if(ST.appAtual === 'tax'){ Fundo.limpar('declaracao'); abrirDeclaracao(pronta, true); }
 }
 
@@ -22658,7 +22658,7 @@ function viewTDeducoes(){
 }
 
 /* ---------- InvestifyONE: quanto do salário sobra para investir ---------- */
-/* o patrimônio que as declarações contam, 31/12 a 31/12 — no InvestifyONE e no TaxONE */
+/* o patrimônio que as declarações contam, 31/12 a 31/12 — no InvestifyONE e no FiscalONE */
 function blocoPatrimonioIR(){
   const pt = ptT();
   const serie = Tax.patrimonio();
@@ -22681,8 +22681,8 @@ function blocoPatrimonioIR(){
     }).join('') + '</tr>' +
     '</tbody></table></div>' +
     '<p class="tiny muted" style="margin:8px 0 0">' + (pt
-      ? 'Valores como a declaração pede: imóveis e veículos pelo custo de compra, não pelo preço de mercado. Vem das declarações importadas no TaxONE.'
-      : 'As the tax return requires: property at cost, not market value. From the returns imported in TaxONE.') + '</p></div>';
+      ? 'Valores como a declaração pede: imóveis e veículos pelo custo de compra, não pelo preço de mercado. Vem das declarações importadas no FiscalONE.'
+      : 'As the tax return requires: property at cost, not market value. From the returns imported in FiscalONE.') + '</p></div>';
   return h;
 }
 
@@ -22694,7 +22694,7 @@ function blocoRendaInvestify(){
   let h = '<div class="card"><div class="card-head"><h3>' + (pt ? 'Seu salário e o que sobra para investir' : 'Your salary and what is left to invest') + '</h3>' +
     '<button class="btn sm" data-acao="sal-cad-novo">+ ' + (pt ? 'Salário' : 'Salary') + '</button></div>';
   if(!m.n) return h + '<p class="small muted" style="margin:0">' + (pt
-    ? 'Cadastre o salário (no BudgetONE, no TaxONE ou aqui) para o app mostrar quanto sobra por mês depois do custo de vida — e comparar com o aporte do prognóstico.'
+    ? 'Cadastre o salário (no BudgetONE, no FiscalONE ou aqui) para o app mostrar quanto sobra por mês depois do custo de vida — e comparar com o aporte do prognóstico.'
     : 'Add your salary to see what is left after living costs.') + '</p></div>';
   const sobra = m.liquido - custo;
   h += '<div class="kpis kpis-3">' +
@@ -23716,7 +23716,7 @@ const DocIR = {
 </script>
 <script>
 /* =========================================================
-   MoneyTRIO — TaxONE → Documentos do IR (as telas)
+   MoneyTRIO — FiscalONE → Documentos do IR (as telas)
    Escolher vários arquivos de uma vez (PDF ou foto), o app lê,
    junta os repetidos, confere com a declaração e leva para o
    BudgetONE o que faltar. O que ele não conseguiu ler aparece
@@ -24766,7 +24766,7 @@ function viewPainel(){
 
   /* o salário do BudgetONE aparece aqui: quanto sobra para investir */
   if(typeof blocoRendaInvestify === 'function') h += blocoRendaInvestify();
-  /* e o patrimônio que as declarações do TaxONE contam, ano a ano */
+  /* e o patrimônio que as declarações do FiscalONE contam, ano a ano */
   if(typeof blocoPatrimonioIR === 'function') h += blocoPatrimonioIR();
   h += cardMercadoResumo();
   return h;
@@ -26332,7 +26332,7 @@ function trechoAoRedor(texto, termo, janela){
 function buscarConteudo(q){
   const achados = {coach:[], glossario:[]};
   if(semAcento(q).length < 2) return achados;
-  const qn = semAcento(q);
+  const qn = semAcento(q).replace(/taxone/g, 'fiscalone');   /* 3.78: o TaxONE virou FiscalONE; a busca aceita os dois nomes */
 
   COACH.forEach(m => {
     let melhor = null;
@@ -26500,7 +26500,7 @@ function viewConfig(){
     {id:'todos',     nome:'Compartilhadas', desc:'Valem nos dois apps'},
     {id:'investify', nome:'InvestifyONE',   desc:'Cotações, chaves e fita'},
     {id:'budget',    nome:'BudgetONE',      desc:'Avisos e orçamento'},
-    {id:'tax',       nome:'TaxONE',         desc:'Salário e barra de baixo'}
+    {id:'tax',       nome:'FiscalONE',         desc:'Salário e barra de baixo'}
   ].filter(x => x.id === 'todos' || appsVisiveis().indexOf(x.id) >= 0);   /* 3.66: na visão da casa, só as do BudgetONE */
   let h = '<div class="card-head"><h1>Configurações</h1></div>' +
     '<div class="cfg-abas">' + ABAS_CFG.map(x =>
@@ -27625,7 +27625,7 @@ function renderFita(){
   if(cfg.fitaLigada === false){ caixa.classList.add('hidden'); return; }
   caixa.classList.remove('hidden');
 
-  /* no TaxONE a fita mostra o que está com a Receita: restituição,
+  /* no FiscalONE a fita mostra o que está com a Receita: restituição,
      imposto a pagar, prazos. Sem nada aberto, ela some. */
   if((ST.appAtual || 'investify') === 'tax'){
     const av = ((typeof Tax !== 'undefined') ? Tax.avisos() : []).concat(window.MoneyModulos ? MoneyModulos.itens('fita.tax') : []);
@@ -29316,7 +29316,7 @@ function ligarEventos(){
       case 'trj-excluir':   Desloc.excluirTrajeto(d.id); Store.salvar(); fechar('assetModal'); render(); break;
       case 'desloc-fixo':   { const n = Desloc.lancarComoFixo(); Store.salvar(); render();
         toast(I18n.atual === 'pt' ? n + ' compromisso(s) de transporte atualizados em Contas fixas.' : n + ' transport commitment(s) updated in Fixed costs.'); break; }
-      /* TaxONE */
+      /* FiscalONE */
       case 'tx-ir':           irPara(d.tela); break;
       case 'tx-ano':          ST.config.taxAno = Number(d.ano); Store.salvar(); render(); break;
       case 'tx-quem':         ST.config.taxQuem = d.quem; Store.salvar(); render(); break;
@@ -29992,7 +29992,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=2.1.0"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
-<script src="modulos/tour.js?v=1.0.1"></script>
+<script src="modulos/tour.js?v=1.0.2"></script>
 <script src="modulos/cartoes.js?v=1.0.0"></script>
 <script src="modulos/cartao-foto.js?v=1.0.0"></script>
 <script src="modulos/contraparte.js?v=1.0.0"></script>
@@ -30010,7 +30010,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/mes-a-mes.js?v=1.0.1"></script>
 <script src="modulos/parcelados.js?v=1.0.1"></script>
 <script src="modulos/contas-fixas.js?v=1.0.0"></script>
-<script src="modulos/documentos.js?v=1.0.1"></script>
+<script src="modulos/documentos.js?v=1.0.2"></script>
 <script src="modulos/contas-mes.js?v=1.0.1"></script>
 <script src="modulos/planejados.js?v=1.0.0"></script>
 <script src="modulos/saldo-previsto.js?v=1.0.0"></script>

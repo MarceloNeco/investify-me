@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/cofre-empresa.js — TaxONE: o "Cofre da empresa" (3.77)        1.0.0 · 13/Nov/2026
+   modulos/cofre-empresa.js — FiscalONE: o "Cofre da empresa" (3.77)        1.0.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      Por empresa (PJ), num lugar só: o cartão CNPJ (PDF ou foto), CNPJ, razão social, regime (Simples, Simples com
@@ -14,7 +14,7 @@
      ST.empresas = [{id, cnpj, razao, regime, contador: {nome, contato}, contas: [{banco, agencia, conta}], pix: [chave],
                      docs: [{id, tipo, nome, arquivoId, validade}], criadoEm}]
    PONTOS QUE USA
-     tela t-empresa (TaxONE) · inbox.grupos ('avisos') · ações em-*
+     tela t-empresa (FiscalONE) · inbox.grupos ('avisos') · ações em-*
    ===================================================================== */
 (function () {
   'use strict';

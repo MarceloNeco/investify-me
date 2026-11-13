@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/documentos.js — "Documentos que o app pede" (3.74)        1.0.1 · 13/Nov/2026
+   modulos/documentos.js — "Documentos que o app pede" (3.74)        1.0.2 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      Uma lista de pedidos periódicos de documento. Cada pedido: nome, para que serve, de quanto em quanto tempo
@@ -53,7 +53,7 @@
     if (temCartaoPorto() || consorciosPorto().length) out.push({
       id: 'porto-ir', nome: tr('Informe de IR da Porto (consórcio)', 'Porto tax statement (consortium)'), para: tr('guardar para a declaração', 'keep for the tax return'),
       periodo: { tipo: 'anual', mes: 2 }, importador: '',
-      passos: [tr('Só no App Porto (celular): Documentos → Informe de IR.', 'Only in the Porto app (phone): Documents → Tax statement.'), tr('Guarde o PDF. Quando for declarar, suba no TaxONE.', 'Keep the PDF. Upload it in TaxONE at tax time.')],
+      passos: [tr('Só no App Porto (celular): Documentos → Informe de IR.', 'Only in the Porto app (phone): Documents → Tax statement.'), tr('Guarde o PDF. Quando for declarar, suba no FiscalONE.', 'Keep the PDF. Upload it in FiscalONE at tax time.')],
       recebido: function () { return false; }
     });
     return out;
@@ -104,7 +104,7 @@
   function adiar(idc) { var c = cfg(); c.docsAdiados = c.docsAdiados || {}; var x = new Date(hoje() + 'T12:00:00'); x.setDate(x.getDate() + 7); c.docsAdiados[idc] = x.toISOString().slice(0, 10); }
 
   MoneyModulos.registrar({
-    id: 'documentos', versao: '1.0.1',
+    id: 'documentos', versao: '1.0.2',
     pontos: {
       'budget.atencao': cartaoAtencao,
       'inbox.grupos': function () {   /* 1.0.1 (3.76): no 📥, com o passo a passo e o botão de subir */
