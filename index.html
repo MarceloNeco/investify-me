@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.67">
+<link rel="stylesheet" href="estilo.css?v=3.68">
 </head>
 <body>
 
@@ -1175,9 +1175,13 @@ function textoGlossario(chave, nivel){
       'Income and investment contributions are left out — spending only.'}},
 
     {k:'caixa-mensal', t:'Mês a mês', te:'Month by month', c:'BudgetONE', ce:'BudgetONE',
-     pt:{medio:'Para cada mês: o que entrou menos o que saiu. Barra para a direita, o mês fechou no azul (sobrou); para a esquerda, ' +
-      'gastou mais do que entrou. Um mês vermelho sozinho costuma ser conta anual (IPVA, seguro); vários seguidos pedem atenção.'},
-     en:{medio:'For each month: income minus spending. A bar to the right means money was left over; to the left, you spent more than came in.'}},
+     pt:{medio:'Para cada mês: tudo o que entrou menos o que saiu (o que foi para investimento não conta como saída). Barra para a direita, o mês fechou no azul (sobrou); para a esquerda, ' +
+      'gastou mais do que entrou. Um mês vermelho sozinho costuma ser conta anual (IPVA, seguro); vários seguidos pedem atenção. ' +
+      'A renda extraordinária (rescisão, FGTS, indenização, ou a entrada que você marcou como "Renda extraordinária") aparece em amarelo com ★: ' +
+      'a escala é feita sem ela, e a barra que passa da borda é cortada (⫽); embaixo do valor vem o resultado sem ela. As médias do Painel não a usam. ' +
+      'Toque no mês para ver o que entrou, saiu e foi para investimento.'},
+     en:{medio:'For each month: everything that came in minus spending (money sent to investments is not spending). A bar to the right means money was left over; to the left, you spent more than came in. ' +
+      'Extraordinary income (severance, FGTS, compensation, or an entry you marked as "Extraordinary income") shows in yellow with ★: the scale ignores it, a bar past the edge is cut (⫽), and the result without it is shown below the value. The Panel averages leave it out. Tap a month to see what came in, went out and was invested.'}},
 
     {k:'sazonalidade', t:'Os meses caros do ano', te:'The expensive months', c:'BudgetONE', ce:'BudgetONE',
      pt:{medio:'A média de gasto de cada mês do calendário, usando todos os anos que você registrou. Mostra o que se repete: ' +
@@ -2771,6 +2775,45 @@ function vizDivergente(itens, fmt){
       '<div class="small mono ' + (pos ? 'up' : 'down') + '" style="text-align:right">' +
         (pos ? '+' : '') + fmt(i.valor) + '</div>' +
     '</div>';
+  });
+  return h + '</div>';
+}
+
+/* 3.68: "Mês a mês" do Painel. A barra mostra o resultado REAL do mês (tudo o que entrou − o que saiu; o que foi para
+   investimento não é "saiu"), dividida: a parte recorrente na cor de sempre e a renda extraordinária em amarelo (★).
+   A escala sai da parte recorrente, para os meses comuns não virarem um risco; o que passa da borda é cortado com ⫽ e o
+   número à direita mostra o total. Tocar no mês abre: entrou recorrente, entrou extraordinária, saiu, foi para investimento.
+   itens: [{nome, rec, extra, entRec, saida, aplic}] (rec = entRec − saida; total = rec + extra) */
+function vizMesAMes(itens, fmt){
+  if(!itens.length) return '<p class="muted small">Sem dados ainda.</p>';
+  const pt = I18n.atual !== 'en';
+  /* com renda extraordinária, a escala deixa 15% de folga: o amarelo sempre aparece até a borda, mesmo no maior mês */
+  const max = (Math.max(...itens.map(i => Math.abs(i.rec))) || 1) * (itens.some(i => i.extra) ? 1 / 0.85 : 1);
+  const umLado = itens.every(i => i.rec >= 0 && i.rec + i.extra >= 0);
+  const H = umLado ? 100 : 50, Z = umLado ? 0 : 50;
+  const px = v => v / max * H;                                     /* % da largura, a partir do zero */
+  const seg = (a, b, cls) => {                                     /* um pedaço de a até b (valores), cortado na borda */
+    let x1 = Math.max(-H, Math.min(H, px(Math.min(a, b)))), x2 = Math.max(-H, Math.min(H, px(Math.max(a, b))));
+    if(x2 - x1 <= 0) return '';
+    return '<div class="mm-seg ' + cls + '" style="left:' + (Z + x1).toFixed(2) + '%;width:' + (x2 - x1).toFixed(2) + '%"></div>';
+  };
+  let h = '<div class="viz-div mm">';
+  itens.forEach(i => {
+    const tot = i.rec + i.extra, pos = tot >= 0;
+    let barra = '<div class="viz-div-zero" style="left:' + Z + '%"></div>';
+    if(i.rec >= 0){ barra += seg(0, i.rec, 'mm-up') + seg(i.rec, tot, 'mm-extra'); }
+    else if(tot >= 0){ barra += seg(i.rec, 0, 'mm-down') + seg(0, tot, 'mm-extra'); }   /* a extraordinária cobriu o mês */
+    else { barra += seg(tot, 0, 'mm-down') + seg(i.rec, tot, 'mm-extra'); }
+    if(Math.max(px(tot), px(i.rec)) > H) barra += '<span class="mm-quebra" style="right:-2px" aria-hidden="true">⫽</span>';
+    if(Math.min(px(tot), px(i.rec)) < -H) barra += '<span class="mm-quebra" style="left:-2px" aria-hidden="true">⫽</span>';
+    const det = (pt ? 'Entrou recorrente ' : 'Recurring income ') + fmt(i.entRec) + ' · ' + (pt ? 'entrou extraordinária ' : 'extraordinary income ') + fmt(i.extra) +
+                ' · ' + (pt ? 'saiu ' : 'spent ') + fmt(i.saida) + ' · ' + (pt ? 'foi para investimento ' : 'went to investments ') + fmt(i.aplic);
+    h += '<details class="mm-mes"><summary title="' + esc(det) + '">' +
+      '<div class="mm-linha"><div class="small mm-nome">' + esc(i.nome) + (i.extra ? ' ★' : '') + '</div>' +
+      '<div class="mm-trilho">' + barra + '</div>' +
+      '<div class="mm-valor"><div class="small mono ' + (pos ? 'up' : 'down') + '">' + (pos ? '+' : '−') + fmt(Math.abs(tot)) + '</div>' +
+        (i.extra ? '<div class="tiny muted mono">' + (pt ? 'sem a rescisão/FGTS: ' : 'without severance/FGTS: ') + '<span class="nowrap" style="white-space:nowrap">' + (i.rec >= 0 ? '+' : '−') + fmt(Math.abs(i.rec)) + '</span></div>' : '') +
+      '</div></div></summary><p class="tiny muted mm-det">' + esc(det) + '</p></details>';
   });
   return h + '</div>';
 }
@@ -9870,16 +9913,15 @@ function viewBPainel(){
   /* o caixa mês a mês */
   const meses = Gasto.porMes(doze);
   if(meses.length >= 2){
-    /* 3.67: o resultado do mês sem a renda extraordinária; ela aparece ao lado, em separado */
+    /* 3.68: a barra é o resultado real do mês; a renda extraordinária aparece em amarelo (★), fora da escala; as médias continuam sem ela */
     const extraMes = {}; doze.filter(rendaExtra).forEach(g => { const t = String(g.data || '').slice(0, 7); extraMes[t] = (extraMes[t] || 0) + (Number(g.valor) || 0); });
     h += '<div class="card"><div class="card-head"><h3>Mês a mês</h3>' +
          '<button class="info-dot" data-info="caixa-mensal">i</button>' + tagP + '</div>' +
-         vizDivergente(meses.map(m => ({nome: m.t.split('-').reverse().join('/') + (extraMes[m.t] ? ' ★' : ''),
-                                        valor: m.entrada - (extraMes[m.t] || 0) - m.saida})), fmt) +
-         (extra ? '<p class="small pn-extra" style="margin-top:8px">★ ' + esc((I18n.atual === 'en' ? 'Extraordinary income (severance, FGTS), outside the bars: ' : 'Renda extraordinária (rescisão, FGTS), fora das barras: ') +
-           Object.keys(extraMes).sort().map(t => t.split('-').reverse().join('/') + ' +' + fmt(extraMes[t])).join(' · ')) + '</p>' : '') +
+         vizMesAMes(meses.map(m => { const ex = extraMes[m.t] || 0, ent = m.entrada - ex;
+           return {nome: m.t.split('-').reverse().join('/'), rec: ent - m.saida, extra: ex, entRec: ent, saida: m.saida, aplic: m.aplicacao || 0}; }), fmt) +
          '<p class="tiny muted" style="margin-top:8px">Para a direita, o mês fechou no azul; ' +
-         'para a esquerda, você gastou mais do que entrou.</p>' +
+         'para a esquerda, você gastou mais do que entrou. Toque no mês para ver o que entrou, saiu e foi investido.' +
+         (extra ? ' ★ inclui renda extraordinária (rescisão, FGTS), em amarelo. As médias do Painel ficam sem ela.' : '') + '</p>' +
          '</div>';
   }
   h += '</div>';

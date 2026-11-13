@@ -79,9 +79,22 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recor
     await p.evaluate(() => { bFiltro.grupos = []; bFiltro.subs = []; irPara('b-painel'); render(); });
 
     console.log('3) renda extraordinária no "Mês a mês"');
-    const mx = await p.evaluate(() => [...document.querySelectorAll('#view-b-painel .viz-div-row, #view-b-painel .div-row, #view-b-painel [class*="div"] .nm')].map((x) => x.textContent.replace(/\s+/g, ' ').trim()).filter((t) => /extra/.test(t)));
-    const txtMes = await p.evaluate(() => { const c = [...document.querySelectorAll('#view-b-painel .card')].find((x) => /Mês a mês/.test(x.textContent)); return c ? c.textContent.replace(/\s+/g, ' ') : ''; });
-    ok(/★ Renda extraordinária \(rescisão, FGTS\), fora das barras: \d\d\/\d{4} \+R\$ 30\.000,00/.test(txtMes) && !/R\$ 33\.850/.test(txtMes) && /\+R\$ 3\.850,00/.test(txtMes), 'o mês da rescisão: a barra mostra o resultado recorrente (+R$ 3.850,00); a rescisão vem marcada (★) e listada embaixo, fora das barras');
+    const mm = await p.evaluate(() => {
+      const c = [...document.querySelectorAll('#view-b-painel .card')].find((x) => /Mês a mês/.test(x.querySelector('h3') ? x.querySelector('h3').textContent : ''));
+      const linhas = [...c.querySelectorAll('.mm-mes')].map((d) => ({ t: d.querySelector('summary').textContent.replace(/\s+/g, ' ').trim(), extra: !!d.querySelector('.mm-extra'), quebra: !!d.querySelector('.mm-quebra'), det: d.querySelector('.mm-det').textContent }));
+      return { linhas, rodape: c.textContent.replace(/\s+/g, ' ') };
+    });
+    const resc = mm.linhas.find((l) => /★/.test(l.t)), comum = mm.linhas.find((l) => !/★/.test(l.t));
+    ok(resc && /\+R\$ 33\.850,00/.test(resc.t) && /sem a rescisão\/FGTS: \+R\$ 3\.850,00/.test(resc.t) && resc.extra && resc.quebra,
+      'o mês da rescisão: a barra mostra o total real (+R$ 33.850,00) com a parte amarela cortada na borda (⫽); embaixo, "sem a rescisão/FGTS: +R$ 3.850,00"');
+    ok(comum && /\+R\$ 3\.850,00/.test(comum.t) && !comum.extra && !comum.quebra, 'os meses comuns continuam com a barra inteira (a escala é feita sem a extraordinária)');
+    ok(/★ inclui renda extraordinária \(rescisão, FGTS\), em amarelo\. As médias do Painel ficam sem ela\./.test(mm.rodape) && /Entrou recorrente R\$ 5\.000,00 · entrou extraordinária R\$ 30\.000,00 · saiu R\$ 1\.150,00 · foi para investimento/.test(resc.det),
+      'rodapé com a ★; tocar no mês mostra entrou recorrente, extraordinária, saiu e investimento');
+    /* o caso do dono (maio): recorrente −37.084,57 e rescisão + FGTS de 137.656 → o mês fica positivo */
+    const maio = await p.evaluate(() => { const d = document.createElement('div'); d.innerHTML = vizMesAMes([{ nome: '05/2026', rec: -37084.57, extra: 137656, entRec: 11250, saida: 48334.57, aplic: 60000 }, { nome: '04/2026', rec: 2000, extra: 0, entRec: 11000, saida: 9000, aplic: 0 }], fmt);
+      const r = d.querySelector('.mm-mes'); return { t: r.querySelector('summary').textContent.replace(/\s+/g, ' '), down: !!r.querySelector('.mm-down'), extra: !!r.querySelector('.mm-extra'), quebra: r.querySelectorAll('.mm-quebra').length, cls: r.querySelector('.mm-valor div').className }; });
+    ok(/\+R\$ 100\.571,43/.test(maio.t) && /sem a rescisão\/FGTS: −R\$ 37\.084,57/.test(maio.t) && maio.down && maio.extra && maio.quebra >= 1 && /up/.test(maio.cls),
+      'maio do dono: o total é positivo (+R$ 100.571,43, verde); a parte recorrente negativa em vermelho e a rescisão em amarelo, cortadas na borda; "sem a rescisão/FGTS" com o −37.084,57 (' + maio.t.trim() + ')');
 
     console.log('4) orçamento por categoria com alerta');
     await p.selectOption('#orcCat', 'LAZER|Restaurantes'); await p.fill('#orcLim', '240'); await p.click('[data-acao="orc-salvar"]'); await p.waitForTimeout(200);
