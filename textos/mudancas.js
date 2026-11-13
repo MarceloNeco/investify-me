@@ -10,6 +10,7 @@ const MUDANCAS = [
     'O app prevê o gasto de cada categoria no mês: as contas certas de Custos pelo valor e pelo dia (antes de o banco mandar), a média dos últimos 6 meses com o peso da época do ano e a inflação do grupo, e as viagens registradas no Futuro. Quando a conta real chega, ela entra no lugar da prevista, sem contar duas vezes.',
     'No Painel, cada categoria mostra o que já foi, o que ainda falta do previsto, o ritmo de hoje e a meta (o limite que você digitou). A Projeção do mês diz: previsto, já foi, ainda vem (quanto em contas certas) e quanto deve sobrar, e os 3 meses seguintes.',
     'Futuro → "Viagens e eventos": registre uma viagem de carro e a gasolina extra entra no previsto.',
+    'Boleto sem nome do banco ("INT PAG TIT"): quando o valor e a data batem com uma conta fixa de Custos (o valor pode variar, como o condomínio), a lista mostra o nome da conta com "A confirmar". Um toque confirma e liga o pagamento à conta; se duas contas batem, o app mostra as duas para você escolher.',
     'Viagem que passou: quando o combustível de poucos dias passa muito do normal, o app pergunta "Foi viagem?". Se foi, esses abastecimentos saem da média e o app aprende a distância do destino. Nunca marca sozinho.'
   ]},
   {v:'3.68', d:'2026-11-13', t:'Mês a mês de verdade, apelidos e nomes', itens:[

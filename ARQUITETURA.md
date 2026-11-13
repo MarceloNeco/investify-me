@@ -656,6 +656,11 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   `orcamento` 1.1.0: barra empilhada (`.pv-barra`: gasto, passou, falta tracejado, risquinho do ritmo, linha da meta) nas categorias com
   limite + as 6 maiores pelo previsto; a "Projeção do mês" usa `Previsao.totalMes()`. Pontos novos no index: `futuro.topo`,
   `budget.atencao`, itens `inbox.itens`. Teste: `teste/teste-previsao.js`.
+  **Conta fixa para boleto genérico** (`apelido` 1.1.0): `Apelido.contasFixas(g)` — saída de origem `u:` sem apelido e sem
+  `recorrenteId` × ocorrências de 10 dias antes a 5 dias depois (vencimento −5/+10), valor dentro de `Apelido.faixa(r)` (min/max dos 12
+  últimos pagamentos ±15%; sem histórico, valor ±25%), pulando vencimento que já tem `gastoId` conciliado. Uma: a lista mostra o nome
+  (ponto `lancamento.linha`, selo "A confirmar" + ✓); duas ou mais: botões para escolher. `ap-conta` → `ligarConta`: `recorrenteId`,
+  `Pagamento.conciliar` e o apelido só daquele lançamento. Teste: `teste/teste-apelido.js` (6).
 - 3.68 (módulo novo `apelido` 1.0.0; `pessoas` 1.2.0; `visao-casa` 1.0.2; o layout do Painel continua o mesmo, fora o "Mês a mês").
   **"Mês a mês"** (`vizMesAMes(itens, fmt)`, itens `{nome, rec, extra, entRec, saida, aplic}`): a barra é o resultado real (entrou − saiu;
   aplicação fora), em dois pedaços — o recorrente (`.mm-up`/`.mm-down`) e o extraordinário (`.mm-extra`, amarelo listrado, ★). A régua é
