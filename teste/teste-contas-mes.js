@@ -28,6 +28,7 @@ const CP = { cnpj: '00000000000191', nome: 'ESCOLA MODELO' };
   gastos.push({ id: 'em' + m, data: '2026-' + m + '-' + d1, valor: v1, grupo: 'DEPENDENTES', sub: 'Escola', desc: 'ESCOLA MODELO MENSALIDADE', fluxo: 'saida', contraparte: CP });
   gastos.push({ id: 'ea' + m, data: '2026-' + m + '-' + d2, valor: v2, grupo: 'DEPENDENTES', sub: 'Escola', desc: 'ESCOLA MODELO PERIODO AMPLIADO', fluxo: 'saida', contraparte: CP });
   gastos.push({ id: 'px' + m, data: '2026-' + m + '-12', valor: 300, grupo: 'OUTROS', sub: 'Outros', desc: 'PIX ENVIADO', fluxo: 'saida' });
+  ['03', '10', '17', '24'].forEach((d) => gastos.push({ id: 'po' + m + d, data: '2026-' + m + '-' + d, valor: 150, grupo: 'VEICULO', sub: 'Combustível', desc: 'POSTO EXEMPLO', fluxo: 'saida' }));
 });
 gastos.push({ id: 'ip25', data: '2025-02-10', valor: 1800, grupo: 'HABITACAO', sub: 'IPTU', desc: 'PREFEITURA EXEMPLO IPTU', fluxo: 'saida' });
 gastos.push({ id: 'ip26', data: '2026-02-12', valor: 1850, grupo: 'HABITACAO', sub: 'IPTU', desc: 'PREFEITURA EXEMPLO IPTU', fluxo: 'saida' });
@@ -78,6 +79,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recor
     ok(mens.length === 2 && mens.some((x) => x[2] === 2262 && x[3] === 10) && mens.some((x) => x[2] === 990 && x[3] === 25), 'a mesma escola, dois boletos: ~2.262 no dia ~10 e ~990 no dia ~25 (duas contas) ' + JSON.stringify(mens));
     ok(s.some((x) => x[0] === 'anual' && x[4] === 2 && /PREFEITURA/.test(x[1])), 'o IPTU em fevereiro de 2025 e 2026 → conta anual');
     ok(!s.some((x) => /PIX/.test(x[1])), '"PIX ENVIADO" (descrição genérica do banco) não sugere nada');
+    ok(!s.some((x) => /POSTO/.test(x[1])), 'o posto (4 vezes por mês, mesmo valor) não vira conta fixa');
     const card = await p.evaluate(() => (document.querySelector('#view-b-painel .cfs-atencao') || {}).textContent || '');
     ok(/Parece conta fixa: .*~R\$ 2\.261,67 · todo dia ~10\. Cadastrar\?/.test(card.replace(/\s+/g, ' ')), 'no Painel, em "Precisa da sua atenção": "Parece conta fixa: … · ~R$ 2.261,67 · todo dia ~10. Cadastrar?"');
     await p.locator('#view-b-painel .cfs-atencao [data-acao="cfs-sim"]').first().click(); await p.waitForTimeout(200);

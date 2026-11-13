@@ -16,7 +16,8 @@
        em 3 meses seguidos, valor parecido (±15%) e dia parecido (±5), sem conta fixa cadastrada → "Precisa da sua
        atenção": "Parece conta fixa: <nome> · ~R$ X · todo dia ~D. Cadastrar?". Dois boletos do mesmo recebedor com
        faixas de valor e dia diferentes = duas contas. O mesmo recebedor no mesmo mês em anos seguidos = conta anual.
-       "Sim" abre o cadastro já preenchido (nome editável); "Não" não volta.
+       "Sim" abre o cadastro já preenchido (nome editável); "Não" não volta. Quem aparece mais de 2× por mês (posto, mercado)
+       não é sugerido.
      · Retrocompatível: nada muda nos dados guardados; as abas de antes continuam embaixo. Visão da casa: só o que ela vê.
    API (window.ContasMes)
      itens(modo) → [{r, data, valor, status, pagoEm, grupo}] · atrasadasAntigas() · resumo(itens) · sugestoes() · STATUS
@@ -104,6 +105,9 @@
       });
       var out = [];
       Object.keys(por).forEach(function (k) {
+        /* quem aparece mais de 2× por mês (posto, mercado, padaria) é gasto do dia a dia, não conta fixa */
+        var nMeses = {}; por[k].forEach(function (g) { nMeses[g.data.slice(0, 7)] = 1; });
+        if (por[k].length / Object.keys(nMeses).length > 2) return;
         /* separa as contas do mesmo recebedor pela faixa de valor e de dia */
         var grupos = [];
         por[k].slice().sort(function (a, b) { return a.valor - b.valor; }).forEach(function (g) {
