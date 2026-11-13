@@ -709,6 +709,21 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **Contas fixas: o status de cada conta (3.75)** (`modulos/contas-mes.js` 1.0.0, `window.ContasMes`): ponto novo `custos.contas` no topo de
+  `viewBCustos` (as abas de antes continuam embaixo). `itens('mes'|'45')`: ocorrências de saída (sem as anteriores ao `criadoEm`) com status paga
+  (Pagamento pago/confirmado ou lançamento com `recorrenteId` no mês; data e valor reais) / atrasada / hoje / avencer / debito (`estadoPadrao`
+  'automatico'; depois do dia, paga). `atrasadasAntigas()` (12 meses até ontem) no topo dos 45 dias. `resumo(l)`; "Por grupo" em `<details>` na ordem
+  de GRUPOS. Seletores em `ST.config.contasModo`/`contasArruma`. `sugestoes()`: saídas sem `recorrenteId` nem parcela, por `Origem.origemDe`
+  (sem 'u:' genérica), separadas por faixa de valor (±15%) e dia (±5); 3 meses seguidos = mensal; o mesmo mês em anos seguidos = anual; some se há
+  compromisso parecido ou se foi recusada (`ST.config.cfRecusadas`). Cartão em `budget.atencao` e item no 📥; "Sim" abre `abrirRecorrente` preenchido.
+  Teste: `teste/teste-contas-mes.js`.
+  **Família (3.75)**: `visao-casa` 1.1.0 — `chefeEJuntar` (a ficha da conta: uid = `escopos.eu()` ou nome = `nomePessoa()`; a do cadastro que
+  parece o dono: mesmo primeiro e último nome) fora de "Quem é da casa" e sugestão `vc-juntar` → `Pessoas.juntar(fica, sai)` (pessoas 1.3.0: os
+  `*Id` passam, nomes viram aliases, uid/perfil vão junto); `nomeVer` (nome completo + apelido entre parênteses); tipo 'outra' separado;
+  `escopos.pinConta()` false → "Preparar" travado + `vc-criar-pin` (`escopos.criarPinConta`). Pontos `inbox.itens` (o que se pede e por quê) e
+  `inbox.rodape` (botão `data-irpara="config" data-rolar="vcFamilia"`). index.html: `data-irpara="config"` não troca mais de app (antes ia para o
+  InvestifyONE); `data-rolar` abre a aba Compartilhadas e rola até o cartão. nuvem.js 1.14.3: `escopos.eu/pinConta/criarPinConta`.
+  Teste: `teste/teste-familia-casa.js`.
   **Parcelados do cartão (3.74)** (`modulos/parcelados.js` 1.0.0, `window.Parcelados`): `Gasto.parcela(desc, g)` (index.html) também lê o k/N
   no fim da descrição de lançamento de cartão (1≤k≤N≤24, N≥2; a data dd/mm não conta). `compras()`: por (descrição sem o k/N + valor + cartão + N)
   guarda a última parcela vista e projeta as N−k que faltam no vencimento da fatura (`Banco.faturaDe`/`Gasto.cobranca`); `doMes(mes)` dá as que

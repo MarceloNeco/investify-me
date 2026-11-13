@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.74 · 13/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.75 · 13/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2660,3 +2660,15 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .doc-ped{padding:8px 0; border-top:1px solid var(--line)}
 .doc-ped:first-child{border-top:0}
 .doc-passos ol{margin:4px 0 8px; padding-left:20px}
+
+/* 3.75: "Contas fixas" — o status de cada conta: faixa fina à esquerda + selo com ícone; o valor na cor normal */
+.cm-linha{display:flex; justify-content:space-between; gap:10px; align-items:center; padding:8px 10px; margin:6px 0; border-left:4px solid var(--cm-cor); border-radius:6px; background:var(--card2, transparent); cursor:pointer}
+.cm-dir{display:flex; flex-direction:column; align-items:flex-end; gap:2px; white-space:nowrap}
+.cm-selo{font-size:.75em; padding:1px 6px; border-radius:10px; border:1px solid var(--cm-cor); color:var(--cm-cor)}
+.cm-resumo{margin:0 0 6px}
+.cm-barra{position:relative; height:10px; border:1.5px solid var(--muted, var(--txt3)); border-radius:6px; overflow:hidden; margin-bottom:10px}
+.cm-barra span{position:absolute; left:0; top:0; bottom:0; background:var(--up)}
+.cm-grupo{margin:6px 0}
+.cm-grupo > summary{display:flex; justify-content:space-between; gap:10px; cursor:pointer; padding:6px 0}
+.cfs-item{padding:8px 0; border-top:1px solid var(--line)}
+.cfs-item:first-child{border-top:0}

@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.74">
+<link rel="stylesheet" href="estilo.css?v=3.75">
 </head>
 <body>
 
@@ -634,7 +634,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.74"></script>
+<script src="textos/frases-en.js?v=3.75"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7608,7 +7608,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.74"></script>
+<script src="textos/mudancas.js?v=3.75"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -17325,6 +17325,7 @@ function viewBCustos(){
          dec.sobra >= 0 ? 'up' : 'down') +
     '</div>';
 
+  h += (window.MoneyModulos ? MoneyModulos.html('custos.contas', {}) : '');   /* 3.75: o mês com o status de cada conta (modulos/contas-mes.js) */
   h += (window.MoneyModulos ? MoneyModulos.html('custos.topo', {}) : '');
   const econ = Abat.doAno(hojeISO().slice(0,4));
   if(econ.n)
@@ -28010,6 +28011,7 @@ function abrirInbox(){
   h += '<div class="f-actions" style="margin-top:12px">' +
     '<button class="btn sm" data-irpara="b-custos" data-close="genModal">📌 ' + esc(pt ? 'Ver compromissos' : 'See commitments') + '</button>' +
     '<button class="btn sm" data-irpara="config" data-close="genModal">🔔 ' + esc(pt ? 'Avisos' : 'Alerts') + '</button>' +
+    (window.MoneyModulos ? MoneyModulos.html('inbox.rodape', {}) : '') +   /* 3.75: ex.: "👪 Visão da família" (modulos/visao-casa.js) */
     '<button class="btn primary sm" data-close="genModal">' + esc(pt ? 'Fechar' : 'Close') + '</button></div>';
   $('#genTitle').textContent = pt ? 'Mensagens' : 'Messages';
   $('#genBody').innerHTML = Verter.html(h);
@@ -28550,7 +28552,10 @@ function ligarEventos(){
     if(d.bmarca){ bFiltro[d.bmarca] = !bFiltro[d.bmarca]; bPagina = 0; bProj = null; render(); return; }
     if(d.bpag != null && d.bpag !== ''){ bPagina = Number(d.bpag); render(); window.scrollTo({top:0,behavior:'smooth'}); return; }
     if(d.banos){ bAnos = Number(d.banos); if(bProj && bProj.series) bProj = Orcamento.projetar(bAnos, bProj.series); render(); return; }
-    if(d.irpara){ if(appDaView(d.irpara) !== (ST.appAtual || 'investify')) abrirApp(appDaView(d.irpara)); irPara(d.irpara); return; }
+    /* 3.75: Configurações é de todos os apps: abre no app em que a pessoa está (antes trocava para o InvestifyONE); data-rolar leva ao cartão */
+    if(d.irpara){ if(d.irpara !== 'config' && appDaView(d.irpara) !== (ST.appAtual || 'investify')) abrirApp(appDaView(d.irpara)); irPara(d.irpara);
+      if(d.rolar && d.irpara === 'config'){ cfgSecao = 'todos'; render(); }   /* a aba "Compartilhadas", no app em que está */
+      if(d.rolar) setTimeout(() => { const alvo = document.getElementById(d.rolar); if(alvo) alvo.scrollIntoView({block:'start', behavior:'smooth'}); }, 120); return; }
     if(d.bid){ abrirLancamento(d.bid); return; }
     if(d.bpreco){ verHistoriaPreco(d.bpreco); return; }
     if(d.idioma !== undefined){ I18n.definir(d.idioma || I18n.outro()); return; }
@@ -29964,7 +29969,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/previsto.js?v=1.0.0"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
 <script src="modulos/calendario-menu.js?v=1.2.0"></script>
-<script src="modulos/pessoas.js?v=1.2.0"></script>
+<script src="modulos/pessoas.js?v=1.3.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=2.1.0"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
@@ -29977,7 +29982,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/apelido.js?v=1.1.0"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
-<script src="modulos/visao-casa.js?v=1.0.2"></script>
+<script src="modulos/visao-casa.js?v=1.1.0"></script>
 <script src="modulos/previsao.js?v=1.1.0"></script>
 <script src="modulos/orcamento.js?v=1.1.1"></script>
 <script src="modulos/patrimonio-mes.js?v=1.1.0"></script>
@@ -29987,6 +29992,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/parcelados.js?v=1.0.0"></script>
 <script src="modulos/contas-fixas.js?v=1.0.0"></script>
 <script src="modulos/documentos.js?v=1.0.0"></script>
-<script src="nuvem.js?v=1.14.2"></script>
+<script src="modulos/contas-mes.js?v=1.0.0"></script>
+<script src="nuvem.js?v=1.14.3"></script>
 </body>
 </html>

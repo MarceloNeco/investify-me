@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.14.2 · 13/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.14.3 · 13/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -2867,6 +2867,10 @@
       conferir: function () { return Escopos.conferir(); }, liberar: function (uid, v) { return Escopos.liberar(uid, v); },
       visoes: function () { return Visao.lista(Sinc.gid); }, minha: function () { return Visao.minha(Sinc.gid); },
       definir: function (uid, v) { return Visao.definir(Sinc.gid, uid, v); },
+      /* 1.14.3 (3.75): quem sou eu (o chefe some da lista "Quem é da casa"), se a conta tem PIN e o caminho para criar */
+      eu: function () { return Conta.uid(); },
+      pinConta: function () { return Pin.info().then(function (i) { return i ? !!i.tem : null; }, function () { return null; }); },
+      criarPinConta: function () { return Portao.criarPinConta(); },
       estado: function () { return { mk: !!Cadeado.mk, tudo: Cadeado.vejoTudo(), precisaMk: !!Cadeado.precisaMk, cfNova: !!Cadeado.cfNova, pin: !!Cadeado.dukRaw, rodando: Escopos.rodando, feito: Escopos.feito() }; }
     },
     /* 1.11.0: planilha espelho e os membros da família (para o cadastro de pessoas) */

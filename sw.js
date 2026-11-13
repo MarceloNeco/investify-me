@@ -2,12 +2,12 @@
    Faz o site abrir sem internet e permite instalar como app.
    AO PUBLICAR UMA VERSÃO NOVA, troque o número abaixo (v1 -> v2).
    É o que avisa os celulares de que existe conteúdo novo. */
-var VERSAO = 'v74';
+var VERSAO = 'v75';
 var CACHE = 'moneytrio-' + VERSAO;
 /* O que fica guardado para abrir sem internet. Cada <script src> do index.html entra aqui com o MESMO ?v=
    (teste/teste-modulos.js confere). Módulo novo = uma linha aqui + uma no index.html. */
 var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './ajuda-botao.png', './icone-192.png', './icone-512.png', './icone-512-maskable.png', './icone.svg', './icone-32.png',
-  './estilo.css?v=3.74', './textos/frases-en.js?v=3.74', './textos/mudancas.js?v=3.74',
+  './estilo.css?v=3.75', './textos/frases-en.js?v=3.75', './textos/mudancas.js?v=3.75',
   './textos/glossario.js?v=3.51', './textos/coach.js?v=3.51',
   './modulos/base.js?v=1.1.0',
   './modulos/arquivos.js?v=1.0.0',
@@ -23,10 +23,10 @@ var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './aju
   './modulos/compromisso-de.js?v=1.7.0',
   './modulos/previsto.js?v=1.0.0',
   './modulos/conciliacao.js?v=1.0.0', './modulos/calendario-menu.js?v=1.2.0',
-  './modulos/pessoas.js?v=1.2.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=2.1.0', './modulos/espelho.js?v=1.1.2', './modulos/tour.js?v=1.0.1', './modulos/cartoes.js?v=1.0.0', './modulos/cartao-foto.js?v=1.0.0',
+  './modulos/pessoas.js?v=1.3.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=2.1.0', './modulos/espelho.js?v=1.1.2', './modulos/tour.js?v=1.0.1', './modulos/cartoes.js?v=1.0.0', './modulos/cartao-foto.js?v=1.0.0',
   /* 3.65: o motor do Leitor OCR para o cartão por foto (cópia do leitor-ocr; leitor/tesseract/ é guardado no 1º uso) */
-  './leitor/leitura.js', './leitor/leitura/catalogo.js', './leitor/leitura/texto.js', './leitor/leitura/foto.js', './leitor/leitores/cartao-plastico.js', './modulos/contraparte.js?v=1.0.0', './modulos/declaracao-escolhas.js?v=1.1.0', './modulos/origem.js?v=1.0.1', './modulos/apelido.js?v=1.1.0', './modulos/lancamento-form.js?v=1.0.0', './modulos/categorias.js?v=1.0.0', './modulos/visao-casa.js?v=1.0.2', './modulos/previsao.js?v=1.1.0', './modulos/orcamento.js?v=1.1.1', './modulos/patrimonio-mes.js?v=1.1.0', './modulos/dividas.js?v=1.0.0', './modulos/seguros.js?v=1.0.0', './modulos/mes-a-mes.js?v=1.0.0', './modulos/parcelados.js?v=1.0.0', './modulos/contas-fixas.js?v=1.0.0', './modulos/documentos.js?v=1.0.0',
-  './nuvem.js?v=1.14.2'];
+  './leitor/leitura.js', './leitor/leitura/catalogo.js', './leitor/leitura/texto.js', './leitor/leitura/foto.js', './leitor/leitores/cartao-plastico.js', './modulos/contraparte.js?v=1.0.0', './modulos/declaracao-escolhas.js?v=1.1.0', './modulos/origem.js?v=1.0.1', './modulos/apelido.js?v=1.1.0', './modulos/lancamento-form.js?v=1.0.0', './modulos/categorias.js?v=1.0.0', './modulos/visao-casa.js?v=1.1.0', './modulos/previsao.js?v=1.1.0', './modulos/orcamento.js?v=1.1.1', './modulos/patrimonio-mes.js?v=1.1.0', './modulos/dividas.js?v=1.0.0', './modulos/seguros.js?v=1.0.0', './modulos/mes-a-mes.js?v=1.0.0', './modulos/parcelados.js?v=1.0.0', './modulos/contas-fixas.js?v=1.0.0', './modulos/documentos.js?v=1.0.0', './modulos/contas-mes.js?v=1.0.0',
+  './nuvem.js?v=1.14.3'];
 /* O motor de leitura de fotos (leitor/tesseract: Tesseract e português, uns 9 MB, a MESMA pasta do motor do
    Leitor OCR; assets/ocr: ZXing e jsQR) tem cache próprio, que NÃO muda a cada versão do app:
    baixa na primeira leitura e fica. Para trocar o motor, troque o número.

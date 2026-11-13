@@ -1,11 +1,17 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.74 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.75 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.75', d:'2026-11-13', t:'Contas fixas com o status de cada conta, e a família arrumada', itens:[
+    'Contas fixas: no topo da tela, "Este mês" ou "Próximos 45 dias", "Por dia" ou "Por grupo" (a escolha fica guardada), e cada conta com o status: ✓ Paga (com a data e o valor pago), ⚠ Atrasada, ⏰ Vence hoje, ○ A vencer e 🔄 Débito automático. O resumo diz quanto é, quanto já foi pago, quanto falta e quanto está atrasado, com uma barra.',
+    'Nos próximos 45 dias, as contas atrasadas que ficaram para trás aparecem no topo, com o total. Por grupo, cada grupo mostra o total e quantas já foram pagas.',
+    '"Parece conta fixa": quando o mesmo recebedor aparece 3 meses seguidos com valor e dia parecidos, o app pergunta se quer cadastrar (dois boletos diferentes do mesmo lugar viram duas contas). O mesmo mês em anos seguidos vira conta anual (IPTU, matrícula). Respondeu "não", não pergunta de novo.',
+    'Família: o aviso do 📥 diz o que falta e por quê e abre as Configurações sem trocar de app. Em "Quem é da casa", você (o chefe) não aparece, as duas fichas que eram você podem ser juntadas sem perder lançamentos, o nome aparece com o apelido entre parênteses e quem não é da família fica separado. Sem o PIN da conta, "Preparar" fica travado, com o botão para criar o PIN.'
+  ]},
   {v:'3.74', d:'2026-11-13', t:'Parcelados do cartão, Contas fixas e Documentos que o app pede', itens:[
     'Compras parceladas no cartão: o app lê a parcela no fim da descrição ("LOJA 03/10") e mostra em "Parcelados no cartão" (Painel e Futuro) o que ainda vem — quanto falta, em quantos meses e quanto cai em cada mês. O previsto do mês já conta cada parcela a vir como conta certa.',
     'A tela "Custos" passou a se chamar "Contas fixas" (e gastos recorrentes), que é como você procura. No Painel, um cartão "Contas fixas do mês": quantas são, o total por mês e as próximas a vencer.',
