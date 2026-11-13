@@ -106,4 +106,8 @@ Vai nascer também uma teia de integrações entre os apps, o RootifyONE, o Arch
 
 - **Aplicabilidade:** cada ponto vale quando se aplica ao estágio atual deste app. O que não se aplica hoje é dito como "não aplicável hoje", com o motivo em uma linha. Este aviso não é motivo para criar login, migrar para banco nem criar integração. Quando o app ganhar login, banco ou integração nova, ele já nasce cumprindo os pontos que passaram a valer.
 - **Em cada entrega:** o resumo diz o que o RootifyONE, o ArchONE ou o EaglePlanONE precisariam saber (integração nova ou removida, recurso novo, item do roadmap concluído).
+  Na linha do **ArchONE** (que mostra recursos — banco, código, Cloudflare, GitHub e outros serviços —, as ligações entre eles, o estado, a
+  capacidade e a performance), escreva só: recurso novo ou removido (tabela, bucket, função de banco, serviço); ligação nova ou removida entre
+  recursos ou apps; mudança de estado ou capacidade. Lógica interna do app não entra. Ex.: "3 tabelas novas no Supabase (money_visao,
+  money_chaves, money_migracao); nenhuma ligação nova (o robô no GitHub continua → Supabase)".
 - **Integração:** nenhuma integração nova sem a regra zero (listar e confirmar com o dono).
