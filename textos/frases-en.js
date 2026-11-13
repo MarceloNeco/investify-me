@@ -7,6 +7,7 @@
 const FRASES_EN = {
   /* 3.71: os cartões da tela inicial */
   'Textos da tela inicial mais diretos':'Clearer home screen texts',
+  'As telas da nuvem e a dica "Onde ficam os seus dados" dizem o mesmo, sem a expressão "cadeado da família".':'The cloud screens and the "Where your data is kept" tip say the same, without the "family lock" wording.',
   'Os três cartões da tela inicial dizem o que cada app faz, sem frase de efeito, e o rodapé diz como os dados são guardados: criptografados no aparelho antes de ir para a nuvem, ou só neste aparelho, sem conta.':'The three home screen cards say what each app does, without slogans, and the footer says how data is stored: encrypted on the device before going to the cloud, or only on this device, without an account.',
   'Gastos e contas fixas':'Spending and fixed bills',
   'Rendas':'Income',

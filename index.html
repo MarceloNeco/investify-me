@@ -9759,8 +9759,8 @@ function viewHub(){
   h += '</div>' +
     '<p class="hub-pe tiny muted">' + ((window.MoneyNuvem && MoneyNuvem.iniciado && !MoneyNuvem.local)
       ? (I18n.atual === 'pt'
-        ? 'Dados criptografados no seu aparelho antes de ir para a nuvem. Acesso com a sua conta, PIN pessoal e aparelho aprovado.'
-        : 'Data is encrypted on your device before it goes to the cloud. Access with your account, personal PIN and an approved device.')
+        ? 'Dados criptografados no seu aparelho antes de ir para a nuvem. Acesso com a sua conta, PIN pessoal e aprovação de cada aparelho novo.'
+        : 'Data is encrypted on your device before it goes to the cloud. Access with your account, personal PIN and approval of each new device.')
       : (I18n.atual === 'pt'
         ? 'Dados guardados só neste aparelho, sem conta e sem nuvem.'
         : 'Data stored only on this device, with no account and no cloud.')) +
@@ -18600,8 +18600,8 @@ const TUTORIAL = [
             en:{t:'The ⓘ explains', x:'Every number worth explaining has an ⓘ next to it. The text changes with the level you choose: Beginner, Medium or Expert.'}},
   {ico:'✨', pt:{t:'Comece pelo passo a passo', x:'Renda, moradia, carro, seguros, filhos: o passo a passo pergunta e cadastra. Depois disso, o app já sabe o que vence e quando.'},
             en:{t:'Start with the step-by-step', x:'Income, housing, car, insurance, children: the step-by-step asks and records. After that, the app already knows what is due and when.'}},
-  {ico:'🔒', pt:{t:'Seus dados são seus', x:'Tudo fica no seu aparelho. Nada sai daqui sem você mandar. Exporte um backup de vez em quando, em Configurações.'},
-            en:{t:'Your data is yours', x:'Everything stays on your device. Nothing leaves unless you send it. Export a backup now and then, in Settings.'}}
+  {ico:'🔒', pt:{t:'Onde ficam os seus dados', x:'Com a nuvem, os dados vão criptografados no seu aparelho; sem conta, ficam só neste aparelho. Em Configurações dá para baixar um backup.'},
+            en:{t:'Where your data is kept', x:'With the cloud, data goes encrypted from your device; without an account, it stays only on this device. You can download a backup in Settings.'}}
 ];
 
 let assistAba = 'tela';
@@ -29952,6 +29952,6 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/previsao.js?v=1.0.0"></script>
 <script src="modulos/orcamento.js?v=1.1.0"></script>
 <script src="modulos/patrimonio-mes.js?v=1.0.0"></script>
-<script src="nuvem.js?v=1.14.0"></script>
+<script src="nuvem.js?v=1.14.1"></script>
 </body>
 </html>

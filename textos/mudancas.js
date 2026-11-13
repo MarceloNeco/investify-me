@@ -7,7 +7,8 @@
    ===================================================================== */
 const MUDANCAS = [
   {v:'3.71', d:'2026-11-13', t:'Textos da tela inicial mais diretos', itens:[
-    'Os três cartões da tela inicial dizem o que cada app faz, sem frase de efeito, e o rodapé diz como os dados são guardados: criptografados no aparelho antes de ir para a nuvem, ou só neste aparelho, sem conta.'
+    'Os três cartões da tela inicial dizem o que cada app faz, sem frase de efeito, e o rodapé diz como os dados são guardados: criptografados no aparelho antes de ir para a nuvem, ou só neste aparelho, sem conta.',
+    'As telas da nuvem e a dica "Onde ficam os seus dados" dizem o mesmo, sem a expressão "cadeado da família".'
   ]},
   {v:'3.70', d:'2026-11-13', t:'A declaração do IR preenche os três apps', itens:[
     'Ao importar a declaração no TaxONE, a tela mostra o que fazer com ela, sempre como escolha: montar ou atualizar a carteira do InvestifyONE com os investimentos de 31/12 (ações e ETFs no exterior com a quantidade, fundos, poupança, contas), cadastrar os dependentes em Pessoas, as fontes pagadoras em Rendas e, se quiser, a escola e o plano de saúde como contas fixas em Custos. O que já existe vem desmarcado; nada é gravado sem você confirmar.',
