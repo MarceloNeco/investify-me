@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.77 · 13/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.78 · 13/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.78 */
+  'TaxONE agora se chama FiscalONE':'TaxONE is now called FiscalONE',
+  'O app de imposto de renda e da empresa (PJ) agora se chama FiscalONE, em todo lugar: tela inicial, menu, títulos, passeio, glossário e ajuda. A cor, o ícone e os seus dados continuam iguais; a busca acha pelos dois nomes.':'The income tax and company app is now called FiscalONE everywhere: home screen, menu, titles, tour, glossary and help. The colour, the icon and your data stay the same; search finds it by either name.',
   /* 3.77 */
   'Saldo previsto da conta, aviso de débito automático e Cofre da empresa':'Forecast account balance, auto-debit warning and Company vault',
   'Saldo previsto da conta: no Painel e em Contas fixas, a linha do saldo de cada conta corrente nos próximos 45 dias, dia a dia (o saldo de hoje que o banco mandou, menos as contas fixas, boletos e faturas do cartão que essa conta paga, mais as rendas). O zero fica sempre à vista e a parte abaixo dele em vermelho.':'Forecast account balance: on the Panel and in Fixed bills, the balance line of each current account for the next 45 days, day by day (today\'s balance from the bank, minus the fixed bills, slips and card bills that account pays, plus income). Zero is always visible and the part below it is red.',

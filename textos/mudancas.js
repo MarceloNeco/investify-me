@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.77 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.78 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.78', d:'2026-11-13', t:'TaxONE agora se chama FiscalONE', itens:[
+    'O app de imposto de renda e da empresa (PJ) agora se chama FiscalONE, em todo lugar: tela inicial, menu, títulos, passeio, glossário e ajuda. A cor, o ícone e os seus dados continuam iguais; a busca acha pelos dois nomes.'
+  ]},
   {v:'3.77', d:'2026-11-13', t:'Saldo previsto da conta, aviso de débito automático e Cofre da empresa', itens:[
     'Saldo previsto da conta: no Painel e em Contas fixas, a linha do saldo de cada conta corrente nos próximos 45 dias, dia a dia (o saldo de hoje que o banco mandou, menos as contas fixas, boletos e faturas do cartão que essa conta paga, mais as rendas). O zero fica sempre à vista e a parte abaixo dele em vermelho.',
     'Se a conta vai ficar negativa, o app avisa em "Precisa da sua atenção" e no 📥: "Sua conta fica negativa em DD/MM (−R$ X). Resgate R$ Y até DD/MM", com o valor arredondado (o buraco + 5% de folga) e de onde tirar: o investimento mais líquido (cai no mesmo dia, ou no dia seguinte: peça um dia antes). "Já resgatei / já agendei" refaz a linha.',

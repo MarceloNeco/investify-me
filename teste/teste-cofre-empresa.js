@@ -1,6 +1,6 @@
 /* =====================================================================
-   teste/teste-cofre-empresa.js — 3.77: TaxONE, o "Cofre da empresa" (modulos/cofre-empresa.js). Dados FICTÍCIOS.
-   Confere: o menu do TaxONE tem a tela; cadastrar com CNPJ, razão, regime, contador, contas da PJ e Pix; CNPJ errado
+   teste/teste-cofre-empresa.js — 3.77: FiscalONE, o "Cofre da empresa" (modulos/cofre-empresa.js). Dados FICTÍCIOS.
+   Confere: o menu do FiscalONE tem a tela; cadastrar com CNPJ, razão, regime, contador, contas da PJ e Pix; CNPJ errado
    não passa; anexar o cartão CNPJ (arquivo guardado no cofre de arquivos, ligado à empresa) e um alvará com validade
    perto → lembrete no 📥 e "ok, entendi" tira; a coleção fica no cofre reservado; visão da casa não vê; sem senha.
    Uso: node teste/teste-cofre-empresa.js
@@ -30,8 +30,8 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos: [], r
     await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && typeof CofreEmpresa !== 'undefined');
     await p.evaluate(() => { I18n.atual = 'pt'; Assist.marcarTutorial(); ST.config.assistOne = false; AssistOne.aplicar(); abrirApp('tax'); irPara('t-empresa'); render(); });
 
-    console.log('1) a tela no TaxONE');
-    ok(await p.evaluate(() => ABAS.tax.some((a) => a.v === 't-empresa') && appDaView('t-empresa') === 'tax' && /Cofre da empresa/.test(document.querySelector('#view-t-empresa, .view:not(.hidden)').innerText)), 'menu do TaxONE: "Cofre da empresa"; a tela abre');
+    console.log('1) a tela no FiscalONE');
+    ok(await p.evaluate(() => ABAS.tax.some((a) => a.v === 't-empresa') && appDaView('t-empresa') === 'tax' && /Cofre da empresa/.test(document.querySelector('#view-t-empresa, .view:not(.hidden)').innerText)), 'menu do FiscalONE: "Cofre da empresa"; a tela abre');
 
     console.log('2) cadastrar');
     await p.click('[data-acao="em-editar"]'); await p.waitForSelector('#genModal:not(.hidden) #emCnpj');

@@ -709,6 +709,9 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **3.78 — TaxONE → FiscalONE (só o nome).** O nome exibido mudou em todo lugar (APPS.tax.nome, títulos, ajuda, glossário, passeio, textos);
+  o id interno continua 'tax' (ABAS.tax, VIEWS_TAX, t-*, coleções, `ST.appAtual`), a cor `--c-tax` e o ícone 🧾 também. As Novidades antigas
+  (textos/mudancas.js) não mudam. `buscarConteudo` troca "taxone" por "fiscalone" na busca. Teste: `teste/teste-fiscalone.js`.
   **3.77 — Saldo previsto da conta, aviso de débito automático, Cofre da empresa.**
   Saldo previsto (`modulos/saldo-previsto.js` 1.0.0, `window.SaldoPrevisto`): para cada `ST.saldos_banco` tipo 'conta' (fora da visão da casa),
   `linha(c)` = 46 pontos (hoje + 45 dias) a partir do saldo do robô, com `eventos(c)`: ocorrências em aberto de `Recorrente` (estado que "conta";

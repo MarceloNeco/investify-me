@@ -192,11 +192,11 @@ const CASA = ['MARCADOR-CASA-DELA', 'MARCADOR-CASA-COND', 'MARCADOR-CASA-CARTAO'
       const cfg = document.body.innerText;
       return { hub, txt, menu, foiPara, cfg, app: ST.appAtual };
     });
-    ok(!tela.hub && tela.app === 'budget' && !/InvestifyONE|TaxONE/.test(tela.menu), 'ela: sem a tela dos três apps; o menu não tem InvestifyONE nem TaxONE');
+    ok(!tela.hub && tela.app === 'budget' && !/InvestifyONE|TaxONE|FiscalONE/.test(tela.menu), 'ela: sem a tela dos três apps; o menu não tem InvestifyONE nem FiscalONE');
     ok(tela.foiPara === 'b-painel', 'ela: uma tela do InvestifyONE leva ao Painel do BudgetONE');
     ok(!/Sobrou por mês/.test(tela.txt) && /Gastos da família/.test(tela.txt) && /atualizado em \d\d\/\d\d/.test(tela.txt), 'ela: Painel sem "Sobrou", com "Gastos da família · atualizado em dd/mm"');
     ok(!/oculto|restrito|escondido|reservad/i.test(tela.txt + tela.cfg), 'ela: nenhuma palavra "oculto", "restrito", "escondido" ou "reservado" nas telas');
-    ok(!/InvestifyONE|TaxONE/.test(tela.cfg), 'ela: Configurações sem as abas do InvestifyONE e do TaxONE');
+    ok(!/InvestifyONE|TaxONE|FiscalONE/.test(tela.cfg), 'ela: Configurações sem as abas do InvestifyONE e do FiscalONE');
     ok(!/Planilha espelho|Família no MoneyTRIO/.test(tela.cfg), 'ela: Configurações sem a planilha espelho e sem "Família no MoneyTRIO"');
     const painelB = await B.evaluate(async () => { MoneyNuvem._teste.Painel.abrir ? MoneyNuvem._teste.Painel.abrir() : null; await new Promise((r) => setTimeout(r, 400)); const t = (document.querySelector('.nv-painel') || document.body).innerText; MoneyNuvem._teste.Painel.fechar(); return t; });
     ok(!/Robô do banco/.test(painelB), 'ela: "Segurança e aparelhos" sem o robô do banco');

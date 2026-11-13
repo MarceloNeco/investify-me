@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/tour.js — o passeio de verdade, com spotlight (3.65)        1.0.1 · 13/Nov/2026
+   modulos/tour.js — o passeio de verdade, com spotlight (3.65)        1.0.2 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      O tutorial deixou de ser uma janela no meio da tela. Cada passo leva o balão até o elemento de verdade:
@@ -33,8 +33,8 @@
 
   var PASSOS = [
     { alvo: ['#sidenav #navLista', '#btnMenu'], ico: '☰',
-      pt: { t: 'O menu', x: 'Três apps num lugar só: BudgetONE para o dia a dia, InvestifyONE para os investimentos e TaxONE para o imposto. Pelo menu você chega a todas as telas; no celular, ele abre no ☰.' },
-      en: { t: 'The menu', x: 'Three apps in one place: BudgetONE for day-to-day money, InvestifyONE for investments and TaxONE for tax. The menu takes you to every screen; on a phone it opens from ☰.' } },
+      pt: { t: 'O menu', x: 'Três apps num lugar só: BudgetONE para o dia a dia, InvestifyONE para os investimentos e FiscalONE para o imposto. Pelo menu você chega a todas as telas; no celular, ele abre no ☰.' },
+      en: { t: 'The menu', x: 'Three apps in one place: BudgetONE for day-to-day money, InvestifyONE for investments and FiscalONE for tax. The menu takes you to every screen; on a phone it opens from ☰.' } },
     { alvo: ['#sidenav .nav-item[data-view$="painel"]', '.tabbar .tab[data-view$="painel"]', '.kpis'], ico: '📊',
       pt: { t: 'O Painel', x: 'O resumo: o que entrou, o que saiu, quanto sobrou e os indicadores do mês. Todo número com ⓘ tem explicação, no nível que você escolher.' },
       en: { t: 'The Dashboard', x: 'The summary: what came in, what went out, what was left and this month\'s indicators. Every number with an ⓘ has an explanation, at the level you choose.' } },
@@ -159,6 +159,6 @@
     }
   };
 
-  MoneyModulos.registrar({ id: 'tour', versao: '1.0.1' });
+  MoneyModulos.registrar({ id: 'tour', versao: '1.0.2' });
   window.Tour = API;
 })();
