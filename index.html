@@ -631,7 +631,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.68"></script>
+<script src="textos/frases-en.js?v=3.68.1"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7565,7 +7565,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.68"></script>
+<script src="textos/mudancas.js?v=3.68.1"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -28395,7 +28395,8 @@ function ligarEventos(){
     if(alvo.dataset.ac === '1') return;                 /* campo com lista de sugestões cuida do Enter */
     const janela = alvo.closest('.modal-wrap:not(.hidden)');
     if(!janela) return;
-    const botao = janela.querySelector('.modal-foot .btn.primary, .f-actions .btn.primary, .btn.primary');
+    /* 3.68.1: prioridade de verdade (uma lista com vírgula devolve o primeiro na ordem do documento: o "✓ Confirmar como está" no alto ganhava do Salvar) */
+    const botao = janela.querySelector('.modal-foot .btn.primary') || janela.querySelector('.f-actions .btn.primary') || janela.querySelector('.btn.primary');
     if(botao && !botao.disabled){ e.preventDefault(); botao.click(); }
   });
 

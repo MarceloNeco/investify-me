@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.68 · 13/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.68.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.68.1 */
+  'O Enter agora sempre salva o que você editou':'Enter now always saves what you edited',
+  'Numa janela de edição, o Enter aperta sempre o botão Salvar do rodapé. Antes, num lançamento "A confirmar", ele apertava o "✓ Confirmar como está" do alto e descartava o que você tinha mudado (apelido, categoria).':'In an edit window, Enter always presses the Save button at the bottom. Before, on an entry "To confirm", it pressed "✓ Confirm as is" at the top and discarded what you had changed (nickname, category).',
   /* 3.68 */
   'Mês a mês de verdade, apelidos e nomes':'Real month by month, nicknames and names',
   '"Mês a mês" mostra o resultado real de cada mês (tudo o que entrou menos o que saiu; o que foi para investimento fica de fora). A parte da renda extraordinária (rescisão, FGTS) aparece em amarelo com ★ e a régua não se deixa levar por ela; toque no mês para ver o que entrou, saiu e foi para investimento.':'"Month by month" shows each month\'s real result (everything that came in minus what went out; what went to investments is left out). The extraordinary income part (severance, FGTS) shows in yellow with ★ and does not stretch the scale; tap a month to see what came in, went out and was invested.',
