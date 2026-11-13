@@ -1,11 +1,18 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.66.1 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.67 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.67', d:'2026-11-13', t:'Painel mais claro: período, drill-down, orçamento e projeção', itens:[
+    'Painel do BudgetONE: cada bloco diz o período que mostra, e todos usam o mesmo período do filtro. O "por mês" divide pelos meses do período, não mais por 12 fixos.',
+    '"Para onde foi": toque no grupo para ver as categorias; toque na categoria para ver os lançamentos dela (ex.: Lazer → Restaurantes → os iFood).',
+    'Renda extraordinária (rescisão, FGTS, resgate) fica fora das médias e das barras do "Mês a mês"; aparece marcada com ★ e listada à parte.',
+    'Orçamento do mês: um limite por categoria, com barra de progresso e aviso aos 80% e ao estourar, na hora em que o lançamento entra.',
+    'Projeção do mês: no ritmo de sempre, quanto sobra ou falta até o fim do mês.'
+  ]},
   {v:'3.66.1', d:'2026-11-13', t:'Nome e ícone novos', itens:[
     'A aba do navegador e o app instalado se chamam só "MoneyTRIO".',
     'Ícone novo: um cifrão dentro do gráfico de crescimento, que dá para ver na aba (16 px), no tema claro e no escuro, e na tela inicial do celular.'
