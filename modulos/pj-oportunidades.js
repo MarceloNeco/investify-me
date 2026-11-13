@@ -100,7 +100,8 @@
       },
       reforma: function (e) { return cartao('reforma', 'info', { revisar: I18n.data(API.revisarEm(e)) }, T.fontes.reforma); }
     },
-    revisarEm: function (e) { return e.reformaRevisar || '2026-09-01'; },
+    /* sem data na lei confirmada aqui: hoje + 30 dias, gravada na empresa na primeira vez (depois, "Revisei" empurra 6 meses) */
+    revisarEm: function (e) { if (!e.reformaRevisar) { var d = new Date(hoje() + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + 30); e.reformaRevisar = d.toISOString().slice(0, 10); } return e.reformaRevisar; },
     cartoes: function (e, mes) {
       if (casa() || !T) return [];
       mes = mes || hoje().slice(0, 7);

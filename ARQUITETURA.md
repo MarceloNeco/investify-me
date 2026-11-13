@@ -716,7 +716,7 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   `modulos/pj-oportunidades.js` 1.0.0 (`window.PJOport`): `simples(anexo, rbt12)`; `regras.{fatorR, exportacao, despesasCasa, mistura, reforma}(e, mes)`
   → cartão `{k, nivel, titulo, frase, porque, fonte, valor}`; `plano(g)` e `dre(e, de, ate)`; `pacote(e, mes)` → `{texto, csv, assunto}` (baixar .txt e .csv;
   `mailto:` para o contador); `contextoIA(e)` pelo ponto novo `ia.contexto` (o `IA.contexto()` do index chama `MoneyModulos.itens('ia.contexto', {app,
-  tela})` e diz "FiscalONE"); a data de revisar a reforma (`empresa.reformaRevisar`, padrão 01/09/2026; "Revisei" +6 meses) no 📥; a troca
+  tela})` e diz "FiscalONE"); a data de revisar a reforma (`empresa.reformaRevisar`, padrão = o dia em que apareceu + 30 dias, gravado na empresa; "Revisei" +6 meses) no 📥; a troca
   (`empresa.troca[passo] = data`) quando há empresa "a encerrar"/"a reativar". Tudo no ponto `pj.empresa`. Teste: `teste/teste-pj-oportunidades.js`.
   **3.82 — FiscalONE, gestão da PJ (itens 1, 6, 7 e 9).** `modulos/pj-gestao.js` 1.0.0 (`window.PJGestao`), no ponto novo `pj.empresa` da tela
   `t-pj` (pj 1.1.0: as empresas pela `CofreEmpresa.ordenadas()`, a ativa primeiro). `serie(e, mesFim)`: 12 meses com receita (faturamento + entradas que

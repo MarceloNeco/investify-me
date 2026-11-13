@@ -70,10 +70,12 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     ok(/Simples Nacional, o imposto é sobre a RECEITA: passar a despesa para a PJ NÃO reduz o DAS/.test(c3.d.frase) && /Só no Lucro Real/.test(c3.d.frase) && c3.real === null, 'despesa de casa no Simples: "não reduz o DAS" (e no Lucro Real a regra não aparece)');
     ok(c3.m && /Mistura PF × PJ: 2 lançamento/.test(c3.m.titulo) && /DAS-SIMPLES/.test(c3.m.frase) && /RESTAURANTE EXEMPLO/.test(c3.m.frase) && /confusão patrimonial/.test(c3.m.frase), 'mistura: o DAS pago no CPF e o restaurante pago pela PJ → "confusão patrimonial"');
     ok(/2027: começa a CBS/.test(c3.r.frase) && /planalto\.gov\.br|gov\.br\/receitafederal/.test(c3.r.fonte), 'reforma: o que muda e quando, com a fonte oficial');
-    ok(/Revisar a reforma tributária com o contador \(Exemplo Consultoria\)/.test(await p.evaluate(() => (inboxGrupos().find((g) => g.id === 'pj') || {}).html || '')), '📥: "Revisar a reforma tributária" (a data de revisar passou)');
+    ok(await p.evaluate(() => ST.empresas.find((x) => x.id === 'emA').reformaRevisar === '2026-12-13' && !/Revisar a reforma/.test((inboxGrupos().find((g) => g.id === 'pj') || { html: '' }).html)), 'a data de revisar nasce em hoje + 30 dias (13/12/2026) e ainda não está no 📥');
+    await p.evaluate(() => { PJOport._hoje = '2026-12-14'; });
+    ok(/Revisar a reforma tributária com o contador \(Exemplo Consultoria\)/.test(await p.evaluate(() => (inboxGrupos().find((g) => g.id === 'pj') || {}).html || '')), '📥: "Revisar a reforma tributária" quando a data chega');
     await p.evaluate(() => abrirInbox()); await p.click('#genBody [data-acao="pjo-revisei"]');
-    ok(await p.evaluate(() => ST.empresas.find((x) => x.id === 'emA').reformaRevisar === '2027-05-13'), '"Revisei" → lembra de novo em 6 meses (13/05/2027)');
-    await p.evaluate(() => fechar('genModal'));
+    ok(await p.evaluate(() => ST.empresas.find((x) => x.id === 'emA').reformaRevisar === '2027-06-14'), '"Revisei" → lembra de novo em 6 meses (14/06/2027)');
+    await p.evaluate(() => { fechar('genModal'); PJOport._hoje = '2026-11-13'; });
 
     console.log('4) a tela: Oportunidades, DRE, troca, glossário');
     await p.evaluate(() => { abrirApp('tax'); irPara('t-pj'); render(); });
