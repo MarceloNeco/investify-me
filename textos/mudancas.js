@@ -11,7 +11,7 @@ const MUDANCAS = [
     'No Painel, cada categoria mostra o que já foi, o que ainda falta do previsto, o ritmo de hoje e a meta (o limite que você digitou). A Projeção do mês diz: previsto, já foi, ainda vem (quanto em contas certas) e quanto deve sobrar, e os 3 meses seguintes.',
     'Futuro → "Viagens e eventos": registre uma viagem de carro e a gasolina extra entra no previsto.',
     'Boleto sem nome do banco ("INT PAG TIT"): quando o valor e a data batem com uma conta fixa de Custos (o valor pode variar, como o condomínio), a lista mostra o nome da conta com "A confirmar". Um toque confirma e liga o pagamento à conta; se duas contas batem, o app mostra as duas para você escolher.',
-    'Viagem que passou: quando o combustível de poucos dias passa muito do normal, o app pergunta "Foi viagem?". Se foi, esses abastecimentos saem da média e o app aprende a distância do destino. Nunca marca sozinho.'
+    'Viagem que passou: quando o combustível de poucos dias passa muito do normal, o app pergunta "Foi viagem?". Se foi, esses abastecimentos saem da média e o app aprende a distância do destino. Nunca marca sozinho.',
     'O ✨ da IA foi para a barra de cima, ao lado da lupa. A faixa de cima só aparece quando há anúncio: sem ela, a tela começa mais no alto. Em telas muito estreitas, o ✨ fica no menu 👤.',
     'Calendário do menu: a setinha agora aponta para onde ele vai. Aberto, a seta aponta para baixo (recolher); recolhido, para cima (abrir).',
   ]},
