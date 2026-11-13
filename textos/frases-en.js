@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.71 · 13/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.72 · 13/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.72 */
+  'Mensagens da nuvem mais claras':'Clearer cloud messages',
+  'As mensagens de entrar e de segurança falam em desbloquear, chave e acesso, em vez de "cadeado" (por exemplo: "Desbloqueie com o PIN ou a digital", "O acesso desta família ainda não foi liberado para você", "Você bloqueou o app").':'The sign-in and security messages now talk about unlocking, key and access instead of "lock" (for example: "Unlock with the PIN or fingerprint", "Access to this family has not been granted to you yet", "You locked the app").',
   /* 3.71: os cartões da tela inicial */
   'Textos da tela inicial mais diretos':'Clearer home screen texts',
   'As telas da nuvem e a dica "Onde ficam os seus dados" dizem o mesmo, sem a expressão "cadeado da família".':'The cloud screens and the "Where your data is kept" tip say the same, without the "family lock" wording.',

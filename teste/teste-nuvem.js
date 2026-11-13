@@ -451,7 +451,7 @@ let BASE = '';
     ok(!(await A.$('#nvPin')) && (await estado(A)).gastos.length === 4, 'A: recarregar dentro dos 15 min abre direto, sem pedir PIN');
     await A.evaluate(() => MoneyNuvem.trancar('manual'));
     await A.waitForSelector('#nvPin', { timeout: 20000 });
-    ok(/Você fechou o cadeado/.test(await A.textContent('.nv-card')), 'A: "Fechar agora" tranca e pede o PIN');
+    ok(/Você bloqueou o app/.test(await A.textContent('.nv-card')), 'A: "Fechar agora" tranca e pede o PIN');
     ok(/Você continua conectado como .*dono.*Só falta destravar/.test(await A.textContent('#nvConectado')) && /Entrar com outra conta/.test(await A.textContent('#nvSairP')), 'A: a tela do cadeado diz "Você continua conectado… Só falta destravar" e tem "Entrar com outra conta"');
     ok((await vale(A)) === null, 'A: trancar apaga a chave guardada');
     await A.reload(); await A.waitForSelector('#nvPin', { timeout: 30000 });
@@ -552,6 +552,14 @@ let BASE = '';
     await A.click('#nvFechar');
 
     /* ---------- 8. cadeado com relógio falso ---------- */
+    /* 3.72: nenhuma mensagem da nuvem fala em "cadeado" (agora: desbloquear, chave, acesso, bloquear), em PT nem em EN */
+    {
+      const src = fs.readFileSync(path.join(__dirname, '..', 'nuvem.js'), 'utf8');
+      const msgs = (src.match(/tt\('(?:[^'\\]|\\.)*',\s*(?:'(?:[^'\\]|\\.)*'|"[^"]*")\)/g) || []);
+      const ruins = msgs.filter((m) => /cadeado|family lock|the lock\b|this lock\b/i.test(m));
+      ok(msgs.length > 100 && ruins.length === 0, 'mensagens da nuvem sem "cadeado" (' + msgs.length + ' conferidas' + (ruins.length ? '; sobrou: ' + ruins.slice(0, 2).join(' | ') : '') + ')');
+      ok(/Desbloqueie|desbloquear/.test(src) && /O acesso desta família ainda não foi liberado/.test(src), 'as mensagens novas estão lá ("Desbloqueie…", "O acesso desta família…")');
+    }
     console.log('8) cadeado (relógio falso)');
     const C = await abrirPagina(browser, { width: 390, height: 800 }, 'C', false);
     await C.clock.install();

@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.71 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.72 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.72', d:'2026-11-13', t:'Mensagens da nuvem mais claras', itens:[
+    'As mensagens de entrar e de segurança falam em desbloquear, chave e acesso, em vez de "cadeado" (por exemplo: "Desbloqueie com o PIN ou a digital", "O acesso desta família ainda não foi liberado para você", "Você bloqueou o app").'
+  ]},
   {v:'3.71', d:'2026-11-13', t:'Textos da tela inicial mais diretos', itens:[
     'Os três cartões da tela inicial dizem o que cada app faz, sem frase de efeito, e o rodapé diz como os dados são guardados: criptografados no aparelho antes de ir para a nuvem, ou só neste aparelho, sem conta.',
     'As telas da nuvem e a dica "Onde ficam os seus dados" dizem o mesmo, sem a expressão "cadeado da família".'
