@@ -644,6 +644,9 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.66.1: título da aba, `og:title` e manifest = "MoneyTRIO" (sem frase). Ícone novo (cifrão sobre o gráfico de crescimento): `icone.svg`
+  (favicon), `icone-32.png`, `icone-192.png`, `icone-512.png` e `icone-512-maskable.png` (fundo inteiro, desenho na zona segura de 76%).
+  Teste: `teste/teste-nome-icone.js`.
 - 3.66 (`nuvem.js` 1.14.0; módulo novo `visao-casa` 1.0.0; `espelho` 1.1.2; SQL `supabase/2026-11-12-moneytrio-escopos.sql`).
   **Dois cofres** (desenho: `DESENHO-visao-da-casa.md`; contrato do robô: `supabase/CONTRATO-robo-escopos.md`):
   - **Chaves próprias do MoneyTRIO:** CC (casa) e CR (reservada), AES-256, em `money_chaves` embrulhadas (RSA-OAEP, `Cifra.embrulhar`)

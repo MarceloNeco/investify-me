@@ -1,11 +1,15 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.66 · 12/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.66.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.66.1', d:'2026-11-13', t:'Nome e ícone novos', itens:[
+    'A aba do navegador e o app instalado se chamam só "MoneyTRIO".',
+    'Ícone novo: um cifrão dentro do gráfico de crescimento, que dá para ver na aba (16 px), no tema claro e no escuro, e na tela inicial do celular.'
+  ]},
   {v:'3.66', d:'2026-11-12', t:'A família no MoneyTRIO: a parte da casa e a parte só sua', itens:[
     'A família no MoneyTRIO: o chefe pode deixar alguém da família ver só a parte da casa (compromissos, contas da casa, os lançamentos dessa pessoa e os totais da família). O resto fica com outra chave e nem chega ao aparelho dela.',
     'Em Configurações → "Família no MoneyTRIO": marcar quem é da casa, "Preparar a visão da família" (feito uma vez, em segundo plano) e "Liberar" cada pessoa com "Só a casa" ou "Tudo".',

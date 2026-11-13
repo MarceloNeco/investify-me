@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.66 · 12/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.66.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.66.1 */
+  'Nome e ícone novos':'New name and icon',
+  'A aba do navegador e o app instalado se chamam só "MoneyTRIO".':'The browser tab and the installed app are called just "MoneyTRIO".',
+  'Ícone novo: um cifrão dentro do gráfico de crescimento, que dá para ver na aba (16 px), no tema claro e no escuro, e na tela inicial do celular.':'New icon: a dollar sign inside the growth chart, visible in the tab (16 px), in the light and dark themes, and on the phone home screen.',
   /* 3.66 */
   'A família no MoneyTRIO: a parte da casa e a parte só sua':'Family in MoneyTRIO: the household part and the part that is yours only',
   'A família no MoneyTRIO: o chefe pode deixar alguém da família ver só a parte da casa (compromissos, contas da casa, os lançamentos dessa pessoa e os totais da família). O resto fica com outra chave e nem chega ao aparelho dela.':'Family in MoneyTRIO: the head can let someone in the family see only the household part (commitments, household bills, that person\'s own entries and the family totals). The rest uses another key and never reaches their device.',
