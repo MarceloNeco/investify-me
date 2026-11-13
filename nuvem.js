@@ -2614,13 +2614,13 @@
       ssSet(K_TRANCOU, null);
       var hora = dataHora(new Date().toISOString());
       var el = Tela.mostrar(Tela.topo() +
-        '<h2>🔒 ' + tt('MoneyTRIO fechado', 'MoneyTRIO is locked') + '</h2>' +
+        '<h2>🔒 ' + tt('MoneyTRIO bloqueado', 'MoneyTRIO is locked') + '</h2>' +
         (trancou ? '<div class="nv-nota" id="nvMotivo">' + (trancou === 'manual' ? tt('Você bloqueou o app.', 'You locked the app.')
-          : trancou === 'fora' ? tt('Trancado porque o app ficou 10 min em segundo plano', 'Locked because the app was in the background for 10 min')
-          : trancou === 'ocioso' ? tt('Trancado após 15 min sem uso', 'Locked after 15 min without use')
+          : trancou === 'fora' ? tt('Bloqueado porque o app ficou 10 min em segundo plano', 'Locked because the app was in the background for 10 min')
+          : trancou === 'ocioso' ? tt('Bloqueado após 15 min sem uso', 'Locked after 15 min without use')
           : trancou === 'pinTrocado' ? tt('O PIN da conta foi trocado em outro aparelho: digite o PIN novo.', 'The account PIN was changed on another device: type the new PIN.')
-          : tt('Fechado sozinho por segurança.', 'Locked by itself for safety.')) + (trancou === 'manual' ? '' : ' · ' + esc(hora)) + '</div>' : '') +
-        '<p class="nv-muted" id="nvConectado">' + tt('Você continua conectado como ', 'You are still signed in as ') + '<b>' + esc(nomeConta()) + '</b>. ' + tt('Só falta destravar.', 'You only need to unlock.') + '<br>' + tt('Família ', 'Family ') + '<b>' + esc(fam.nome) + '</b></p>' +
+          : tt('Bloqueado sozinho por segurança.', 'Locked by itself for safety.')) + (trancou === 'manual' ? '' : ' · ' + esc(hora)) + '</div>' : '') +
+        '<p class="nv-muted" id="nvConectado">' + tt('Você continua conectado como ', 'You are still signed in as ') + '<b>' + esc(nomeConta()) + '</b>. ' + tt('Só falta desbloquear.', 'You only need to unlock.') + '<br>' + tt('Família ', 'Family ') + '<b>' + esc(fam.nome) + '</b></p>' +
         (L && L.bloqueado ? '<div class="nv-nota erro">' + tt('O PIN errou muitas vezes e ficou bloqueado neste ' + apN() + '. Toque em "Esqueci o PIN" e aprove pelo outro aparelho.', 'The PIN failed too many times and is blocked on this ' + apN() + '. Tap "I forgot the PIN" and approve from your other device.') + '</div>'
           : '<label class="nv-fld"><span>PIN</span><input type="text" class="nv-pinc" id="nvPin" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label><button class="nv-btn pri" id="nvPinOk">' + tt('Abrir', 'Open') + '</button>' +
             (dig ? '<button class="nv-btn" id="nvDig">👆 ' + tt('Abrir com a digital', 'Open with fingerprint') + '</button>' : '')) +

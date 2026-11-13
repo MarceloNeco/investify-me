@@ -7,7 +7,8 @@
    ===================================================================== */
 const MUDANCAS = [
   {v:'3.72', d:'2026-11-13', t:'Mensagens da nuvem mais claras', itens:[
-    'As mensagens de entrar e de segurança falam em desbloquear, chave e acesso, em vez de "cadeado" (por exemplo: "Desbloqueie com o PIN ou a digital", "O acesso desta família ainda não foi liberado para você", "Você bloqueou o app").'
+    'As mensagens de entrar e de segurança falam em desbloquear, chave e acesso, em vez de "cadeado" (por exemplo: "Desbloqueie com o PIN ou a digital", "O acesso desta família ainda não foi liberado para você", "Você bloqueou o app").',
+    'As telas de entrar, de PIN e de "MoneyTRIO bloqueado" mostram a mesma imagem de fundo do app, nos dois temas.'
   ]},
   {v:'3.71', d:'2026-11-13', t:'Textos da tela inicial mais diretos', itens:[
     'Os três cartões da tela inicial dizem o que cada app faz, sem frase de efeito, e o rodapé diz como os dados são guardados: criptografados no aparelho antes de ir para a nuvem, ou só neste aparelho, sem conta.',

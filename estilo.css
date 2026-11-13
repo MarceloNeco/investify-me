@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.70 · 13/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.72 · 13/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -424,7 +424,7 @@ td:first-child .t-sub{overflow:hidden; text-overflow:ellipsis; white-space:nowra
 
 /* ---------- tela de senha ---------- */
 .lock-wrap{
-  position:fixed; inset:0; z-index:300; background:var(--bg);
+  position:fixed; inset:0; z-index:300; background:var(--bg); isolation:isolate;   /* 3.72: a imagem de fundo do app por trás (::before/::after) */
   display:flex; align-items:flex-start; justify-content:center; padding:24px;
   overflow-y:auto; -webkit-overflow-scrolling:touch;
 }
@@ -504,9 +504,8 @@ html[data-theme="light"] mark{background:rgba(14,163,113,.22)}
 /* ---------- fundo decorativo ---------- */
 html{background:var(--bg)}
 body{background:transparent}
-body::before{
-  content:''; position:fixed; inset:0; z-index:-2; pointer-events:none;
-  background-image:url("data:image/webp;base64,UklGRvpZAABXRUJQVlA4IO5ZAADQhgSdASqAB5EDPpFInUuluzMso/SZe2ASCWlu++0wBgces9Bejupda5gHPUeXyfw8hra3ahf/Bo6WJxQbIvs9DThPj80To8/f/mA8gG9/cPv4j+6Pr0+P/5vl7+N/zeP+At7b3cnvHvN4jver+AO7l9fNZD/9vAWCa0JSeOHSxALp\
+/* 3.72: a imagem fica numa variável só; o fundo do app e as telas do portão (nuvem, PIN, entrar) usam a mesma, sem duplicar */
+:root{--fundo-app:url("data:image/webp;base64,UklGRvpZAABXRUJQVlA4IO5ZAADQhgSdASqAB5EDPpFInUuluzMso/SZe2ASCWlu++0wBgces9Bejupda5gHPUeXyfw8hra3ahf/Bo6WJxQbIvs9DThPj80To8/f/mA8gG9/cPv4j+6Pr0+P/5vl7+N/zeP+At7b3cnvHvN4jver+AO7l9fNZD/9vAWCa0JSeOHSxALp\
 Qdy5jfLoO72C6VDLmN8ug7lzG+XQdy5jfLoO5cxvl0HcuY3y6Du9g9JPmqGXMcBnZ44dKhl13R44eWC6UHcuY3y6DuXMb5dB3LmN8ug7lzG+lfmN8ug7mcyj1Ywr4Bd5zG+XTCyeAzcd6UHcumQyqUPbgFn9MO72C6lQ3y6DuXMb5dB3fKISk8cOpUN8ug7vYLpUMuY3\
 0AG+XQe78ug7mb7pW1ug7l0yGVT5qhlzG+lfmN8ug7lzG+XQdy5jfLoO5cxvl0HcuY3y6DuXMb5dB3Lmk8s3R44dSvIZVNaxhpOqGXMb6V+Y3y6DuVm/+tQ9cl5LQ7hfQW534tFQT5C5Mw6q5rUSjZyLb2u6yJg8sYMco1MNlsV5IVB7cqRwI8muiN8ug7lzG+XQdy5j\
 fLoKxw0/DyOl6fQl3H82+RbN8qKFChQoUKFChNoDKpVJ44dKhlzG7+Hqt1/gAh29mChorHo1YVgUqNA/+HlX/ydl/iBspCTlLa7fPlq2vU3sdkPGHNvmQAsrAD6ThFKHUCvZt9YE/WKzlm/DR9GUedPsk4FNAulP1O9+mr8GTe8ZNfzX/VwSbcuY3y6DuXMb5dB3LmSp\
@@ -659,19 +658,22 @@ jV4u3yGllguWZO8JBH0X8QCV3otQ7eMuhMOiZwE8Gz7KyPwyFUK29h9xZ4zcBkQYpYZFw3G3xDCty3q8
 LMxroK04Qk1Pfo316DpD4E11hxQWzvBR8DvhVlrgfNj3/H3b8n+y+5WHD+QZ19Ca1iDgzi3oOo/UaSnWFXQTs1PTODCadEhfOS0PwCITqbvX0fXiFltc0O7yZj8T8PMWwAAH0EuS4TniZQM9poqdZ4mPqaX7Oah3RoFaRzA2tkFkKMwAQLwPbXTVIdr971zYip11oMtP\
 QQEj3xrPIGk/lBWmyEShDlxcrQDHf+bSkPRpYM0gjGlc8p6B4gQGmQAAB+483HNBX5hm3uCTTp75leTD/KR4Pxdd8/rn9E2ngAFSAAAABgm1nANTPCd2zPmXIYADqkX/nDXUkq0wUe5njm/8MXrXJ5QTgE4ZU/Uu1NVoak/F5N8LY7/baT0P39ACb6UvfYksuQYaLRCp\
 a1SP/FxB5pFhhD5PNj1w4Cq0NPsAyUrnqYHFAooCHPNCR5L4LbmBd5nYNj2eT4VWdfduUr19J7WKtt/9LdONRyl4UtQZ6lSeSetsy5qRnBcyb98GrqRASeSmBF0Ex2xj1/fxQ4NTrF0K2nbot/XPHq2VhS5zsbz4RPcK0zkTRQxZ44sxoUSRORcWHtTZQ8nH4i21KaCv\
-CPSaioc3s+lmFkRUQvSw41i/sP57WCVvx0mZXDEHP6DAha5qsYc+wOPWGdaOhvxcMTRY66wrg3iTl6n63ZnC6yvHaOZs46EFqaZImFTwrcIdtGDAQL157H8AAAA=");
+CPSaioc3s+lmFkRUQvSw41i/sP57WCVvx0mZXDEHP6DAha5qsYc+wOPWGdaOhvxcMTRY66wrg3iTl6n63ZnC6yvHaOZs46EFqaZImFTwrcIdtGDAQL157H8AAAA=")}
+body::before, .nv-portao::before, .lock-wrap::before{
+  content:''; position:fixed; inset:0; z-index:-2; pointer-events:none;
+  background-image:var(--fundo-app);
   background-position:center top; background-size:cover; background-repeat:no-repeat;
 }
-body::after{
+body::after, .nv-portao::after, .lock-wrap::after{
   content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
   background:linear-gradient(180deg, rgba(11,15,20,.42) 0%, rgba(11,15,20,.74) 38%, rgba(11,15,20,.90) 100%);
 }
-html[data-theme="light"] body::before{opacity:.14}
-html[data-theme="light"] body::after{
+html[data-theme="light"] body::before, html[data-theme="light"] .nv-portao::before, html[data-theme="light"] .lock-wrap::before{opacity:.14}
+html[data-theme="light"] body::after, html[data-theme="light"] .nv-portao::after, html[data-theme="light"] .lock-wrap::after{
   background:linear-gradient(180deg, rgba(242,245,249,.80) 0%, rgba(242,245,249,.92) 45%, rgba(242,245,249,.97) 100%);
 }
-html.sem-fundo body::before{display:none}
-html.sem-fundo body::after{display:none}
+html.sem-fundo body::before, html.sem-fundo .nv-portao::before, html.sem-fundo .lock-wrap::before{display:none}
+html.sem-fundo body::after, html.sem-fundo .nv-portao::after, html.sem-fundo .lock-wrap::after{display:none}
 
 /* cartões levemente translúcidos, para o fundo aparecer sem atrapalhar a leitura */
 :root{

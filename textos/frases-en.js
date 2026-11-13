@@ -6,6 +6,7 @@
    ===================================================================== */
 const FRASES_EN = {
   /* 3.72 */
+  'As telas de entrar, de PIN e de "MoneyTRIO bloqueado" mostram a mesma imagem de fundo do app, nos dois temas.':'The sign-in, PIN and "MoneyTRIO is locked" screens show the same background image as the app, in both themes.',
   'Mensagens da nuvem mais claras':'Clearer cloud messages',
   'As mensagens de entrar e de segurança falam em desbloquear, chave e acesso, em vez de "cadeado" (por exemplo: "Desbloqueie com o PIN ou a digital", "O acesso desta família ainda não foi liberado para você", "Você bloqueou o app").':'The sign-in and security messages now talk about unlocking, key and access instead of "lock" (for example: "Unlock with the PIN or fingerprint", "Access to this family has not been granted to you yet", "You locked the app").',
   /* 3.71: os cartões da tela inicial */
