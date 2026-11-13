@@ -1,10 +1,17 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.66.1 · 13/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.67 · 13/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.67 */
+  'Painel mais claro: período, drill-down, orçamento e projeção':'Clearer Panel: period, drill-down, budget and projection',
+  'Painel do BudgetONE: cada bloco diz o período que mostra, e todos usam o mesmo período do filtro. O "por mês" divide pelos meses do período, não mais por 12 fixos.':'BudgetONE Panel: each block says the period it shows, and all of them use the same period as the filter. "Per month" divides by the months in the period, no longer by a fixed 12.',
+  '"Para onde foi": toque no grupo para ver as categorias; toque na categoria para ver os lançamentos dela (ex.: Lazer → Restaurantes → os iFood).':'"Where it went": tap a group to see its categories; tap a category to see its entries (e.g. Leisure → Restaurants → the delivery orders).',
+  'Renda extraordinária (rescisão, FGTS e afins) fica fora das médias e das barras do "Mês a mês"; aparece marcada com ★ e listada à parte.':'Extraordinary income (severance, FGTS and the like) stays out of the averages and of the "Month by month" bars; it is marked with ★ and listed separately.',
+  'Orçamento do mês: um limite por categoria, com barra de progresso e aviso aos 80% e ao estourar, na hora em que o lançamento entra.':'Monthly budget: a limit per category, with a progress bar and a warning at 80% and when it goes over, as soon as the entry comes in.',
+  'Projeção do mês: no ritmo de sempre, quanto sobra ou falta até o fim do mês.':'Month projection: at the usual pace, how much is left over or missing by the end of the month.',
   /* 3.66.1 */
   'Nome e ícone novos':'New name and icon',
   'A aba do navegador e o app instalado se chamam só "MoneyTRIO".':'The browser tab and the installed app are called just "MoneyTRIO".',

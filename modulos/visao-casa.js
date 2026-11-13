@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.0.0 · 12/Nov/2026
+   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.0.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 11/Nov/2026; desenho em DESENHO-visao-da-casa.md)
      Um membro da família com a visão "Só a casa" vê a parte da casa; o resto fica RESERVADO e nem chega ao aparelho dele
@@ -22,7 +22,8 @@
      preparar(estado)  · ehPJ(item)  · pessoasDela()  · antesDeSubir(estado)
    DADOS
      Store.estado.visaoCasa = {pessoas: [ids das pessoas com a visão casa]}   (da casa: o app dela sabe quem ela é)
-     Store.estado.resumo = [{id: 'AAAA-MM', grupos, total, n, atualizadoEm}]
+     Store.estado.resumo = [{id: 'AAAA-MM', grupos, total, n, atualizadoEm, orc?: {'GRUPO|sub': total do mês}}]
+       (3.67: orc = só as categorias com limite no orçamento, para quem vê só a casa acompanhar o limite da família)
    ===================================================================== */
 (function () {
   'use strict';
@@ -30,7 +31,7 @@
   /* PJ: siglas em maiúsculas (DAS e TFE também são palavras comuns), o resto sem diferença de caixa */
   var PJ_SIGLA = /\b(PJ|DAS|TFE|CNPJ|ISS|DARF PJ)\b/;
   var PJ_TEXTO = /\b(contador(a)?|contabilidade|cont[aá]bil|contabilizei|simples nacional|pr[oó][ -]?labore|alvar[aá]|junta comercial|certificado digital)\b/i;
-  var CASA_COLS = { pessoas: 1, profissionais: 1, saude_planos: 1, agendamentos: 1, precos: 1, bancos: 1, resumo: 1 };
+  var CASA_COLS = { pessoas: 1, profissionais: 1, saude_planos: 1, agendamentos: 1, precos: 1, bancos: 1, resumo: 1, orcamentos: 1 };   /* 3.67: o orçamento por categoria vale para a família */
   var CASA_CONFIG = { visaoCasa: 1, categorias: 1, moedaBase: 1 };
 
   var C = { dela: {}, cartoes: {}, rec: {} };
@@ -77,7 +78,8 @@
     deConfig: function (k) { return CASA_CONFIG[k] ? 'casa' : 'reservado'; },
     /* os totais da família por mês; só muda o atualizadoEm do mês que mudou */
     antesDeSubir: function (est) {
-      var meses = {};
+      var meses = {}, comLimite = {};
+      (est.orcamentos || []).forEach(function (o) { if (o && o.id) comLimite[o.id] = 1; });   /* 3.67: só o total das categorias com limite */
       (est.gastos || []).forEach(function (g) {
         if (!g || !g.data || !g.grupo || g.grupo === 'RENDA' || g.grupo === 'INVESTIMENTO') return;
         if (g.fluxo && g.fluxo !== 'saida') return;
@@ -85,13 +87,15 @@
         var o = meses[m] || (meses[m] = { grupos: {}, total: 0, n: 0 });
         o.grupos[g.grupo] = Math.round(((o.grupos[g.grupo] || 0) + v) * 100) / 100;
         o.total = Math.round((o.total + v) * 100) / 100; o.n++;
+        var k = g.grupo + '|' + g.sub; if (comLimite[k]) { o.orc = o.orc || {}; o.orc[k] = Math.round(((o.orc[k] || 0) + v) * 100) / 100; }
       });
       var antes = {}; (est[COL] || []).forEach(function (r) { antes[r.id] = r; });
       var agora = new Date().toISOString(), out = [];
       Object.keys(meses).sort().forEach(function (m) {
         var o = meses[m], a = antes[m];
-        var igual = a && a.total === o.total && a.n === o.n && JSON.stringify(a.grupos) === JSON.stringify(o.grupos);
-        out.push(igual ? a : { id: m, grupos: o.grupos, total: o.total, n: o.n, atualizadoEm: agora });
+        var igual = a && a.total === o.total && a.n === o.n && JSON.stringify(a.grupos) === JSON.stringify(o.grupos) && JSON.stringify(a.orc || null) === JSON.stringify(o.orc || null);
+        var novo = { id: m, grupos: o.grupos, total: o.total, n: o.n, atualizadoEm: agora }; if (o.orc) novo.orc = o.orc;
+        out.push(igual ? a : novo);
       });
       est[COL] = out;
     }
@@ -169,7 +173,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'visao-casa', versao: '1.0.0', colecoes: [COL],
+    id: 'visao-casa', versao: '1.0.1', colecoes: [COL],
     pontos: {
       'budget.painel': function () { return API.soCasa() ? gastosDaFamilia() : ''; },
       'config.todos': function () { return cartaoChefe(); }

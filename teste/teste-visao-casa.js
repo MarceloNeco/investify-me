@@ -61,7 +61,7 @@ async function fotos(pg, nome, ir) {
   }
   await pg.setViewportSize({ width: 1366, height: 768 });
 }
-const RES = ['MARCADOR-RESERVADO-DEBITO', 'MARCADOR-RENDA-DELE', 'MARCADOR-PJ-CONTADOR', 'MARCADOR-INVEST', 'MARCADOR-BLACK', 'MARCADOR-ROBO-RES'];
+const RES = ['MARCADOR-RESERVADO-DEBITO', 'MARCADOR-RESERVADO-NOV', 'MARCADOR-RENDA-DELE', 'MARCADOR-PJ-CONTADOR', 'MARCADOR-INVEST', 'MARCADOR-BLACK', 'MARCADOR-ROBO-RES'];
 const CASA = ['MARCADOR-CASA-DELA', 'MARCADOR-CASA-COND', 'MARCADOR-CASA-CARTAO'];
 
 (async () => {
@@ -125,6 +125,12 @@ const CASA = ['MARCADOR-CASA-DELA', 'MARCADOR-CASA-COND', 'MARCADOR-CASA-CARTAO'
     const res = await A.evaluate(async () => { try { await MoneyNuvem._teste.Sinc.registrar(); } catch (e) {} return (Store.estado.resumo || []).map((r) => r.id + ':' + r.total).join(' '); });
     await subir(A);
     ok(/2026-10:1525/.test(res) && vivos.length && db.money_docs.some((r) => r.colecao === 'resumo' && r.escopo === 'casa'), 'totais da família por mês (casa): ' + res + ' (sem a renda)');
+    /* 3.67: o orçamento da família — o chefe põe um limite em Lazer › Restaurante; um gasto DELE no mês (reservado) conta no total */
+    await A.evaluate(() => { Store.estado.gastos.push({ id: 'gNov', data: hojeISO(), valor: 90, grupo: 'LAZER', sub: 'Restaurante', desc: 'MARCADOR-RESERVADO-NOV', quemId: 'pAna', fluxo: 'saida', criadoEm: new Date().toISOString() }); OrcamentoMes.salvar('LAZER', 'Restaurante', 100); });
+    await subir(A);
+    const mesHoje = new Date().toISOString().slice(0, 7);
+    ok(db.money_docs.some((r) => r.colecao === 'orcamentos' && !r.id.startsWith('r.') && r.escopo === 'casa' && !r.apagado_em) && db.money_docs.some((r) => r.id === 'r.gNov'),
+      'o orçamento é da casa (a Beta recebe); o gasto dele no mês fica reservado (r.gNov)');
     /* (o banco recusar registro fechado com a CF depois da migração: teste/sql/teste-moneytrio-escopos.sql e o mock) */
 
     console.log('3) liberar a Beta com "Só a casa"');
@@ -159,6 +165,18 @@ const CASA = ['MARCADOR-CASA-DELA', 'MARCADOR-CASA-COND', 'MARCADOR-CASA-CARTAO'
     ok(idb.length > 0 && !/\|r\./.test(idb), 'o IndexedDB dela não tem nenhum id "r." (' + idb.split('\n').length + ' chaves)');
     const tot = await B.evaluate(() => (Store.estado.resumo || []).find((r) => r.id === '2026-10'));
     ok(tot && tot.total === 1525 && tot.atualizadoEm, 'os totais da família chegam a ela (out/2026: ' + (tot && tot.total) + ', com os gastos dele, sem a renda)');
+    /* 3.67: o orçamento da família na visão dela: o total vem do resumo; o aviso não revela nenhum lançamento reservado */
+    const orcB = await B.evaluate(async () => { irPara('b-painel'); render(); await new Promise((r) => setTimeout(r, 200));
+      const s = OrcamentoMes.situacao(OrcamentoMes.lista()[0] || {}); const card = (document.querySelector('.orc') || {}).textContent || '';
+      const ts = []; const orig = window.toast; window.toast = (m) => ts.push(m);
+      Gasto.add({ id: 'bNov', data: hojeISO(), valor: 20, grupo: 'LAZER', sub: 'Restaurante', desc: 'JANTAR DELA', quemId: 'pBeta', fluxo: 'saida' });
+      window.toast = orig; const s2 = OrcamentoMes.situacao(OrcamentoMes.lista()[0] || {});
+      return { n: OrcamentoMes.lista().length, g: s.gasto, e: s.estado, card, ts, g2: s2.gasto, proj: !!document.querySelector('.orc-proj'), html: document.body.innerHTML };
+    });
+    ok(orcB.n === 1 && orcB.g === 90 && orcB.e === 'perto' && /R\$ 90,00 \/ R\$ 100,00/.test(orcB.card), 'ela vê o orçamento da família: Restaurante R$ 90 de R$ 100 (o total vem do resumo, sem o lançamento dele)');
+    ok(orcB.g2 === 110 && orcB.ts.some((m) => /Restaurante: estourou o limite do mês \(R\$ 110,00 \/ R\$ 100,00\)/.test(m)) && !orcB.ts.some((m) => /MARCADOR|RESERVADO/.test(m)),
+      'o gasto dela estoura o limite da família: aviso "' + (orcB.ts[0] || '') + '", sem nada do lançamento dele');
+    ok(!orcB.proj && !/MARCADOR-RESERVADO-NOV|12\.345/.test(orcB.html), 'ela: sem a "Projeção do mês" (não usa a renda dele); nada reservado na tela');
     ok(!/12345|12\.345/.test(bst) && !bst.includes('50000'), 'a renda dele e o investimento não aparecem nem como número');
 
     /* "não percebe": as telas dela */

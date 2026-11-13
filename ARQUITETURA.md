@@ -644,6 +644,19 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.67 (módulo novo `orcamento` 1.0.0; o layout do Painel não muda — o dono vai colher propostas).
+  **Painel do BudgetONE** (`viewBPainel`): um período só para o Painel inteiro (`periodoPainel(lista)`: o filtro, ou os últimos 12
+  meses; o nome vem de `periodosProntos`), rótulo `.pn-periodo` em cada bloco; todo "por mês" divide por `P.meses`; os quatro números
+  do topo usam o mesmo período dos blocos. "Para onde foi" com drill-down (`vizBarrasDrill`; `painelGrupoAberto`; `data-pngrupo` abre,
+  `data-pnsub` filtra os lançamentos no mesmo período). Renda extraordinária: `rendaExtra(g)` (rescisão, FGTS, indenização pelo nome — resgate de investimento NÃO, é a volta de um aporte —, ou
+  `g.extra` true/false à mão) fora das médias e das barras do "Mês a mês" (★ e lista embaixo).
+  **`modulos/orcamento.js`** (`window.OrcamentoMes`; o nome `Orcamento` já é o do IPCA): `ST.orcamentos = [{id:'GRUPO|sub', grupo, sub,
+  limite}]`; cartão "Orçamento do mês" (barra; ≥80% perto, >100% estourou; aviso no `gasto.novo`) e "Projeção do mês" (entra = maior entre
+  a renda do mês e a média sem extraordinária; sai = o que já saiu + média diária de 12 meses × dias que faltam; não aparece na visão da casa).
+  **Visão da casa** (`visao-casa` 1.0.1): `orcamentos` é coleção da casa (o limite vale para a família); o `resumo` do mês leva `orc`
+  (o total só das categorias com limite, sem lançamento nenhum); para quem vê só a casa, `gastoNoMes` = `resumo.orc` + o que ela lançou
+  depois do `atualizadoEm`. O aviso diz só a categoria e os totais. A "Projeção do mês" não aparece para ela (a renda dele nunca entra).
+  Teste: `teste/teste-painel-mes.js` (fotos `/tmp/painel-mes-*.png`).
 - 3.66.1: título da aba, `og:title` e manifest = "MoneyTRIO" (sem frase). Ícone novo (cifrão sobre o gráfico de crescimento): `icone.svg`
   (favicon), `icone-32.png`, `icone-192.png`, `icone-512.png` e `icone-512-maskable.png` (fundo inteiro, desenho na zona segura de 76%).
   Teste: `teste/teste-nome-icone.js`.

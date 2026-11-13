@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.65.2">
+<link rel="stylesheet" href="estilo.css?v=3.67">
 </head>
 <body>
 
@@ -631,7 +631,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.66.1"></script>
+<script src="textos/frases-en.js?v=3.67"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -2718,6 +2718,26 @@ function vizBarras(itens, fmt){
          '</div>';
   });
   return h || '<p class="muted small">Sem dados ainda.</p>';
+}
+
+/* 3.67: "Para onde foi" com drill-down: o grupo abre as categorias; a categoria leva aos lançamentos dela, no mesmo período */
+function vizBarrasDrill(porGrupo, lista, fmt){
+  const total = porGrupo.reduce((s, x) => s + Math.abs(x.valor), 0) || 1;
+  const pt = I18n.atual !== 'en';
+  return porGrupo.map(x => {
+    const G = GRUPOS[x.chave] || {}, cor = 'var(' + (G.cor || '--s1') + ')', pct = Math.abs(x.valor) / total * 100, aberto = painelGrupoAberto === x.chave;
+    let h = '<div class="alloc-row pn-grupo' + (aberto ? ' aberto' : '') + '">' +
+      '<button type="button" class="nm pn-abre" data-pngrupo="' + esc(x.chave) + '" aria-expanded="' + aberto + '"><span class="pn-seta" aria-hidden="true">' + (aberto ? '▾' : '▸') + '</span><i class="dot" style="background:' + cor + '"></i>' + esc(G.nome || x.chave) + '</button>' +
+      '<div class="vl">' + fmt(x.valor) + ' · <b>' + pct.toFixed(1) + '%</b></div>' +
+      '<div class="bar"><i style="width:' + pct.toFixed(2) + '%;background:' + cor + '"></i></div></div>';
+    if(aberto){
+      const subs = Gasto.porChave(lista.filter(g => g.fluxo === 'saida' && g.grupo === x.chave), 'sub');
+      h += '<div class="pn-subs">' + subs.map(s =>
+        '<button type="button" class="pn-sub" data-pnsub="' + esc(s.chave) + '" data-pngrupo2="' + esc(x.chave) + '">' +
+        '<span>' + esc(s.chave) + ' <span class="t-sub">' + s.n + (pt ? ' lanç.' : ' entries') + '</span></span><span class="num">' + fmt(s.valor) + ' ›</span></button>').join('') + '</div>';
+    }
+    return h;
+  }).join('') || '<p class="muted small">Sem dados ainda.</p>';
 }
 
 /* ---------------------------------------------------------
@@ -7495,7 +7515,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.66.1"></script>
+<script src="textos/mudancas.js?v=3.67"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -9772,6 +9792,28 @@ function fecharMenuApps(){
 /* =========================================================
    BudgetONE — Painel
    ========================================================= */
+/* 3.67: a renda extraordinária (rescisão, FGTS, indenização, ou marcada à mão em "extra") não entra na média do mês.
+   Resgate de investimento NÃO é renda nenhuma: é a volta de um aporte (fluxo 'aplicacao', negativo; 3.65.2). */
+const RX_RENDA_EXTRA = /rescis|fgts|indeniza/i;
+function rendaExtra(g){
+  if(!g || g.fluxo !== 'entrada') return false;
+  if(g.extra === true) return true;
+  if(g.extra === false) return false;
+  return RX_RENDA_EXTRA.test((g.sub || '') + ' ' + (g.desc || ''));
+}
+/* 3.67: o período do Painel inteiro (o filtro, ou os últimos 12 meses) e quantos meses ele tem: todo "por mês" divide por ele */
+function periodoPainel(lista){
+  const jan = Gasto.janela(), pt = I18n.atual !== 'en', datas = (lista || []).map(g => g.data).filter(Boolean).sort();
+  const de = bFiltro.de || datas[0] || jan.de, ate = bFiltro.ate || datas[datas.length - 1] || jan.ate;
+  let meses = 12;
+  if(de && ate){ const d = (new Date(ate + 'T12:00:00') - new Date(de + 'T12:00:00')) / 86400000 + 1; meses = Math.max(1, Math.round(d / 30.44)); }
+  const pr = (typeof periodosProntos === 'function' ? periodosProntos() : []).find(x => x.id === bFiltro.periodo);
+  const datasTxt = (de ? fmtData(de) : '…') + ' a ' + (ate ? fmtData(ate) : (pt ? 'hoje' : 'today'));
+  return {de, ate, meses, rotulo: (pr ? pr.nome : (pt ? 'período' : 'period')) + ' · ' + datasTxt,
+          porMes: meses === 1 ? (pt ? 'no mês' : 'in the month') : (pt ? 'média de ' + meses + ' meses' : 'average of ' + meses + ' months')};
+}
+let painelGrupoAberto = '';   /* 3.67: o grupo aberto em "Para onde foi" (grupo → categoria → lançamentos) */
+
 function viewBPainel(){
   const total = Gasto.todos().length;
   if(!total) return bVazio('b-painel');
@@ -9782,22 +9824,25 @@ function viewBPainel(){
   /* com filtro ligado, o painel mostra o recorte; sem filtro, os últimos 12 meses */
   const doze = bTemFiltro() ? bLista() : Gasto.filtrar({de: jan.de, ate: jan.ate});
   const c    = Gasto.caixa(doze);
+  /* 3.67: um período só para o Painel inteiro; a renda extraordinária fica de fora das médias */
+  const P = periodoPainel(doze);
+  const extra = doze.filter(rendaExtra).reduce((t, g) => t + (Number(g.valor) || 0), 0);
+  const entMes = (c.entrada - extra) / P.meses, saiMes = c.saida / P.meses;
+  const tagP = '<span class="small muted pn-periodo">' + esc(P.rotulo) + '</span>';
 
-  const pDe = bFiltro.de || jan.de, pAte = bFiltro.ate || jan.ate;
-  let h = '<div class="card-head"><h1>Painel</h1>' +
-    '<span class="small muted">' + (pDe ? fmtData(pDe) : '…') + ' a ' + (pAte ? fmtData(pAte) : (I18n.atual === 'pt' ? 'hoje' : 'today')) + '</span></div>';
+  let h = '<div class="card-head"><h1>Painel</h1>' + tagP + '</div>';
 
   h += barraFiltros({busca:false});
   h += avisoDensidade(real);
 
   /* os quatro números que importam */
   h += '<div class="kpis">' +
-    kpiB('Entrou por mês', fmt(real.entrada), 'renda-mensal', 'média dos 12 meses', '', 'b-renda') +
-    kpiB('Saiu por mês', fmt(real.saida), 'gasto-mensal', c.n + ' lançamentos no período', '', 'b-lanc') +
+    kpiB('Entrou por mês', fmt(entMes), 'renda-mensal', P.porMes + (extra ? ' · sem ' + fmt(extra) + ' de renda extraordinária' : ''), '', 'b-renda') +
+    kpiB('Saiu por mês', fmt(saiMes), 'gasto-mensal', P.porMes + ' · ' + c.n + ' lançamentos', '', 'b-lanc') +
     ((window.Escopo && Escopo.soCasa && Escopo.soCasa()) ? '' :   /* 3.66: na visão da casa, "Sobrou" não teria sentido (a renda dela menos o gasto da família) */
-    kpiB('Sobrou por mês', fmt(real.entrada - real.saida), 'sobra-mensal',
-         real.entrada ? pnum((real.entrada - real.saida) / real.entrada * 100, 0) + '% do que entrou' : '—',
-         (real.entrada - real.saida) >= 0 ? 'up' : 'down', 'b-fluxo')) +
+    kpiB('Sobrou por mês', fmt(entMes - saiMes), 'sobra-mensal',
+         entMes ? pnum((entMes - saiMes) / entMes * 100, 0) + '% do que entrou' + (extra ? ' (sem a extraordinária)' : '') : '—',
+         (entMes - saiMes) >= 0 ? 'up' : 'down', 'b-fluxo')) +
     kpiB('Custo de viver', fmt(fixo.mensal), 'custo-fixo', fixo.itens.length + ' compromissos fixos', '', 'b-custos') +
     '</div>';
   /* 3.64: indicadores do mês e a conferência com o saldo do banco (modulos/indicadores.js, modulos/saldo-banco.js) */
@@ -9811,11 +9856,11 @@ function viewBPainel(){
   }));
   h += '<div class="painel-par">';   /* 3.65.2: lado a lado a partir de 1200 px */
   h += '<div class="card"><div class="card-head"><h3>Para onde foi</h3>' +
-       '<button class="info-dot" data-info="gasto-por-grupo">i</button></div>' +
+       '<button class="info-dot" data-info="gasto-por-grupo">i</button>' + tagP + '</div>' +
        '<div class="rosca-linha">' +
          '<div class="rosca-fig">' + vizRosca(segs.map(s => ({valor: s.valor, cor: s.cor, nome: s.nome})),
-                  {centro: fmtCurto(c.saida), legenda: 'saiu em 12 meses', semLegenda: true}) + '</div>' +
-         '<div class="rosca-leg">' + vizBarras(segs, fmt) + '</div>' +
+                  {centro: fmtCurto(c.saida), legenda: 'saiu no período', semLegenda: true}) + '</div>' +
+         '<div class="rosca-leg">' + vizBarrasDrill(porGrupo, doze, fmt) + '</div>' +   /* 3.67: toque no grupo → categorias → lançamentos */
        '</div>' +
        /* 3.64: o peso de cada grupo na renda do período */
        (window.Indicadores ? (pg => pg.length ? '<p class="small muted ind-peso" style="margin:8px 0 0">' + esc(I18n.atual === 'pt' ? 'Peso na renda: ' : 'Share of income: ') +
@@ -9825,10 +9870,14 @@ function viewBPainel(){
   /* o caixa mês a mês */
   const meses = Gasto.porMes(doze);
   if(meses.length >= 2){
+    /* 3.67: o resultado do mês sem a renda extraordinária; ela aparece ao lado, em separado */
+    const extraMes = {}; doze.filter(rendaExtra).forEach(g => { const t = String(g.data || '').slice(0, 7); extraMes[t] = (extraMes[t] || 0) + (Number(g.valor) || 0); });
     h += '<div class="card"><div class="card-head"><h3>Mês a mês</h3>' +
-         '<button class="info-dot" data-info="caixa-mensal">i</button></div>' +
-         vizDivergente(meses.map(m => ({nome: m.t.split('-').reverse().join('/'),
-                                        valor: m.entrada - m.saida})), fmt) +
+         '<button class="info-dot" data-info="caixa-mensal">i</button>' + tagP + '</div>' +
+         vizDivergente(meses.map(m => ({nome: m.t.split('-').reverse().join('/') + (extraMes[m.t] ? ' ★' : ''),
+                                        valor: m.entrada - (extraMes[m.t] || 0) - m.saida})), fmt) +
+         (extra ? '<p class="small pn-extra" style="margin-top:8px">★ ' + esc((I18n.atual === 'en' ? 'Extraordinary income (severance, FGTS), outside the bars: ' : 'Renda extraordinária (rescisão, FGTS), fora das barras: ') +
+           Object.keys(extraMes).sort().map(t => t.split('-').reverse().join('/') + ' +' + fmt(extraMes[t])).join(' · ')) + '</p>' : '') +
          '<p class="tiny muted" style="margin-top:8px">Para a direita, o mês fechou no azul; ' +
          'para a esquerda, você gastou mais do que entrou.</p>' +
          '</div>';
@@ -9840,7 +9889,7 @@ function viewBPainel(){
   const NOMES_MES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   if(saz.some(m => m.media > 0)){
     h += '<div class="card"><div class="card-head"><h3>Os meses caros do seu ano</h3>' +
-         '<button class="info-dot" data-info="sazonalidade">i</button></div>' +
+         '<button class="info-dot" data-info="sazonalidade">i</button><span class="small muted pn-periodo">' + esc(I18n.atual === 'en' ? 'all the years recorded' : 'todos os anos registrados') + '</span></div>' +
          vizColunas(saz.map((m,i) => ({nome: NOMES_MES[i], valor: m.media})), fmt) +   /* 3.65.2: 12 colunas, não 12 linhas */
          '<p class="tiny muted" style="margin-top:8px">Média de cada mês em todos os anos que você registrou. ' +
          'É onde aparecem IPTU, IPVA, material escolar e as festas de fim de ano.</p></div>';
@@ -9849,8 +9898,8 @@ function viewBPainel(){
   /* os maiores buracos */
   const porSub = Gasto.porChave(doze.filter(g => g.fluxo === 'saida'), g => g.grupo + ' · ' + g.sub).slice(0,10);
   if(porSub.length){
-    h += '<div class="card"><div class="card-head"><h3>As dez maiores contas</h3></div>' +
-         '<table class="tbl"><thead><tr><th>Categoria</th><th class="num">12 meses</th>' +
+    h += '<div class="card"><div class="card-head"><h3>As dez maiores contas</h3>' + tagP + '</div>' +
+         '<table class="tbl"><thead><tr><th>Categoria</th><th class="num">' + (P.meses === 1 ? 'no mês' : 'no período') + '</th>' +
          '<th class="num">por mês</th><th class="num">vezes</th></tr></thead><tbody>' +
          porSub.map(x => {
            const [grupo, sub] = x.chave.split(' · ');
@@ -9858,7 +9907,7 @@ function viewBPainel(){
            return '<tr><td><span class="t-main">' + esc(sub) + '</span>' +
                   '<div class="t-sub">' + (G.ico || '') + ' ' + esc(G.nome || grupo) + '</div></td>' +
                   '<td class="num">' + fmt(x.valor) + '</td>' +
-                  '<td class="num">' + fmt(x.valor/12) + '</td>' +
+                  '<td class="num">' + fmt(x.valor / P.meses) + '</td>' +   /* 3.67: os meses do período, não 12 fixos */
                   '<td class="num">' + x.n + '</td></tr>';
          }).join('') + '</tbody></table></div>';
   }
@@ -28307,13 +28356,16 @@ function ligarEventos(){
 
   /* cliques gerais (delegação) */
   document.addEventListener('click', async (e) => {
-    const el = e.target.closest('[data-olho],[data-assunto],[data-mk-serie],[data-mk-per],[data-mk-ativo],[data-comp-per],[data-mov],[data-fmov],[data-resp],[data-graf-per],[data-grafico],[data-acoes-ativo],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del],[data-app],[data-bgrupo],[data-bsub],[data-bquem],[data-bforma],[data-bper],[data-bid],[data-bpag],[data-banos],[data-bpreco],[data-item],[data-recedit],[data-recoff],[data-recsug],[data-abatinfo],[data-servfalta],[data-rcmes],[data-recclone],[data-recrolar],[data-cfgsec],[data-avisof],[data-bamove],[data-basai],[data-baentra],[data-app2],[data-custaba],[data-caldia],[data-calandar],[data-calhoje],[data-cdtabre],[data-calpular],[data-calmesir],[data-calanoir],[data-cdtatalho],[data-ocor],[data-ocestado],[data-pgest],[data-recfav],[data-gfav],[data-grev],[data-rcregra],[data-para],[data-idioma],[data-bmarca],[data-contaba],[data-porta],[data-avtipo],[data-campon],[data-campdel],[data-servmes],[data-servaj],[data-ajtipo],[data-rjpct],[data-servir],[data-reaj],[data-visitas],[data-asaba],[data-vercomo],[data-nivelconta],[data-bkdel],[data-ctedit],[data-ctdel],[data-salaba],[data-trocaapp],[data-irpara]');
+    const el = e.target.closest('[data-olho],[data-assunto],[data-mk-serie],[data-mk-per],[data-mk-ativo],[data-comp-per],[data-mov],[data-fmov],[data-resp],[data-graf-per],[data-grafico],[data-acoes-ativo],[data-info],[data-acao],[data-fonte],[data-fonte-toggle],[data-editar],[data-aporte],[data-excluir],[data-valor],[data-coach],[data-coach-busca],[data-coach-feito],[data-letra],[data-filtro-tipo],[data-filtro-inst],[data-perfil],[data-cotar],[data-meta-del],[data-app],[data-bgrupo],[data-bsub],[data-bquem],[data-bforma],[data-bper],[data-bid],[data-bpag],[data-banos],[data-bpreco],[data-item],[data-recedit],[data-recoff],[data-recsug],[data-abatinfo],[data-servfalta],[data-rcmes],[data-recclone],[data-recrolar],[data-cfgsec],[data-avisof],[data-bamove],[data-basai],[data-baentra],[data-app2],[data-custaba],[data-caldia],[data-calandar],[data-calhoje],[data-cdtabre],[data-calpular],[data-calmesir],[data-calanoir],[data-cdtatalho],[data-ocor],[data-ocestado],[data-pgest],[data-recfav],[data-gfav],[data-grev],[data-rcregra],[data-para],[data-idioma],[data-bmarca],[data-contaba],[data-porta],[data-avtipo],[data-campon],[data-campdel],[data-servmes],[data-servaj],[data-ajtipo],[data-rjpct],[data-servir],[data-reaj],[data-visitas],[data-asaba],[data-vercomo],[data-nivelconta],[data-bkdel],[data-ctedit],[data-ctdel],[data-salaba],[data-trocaapp],[data-irpara],[data-pngrupo],[data-pnsub]');
     if(!el) return;
     const d = el.dataset;
 
     /* ---------- MoneyTrio e BudgetONE ---------- */
     if(d.app){ abrirApp(d.app); return; }
     const alterna = (arr, v) => { const i = arr.indexOf(v); if(i >= 0) arr.splice(i,1); else arr.push(v); };
+    /* 3.67: "Para onde foi" — o grupo abre e fecha; a categoria leva aos lançamentos dela, no mesmo período */
+    if(d.pnsub){ bFiltro.grupos = [d.pngrupo2]; bFiltro.subs = [d.pnsub]; bPagina = 0; bProj = null; irPara('b-lanc'); return; }
+    if(d.pngrupo){ painelGrupoAberto = painelGrupoAberto === d.pngrupo ? '' : d.pngrupo; render(); return; }
     if(d.bgrupo){
       alterna(bFiltro.grupos, d.bgrupo);
       /* tirou o grupo: as categorias dele saem junto, senão o filtro fica vazio sem explicação */
@@ -29754,7 +29806,8 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/origem.js?v=1.0.1"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
-<script src="modulos/visao-casa.js?v=1.0.0"></script>
+<script src="modulos/visao-casa.js?v=1.0.1"></script>
+<script src="modulos/orcamento.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.14.0"></script>
 </body>
 </html>
