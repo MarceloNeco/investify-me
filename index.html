@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.76">
+<link rel="stylesheet" href="estilo.css?v=3.77">
 </head>
 <body>
 
@@ -332,6 +332,7 @@ const TEXTOS = {
   'nav.t.proc':        {pt:'Restituição e processos', en:'Refunds & cases'},
   'nav.t.ded':         {pt:'Deduções',          en:'Deductions'},
   'nav.t.docs':        {pt:'Documentos do IR',  en:'Tax documents'},
+  'nav.t.empresa':     {pt:'Cofre da empresa',  en:'Company vault'},
 
   /* o conjunto */
   'app.trio':          {pt:'Três ferramentas, três visões, o mesmo dinheiro.',
@@ -634,7 +635,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.76"></script>
+<script src="textos/frases-en.js?v=3.77"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7608,7 +7609,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.76"></script>
+<script src="textos/mudancas.js?v=3.77"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -9748,6 +9749,7 @@ ABAS.tax = [
   {v:'t-processos',  ico:'📁', chave:'nav.t.proc',     mobile:true},
   {v:'t-docs',       ico:'📎', chave:'nav.t.docs',     mobile:false},
   {v:'t-deducoes',   ico:'🩺', chave:'nav.t.ded',      mobile:false},
+  {v:'t-empresa',    ico:'🏢', chave:'nav.t.empresa',  mobile:false},   /* 3.77: modulos/cofre-empresa.js */
   {v:'config',       ico:'⚙️', chave:'nav.config',     mobile:false}
 ];
 const VIEWS_BUDGET = ['b-painel','b-lanc','b-fluxo','b-custos','b-renda','b-desloc','b-futuro','b-precos'];
@@ -10733,6 +10735,8 @@ function salvarRecorrente(op){
     toast(I18n.atual === 'pt' ? 'O abatimento passou do preço cheio.' : 'The offset is larger than the full price.', 'warn'); return;
   }
   const vReal = dados.valor;
+  /* 3.77: o mesmo recebedor já está em débito automático? pergunta antes (modulos/debito-auto.js) */
+  if(window.DebitoAuto && DebitoAuto.perguntar(dados, recEditando, op)) return;
   /* 3.54: parece repetido? pergunta NA HORA, antes de criar (só ao criar; ao editar, não) */
   if(!op.mesmoAssim && !recEditando){
     const rep = Recorrente.sobreposicoes(dados)[0];
@@ -27934,6 +27938,7 @@ function inboxItens(){
    Os módulos entram pelo ponto inbox.grupos: [{id, n, html}] (id = um dos grupos abaixo; html = os itens, com os botões).
    O contador do sino é a soma dos itens (os avisos só enquanto não forem vistos). inboxItens() continua (lista simples). */
 const INBOX_GRUPOS = [
+  ['saldo', '📉', 'Conta vai ficar negativa', 'Account will go negative', 'O saldo previsto da conta fica abaixo de zero: resgate antes do dia.', 'The forecast balance drops below zero: redeem before the day.'],
   ['confirmar', '✅', 'Confirmar classificação', 'Confirm categories', 'O que o banco mandou e o app não tem certeza da categoria: confirme ou corrija aqui mesmo.', 'What the bank sent and the app is unsure about: confirm or fix right here.'],
   ['atrasadas', '⚠️', 'Contas atrasadas', 'Overdue bills', 'Passaram do vencimento e ninguém marcou: se já pagou, marque; senão, pague.', 'Past due and unmarked: if paid, mark it; if not, pay it.'],
   ['contafixa', '📌', 'Parece conta fixa: cadastrar?', 'Looks like a fixed bill: add it?', 'O mesmo recebedor se repete todo mês. Cadastrando, ele entra na agenda e no previsto.', 'The same payee repeats every month. Adding it puts it in the schedule and the forecast.'],
@@ -29979,8 +29984,8 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/fgts.js?v=1.0.0"></script>
 <script src="modulos/importar-posicoes.js?v=1.0.0"></script>
 <script src="modulos/assinaturas.js?v=1.1.1"></script>
-<script src="modulos/compromisso-de.js?v=1.7.1"></script>
-<script src="modulos/previsto.js?v=1.0.1"></script>
+<script src="modulos/compromisso-de.js?v=1.7.2"></script>
+<script src="modulos/previsto.js?v=1.0.2"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
 <script src="modulos/calendario-menu.js?v=1.2.0"></script>
 <script src="modulos/pessoas.js?v=1.3.0"></script>
@@ -30008,6 +30013,9 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/documentos.js?v=1.0.1"></script>
 <script src="modulos/contas-mes.js?v=1.0.1"></script>
 <script src="modulos/planejados.js?v=1.0.0"></script>
+<script src="modulos/saldo-previsto.js?v=1.0.0"></script>
+<script src="modulos/debito-auto.js?v=1.0.0"></script>
+<script src="modulos/cofre-empresa.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.14.3"></script>
 </body>
 </html>
