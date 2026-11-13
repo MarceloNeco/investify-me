@@ -655,6 +655,10 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   responsável. `budget(d)`: dependentes → `Pessoas.salvar` (casa, dependente, `irDependente`); fontes → `Recorrente` RENDA (÷ 12); pagamentos
   01/02 (educação) e 26 (plano) → compromisso sugerido, desmarcado (÷ 12). `baseProxima(d)` = a linha "A declaração de <ano+1> já começa
   com…" (a declaração salva no TaxONE já guarda bens, dependentes e fontes). Tudo o que nasce aqui leva `escopo: 'reservado'`.
+  Ajustes com a declaração real: campo "Dólar de 31/12/<ano> (PTAX)" (`#deDolar`, texto com vírgula; vem com o dólar de hoje; vazio =
+  as posições em moeda estrangeira com problema e desmarcadas; mudar o campo refaz a lista `#dePosLista`); `tipoIliq` por grupo/código (01
+  imóvel sempre; 02 e 99.05 outro; 99 com VGBL/PGBL/PREVID previdência; 03.99 empresa); `nomeCurto`; `achaPessoa` (nome, apelido ou primeiro
+  nome) nos dependentes e no "de quem é".
   Teste: `teste/teste-declaracao-apps.js` (texto fictício no formato do PdfTexto).
 - 3.69 (módulo novo `previsao` 1.0.0; `orcamento` 1.1.0). **Previsto × realizado** (`window.Previsao`; o nome `Previsto` já é o
   do módulo de sazonalidade/boletos): para cada grupo › categoria de saída, previsto do mês = contas certas (`Recorrente.ocorrencias` do

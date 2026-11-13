@@ -34,6 +34,10 @@ const TEXTO = [
   '01 11 APARTAMENTO EXEMPLO QUITADO VIA CONSORCIO 200.000,00 200.000,00', '105 - Brasil',
   'RUA EXEMPLO 123 APTO 45', 'IPTU 000.000.000-0 MATRICULA 99999',
   '03 01 AVENUE AAPL - APPLE INC - QTDE 5 5.000,00 0,00', '249 - Estados Unidos da America',
+  '02 01 JEEP RENEGADE 1.8 PCD 2019-2019, PLACA AAA0A00 40.000,00 35.000,00', '105 - Brasil',
+  '01 12 AP PLANTA R$ 1.291.315 CONSTRUTORA EXEMPLO 100.000,00 150.000,00', '105 - Brasil',
+  '99 06 PREVIDENCIA VGBL SEGURADORA EXEMPLO - CERTIFICADO 123 10.000,00 12.000,00', '105 - Brasil',
+  '99 06 OUTROS BENS E DIREITOS (99.06) - CONTA 456 - CERTIFICADO 789 1.000,00 1.100,00', '105 - Brasil',
   'TOTAL 279.300,00 296.900,00',
   'DIVIDAS E ONUS REAIS', 'Sem Informacoes',
   'RESUMO', 'RENDIMENTOS TRIBUTAVEIS', 'Recebidos de Pessoa Juridica pelo titular 120.000,00', 'TOTAL 120.000,00',
@@ -60,7 +64,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, gastos: [], recorrentes: []
     console.log('1) a leitura');
     const d = await p.evaluate((t) => Tax.lerDeclaracao(t), TEXTO);
     const cons = d.itensBens.find((x) => x.grupo === '99');
-    ok(d.itensBens.length === 9, '9 bens lidos');
+    ok(d.itensBens.length === 13, '13 bens lidos');
     ok(/SALDO DEVEDOR: 2023 R\$ 40\.000,00 \/ 2024 R\$ 35\.000,00 \/ 2025 R\$ 30\.000,00 - VALOR ATUAL CREDITO R\$ 50\.000,00$/.test(cons.desc) && cons.local === 'Brasil', 'a discriminação de 8 linhas veio inteira (até o valor do crédito): …' + cons.desc.slice(-90));
     const ap = d.itensBens.find((x) => x.grupo === '01');
     ok(!/RUA|IPTU|MATRICULA/.test(ap.desc), 'o endereço, o IPTU e a matrícula depois da localização não entram');
@@ -84,7 +88,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, gastos: [], recorrentes: []
     ok(conta.dono === 'pB' && t.rows.some((r) => /CONTA CORRENTE CONJUGE/.test(r.txt) && r.dono === 'pB'), 'a conta do cônjuge já vem com a Ciclana escolhida em "De quem é"');
     ok(t.ps.length === 6 && !t.ps.some((x) => x.tipo === 'outro'), 'consórcio e apartamento não viram posição (ficam no patrimônio sem liquidez)');
     ok(t.pos && t.deps && t.fontes.join() === 'true' && t.comps.join() === 'false,false', 'escolhas: carteira, dependentes e a fonte marcados; as contas fixas (escola, plano) desmarcadas');
-    ok(/A declaração de 2027 já começa com 8 bens, 2 dependentes e 1 fontes desta/.test(t.base), 'a base da próxima: "' + t.base + '"');
+    ok(/A declaração de 2027 já começa com 12 bens, 2 dependentes e 1 fontes desta/.test(t.base), 'a base da próxima: "' + t.base + '"');
 
     console.log('3) salvar');
     await p.evaluate(() => { document.querySelectorAll('.de-comp')[0].checked = true; });
@@ -118,6 +122,31 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, gastos: [], recorrentes: []
     ok(f.durante.ativa && f.durante.pilula, 'enquanto lê, a tarefa está no Fundo e a pílula aparece (' + JSON.stringify(f.durante) + ')');
     ok(f.depois.pronta && f.depois.app === 'budget', 'a pessoa saiu para o BudgetONE: a leitura termina mesmo assim e fica pronta na pílula');
     ok(f.abriu && f.limpo, 'tocar na pílula leva de volta ao TaxONE, com a declaração e as escolhas abertas');
+    console.log('6) os ajustes vistos com a declaração real (dados fictícios)');
+    const tp = await p.evaluate((dd) => DeclEscolhas.bens(dd).map((x) => x.b.grupo + '.' + x.b.codigo + '=' + x.tipo + '|' + x.nome), d);
+    const tipo = (pre) => (tp.find((x) => x.indexOf(pre) === 0) || '');
+    ok(/^01\.11=imovel\|APARTAMENTO EXEMPLO QUITADO VIA CONSORCIO$/.test(tipo('01.11')) && /^01\.12=imovel\|AP PLANTA$/.test(tipo('01.12')), 'imóvel com "consórcio" na descrição continua imóvel; "AP PLANTA R$ 1.291.315" → "AP PLANTA" (' + tipo('01.12') + ')');
+    ok(/^02\.01=outro\|JEEP RENEGADE 1\.8 PCD 2019-2019$/.test(tipo('02.01')), 'veículo: "JEEP RENEGADE 1.8 PCD 2019-2019" (o ponto do número não corta o nome)');
+    ok(/^99\.05=outro\|CONSORCIO VEICULO SEGURADORA EXEMPLO$/.test(tipo('99.05')), 'consórcio (99.05): "CONSORCIO VEICULO SEGURADORA EXEMPLO"');
+    const prev = tp.filter((x) => x.indexOf('99.06') === 0);
+    ok(prev.some((x) => /=previdencia\|PREVIDENCIA VGBL SEGURADORA EXEMPLO$/.test(x)) && prev.some((x) => /=outro\|OUTROS BENS E DIREITOS \(99\.06\)$/.test(x)), '99.06: com VGBL → previdência; "OUTROS BENS E DIREITOS (99.06) - CONTA…" → outro');
+    const sem = await p.evaluate((dd) => { fechar('genModal'); const guard = Mercado.cambio.USD; delete Mercado.cambio.USD; abrirDeclaracao(dd, true);
+      const campo = document.getElementById('deDolar'), ps = DeclEscolhas.posicoes(txDec).lista;
+      const r = { vazio: campo && campo.value === '', usd: ps.filter((x) => /AVENUE/.test(x.bem.desc)).map((x) => ({ m: x.marcado, pr: x.problema, pm: x.item.pm })),
+        ck: [...document.querySelectorAll('.de-pos')].filter((c) => /AVENUE|MSFT|TFLO/.test(c.closest('li').textContent)).map((c) => c.checked + '/' + c.disabled) };
+      campo.value = '5,10'; campo.dispatchEvent(new Event('input', { bubbles: true }));
+      const ps2 = DeclEscolhas.posicoes(txDec).lista.filter((x) => /AVENUE/.test(x.bem.desc));
+      r.depois = ps2.map((x) => ({ t: x.item.ticker, m: x.marcado, pm: x.item.pm, pr: x.problema }));
+      r.liCk = [...document.querySelectorAll('.de-pos')].filter((c) => /MSFT/.test(c.closest('li').textContent)).map((c) => c.disabled);
+      Mercado.cambio.USD = guard; fechar('assetModal'); return r; }, d);
+    ok(sem.vazio && sem.usd.length >= 3 && sem.usd.every((x) => !x.m && /falta o dólar/.test(x.pr)) && sem.ck.every((x) => x === 'false/true'), 'sem câmbio: o campo do dólar vem vazio e o que é em dólar fica desmarcado, com "falta o dólar" (nunca pm = 0)');
+    const ms = sem.depois.find((x) => x.t === 'MSFT');
+    ok(!ms.pr && Math.abs(ms.pm - 400 / 0.14 / 5.1) < 0.01 && sem.liCk[0] === false, 'preenchido o dólar de 31/12 (5,10), a lista se refaz: o problema some e a MSFT fica liberada, pm = 400 ÷ 0,14 ÷ 5,10 (desmarcada só porque já foi importada no passo 3)');
+    const dep = await p.evaluate((dd) => { Store.estado.pessoas = Pessoas.todas().filter((x) => x.papel !== 'dependente');
+      Pessoas.salvar({ tipo: 'casa', papel: 'dependente', nome: 'Bel', apelido: 'Beltrano' }); Pessoas.salvar({ tipo: 'casa', papel: 'dependente', nome: 'Sicrana Maria', sobrenome: 'Exemplo' });
+      const n0 = Pessoas.todas().length, b = DeclEscolhas.budget(dd); DeclEscolhas.aplicar(dd, { bens: [], deps: true, fontes: [], comps: [], pos: null, usd: 5 });
+      return { ja: b.deps.map((x) => x.nome + '=' + x.ja), criou: Pessoas.todas().length - n0 }; }, d);
+    ok(dep.ja.join() === 'Beltrano=true,Sicrana=true' && dep.criou === 0, 'dependente que já existe pelo apelido ("Bel", apelido Beltrano) ou pelo primeiro nome ("Sicrana Maria"): não cria outra pessoa (' + dep.ja.join(', ') + ')');
     ok(p.erros.length === 0, 'sem erro de página' + (p.erros.length ? ': ' + p.erros[0] : ''));
   } catch (e) { falhas++; console.log('  ✗ ERRO: ' + (e && e.stack || e)); }
   await b.close(); srv.close();
