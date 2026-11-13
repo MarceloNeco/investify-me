@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.75 · 13/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.76 · 13/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2700,3 +2700,13 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .inb-item .t-sub{display:block}
 .inb-acoes{display:flex; gap:6px; flex-wrap:wrap}
 .inb-oc{display:block}
+
+/* 3.76: Projeção — uma tabela só; no celular a 1ª coluna fica fixa e as outras rolam */
+.proj-wrap{overflow-x:auto}
+.proj-tbl .proj-col1{position:sticky; left:0; z-index:1; background:var(--card); text-align:left; white-space:nowrap}
+.proj-tbl th.proj-col1{font-weight:normal}
+.proj-tbl .proj-sub .proj-col1{padding-left:28px}
+.proj-tbl .proj-sub td, .proj-tbl .proj-sub th{font-size:.9em; color:var(--txt2)}
+.proj-tbl tfoot th, .proj-tbl tfoot td{font-weight:700}
+.proj-g{font:inherit; color:inherit; text-align:left}
+.proj-card .card-head{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap}

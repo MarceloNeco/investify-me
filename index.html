@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.75">
+<link rel="stylesheet" href="estilo.css?v=3.76">
 </head>
 <body>
 
@@ -634,7 +634,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.75"></script>
+<script src="textos/frases-en.js?v=3.76"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7608,7 +7608,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.75"></script>
+<script src="textos/mudancas.js?v=3.76"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -9549,6 +9549,29 @@ const Orcamento = {
     return reg;
   },
 
+  /* 3.76: o que está guardado, sem buscar nada ({codigo: série}) */
+  seriesDoCache(){
+    const c = this.carregar(), out = {};
+    Object.keys(c).forEach(k => { if(/^s\d+$/.test(k) && c[k] && c[k].ano != null) out[k.slice(1)] = c[k]; });
+    return out;
+  },
+  /* falta algum grupo usado, ou o guardado tem mais de 7 dias? */
+  velho(){
+    const c = this.carregar(), semana = 7 * 86400000, cods = {433: 1};
+    Gasto.todos().forEach(g => { const G = GRUPOS[g.grupo]; if(G && G.fluxo === 'saida') cods[G.ipca] = 1; });
+    return Object.keys(cods).some(cod => !c['s' + cod] || (Date.now() - c['s' + cod].em) >= semana);
+  },
+  /* 3.76: IPCA automático — em segundo plano, uma vez por sessão, só com internet e só se o guardado envelheceu */
+  _buscando: false, _tentou: false,
+  atualizarSeVelho(){
+    if(this._buscando || this._tentou || !Gasto.todos().length || !this.velho() || (typeof navigator !== 'undefined' && navigator.onLine === false)) return false;
+    this._buscando = true; this._tentou = true;
+    this.todosOsGrupos(() => {}).then(r => {
+      if(r && r.series && Object.keys(r.series).length){ bProj = this.projetar(bAnos, r.series); bProj.series = r.series; }
+    }).catch(() => {}).then(() => { this._buscando = false; if(typeof render === 'function' && viewAtual === 'b-futuro') render(); });
+    return true;
+  },
+
   /* busca o IPCA de todos os grupos que a carteira de gastos usa */
   async todosOsGrupos(aviso){
     const usados = {};
@@ -10916,86 +10939,90 @@ function viewBRenda(){
 /* =========================================================
    BudgetONE — Futuro (projeção pelo IPCA de cada grupo)
    ========================================================= */
-let bProj = null, bAnos = 5, bProjCarregando = false;
+let bProj = null, bAnos = 5;
 
+/* 3.76: "Futuro" virou "Projeção" (id b-futuro mantido) e ficou só a projeção de longo prazo.
+   · IPCA automático: a tela projeta na hora com o que está guardado; se o guardado tiver mais de 7 dias (ou faltar um grupo)
+     e houver internet, busca em segundo plano no Banco Central (a mesma fonte de antes) e projeta de novo. Sem internet,
+     usa o guardado e diz "IPCA de <mês/ano>". O previsto (modulos/previsao.js) usa o mesmo cache.
+   · Uma tabela só: linhas = grupos (tocar abre as categorias, com o IPCA do grupo); colunas = IPCA 12m · Hoje/mês ·
+     <ano corrente> (realizado até hoje + o mês de hoje até dezembro, "parcial") · ano+1 … ano+N (o seletor 3/5/10/20).
+     Acima de 6 anos: 1 a 5 e o último, com "ver todos os anos". "por mês | por ano". Linha de total.
+     Celular: a 1ª coluna fica fixa; por padrão Hoje · ano+1 · último ano, e "mais colunas" mostra o resto. */
+let projModo = 'mes', projAbertos = {}, projTodosAnos = false, projMaisCol = false;
+function projValor(mensal, taxa, k){ return mensal * Math.pow(1 + (taxa || 0), k); }
 function viewBFuturo(){
   if(!Gasto.todos().length) return bVazio('b-futuro');
+  const pt = I18n.atual !== 'en';
+  if(!bProj){ const sc = Orcamento.seriesDoCache(); if(Object.keys(sc).length){ bProj = Orcamento.projetar(bAnos, sc); bProj.series = sc; } }
+  Orcamento.atualizarSeVelho();
 
-  let h = '<div class="card-head"><h1>Futuro</h1>' +
-    '<div class="seg" id="bAnosSeg">' +
-      [3,5,10,20].map(a => '<button data-banos="' + a + '"' + (a === bAnos ? ' class="active"' : '') + '>' +
-        a + ' anos</button>').join('') +
-    '</div></div>';
-  if(window.MoneyModulos) h += MoneyModulos.html('futuro.topo', {});   /* 3.69: viagens e eventos (modulos/previsao.js) */
+  const segAnos = '<div class="seg" id="bAnosSeg">' + [3,5,10,20].map(a => '<button data-banos="' + a + '"' + (a === bAnos ? ' class="active"' : '') + '>' + a + (pt ? ' anos' : ' years') + '</button>').join('') + '</div>';
+  const segModo = '<div class="seg proj-modo">' + [['mes', pt ? 'por mês' : 'per month'], ['ano', pt ? 'por ano' : 'per year']].map(m =>
+    '<button data-acao="proj-modo" data-v="' + m[0] + '"' + (projModo === m[0] ? ' class="active"' : '') + '>' + m[1] + '</button>').join('') + '</div>';
+  let h = '<div class="card-head"><h1>' + esc(t('nav.futuro')) + '</h1>' + segAnos + '</div>';
 
   if(!bProj){
-    h += '<div class="card"><div class="vazio">' +
-      '<div class="vazio-ico">🔮</div><h3>Quanto a mesma vida vai custar</h3>' +
-      '<p>Cada grupo de despesa sobe por uma inflação diferente. Educação e saúde costumam correr ' +
-      'bem acima do IPCA cheio; transporte e comunicação costumam ficar abaixo. O app busca o IPCA ' +
-      'de cada grupo no Banco Central e projeta o seu orçamento com a taxa certa em cada linha.</p>' +
-      '<button class="btn primary" data-acao="b-projetar"' + (bProjCarregando ? ' disabled' : '') + '>' +
-      (bProjCarregando ? 'Buscando no Banco Central…' : '📥 Buscar o IPCA e projetar') + '</button>' +
-      '</div></div>';
-    return h;
+    const busca = Orcamento._buscando;
+    return h + '<div class="card"><div class="vazio"><div class="vazio-ico">🔮</div><h3>' + esc(pt ? 'Quanto a mesma vida vai custar' : 'What the same life will cost') + '</h3>' +
+      '<p>' + esc(busca ? (pt ? 'Buscando o IPCA de cada grupo no Banco Central…' : 'Fetching each group’s IPCA from the Central Bank…')
+        : (pt ? 'Sem internet e sem IPCA guardado: a projeção aparece sozinha quando houver internet.' : 'No internet and no saved IPCA: the projection shows up by itself when online.')) + '</p></div></div>';
   }
 
-  const p = bProj;
+  const p = bProj, anoAtual = Number(hojeISO().slice(0, 4)), mesAtual = Number(hojeISO().slice(5, 7));
+  const em12 = p.linhas.reduce((s2, l) => s2 + projValor(l.mensal, l.taxa, 1), 0);
+  const ref = (p.series && (p.series[433] || Object.values(p.series)[0])) || null;
+  const mesIpca = ref && ref.ultimo ? (pt ? 'IPCA de ' : 'IPCA as of ') + ref.ultimo.slice(3) : '';
   h += '<div class="kpis kpis-3">' +
-    kpiB('Custa hoje', fmt(p.hojeMensal) + '/mês', null, fmt(p.hoje) + ' no ano') +
-    kpiB('Em ' + p.anos + ' anos', fmt(p.fimMensal) + '/mês', null, fmt(p.fim) + ' no ano', 'down') +
-    kpiB('Aumento', '+' + pnum(p.alta,1) + '%', 'inflacao-por-grupo',
-         'a mesma vida, mais cara') + '</div>';
+    kpiB(pt ? 'Custa hoje' : 'Costs today', fmt(p.hojeMensal) + (pt ? '/mês' : '/mo'), null, fmt(p.hoje) + (pt ? ' no ano' : ' a year')) +
+    kpiB(pt ? 'Em 12 meses' : 'In 12 months', fmt(em12) + (pt ? '/mês' : '/mo'), null, fmt(em12 * 12) + (pt ? ' no ano' : ' a year'), 'down') +
+    kpiB((pt ? 'Em ' : 'In ') + p.anos + (pt ? ' anos' : ' years'), fmt(p.fimMensal) + (pt ? '/mês' : '/mo'), 'inflacao-por-grupo', '+' + pnum(p.alta, 1) + '% · ' + (pt ? 'a mesma vida, mais cara' : 'the same life, dearer'), 'down') + '</div>';
+
+  /* as colunas de ano */
+  const celular = window.matchMedia && matchMedia('(max-width:560px)').matches;
+  let anos = []; for(let k = 1; k <= p.anos; k++) anos.push(k);
+  if(anos.length > 6 && !projTodosAnos) anos = [1,2,3,4,5,p.anos];
+  if(celular && !projMaisCol) anos = [1, p.anos].filter((x, i, a) => a.indexOf(x) === i);
+  const mostraParcial = !celular || projMaisCol, mostraIpca = !celular || projMaisCol;
+  const fator = projModo === 'ano' ? 12 : 1;
+  /* o ano corrente: o que já foi (este ano, até hoje) + o mês de hoje até dezembro */
+  const realAno = {}; Gasto.todos().forEach(g => { if(g.fluxo === 'saida' && String(g.data || '').slice(0, 4) === String(anoAtual)) realAno[g.grupo] = (realAno[g.grupo] || 0) + (Number(g.valor) || 0); });
+  const parcial = (grupo, mensal) => ((realAno[grupo] || 0) + mensal * (12 - mesAtual)) / 12;
+  const cel = v => '<td class="num">' + fmt(v * fator) + '</td>';
+  const linha = (rot, sub, taxa, mensal, grupo, cls, attrs) => '<tr class="' + (cls || '') + '"' + (attrs || '') + '><th scope="row" class="proj-col1">' + rot + (sub ? '<div class="t-sub">' + esc(sub) + '</div>' : '') + '</th>' +
+    (mostraIpca ? '<td class="num">' + (taxa == null ? '<span class="muted">—</span>' : pnum(taxa * 100, 2) + '%') + '</td>' : '') +
+    cel(mensal) + (mostraParcial ? cel(grupo === '__total' ? p.linhas.reduce((s2, l) => s2 + parcial(l.grupo, l.mensal), 0) : (cls === 'proj-sub' ? mensal : parcial(grupo, mensal))) : '') +
+    anos.map(k => cel(grupo === '__total' ? p.linhas.reduce((s2, l) => s2 + projValor(l.mensal, l.taxa, k), 0) : projValor(mensal, taxa, k))).join('') + '</tr>';
+  let tb = '<div class="tbl-wrap proj-wrap"><table class="tbl proj-tbl"><thead><tr><th class="proj-col1">' + esc(pt ? 'Grupo' : 'Group') + '</th>' +
+    (mostraIpca ? '<th class="num">' + esc(pt ? 'IPCA 12m' : 'IPCA 12m') + '</th>' : '') + '<th class="num">' + esc(pt ? 'Hoje' : 'Today') + '</th>' +
+    (mostraParcial ? '<th class="num">' + anoAtual + '<div class="t-sub">' + esc(pt ? 'parcial' : 'partial') + '</div></th>' : '') +
+    anos.map(k => '<th class="num">' + (anoAtual + k) + '</th>').join('') + '</tr></thead><tbody>';
+  const janela = Gasto.janela(), doze = Gasto.filtrar({de: janela.de, ate: janela.ate, fluxo: 'saida'});
+  p.linhas.forEach(l => {
+    const G = GRUPOS[l.grupo] || {}, aberto = !!projAbertos[l.grupo];
+    tb += linha('<button type="button" class="linkinho proj-g" data-acao="proj-grupo" data-g="' + esc(l.grupo) + '" aria-expanded="' + aberto + '">' + (aberto ? '▾ ' : '▸ ') + (G.ico || '') + ' ' + esc(l.nome) + '</button>',
+      '', l.taxa, l.mensal, l.grupo, 'proj-grupo');
+    if(aberto) Gasto.porChave(doze.filter(g => g.grupo === l.grupo), 'sub').forEach(c =>
+      tb += linha('<span class="proj-cat">' + esc(c.chave) + '</span>', '', l.taxa, c.valor / 12, l.grupo, 'proj-sub'));
+  });
+  tb += '</tbody><tfoot>' + linha('<b>' + esc(pt ? 'Total' : 'Total') + '</b>', '', null, p.hojeMensal, '__total', 'proj-total') + '</tfoot></table></div>';
+  h += '<div class="card sem-pad proj-card"><div class="card-head" style="padding:12px 14px 0">' + segModo +
+    '<span class="small muted">' + esc(mesIpca) + (Orcamento._buscando ? ' · ' + esc(pt ? 'atualizando…' : 'updating…') : '') + '</span></div>' + tb +
+    '<div class="row" style="gap:8px;padding:8px 14px 12px;flex-wrap:wrap">' +
+    (p.anos > 6 && (!celular || projMaisCol) ? '<button class="btn sm" data-acao="proj-todos">' + esc(projTodosAnos ? (pt ? 'menos anos' : 'fewer years') : (pt ? 'ver todos os anos' : 'see every year')) + '</button>' : '') +
+    (celular ? '<button class="btn sm" data-acao="proj-mais">' + esc(projMaisCol ? (pt ? 'menos colunas' : 'fewer columns') : (pt ? 'mais colunas' : 'more columns')) + '</button>' : '') + '</div></div>';
 
   if(p.diferenca != null && Math.abs(p.diferenca) > p.hoje * 0.005){
     const maior = p.diferenca > 0;
-    h += '<div class="card2-box"><b class="small">' +
-      (maior ? 'A sua cesta corre acima do IPCA cheio' : 'A sua cesta corre abaixo do IPCA cheio') + '</b>' +
-      '<p class="small muted" style="margin:6px 0 0">Projetando cada grupo pela inflação dele, o total em ' +
-      p.anos + ' anos fica <b>' + fmt(Math.abs(p.diferenca)) + (maior ? ' maior' : ' menor') +
-      '</b> do que se você aplicasse o IPCA cheio em tudo. ' +
-      (maior ? 'Isso acontece quando o peso está em educação e saúde, que sobem mais que a média.'
-             : 'Isso acontece quando o peso está em itens que sobem menos que a média.') + '</p></div>';
+    h += '<div class="card2-box"><b class="small">' + esc(maior ? (pt ? 'A sua cesta corre acima do IPCA cheio' : 'Your basket runs above headline IPCA') : (pt ? 'A sua cesta corre abaixo do IPCA cheio' : 'Your basket runs below headline IPCA')) + '</b>' +
+      '<p class="small muted" style="margin:6px 0 0">' + esc((pt ? 'Projetando cada grupo pela inflação dele, o total em ' : 'Projecting each group by its own inflation, the total in ') + p.anos + (pt ? ' anos fica ' : ' years is ') +
+      fmt(Math.abs(p.diferenca)) + (maior ? (pt ? ' maior' : ' higher') : (pt ? ' menor' : ' lower')) + (pt ? ' do que com o IPCA cheio em tudo.' : ' than with headline IPCA on everything.')) + '</p></div>';
   }
 
-  h += '<div class="card sem-pad"><table class="tbl"><thead><tr><th>Grupo</th>' +
-       '<th class="num">IPCA do grupo</th><th class="num">hoje /mês</th>' +
-       '<th class="num">em ' + p.anos + ' anos</th></tr></thead><tbody>';
-  p.linhas.forEach(l => {
-    const G = GRUPOS[l.grupo] || {};
-    h += '<tr><td><span class="t-main">' + (G.ico || '') + ' ' + esc(l.nome) + '</span>' +
-         '<div class="t-sub">' + esc(IPCA_GRUPOS[l.ipca] || '') + '</div></td>' +
-         '<td class="num">' + (l.taxa == null ? '<span class="muted">—</span>' : pnum(l.taxa*100,2) + '%') + '</td>' +
-         '<td class="num">' + fmt(l.mensal) + '</td>' +
-         '<td class="num down">' + fmt(l.fim/12) + '</td></tr>';
-  });
-  h += '</tbody><tfoot><tr><th>Total</th><th></th><th class="num">' + fmt(p.hojeMensal) +
-       '</th><th class="num">' + fmt(p.fimMensal) + '</th></tr></tfoot></table></div>';
-
-  /* a curva de cada grupo ao longo dos anos */
-  const series = p.linhas.slice(0,6).map(l => ({
-    nome: l.nome, cor: 'var(' + ((GRUPOS[l.grupo] || {}).cor || '--s1') + ')',
-    pontos: l.serie.map(s => {
-      const d = new Date(); d.setFullYear(d.getFullYear() + s.ano);
-      return {t: d.toISOString().slice(0,10), v: s.valor / 12};
-    })
-  }));
-  h += '<div class="card"><div class="card-head"><h3>Quanto cada grupo vai custar por mês</h3></div>' +
-       '<table class="tbl tbl-proj"><thead><tr><th>Grupo</th>' +
-       [0,1,2,3].map(i => '<th class="num">' + (new Date().getFullYear() + Math.round(p.anos*i/3)) + '</th>').join('') +
-       '</tr></thead><tbody>' +
-       p.linhas.map(l => '<tr><td>' + ((GRUPOS[l.grupo]||{}).ico || '') + ' ' + esc(l.nome) + '</td>' +
-         [0,1,2,3].map(i => {
-           const a = Math.round(p.anos*i/3);
-           const pt = l.serie[Math.min(a, l.serie.length-1)];
-           return '<td class="num">' + fmt(pt.valor/12) + '</td>';
-         }).join('') + '</tr>').join('') +
-       '</tbody></table></div>';
-
   /* fôlego: quanto tempo a carteira aguenta */
-  const t = (typeof totais === 'function' && (ST.posicoes || []).length) ? totais() : null;
-  if(t && t.valor){
-    const f = Orcamento.folego(t.valor);
+  const tt = (typeof totais === 'function' && (ST.posicoes || []).length) ? totais() : null;
+  if(tt && tt.valor){
+    const f = Orcamento.folego(tt.valor);
     const meses = n => n == null ? '—' : (n >= 120 ? '10 anos ou mais'
       : (n >= 24 ? pnum(n/12,1) + ' anos' : pnum(n,0) + ' meses'));
     h += '<div class="card"><div class="card-head"><h3>Quanto tempo a carteira aguenta</h3>' +
@@ -11009,25 +11036,11 @@ function viewBFuturo(){
          'sem contar o que ele ainda renderia nem o efeito da inflação. Serve para ter ordem de grandeza.</p></div>';
   }
 
-  h += '<p class="tiny muted" style="margin-top:4px">IPCA por grupo, séries ' +
+  h += '<p class="tiny muted" style="margin-top:4px">' + esc(pt ? 'IPCA por grupo, séries ' : 'IPCA by group, series ') +
        Object.keys(IPCA_GRUPOS).filter(k => k !== '433').join(', ') +
-       ' do Banco Central, acumulado dos últimos 12 meses. Projeção de juros compostos sobre o gasto ' +
-       'dos últimos 12 meses — supõe que você mantenha o mesmo padrão de vida.</p>';
+       esc(pt ? ' do Banco Central, acumulado dos últimos 12 meses (o app busca sozinho, uma vez por semana). Projeção de juros compostos sobre o gasto dos últimos 12 meses: supõe o mesmo padrão de vida.'
+              : ' from the Central Bank, last 12 months (the app fetches it by itself, once a week). Compound projection over the last 12 months of spending: assumes the same lifestyle.') + '</p>';
   return h;
-}
-
-async function bProjetar(){
-  bProjCarregando = true; render();
-  try{
-    const {series, falhas} = await Orcamento.todosOsGrupos(m => toast(m));
-    if(!Object.keys(series).length) throw new Error('não veio nenhuma série');
-    bProj = Orcamento.projetar(bAnos, series);
-    if(falhas.length) toast('Sem IPCA de: ' + falhas.join(', ') + '. Usei o IPCA cheio nesses.');
-    bProj.series = series;
-  }catch(e){
-    toast('Não consegui falar com o Banco Central agora. ' + (e.message || ''));
-  }
-  bProjCarregando = false; render();
 }
 
 /* =========================================================
@@ -17383,13 +17396,16 @@ function abrirAdicionarConta(){
   ];
   const itens = base.concat(window.MoneyModulos ? MoneyModulos.itens('custos.adicionar', {}) : []);
   const h = '<ul class="cf-add">' + itens.map(x =>
-    '<li>' + (x.label ? '<label class="cf-add-op" for="' + esc(x.label) + '" data-close="genModal">' : '<button type="button" class="cf-add-op" data-acao="' + esc(x.acao) + '" data-close="genModal">') +
+    '<li>' + (x.label ? '<label class="cf-add-op" for="' + esc(x.label) + '">' : '<button type="button" class="cf-add-op" data-acao="' + esc(x.acao) + '">') +
       '<span class="cf-add-ico">' + x.ico + '</span><span><b>' + esc(pt ? x.pt : x.en) + '</b><span class="t-sub">' + esc(pt ? x.dpt : x.den) + '</span></span>' +
     (x.label ? '</label>' : '</button>') + '</li>').join('') + '</ul>';
   $('#genTitle').textContent = pt ? 'Adicionar' : 'Add';
   $('#genBody').innerHTML = Verter.html(h);
   abrir('genModal');
 }
+
+/* o menu fecha ANTES de a opção rodar (na captura): a opção pode abrir outra janela no mesmo lugar */
+document.addEventListener('click', ev => { if(ev.target.closest && ev.target.closest('#genBody .cf-add-op')) fechar('genModal'); }, true);
 
 /* ---------- o calendário do mês ---------- */
 function blocoCalendario(){
@@ -18416,9 +18432,9 @@ const AJUDA_TELAS = {
          f:['Filters split by period, group, category, who paid and how.','An imported statement or a receipt photo records without typing.']}
   },
   'b-custos': {
-    pt: {t:'Contas fixas', o:'As contas fixas e os gastos que se repetem (aluguel, diarista) e o que foi pontual, com o dia de cada um.',
+    pt: {t:'Contas fixas', o:'Em cima, "Contas fixas" e "Gastos planejados" (carro, viagens, parcelados). As contas fixas e os gastos que se repetem (aluguel, diarista) e o que foi pontual, com o dia de cada um.',
          f:['Conta recorrente com o dia certo ganha aviso antes de vencer.','Revisar mostra o que venceu sem marcar e o que parece conta fixa nova.']},
-    en: {t:'Fixed bills', o:'Fixed bills and recurring expenses (rent, cleaner) and what was one-off, with the day of each.',
+    en: {t:'Fixed bills', o:'At the top, "Fixed bills" and "Planned expenses" (car, trips, instalments). Fixed bills and recurring expenses (rent, cleaner) and what was one-off, with the day of each.',
          f:['A recurring bill with the right day gets a reminder before it is due.','Review shows what passed its date unmarked and what looks like a new fixed bill.']}
   },
   'b-renda': {
@@ -28886,7 +28902,10 @@ function ligarEventos(){
       /* o motor não teve certeza do valor: a pessoa toca no certo */
       case 'esc-ia': tentarIAEscaneado(Number(d.idx)); break;
       case 'esc-valor': { const r = escaneados[d.idx]; if(r){ r.valor = Number(d.v); r.confiavel = true; r.escolhido = true; r.confianca = Math.max(r.confianca || 0, 7); mostrarLidos(escaneados); } break; }
-      case 'b-projetar': bProjetar(); break;
+      case 'proj-modo': projModo = d.v === 'ano' ? 'ano' : 'mes'; render(); break;   /* 3.76: Projeção */
+      case 'proj-grupo': projAbertos[d.g] = !projAbertos[d.g]; render(); break;
+      case 'proj-todos': projTodosAnos = !projTodosAnos; render(); break;
+      case 'proj-mais': projMaisCol = !projMaisCol; render(); break;
       case 'b-novo-preco': fechar('genModal'); abrirPreco(d.item || ''); break;
       case 'b-filtros': bFiltroAberto = !bFiltroAberto; render(); break;
       case 'fechar-anuncio': Anuncio.fechar(); break;
@@ -29660,6 +29679,8 @@ function comecarApp(r){
     if(n) setTimeout(() => toast('Criei ' + n + ' lançamentos de saldo inicial em Movimentações.'), 1400);
   }
   I18n.iniciar();
+  /* 3.76: o IPCA da Projeção (e do previsto) se atualiza sozinho, em segundo plano, se o guardado tiver mais de 7 dias */
+  setTimeout(() => { try{ Orcamento.atualizarSeVelho(); }catch(e){} }, 4000);
 
   /* quem está usando: a sessão guardada manda; sem ela, o modo é
      o de sempre (carteira aberta com senha, ou arquivo local) */

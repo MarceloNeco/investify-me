@@ -709,6 +709,20 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **3.76 — 📥 de pendências, Contas fixas, Gastos planejados, Projeção.**
+  📥: `inboxGrupos()` (index.html) junta os grupos em `INBOX_GRUPOS` (confirmar, atrasadas, contafixa, docs, viagem, familia, avisos);
+  o núcleo põe as origens "A confirmar" (`Origem.grupos`, ✓ `or-confirmar-grupo`, Corrigir `or-mudar`), os `g.revisar` (`data-grev`), as atrasadas
+  (`inb-pago`/`inb-nao-pago` → `Pagamento.marcar`) e os avisos de vencer/entrar (`inb-visto` → `ST.config.inboxVistos`); os módulos entram pelo ponto
+  `inbox.grupos` → `[{id, n, html}]` (contas-mes, documentos, previsao, mes-a-mes, visao-casa, seguros, profissionais). O sino = `inboxContagem()`.
+  Uma ação dentro do 📥 refaz a lista sem fechar (ouvinte de clique em `#genBody[data-inbox]`). `inboxItens()` continua (lista simples).
+  Contas fixas: `custosSecao` ('contas' | 'planejados', ação `cf-secao`), "+ Adicionar" (`abrirAdicionarConta`, ponto `custos.adicionar` →
+  `[{ico, pt, en, dpt, den, acao | label}]`; compromisso-de, previsto, assinaturas, seguros); sem renda, sem "Sobrou"; as abas "Todos" e "Revisar"
+  saíram (`blocoTodos`/`blocoRevisar` removidos). Gastos planejados: `modulos/planejados.js` (ponto `custos.planejados`, partes carro/viagens/
+  parcelados/manutencao; rotinas = trajetos de Deslocamentos com `plano` 'rotina'|'fds'; `ST.viagens_longas`; `provisaoMes` entra no combustível
+  pelo `eventoNoMes` do previsao 1.2.0, que também usa o km da viagem longa). `irPara('b-desloc')` → b-custos/planejados/carro. Menu: b-desloc saiu
+  de ABAS. Projeção (`viewBFuturo`, id b-futuro): `Orcamento.seriesDoCache/velho/atualizarSeVelho` (IPCA em segundo plano, uma vez por sessão,
+  com internet; também 4 s depois de abrir o app); tabela única `.proj-tbl` (grupos → categorias `proj-grupo`, `projModo` mês/ano, `projTodosAnos`,
+  `projMaisCol` no celular, `.proj-col1` sticky). Testes: `teste-inbox.js`, `teste-planejados.js`, `teste-projecao.js`.
   **Contas fixas: o status de cada conta (3.75)** (`modulos/contas-mes.js` 1.0.0, `window.ContasMes`): ponto novo `custos.contas` no topo de
   `viewBCustos` (as abas de antes continuam embaixo). `itens('mes'|'45')`: ocorrências de saída (sem as anteriores ao `criadoEm`) com status paga
   (Pagamento pago/confirmado ou lançamento com `recorrenteId` no mês; data e valor reais) / atrasada / hoje / avencer / debito (`estadoPadrao`

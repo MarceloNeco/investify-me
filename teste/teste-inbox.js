@@ -20,9 +20,9 @@ const gastos = [
   { id: 'a2', data: dia(-2), valor: 45, grupo: 'ALIMENTACAO', sub: 'Mercado', desc: 'MERCADINHO EXEMPLO', fluxo: 'saida', confianca: 'palpite', origem: 'robo' },
   { id: 'r1', data: dia(-4), valor: 300, grupo: 'OUTROS', sub: 'Outros', desc: 'TRANSFERENCIA EXEMPLO', fluxo: 'saida', revisar: true }
 ];
-[-3, -2, -1].forEach((k) => gastos.push({ id: 'cl' + k, data: mes(k), valor: 1200, grupo: 'DEPENDENTES', sub: 'Escola', desc: 'COLEGIO EXEMPLO', fluxo: 'saida', contraparte: { cnpj: '00000000000272' } }));
+[-3, -2, -1].forEach((k) => gastos.push({ id: 'cl' + k, data: mes(k), valor: 1200, grupo: 'HABITACAO', sub: 'Condomínio', desc: 'CONDOMINIO RESIDENCIAL EXEMPLO', fluxo: 'saida', contraparte: { cnpj: '00000000000272' } }));
 const recorrentes = [
-  { id: 'rcA', nome: 'Condomínio Exemplo', grupo: 'HABITACAO', sub: 'Condomínio', valor: 800, dia: +dia(-5).slice(8, 10), regra: 'dia', criadoEm: dia(-7), estadoPadrao: 'pendente' },
+  { id: 'rcA', nome: 'Aluguel Exemplo', grupo: 'HABITACAO', sub: 'Aluguel', valor: 800, dia: +dia(-5).slice(8, 10), regra: 'dia', criadoEm: dia(-7), estadoPadrao: 'pendente' },
   { id: 'rcB', nome: 'Internet Exemplo', grupo: 'HABITACAO', sub: 'Internet', valor: 120, dia: +dia(1).slice(8, 10), regra: 'dia', criadoEm: dia(-7), estadoPadrao: 'pendente' }
 ];
 const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recorrentes, cartoes: [{ id: 'ctP', apelido: 'Cartão Porto', banco: 'Porto Bank', bandeira: 'visa', fim: '0000', fecha: 25, vence: 5 }] };
