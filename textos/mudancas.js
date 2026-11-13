@@ -1,11 +1,17 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.67 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.68 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.68', d:'2026-11-13', t:'Mês a mês de verdade, apelidos e nomes', itens:[
+    '"Mês a mês" mostra o resultado real de cada mês (tudo o que entrou menos o que saiu; o que foi para investimento fica de fora). A parte da renda extraordinária (rescisão, FGTS) aparece em amarelo com ★ e a régua não se deixa levar por ela; toque no mês para ver o que entrou, saiu e foi para investimento.',
+    'Na edição de uma entrada: "★ Renda extraordinária (fica fora das médias)". Rescisão, FGTS e indenização já vêm marcadas; marque outra (um prêmio, a venda de algo) ou desmarque.',
+    'Apelido: dê um nome fácil a uma loja ou pessoa ("PANIFICADORA …" → "Padaria do bairro"). Vale para todos os lançamentos dessa origem, antigos e novos; o nome do banco continua no detalhe e na busca.',
+    '"Quem pagou/recebeu" aparece pelo nome do cadastro de Pessoas, em todas as telas. A busca aceita o nome e o apelido.'
+  ]},
   {v:'3.67', d:'2026-11-13', t:'Painel mais claro: período, drill-down, orçamento e projeção', itens:[
     'Painel do BudgetONE: cada bloco diz o período que mostra, e todos usam o mesmo período do filtro. O "por mês" divide pelos meses do período, não mais por 12 fixos.',
     '"Para onde foi": toque no grupo para ver as categorias; toque na categoria para ver os lançamentos dela (ex.: Lazer → Restaurantes → os iFood).',
