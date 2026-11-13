@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.69 · 13/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.70 · 13/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -1108,6 +1108,11 @@ details.imp-arq.repetido{border-color:var(--warn)}
 .viz-duplo .viz-svg{width:100%; height:auto; display:block; overflow:visible}
 .viz-duplo .col-e{fill:var(--up)}
 .viz-duplo .col-s{fill:var(--down)}
+.dec-esc .dec-bens{list-style:none; padding:0; margin:6px 0 10px 26px; display:grid; gap:8px}   /* 3.70: as listas da declaração */
+.dec-esc .dec-bens li{display:grid; gap:4px; padding-bottom:8px; border-bottom:1px solid var(--line, rgba(127,127,127,.18))}
+.dec-esc .dec-bens li:last-child{border-bottom:0}
+.dec-esc .dec-bens select{max-width:280px; min-height:34px; font-size:.85rem}
+.dec-esc .dec-sub{margin:4px 0 10px 26px; display:grid; gap:4px}
 /* 3.69: o Fluxo novo — aporte separado do gasto, a renda extraordinária em amarelo, o patrimônio real × estimado */
 .viz-duplo .col-a{fill:var(--viz-aporte)}
 .viz-duplo .col-x-star{font-size:10px; fill:#c99400}

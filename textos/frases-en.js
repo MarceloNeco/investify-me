@@ -1,10 +1,17 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.69 · 13/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.70 · 13/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.70 */
+  'A declaração do IR preenche os três apps':'The tax return fills in all three apps',
+  'Ao importar a declaração no TaxONE, a tela mostra o que fazer com ela, sempre como escolha: montar ou atualizar a carteira do InvestifyONE com os investimentos de 31/12 (ações e ETFs no exterior com a quantidade, fundos, poupança, contas), cadastrar os dependentes em Pessoas, as fontes pagadoras em Rendas e, se quiser, a escola e o plano de saúde como contas fixas em Custos. O que já existe vem desmarcado; nada é gravado sem você confirmar.':'When you import the return in TaxONE, the screen shows what to do with it, always as a choice: build or update the InvestifyONE portfolio with the investments of 31/12 (foreign shares and ETFs with their quantity, funds, savings, accounts), add the dependants to People, the paying sources to Income and, if you want, school and health plan as fixed bills in Costs. What already exists comes unticked; nothing is saved until you confirm.',
+  '"De quem é": a conta ou o bem com "cônjuge" ou com o nome de alguém do cadastro já vem com essa pessoa escolhida.':'"Whose": an account or asset that mentions the spouse or the name of someone registered comes with that person already chosen.',
+  'A descrição longa de cada bem (cotas de consórcio, saldo devedor por ano, valor do crédito) agora vem inteira.':'The long description of each asset (consortium quotas, outstanding balance per year, credit value) now comes in full.',
+  'A leitura da declaração (até 25 páginas) continua mesmo se você sair da tela: a pílula mostra o andamento e leva de volta quando terminar.':'Reading the return (up to 25 pages) keeps going even if you leave the screen: the pill shows the progress and takes you back when it is done.',
+  'Tudo isso fica só com você: quem vê só a parte da casa não vê patrimônio, investimento nem imposto de renda.':'All of this stays with you only: whoever sees only the household part does not see net worth, investments or income tax.',
   /* 3.69 */
   'Previsto × realizado por categoria':'Forecast × actual by category',
   'O app prevê o gasto de cada categoria no mês: as contas certas de Custos pelo valor e pelo dia (antes de o banco mandar), a média dos últimos 6 meses com o peso da época do ano e a inflação do grupo, e as viagens registradas no Futuro. Quando a conta real chega, ela entra no lugar da prevista, sem contar duas vezes.':'The app forecasts each category\'s spending for the month: fixed bills from Costs by amount and date (before the bank sends them), the average of the last 6 months weighted by time of year and the group\'s inflation, and the trips registered in Forecast. When the real bill arrives, it replaces the forecast one, never counted twice.',

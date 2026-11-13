@@ -1,11 +1,18 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.69 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.70 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.70', d:'2026-11-13', t:'A declaração do IR preenche os três apps', itens:[
+    'Ao importar a declaração no TaxONE, a tela mostra o que fazer com ela, sempre como escolha: montar ou atualizar a carteira do InvestifyONE com os investimentos de 31/12 (ações e ETFs no exterior com a quantidade, fundos, poupança, contas), cadastrar os dependentes em Pessoas, as fontes pagadoras em Rendas e, se quiser, a escola e o plano de saúde como contas fixas em Custos. O que já existe vem desmarcado; nada é gravado sem você confirmar.',
+    '"De quem é": a conta ou o bem com "cônjuge" ou com o nome de alguém do cadastro já vem com essa pessoa escolhida.',
+    'A descrição longa de cada bem (cotas de consórcio, saldo devedor por ano, valor do crédito) agora vem inteira.',
+    'A leitura da declaração (até 25 páginas) continua mesmo se você sair da tela: a pílula mostra o andamento e leva de volta quando terminar.',
+    'Tudo isso fica só com você: quem vê só a parte da casa não vê patrimônio, investimento nem imposto de renda.'
+  ]},
   {v:'3.69', d:'2026-11-13', t:'Previsto × realizado por categoria', itens:[
     'O app prevê o gasto de cada categoria no mês: as contas certas de Custos pelo valor e pelo dia (antes de o banco mandar), a média dos últimos 6 meses com o peso da época do ano e a inflação do grupo, e as viagens registradas no Futuro. Quando a conta real chega, ela entra no lugar da prevista, sem contar duas vezes.',
     'No Painel, cada categoria mostra o que já foi, o que ainda falta do previsto, o ritmo de hoje e a meta (o limite que você digitou). A Projeção do mês diz: previsto, já foi, ainda vem (quanto em contas certas) e quanto deve sobrar, e os 3 meses seguintes.',
