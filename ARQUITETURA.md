@@ -709,6 +709,15 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **3.83 — FiscalONE, gestor de CNPJ (itens 2, 3, 4, 8, 10 e 11).** `textos/pj-textos.js` (const `PJ_TEXTOS`, carregado depois do glossário): TODOS
+  os textos das regras (PT/EN, `{chaves}` trocadas pelos números), as fontes oficiais, as tabelas dos Anexos III e V da LC 123 (teto, alíquota, parcela a
+  deduzir), a parte de ISS+PIS+COFINS que zera na exportação (aproximada), os parâmetros do Fator R (28%, folga 31%, INSS 11%, IR marginal 27,5%), a
+  checklist da troca, o plano de contas e 11 verbetes do glossário (categoria FiscalONE; `darf-pj` porque `darf` já era dos investimentos).
+  `modulos/pj-oportunidades.js` 1.0.0 (`window.PJOport`): `simples(anexo, rbt12)`; `regras.{fatorR, exportacao, despesasCasa, mistura, reforma}(e, mes)`
+  → cartão `{k, nivel, titulo, frase, porque, fonte, valor}`; `plano(g)` e `dre(e, de, ate)`; `pacote(e, mes)` → `{texto, csv, assunto}` (baixar .txt e .csv;
+  `mailto:` para o contador); `contextoIA(e)` pelo ponto novo `ia.contexto` (o `IA.contexto()` do index chama `MoneyModulos.itens('ia.contexto', {app,
+  tela})` e diz "FiscalONE"); a data de revisar a reforma (`empresa.reformaRevisar`, padrão 01/09/2026; "Revisei" +6 meses) no 📥; a troca
+  (`empresa.troca[passo] = data`) quando há empresa "a encerrar"/"a reativar". Tudo no ponto `pj.empresa`. Teste: `teste/teste-pj-oportunidades.js`.
   **3.82 — FiscalONE, gestão da PJ (itens 1, 6, 7 e 9).** `modulos/pj-gestao.js` 1.0.0 (`window.PJGestao`), no ponto novo `pj.empresa` da tela
   `t-pj` (pj 1.1.0: as empresas pela `CofreEmpresa.ordenadas()`, a ativa primeiro). `serie(e, mesFim)`: 12 meses com receita (faturamento + entradas que
   não são transferência; `moedas` pelo `valorMoeda`), impostos (DAS+DARF), contador, taxas (TFE), tarifas, câmbio (`rb_cambio-`/"IOF / TED / DOC"), custos,

@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.82">
+<link rel="stylesheet" href="estilo.css?v=3.83">
 </head>
 <body>
 
@@ -636,7 +636,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.82"></script>
+<script src="textos/frases-en.js?v=3.83"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -1062,6 +1062,7 @@ function doCatalogo(ticker){
 
 </script>
 <script src="textos/glossario.js?v=3.51"></script>
+<script src="textos/pj-textos.js?v=3.83"></script>
 <script>
 /* =========================================================
    MoneyTRIO — glossário
@@ -7618,7 +7619,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.82"></script>
+<script src="textos/mudancas.js?v=3.83"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -24254,7 +24255,7 @@ const IA = {
     const linhas = [];
     const app = (typeof ST !== 'undefined' && ST.appAtual) || 'investify';
     const tela = (typeof viewAtual !== 'undefined') ? viewAtual : '';
-    linhas.push((L === 'pt' ? 'App: ' : 'App: ') + (app === 'budget' ? 'BudgetONE' : 'InvestifyONE') + ' · ' +
+    linhas.push((L === 'pt' ? 'App: ' : 'App: ') + (app === 'budget' ? 'BudgetONE' : app === 'tax' ? 'FiscalONE' : 'InvestifyONE') + ' · ' +
                 (L === 'pt' ? 'tela: ' : 'screen: ') + tela);
     try{
       if(app === 'investify' && typeof totais === 'function'){
@@ -24286,6 +24287,8 @@ const IA = {
           if(prox) linhas.push((L === 'pt' ? 'Próximos 15 dias: ' : 'Next 15 days: ') + prox);
         }
       }
+      /* 3.83: o contexto que os módulos acrescentam (ex.: a empresa na tela PJ, sem CPF/CNPJ/dados bancários) */
+      if(window.MoneyModulos) MoneyModulos.itens('ia.contexto', {app: app, tela: tela}).forEach(l => { if(l) linhas.push(String(l)); });
     }catch(e){ /* sem contexto, a pergunta vai sozinha */ }
     linhas.push((L === 'pt' ? 'Nível de explicação escolhido: ' : 'Chosen explanation level: ') + (ST.nivel || 'medio'));
     return linhas.join('\n');
@@ -30036,6 +30039,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/pj.js?v=1.1.0"></script>
 <script src="modulos/bs2-extrato.js?v=1.0.0"></script>
 <script src="modulos/pj-gestao.js?v=1.0.0"></script>
+<script src="modulos/pj-oportunidades.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.15.1"></script>
 </body>
 </html>
