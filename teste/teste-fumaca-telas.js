@@ -51,6 +51,11 @@ const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify',
       document.querySelectorAll('#toasts .toast').forEach((e) => e.parentNode.removeChild(e)); window.scrollTo(0, 0);
       /* a lista "O que há de novo" ganha a versão nova de propósito: sai das duas cópias */
       document.querySelectorAll('ol.mudancas').forEach((e) => e.parentNode.removeChild(e));
+      /* 3.69: o ✨ IA saiu da faixa e foi para a barra de cima (#btnIA); a faixa sem anúncio nem modo de teste sumiu.
+         Nas duas cópias: tira o ✨ (nos dois lugares) e a faixa que ficar vazia, e mede o topo de novo */
+      document.querySelectorAll('#btnIA, .faixa .ia-bt').forEach((e) => e.parentNode.removeChild(e));
+      document.querySelectorAll('.faixa').forEach((f) => { if (!f.children.length) f.parentNode.removeChild(f); });
+      if (typeof medirTopo === 'function') medirTopo();
       /* o número da versão muda de propósito: troca pelo mesmo texto nas duas cópias */
       const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
       const rv = new RegExp('(^|[^\\d.,])' + VERSAO.replace('.', '\\.') + '(?![\\d,])', 'g');   /* só o número inteiro: "3.56" não mexe em "R$ 3.561,50" */

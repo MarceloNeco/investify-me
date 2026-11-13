@@ -26,7 +26,8 @@
 
   <!-- ======= BARRA SUPERIOR ======= -->
   <header class="topbar">
-    <!-- padrão comum (diretriz 02/Out/2026): ☰ · nome do sub-app ▾ · … · 🔍 📥 👤 -->
+    <!-- padrão comum (diretriz 02/Out/2026): ☰ · nome do sub-app ▾ · … · ✨ 🔍 📥 👤
+         (3.69: o ✨ da IA saiu da faixa e veio para cá, ao lado da lupa; a faixa só aparece com anúncio ou modo de teste) -->
     <button type="button" class="icon-btn" id="btnMenu" aria-label="Menu" title="Menu"
             aria-expanded="false" aria-controls="sidenav">☰</button>
     <div class="brand-caixa">
@@ -43,6 +44,7 @@
     <div class="fita" id="fita"><div class="fita-trilho" id="fitaTrilho"></div></div>
 
     <div class="topbar-actions">
+      <button type="button" class="icon-btn ia-ico" id="btnIA" data-acao="ia-abrir" data-recurso="ia" aria-label="Perguntar à IA sobre o que está na tela" title="Perguntar à IA sobre o que está na tela">✨</button>
       <button type="button" class="icon-btn" id="btnBusca" aria-label="Buscar" title="Buscar no app">🔍</button>
       <button type="button" class="icon-btn inbox-bt" id="btnInbox" aria-label="Mensagens" title="Mensagens e avisos"
               aria-haspopup="dialog">📥<span class="inbox-n hidden" id="inboxN" aria-hidden="true"></span></button>
@@ -15778,11 +15780,10 @@ const Anuncio = {
 
   html(){
     const comAnuncio = this.mostrar();
-    const podeIA = (typeof Acesso !== 'undefined') && Acesso.pode('ia');
-    /* o PT|EN saiu daqui: idioma fica em 👤 → Configurações → Idioma e formatos (diretriz do topo) */
+    /* o PT|EN saiu daqui: idioma fica em 👤 → Configurações → Idioma e formatos (diretriz do topo)
+       3.69: o ✨ IA também saiu (está na barra de cima, #btnIA). Sem anúncio e sem o modo de teste, a faixa não existe: o conteúdo sobe */
+    if(!comAnuncio && !Acesso.verComo) return '';
     return '<div class="faixa' + (comAnuncio ? ' com-anuncio' : '') + '">' +
-      '<button class="ia-bt' + (podeIA ? '' : ' ia-off') + '" data-acao="ia-abrir" data-recurso="ia" title="' +
-        esc(I18n.atual === 'pt' ? 'Perguntar à IA sobre o que está na tela' : 'Ask the AI about what is on screen') + '">✨ IA</button>' +
       (comAnuncio ? '<div class="anuncio" id="anuncio" data-recurso="anuncios">' + this.htmlAnuncio() +
         '<button class="anuncio-x" data-acao="fechar-anuncio" aria-label="' + esc(t('ad.fechar')) + '">×</button></div>' : '') +
       (Acesso.verComo ? '<span class="tarja-teste">' + esc(I18n.atual === 'pt' ? 'modo de teste: vendo como ' : 'test mode: viewing as ') +
@@ -15796,6 +15797,11 @@ const Anuncio = {
     const antes = caixa.querySelector('.anuncio-a');
     const idAntes = antes ? antes.dataset.anid : null;
     caixa.innerHTML = Verter.html(this.html());
+    /* 3.69: o ✨ da barra de cima mostra se a IA está liberada para esta conta (o estado ia-off de antes) */
+    const ia = $('#btnIA');
+    if(ia){ ia.classList.toggle('ia-off', !((typeof Acesso !== 'undefined') && Acesso.pode('ia')));
+      const tt = I18n.atual === 'pt' ? 'Perguntar à IA sobre o que está na tela' : 'Ask the AI about what is on screen'; ia.title = tt; ia.setAttribute('aria-label', tt); }
+    requestAnimationFrame(medirTopo);
     const agora = caixa.querySelector('.anuncio-a');
     /* uma exibição por anúncio mostrado, não por render */
     if(agora && agora.dataset.anid && agora.dataset.anid !== idAntes && typeof Anuncios !== 'undefined')
@@ -29874,7 +29880,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/compromisso-de.js?v=1.7.0"></script>
 <script src="modulos/previsto.js?v=1.0.0"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
-<script src="modulos/calendario-menu.js?v=1.1.0"></script>
+<script src="modulos/calendario-menu.js?v=1.2.0"></script>
 <script src="modulos/pessoas.js?v=1.2.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=2.1.0"></script>

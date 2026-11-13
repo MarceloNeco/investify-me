@@ -66,7 +66,9 @@ async function recolherAbrir(p, nome, antesDeMedir) {
   meio.h = meio.hs.find((x) => x > hEtq + 5 && x < o.h - 5) || hEtq;
   ok(meio.anima >= 1 && meio.h > hEtq + 5 && meio.h < o.h - 5, nome + ': abre com animação suave de altura (' + hEtq + ' → ' + meio.h + ' → ' + o.h + ' px), o chevron gira junto');
   const seta = await p.evaluate(() => (document.querySelector('#navCal .calm-rec path') || {}).getAttribute && document.querySelector('#navCal .calm-rec path').getAttribute('d'));
-  ok(seta === 'M4 10l4-4 4 4', nome + ': aberto, a seta aponta para CIMA (a ação é recolher)');
+  ok(seta === 'M4 6l4 4 4-4', nome + ': aberto, a seta aponta para BAIXO (3.69: o calendário mora no pé do menu; recolher faz o cabeçalho descer)');
+  const setaEtq = await p.evaluate(() => { CalendarioMenu.alternar(true); const d = document.querySelector('#navCal .calm-etq > svg:last-child path').getAttribute('d'); CalendarioMenu.alternar(false); return d; });
+  ok(setaEtq === 'M4 10l4-4 4 4', nome + ': recolhido, a seta da etiqueta aponta para CIMA (abrir faz subir)');
   try { await (await p.$('#navCal')).screenshot({ path: '/tmp/cal-aberto-' + nome.replace(/\W+/g, '-') + '.png' }); } catch (e) {}
   ok(o.grade && o.rec.startsWith('true') && o.salvo === null && o.bot <= o.H + 1 && o.h > 100, nome + ': tocar na etiqueta abre de novo, inteiro na tela (' + o.top + '–' + o.bot + ')');
   await p.reload(); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.recorrentes || []).length >= 1);
@@ -200,7 +202,7 @@ async function janelasTravam(p, nome, celular) {
       await janelasTravam(p, 'janelas celular', true);
       const en = await p.evaluate(() => { I18n.atual = 'en'; renderCalendarioMenu(); const b1 = document.querySelector('#navCal .calm-rec').getAttribute('aria-label');
         CalendarioMenu.alternar(true); const e = document.querySelector('#navCal .calm-etq'); const r = [b1, e.textContent, e.title]; CalendarioMenu.alternar(false); I18n.atual = 'pt'; return r; });
-      ok(en[0] === 'Collapse the calendar' && /^[A-Z][a-z]+ 20\d\d$/.test(en[1]) && en[2] === 'Show the calendar', 'em inglês: "' + en.join('" · "') + '"');
+      ok(en[0] === 'Collapse the calendar' && /^[A-Z][a-z]+ 20\d\d$/.test(en[1]) && en[2] === 'Open the calendar', 'em inglês: "' + en.join('" · "') + '"');
       ok(erros.length === 0, 'celular: sem erro de página' + (erros.length ? ': ' + erros.join(' | ') : ''));
       await ctx.close();
     }

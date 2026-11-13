@@ -1668,6 +1668,7 @@ label.campo > span, .campo > span{font-size:.78rem; color:var(--txt2)}
 .ia-bt{border:1px solid var(--linha-suave); background:linear-gradient(135deg, color-mix(in srgb, var(--accent2) 18%, transparent), color-mix(in srgb, var(--s7) 18%, transparent));
   color:var(--txt); border-radius:999px; padding:5px 12px; font:inherit; font-size:.8rem; font-weight:620; cursor:pointer; min-height:30px}
 .ia-bt.ia-off{opacity:.65}
+.ia-ico.ia-off{opacity:.55}   /* 3.69: o ✨ na barra de cima, ao lado da 🔍 */
 .faixa .anuncio{flex:1; display:flex; align-items:center; gap:8px; min-width:0; margin:0; padding:0; border:0; background:none}
 .faixa .anuncio-a{display:flex; align-items:center; gap:10px; min-width:0; flex:1; text-decoration:none; color:inherit;
   background:var(--card); border:1px solid var(--linha-suave); border-radius:10px; padding:5px 10px}
@@ -1723,7 +1724,11 @@ body:has(.modal-wrap:not(.hidden)) .faixa{visibility:hidden}
   .topbar .brand{min-width:0; overflow:hidden; flex:1 1 auto}
   .topbar .brand-name{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:40vw}
   .topbar-actions{margin-left:auto; gap:6px; flex-wrap:nowrap; flex:0 0 auto}
+  /* 3.69: com o ✨ na barra, o nome do app encolhe (com …) em vez de jogar os ícones para outra linha */
+  .topbar .brand-caixa{flex:1 1 0; min-width:0}
 }
+/* 3.69: tela muito estreita (menos de 360 px): o ✨ sai da barra; fica no menu 👤 ("✨ Perguntar à IA") */
+@media (max-width:359px){ #btnIA{display:none} }
 
 /* ---- o seletor de ano tem tamanho de chip, não de campo ---- */
 .chips .chip-select, select.chip-select{width:auto !important; min-height:32px !important; height:32px; padding:0 28px 0 12px; margin:0; font-size:.82rem; line-height:1}
