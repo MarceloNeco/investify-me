@@ -121,7 +121,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recor
     console.log('4) orçamento por categoria com alerta');
     await p.selectOption('#orcCat', 'LAZER|Restaurantes'); await p.fill('#orcLim', '240'); await p.click('[data-acao="orc-salvar"]'); await p.waitForTimeout(200);
     const o1 = await p.evaluate(() => { const c = document.querySelector('.orc'); return { t: c.textContent.replace(/\s+/g, ' '), cls: c.querySelector('.orc-linha').className, lim: ST.orcamentos.length }; });
-    ok(o1.lim === 1 && /R\$ 200,00 \/ R\$ 240,00/.test(o1.t) && /orc-perto/.test(o1.cls), 'limite de R$ 240 em Restaurantes: R$ 200 no mês = 83%, "perto do limite" (' + o1.t.slice(0, 120) + ')');
+    ok(o1.lim === 1 && /R\$ 200,00 de R\$ [\d.]+,\d\d previsto · meta R\$ 240,00/.test(o1.t) && /orc-perto/.test(o1.cls), 'limite de R$ 240 em Restaurantes: R$ 200 no mês = 83%, "perto do limite" (' + o1.t.slice(0, 120) + ')');
     const o2 = await p.evaluate(() => { const ts = []; const orig = window.toast; window.toast = (m) => { ts.push(m); }; Gasto.add({ id: 'rest-extra', data: hojeISO(), valor: 60, grupo: 'LAZER', sub: 'Restaurantes', desc: 'IFOOD NOVO', fluxo: 'saida' }); window.toast = orig; Store.salvar(); render(); return { ts, cls: document.querySelector('.orc-linha').className, alerta: (document.querySelector('.orc-alerta') || {}).textContent || '' }; });
     ok(o2.ts.some((m) => /Restaurantes: estourou o limite do mês/.test(m)) && /orc-estourou/.test(o2.cls) && /Restaurantes 108%/.test(o2.alerta), 'lançamento novo passa do limite: aviso na hora ("' + (o2.ts[0] || '') + '") e a barra fica vermelha');
 

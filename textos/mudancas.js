@@ -1,11 +1,17 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.68 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.69 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.69', d:'2026-11-13', t:'Previsto × realizado por categoria', itens:[
+    'O app prevê o gasto de cada categoria no mês: as contas certas de Custos pelo valor e pelo dia (antes de o banco mandar), a média dos últimos 6 meses com o peso da época do ano e a inflação do grupo, e as viagens registradas no Futuro. Quando a conta real chega, ela entra no lugar da prevista, sem contar duas vezes.',
+    'No Painel, cada categoria mostra o que já foi, o que ainda falta do previsto, o ritmo de hoje e a meta (o limite que você digitou). A Projeção do mês diz: previsto, já foi, ainda vem (quanto em contas certas) e quanto deve sobrar, e os 3 meses seguintes.',
+    'Futuro → "Viagens e eventos": registre uma viagem de carro e a gasolina extra entra no previsto.',
+    'Viagem que passou: quando o combustível de poucos dias passa muito do normal, o app pergunta "Foi viagem?". Se foi, esses abastecimentos saem da média e o app aprende a distância do destino. Nunca marca sozinho.'
+  ]},
   {v:'3.68', d:'2026-11-13', t:'Mês a mês de verdade, apelidos e nomes', itens:[
     '"Mês a mês" mostra o resultado real de cada mês (tudo o que entrou menos o que saiu; o que foi para investimento fica de fora). A parte da renda extraordinária (rescisão, FGTS) aparece em amarelo com ★ e a régua não se deixa levar por ela; toque no mês para ver o que entrou, saiu e foi para investimento.',
     'Na edição de uma entrada: "★ Renda extraordinária (fica fora das médias)". Rescisão, FGTS e indenização já vêm marcadas; marque outra (um prêmio, a venda de algo) ou desmarque.',

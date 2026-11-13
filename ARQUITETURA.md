@@ -644,6 +644,18 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   dela na tela até o fim), refeita ao rolar (rAF), no `resize`, no `matchMedia('(min-width:761px)')` e no `ResizeObserver` do topo e do
   anúncio; a barra e a lista rolam com `overscroll-behavior:contain`; as views sem `max-width`; texto corrido até 110ch; o selo "Entrar na
   nuvem" fica ao lado da barra. Teste: `teste/teste-desktop.js` (1280×720 a 2560×1440 e trocando a largura).
+- 3.69 (módulo novo `previsao` 1.0.0; `orcamento` 1.1.0). **Previsto × realizado** (`window.Previsao`; o nome `Previsto` já é o
+  do módulo de sazonalidade/boletos): para cada grupo › categoria de saída, previsto do mês = contas certas (`Recorrente.ocorrencias` do
+  mês; o real — pagamento conciliado/pago ou lançamento com `recorrenteId` no mês — substitui o valor previsto) + variáveis (média dos 6
+  meses fechados antes, sem lançamentos de compromisso, sem os de evento e sem os meses com evento × peso do mês do ano anterior, só
+  com ≥ 12 meses de histórico, entre 0,6 e 1,5 × IPCA do grupo do cache do `Orcamento`, sem buscar nada) + eventos (`ST.eventos`, viagens
+  do Futuro: km × 2 ÷ consumo × preço, de `Desloc.veiculo()`, no combustível do mês da ida). Viagem descoberta: janelas de 4 dias de
+  combustível > 2× a mediana semanal (18 semanas) ou ≥ 2 abastecimentos quando o normal é 1; pergunta em `budget.atencao` (Painel) e
+  `inbox.itens` (📥); "sim" grava o evento (`detectado`), marca `g.evento` e aprende o km; "não" vai para `ST.config.viagensNao`.
+  `totalMes` → previsto/gasto/aVir/aVirCertas/rendaPrevista/sobra (renda e sobra `null` na visão da casa); `proximos(3)`.
+  `orcamento` 1.1.0: barra empilhada (`.pv-barra`: gasto, passou, falta tracejado, risquinho do ritmo, linha da meta) nas categorias com
+  limite + as 6 maiores pelo previsto; a "Projeção do mês" usa `Previsao.totalMes()`. Pontos novos no index: `futuro.topo`,
+  `budget.atencao`, itens `inbox.itens`. Teste: `teste/teste-previsao.js`.
 - 3.68 (módulo novo `apelido` 1.0.0; `pessoas` 1.2.0; `visao-casa` 1.0.2; o layout do Painel continua o mesmo, fora o "Mês a mês").
   **"Mês a mês"** (`vizMesAMes(itens, fmt)`, itens `{nome, rec, extra, entRec, saida, aplic}`): a barra é o resultado real (entrou − saiu;
   aplicação fora), em dois pedaços — o recorrente (`.mm-up`/`.mm-down`) e o extraordinário (`.mm-extra`, amarelo listrado, ★). A régua é

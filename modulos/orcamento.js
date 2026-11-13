@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/orcamento.js — orçamento por categoria com alerta e a projeção do mês (3.67)        1.0.0 · 13/Nov/2026
+   modulos/orcamento.js — orçamento por categoria com alerta e a projeção do mês (3.67)        1.1.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedidos do dono, 13/Nov/2026; o layout do Painel NÃO muda agora: são dois cartões no ponto budget.painel)
      · Orçamento do mês: um limite mensal por categoria (grupo › categoria). Barra de progresso do mês atual; a partir de
@@ -11,6 +11,12 @@
        Não aparece na visão da casa (lá não há a renda da família inteira, e a renda dele nunca entra).
      · Visão da casa: o orçamento é da família (coleção da casa). O total de cada categoria com limite vem do resumo
        (Escopo: resumo.orc), sem nenhum lançamento reservado; o aviso diz só a categoria e os totais.
+     · 1.1.0 (3.69): o previsto × realizado (modulos/previsao.js). A barra de cada categoria virou empilhada: cheio = já
+       gasto; só contorno = o que falta do previsto; risquinho = o ritmo de hoje; o que passa do previsto em vermelho forte;
+       a linha tracejada é a meta (o limite digitado). Conta certa ainda não paga: "vem dia 10". Além das categorias com
+       limite, as maiores pelo previsto (até 6). A "Projeção do mês" usa o previsto: "Previsto para novembro: R$ X · já foi
+       R$ Y · ainda vem R$ Z (R$ W em contas certas) · deve sobrar R$ S", e os 3 meses seguintes. Na visão da casa ela
+       aparece sem renda e sem sobra (o desenho final vem do Claude Design).
    API (window.OrcamentoMes)
      lista() · gastoNoMes(grupo, sub, mes?) · situacao(o) → {gasto, pct, estado: 'ok'|'perto'|'estourou'}
      salvar(grupo, sub, limite) · tirar(id) · projecao() → {entra, sai, sobra, ...}
@@ -55,17 +61,9 @@
     },
     tirar: function (id) { ST[COL] = lista().filter(function (x) { return x.id !== id; }); },
     projecao: function () {
-      var hoje = hojeISO(), mes = mesDe(hoje), d = Number(hoje.slice(8, 10)), y = Number(hoje.slice(0, 4)), m = Number(hoje.slice(5, 7));
-      var dias = new Date(y, m, 0).getDate(), resto = dias - d;
-      var extra = typeof rendaExtra === 'function' ? rendaExtra : function () { return false; };
-      var doze = Gasto.filtrar({ de: Gasto.recuar(hoje, 365), ate: hoje }), ent12 = 0, sai12 = 0, entMes = 0, saiMes = 0;
-      doze.forEach(function (g) {
-        var v = Number(g.valor) || 0, noMes = mesDe(g.data) === mes;
-        if (g.fluxo === 'saida') { sai12 += v; if (noMes) saiMes += v; }
-        else if (g.fluxo === 'entrada' && !extra(g)) { ent12 += v; if (noMes) entMes += v; }
-      });
-      var entra = Math.max(entMes, ent12 / 12), sai = saiMes + (sai12 / 365) * resto;
-      return { entra: entra, sai: sai, sobra: entra - sai, saiAteHoje: saiMes, entrouNoMes: entMes, diasFaltam: resto, mediaEntrada: ent12 / 12 };
+      /* 3.69: o previsto de cada categoria (contas certas + variáveis + eventos) no lugar de "média diária × dias que faltam" */
+      var t = Previsao.totalMes();
+      return { entra: t.rendaPrevista, sai: t.previsto, sobra: t.sobra, saiAteHoje: t.gasto, aVir: t.aVir, aVirCertas: t.aVirCertas, mes: t.mes };
     }
   };
 
@@ -76,9 +74,24 @@
     });
     return out;
   }
-  function barra(sit) {
-    var w = Math.min(100, Math.round(sit.pct * 100)), cor = sit.estado === 'estourou' ? 'var(--down)' : sit.estado === 'perto' ? 'var(--warn, #d99a00)' : 'var(--up)';
-    return '<div class="orc-barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(sit.pct * 100) + '"><i style="width:' + w + '%;background:' + cor + '"></i></div>';
+  /* 3.69: a barra empilhada (o mínimo para ver os números; o desenho final vem do Claude Design) */
+  function barra(p, limite) {
+    var esc_ = Math.max(p.previsto, p.gasto, limite || 0) * 1.05 || 1, pc = function (v) { return Math.max(0, Math.min(100, v / esc_ * 100)).toFixed(1) + '%'; };
+    var dentro = Math.min(p.gasto, p.previsto), passou = Math.max(0, p.gasto - p.previsto), falta = Math.max(0, p.previsto - p.gasto);
+    return '<div class="orc-barra pv-barra" role="img" aria-label="' + esc(tr('Gasto ', 'Spent ') + fmt(p.gasto) + tr(' de ', ' of ') + fmt(p.previsto) + tr(' previsto', ' forecast')) + '">' +
+      '<i class="pv-gasto" style="width:' + pc(dentro) + '"></i>' + (passou ? '<i class="pv-passou" style="width:' + pc(passou) + '"></i>' : '') +
+      (falta ? '<i class="pv-falta" style="width:' + pc(falta) + '"></i>' : '') +
+      (p.ritmoHoje > 0 ? '<b class="pv-ritmo" style="left:' + pc(p.ritmoHoje) + '" title="' + esc(tr('ritmo de hoje: ', 'pace today: ') + fmt(p.ritmoHoje)) + '"></b>' : '') +
+      (limite ? '<b class="pv-meta" style="left:' + pc(limite) + '" title="' + esc(tr('meta: ', 'goal: ') + fmt(limite)) + '"></b>' : '') + '</div>';
+  }
+  function linhaPrevisto(p, o, sit) {
+    if (sit) p = Object.assign({}, p, { gasto: sit.gasto });   /* com limite, o gasto é o mesmo do aviso (na visão da casa, o total da família) */
+    var vem = p.comprometidoAVir.map(function (c) { return c.nome + tr(' vem dia ', ' due on the ') + c.dia + tr('', 'th') + ' (' + fmt(c.valor) + ')'; }).join(' · ');
+    return '<div class="orc-linha orc-' + (sit ? sit.estado : 'ok') + ' pv-' + p.estado + '"><div class="orc-nome"><b>' + esc(p.sub) + '</b> <span class="t-sub">' + esc(nomeG(p.grupo)) + '</span></div>' +
+      '<div class="orc-valor">' + esc(fmt(p.gasto)) + ' <span class="tiny muted">' + esc(tr('de ', 'of ') + fmt(p.previsto) + tr(' previsto', ' forecast') +
+        (o ? tr(' · meta ', ' · goal ') + fmt(o.limite) : '') + (p.gasto > p.previsto ? tr(' · passou ', ' · over by ') + fmt(p.gasto - p.previsto) : '')) + '</span>' +
+      (o ? ' <button type="button" class="linkinho" data-acao="orc-tirar" data-id="' + esc(o.id) + '" aria-label="' + esc(tr('Tirar o limite de ', 'Remove the limit of ') + o.sub) + '">✕</button>' : '') + '</div>' +
+      barra(p, o && o.limite) + (vem ? '<div class="tiny muted pv-vem">' + esc(vem) + '</div>' : '') + '</div>';
   }
   function cartaoOrcamento() {
     var l = lista().map(function (o) { return { o: o, s: API.situacao(o) }; }).sort(function (a, b) { return b.s.pct - a.s.pct; });
@@ -86,13 +99,10 @@
     var nomeMes = new Date(hojeISO() + 'T12:00:00').toLocaleDateString(pt() ? 'pt-BR' : 'en-US', { month: 'long', year: 'numeric' });
     var h = '<div class="card orc"><div class="card-head"><h3>' + esc(tr('Orçamento do mês', 'Monthly budget')) + '</h3><span class="small muted pn-periodo">' + esc(nomeMes) + '</span></div>';
     if (alertas.length) h += '<p class="orc-alerta small" role="status">⚠️ ' + esc(alertas.map(function (x) { return x.o.sub + ' ' + Math.round(x.s.pct * 100) + '%'; }).join(' · ')) + '</p>';
-    h += l.map(function (x) {
-      var o = x.o, s = x.s, falta = o.limite - s.gasto;
-      return '<div class="orc-linha orc-' + s.estado + '"><div class="orc-nome"><b>' + esc(o.sub) + '</b> <span class="t-sub">' + esc(nomeG(o.grupo)) + '</span></div>' +
-        '<div class="orc-valor">' + esc(fmt(s.gasto)) + ' / ' + esc(fmt(o.limite)) + ' <span class="tiny muted">' +
-        esc(s.estado === 'estourou' ? tr('estourou ', 'over by ') + fmt(-falta) : s.estado === 'perto' ? tr('perto do limite: faltam ', 'near the limit: ') + fmt(falta) + tr('', ' left') : tr('faltam ', '') + fmt(falta) + tr('', ' left')) + '</span>' +
-        ' <button type="button" class="linkinho" data-acao="orc-tirar" data-id="' + esc(o.id) + '" aria-label="' + esc(tr('Tirar o limite de ', 'Remove the limit of ') + o.sub) + '">✕</button></div>' + barra(s) + '</div>';
-    }).join('');
+    /* 3.69: as categorias com limite e as maiores pelo previsto, cada uma com a barra empilhada */
+    var cats = Previsao.categorias(), porK = {}; cats.forEach(function (p) { porK[p.grupo + '|' + p.sub] = p; });
+    h += l.map(function (x) { return linhaPrevisto(porK[x.o.id] || Previsao.previstoMes(x.o.grupo, x.o.sub), x.o, x.s); }).join('');
+    h += cats.filter(function (p) { return !l.some(function (x) { return x.o.id === p.grupo + '|' + p.sub; }); }).slice(0, 6).map(function (p) { return linhaPrevisto(p, null, null); }).join('');
     if (!l.length) h += '<p class="small muted">' + esc(tr('Defina um limite por mês para as categorias que você quer vigiar. O app avisa quando passar de 80% e quando estourar.', 'Set a monthly limit for the categories you want to watch. The app warns at 80% and when it goes over.')) + '</p>';
     h += '<form class="orc-novo" data-orc-form><select id="orcCat" aria-label="' + esc(tr('Categoria', 'Category')) + '"><option value="">' + esc(tr('Categoria…', 'Category…')) + '</option>' +
       opcoes().map(function (x) { return '<option value="' + esc(x[0]) + '">' + esc(x[1]) + '</option>'; }).join('') + '</select>' +
@@ -101,17 +111,24 @@
     return h + '</div>';
   }
   function cartaoProjecao() {
-    if (window.Escopo && Escopo.soCasa && Escopo.soCasa()) return '';
-    var p = API.projecao(); if (!p.entra && !p.sai) return '';
-    var sobra = p.sobra >= 0;
-    return '<div class="card orc-proj"><div class="card-head"><h3>' + esc(tr('Projeção do mês', 'Month projection')) + '</h3><span class="small muted pn-periodo">' + esc(tr('até o fim do mês', 'to the end of the month')) + '</span></div>' +
-      '<p class="orc-proj-n ' + (sobra ? 'up' : 'down') + '"><b>' + esc((sobra ? tr('Sobra prevista: ', 'Expected surplus: ') : tr('Falta prevista: ', 'Expected shortfall: ')) + fmt(Math.abs(p.sobra))) + '</b></p>' +
-      '<p class="small muted">' + esc(tr('Entra ', 'In ') + fmt(p.entra) + tr(' (a renda do mês ou a média, sem a extraordinária) · sai ', ' (this month\'s income or the average, without the extraordinary) · out ') + fmt(p.sai) +
-        tr(' (' + fmt(p.saiAteHoje) + ' até hoje + o ritmo de sempre nos ' + p.diasFaltam + ' dias que faltam).', ' (' + fmt(p.saiAteHoje) + ' so far + the usual pace for the ' + p.diasFaltam + ' days left).')) + '</p></div>';
+    var t = Previsao.totalMes(); if (!t.previsto && !t.gasto) return '';
+    var mes = Previsao.nomeMes(t.mes), sobra = t.sobra;
+    var frase = tr('Previsto para ' + mes + ': ', 'Forecast for ' + mes + ': ') + fmt(t.previsto) + tr(' · já foi ', ' · spent so far ') + fmt(t.gasto) +
+      tr(' · ainda vem ', ' · still to come ') + fmt(t.aVir) + ' (' + fmt(t.aVirCertas) + tr(' em contas certas)', ' in fixed bills)') +
+      (sobra == null ? '' : (sobra >= 0 ? tr(' · deve sobrar ', ' · should be left over ') : tr(' · deve faltar ', ' · should fall short by ')) + fmt(Math.abs(sobra)));
+    var prox = Previsao.proximos(3).map(function (x) {
+      return Previsao.nomeMes(x.mes) + ' ' + fmt(x.previsto) + (x.sobra == null ? '' : ' (' + (x.sobra >= 0 ? tr('sobra ', 'left ') : tr('falta ', 'short ')) + fmt(Math.abs(x.sobra)) + ')');
+    }).join(' · ');
+    return '<div class="card orc-proj"><div class="card-head"><h3>' + esc(tr('Projeção do mês', 'Month projection')) + '</h3><span class="small muted pn-periodo">' + esc(tr('previsto × realizado', 'forecast × actual')) + '</span></div>' +
+      (sobra == null ? '' : '<p class="orc-proj-n ' + (sobra >= 0 ? 'up' : 'down') + '"><b>' + esc((sobra >= 0 ? tr('Sobra prevista: ', 'Expected surplus: ') : tr('Falta prevista: ', 'Expected shortfall: ')) + fmt(Math.abs(sobra))) + '</b></p>') +
+      '<p class="small pv-frase">' + esc(frase) + '</p>' +
+      '<p class="tiny muted">' + esc(tr('Próximos meses: ', 'Next months: ') + prox) + '</p>' +
+      '<p class="tiny muted">' + esc(tr('Previsto = contas certas pelo valor e dia + a média dos últimos 6 meses (com o peso da época do ano e a inflação do grupo) + as viagens registradas no Futuro.',
+        'Forecast = fixed bills by amount and date + the average of the last 6 months (weighted by time of year and the group\'s inflation) + the trips registered in Forecast.')) + '</p></div>';
   }
 
   MoneyModulos.registrar({
-    id: 'orcamento', versao: '1.0.0', colecoes: [COL],
+    id: 'orcamento', versao: '1.1.0', colecoes: [COL],
     pontos: { 'budget.painel': function () { return cartaoOrcamento() + cartaoProjecao(); } },
     acoes: {
       'orc-salvar': function () {

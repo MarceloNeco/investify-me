@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.68 · 13/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.69 · 13/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2579,6 +2579,21 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .orc-novo input{flex:0 1 160px; min-width:120px}
 .orc-proj-n{font-size:1.15rem; margin:4px 0}
 .orc-proj-n.up{color:var(--up)} .orc-proj-n.down{color:var(--down)}
+/* 3.69: a barra empilhada do previsto × realizado (o mínimo; o desenho final vem do Claude Design) */
+.pv-barra{position:relative; display:flex; height:12px; overflow:visible}
+.pv-barra i{border-radius:0; flex:none}
+.pv-barra i:first-child{border-radius:6px 0 0 6px}
+.pv-gasto{background:var(--up)}
+.pv-acima .pv-gasto, .orc-estourou .pv-gasto{background:var(--warn, #d99a00)}
+.pv-passou{background:var(--down); filter:saturate(1.4) brightness(.85)}
+.pv-falta{box-sizing:border-box; border:1.5px dashed var(--txt3, rgba(127,127,127,.7)); border-left:0; border-radius:0 6px 6px 0; background:transparent}
+.pv-ritmo{position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px; background:var(--txt, #222)}
+.pv-meta{position:absolute; top:-5px; bottom:-5px; width:0; border-left:2px dashed var(--down)}
+.pv-vem{margin-top:4px}
+.pv-frase{margin:4px 0}
+.pv-pergunta{padding:8px 0; border-bottom:1px solid var(--line, rgba(127,127,127,.18))}
+.pv-pergunta:last-child{border-bottom:0}
+.pv-pergunta .pv-dest{max-width:220px}
 
 /* 3.68: "Mês a mês" — a barra real, com a parte extraordinária em amarelo (★), cortada na borda (⫽); tocar abre o detalhe */
 .mm-mes{margin-bottom:5px}

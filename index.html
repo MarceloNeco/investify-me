@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.68">
+<link rel="stylesheet" href="estilo.css?v=3.69">
 </head>
 <body>
 
@@ -631,7 +631,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.68"></script>
+<script src="textos/frases-en.js?v=3.69"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7565,7 +7565,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.68"></script>
+<script src="textos/mudancas.js?v=3.69"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -9899,7 +9899,7 @@ function viewBPainel(){
     kpiB('Custo de viver', fmt(fixo.mensal), 'custo-fixo', fixo.itens.length + ' compromissos fixos', '', 'b-custos') +
     '</div>';
   /* 3.64: indicadores do mês e a conferência com o saldo do banco (modulos/indicadores.js, modulos/saldo-banco.js) */
-  h += (window.MoneyModulos ? MoneyModulos.html('budget.painel', {}) : '');
+  h += (window.MoneyModulos ? MoneyModulos.html('budget.atencao', {}) + MoneyModulos.html('budget.painel', {}) : '');   /* 3.69: "Precisa da sua atenção" antes */
 
   /* para onde foi o dinheiro */
   const porGrupo = Gasto.porChave(doze.filter(g => g.fluxo === 'saida'), 'grupo');
@@ -10868,6 +10868,7 @@ function viewBFuturo(){
       [3,5,10,20].map(a => '<button data-banos="' + a + '"' + (a === bAnos ? ' class="active"' : '') + '>' +
         a + ' anos</button>').join('') +
     '</div></div>';
+  if(window.MoneyModulos) h += MoneyModulos.html('futuro.topo', {});   /* 3.69: viagens e eventos (modulos/previsao.js) */
 
   if(!bProj){
     h += '<div class="card"><div class="vazio">' +
@@ -27886,6 +27887,7 @@ function inboxItens(){
                 : (d <= 0 ? 'due today' : d === 1 ? 'due tomorrow' : 'due in ' + d + ' days')});
     });
   }catch(e){}
+  if(window.MoneyModulos) MoneyModulos.itens('inbox.itens', {}).forEach(x => itens.push(x));   /* 3.69: "Foi viagem?" (modulos/previsao.js) */
   return itens;
 }
 
@@ -29886,7 +29888,8 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
 <script src="modulos/visao-casa.js?v=1.0.2"></script>
-<script src="modulos/orcamento.js?v=1.0.0"></script>
+<script src="modulos/previsao.js?v=1.0.0"></script>
+<script src="modulos/orcamento.js?v=1.1.0"></script>
 <script src="nuvem.js?v=1.14.0"></script>
 </body>
 </html>
