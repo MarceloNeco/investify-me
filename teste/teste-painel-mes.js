@@ -96,6 +96,28 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recor
     ok(/\+R\$ 100\.571,43/.test(maio.t) && /sem a rescisão\/FGTS: −R\$ 37\.084,57/.test(maio.t) && maio.down && maio.extra && maio.quebra >= 1 && /up/.test(maio.cls),
       'maio do dono: o total é positivo (+R$ 100.571,43, verde); a parte recorrente negativa em vermelho e a rescisão em amarelo, cortadas na borda; "sem a rescisão/FGTS" com o −37.084,57 (' + maio.t.trim() + ')');
 
+    console.log('3b) interruptor "Renda extraordinária" na edição de uma entrada (3.68)');
+    const ed = async (id, marcar) => {
+      await p.evaluate((i) => abrirLancamento(i), id); await p.waitForTimeout(150);
+      const r = await p.evaluate(() => { const l = document.querySelector('#glExtraLbl'), c = document.querySelector('#glExtra'); return { vis: !!l && !l.hidden, on: !!c && c.checked }; });
+      if (marcar !== undefined && r.on !== marcar) await p.click('#glExtra');
+      await p.click('[data-acao="gl-salvar"]'); await p.waitForTimeout(150);
+      return Object.assign(r, await p.evaluate((i) => { const g = Gasto.todos().find((x) => x.id === i); return { extra: g.extra, conta: rendaExtra(g) }; }, id));
+    };
+    const e1 = await ed('resc');
+    ok(e1.vis && e1.on && e1.extra === undefined && e1.conta, 'rescisão: o interruptor aparece já ligado (regra automática) e salvar sem mexer não grava nada');
+    await p.evaluate(() => { Gasto.add({ id: 'premio', data: hojeISO(), valor: 700, grupo: 'RENDA', sub: 'Prêmio', desc: 'PREMIO SORTEIO', fluxo: 'entrada' }); Store.salvar(); });
+    const e2 = await ed('premio', true);
+    ok(e2.vis && !e2.on && e2.extra === true && e2.conta, 'prêmio marcado à mão' + JSON.stringify(e2) + ': : grava extra = true e sai das médias');
+    const e3 = await ed('premio', false);
+    ok(e3.extra === undefined && !e3.conta, 'desmarcar volta à regra automática (extra apagado)');
+    const e4 = await ed('resc', false);
+    ok(e4.extra === false && !e4.conta, 'rescisão desmarcada: grava extra = false e volta para as médias');
+    await ed('resc', true);
+    await p.evaluate(() => { ST.gastos = ST.gastos.filter((x) => x.id !== 'premio'); Store.salvar(); render(); });
+    const e5 = await p.evaluate(() => { abrirLancamento('cond0'); const l = document.querySelector('#glExtraLbl'); const r = !!l && l.hidden; fechar('assetModal'); return r; });
+    ok(e5, 'numa saída (Condomínio) o interruptor não aparece');
+
     console.log('4) orçamento por categoria com alerta');
     await p.selectOption('#orcCat', 'LAZER|Restaurantes'); await p.fill('#orcLim', '240'); await p.click('[data-acao="orc-salvar"]'); await p.waitForTimeout(200);
     const o1 = await p.evaluate(() => { const c = document.querySelector('.orc'); return { t: c.textContent.replace(/\s+/g, ' '), cls: c.querySelector('.orc-linha').className, lim: ST.orcamentos.length }; });

@@ -1183,6 +1183,13 @@ function textoGlossario(chave, nivel){
      en:{medio:'For each month: everything that came in minus spending (money sent to investments is not spending). A bar to the right means money was left over; to the left, you spent more than came in. ' +
       'Extraordinary income (severance, FGTS, compensation, or an entry you marked as "Extraordinary income") shows in yellow with ★: the scale ignores it, a bar past the edge is cut (⫽), and the result without it is shown below the value. The Panel averages leave it out. Tap a month to see what came in, went out and was invested.'}},
 
+    {k:'renda-extra', t:'Renda extraordinária', te:'Extraordinary income', c:'BudgetONE', ce:'BudgetONE',
+     pt:{medio:'Renda que não se repete: rescisão, FGTS, indenização. Ela fica fora das médias do Painel ("Entrou por mês", "Sobrou por mês") e da projeção do mês, ' +
+      'e no "Mês a mês" aparece em amarelo com ★. O app reconhece sozinho quando a categoria ou a descrição falam em rescisão, FGTS ou indenização. ' +
+      'Para outra renda (um prêmio, a venda de um bem), marque aqui; para tirar a marca de uma que o app reconheceu, desmarque. Resgate de investimento não é renda: é a volta do que você aplicou.'},
+     en:{medio:'Income that does not repeat: severance, FGTS, compensation. It stays out of the Panel averages and the month projection, and shows in yellow with ★ in "Month by month". ' +
+      'The app recognizes it by itself when the category or description mentions severance, FGTS or compensation. Tick it for other income (a prize, selling something); untick to undo. Redeeming an investment is not income.'}},
+
     {k:'sazonalidade', t:'Os meses caros do ano', te:'The expensive months', c:'BudgetONE', ce:'BudgetONE',
      pt:{medio:'A média de gasto de cada mês do calendário, usando todos os anos que você registrou. Mostra o que se repete: ' +
       'IPTU e IPVA no começo do ano, material escolar em fevereiro, festas em dezembro. Serve para guardar antes, nos meses leves.'},
@@ -11061,6 +11068,10 @@ function abrirLancamento(id){
     (window.MoneyModulos ? MoneyModulos.html('lancamento.form', {g: g}) : '') +
     '<label class="linha-check"><input type="checkbox" id="glIrpf"' + (g && g.irpf ? ' checked' : '') + '> ' +
       (I18n.atual === 'pt' ? 'Entra no imposto de renda' : 'Counts for income tax') + '</label>' +
+    /* 3.68: renda extraordinária à mão (g.extra); sem marcar, vale a regra automática (rescisão, FGTS, indenização) */
+    '<label class="linha-check" id="glExtraLbl"' + ((g ? g.grupo : '') === 'RENDA' ? '' : ' hidden') + '><input type="checkbox" id="glExtra"' + (g && rendaExtra(Object.assign({}, g, {fluxo: 'entrada'})) ? ' checked' : '') + '> ' +
+      (I18n.atual === 'pt' ? '★ Renda extraordinária (fica fora das médias)' : '★ Extraordinary income (left out of the averages)') +
+      ' <button type="button" class="info-dot" data-info="renda-extra">i</button></label>' +
     '<label class="linha-check"><input type="checkbox" id="glFav"' + (g && g.favorito ? ' checked' : '') + '> ' +
       (I18n.atual === 'pt' ? '★ Favorito' : '★ Favourite') + '</label>' +
     '<label class="linha-check"><input type="checkbox" id="glRev"' + (g && g.revisar ? ' checked' : '') + '> ' +
@@ -11096,6 +11107,13 @@ function abrirLancamento(id){
   ['change', 'input'].forEach(ev => janela.addEventListener(ev, e => {
     if(['glGrupo', 'glSub', 'glValor', 'glCalcIR'].indexOf(e.target.id) >= 0 || e.target.name === 'glBase') blocoSal();
     if(e.target.id === 'glPer' || e.target.id === 'glGrupo' || e.target.id === 'glSub') blocoFixo();
+    /* 3.68: o interruptor de renda extraordinária só aparece em Renda; enquanto não for mexido, segue a regra automática */
+    const cxE = $('#glExtra');
+    if(cxE && e.target === cxE) cxE.dataset.mexeu = '1';
+    else if(cxE && ['glGrupo', 'glSub', 'glDesc'].indexOf(e.target.id) >= 0){
+      $('#glExtraLbl').hidden = $('#glGrupo').value !== 'RENDA';
+      if(!cxE.dataset.mexeu && !(g && typeof g.extra === 'boolean')) cxE.checked = RX_RENDA_EXTRA.test($('#glSub').value + ' ' + (($('#glDesc') || {}).value || ''));
+    }
   }));
   blocoSal(); blocoFixo();
 
@@ -11213,6 +11231,11 @@ function salvarLancamento(){
     conta: $('#glConta').value, irpf: $('#glIrpf').checked,
     favorito: !!($('#glFav') || {}).checked, revisar: !!($('#glRev') || {}).checked
   };
+  /* 3.68: a marca "renda extraordinária" só é gravada quando difere da regra automática (assim, mudar a categoria continua valendo) */
+  if($('#glGrupo').value === 'RENDA' && $('#glExtra')){
+    const auto = RX_RENDA_EXTRA.test((dados.sub || '') + ' ' + (dados.desc || ''));
+    dados.extra = $('#glExtra').checked === auto ? undefined : $('#glExtra').checked;
+  } else dados.extra = undefined;
   if(!Abat.aplicar(dados, dados.valor, Abat.ler('gl'))){
     toast(I18n.atual === 'pt' ? 'O abatimento passou do preço cheio.' : 'The offset is larger than the full price.', 'warn'); return;
   }
