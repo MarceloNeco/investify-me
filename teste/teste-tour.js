@@ -34,7 +34,7 @@ const cruza = (a, b) => !(a.right <= b.left || b.right <= a.left || a.bottom <= 
     await p.waitForTimeout(500);
     await p.evaluate(() => Assist.abrir('tutorial'));
     const posicoes = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {   /* 3.74: + o passo "Contas fixas" */
       await p.waitForTimeout(500);
       const m = await p.evaluate(() => {
         const R = (e) => { const r = e.getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, w: r.width, h: r.height }; };
@@ -52,16 +52,16 @@ const cruza = (a, b) => !(a.right <= b.left || b.right <= a.left || a.bottom <= 
       ok(m.foco && m.role === 'dialog', vp.width + ' passo ' + m.n + ': o foco está no balão (role=dialog)');
       if (i === 0) ok(/left/.test(m.trans) && /top/.test(m.trans), vp.width + ': o balão se move com animação (transition em left/top)');
       if (i === 0) ok(vp.width > 760 ? m.alvoId === 'navLista' : m.alvoId === 'btnMenu', vp.width + ': o 1º passo aponta para o menu certo (' + (vp.width > 760 ? 'lateral' : '☰') + ')');
-      if (i < 4) await p.keyboard.press('ArrowRight');
+      if (i < 5) await p.keyboard.press('ArrowRight');
     }
     ok(new Set(posicoes.map((x) => Math.round(x.left) + ',' + Math.round(x.top))).size >= 3, vp.width + ': o balão foi para lugares diferentes (um por alvo)');
     await p.keyboard.press('ArrowLeft'); await p.waitForTimeout(300);
-    ok(await p.evaluate(() => document.querySelector('.tour-n').textContent) === '4 / 5', vp.width + ': ← volta um passo');
+    ok(await p.evaluate(() => document.querySelector('.tour-n').textContent) === '5 / 6', vp.width + ': ← volta um passo');
     /* foco preso: Tab várias vezes continua dentro do balão */
     for (let k = 0; k < 6; k++) await p.keyboard.press('Tab');
     ok(await p.evaluate(() => !!document.activeElement.closest('.tour-balao')), vp.width + ': Tab não sai do balão');
     /* alvo que não existe: balão no meio, só naquele passo */
-    await p.evaluate(() => { document.getElementById('assistOne').classList.add('hidden'); Tour.ir(4); });
+    await p.evaluate(() => { document.getElementById('assistOne').classList.add('hidden'); Tour.ir(5); });   /* 3.74: o AssistONE agora é o 6º passo */
     await p.waitForTimeout(500);
     await p.screenshot({ path: '/tmp/tour-' + vp.width + '-sem-alvo.png' });
     const ok1 = await p.evaluate(() => { const r = document.querySelector('.tour-balao').getBoundingClientRect(); const c = { x: r.left + r.width / 2, y: r.top + r.height / 2 };

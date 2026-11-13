@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/orcamento.js — orçamento por categoria com alerta e a projeção do mês (3.67)        1.1.0 · 13/Nov/2026
+   modulos/orcamento.js — orçamento por categoria com alerta e a projeção do mês (3.67)        1.1.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedidos do dono, 13/Nov/2026; o layout do Painel NÃO muda agora: são dois cartões no ponto budget.painel)
      · Orçamento do mês: um limite mensal por categoria (grupo › categoria). Barra de progresso do mês atual; a partir de
@@ -119,7 +119,8 @@
     var prox = Previsao.proximos(3).map(function (x) {
       return Previsao.nomeMes(x.mes) + ' ' + fmt(x.previsto) + (x.sobra == null ? '' : ' (' + (x.sobra >= 0 ? tr('sobra ', 'left ') : tr('falta ', 'short ')) + fmt(Math.abs(x.sobra)) + ')');
     }).join(' · ');
-    return '<div class="card orc-proj"><div class="card-head"><h3>' + esc(tr('Projeção do mês', 'Month projection')) + '</h3><span class="small muted pn-periodo">' + esc(tr('previsto × realizado', 'forecast × actual')) + '</span></div>' +
+    return '<div class="card orc-proj"><div class="card-head"><h3>' + esc(tr('Projeção do mês', 'Month projection')) + '</h3><span class="small muted pn-periodo">' + esc(tr('previsto × realizado', 'forecast × actual')) + '</span>' +
+      '<button class="btn sm orc-cf" data-irpara="b-custos">📌 ' + esc(tr('Contas fixas', 'Fixed bills')) + '</button></div>' +   /* 3.74: o previsto leva às contas fixas */
       (sobra == null ? '' : '<p class="orc-proj-n ' + (sobra >= 0 ? 'up' : 'down') + '"><b>' + esc((sobra >= 0 ? tr('Sobra prevista: ', 'Expected surplus: ') : tr('Falta prevista: ', 'Expected shortfall: ')) + fmt(Math.abs(sobra))) + '</b></p>') +
       '<p class="small pv-frase">' + esc(frase) + '</p>' +
       '<p class="tiny muted">' + esc(tr('Próximos meses: ', 'Next months: ') + prox) + '</p>' +
@@ -128,7 +129,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'orcamento', versao: '1.1.0', colecoes: [COL],
+    id: 'orcamento', versao: '1.1.1', colecoes: [COL],
     pontos: { 'budget.painel': function () { return cartaoOrcamento() + cartaoProjecao(); } },
     acoes: {
       'orc-salvar': function () {

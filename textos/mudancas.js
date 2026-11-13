@@ -1,11 +1,16 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.73 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.74 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.74', d:'2026-11-13', t:'Parcelados do cartão, Contas fixas e Documentos que o app pede', itens:[
+    'Compras parceladas no cartão: o app lê a parcela no fim da descrição ("LOJA 03/10") e mostra em "Parcelados no cartão" (Painel e Futuro) o que ainda vem — quanto falta, em quantos meses e quanto cai em cada mês. O previsto do mês já conta cada parcela a vir como conta certa.',
+    'A tela "Custos" passou a se chamar "Contas fixas" (e gastos recorrentes), que é como você procura. No Painel, um cartão "Contas fixas do mês": quantas são, o total por mês e as próximas a vencer.',
+    '"Documentos que o app pede": quando chega a hora de subir um documento que se repete (a fatura do cartão Porto, o saldo das cotas do consórcio, a apólice), o app lembra em "Precisa da sua atenção" e no 📥, com o passo a passo e o botão de subir, que já abre o leitor certo. Dá para adiar 7 dias e copiar um pedido pronto para o Claude in Chrome baixar o documento.'
+  ]},
   {v:'3.73', d:'2026-11-13', t:'Dívidas, fatura do cartão Porto, seguro e Mês a mês', itens:[
     'Novo cartão "Dívidas" no Painel do InvestifyONE e no do BudgetONE: consórcio, financiamento ou outra dívida, cada uma com uma barra (cheia = o que já foi pago, tracejada = o que falta), o saldo, a parcela e "quita em ~mm/aaaa (estimativa)", agrupadas pelo bem a que pertencem. O bem mostra "valor − dívida = parte sua".',
     'O patrimônio total (no Painel do InvestifyONE e no Fluxo) agora desconta as dívidas, com a linha "dívidas: −R$ X" à vista. Cada parcela paga que o app reconhece baixa o saldo (estimativa) até a próxima atualização; a parcela continua como gasto fixo no orçamento.',

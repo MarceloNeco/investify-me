@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.73 · 13/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.74 · 13/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2650,3 +2650,13 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 
 /* 3.73: "Mês a mês" refeito (modulos/mes-a-mes.js) — as duas vistas */
 .mm-modos{display:inline-flex; gap:6px; margin:0 0 10px; flex-wrap:wrap}
+
+/* 3.74: "Contas fixas e gastos recorrentes" no menu; cartões novos do Painel */
+.nav-item .nav-sub{display:block; font-size:.72em; color:var(--txt2); margin-left:1.9em; line-height:1.1}
+.cf-frase, .pc-frase{margin:0 0 8px}
+.orc-proj .card-head .orc-cf{margin-left:auto}
+
+/* 3.74: "Documentos que o app pede" */
+.doc-ped{padding:8px 0; border-top:1px solid var(--line)}
+.doc-ped:first-child{border-top:0}
+.doc-passos ol{margin:4px 0 8px; padding-left:20px}

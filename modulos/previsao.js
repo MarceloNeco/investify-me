@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/previsao.js — previsto × realizado por categoria (3.69)        1.0.0 · 13/Nov/2026
+   modulos/previsao.js — previsto × realizado por categoria (3.69)        1.1.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (regra aprovada pelo dono, 13/Nov/2026)
      Para cada grupo › categoria de saída, o PREVISTO do mês M é a soma de três partes:
@@ -21,6 +21,8 @@
         atenção" (Painel e 📥): "Parece que teve viagem entre X e Y (R$ Z de combustível). Foi viagem?". Sim: aceita um
         destino (opcional), marca esses lançamentos como do evento (g.evento), tira da média e aprende o km do destino.
         Não: nada muda (não pergunta de novo). Nunca marca sozinho.
+     a2) 1.1.0 (3.74): as parcelas do cartão (modulos/parcelados.js) também são contas certas: a que já chegou pelo valor real,
+        as que faltam pelo valor da última vista, no vencimento da fatura; fora da média dos variáveis.
      e) O limite digitado à mão (orçamento 3.67) continua como META; o previsto é a estimativa. O cartão mostra os dois.
      Visão da casa: só o que ela já vê (os lançamentos e compromissos dela); sem renda e sem "sobra"; não pergunta de viagem.
    API (window.Previsao)
@@ -87,7 +89,8 @@
     if (typeof Recorrente === 'undefined') return [];
     return Recorrente.ocorrencias(mes + '-01', mes + '-' + diasNoMes(mes)).filter(function (o) {
       return (GRUPOS[o.r.grupo] || {}).fluxo === 'saida' && o.estado !== 'cancelado';
-    }).map(function (o) { var real = pagoReal(o); return { o: o, grupo: o.r.grupo, sub: o.r.sub, nome: o.r.nome, data: o.data, valor: n2(o.valor), real: real }; });
+    }).map(function (o) { var real = pagoReal(o); return { o: o, grupo: o.r.grupo, sub: o.r.sub, nome: o.r.nome, data: o.data, valor: n2(o.valor), real: real }; })
+      .concat(window.Parcelados ? Parcelados.doMes(mes) : []);   /* 1.1.0: as parcelas do cartão (modulos/parcelados.js) */
   }
 
   /* ---- b) variáveis ---- */
@@ -97,7 +100,7 @@
     l.forEach(function (g) {
       var m = mesDe(g.data); if (!primeiro || m < primeiro) primeiro = m;
       if (g.evento) { evMes[m] = 1; return; }
-      if (g.recorrenteId) return;
+      if (g.recorrenteId || Gasto.parcela(g.desc, g)) return;   /* 1.1.0: parcela do cartão é conta certa, não média */
       meses[m] = (meses[m] || 0) + (Number(g.valor) || 0);
     });
     return { meses: meses, evMes: evMes, primeiro: primeiro };
@@ -288,7 +291,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'previsao', versao: '1.0.0', colecoes: [COL],
+    id: 'previsao', versao: '1.1.0', colecoes: [COL],
     pontos: {
       'futuro.topo': cartaoEventos, 'budget.atencao': cartaoAtencao,
       'inbox.itens': function () {

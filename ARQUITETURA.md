@@ -709,6 +709,20 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **Parcelados do cartão (3.74)** (`modulos/parcelados.js` 1.0.0, `window.Parcelados`): `Gasto.parcela(desc, g)` (index.html) também lê o k/N
+  no fim da descrição de lançamento de cartão (1≤k≤N≤24, N≥2; a data dd/mm não conta). `compras()`: por (descrição sem o k/N + valor + cartão + N)
+  guarda a última parcela vista e projeta as N−k que faltam no vencimento da fatura (`Banco.faturaDe`/`Gasto.cobranca`); `doMes(mes)` dá as que
+  chegaram (pelo mês da fatura) e as a vir; `resumo()` o total e os meses. `previsao` 1.1.0 soma `Parcelados.doMes` às contas certas e tira as
+  parcelas da média dos variáveis. Cartão `.pc-card` em `budget.painel` e `futuro.topo`. Visão da casa: só os lançamentos dela. Teste: `teste/teste-parcelados.js`.
+  **Contas fixas (3.74)** (`modulos/contas-fixas.js` 1.0.0, `window.ContasFixas`): a tela 'b-custos' passou a se chamar "Contas fixas" (chave `nav.custos`
+  + subtítulo `nav.custos.sub`; id mantido). `resumo()`: nº de compromissos de saída ativos, o mensal (por categoria, não por `r.fluxo`) e as 3 próximas a
+  vencer. Cartão `.cf-card` em `budget.painel` (botão "Ver todas" → b-custos); o botão "Contas fixas" na Projeção do mês (orcamento 1.1.1); passo do tour.
+  Visão da casa: só os compromissos dela. Teste: `teste/teste-contas-fixas.js`.
+  **Documentos que o app pede (3.74)** (`modulos/documentos.js` 1.0.0, `window.DocsPedidos`): pedidos periódicos gerados quando há cartão Porto ou consórcio
+  Porto (fatura mensal dia 1, cotas mensal dia 23, informe de IR anual fev — janela de 60 dias). `recebido` é calculado do dado importado (faturas_cartao,
+  historico fonte 'csv'); `atencao()` os vencidos não recebidos nem adiados. `ST.config.docsAdiados`/`docsFeitos` (adiar 7 dias / marcar feito). Cartão em
+  `budget.atencao` e item no 📥 com passo a passo; "Subir o arquivo" abre o leitor certo (dvFatArq/dvCsvArq/sgArq); "Copiar o pedido para o Claude in Chrome"
+  copia o PROMPT genérico (sem número pessoal). Visão da casa: nada. Teste: `teste/teste-documentos.js`.
   **Mês a mês refeito (3.73)** (`modulos/mes-a-mes.js` 1.0.0, `window.MesAMes`): fora da visão da casa, o cartão `.mm-card` do Painel usa
   `MesAMes.html(doze)` (a casa continua com `vizMesAMes`). `itens(lista)` por mês: `conta` = entrada − saída − aplicação (líquida: o resgate é
   aplicação negativa), `dia` = entrada recorrente (sem `rendaExtra`) − saída; `estrela` (renda extraordinária), `invest` (aplicação > média da renda

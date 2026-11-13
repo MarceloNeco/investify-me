@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.73">
+<link rel="stylesheet" href="estilo.css?v=3.74">
 </head>
 <body>
 
@@ -318,7 +318,8 @@ const TEXTOS = {
   'nav.config':        {pt:'Configurações',     en:'Settings'},
   'nav.lancamentos':   {pt:'Lançamentos',       en:'Entries'},
   'nav.fluxo':         {pt:'Fluxo',             en:'Cash flow'},
-  'nav.custos':        {pt:'Custos',            en:'Costs'},
+  'nav.custos':        {pt:'Contas fixas',      en:'Fixed bills'},   /* 3.74: antes "Custos"; o id da tela continua b-custos */
+  'nav.custos.sub':    {pt:'e gastos recorrentes', en:'and recurring expenses'},
   'nav.renda':         {pt:'Renda',             en:'Income'},
   'nav.desloc':        {pt:'Deslocamentos',     en:'Commutes'},
   'nav.futuro':        {pt:'Futuro',            en:'Forecast'},
@@ -633,7 +634,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.73"></script>
+<script src="textos/frases-en.js?v=3.74"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7607,7 +7608,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.73"></script>
+<script src="textos/mudancas.js?v=3.74"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -7795,10 +7796,17 @@ const Gasto = {
   },
   ehSalario(g){ return !!g && g.grupo === 'RENDA' && /^sal[aá]rio$/i.test(String(g.sub || '').trim()); },
 
-  /* "PARC 03/10", "parcela 3 de 10" — o número da parcela, ou '' */
-  parcela(desc){
+  /* "PARC 03/10", "parcela 3 de 10" — o número da parcela, ou ''.
+     3.74: em lançamento de CARTÃO (g), também o k/N no FIM da descrição, antes de " · nota": "LOJA X 05/06",
+     "LOJA X (5/6)", "*Curso01/12"; só com 1 ≤ k ≤ N ≤ 24 e N ≥ 2 (a data "28/10" não vira parcela) */
+  parcela(desc, g){
     const m = /parc\w*\.?\s*(\d{1,2})\s*(?:\/|de)\s*(\d{1,2})\b/i.exec(desc || '');
-    return m ? Number(m[1]) + '/' + Number(m[2]) : '';
+    if(m) return Number(m[1]) + '/' + Number(m[2]);
+    if(!g || !(g.cartaoId || g.formaId === 'credito' || /cr[eé]dito|cart[aã]o/i.test(g.forma || ''))) return '';
+    const f = /(?:^|[^\d\/])\(?(\d{1,2})\/(\d{1,2})\)?\s*$/.exec(String(desc || '').split(' · ')[0].trim());
+    if(!f) return '';
+    const k = Number(f[1]), n = Number(f[2]);
+    return k >= 1 && n >= 2 && k <= n && n <= 24 ? k + '/' + n : '';
   },
 
   /* ---------- recortes ---------- */
@@ -9687,7 +9695,7 @@ const ABAS = {
   budget: [
     {v:'b-painel',   ico:'📊', chave:'nav.painel',      mobile:true,  fixa:true},
     {v:'b-lanc',     ico:'🧾', chave:'nav.lancamentos', mobile:true},
-    {v:'b-custos',   ico:'📌', chave:'nav.custos',      mobile:true},
+    {v:'b-custos',   ico:'📌', chave:'nav.custos',      mobile:true, sub:'nav.custos.sub'},
     {v:'b-fluxo',    ico:'📈', chave:'nav.fluxo',       mobile:true},
     {v:'b-renda',    ico:'💰', chave:'nav.renda',       mobile:false},
     {v:'b-desloc',   ico:'🗺️', chave:'nav.desloc',      mobile:false},
@@ -9807,7 +9815,8 @@ function montarNav(){
   const abas = (ABAS[app] || ABAS.investify).filter(a => a.v !== 'b-desloc' || (typeof Flags === 'undefined' || Flags.ligada('deslocamentos')));
   const lado = $('#navLista');
   if(lado) lado.innerHTML = Verter.html(abas.map(a =>
-    '<button class="nav-item" data-view="' + a.v + '"><span>' + a.ico + '</span> ' + esc(nomeAba(a)) + '</button>').join(''));
+    '<button class="nav-item" data-view="' + a.v + '"><span>' + a.ico + '</span> ' + esc(nomeAba(a)) +
+    (a.sub ? ' <small class="nav-sub">' + esc(t(a.sub)) + '</small>' : '') + '</button>').join(''));   /* 3.74: "Contas fixas e gastos recorrentes" */
   const baixo = $('#tabLista');
   if(baixo){
     /* quais botões ficam fixos embaixo é escolha de quem usa */
@@ -10050,7 +10059,7 @@ const B_VAZIO = {
                p:'O jeito mais fácil de começar é tirar uma foto de um comprovante. Também dá para subir a planilha que você já usa, ou lançar o primeiro custo na mão.'},
   'b-lanc':   {h:'Lançamentos', ico:'🧾', t:'Seus gastos vão aparecer aqui',
                p:'Cada compra, conta ou recebimento vira uma linha nesta lista. Comece por uma foto, pela planilha ou na mão.'},
-  'b-custos': {h:'Custos',      ico:'📌', t:'Nenhum custo fixo ainda',
+  'b-custos': {h:'Contas fixas', ico:'📌', t:'Nenhum custo fixo ainda',
                p:'Aluguel, luz, internet, escola: o que se repete todo mês entra aqui e vira aviso antes de vencer.',
                acoes:[['rec-novo','📌 Novo compromisso',true],['rec-importar','⬆ Importar compromissos'],['cdl-contrato','📄 Compromisso de um contrato (PDF)'],['b-escanear','📷 Ler comprovante'],['b-novo','+ Novo lançamento']]},
   'b-fluxo':  {h:'Fluxo',       ico:'📈', t:'O fluxo aparece com o primeiro lançamento',
@@ -12366,7 +12375,7 @@ function desenharWizard(){
       '</div>';
     if(!ativos.length){
       h += '<p class="small muted">Você não cadastrou nada ainda. Pode voltar e preencher, ou fechar e ' +
-           'cadastrar depois em Custos fixos.</p>';
+           'cadastrar depois em Contas fixas.</p>';
     }else{
       h += '<div class="card2-box"><b class="small">' + ativos.length + ' compromissos cadastrados</b>' +
         '<ul class="small muted" style="margin:7px 0 0 18px;padding:0">' +
@@ -12381,7 +12390,7 @@ function desenharWizard(){
     }
     h += '<div class="card2-box" style="margin-top:12px"><b class="small">O que dá para fazer agora</b>' +
       '<ul class="small muted" style="margin:7px 0 0 18px;padding:0">' +
-      '<li>Ver a agenda dos próximos 45 dias em <b>Custos fixos</b>.</li>' +
+      '<li>Ver a agenda dos próximos 45 dias em <b>Contas fixas</b>.</li>' +
       '<li>Importar a planilha de gastos ou o extrato do banco, em <b>Lançamentos → Importar arquivo</b>.</li>' +
       '<li>Escolher os avisos da fita do topo em <b>Configurações → BudgetONE</b>.</li>' +
       '</ul></div>';
@@ -18476,9 +18485,9 @@ const AJUDA_TELAS = {
          f:['Filters split by period, group, category, who paid and how.','An imported statement or a receipt photo records without typing.']}
   },
   'b-custos': {
-    pt: {t:'Custos', o:'O que se repete (aluguel, diarista) e o que foi pontual, com o dia de cada um.',
+    pt: {t:'Contas fixas', o:'As contas fixas e os gastos que se repetem (aluguel, diarista) e o que foi pontual, com o dia de cada um.',
          f:['Conta recorrente com o dia certo ganha aviso antes de vencer.','Revisar mostra o que venceu sem marcar e o que parece conta fixa nova.']},
-    en: {t:'Costs', o:'What repeats (rent, cleaner) and what was one-off, with the day of each.',
+    en: {t:'Fixed bills', o:'Fixed bills and recurring expenses (rent, cleaner) and what was one-off, with the day of each.',
          f:['A recurring bill with the right day gets a reminder before it is due.','Review shows what passed its date unmarked and what looks like a new fixed bill.']}
   },
   'b-renda': {
@@ -29018,7 +29027,7 @@ function ligarEventos(){
         const n = salvarPassoWizard();
         fechar('assetModal'); render(); renderFita();
         const total = (wz && wz.criados) || n;
-        toast(total ? total + ' compromissos cadastrados. A agenda já está em Custos fixos.' : 'Pronto.');
+        toast(total ? total + ' compromissos cadastrados. A agenda já está em Contas fixas.' : 'Pronto.');
         wz = null;
         break;
       }
@@ -29284,7 +29293,7 @@ function ligarEventos(){
       case 'trj-salvar':    salvarTrajeto(); break;
       case 'trj-excluir':   Desloc.excluirTrajeto(d.id); Store.salvar(); fechar('assetModal'); render(); break;
       case 'desloc-fixo':   { const n = Desloc.lancarComoFixo(); Store.salvar(); render();
-        toast(I18n.atual === 'pt' ? n + ' compromisso(s) de transporte atualizados em Custos fixos.' : n + ' transport commitment(s) updated in Fixed costs.'); break; }
+        toast(I18n.atual === 'pt' ? n + ' compromisso(s) de transporte atualizados em Contas fixas.' : n + ' transport commitment(s) updated in Fixed costs.'); break; }
       /* TaxONE */
       case 'tx-ir':           irPara(d.tela); break;
       case 'tx-ano':          ST.config.taxAno = Number(d.ano); Store.salvar(); render(); break;
@@ -29959,7 +29968,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=2.1.0"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
-<script src="modulos/tour.js?v=1.0.0"></script>
+<script src="modulos/tour.js?v=1.0.1"></script>
 <script src="modulos/cartoes.js?v=1.0.0"></script>
 <script src="modulos/cartao-foto.js?v=1.0.0"></script>
 <script src="modulos/contraparte.js?v=1.0.0"></script>
@@ -29969,12 +29978,15 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
 <script src="modulos/visao-casa.js?v=1.0.2"></script>
-<script src="modulos/previsao.js?v=1.0.0"></script>
-<script src="modulos/orcamento.js?v=1.1.0"></script>
+<script src="modulos/previsao.js?v=1.1.0"></script>
+<script src="modulos/orcamento.js?v=1.1.1"></script>
 <script src="modulos/patrimonio-mes.js?v=1.1.0"></script>
 <script src="modulos/dividas.js?v=1.0.0"></script>
 <script src="modulos/seguros.js?v=1.0.0"></script>
 <script src="modulos/mes-a-mes.js?v=1.0.0"></script>
+<script src="modulos/parcelados.js?v=1.0.0"></script>
+<script src="modulos/contas-fixas.js?v=1.0.0"></script>
+<script src="modulos/documentos.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.14.2"></script>
 </body>
 </html>
