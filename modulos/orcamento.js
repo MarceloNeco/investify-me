@@ -8,7 +8,9 @@
      · Projeção do mês: no ritmo de sempre, quanto sobra ou falta no fim do mês.
        Entra = o maior entre a renda já lançada no mês e a média mensal (sem a renda extraordinária).
        Sai = o que já saiu no mês + a média diária de gasto (12 meses) × os dias que faltam.
-       Não aparece na visão da casa (lá não há a renda da família inteira).
+       Não aparece na visão da casa (lá não há a renda da família inteira, e a renda dele nunca entra).
+     · Visão da casa: o orçamento é da família (coleção da casa). O total de cada categoria com limite vem do resumo
+       (Escopo: resumo.orc), sem nenhum lançamento reservado; o aviso diz só a categoria e os totais.
    API (window.OrcamentoMes)
      lista() · gastoNoMes(grupo, sub, mes?) · situacao(o) → {gasto, pct, estado: 'ok'|'perto'|'estourou'}
      salvar(grupo, sub, limite) · tirar(id) · projecao() → {entra, sai, sobra, ...}
@@ -29,9 +31,16 @@
     lista: lista,
     gastoNoMes: function (grupo, sub, mes) {
       mes = mes || mesDe(hojeISO());
-      return Gasto.todos().reduce(function (t, g) {
-        return t + (g.fluxo === 'saida' && g.grupo === grupo && g.sub === sub && mesDe(g.data) === mes ? (Number(g.valor) || 0) : 0);
+      var casa = window.Escopo && Escopo.soCasa && Escopo.soCasa();
+      /* na visão da casa o limite é da família: o total vem do resumo (só o número da categoria, sem lançamento nenhum),
+         mais o que esta pessoa lançou depois da última conta do resumo (o aparelho de quem vê tudo ainda não somou) */
+      var r = casa ? (ST.resumo || []).filter(function (x) { return x.id === mes; })[0] : null, desde = r ? r.atualizadoEm || '' : '';
+      var meu = Gasto.todos().reduce(function (t, g) {
+        if (!(g.fluxo === 'saida' && g.grupo === grupo && g.sub === sub && mesDe(g.data) === mes)) return t;
+        if (r && r.orc && (g.criadoEm || '') <= desde) return t;   /* já está no total da família */
+        return t + (Number(g.valor) || 0);
       }, 0);
+      return (r && r.orc ? Number(r.orc[grupo + '|' + sub]) || 0 : 0) + meu;
     },
     situacao: function (o) {
       var gasto = API.gastoNoMes(o.grupo, o.sub), pct = o.limite > 0 ? gasto / o.limite : 0;

@@ -24,6 +24,8 @@ for (let k = 11; k >= 0; k--) {
   gastos.push({ id: 'sal' + k, data: t + '-01', valor: 5000, grupo: 'RENDA', sub: 'Salário', desc: 'SALARIO TESTE', fluxo: 'entrada' });
 }
 gastos.push({ id: 'resc', data: mm(mesAtual - 4) + '-20', valor: 30000, grupo: 'RENDA', sub: 'Rescisão', desc: 'RESCISAO CONTRATO', fluxo: 'entrada' });
+/* resgate de investimento (como o robô manda desde a 3.65.2): é a volta de um aporte, não renda nenhuma */
+gastos.push({ id: 'rb_resg', data: mm(mesAtual - 2) + '-15', valor: -8000, grupo: 'INVESTIMENTO', sub: 'Resgate', desc: 'RESGATE PRIVILEGE', fluxo: 'aplicacao', resgate: true, origem: 'robo' });
 const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recorrentes: [] };
 
 (async () => {
@@ -63,6 +65,10 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recor
     ok(b1.cel && b1.cel[1] === 'R$ 200,00' && b1.cel[2] === 'R$ 200,00' && /no mês/.test(b1.th) && /mês atual/i.test(b1.per), 'filtro "Mês atual": a tabela diz "no mês", e o "por mês" não divide por 12 (' + JSON.stringify(b1.cel) + ')');
     await p.evaluate(() => { bAplicarPeriodo('12m'); render(); });
 
+    const rg = await p.evaluate(() => ({ extraResg: rendaExtra({ fluxo: 'entrada', grupo: 'RENDA', sub: 'Resgate', desc: 'RESGATE PRIVILEGE' }), extraInv: rendaExtra(Gasto.todos().find((g) => g.id === 'rb_resg')),
+      entrada: Gasto.caixa(bLista()).entrada, fgts: rendaExtra({ fluxo: 'entrada', sub: 'FGTS', desc: 'SAQUE FGTS' }) }));
+    ok(!rg.extraResg && !rg.extraInv && rg.fgts && rg.entrada === 90000, '"RESGATE PRIVILEGE" (investimento) não é renda nem renda extraordinária; FGTS é (entrada do período = 12 salários + a rescisão)');
+
     console.log('2) drill-down: grupo → categoria → lançamentos');
     await p.click('[data-pngrupo="LAZER"]'); await p.waitForTimeout(150);
     const d1 = await p.evaluate(() => [...document.querySelectorAll('.pn-sub')].map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
@@ -75,7 +81,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recor
     console.log('3) renda extraordinária no "Mês a mês"');
     const mx = await p.evaluate(() => [...document.querySelectorAll('#view-b-painel .viz-div-row, #view-b-painel .div-row, #view-b-painel [class*="div"] .nm')].map((x) => x.textContent.replace(/\s+/g, ' ').trim()).filter((t) => /extra/.test(t)));
     const txtMes = await p.evaluate(() => { const c = [...document.querySelectorAll('#view-b-painel .card')].find((x) => /Mês a mês/.test(x.textContent)); return c ? c.textContent.replace(/\s+/g, ' ') : ''; });
-    ok(/★ Renda extraordinária \(rescisão, FGTS, resgate\), fora das barras: \d\d\/\d{4} \+R\$ 30\.000,00/.test(txtMes) && !/R\$ 33\.850/.test(txtMes) && /\+R\$ 3\.850,00/.test(txtMes), 'o mês da rescisão: a barra mostra o resultado recorrente (+R$ 3.850,00); a rescisão vem marcada (★) e listada embaixo, fora das barras');
+    ok(/★ Renda extraordinária \(rescisão, FGTS\), fora das barras: \d\d\/\d{4} \+R\$ 30\.000,00/.test(txtMes) && !/R\$ 33\.850/.test(txtMes) && /\+R\$ 3\.850,00/.test(txtMes), 'o mês da rescisão: a barra mostra o resultado recorrente (+R$ 3.850,00); a rescisão vem marcada (★) e listada embaixo, fora das barras');
 
     console.log('4) orçamento por categoria com alerta');
     await p.selectOption('#orcCat', 'LAZER|Restaurantes'); await p.fill('#orcLim', '240'); await p.click('[data-acao="orc-salvar"]'); await p.waitForTimeout(200);

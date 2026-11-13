@@ -9792,8 +9792,9 @@ function fecharMenuApps(){
 /* =========================================================
    BudgetONE — Painel
    ========================================================= */
-/* 3.67: a renda extraordinária (rescisão, FGTS, resgate, ou marcada à mão em "extra") não entra na média do mês */
-const RX_RENDA_EXTRA = /rescis|fgts|resgate/i;
+/* 3.67: a renda extraordinária (rescisão, FGTS, indenização, ou marcada à mão em "extra") não entra na média do mês.
+   Resgate de investimento NÃO é renda nenhuma: é a volta de um aporte (fluxo 'aplicacao', negativo; 3.65.2). */
+const RX_RENDA_EXTRA = /rescis|fgts|indeniza/i;
 function rendaExtra(g){
   if(!g || g.fluxo !== 'entrada') return false;
   if(g.extra === true) return true;
@@ -9875,7 +9876,7 @@ function viewBPainel(){
          '<button class="info-dot" data-info="caixa-mensal">i</button>' + tagP + '</div>' +
          vizDivergente(meses.map(m => ({nome: m.t.split('-').reverse().join('/') + (extraMes[m.t] ? ' ★' : ''),
                                         valor: m.entrada - (extraMes[m.t] || 0) - m.saida})), fmt) +
-         (extra ? '<p class="small pn-extra" style="margin-top:8px">★ ' + esc((I18n.atual === 'en' ? 'Extraordinary income (severance, FGTS, redemption), outside the bars: ' : 'Renda extraordinária (rescisão, FGTS, resgate), fora das barras: ') +
+         (extra ? '<p class="small pn-extra" style="margin-top:8px">★ ' + esc((I18n.atual === 'en' ? 'Extraordinary income (severance, FGTS), outside the bars: ' : 'Renda extraordinária (rescisão, FGTS), fora das barras: ') +
            Object.keys(extraMes).sort().map(t => t.split('-').reverse().join('/') + ' +' + fmt(extraMes[t])).join(' · ')) + '</p>' : '') +
          '<p class="tiny muted" style="margin-top:8px">Para a direita, o mês fechou no azul; ' +
          'para a esquerda, você gastou mais do que entrou.</p>' +
@@ -29805,7 +29806,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/origem.js?v=1.0.1"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
-<script src="modulos/visao-casa.js?v=1.0.0"></script>
+<script src="modulos/visao-casa.js?v=1.0.1"></script>
 <script src="modulos/orcamento.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.14.0"></script>
 </body>

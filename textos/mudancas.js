@@ -9,7 +9,7 @@ const MUDANCAS = [
   {v:'3.67', d:'2026-11-13', t:'Painel mais claro: período, drill-down, orçamento e projeção', itens:[
     'Painel do BudgetONE: cada bloco diz o período que mostra, e todos usam o mesmo período do filtro. O "por mês" divide pelos meses do período, não mais por 12 fixos.',
     '"Para onde foi": toque no grupo para ver as categorias; toque na categoria para ver os lançamentos dela (ex.: Lazer → Restaurantes → os iFood).',
-    'Renda extraordinária (rescisão, FGTS, resgate) fica fora das médias e das barras do "Mês a mês"; aparece marcada com ★ e listada à parte.',
+    'Renda extraordinária (rescisão, FGTS e afins) fica fora das médias e das barras do "Mês a mês"; aparece marcada com ★ e listada à parte.',
     'Orçamento do mês: um limite por categoria, com barra de progresso e aviso aos 80% e ao estourar, na hora em que o lançamento entra.',
     'Projeção do mês: no ritmo de sempre, quanto sobra ou falta até o fim do mês.'
   ]},
