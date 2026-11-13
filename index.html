@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.80">
+<link rel="stylesheet" href="estilo.css?v=3.81">
 </head>
 <body>
 
@@ -333,6 +333,7 @@ const TEXTOS = {
   'nav.t.ded':         {pt:'Deduções',          en:'Deductions'},
   'nav.t.docs':        {pt:'Documentos do IR',  en:'Tax documents'},
   'nav.t.empresa':     {pt:'Cofre da empresa',  en:'Company vault'},
+  'nav.t.pj':          {pt:'PJ',                en:'Company'},
 
   /* o conjunto */
   'app.trio':          {pt:'Três ferramentas, três visões, o mesmo dinheiro.',
@@ -635,7 +636,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.80"></script>
+<script src="textos/frases-en.js?v=3.81"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7617,7 +7618,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.80"></script>
+<script src="textos/mudancas.js?v=3.81"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -9758,6 +9759,7 @@ ABAS.tax = [
   {v:'t-docs',       ico:'📎', chave:'nav.t.docs',     mobile:false},
   {v:'t-deducoes',   ico:'🩺', chave:'nav.t.ded',      mobile:false},
   {v:'t-empresa',    ico:'🏢', chave:'nav.t.empresa',  mobile:false},   /* 3.77: modulos/cofre-empresa.js */
+  {v:'t-pj',         ico:'💼', chave:'nav.t.pj',       mobile:true},    /* 3.81: modulos/pj.js */
   {v:'config',       ico:'⚙️', chave:'nav.config',     mobile:false}
 ];
 const VIEWS_BUDGET = ['b-painel','b-lanc','b-fluxo','b-custos','b-renda','b-desloc','b-futuro','b-precos'];
@@ -17230,10 +17232,13 @@ const Transferencia = {
     const t = {id, data: /^\d{4}-\d{2}-\d{2}$/.test(String(l.data || '')) ? l.data : '', valor: Math.abs(Number(l.valor) || 0),
                banco: String(l.banco || '').trim(), desc: String(l.descricao || '').trim().slice(0, 140),
                forma: String(l.forma || '').trim(), origem: 'robo', idRobo: String(l.id)};
+    /* 3.81: a categoria e a marca de IR do robô (pró-labore, lucros, conversão da PJ: modulos/pj.js) */
+    if(l.categoria) t.sub = String(l.categoria).trim().slice(0, 80);
+    if(l.ir != null && l.ir !== '' && l.ir !== true) t.irTexto = String(l.ir).trim().slice(0, 120);
     if(!t.valor) return '';
     const l2 = this.todas(), i = l2.findIndex(x => x.id === id);
     if(i >= 0){
-      const a = l2[i], muda = ['data','valor','banco','desc','forma'].some(k => a[k] !== t[k]);
+      const a = l2[i], muda = ['data','valor','banco','desc','forma','sub','irTexto'].some(k => a[k] !== t[k]);
       if(!muda) return '';
       l2[i] = Object.assign({}, a, t); if(!adiar) this.ligarTudo(); return 'corrigida';
     }
@@ -27949,6 +27954,7 @@ const INBOX_GRUPOS = [
   ['saldo', '📉', 'Conta vai ficar negativa', 'Account will go negative', 'O saldo previsto da conta fica abaixo de zero: resgate antes do dia.', 'The forecast balance drops below zero: redeem before the day.'],
   ['confirmar', '✅', 'Confirmar classificação', 'Confirm categories', 'O que o banco mandou e o app não tem certeza da categoria: confirme ou corrija aqui mesmo.', 'What the bank sent and the app is unsure about: confirm or fix right here.'],
   ['atrasadas', '⚠️', 'Contas atrasadas', 'Overdue bills', 'Passaram do vencimento e ninguém marcou: se já pagou, marque; senão, pague.', 'Past due and unmarked: if paid, mark it; if not, pay it.'],
+  ['pj', '🏢', 'Empresa (PJ)', 'Company', 'A empresa da declaração, de qual empresa é cada conta e o que transferir para a PJ.', 'The company from your tax return, which company owns each account and what to transfer to it.'],
   ['receber', '💸', 'Valores a receber', 'Money to receive', 'Estornos e reembolsos: o que caiu, o que atrasou e o que parece estorno.', 'Refunds and reimbursements: what landed, what is late and what looks like a refund.'],
   ['contafixa', '📌', 'Parece conta fixa: cadastrar?', 'Looks like a fixed bill: add it?', 'O mesmo recebedor se repete todo mês. Cadastrando, ele entra na agenda e no previsto.', 'The same payee repeats every month. Adding it puts it in the schedule and the forecast.'],
   ['docs', '📄', 'Documentos para subir', 'Documents to upload', 'Arquivos que o app pede de tempos em tempos para manter os números certos.', 'Files the app asks for from time to time to keep the numbers right.'],
@@ -30019,14 +30025,16 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/mes-a-mes.js?v=1.0.1"></script>
 <script src="modulos/parcelados.js?v=1.0.1"></script>
 <script src="modulos/contas-fixas.js?v=1.0.0"></script>
-<script src="modulos/documentos.js?v=1.0.2"></script>
+<script src="modulos/documentos.js?v=1.1.0"></script>
 <script src="modulos/contas-mes.js?v=1.0.1"></script>
 <script src="modulos/planejados.js?v=1.0.0"></script>
-<script src="modulos/saldo-previsto.js?v=1.0.1"></script>
+<script src="modulos/saldo-previsto.js?v=1.0.2"></script>
 <script src="modulos/debito-auto.js?v=1.0.0"></script>
-<script src="modulos/cofre-empresa.js?v=1.0.0"></script>
+<script src="modulos/cofre-empresa.js?v=1.1.0"></script>
 <script src="modulos/a-receber.js?v=1.0.0"></script>
 <script src="modulos/pre-autorizacao.js?v=1.0.0"></script>
-<script src="nuvem.js?v=1.15.0"></script>
+<script src="modulos/pj.js?v=1.0.0"></script>
+<script src="modulos/bs2-extrato.js?v=1.0.0"></script>
+<script src="nuvem.js?v=1.15.1"></script>
 </body>
 </html>

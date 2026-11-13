@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.0.1 · 13/Nov/2026
+   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.0.2 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · Para cada conta corrente com saldo vindo do robô (SaldoBanco): parte do saldo de hoje e soma, dia a dia, nos
@@ -52,7 +52,7 @@
     _hoje: null,
     contas: function () {
       if (casa()) return [];
-      return (ST.saldos_banco || []).filter(function (r) { return r.tipo === 'conta' && r.saldo != null; });
+      return (ST.saldos_banco || []).filter(function (r) { return r.tipo === 'conta' && r.saldo != null && !(window.PJ && PJ.ehContaPJ(r)); });   /* 1.0.2 (3.81): sem as contas da PJ */
     },
     eventos: function (conta) {
       var h = hoje(), fim = mais(h, DIAS), ev = [], id = conta.id;
@@ -61,6 +61,8 @@
         var r = o.r; if (!(ESTADOS_PG[o.estado] || {}).conta) return;
         var entra = r.fluxo === 'entrada'; if (!entra && pagoNoCartao(r)) return;
         var c = contaPara([r.conta, r.forma, r.pagador, r.nome].join(' ')); if (!c || c.id !== id) return;
+        /* 1.0.2 (3.81): conta da PJ — o dono transfere da PF um dia antes */
+        if (r.empresaId) { if (mais(o.data, -1) > h) ev.push({ data: mais(o.data, -1), valor: n2(-o.valor), nome: tr('Transferir para a PJ: ', 'Transfer to the company: ') + r.nome }); return; }
         ev.push({ data: o.data, valor: n2(entra ? o.valor : -o.valor), nome: r.nome });
       });
       /* faturas: a aberta que o robô mandou, no vencimento; depois, os parcelados de cada mês */
@@ -156,7 +158,7 @@
   function alertas() { return API.contas().map(function (c) { var a = API.alerta(c); return a ? { c: c, a: a } : null; }).filter(Boolean); }
 
   MoneyModulos.registrar({
-    id: 'saldo-previsto', versao: '1.0.1', colecoes: [COL],
+    id: 'saldo-previsto', versao: '1.0.2', colecoes: [COL],
     pontos: {
       'budget.painel': cartao, 'custos.contas': cartao,
       'budget.atencao': function () {

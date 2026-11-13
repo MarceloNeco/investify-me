@@ -709,6 +709,22 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **3.81 — PJ no FiscalONE; importador BS2; dados para receber.** `modulos/pj.js` 1.0.0 (`window.PJ`, tela `t-pj` em `ABAS.tax`): a empresa é a
+  do Cofre (`ST.empresas`); `sugestoes()` = fontes pagadoras da declaração cujo nome tem o `titular` (📥 grupo novo 'pj': `pj-cadastrar`/`pj-recusar`,
+  `ST.config.pjRecusadas`); `contasSemEmpresa()` (rótulos do robô com `irTexto` 'PJ' ou contraparte = CNPJ de empresa) → `pj-conta` (`empresa.contasRobo`).
+  `empresaDe(x)`: o rótulo do robô (gasto: `conta`; transferência: `banco`) em `contasRobo` ou `contas[].rotuloRobo`. `categoria(x)`: os rótulos e os
+  textos do extrato que o robô usa (conversão chegada/saída, DAS-SIMPLES, RECEITA FED-DARF, PREF MUN SAO PAULO, contador do Cofre, pró-labore, lucros,
+  PF → PJ, Faturamento PJ, tarifas). `resumo(e, mes)` soma gastos E transferências (Transferencia.receber passou a guardar `sub` e `irTexto`). `fatorR`:
+  12 meses, folha = pró-labore + DARF; ≥ 28% Anexo III, senão V. `criarCalendario(e)`: compromissos com `empresaId`, `escopo` 'reservado', `pjTipo`
+  (DAS/DARF dia 20, contador dia 10, TFE anual julho; MEI: DAS-MEI); valor = média das 3 últimas. Saldo previsto 1.0.2: compromisso com `empresaId` sai
+  um dia antes como "Transferir para a PJ" e as contas da PJ (PJ.ehContaPJ) ficam fora; 📥 "Transfira R$ X para a PJ até DD/MM" (5 dias antes);
+  DEFIS (março) e DASN-SIMEI (maio) como avisos. `modulos/bs2-extrato.js` 1.0.0 (`window.BS2Extrato`): CSV (conta da 2ª linha do cabeçalho; ids
+  `bs2-<movimentação|transação>`) e OFX (STMTRS com movimento; BRL `bs2-<FITID>`; moeda `bs2usd-[pf-]<FITID>-c|d[-tarifa]`); PTAX de compra SGS 10813
+  (volta até 7 dias; cache `moneytrio.ptax.compra`); regras do robô na ordem (a–d e moeda estrangeira), conta → rótulo → empresa pelo Cofre (sem número
+  no código); custo de câmbio `cambio-AAAA-MM-DD`; conversão pela `MoneyNuvem.converterRobo` (nuvem.js 1.15.1) e `Transferencia.receber`; prévia;
+  Documentos que o app pede 1.1.0 (`bs2-extrato`, importador 'bs2'). Cofre da empresa 1.1.0: `contas[]` com os dados completos (BRL e internacional),
+  `rotuloRobo`, `pixes`; empresa com `socio`, `prolabore` {bruto, irrf, liquido}, `contador.cnpj`; painel "Dados para receber" (📋 por campo, copiar tudo
+  PT/EN, `mailto:`, Web Share; confirmação antes). Testes: `teste/teste-pj.js`, `teste/teste-bs2-extrato.js`.
   **3.80 — Pré-autorizações do cartão.** O robô manda `pendente: true` e `caucao_provavel` nos lançamentos de cartão PENDING (não
   vão para a planilha). nuvem.js 1.15.0: no lote da caixa, o pendente vai para `PreAut.receber(g, l)` (não para `ST.gastos`); no fim do lote,
   `PreAut.entrega()` e `PreAut.limpar()`. `modulos/pre-autorizacao.js` 1.0.0 (`window.PreAut`): `ST.cartao_pendentes` (id `pa_<idRobo>`,

@@ -1,11 +1,17 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.80 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.81 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.81', d:'2026-11-13', t:'PJ no FiscalONE e importador do extrato BS2', itens:[
+    'Nova tela "PJ" no FiscalONE, uma aba por empresa: faturamento do mês (a conta em US$ convertida) e a conversão que chegou na PJ, DAS, DARF, contador, TFE, tarifas, o que foi para você (pró-labore e lucros), o saldo de cada conta da PJ e o Fator R dos 12 meses, com o alerta de Anexo V (abaixo de 28%) ou III.',
+    'A empresa da sua declaração aparece no 📥 como "Cadastrar esta empresa?", e o app pergunta de qual empresa é cada conta do robô. O calendário fiscal (DAS e DARF dia 20, contador dia 10, TFE em julho; DEFIS em março) vira contas fixas da PJ, e o saldo previsto e o 📥 avisam "Transfira R$ X para a PJ até o dia anterior".',
+    'Importar o extrato do BS2 no app (CSV da conta em reais e OFX da conta internacional, convertida pela PTAX do dia), com as mesmas regras do robô e sem duplicar o que ele já trouxe; o app pede o extrato todo mês em "Documentos que o app pede".',
+    'Cofre da empresa: os dados completos de cada conta para receber pagamentos (Pix, agência e conta; e, para o exterior, beneficiário, SWIFT/BIC, banco intermediário…), com 📋 em cada campo, "Copiar tudo" em português ou inglês, e-mail pronto e Compartilhar. Tudo fica no cofre reservado.'
+  ]},
   {v:'3.80', d:'2026-11-13', t:'Pré-autorizações do cartão: pendentes e cauções', itens:[
     'O que o cartão ainda não cobrou de verdade (pendente no banco) aparece em Lançamentos com o selo "⏳ Pendente no cartão". Ele entra no saldo previsto, na fatura aberta e no previsto da categoria, mas não no "gastou" do mês até virar definitivo.',
     'Caução de locadora, hotel ou pousada aparece com "🔒 Caução (valor bloqueado no limite)": entra só no limite usado e no saldo previsto da fatura, com a nota "costuma ser liberado; o valor final vem depois".',
