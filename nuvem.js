@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.14.1 · 13/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.14.2 · 13/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -596,7 +596,7 @@
       if (!this.dukRaw) return { erro: 'fechado' };
       var sal = b64(Cifra.rnd(32)), cred;
       try {
-        cred = await navigator.credentials.create({ publicKey: { challenge: Cifra.rnd(32), rp: { name: 'MoneyTRIO' }, user: { id: Cifra.rnd(16), name: Conta.email() || 'moneytrio', displayName: 'MoneyTRIO · ' + tt('cadeado', 'lock') },
+        cred = await navigator.credentials.create({ publicKey: { challenge: Cifra.rnd(32), rp: { name: 'MoneyTRIO' }, user: { id: Cifra.rnd(16), name: Conta.email() || 'moneytrio', displayName: 'MoneyTRIO · ' + tt('acesso', 'access') },
           pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }], authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' }, extensions: { prf: { eval: { first: unb64(sal) } } }, timeout: 60000 } });
       } catch (e) { return { erro: 'cancelou' }; }
       var ext = cred && cred.getClientExtensionResults ? cred.getClientExtensionResults() : {};
@@ -728,13 +728,13 @@
       var velho = await Cadeado.local().catch(function () { return null; }), apVelho = velho && velho.ap;
       if (!apId && o.como === 'passkey') { try { apId = await this.rpc('sol_aparelho_registrar', { p_nome: nomeAparelho(), p_app: AP_APP, p_como: 'passkey' }); } catch (e) {} }
       Pin.pedir(apId, async function (pin) {
-        Portao.carregando(tt('Preparando o cadeado deste aparelho…', 'Preparing the lock on this device…'));
+        Portao.carregando(tt('Preparando a chave deste aparelho…', 'Preparing this device\'s key…'));
         try {
           if (o.tipo === 'pessoal') return await Cadeado.montar(unb64(o.sk), null, pin, fam.grupo_id, o.como || 'aparelho', apId);
           return await Cadeado.montar(null, { raw: unb64(o.cf), kv: o.kv, fk: o.fk, mk: o.mk && o.mk.c ? { v: o.mk.v, c: unb64(o.mk.c), r: o.mk.r ? unb64(o.mk.r) : null } : null }, pin, o.gid || fam.grupo_id, 'familia', apId);
         } catch (e) { return { erro: 'rede', e: e }; }
       }, function (r) {
-        if (!r.ok) return Portao.mensagem(tt('Não deu', 'It did not work'), r.erro === 'semliberar' ? tt('O cadeado desta família ainda não foi liberado para você.', 'This family lock has not been released to you yet.') : esc(Conta.explicar(r.e)), [[tt('Voltar', 'Back'), function () { Portao.primeiraVez(fam, false); }]]);
+        if (!r.ok) return Portao.mensagem(tt('Não deu', 'It did not work'), r.erro === 'semliberar' ? tt('O acesso desta família ainda não foi liberado para você.', 'Access to this family has not been granted to you yet.') : esc(Conta.explicar(r.e)), [[tt('Voltar', 'Back'), function () { Portao.primeiraVez(fam, false); }]]);
         /* "Esqueci o PIN" neste mesmo aparelho: o lugar antigo dele na lista sai (fica só o novo) */
         if (apVelho && apVelho !== apId) Aparelhos.rpc('sol_aparelho_tirar', { p_id: apVelho }).catch(function () {});
         IDB.set('kv', 'digitalPerguntada|' + Conta.uid(), Date.now()).catch(function () {});
@@ -1368,7 +1368,7 @@
     },
     migrar: async function (andar) {
       andar = andar || function () {};
-      if (!Cadeado.aberto() || !Sinc.gid) throw new Error(tt('Abra o cadeado.', 'Unlock first.'));
+      if (!Cadeado.aberto() || !Sinc.gid) throw new Error(tt('Desbloqueie primeiro.', 'Unlock first.'));
       if (!Cadeado.dukRaw) { var e0 = new Error(tt('Para preparar, abra pelo PIN ou pela digital (não vale a reabertura automática).', 'To prepare, unlock with the PIN or fingerprint.')); e0.codigo = 'pin'; throw e0; }
       if (!navigator.onLine) throw new Error(tt('Ligue a internet.', 'Connect to the internet.'));
       if (!window.Escopo) throw new Error('modulos/visao-casa.js');
@@ -2173,7 +2173,7 @@
         if (info && !info.tem) { b2.classList.remove('nv-hidden'); if (d) d.textContent = tt('A sua conta ainda não tem PIN da conta. Crie um: ele vale em todos os seus aparelhos e apps.', 'Your account has no account PIN yet. Create one: it works on all your devices and apps.'); }
         else { b1.classList.remove('nv-hidden'); if (d) d.textContent = tt('O PIN da sua conta vale em todos os seus aparelhos e apps.', 'Your account PIN works on all your devices and apps.'); }
       }).catch(function () { var b1 = el.querySelector('#nvPin'); if (b1) b1.classList.remove('nv-hidden'); });
-      $('#nvPinCriar').onclick = function () { if (!Cadeado.dukRaw) return aviso(tt('Abra o cadeado (com o PIN ou a digital) para criar o PIN da conta.', 'Open the lock (PIN or fingerprint) to create the account PIN.')); Painel.fechar(); Portao.criarPinConta(); };
+      $('#nvPinCriar').onclick = function () { if (!Cadeado.dukRaw) return aviso(tt('Desbloqueie com o PIN ou a digital para criar o PIN da conta.', 'Unlock with the PIN or fingerprint to create the account PIN.')); Painel.fechar(); Portao.criarPinConta(); };
       $('#nvPin').onclick = function () { if (!Cadeado.dukRaw) return aviso(tt('Para trocar o PIN, toque em 🔒 Bloquear agora e abra de novo com o PIN.', 'To change the PIN, lock (🔒 Lock now) and open again with the PIN.')); Painel.fechar(); Portao.trocarPinConta(); };
       if ($('#nvDeNovo')) $('#nvDeNovo').onclick = function () { Sinc.tentarDeNovo(); };
       if ($('#nvDigOn')) $('#nvDigOn').onclick = async function () { if (!Cadeado.dukRaw) return aviso(tt('Para ligar a digital, toque em 🔒 Bloquear agora e abra de novo com o PIN.', 'To turn on the fingerprint, lock (🔒 Lock now) and open again with the PIN.')); var r = await Cadeado.ligarDigital(); aviso(r.ok ? '✓ ' + tt('Pronto: abre com a digital neste ' + apN() + '.', 'Done: opens with your fingerprint on this ' + apN() + '.') : tt('A digital não foi ligada. Continue usando o PIN.', 'Fingerprint was not turned on. Keep using the PIN.')); Painel.desenhar(); };
@@ -2223,7 +2223,7 @@
       }).join('') || '<p class="nv-tiny">' + tt('Nenhum aparelho registrado ainda.', 'No device registered yet.') + '</p>';
       caixa.querySelectorAll('[data-tirar]').forEach(function (b) { b.onclick = async function () {
         var id = b.getAttribute('data-tirar'), este = L && id === L.ap;
-        if (!window.confirm(este ? tt('Remover ESTE aparelho? O cadeado e a cópia daqui saem (na nuvem continua tudo).', 'Remove THIS device? The lock and the copy here are erased (everything stays in the cloud).') : tt('Remover este aparelho da sua conta? Para usar lá de novo, vai ser preciso aprovar outra vez.', 'Remove this device from your account? To use it there again, it will need approval again.'))) return;
+        if (!window.confirm(este ? tt('Remover ESTE aparelho? A chave e a cópia daqui saem (na nuvem continua tudo).', 'Remove THIS device? The key and the copy here are erased (everything stays in the cloud).') : tt('Remover este aparelho da sua conta? Para usar lá de novo, vai ser preciso aprovar outra vez.', 'Remove this device from your account? To use it there again, it will need approval again.'))) return;
         try { await Aparelhos.rpc('sol_aparelho_tirar', { p_id: id }); } catch (e) { return aviso(Conta.explicar(e), 'erro'); }
         if (este) return Aparelhos.tirado();
         aviso('✓ ' + tt('Aparelho removido.', 'Device removed.')); Painel.aparelhos(el, L);
@@ -2312,7 +2312,7 @@
       var loc = this.dadosLocais();
       var el = Tela.mostrar(Tela.topo() +
         '<p class="nv-muted">' + tt('Entre com a sua conta SolverONE (a mesma do OmniLifeONE). Os seus dados de finanças ficam guardados na nuvem, criptografados no seu aparelho antes de sair: só abre com a sua conta, o seu PIN e um aparelho aprovado.', 'Sign in with your SolverONE account (the same as OmniLifeONE). Your finance data is kept in the cloud, encrypted on your device before it leaves: it only opens with your account, your PIN and an approved device.') + '</p>' +
-        (loc ? '<div class="nv-nota atencao">📦 ' + tt('Este aparelho tem dados do MoneyTRIO guardados só aqui. Depois de entrar e abrir o cadeado, você poderá levá-los para a nuvem. Nada é apagado deste aparelho.', 'This device has MoneyTRIO data kept only here. After signing in and opening the lock, you can move it to the cloud. Nothing is erased from this device.') + '</div>' : '') +
+        (loc ? '<div class="nv-nota atencao">📦 ' + tt('Este aparelho tem dados do MoneyTRIO guardados só aqui. Depois de entrar e desbloquear, você poderá levá-los para a nuvem. Nada é apagado deste aparelho.', 'This device has MoneyTRIO data kept only here. After signing in and unlocking, you can move it to the cloud. Nothing is erased from this device.') + '</div>' : '') +
         (Conta._erroRetorno ? '<div class="nv-nota erro">' + esc(tt('Não deu para entrar: ', 'Could not sign in: ') + Conta._erroRetorno) + '</div>' : '') +
         '<button class="nv-btn google" id="nvGo">' + G_GOOGLE + '<span>' + tt('Entrar com Google', 'Sign in with Google') + '</span></button>' +
         '<div class="nv-ou">' + tt('ou com e-mail e senha', 'or with e-mail and password') + '</div>' +
@@ -2436,7 +2436,7 @@
         /* 1.10.0: o código antigo vale como "kit": o aparelho entra na lista e usa o PIN da conta (se a conta já tem) */
         (async function () { var ap = null; try { ap = await Aparelhos.rpc('sol_aparelho_registrar', { p_nome: nomeAparelho(), p_app: AP_APP, p_como: 'kit' }); } catch (e) {}
         Pin.pedir(ap, async function (pin) {
-          Portao.carregando(tt('Conferindo o código e preparando o cadeado… (leva alguns segundos)', 'Checking the code and preparing the lock… (takes a few seconds)'));
+          Portao.carregando(tt('Conferindo o código e preparando a chave… (leva alguns segundos)', 'Checking the code and preparing the key… (takes a few seconds)'));
           var r; try { r = await Cadeado.pelaPrimeiraVez(cod, pin, fam.grupo_id); } catch (e) { r = { erro: 'rede', e: e }; }
           if (r.ok && ap) { var L = await Cadeado.local(); L.ap = ap; L.como = 'kit'; L.avisosAte = L.avisosAte || new Date().toISOString(); await Cadeado.gravar(L); }
           if (!r.ok && ap) { Aparelhos.rpc('sol_aparelho_tirar', { p_id: ap }).catch(function () {}); }
@@ -2444,8 +2444,8 @@
         }, function (r) {
           if (r.ok) { IDB.set('kv', 'digitalPerguntada|' + Conta.uid(), Date.now()).catch(function () {}); return Portao.oferecerDigital(function () { if (Nuvem.iniciado) Nuvem.destrancado(); else Nuvem.depoisDoCadeado(true); }); }
           var msg = r.erro === 'codigo' ? tt('Esse código não confere. Confira as letras e os números no papel.', "That code doesn't match. Check the letters and numbers on the paper.")
-            : r.erro === 'semchave' ? tt('Esta conta ainda não tem cadeado. Abra antes as Senhas da casa no OmniLifeONE (com esta mesma conta) e volte aqui.', 'This account has no lock yet. First open the home passwords in OmniLifeONE (with this same account) and come back.')
-            : r.erro === 'semliberar' ? tt('O código está certo, mas o cadeado desta família ainda não foi liberado para você. Peça para outro responsável abrir as Senhas da casa no OmniLifeONE, com internet, e tente de novo.', 'The code is right, but this family lock has not been released to you yet. Ask another guardian to open the home passwords in OmniLifeONE, online, and try again.')
+            : r.erro === 'semchave' ? tt('Esta conta ainda não tem a chave da família. Abra antes as Senhas da casa no OmniLifeONE (com esta mesma conta) e volte aqui.', 'This account has no family key yet. First open the home passwords in OmniLifeONE (with this same account) and come back.')
+            : r.erro === 'semliberar' ? tt('O código está certo, mas o acesso desta família ainda não foi liberado para você. Peça para outro responsável abrir as Senhas da casa no OmniLifeONE, com internet, e tente de novo.', 'The code is right, but access to this family has not been granted to you yet. Ask another guardian to open the home passwords in OmniLifeONE, online, and try again.')
             : Conta.explicar(r.e);
           Portao.codigo(fam, esqueci); Tela.erro(msg);
         }); })();
@@ -2492,7 +2492,7 @@
         if (/^(\d)\1+$/.test(a) || '0123456789012'.indexOf(a) >= 0 || '9876543210987'.indexOf(a) >= 0) return Tela.erro(tt('Esse PIN é fácil de adivinhar (números repetidos ou em sequência). Escolha outro.', 'That PIN is easy to guess (repeated or sequential digits). Pick another.'));
         if (a !== b) return Tela.erro(tt('Os dois PINs ficaram diferentes.', "The two PINs don't match."));
         if (!navigator.onLine) return Tela.erro(tt('Para criar o PIN da conta, ligue a internet.', 'To create the account PIN, connect to the internet.'));
-        if (!Cadeado.dukRaw) return Tela.erro(tt('Abra o cadeado de novo e tente outra vez.', 'Open the lock again and retry.'));
+        if (!Cadeado.dukRaw) return Tela.erro(tt('Desbloqueie de novo e tente outra vez.', 'Unlock again and retry.'));
         Tela.ocupar($('#nvCOk'), async function () {
           var L = await Cadeado.local();
           if (!L || !L.ap) return Tela.erro(tt('Este aparelho ainda não está na lista dos seus aparelhos. Abra pelo PIN deste aparelho uma vez.', 'This device is not in your device list yet. Open it with this device\'s PIN once.'));
@@ -2543,13 +2543,13 @@
         var c = await Pin.conferir(pin, info, ap);
         if (!c) return Tela.erro(tt('Sem conexão com a nuvem. Tente de novo.', 'No connection to the cloud. Try again.'));
         if (!c.ok) return Tela.erro(Pin.explicar(c.erro === 'espera' ? { erro: 'espera', ate: Date.parse(c.espera_ate), muitas: c.tentativas >= 10 } : { erro: 'pin', conta: true, restam: c.restam, ate: c.espera_ate ? 1 : 0 }));
-        Portao.carregando(tt('Preparando o cadeado deste aparelho…', 'Preparing the lock on this device…')); await aoOk(pin, c);
+        Portao.carregando(tt('Preparando a chave deste aparelho…', 'Preparing this device\'s key…')); await aoOk(pin, c);
       }); };
       $('#nvPCNovo').onclick = function () {
         Portao.novoPin(async function (pin) {
           var d; try { d = await Pin.definir(pin, null, null, ap); } catch (e) { d = null; }
           if (!d || !d.ok) { Portao.pinConta(info, ap, aoOk); return Tela.erro(tt('Para escolher outro PIN da conta, este aparelho precisa ter sido aprovado pelo seu outro aparelho (há menos de 10 minutos). Se foi a família que aprovou, use o PIN da conta.', 'To choose another account PIN, this device must have been approved by your other device (less than 10 minutes ago). If the family approved it, use the account PIN.')); }
-          Portao.carregando(tt('Preparando o cadeado deste aparelho…', 'Preparing the lock on this device…')); await aoOk(pin, d);
+          Portao.carregando(tt('Preparando a chave deste aparelho…', 'Preparing this device\'s key…')); await aoOk(pin, d);
         }, false, true);
       };
     },
@@ -2614,13 +2614,13 @@
       ssSet(K_TRANCOU, null);
       var hora = dataHora(new Date().toISOString());
       var el = Tela.mostrar(Tela.topo() +
-        '<h2>🔒 ' + tt('MoneyTRIO fechado', 'MoneyTRIO is locked') + '</h2>' +
-        (trancou ? '<div class="nv-nota" id="nvMotivo">' + (trancou === 'manual' ? tt('Você fechou o cadeado.', 'You locked it.')
-          : trancou === 'fora' ? tt('Trancado porque o app ficou 10 min em segundo plano', 'Locked because the app was in the background for 10 min')
-          : trancou === 'ocioso' ? tt('Trancado após 15 min sem uso', 'Locked after 15 min without use')
+        '<h2>🔒 ' + tt('MoneyTRIO bloqueado', 'MoneyTRIO is locked') + '</h2>' +
+        (trancou ? '<div class="nv-nota" id="nvMotivo">' + (trancou === 'manual' ? tt('Você bloqueou o app.', 'You locked the app.')
+          : trancou === 'fora' ? tt('Bloqueado porque o app ficou 10 min em segundo plano', 'Locked because the app was in the background for 10 min')
+          : trancou === 'ocioso' ? tt('Bloqueado após 15 min sem uso', 'Locked after 15 min without use')
           : trancou === 'pinTrocado' ? tt('O PIN da conta foi trocado em outro aparelho: digite o PIN novo.', 'The account PIN was changed on another device: type the new PIN.')
-          : tt('Fechado sozinho por segurança.', 'Locked by itself for safety.')) + (trancou === 'manual' ? '' : ' · ' + esc(hora)) + '</div>' : '') +
-        '<p class="nv-muted" id="nvConectado">' + tt('Você continua conectado como ', 'You are still signed in as ') + '<b>' + esc(nomeConta()) + '</b>. ' + tt('Só falta destravar.', 'You only need to unlock.') + '<br>' + tt('Família ', 'Family ') + '<b>' + esc(fam.nome) + '</b></p>' +
+          : tt('Bloqueado sozinho por segurança.', 'Locked by itself for safety.')) + (trancou === 'manual' ? '' : ' · ' + esc(hora)) + '</div>' : '') +
+        '<p class="nv-muted" id="nvConectado">' + tt('Você continua conectado como ', 'You are still signed in as ') + '<b>' + esc(nomeConta()) + '</b>. ' + tt('Só falta desbloquear.', 'You only need to unlock.') + '<br>' + tt('Família ', 'Family ') + '<b>' + esc(fam.nome) + '</b></p>' +
         (L && L.bloqueado ? '<div class="nv-nota erro">' + tt('O PIN errou muitas vezes e ficou bloqueado neste ' + apN() + '. Toque em "Esqueci o PIN" e aprove pelo outro aparelho.', 'The PIN failed too many times and is blocked on this ' + apN() + '. Tap "I forgot the PIN" and approve from your other device.') + '</div>'
           : '<label class="nv-fld"><span>PIN</span><input type="text" class="nv-pinc" id="nvPin" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label><button class="nv-btn pri" id="nvPinOk">' + tt('Abrir', 'Open') + '</button>' +
             (dig ? '<button class="nv-btn" id="nvDig">👆 ' + tt('Abrir com a digital', 'Open with fingerprint') + '</button>' : '')) +
@@ -2644,7 +2644,7 @@
         if (r.erro === 'espera') return Tela.erro(tt('Espere ', 'Wait ') + Math.ceil((r.ate - Date.now()) / 1000) + tt(' segundos para tentar de novo.', ' seconds to try again.'));
         if (r.erro === 'pin') return Tela.erro(tt('PIN errado. ', 'Wrong PIN. ') + (r.erros >= 4 ? tt('Tentativas erradas: ', 'Wrong attempts: ') + r.erros + tt(' de 10. Na 10ª o PIN fica bloqueado.', ' of 10. On the 10th the PIN is blocked.') : ''));
         if (r.erro === 'offline') return Tela.erro(tt('Para abrir esta família pela primeira vez neste ' + apN() + ', ligue a internet.', 'To open this family for the first time on this ' + apN() + ', connect to the internet.'));
-        if (r.erro === 'semliberar') return Tela.erro(tt('O cadeado desta família ainda não foi liberado para você. Peça para outro responsável abrir as Senhas da casa no OmniLifeONE.', 'This family lock has not been released to you yet. Ask another guardian to open the home passwords in OmniLifeONE.'));
+        if (r.erro === 'semliberar') return Tela.erro(tt('O acesso desta família ainda não foi liberado para você. Peça para outro responsável abrir as Senhas da casa no OmniLifeONE.', 'Access to this family has not been granted to you yet. Ask another guardian to open the home passwords in OmniLifeONE.'));
         if (r.erro === 'novo') return Portao.primeiraVez(fam, false);
         Tela.erro(tt('A digital não abriu. Use o PIN.', 'Fingerprint did not open. Use the PIN.'));
       };
@@ -2992,7 +2992,7 @@
           if (querLevar) { this.podeLevar = false; return this.comecar(Store.migrar(JSON.parse(loc.texto)), true); }
         }
         this.comecar(reconstruir(regs), false);
-        if (Sinc.falhasAbrir) aviso('⚠️ ' + Sinc.falhasAbrir + tt(' registros não abriram com este cadeado.', ' records did not open with this lock.'), 'warn');
+        if (Sinc.falhasAbrir) aviso('⚠️ ' + Sinc.falhasAbrir + tt(' registros não abriram com esta chave.', ' records did not open with this key.'), 'warn');
       } catch (e) {
         console.error('nuvem:', e);
         Portao.mensagem(tt('Não deu para abrir', 'Could not open'), esc(Conta.explicar(e)), [[tt('Tentar de novo', 'Try again'), function () { Nuvem.depoisDoCadeado(false); }]]);
