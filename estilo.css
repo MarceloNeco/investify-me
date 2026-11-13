@@ -20,7 +20,7 @@
   --r1:#86b6ef; --r2:#5598e7; --r3:#3987e5; --r4:#256abf; --r5:#184f95;
   --grid:#26313f;
   /* 3.65.2: gráficos — eixo legível (AA), zero sempre visível, saldo do mês em roxo-claro */
-  --viz-eixo:#a9b8ca; --viz-grade:#26313f; --viz-zero:#8a9bb0; --viz-saldo:#c4a7ff; --viz-trilho:#222c3a;
+  --viz-eixo:#a9b8ca; --viz-grade:#26313f; --viz-zero:#8a9bb0; --viz-saldo:#c4a7ff; --viz-trilho:#222c3a; --viz-aporte:#2bb3ff;
 }
 html[data-theme="light"]{
   --bg:#f2f5f9; --bg2:#ffffff; --card:#ffffff; --card2:#f6f9fc;
@@ -36,7 +36,7 @@ html[data-theme="light"]{
   /* escala ordinal de risco no modo claro: nenhum passo mais claro que o degrau 250 */
   --r1:#86b6ef; --r2:#5598e7; --r3:#2a78d6; --r4:#1c5cab; --r5:#104281;
   --grid:#e6ebf2;
-  --viz-eixo:#4f6178; --viz-grade:#e6ebf2; --viz-zero:#5c6b80; --viz-saldo:#6d3fd1; --viz-trilho:#e9eef5;
+  --viz-eixo:#4f6178; --viz-grade:#e6ebf2; --viz-zero:#5c6b80; --viz-saldo:#6d3fd1; --viz-trilho:#e9eef5; --viz-aporte:#1573d8;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -1108,6 +1108,17 @@ details.imp-arq.repetido{border-color:var(--warn)}
 .viz-duplo .viz-svg{width:100%; height:auto; display:block; overflow:visible}
 .viz-duplo .col-e{fill:var(--up)}
 .viz-duplo .col-s{fill:var(--down)}
+/* 3.69: o Fluxo novo — aporte separado do gasto, a renda extraordinária em amarelo, o patrimônio real × estimado */
+.viz-duplo .col-a{fill:var(--viz-aporte)}
+.viz-duplo .col-x-star{font-size:10px; fill:#c99400}
+.viz-duplo .pat-real{fill:none; stroke:var(--s1); stroke-width:2.6; stroke-linejoin:round; stroke-linecap:round}
+.viz-duplo .pat-est{fill:none; stroke:var(--s1); stroke-width:2; stroke-dasharray:6 5; opacity:.85}
+.viz-duplo .pat-p{fill:var(--s1); stroke:var(--card); stroke-width:1.5}
+.viz-duplo .pat-inv{fill:var(--s1); opacity:.14}
+.pat-inv-dot{background:color-mix(in srgb, var(--s1) 30%, transparent) !important}
+.dot-extra{background:repeating-linear-gradient(135deg, #e0b000 0 3px, #f2c94c 3px 5px) !important}
+.leg-trac{display:inline-block; width:18px; height:0; border-top:2px dashed var(--s1); vertical-align:middle; margin-right:6px}
+.kpis-2{grid-template-columns:repeat(2,1fr)}
 .viz-duplo .dup-cursor{stroke:var(--txt3); stroke-width:1; stroke-dasharray:3 3; pointer-events:none}
 .viz-duplo .dup-captura{cursor:crosshair}
 .viz-duplo .rot-dir{fill:var(--s1); font-size:10px; font-weight:600}

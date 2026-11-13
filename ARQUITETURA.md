@@ -661,6 +661,16 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   últimos pagamentos ±15%; sem histórico, valor ±25%), pulando vencimento que já tem `gastoId` conciliado. Uma: a lista mostra o nome
   (ponto `lancamento.linha`, selo "A confirmar" + ✓); duas ou mais: botões para escolher. `ap-conta` → `ligarConta`: `recorrenteId`,
   `Pagamento.conciliar` e o apelido só daquele lançamento. Teste: `teste/teste-apelido.js` (6).
+  **Fluxo com o patrimônio real** (`modulos/patrimonio-mes.js` 1.0.0, `window.PatrimonioMes`): `ST.patrimonio_mes = [{id:'AAAA-MM', mes,
+  valor, caixa, invest, em}]` — `registrar()` grava o `patrimonioHoje()` do mês, no máximo 1×/dia (vale a última do mês; nunca na visão da
+  casa; coleção reservada). `realDe(mes)`: a de hoje no mês atual; a foto do mês; senão remonta das fontes que o patrimônio de hoje usa (última
+  `ST.fotos` do mês para a carteira; último `saldos_banco.hist` do mês de cada conta — o robô guarda só 90 dias), e só se TODAS têm valor.
+  `serie(meses)`: sem real, de trás para frente P(m−1) = P(m) − (entrou(m) − gastou(m)), e para a frente depois do último real; sem nenhum
+  real, do zero. `vizFluxoPatrimonioDesenho` refeito: `.pat-real` (cheia) × `.pat-est` (tracejada), `.pat-inv` (área investida, só com fotos
+  da carteira), colunas `.col-e`/`.col-x` (padrão listrado + ★)/`.col-s`/`.col-a` (`--viz-aporte`); saldo do mês = entrou − gastou. KPIs do
+  Fluxo: patrimônio de hoje, variação (real se o 1º e o último ponto são reais), sobrou, foi para investimento. Visão da casa: só o bloco de
+  baixo, sem aporte; o balão sem patrimônio/investimento. Verbetes `fluxo-patrimonio`, `patrimonio-planilha`, `saldo-acumulado`. Teste:
+  `teste/teste-fluxo.js`.
   **Topo**: o ✨ IA saiu da faixa (`Anuncio.html`) para a barra de cima (`#btnIA`, `.ia-ico`, antes da 🔍; `ia-off` posto no
   `Anuncio.render`). A faixa só existe com anúncio ou com a tarja do modo de teste (senão `html()` devolve '' e o `medirTopo` mede de novo).
   No celular o nome do app encolhe (`.brand-caixa{flex:1 1 0}`) para o topo não quebrar de linha (quebrar fazia o fundo pular ao abrir

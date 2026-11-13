@@ -1203,11 +1203,19 @@ function textoGlossario(chave, nivel){
       'simples, sem rendimento nem inflação — serve de régua, não de previsão.'},
      en:{medio:'Today\'s portfolio divided by monthly spending: how many months you could live on it with no income. Simple ratio, no returns or inflation.'}},
 
-    {k:'fluxo-patrimonio', t:'O que você tem, e o que entra e sai', te:'What you own, and what flows', c:'BudgetONE', ce:'BudgetONE',
-     pt:{medio:'Em cima, o acumulado: o caixa que sobrou mais o que foi para investimento (a preço de custo). Embaixo, cada mês: ' +
-      'para cima o que entrou, para baixo o que saiu (gasto e aporte juntos). A linha do "patrimônio de hoje" vem do InvestifyONE, ' +
-      'a valor de mercado — a distância entre as duas é, grosso modo, o que os investimentos renderam.'},
-     en:{medio:'Top: accumulated cash plus money invested (at cost). Bottom: each month\'s inflow and outflow. The "today" line comes from InvestifyONE at market value.'}}
+    {k:'fluxo-patrimonio', t:'O que você tem, e o que entra e sai', te:'What you own, and what comes in and goes out', c:'BudgetONE', ce:'BudgetONE',
+     pt:{medio:'Em cima, o seu patrimônio no fim de cada mês, pela mesma conta do "Patrimônio de hoje": os saldos das contas mais a carteira do InvestifyONE, sem contar duas vezes. ' +
+      'Linha cheia é o valor real (o app guarda uma foto por mês a partir de agora, e usa as fotos da carteira e os saldos que o robô já mandou). ' +
+      'Linha tracejada é estimada de trás para frente: o patrimônio do mês anterior = o deste mês menos o que sobrou nele (entrou − gastou). Aplicar em investimento não muda o patrimônio, e o rendimento não entra; por isso "estimado, sem rendimentos". ' +
+      'A área clara embaixo da linha é a parte investida, quando há fotos da carteira. Embaixo, cada mês: o que entrou (★ amarelo é renda extraordinária), o que foi gasto e o que foi para investimento, separados; a linha roxa é o saldo do mês (entrou − gastou).'},
+     en:{medio:'Top: your net worth at the end of each month, the same sum as "Net worth today" (bank balances plus the InvestifyONE portfolio, never counted twice). Solid line = actual value; dashed = estimated backwards from what was left each month (in − spent), without returns. The light area is the invested part, when there are portfolio photos. Bottom: each month, what came in (★ yellow is extraordinary income), what was spent and what went to investments, separately; the purple line is the month balance (in − spent).'}},
+    {k:'patrimonio-planilha', t:'Variação do patrimônio no período', te:'Net worth change in the period', c:'BudgetONE', ce:'BudgetONE',
+     pt:{medio:'O patrimônio do fim do período menos o do começo. É "real" quando os dois pontos são valores de verdade (as contas e a carteira daquele mês); senão é estimada pelo que sobrou em cada mês, sem rendimentos. ' +
+      'A diferença entre a variação real e o "Sobrou no período" é, grosso modo, o rendimento dos investimentos (ou um gasto que não foi lançado).'},
+     en:{medio:'Net worth at the end of the period minus at the start. "Actual" when both points are real values; otherwise estimated from what was left each month, without returns. The gap between the actual change and "Left over" is roughly the investment return (or spending that was not recorded).'}},
+    {k:'saldo-acumulado', t:'Sobrou no período', te:'Left over in the period', c:'BudgetONE', ce:'BudgetONE',
+     pt:{medio:'Tudo o que entrou menos tudo o que foi gasto no período. O que foi para investimento não conta como gasto: continua sendo seu, só mudou de lugar (aparece em "Foi para investimento").'},
+     en:{medio:'Everything that came in minus everything spent in the period. Money that went to investments is not spending: it is still yours (see "Went to investments").'}}
   ];
   if(typeof GLOSSARIO === 'undefined' || typeof GLOS_MAP === 'undefined') return;
   AJUDA.forEach(g => { if(!GLOS_MAP[g.k]){ GLOSSARIO.push(g); GLOS_MAP[g.k] = g; } });
@@ -3182,28 +3190,37 @@ function vizFluxoPatrimonio(meses, op){
   return Viz.auto((W, H) => vizFluxoPatrimonioDesenho(ms, op, W, H), {frac: 0.5, min: 300, max: 560});
 }
 function vizFluxoPatrimonioDesenho(ms, op, W, H){
+  /* 3.69 (pedido do dono): em cima, o patrimônio REAL no fim de cada mês (PatrimonioMes: foto do mês, ou remontado das
+     fontes; o último ponto é o de hoje); sem valor real, a estimativa de trás para frente, tracejada ("estimado, sem
+     rendimentos"); área clara "dos quais investido" quando há fotos da carteira. Embaixo, igual ao "Mês a mês": entrou
+     (verde, a parte extraordinária em amarelo com ★), gastou (vermelho) e "foi para investimento" (outra cor), e a linha
+     do saldo do mês = entrou − gastou (o aporte não diminui o saldo). Na visão da casa, só o bloco de baixo, sem aporte. */
+  const pt = I18n.atual !== 'en', casa = !!op.casa, pat = op.pat || [], extra = op.extra || {};
   const estreito = W < 520;
-  const mL = estreito ? 54 : 66, mR = 14, tit = 20, mB = 24, gap = 30;
-  const util = H - 2 * tit - gap - mB;
-  const hA = Math.round(util * 0.46), hB = util - hA;
-  const topoA = tit, topoB = tit + hA + gap + tit;
-  const LARG = W - mL - mR, pad = Math.min(22, Math.max(10, LARG / ms.length / 2));   /* as colunas da ponta não encostam no eixo */
+  const mL = estreito ? 54 : 66, mR = 14, tit = 20, mB = 24, gap = casa ? 0 : 30;
+  const util = H - (casa ? 1 : 2) * tit - gap - mB;
+  const hA = casa ? 0 : Math.round(util * 0.46), hB = util - hA;
+  const topoA = tit, topoB = casa ? tit : tit + hA + gap + tit;
+  const LARG = W - mL - mR, pad = Math.min(22, Math.max(10, LARG / ms.length / 2));
   const passo = (LARG - 2 * pad) / Math.max(1, ms.length - 1);
   const x = i => mL + pad + i * passo;
-
-  /* --- bloco A: o que você tem (estoque) --- */
-  const estoque = ms.flatMap(m => [m.patrimonio || 0, m.investAcum || 0]).concat(op.real && op.real.valor ? [op.real.valor] : []);
-  let aMax = Math.max.apply(null, estoque), aMin = Math.min.apply(null, estoque);
-  if(aMax === aMin){ aMax += 1; aMin -= 1; }
-  const fA = (aMax - aMin) * 0.08; aMax += fA; aMin -= (aMin >= 0 && aMin - fA < 0) ? aMin : fA;   /* sem negativo, não inventa o −R$ */
   const nB = hB > 150 ? 5 : 3, nA = hA > 150 ? 4 : 3;
-  /* as marcas são calculadas uma vez e a escala vai exatamente da primeira à última: nenhum número do eixo sai do bloco */
-  const mkA = vizMarcas(aMin, aMax, nA); aMin = mkA[0]; aMax = mkA[mkA.length - 1];
-  const yA = v => topoA + hA - ((v - aMin) / (aMax - aMin)) * hA;
 
-  /* --- bloco B: o que entrou e saiu no mês, e o saldo do mês --- */
-  const saldo = m => (m.entrada || 0) - (m.saida || 0) - (m.aplicacao || 0);
-  const fluxos = ms.flatMap(m => [m.entrada || 0, -(m.saida || 0) - (m.aplicacao || 0), saldo(m)]).concat([0]);
+  /* --- bloco A: o patrimônio --- */
+  let yA = () => 0, mkA = [];
+  if(!casa){
+    const vals = pat.map(p => p.valor || 0).concat(pat.map(p => p.invest != null ? p.invest : 0));
+    let aMax = Math.max.apply(null, vals), aMin = Math.min.apply(null, vals);
+    if(aMax === aMin){ aMax += 1; aMin -= 1; }
+    const fA = (aMax - aMin) * 0.08; aMax += fA; aMin -= (aMin >= 0 && aMin - fA < 0) ? aMin : fA;
+    mkA = vizMarcas(aMin, aMax, nA); aMin = mkA[0]; aMax = mkA[mkA.length - 1];
+    yA = v => topoA + hA - ((v - aMin) / (aMax - aMin)) * hA;
+  }
+
+  /* --- bloco B: o mês --- */
+  const ent = m => m.entrada || 0, gas = m => m.saida || 0, apl = m => casa ? 0 : Math.max(0, m.aplicacao || 0);
+  const saldo = m => ent(m) - gas(m);
+  const fluxos = ms.flatMap(m => [ent(m), -gas(m), -apl(m), saldo(m)]).concat([0]);
   let bMax = Math.max.apply(null, fluxos), bMin = Math.min.apply(null, fluxos);
   if(bMax === bMin) bMax = bMin + 1;
   const fB = (bMax - bMin) * 0.06; bMax += fB; bMin -= bMin < 0 ? fB : 0;
@@ -3211,69 +3228,77 @@ function vizFluxoPatrimonioDesenho(ms, op, W, H){
   const yB = v => topoB + hB - ((v - bMin) / (bMax - bMin)) * hB;
   const zeroB = yB(0);
 
-  const linha = (campo, cor) => {
-    const d = ms.map((m,i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + yA(m[campo] || 0).toFixed(1)).join(' ');
-    return '<path d="' + d + '" fill="none" stroke="' + cor + '" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></path>';
-  };
+  let h = '<div class="viz-duplo' + (casa ? ' viz-casa' : '') + '" data-meses="' + esc(JSON.stringify(ms.map((m, i) => {
+    const o = {t: m.t, e: Math.round(ent(m)), x: Math.round(extra[m.t] || 0), s: Math.round(gas(m))};
+    if(!casa){ const p = pat[i] || {}; o.a = Math.round(apl(m)); o.p = Math.round(p.valor || 0); o.r = p.real ? 1 : 0; if(p.invest != null && op.areaInvest) o.i = Math.round(p.invest); }
+    return o;
+  }))) + '" data-geo="' + [W,H,mL + pad,mR,passo].join(',') + '"' + (casa ? ' data-casa="1"' : '') + '>';
+  const idx = 'pfx' + Math.random().toString(36).slice(2, 7);
+  h += '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" class="viz-svg" role="img" aria-label="' +
+       (casa ? (pt ? 'O que entrou e saiu em cada mês e o saldo do mês' : 'What came in and went out each month, and the month balance')
+             : (pt ? 'Em cima, o patrimônio no fim de cada mês; embaixo, o que entrou, o que foi gasto e o que foi para investimento em cada mês' : 'Top: net worth at the end of each month; bottom: what came in, what was spent and what was invested each month')) + '">' +
+       '<defs><pattern id="' + idx + '" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#e0b000"></rect><rect width="3" height="8" fill="#f2c94c"></rect></pattern></defs>';
 
-  let h = '<div class="viz-duplo" data-meses="' + esc(JSON.stringify(ms.map(m => ({
-    t: m.t, e: Math.round(m.entrada || 0), s: Math.round(m.saida || 0),
-    a: Math.round(m.aplicacao || 0), c: Math.round(m.saldoAcum || 0),
-    i: Math.round(m.investAcum || 0), p: Math.round(m.patrimonio || 0)
-  })))) + '" data-geo="' + [W,H,mL + pad,mR,passo].join(',') + '">';
-  h += '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" class="viz-svg" role="img" ' +
-       'aria-label="Em cima, o que você tem; embaixo, o que entrou e saiu em cada mês e o saldo do mês">';
+  if(!casa) h += '<text class="viz-painel-t" x="' + mL + '" y="' + (topoA - 6) + '">' + (pt ? 'O que você tem' : 'What you own') + '</text>';
+  h += '<text class="viz-painel-t" x="' + mL + '" y="' + (topoB - 6) + '">' + (pt ? 'Entrou e saiu, mês a mês' : 'In and out, month by month') + '</text>';
 
-  /* títulos dos blocos */
-  h += '<text class="viz-painel-t" x="' + mL + '" y="' + (topoA - 6) + '">O que você tem</text>' +
-       '<text class="viz-painel-t" x="' + mL + '" y="' + (topoB - 6) + '">Entrou e saiu, mês a mês</text>';
-
-  /* bloco A: grade, eixo e o zero (quando o patrimônio passa por baixo dele) */
-  mkA.forEach(v => {
-    const y = yA(v);
+  if(!casa){
+    mkA.forEach(v => { const y = yA(v);
+      h += '<line class="ax-l" x1="' + mL + '" y1="' + y.toFixed(1) + '" x2="' + (W-mR) + '" y2="' + y.toFixed(1) + '"></line>' +
+           '<text class="ax" x="' + (mL-8) + '" y="' + (y+4).toFixed(1) + '" text-anchor="end">' + esc(vizEixo(v)) + '</text>'; });
+    if(mkA[0] < 0 && mkA[mkA.length - 1] > 0)
+      h += '<line class="viz-zero" x1="' + mL + '" y1="' + yA(0).toFixed(1) + '" x2="' + (W-mR) + '" y2="' + yA(0).toFixed(1) + '"></line>';
+  }
+  mkB.forEach(v => { const y = yB(v);
     h += '<line class="ax-l" x1="' + mL + '" y1="' + y.toFixed(1) + '" x2="' + (W-mR) + '" y2="' + y.toFixed(1) + '"></line>' +
-         '<text class="ax" x="' + (mL-8) + '" y="' + (y+4).toFixed(1) + '" text-anchor="end">' + esc(vizEixo(v)) + '</text>';
-  });
-  if(aMin < 0 && aMax > 0)
-    h += '<line class="viz-zero" x1="' + mL + '" y1="' + yA(0).toFixed(1) + '" x2="' + (W-mR) + '" y2="' + yA(0).toFixed(1) + '"></line>';
+         '<text class="ax" x="' + (mL-8) + '" y="' + (y+4).toFixed(1) + '" text-anchor="end">' + esc(vizEixo(v)) + '</text>'; });
 
-  /* bloco B: grade, eixo e a linha do zero, sempre */
-  mkB.forEach(v => {
-    const y = yB(v);
-    h += '<line class="ax-l" x1="' + mL + '" y1="' + y.toFixed(1) + '" x2="' + (W-mR) + '" y2="' + y.toFixed(1) + '"></line>' +
-         '<text class="ax" x="' + (mL-8) + '" y="' + (y+4).toFixed(1) + '" text-anchor="end">' + esc(vizEixo(v)) + '</text>';
-  });
-
-  /* colunas: entrada para cima, saída (com o que foi investir) para baixo */
-  const larg = Math.max(2, Math.min(18, passo * 0.5));
-  const r = Math.min(4, larg/2);
-  ms.forEach((m,i) => {
-    const cx = x(i);
-    const ent = m.entrada || 0, sai = (m.saida || 0) + (m.aplicacao || 0);
-    if(ent > 0){ const y0 = yB(ent), alt = Math.max(1.5, zeroB - y0 - 1); h += '<path class="col-e" d="' + cantoArredondado(cx - larg - 1, y0, larg, alt, r, true) + '"></path>'; }
-    if(sai > 0){ const y1 = yB(-sai), alt = Math.max(1.5, y1 - zeroB - 1); h += '<path class="col-s" d="' + cantoArredondado(cx + 1, zeroB + 1, larg, alt, r, false) + '"></path>'; }
+  /* colunas: entrou para cima (a parte extraordinária em amarelo, no topo da coluna); gastou e foi investir para baixo, lado a lado */
+  const larg = Math.max(2, Math.min(14, passo * (casa ? 0.4 : 0.3)));
+  const r = Math.min(3, larg / 2);
+  ms.forEach((m, i) => {
+    const cx = x(i), e = ent(m), ex = Math.min(e, extra[m.t] || 0), g = gas(m), a = apl(m);
+    const xe = casa ? cx - larg - 1 : cx - larg * 1.5 - 1;
+    if(e > 0){
+      const y0 = yB(e), alt = Math.max(1.5, zeroB - y0 - 1);
+      h += '<path class="col-e" d="' + cantoArredondado(xe, y0, larg, alt, r, true) + '"></path>';
+      if(ex > 0){ const yx = yB(e), hx = Math.max(1.5, yB(e - ex) - yx); h += '<path class="col-x" fill="url(#' + idx + ')" d="' + cantoArredondado(xe, yx, larg, hx, r, true) + '"></path>'; }
+    }
+    const xg = casa ? cx + 1 : cx - larg * 0.5;
+    if(g > 0){ const y1 = yB(-g), alt = Math.max(1.5, y1 - zeroB - 1); h += '<path class="col-s" d="' + cantoArredondado(xg, zeroB + 1, larg, alt, r, false) + '"></path>'; }
+    if(a > 0){ const y2 = yB(-a), alt = Math.max(1.5, y2 - zeroB - 1); h += '<path class="col-a" d="' + cantoArredondado(cx + larg * 0.5 + 1, zeroB + 1, larg, alt, r, false) + '"></path>'; }
+    if(ex > 0 && passo > 16) h += '<text class="col-x-star" x="' + (xe + larg / 2).toFixed(1) + '" y="' + (yB(e) - 3).toFixed(1) + '" text-anchor="middle">★</text>';
   });
   h += '<line class="viz-zero" x1="' + mL + '" y1="' + zeroB.toFixed(1) + '" x2="' + (W-mR) + '" y2="' + zeroB.toFixed(1) + '"></line>';
-  /* o saldo do mês (entrou − saiu), por cima das colunas */
   h += '<path class="viz-saldo" d="' + ms.map((m,i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + yB(saldo(m)).toFixed(1)).join(' ') + '"></path>';
   if(ms.length <= 40) ms.forEach((m,i) => { h += '<circle class="viz-saldo-p" cx="' + x(i).toFixed(1) + '" cy="' + yB(saldo(m)).toFixed(1) + '" r="3"></circle>'; });
 
-  /* bloco A por último: as linhas de estoque */
-  h += linha('investAcum', 'var(--s4)');
-  h += linha('patrimonio', 'var(--s1)');
-  if(op.real && op.real.valor){
-    const yr = yA(op.real.valor), xr = x(ms.length - 1);
-    h += '<circle cx="' + xr.toFixed(1) + '" cy="' + yr.toFixed(1) + '" r="5" fill="var(--accent)" stroke="var(--card)" stroke-width="2"><title>' + esc(op.real.rotulo || 'hoje') + '</title></circle>';
-  }
-  const ult = ms[ms.length-1];
-  if(!estreito){
-    const yP = yA(ult.patrimonio||0), yI = yA(ult.investAcum||0), perto = Math.abs(yP - yI) < 16;
-    h += '<text class="rot-dir" x="' + (W-mR) + '" y="' + (yP - 8).toFixed(1) + '" text-anchor="end">Patrimônio</text>' +
-         '<text class="rot-dir rot-dir-2" x="' + (W-mR) + '" y="' + (perto ? yP + 18 : yI + 16).toFixed(1) + '" text-anchor="end">Investido</text>';
+  /* bloco A por último: a área "dos quais investido", a linha estimada (tracejada) e a real (cheia) */
+  if(!casa){
+    if(op.areaInvest){
+      const pts = pat.map((p, i) => p.invest != null ? [x(i), yA(p.invest)] : null);
+      let run = [];
+      const fecha = () => { if(run.length >= 1){ const y0 = yA(Math.max(0, mkA[0]));
+        const d = 'M' + run[0][0].toFixed(1) + ' ' + y0.toFixed(1) + run.map(q => ' L' + q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join('') + ' L' + run[run.length-1][0].toFixed(1) + ' ' + y0.toFixed(1) + ' Z';
+        h += '<path class="pat-inv" d="' + d + '"></path>'; } run = []; };
+      pts.forEach(q => { if(q) run.push(q); else fecha(); }); fecha();
+    }
+    const P = (i) => x(i).toFixed(1) + ' ' + yA(pat[i].valor || 0).toFixed(1);
+    /* tracejada: todo trecho em que um dos dois pontos é estimado */
+    let dEst = '', dReal = '';
+    for(let i = 1; i < pat.length; i++){
+      if(pat[i].real && pat[i-1].real) dReal += 'M' + P(i-1) + ' L' + P(i) + ' ';
+      else dEst += 'M' + P(i-1) + ' L' + P(i) + ' ';
+    }
+    if(dEst) h += '<path class="pat-est" d="' + dEst + '"></path>';
+    if(dReal) h += '<path class="pat-real" d="' + dReal + '"></path>';
+    pat.forEach((p, i) => { if(p.real) h += '<circle class="pat-p" cx="' + x(i).toFixed(1) + '" cy="' + yA(p.valor).toFixed(1) + '" r="' + (i === pat.length - 1 ? 4.5 : 3) + '"><title>' + esc(fmt(p.valor)) + '</title></circle>'; });
+    if(!estreito && pat.length){
+      const u = pat[pat.length - 1];
+      h += '<text class="rot-dir" x="' + (W-mR) + '" y="' + (yA(u.valor || 0) - 9).toFixed(1) + '" text-anchor="end">' + (pt ? 'Patrimônio' : 'Net worth') + '</text>';
+    }
   }
 
-  /* eixo do tempo, embaixo */
-  /* 3.65.2: um mês a cada `cada`, sempre com o último e com o mesmo espaço entre eles (nada de mês pulado ao acaso) */
   const cada = Math.max(1, Math.ceil(passo ? 60 / passo : ms.length));
   for(let i = ms.length - 1; i >= 0; i -= cada){
     const [ano, mes] = ms[i].t.split('-');
@@ -3284,13 +3309,17 @@ function vizFluxoPatrimonioDesenho(ms, op, W, H){
   h += '<rect class="dup-captura" x="' + mL + '" y="0" width="' + LARG + '" height="' + H + '" fill="transparent"></rect>';
   h += '</svg><div class="viz-balao dup-balao"></div>';
 
+  const algumEst = pat.some(p => !p.real), algumReal = pat.some(p => p.real);
   h += '<div class="viz-leg">' +
-    '<span><i class="dot" style="background:var(--s1)"></i>Patrimônio (caixa + investido)</span>' +
-    '<span><i class="dot" style="background:var(--s4)"></i>Investido acumulado</span>' +
-    '<span><i class="dot" style="background:var(--up)"></i>Entrou no mês</span>' +
-    '<span><i class="dot" style="background:var(--down)"></i>Saiu no mês</span>' +
-    '<span><i class="dot" style="background:var(--viz-saldo)"></i>Saldo do mês</span>' +
-    (op.real && op.real.valor ? '<span><i class="dot" style="background:var(--accent)"></i>' + esc(op.real.rotulo || 'valor de hoje') + '</span>' : '') +
+    (casa ? '' :
+      (algumReal ? '<span><i class="dot" style="background:var(--s1)"></i>' + (pt ? 'Patrimônio (real)' : 'Net worth (actual)') + '</span>' : '') +
+      (algumEst ? '<span><i class="leg-trac"></i>' + (pt ? 'estimado (sem rendimentos)' : 'estimated (no returns)') + '</span>' : '') +
+      (op.areaInvest ? '<span><i class="dot pat-inv-dot"></i>' + (pt ? 'dos quais investido' : 'of which invested') + '</span>' : '')) +
+    '<span><i class="dot" style="background:var(--up)"></i>' + (pt ? 'Entrou' : 'Came in') + '</span>' +
+    (Object.keys(extra).some(k => extra[k] > 0) ? '<span><i class="dot dot-extra"></i>★ ' + (pt ? 'extraordinária' : 'extraordinary') + '</span>' : '') +
+    '<span><i class="dot" style="background:var(--down)"></i>' + (pt ? 'Gastou' : 'Spent') + '</span>' +
+    (casa ? '' : '<span><i class="dot" style="background:var(--viz-aporte)"></i>' + (pt ? 'Foi para investimento' : 'Went to investments') + '</span>') +
+    '<span><i class="dot" style="background:var(--viz-saldo)"></i>' + (pt ? 'Saldo do mês (entrou − gastou)' : 'Month balance (in − spent)') + '</span>' +
     '</div></div>';
   return h;
 }
@@ -9891,7 +9920,7 @@ function viewBPainel(){
   h += avisoDensidade(real);
 
   /* os quatro números que importam */
-  h += '<div class="kpis">' +
+  h += '<div class="kpis kpis-2">' +
     kpiB('Entrou por mês', fmt(entMes), 'renda-mensal', P.porMes + (extra ? ' · sem ' + fmt(extra) + ' de renda extraordinária' : ''), '', 'b-renda') +
     kpiB('Saiu por mês', fmt(saiMes), 'gasto-mensal', P.porMes + ' · ' + c.n + ' lançamentos', '', 'b-lanc') +
     ((window.Escopo && Escopo.soCasa && Escopo.soCasa()) ? '' :   /* 3.66: na visão da casa, "Sobrou" não teria sentido (a renda dela menos o gasto da família) */
@@ -12118,36 +12147,45 @@ function viewBFluxo(){
     return h + '<div class="card"><p class="muted small" style="margin:0">Poucos meses no recorte. ' +
       'Escolha um período maior lá em cima.</p></div>';
 
-  const ult = serie[serie.length - 1];
-  const real = patrimonioHoje();
+  /* 3.69 (pedido do dono): o patrimônio real mês a mês (modulos/patrimonio-mes.js); a barra de aporte separada do gasto */
+  const pt = I18n.atual !== 'en', casa = !!(window.Escopo && Escopo.soCasa && Escopo.soCasa());
+  if(window.PatrimonioMes && !casa){ const antes = JSON.stringify(ST.patrimonio_mes || []); PatrimonioMes.registrar(); if(JSON.stringify(ST.patrimonio_mes || []) !== antes) Store.salvar(); }
+  const real = casa ? null : patrimonioHoje();
+  const pat = (window.PatrimonioMes && !casa) ? PatrimonioMes.serie(serie) : [];
+  const temReal = pat.some(p => p.real);
+  const extra = {}; lista.forEach(g => { if(rendaExtra(g)){ const m = (g.data || '').slice(0, 7); extra[m] = (extra[m] || 0) + (Number(g.valor) || 0); } });
+  const soma = k => serie.reduce((t, m) => t + (m[k] || 0), 0);
+  const sobrou = soma('entrada') - soma('saida'), aportes = soma('aplicacao');
+  const p0 = pat[0], pN = pat[pat.length - 1];
 
-  h += '<div class="kpis kpis-4">' +
-    kpiB('Sobrou no período', fmt(ult.saldoAcum), 'saldo-acumulado',
-         'entradas menos saídas e aportes', ult.saldoAcum >= 0 ? 'up' : 'down') +
-    kpiB('Foi para investimento', fmt(ult.investAcum), null, 'a preço de custo') +
-    kpiB('Acumulado no período', fmt(ult.patrimonio), 'patrimonio-planilha', 'o que sobrou + o que foi investir') +
-    (real ? kpiB('Patrimônio de hoje', fmt(real.valor), null, real.sub, 'up')
-          : kpiB('Patrimônio de hoje', '—', null, 'chega com os saldos do robô ou com a carteira do InvestifyONE')) +
-    '</div>';
-
-  h += '<div class="card"><div class="card-head"><h3>O que você tem, e o que entra e sai</h3>' +
-       '<button class="info-dot" data-info="fluxo-patrimonio">i</button></div>' +
-       vizFluxoPatrimonio(serie, {real: real}) +
-       '<p class="tiny muted" style="margin-top:12px">Em cima, o que você acumulou: o patrimônio é o caixa ' +
-       'mais o que foi para investimento, a preço de custo. Embaixo, o mês a mês: para cima o que entrou, ' +
-       'para baixo o que saiu (gasto e aporte juntos). Passe o dedo ou o mouse para ver cada mês.</p></div>';
-
-  if(real && ult.patrimonio > 0){
-    const dif = real.valor - ult.patrimonio;
-    h += '<div class="card2-box"><b class="small">' +
-      (dif >= 0 ? 'Os investimentos renderam além do que você colocou' : 'O valor de mercado está abaixo do custo') +
-      '</b><p class="small muted" style="margin:6px 0 0">A planilha diz que você acumulou <b>' +
-      fmt(ult.patrimonio) + '</b> somando caixa e aportes. Hoje (' + esc(real.sub) + ') isso vale <b>' +
-      fmt(real.valor) + '</b> — uma diferença de <b class="' + (dif >= 0 ? 'up' : 'down') + '">' +
-      fmt(Math.abs(dif)) + '</b>. ' +
-      'Parte disso é rendimento; parte é gasto que nunca foi lançado na planilha. Quanto mais completo o ' +
-      'BudgetONE, mais essa diferença vira só rendimento.</p></div>';
+  if(casa){
+    h += '<div class="kpis kpis-2">' +
+      kpiB(pt ? 'Entrou no período' : 'Came in during the period', fmt(soma('entrada')), null, pt ? 'o que é seu' : 'yours', 'up') +
+      kpiB(pt ? 'Gastou no período' : 'Spent during the period', fmt(soma('saida')), null, pt ? 'o que é seu' : 'yours', 'down') + '</div>';
+  } else {
+    const varReal = p0 && pN && p0.real && pN.real;
+    h += '<div class="kpis kpis-4">' +
+      (real ? kpiB(pt ? 'Patrimônio de hoje' : 'Net worth today', fmt(real.valor), null, real.sub, 'up')
+            : kpiB(pt ? 'Patrimônio de hoje' : 'Net worth today', '—', null, pt ? 'chega com os saldos do robô ou com a carteira do InvestifyONE' : 'comes with the bank balances or the InvestifyONE portfolio')) +
+      (p0 && pN ? kpiB(pt ? 'Variação do patrimônio no período' : 'Net worth change in the period', (pN.valor - p0.valor >= 0 ? '+' : '−') + fmt(Math.abs(pN.valor - p0.valor)), 'patrimonio-planilha',
+            varReal ? (pt ? 'real: do começo ao fim do período' : 'actual: start to end of the period') : (pt ? 'estimada (sem rendimentos)' : 'estimated (no returns)'), pN.valor - p0.valor >= 0 ? 'up' : 'down') : '') +
+      kpiB(pt ? 'Sobrou no período' : 'Left over in the period', fmt(sobrou), 'saldo-acumulado', pt ? 'entrou menos o que foi gasto' : 'came in minus spent', sobrou >= 0 ? 'up' : 'down') +
+      kpiB(pt ? 'Foi para investimento' : 'Went to investments', fmt(aportes), null, pt ? 'aportes menos resgates, a preço de custo' : 'contributions minus redemptions, at cost') +
+      '</div>';
+    if(!temReal)
+      h += '<div class="aviso-box"><b>' + (pt ? 'Falta a carteira ou os saldos' : 'The portfolio or the balances are missing') + '</b><p class="small" style="margin:6px 0 0">' +
+        (pt ? 'Sem a carteira do InvestifyONE e sem os saldos das contas, o app não sabe o seu patrimônio de verdade: a linha de cima é só uma estimativa a partir do que entrou e saiu, começando do zero, sem o que você já tinha e sem rendimentos.'
+            : 'Without the InvestifyONE portfolio and the bank balances, the app does not know your real net worth: the top line is only an estimate from what came in and went out, starting from zero, without what you already had and without returns.') + '</p></div>';
   }
+
+  h += '<div class="card"><div class="card-head"><h3>' + (casa ? (pt ? 'O que entra e sai' : 'What comes in and goes out') : (pt ? 'O que você tem, e o que entra e sai' : 'What you own, and what comes in and goes out')) + '</h3>' +
+       '<button class="info-dot" data-info="fluxo-patrimonio">i</button></div>' +
+       vizFluxoPatrimonio(serie, {pat: pat, casa: casa, extra: extra, areaInvest: !casa && PatrimonioMes.temCarteira() && pat.some(p => p.invest != null)}) +
+       '<p class="tiny muted" style="margin-top:12px">' + (casa
+         ? (pt ? 'Para cima o que entrou (★ em amarelo: renda extraordinária), para baixo o que foi gasto; a linha é o saldo do mês. Passe o dedo ou o mouse para ver cada mês.'
+               : 'Up: what came in (★ yellow: extraordinary income); down: what was spent; the line is the month balance. Hover or tap to see each month.')
+         : (pt ? 'Em cima, o patrimônio no fim de cada mês: linha cheia onde é o valor real (as contas e a carteira), tracejada onde é estimado de trás para frente pelo que sobrou em cada mês (sem rendimentos). Embaixo, o mês a mês: o que entrou (★ em amarelo: renda extraordinária), o que foi gasto e o que foi para investimento, separado; a linha é o saldo do mês (entrou − gastou). Passe o dedo ou o mouse para ver cada mês.'
+               : 'Top: net worth at the end of each month — solid where it is the actual value (accounts and portfolio), dashed where it is estimated backwards from what was left each month (no returns). Bottom: each month, what came in (★ yellow: extraordinary income), what was spent and what went to investments, separately; the line is the month balance (in − spent). Hover or tap to see each month.')) + '</p></div>';
 
   /* os anos, lado a lado */
   const porAno = {};
@@ -12159,14 +12197,14 @@ function viewBFluxo(){
   const anos = Object.values(porAno);
   if(anos.length > 1){
     h += '<div class="card sem-pad"><table class="tbl"><thead><tr><th>Ano</th>' +
-      '<th class="num">Entrou</th><th class="num">Saiu</th><th class="num">Investiu</th>' +
+      '<th class="num">Entrou</th><th class="num">Saiu</th>' + (casa ? '' : '<th class="num">Investiu</th>') +
       '<th class="num" data-principal>Sobrou</th></tr></thead><tbody>' +
       anos.reverse().map(a => {
-        const sobra = a.entrada - a.saida - a.aplicacao;
+        const sobra = a.entrada - a.saida;   /* 3.69: o aporte não é gasto (vai para o patrimônio) */
         return '<tr><td><b>' + a.ano + '</b></td>' +
           '<td class="num up">' + fmt(a.entrada) + '</td>' +
           '<td class="num down">' + fmt(a.saida) + '</td>' +
-          '<td class="num">' + fmt(a.aplicacao) + '</td>' +
+          (casa ? '' : '<td class="num">' + fmt(a.aplicacao) + '</td>') +
           '<td class="num ' + (sobra >= 0 ? 'up' : 'down') + '">' + fmt(sobra) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
   }
@@ -20537,7 +20575,7 @@ function viewBDesloc(){
       '<button class="btn primary sm" data-acao="trj-novo"' + (lugares.length < 2 ? ' disabled title="' + (pt ? 'cadastre dois lugares primeiro' : 'add two places first') + '"' : '') + '>+ ' + (pt ? 'Trajeto' : 'Trip') + '</button>' +
     '</div></div>';
 
-  h += '<div class="kpis">' +
+  h += '<div class="kpis kpis-2">' +
     kpiB(pt ? 'Combustível por mês' : 'Fuel per month', fmt(r.combustivel), null, Math.round(r.km) + ' km ' + (pt ? 'de carro' : 'by car'), r.combustivel ? 'down' : '') +
     kpiB(pt ? 'Pedágios' : 'Tolls', fmt(r.pedagio), null, null, r.pedagio ? 'down' : '') +
     kpiB(pt ? 'App / táxi' : 'Ride-hailing', fmt(r.app), null, null, r.app ? 'down' : '') +
@@ -27287,13 +27325,16 @@ function ligarGraficos(raiz){
       cursor.setAttribute('x1', cx); cursor.setAttribute('x2', cx);
       cursor.setAttribute('opacity', '1');
       const [ano, mes] = m.t.split('-');
-      const saldoMes = m.e - m.s - m.a;
+      /* 3.69: saldo do mês = entrou − gastou (o aporte não diminui); patrimônio real ou estimado; nada de patrimônio na visão da casa */
+      const saldoMes = m.e - m.s, ptb = I18n.atual !== 'en';
       balao.innerHTML = Verter.html('<b>' + mes + '/' + ano + '</b>' +
-        '<div class="bl-l"><i class="dot" style="background:var(--s1)"></i>Patrimônio<span>' + fmt(m.p) + '</span></div>' +
-        '<div class="bl-l"><i class="dot" style="background:var(--s4)"></i>Investido<span>' + fmt(m.i) + '</span></div>' +
-        '<div class="bl-l"><i class="dot" style="background:var(--up)"></i>Entrou<span>' + fmt(m.e) + '</span></div>' +
-        '<div class="bl-l"><i class="dot" style="background:var(--down)"></i>Saiu<span>' + fmt(m.s + m.a) + '</span></div>' +
-        '<div class="bl-l bl-tot">Saldo do mês<span class="' + (saldoMes >= 0 ? 'up' : 'down') + '">' +
+        (m.p != null ? '<div class="bl-l"><i class="dot" style="background:var(--s1)"></i>' + (ptb ? 'Patrimônio' : 'Net worth') + (m.r ? '' : (ptb ? ' (estimado)' : ' (estimated)')) + '<span>' + fmt(m.p) + '</span></div>' : '') +
+        (m.i != null ? '<div class="bl-l"><i class="dot pat-inv-dot"></i>' + (ptb ? 'dos quais investido' : 'of which invested') + '<span>' + fmt(m.i) + '</span></div>' : '') +
+        '<div class="bl-l"><i class="dot" style="background:var(--up)"></i>' + (ptb ? 'Entrou' : 'Came in') + '<span>' + fmt(m.e) + '</span></div>' +
+        (m.x ? '<div class="bl-l"><i class="dot dot-extra"></i>★ ' + (ptb ? 'extraordinária' : 'extraordinary') + '<span>' + fmt(m.x) + '</span></div>' : '') +
+        '<div class="bl-l"><i class="dot" style="background:var(--down)"></i>' + (ptb ? 'Gastou' : 'Spent') + '<span>' + fmt(m.s) + '</span></div>' +
+        (m.a != null ? '<div class="bl-l"><i class="dot" style="background:var(--viz-aporte)"></i>' + (ptb ? 'Foi para investimento' : 'Went to investments') + '<span>' + fmt(m.a) + '</span></div>' : '') +
+        '<div class="bl-l bl-tot">' + (ptb ? 'Saldo do mês' : 'Month balance') + '<span class="' + (saldoMes >= 0 ? 'up' : 'down') + '">' +
           fmt(saldoMes) + '</span></div>');
       balao.style.opacity = '1';
       const lado = (cx / W) > 0.6 ? -1 : 1;
@@ -29897,6 +29938,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/visao-casa.js?v=1.0.2"></script>
 <script src="modulos/previsao.js?v=1.0.0"></script>
 <script src="modulos/orcamento.js?v=1.1.0"></script>
+<script src="modulos/patrimonio-mes.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.14.0"></script>
 </body>
 </html>
