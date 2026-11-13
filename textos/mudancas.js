@@ -13,6 +13,9 @@ const MUDANCAS = [
     'Boleto sem nome do banco ("INT PAG TIT"): quando o valor e a data batem com uma conta fixa de Custos (o valor pode variar, como o condomínio), a lista mostra o nome da conta com "A confirmar". Um toque confirma e liga o pagamento à conta; se duas contas batem, o app mostra as duas para você escolher.',
     'Viagem que passou: quando o combustível de poucos dias passa muito do normal, o app pergunta "Foi viagem?". Se foi, esses abastecimentos saem da média e o app aprende a distância do destino. Nunca marca sozinho.'
   ]},
+  {v:'3.68.1', d:'2026-11-13', t:'O Enter agora sempre salva o que você editou', itens:[
+    'Numa janela de edição, o Enter aperta sempre o botão Salvar do rodapé. Antes, num lançamento "A confirmar", ele apertava o "✓ Confirmar como está" do alto e descartava o que você tinha mudado (apelido, categoria).'
+  ]},
   {v:'3.68', d:'2026-11-13', t:'Mês a mês de verdade, apelidos e nomes', itens:[
     '"Mês a mês" mostra o resultado real de cada mês (tudo o que entrou menos o que saiu; o que foi para investimento fica de fora). A parte da renda extraordinária (rescisão, FGTS) aparece em amarelo com ★ e a régua não se deixa levar por ela; toque no mês para ver o que entrou, saiu e foi para investimento.',
     'Na edição de uma entrada: "★ Renda extraordinária (fica fora das médias)". Rescisão, FGTS e indenização já vêm marcadas; marque outra (um prêmio, a venda de algo) ou desmarque.',

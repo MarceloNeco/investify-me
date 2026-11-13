@@ -661,6 +661,7 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   últimos pagamentos ±15%; sem histórico, valor ±25%), pulando vencimento que já tem `gastoId` conciliado. Uma: a lista mostra o nome
   (ponto `lancamento.linha`, selo "A confirmar" + ✓); duas ou mais: botões para escolher. `ap-conta` → `ligarConta`: `recorrenteId`,
   `Pagamento.conciliar` e o apelido só daquele lançamento. Teste: `teste/teste-apelido.js` (6).
+- 3.68.1: o Enter global (keydown no `document`) escolhe o botão por prioridade de verdade: `.modal-foot .btn.primary`, senão `.f-actions .btn.primary`, senão o primeiro `.btn.primary` (uma lista com vírgula no `querySelector` devolve o primeiro na ordem do documento). Teste: `teste/teste-enter.js`.
 - 3.68 (módulo novo `apelido` 1.0.0; `pessoas` 1.2.0; `visao-casa` 1.0.2; o layout do Painel continua o mesmo, fora o "Mês a mês").
   **"Mês a mês"** (`vizMesAMes(itens, fmt)`, itens `{nome, rec, extra, entRec, saida, aplic}`): a barra é o resultado real (entrou − saiu;
   aplicação fora), em dois pedaços — o recorrente (`.mm-up`/`.mm-down`) e o extraordinário (`.mm-extra`, amarelo listrado, ★). A régua é
