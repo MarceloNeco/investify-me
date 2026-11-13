@@ -18,7 +18,8 @@
      gastos da família (sem renda, investimento nem transferência). Quem calcula é o aparelho de quem vê tudo, logo antes
      de subir (Escopo.antesDeSubir).
      · 3.68 (1.0.2): o apelido da origem (modulos/apelido.js) é da casa quando algum lançamento dessa origem é da casa.
-     · 3.75 (1.1.0): em "Quem é da casa" o chefe (a ficha da conta e a do cadastro que parece ser ele) não aparece; sugere
+     · 3.75 (1.1.0): em "Quem é da casa" o chefe não aparece: o app pergunta uma vez "Qual destas fichas é você?" (vínculo
+       guardado em ST.config.vcEu) e a outra ficha da conta, se houver, recebe
        "Juntar" as duas (Pessoas.juntar: nada se perde); nome de exibição com o apelido entre parênteses; quem é de fora
        (tipo 'outra') fica separado; sem PIN da conta, "Preparar" fica travado com o botão de criar o PIN; aviso no 📥
        com o que se pede e por quê, e o botão que abre o cartão sem trocar de app.
@@ -138,22 +139,21 @@
 
   /* Configurações → "Família no MoneyTRIO" (só no aparelho do chefe) */
   var Tela = { lista: null, erro: '', pinConta: undefined };
-  /* 1.1.0 (3.75): o chefe (dono da conta) nunca entra em "Quem é da casa"; a ficha do cadastro que parece ser ele
-     (mesmo primeiro e último nome da conta) sugere "Juntar"; quem é de fora (tipo 'outra') fica separado */
+  /* 1.1.0 (3.75): o chefe (dono da conta) nunca entra em "Quem é da casa". Sem adivinhar pelo nome: o app pergunta UMA vez
+     "Qual destas fichas é você?" e guarda o vínculo (ST.config.vcEu = {uid, pessoa: id | 'nenhuma'}; a ficha ganha o uid).
+     Daí em diante essa ficha é o chefe; a outra ficha da conta (uid da conta ou o nome da conta), se existir, recebe "Juntar".
+     Quem é de fora (tipo 'outra') fica separado. */
   function Nn(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
   function nomeComp(p) { return window.Pessoas ? Pessoas.nomeCompleto(p) : (p.nome || ''); }
   function contaNome() { return window.MoneyNuvem && MoneyNuvem.nomePessoa ? String(MoneyNuvem.nomePessoa() || '') : ''; }
   function ehDaConta(p, eu) { var c = Nn(contaNome()); return (eu && p.uid === eu) || (!!c && Nn(nomeComp(p)) === c); }
-  function pareceDono(p) {
-    var c = Nn(contaNome()).split(' '); if (c.length < 2) return false;
-    var w = Nn(nomeComp(p)).split(' ');
-    return w[0] === c[0] && w.indexOf(c[c.length - 1]) > 0;
-  }
+  function vinculo(eu) { var v = ST.config && ST.config.vcEu; return v && eu && v.uid === eu ? v.pessoa : null; }
   API.chefeEJuntar = function (pessoas, eu) {
-    var conta = pessoas.filter(function (p) { return ehDaConta(p, eu); })[0] || null;
-    var outra = pessoas.filter(function (p) { return p !== conta && pareceDono(p); })[0] || null;
+    var v = vinculo(eu), euP = v && v !== 'nenhuma' ? pessoas.filter(function (p) { return p.id === v; })[0] || null : null;
+    var conta = pessoas.filter(function (p) { return p !== euP && ehDaConta(p, eu); })[0] || null;
     var nao = (ST.config && ST.config.vcJuntarNao) || {};
-    return { conta: conta, outra: outra, juntar: conta && outra && !nao[conta.id + '|' + outra.id] ? { fica: outra, sai: conta } : null };
+    return { eu: euP, conta: conta, perguntar: !!eu && !v && pessoas.length > 0,
+      juntar: euP && conta && !nao[conta.id + '|' + euP.id] ? { fica: euP, sai: conta } : null };
   };
   API.nomeVer = function (p) { var n = nomeComp(p) || p.apelido || ''; return n + (p.apelido && Nn(p.apelido) !== Nn(p.nome) && Nn(p.apelido) !== Nn(n) ? ' (' + p.apelido + ')' : ''); };
   function cartaoChefe() {
@@ -170,7 +170,7 @@
     if (Tela.pinConta === undefined && n.pinConta) { Tela.pinConta = null; n.pinConta().then(function (t) { Tela.pinConta = t; if (typeof render === 'function') render(); }); }
     var daCasa = (ST.pessoas || []).filter(function (p) { return p.tipo === 'casa' && !p.arquivada; });
     var cj = API.chefeEJuntar(daCasa, eu);
-    var pessoas = daCasa.filter(function (p) { return p !== cj.conta && p !== cj.outra && !(eu && p.uid === eu); });
+    var pessoas = daCasa.filter(function (p) { return p !== cj.conta && p !== cj.eu && !(eu && p.uid === eu); });
     var deFora = (ST.pessoas || []).filter(function (p) { return p.tipo === 'outra' && !p.arquivada; });
     var marcadas = (ST.visaoCasa && ST.visaoCasa.pessoas) || [];
     var membros = (Tela.lista || []).filter(function (m) { return m.papel !== 'chefe'; });
@@ -178,8 +178,12 @@
       h += '<p class="small">' + esc(tr('Para alguém da família ver só a parte da casa (compromissos, contas da casa, os gastos dela e os totais da família), o MoneyTRIO separa antes o que é da casa e o que é só seu. É feito uma vez, neste aparelho.',
         'For someone in the family to see only the household part (commitments, household bills, their own spending and the family totals), MoneyTRIO first separates what belongs to the household and what is yours only. Done once, on this device.')) + '</p>' +
         '<p class="small"><b>' + esc(tr('Quem é da casa (os lançamentos dessas pessoas e dos cartões que elas usam ficam na parte da casa):', 'Who belongs to the household (their entries and the cards they use go to the household part):')) + '</b></p>' +
+        (cj.perguntar ? '<div class="aviso-box vc-quem-sou"><p class="small" style="margin:0 0 6px"><b>' + esc(tr('Qual destas fichas é você?', 'Which of these cards is you?')) + '</b> ' +
+          esc(tr('Você (o chefe) vê tudo e não entra na lista da casa. Pergunto uma vez só.', 'You (the head) see everything and are not on the household list. I ask only once.')) + '</p>' +
+          daCasa.map(function (p) { return '<button class="btn sm" data-acao="vc-sou" data-id="' + esc(p.id) + '">' + esc(API.nomeVer(p)) + '</button> '; }).join('') +
+          '<button class="btn sm" data-acao="vc-sou" data-id="nenhuma">' + esc(tr('Nenhuma', 'None')) + '</button></div>' : '') +
         (cj.juntar ? '<div class="aviso-box vc-juntar"><p class="small" style="margin:0 0 6px">' + esc(API.nomeVer(cj.juntar.fica) + tr(' e ', ' and ') + API.nomeVer(cj.juntar.sai) +
-          tr(' parecem a mesma pessoa (você). Juntar? Os lançamentos das duas ficam com uma só.', ' look like the same person (you). Merge? The entries of both stay with one.')) + '</p>' +
+          tr(' são a mesma pessoa (você)? Juntar: os lançamentos das duas ficam com uma só.', ' the same person (you)? Merge: the entries of both stay with one.')) + '</p>' +
           '<button class="btn sm primary" data-acao="vc-juntar" data-fica="' + esc(cj.juntar.fica.id) + '" data-sai="' + esc(cj.juntar.sai.id) + '">' + esc(tr('Juntar', 'Merge')) + '</button> ' +
           '<button class="btn sm" data-acao="vc-juntar-nao" data-par="' + esc(cj.juntar.sai.id + '|' + cj.juntar.fica.id) + '">' + esc(tr('Não são', 'They are not')) + '</button></div>' : '') +
         '<div class="vc-pessoas">' + (pessoas.length ? pessoas.map(function (p) {
@@ -213,7 +217,7 @@
 
   function pendente() { var n = nv(); if (!n) return false; var e = n.estado(); return !!(e.tudo && !e.feito); }
   function fraseAviso() {
-    var m = (ST.pessoas || []).filter(function (p) { return p.tipo === 'casa' && !p.arquivada && p.papel === 'responsavel' && !ehDaConta(p, nv() && nv().eu ? nv().eu() : '') && !pareceDono(p); })[0];
+    var m = (ST.pessoas || []).filter(function (p) { return p.tipo === 'casa' && !p.arquivada && p.papel === 'responsavel' && !ehDaConta(p, nv() && nv().eu ? nv().eu() : '') && p.id !== vinculo(nv() && nv().eu ? nv().eu() : ''); })[0];
     var quem = m ? (m.apelido || m.nome) : tr('quem é da família', 'family members');
     return tr('Escolha quem é da casa para ', 'Choose who belongs to the household so ') + quem + tr(' poder ver só a parte da casa', ' can see only the household part') +
       (Tela.pinConta === false ? tr('. Antes, crie o PIN da sua conta.', '. First, create your account PIN.') : '.');
@@ -229,6 +233,12 @@
       'config.todos': function () { return cartaoChefe(); }
     },
     acoes: {
+      'vc-sou': function (el) {
+        var n = nv(), eu = n && n.eu ? n.eu() : ''; if (!eu) return;
+        var c = ST.config = ST.config || {}; c.vcEu = { uid: eu, pessoa: el.dataset.id };
+        var p = el.dataset.id !== 'nenhuma' && window.Pessoas ? Pessoas.porId(el.dataset.id) : null; if (p) p.uid = eu;
+        Store.salvar(); render();
+      },
       'vc-juntar': function (el) {
         var n = window.Pessoas ? Pessoas.juntar(el.dataset.fica, el.dataset.sai) : 0; Store.salvar(); render();
         toast(tr('Juntado: ', 'Merged: ') + n + tr(' registro(s) passaram para uma ficha só.', ' record(s) moved to a single card.'));

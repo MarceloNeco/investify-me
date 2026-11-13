@@ -717,8 +717,9 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   (sem 'u:' genérica), separadas por faixa de valor (±15%) e dia (±5); 3 meses seguidos = mensal; o mesmo mês em anos seguidos = anual; some se há
   compromisso parecido ou se foi recusada (`ST.config.cfRecusadas`). Cartão em `budget.atencao` e item no 📥; "Sim" abre `abrirRecorrente` preenchido.
   Teste: `teste/teste-contas-mes.js`.
-  **Família (3.75)**: `visao-casa` 1.1.0 — `chefeEJuntar` (a ficha da conta: uid = `escopos.eu()` ou nome = `nomePessoa()`; a do cadastro que
-  parece o dono: mesmo primeiro e último nome) fora de "Quem é da casa" e sugestão `vc-juntar` → `Pessoas.juntar(fica, sai)` (pessoas 1.3.0: os
+  **Família (3.75)**: `visao-casa` 1.1.0 — sem adivinhar pelo nome: sem vínculo, pergunta uma vez "Qual destas fichas é você?" (`vc-sou` →
+  `ST.config.vcEu = {uid, pessoa}`, a ficha ganha o uid). `chefeEJuntar`: a ficha escolhida e a ficha da conta (uid = `escopos.eu()` ou nome =
+  `nomePessoa()`) ficam fora de "Quem é da casa"; a da conta recebe `vc-juntar` → `Pessoas.juntar(fica, sai)` (pessoas 1.3.0: os
   `*Id` passam, nomes viram aliases, uid/perfil vão junto); `nomeVer` (nome completo + apelido entre parênteses); tipo 'outra' separado;
   `escopos.pinConta()` false → "Preparar" travado + `vc-criar-pin` (`escopos.criarPinConta`). Pontos `inbox.itens` (o que se pede e por quê) e
   `inbox.rodape` (botão `data-irpara="config" data-rolar="vcFamilia"`). index.html: `data-irpara="config"` não troca mais de app (antes ia para o
