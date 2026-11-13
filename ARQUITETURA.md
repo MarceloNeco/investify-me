@@ -687,7 +687,67 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   Fluxo: patrimônio de hoje, variação (real se o 1º e o último ponto são reais), sobrou, foi para investimento. Visão da casa: só o bloco de
   baixo, sem aporte; o balão sem patrimônio/investimento. Verbetes `fluxo-patrimonio`, `patrimonio-planilha`, `saldo-acumulado`. Teste:
   `teste/teste-fluxo.js`.
-  **Topo**: o ✨ IA saiu da faixa (`Anuncio.html`) para a barra de cima (`#btnIA`, `.ia-ico`, antes da 🔍; `ia-off` posto no
+  **Dívidas e consórcios (3.73)** (`modulos/dividas.js` 1.0.0, `window.Dividas`): `ST.dividas = [{id, nome, tipo: consorcio|financiamento|outro,
+  instituicao, grupo, cota, contrato, bemRef (id do patrimonio_iliquido), pctPago, saldo, parcela, diaVenc, formaPgto, contemplada, atualizadoEm,
+  historico: [{data, saldo, pctPago, fonte: manual|csv}], pagas: [{mes, data, valor, fonte: 'fatura', fatura}]}]` e `ST.faturas_cartao = [{id:
+  'porto-AAAA-MM-DD', venc, final, total, totalArquivo, itens, pagIds, pago, dif}]` (as duas no cofre reservado). `estado(d)`: o saldo da última
+  atualização menos UMA parcela por mês pago depois dela (linha da fatura em `d.pagas`, `g.dividaId`, ou lançamento com "consorc"/"financ" a ±3%
+  da parcela); % pago pelo total implícito (saldo/(1−pct)); `quitaEm` = hoje + ⌈saldo/parcela⌉ meses. `total()` (0 na visão da casa), `emMes(mes)`
+  (a última atualização até o mês; antes da primeira, a primeira). O patrimônio desconta: `patrimonioHoje()` ganha `dividas` e "dívidas: −R$ X"
+  no `sub` (Fluxo); o KPI "Patrimônio total" do Painel do InvestifyONE; `PatrimonioMes.realDe` (1.1.0) tira `emMes` no valor remontado. Pontos:
+  `investify.painel` e `budget.painel` (cartão `.dv-card`: `.dv-barra` tracejada com `.dv-pago` cheio, agrupado por bem), `iliquido.valor` (a nota
+  "valor − dívida = parte sua", sem mudar o valor), `lancamento.linha` (selo `.dv-tag` 🧾 no pagamento detalhado). CSV: `lerCsv(tabela)` acha as
+  colunas por nome (grupo/cota juntos ou separados, % pago ou % a pagar, saldo/devedor, parcela/prestação, situação "contemplada"); `aplicarCsv`
+  atualiza a mesma grupo+cota com histórico. Fatura Porto: `lerPortoTabela` (XLSX, 1ª aba "nacional": [DD/MM, desc, crédito, débito], TOTAL no fim,
+  final na linha 2; ano pelo nome `Fatura_Porto_Seguro_AAAA-MM-DD`, mês maior que o do vencimento = ano anterior; data do Excel aceita) e
+  `lerPortoTexto` (PDF); `consorcios(f)` (parcela ±3%, empate ou nenhuma = a confirmar); `pagamentoDe(f)` (lançamentos "PORTOSEG"/"PORTO SEG" sem
+  "consorc" a ±10 dias do vencimento, somados); `aplicarFatura` guarda o detalhe, marca `g.faturaId` e lança `d.pagas` — nenhum gasto novo. A
+  leitura roda no Fundo (`dividas-csv`, `dividas-fatura`). Verbete `dividas`. Teste: `teste/teste-dividas.js` (amostras de
+  `teste/amostras/gerar-dividas.py`).
+  **Seguro (3.73)** (`modulos/seguros.js` 1.0.0, `window.Seguros`): `ST.seguros = [{id, nome, tipo: auto|residencial|vida|outro, seguradora, apolice,
+  inicio, fim, premio, parcelas, recId}]` (reservado). `lerApolice(texto)` por modelo, sem IA (seguradora, nº, vigência "de… a…", prêmio total,
+  parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
+  categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
+  (`custos.topo`) e no 📥 (`inbox.itens`).
+  **Contas fixas: o status de cada conta (3.75)** (`modulos/contas-mes.js` 1.0.0, `window.ContasMes`): ponto novo `custos.contas` no topo de
+  `viewBCustos` (as abas de antes continuam embaixo). `itens('mes'|'45')`: ocorrências de saída (sem as anteriores ao `criadoEm`) com status paga
+  (Pagamento pago/confirmado ou lançamento com `recorrenteId` no mês; data e valor reais) / atrasada / hoje / avencer / debito (`estadoPadrao`
+  'automatico'; depois do dia, paga). `atrasadasAntigas()` (12 meses até ontem) no topo dos 45 dias. `resumo(l)`; "Por grupo" em `<details>` na ordem
+  de GRUPOS. Seletores em `ST.config.contasModo`/`contasArruma`. `sugestoes()`: saídas sem `recorrenteId` nem parcela, por `Origem.origemDe`
+  (sem 'u:' genérica), separadas por faixa de valor (±15%) e dia (±5); 3 meses seguidos = mensal; o mesmo mês em anos seguidos = anual; some se há
+  compromisso parecido ou se foi recusada (`ST.config.cfRecusadas`). Cartão em `budget.atencao` e item no 📥; "Sim" abre `abrirRecorrente` preenchido.
+  Teste: `teste/teste-contas-mes.js`.
+  **Família (3.75)**: `visao-casa` 1.1.0 — sem adivinhar pelo nome: sem vínculo, pergunta uma vez "Qual destas fichas é você?" (`vc-sou` →
+  `ST.config.vcEu = {uid, pessoa}`, a ficha ganha o uid). `chefeEJuntar`: a ficha escolhida e a ficha da conta (uid = `escopos.eu()` ou nome =
+  `nomePessoa()`) ficam fora de "Quem é da casa"; a da conta recebe `vc-juntar` → `Pessoas.juntar(fica, sai)` (pessoas 1.3.0: os
+  `*Id` passam, nomes viram aliases, uid/perfil vão junto); `nomeVer` (nome completo + apelido entre parênteses); tipo 'outra' separado;
+  `escopos.pinConta()` false → "Preparar" travado + `vc-criar-pin` (`escopos.criarPinConta`). Pontos `inbox.itens` (o que se pede e por quê) e
+  `inbox.rodape` (botão `data-irpara="config" data-rolar="vcFamilia"`). index.html: `data-irpara="config"` não troca mais de app (antes ia para o
+  InvestifyONE); `data-rolar` abre a aba Compartilhadas e rola até o cartão. nuvem.js 1.14.3: `escopos.eu/pinConta/criarPinConta`.
+  Teste: `teste/teste-familia-casa.js`.
+  **Parcelados do cartão (3.74)** (`modulos/parcelados.js` 1.0.0, `window.Parcelados`): `Gasto.parcela(desc, g)` (index.html) também lê o k/N
+  no fim da descrição de lançamento de cartão (1≤k≤N≤24, N≥2; a data dd/mm não conta). `compras()`: por (descrição sem o k/N + valor + cartão + N)
+  guarda a última parcela vista e projeta as N−k que faltam no vencimento da fatura (`Banco.faturaDe`/`Gasto.cobranca`); `doMes(mes)` dá as que
+  chegaram (pelo mês da fatura) e as a vir; `resumo()` o total e os meses. `previsao` 1.1.0 soma `Parcelados.doMes` às contas certas e tira as
+  parcelas da média dos variáveis. Cartão `.pc-card` em `budget.painel` e `futuro.topo`. Visão da casa: só os lançamentos dela. Teste: `teste/teste-parcelados.js`.
+  **Contas fixas (3.74)** (`modulos/contas-fixas.js` 1.0.0, `window.ContasFixas`): a tela 'b-custos' passou a se chamar "Contas fixas" (chave `nav.custos`
+  + subtítulo `nav.custos.sub`; id mantido). `resumo()`: nº de compromissos de saída ativos, o mensal (por categoria, não por `r.fluxo`) e as 3 próximas a
+  vencer. Cartão `.cf-card` em `budget.painel` (botão "Ver todas" → b-custos); o botão "Contas fixas" na Projeção do mês (orcamento 1.1.1); passo do tour.
+  Visão da casa: só os compromissos dela. Teste: `teste/teste-contas-fixas.js`.
+  **Documentos que o app pede (3.74)** (`modulos/documentos.js` 1.0.0, `window.DocsPedidos`): pedidos periódicos gerados quando há cartão Porto ou consórcio
+  Porto (fatura mensal dia 1, cotas mensal dia 23, informe de IR anual fev — janela de 60 dias). `recebido` é calculado do dado importado (faturas_cartao,
+  historico fonte 'csv'); `atencao()` os vencidos não recebidos nem adiados. `ST.config.docsAdiados`/`docsFeitos` (adiar 7 dias / marcar feito). Cartão em
+  `budget.atencao` e item no 📥 com passo a passo; "Subir o arquivo" abre o leitor certo (dvFatArq/dvCsvArq/sgArq); "Copiar o pedido para o Claude in Chrome"
+  copia o PROMPT genérico (sem número pessoal). Visão da casa: nada. Teste: `teste/teste-documentos.js`.
+  **Mês a mês refeito (3.73)** (`modulos/mes-a-mes.js` 1.0.0, `window.MesAMes`): fora da visão da casa, o cartão `.mm-card` do Painel usa
+  `MesAMes.html(doze)` (a casa continua com `vizMesAMes`). `itens(lista)` por mês: `conta` = entrada − saída − aplicação (líquida: o resgate é
+  aplicação negativa), `dia` = entrada recorrente (sem `rendaExtra`) − saída; `estrela` (renda extraordinária), `invest` (aplicação > média da renda
+  recorrente nos meses com renda), `par` (🔗: a ★ de X com o 📈 de X−1, X ou X+1, o maior; frase em `frasePar`). Escala: 2,5 × p75 dos |valores|
+  da vista (`escala`), ⫽ no que passa. `ST.config.mesAMesModo` = 'conta'|'dia' (ação `mm-modo`). `perguntas()`: entrada dos últimos 12 meses,
+  sem `g.extra` decidido e sem a regra automática, maior que 2× a média da renda recorrente dos 6 meses anteriores (com ≥3 meses) → cartão
+  `.mm-atencao` em `budget.atencao` e item no 📥; `mm-extra-sim`/`mm-extra-nao` gravam `g.extra`. Verbete `caixa-mensal` reescrito. Teste:
+  `teste/teste-mes-a-mes.js`; `teste-painel-mes.js` ajustado.
+ (`Anuncio.html`) para a barra de cima (`#btnIA`, `.ia-ico`, antes da 🔍; `ia-off` posto no
   `Anuncio.render`). A faixa só existe com anúncio ou com a tarja do modo de teste (senão `html()` devolve '' e o `medirTopo` mede de novo).
   No celular o nome do app encolhe (`.brand-caixa{flex:1 1 0}`) para o topo não quebrar de linha (quebrar fazia o fundo pular ao abrir
   uma janela, pelo `scrollbar-gutter`); abaixo de 360 px o ✨ some da barra e fica no menu 👤. Teste: `teste/teste-topo-ia.js`; a fumaça

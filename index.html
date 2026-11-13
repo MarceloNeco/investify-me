@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.72">
+<link rel="stylesheet" href="estilo.css?v=3.75">
 </head>
 <body>
 
@@ -318,7 +318,8 @@ const TEXTOS = {
   'nav.config':        {pt:'Configurações',     en:'Settings'},
   'nav.lancamentos':   {pt:'Lançamentos',       en:'Entries'},
   'nav.fluxo':         {pt:'Fluxo',             en:'Cash flow'},
-  'nav.custos':        {pt:'Custos',            en:'Costs'},
+  'nav.custos':        {pt:'Contas fixas',      en:'Fixed bills'},   /* 3.74: antes "Custos"; o id da tela continua b-custos */
+  'nav.custos.sub':    {pt:'e gastos recorrentes', en:'and recurring expenses'},
   'nav.renda':         {pt:'Renda',             en:'Income'},
   'nav.desloc':        {pt:'Deslocamentos',     en:'Commutes'},
   'nav.futuro':        {pt:'Futuro',            en:'Forecast'},
@@ -633,7 +634,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.72"></script>
+<script src="textos/frases-en.js?v=3.75"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -1177,13 +1178,16 @@ function textoGlossario(chave, nivel){
       'Income and investment contributions are left out — spending only.'}},
 
     {k:'caixa-mensal', t:'Mês a mês', te:'Month by month', c:'BudgetONE', ce:'BudgetONE',
-     pt:{medio:'Para cada mês: tudo o que entrou menos o que saiu (o que foi para investimento não conta como saída). Barra para a direita, o mês fechou no azul (sobrou); para a esquerda, ' +
-      'gastou mais do que entrou. Um mês vermelho sozinho costuma ser conta anual (IPVA, seguro); vários seguidos pedem atenção. ' +
-      'A renda extraordinária (rescisão, FGTS, indenização, ou a entrada que você marcou como "Renda extraordinária") aparece em amarelo com ★: ' +
-      'a escala é feita sem ela, e a barra que passa da borda é cortada (⫽); embaixo do valor vem o resultado sem ela. As médias do Painel não a usam. ' +
-      'Toque no mês para ver o que entrou, saiu e foi para investimento.'},
-     en:{medio:'For each month: everything that came in minus spending (money sent to investments is not spending). A bar to the right means money was left over; to the left, you spent more than came in. ' +
-      'Extraordinary income (severance, FGTS, compensation, or an entry you marked as "Extraordinary income") shows in yellow with ★: the scale ignores it, a bar past the edge is cut (⫽), and the result without it is shown below the value. The Panel averages leave it out. Tap a month to see what came in, went out and was invested.'}},
+     pt:{medio:'Para cada mês, o que sobrou na conta: tudo o que entrou menos o que foi gasto e o que foi para investimento (aportes menos resgates). Barra para a direita, sobrou; para a esquerda, saiu mais do que entrou. ' +
+      'Marcas no mês: ★ teve renda extraordinária (rescisão, FGTS, indenização, ou a entrada que você marcou); 📈 investiu mais que a renda média do mês; 🔗 a renda extraordinária e o investimento grande estão ligados (por exemplo, a rescisão investida no mês seguinte). ' +
+      '"Dia a dia" mostra só a renda que se repete menos o que foi gasto, sem renda extraordinária e sem investimento: é o seu mês comum. A escolha fica guardada. ' +
+      'A escala vai até 2,5 vezes o valor típico; um mês fora da curva é cortado na borda (⫽) e o número mostra o valor inteiro. Toque no mês para ver os números. ' +
+      'Na parte da casa, a barra é o que entrou menos o que foi gasto, com a renda extraordinária em amarelo.'},
+     en:{medio:'For each month, what was left in the account: everything that came in minus spending and what went to investments (contributions minus redemptions). A bar to the right means money was left; to the left, more went out than came in. ' +
+      'Month marks: ★ extraordinary income (severance, FGTS, compensation, or an entry you marked); 📈 invested more than the average monthly income; 🔗 the extraordinary income and the large investment are linked (e.g. severance invested the following month). ' +
+      '"Day to day" shows only the income that repeats minus spending, without extraordinary income and investments: your ordinary month. Your choice is remembered. ' +
+      'The scale goes up to 2.5 times the typical value; an outlier month is cut at the edge (⫽) and the number shows the full value. Tap a month to see the numbers. ' +
+      'In the household view, the bar is income minus spending, with extraordinary income in yellow.'}},
 
     {k:'renda-extra', t:'Renda extraordinária', te:'Extraordinary income', c:'BudgetONE', ce:'BudgetONE',
      pt:{medio:'Renda que não se repete: rescisão, FGTS, indenização. Ela fica fora das médias do Painel ("Entrou por mês", "Sobrou por mês") e da projeção do mês, ' +
@@ -1191,6 +1195,14 @@ function textoGlossario(chave, nivel){
       'Para outra renda (um prêmio, a venda de um bem), marque aqui; para tirar a marca de uma que o app reconheceu, desmarque. Resgate de investimento não é renda: é a volta do que você aplicou.'},
      en:{medio:'Income that does not repeat: severance, FGTS, compensation. It stays out of the Panel averages and the month projection, and shows in yellow with ★ in "Month by month". ' +
       'The app recognizes it by itself when the category or description mentions severance, FGTS or compensation. Tick it for other income (a prize, selling something); untick to undo. Redeeming an investment is not income.'}},
+
+    {k:'dividas', t:'Dívidas e consórcios', te:'Debts and consortiums', c:'InvestifyONE', ce:'InvestifyONE',
+     pt:{medio:'O que você ainda deve: consórcio, financiamento ou outra dívida. O saldo devedor sai do patrimônio total (no Painel do InvestifyONE e no Fluxo) e aparece à vista como "dívidas: −R$ X". ' +
+      'Cada barra mostra cheio o que já foi pago e tracejado o que falta; "quita em" é uma estimativa pelo saldo dividido pela parcela. Cada parcela paga que o app reconhece (no extrato ou na fatura do cartão Porto) baixa o saldo até a próxima atualização, ' +
+      'que pode vir à mão ou pelo arquivo CSV das posições do consórcio. A parcela continua como gasto fixo no orçamento. Ligada a um bem (imóvel, carro), mostra o valor do bem menos a dívida: a parte sua.'},
+     en:{medio:'What you still owe: consortium, financing or other debt. The balance owed is subtracted from total net worth (InvestifyONE Panel and Flow) and shown as "debts: −R$ X". ' +
+      'Each bar is solid for what is paid and dashed for what is left; "paid off" is an estimate (balance divided by the instalment). Each paid instalment the app recognizes (in the statement or the Porto card bill) lowers the balance until the next update, ' +
+      'by hand or from the consortium positions CSV. The instalment stays a fixed expense in the budget. Linked to an asset (home, car), it shows the asset value minus the debt: your share.'}},
 
     {k:'sazonalidade', t:'Os meses caros do ano', te:'The expensive months', c:'BudgetONE', ce:'BudgetONE',
      pt:{medio:'A média de gasto de cada mês do calendário, usando todos os anos que você registrou. Mostra o que se repete: ' +
@@ -7218,7 +7230,7 @@ const Importador = {
     /* ---- Avenue: agrupa por tipo de lançamento, já que são muitos ativos ---- */
     if(dados.formato === 'avenue-csv'){
       const GRUPOS = [
-        {id:'compra',   tipo:'compra',   nome:'Compras',                 ganho:'a data de cada compra é o que destrava a rentabilidade'},
+        {id:'compra',   tipo:'compra',   nome:'Compras',                 ganho:'a data de cada compra é o que libera o cálculo da rentabilidade'},
         {id:'venda',    tipo:'venda',    nome:'Vendas',                  ganho:'entram com data e preço, para o custo ficar certo'},
         {id:'provento', tipo:'provento', nome:'Dividendos recebidos',    ganho:'renda que hoje não aparece em lugar nenhum'},
         {id:'juros',    tipo:'juros',    nome:'Cupons e aluguel de ações', ganho:'juros de bond e aluguel de papel'},
@@ -7305,7 +7317,7 @@ const Importador = {
 
     if(dados.inicio && (!pos || pos.data !== dados.inicio))
       lista.push({id:'inicio', nome:'Data de início do plano', de: pos && pos.data ? fmtData(pos.data) : 'em branco',
-                  para: fmtData(dados.inicio), ganho:'destrava o cálculo de rentabilidade'});
+                  para: fmtData(dados.inicio), ganho:'libera o cálculo de rentabilidade'});
 
     const noHistorico = (data, valor) => pos && (pos.historicoManual || [])
       .some(x => x[0] === data && Math.abs(x[1] - valor) < 0.01);
@@ -7596,7 +7608,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.72"></script>
+<script src="textos/mudancas.js?v=3.75"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -7784,10 +7796,17 @@ const Gasto = {
   },
   ehSalario(g){ return !!g && g.grupo === 'RENDA' && /^sal[aá]rio$/i.test(String(g.sub || '').trim()); },
 
-  /* "PARC 03/10", "parcela 3 de 10" — o número da parcela, ou '' */
-  parcela(desc){
+  /* "PARC 03/10", "parcela 3 de 10" — o número da parcela, ou ''.
+     3.74: em lançamento de CARTÃO (g), também o k/N no FIM da descrição, antes de " · nota": "LOJA X 05/06",
+     "LOJA X (5/6)", "*Curso01/12"; só com 1 ≤ k ≤ N ≤ 24 e N ≥ 2 (a data "28/10" não vira parcela) */
+  parcela(desc, g){
     const m = /parc\w*\.?\s*(\d{1,2})\s*(?:\/|de)\s*(\d{1,2})\b/i.exec(desc || '');
-    return m ? Number(m[1]) + '/' + Number(m[2]) : '';
+    if(m) return Number(m[1]) + '/' + Number(m[2]);
+    if(!g || !(g.cartaoId || g.formaId === 'credito' || /cr[eé]dito|cart[aã]o/i.test(g.forma || ''))) return '';
+    const f = /(?:^|[^\d\/])\(?(\d{1,2})\/(\d{1,2})\)?\s*$/.exec(String(desc || '').split(' · ')[0].trim());
+    if(!f) return '';
+    const k = Number(f[1]), n = Number(f[2]);
+    return k >= 1 && n >= 2 && k <= n && n <= 24 ? k + '/' + n : '';
   },
 
   /* ---------- recortes ---------- */
@@ -9676,7 +9695,7 @@ const ABAS = {
   budget: [
     {v:'b-painel',   ico:'📊', chave:'nav.painel',      mobile:true,  fixa:true},
     {v:'b-lanc',     ico:'🧾', chave:'nav.lancamentos', mobile:true},
-    {v:'b-custos',   ico:'📌', chave:'nav.custos',      mobile:true},
+    {v:'b-custos',   ico:'📌', chave:'nav.custos',      mobile:true, sub:'nav.custos.sub'},
     {v:'b-fluxo',    ico:'📈', chave:'nav.fluxo',       mobile:true},
     {v:'b-renda',    ico:'💰', chave:'nav.renda',       mobile:false},
     {v:'b-desloc',   ico:'🗺️', chave:'nav.desloc',      mobile:false},
@@ -9796,7 +9815,8 @@ function montarNav(){
   const abas = (ABAS[app] || ABAS.investify).filter(a => a.v !== 'b-desloc' || (typeof Flags === 'undefined' || Flags.ligada('deslocamentos')));
   const lado = $('#navLista');
   if(lado) lado.innerHTML = Verter.html(abas.map(a =>
-    '<button class="nav-item" data-view="' + a.v + '"><span>' + a.ico + '</span> ' + esc(nomeAba(a)) + '</button>').join(''));
+    '<button class="nav-item" data-view="' + a.v + '"><span>' + a.ico + '</span> ' + esc(nomeAba(a)) +
+    (a.sub ? ' <small class="nav-sub">' + esc(t(a.sub)) + '</small>' : '') + '</button>').join(''));   /* 3.74: "Contas fixas e gastos recorrentes" */
   const baixo = $('#tabLista');
   if(baixo){
     /* quais botões ficam fixos embaixo é escolha de quem usa */
@@ -9956,6 +9976,12 @@ function viewBPainel(){
   if(meses.length >= 2){
     /* 3.68: a barra é o resultado real do mês; a renda extraordinária aparece em amarelo (★), fora da escala; as médias continuam sem ela */
     const extraMes = {}; doze.filter(rendaExtra).forEach(g => { const t = String(g.data || '').slice(0, 7); extraMes[t] = (extraMes[t] || 0) + (Number(g.valor) || 0); });
+    /* 3.73: fora da visão da casa, o "Mês a mês" refeito (modulos/mes-a-mes.js): sobrou na conta | dia a dia, ★ 📈 🔗 */
+    const casaMm = !!(window.Escopo && Escopo.soCasa && Escopo.soCasa());
+    if(window.MesAMes && !casaMm)
+      h += '<div class="card mm-card"><div class="card-head"><h3>Mês a mês</h3>' +
+           '<button class="info-dot" data-info="caixa-mensal">i</button>' + tagP + '</div>' + MesAMes.html(doze) + '</div>';
+    else
     h += '<div class="card"><div class="card-head"><h3>Mês a mês</h3>' +
          '<button class="info-dot" data-info="caixa-mensal">i</button>' + tagP + '</div>' +
          vizMesAMes(meses.map(m => { const ex = extraMes[m.t] || 0, ent = m.entrada - ex;
@@ -10033,7 +10059,7 @@ const B_VAZIO = {
                p:'O jeito mais fácil de começar é tirar uma foto de um comprovante. Também dá para subir a planilha que você já usa, ou lançar o primeiro custo na mão.'},
   'b-lanc':   {h:'Lançamentos', ico:'🧾', t:'Seus gastos vão aparecer aqui',
                p:'Cada compra, conta ou recebimento vira uma linha nesta lista. Comece por uma foto, pela planilha ou na mão.'},
-  'b-custos': {h:'Custos',      ico:'📌', t:'Nenhum custo fixo ainda',
+  'b-custos': {h:'Contas fixas', ico:'📌', t:'Nenhum custo fixo ainda',
                p:'Aluguel, luz, internet, escola: o que se repete todo mês entra aqui e vira aviso antes de vencer.',
                acoes:[['rec-novo','📌 Novo compromisso',true],['rec-importar','⬆ Importar compromissos'],['cdl-contrato','📄 Compromisso de um contrato (PDF)'],['b-escanear','📷 Ler comprovante'],['b-novo','+ Novo lançamento']]},
   'b-fluxo':  {h:'Fluxo',       ico:'📈', t:'O fluxo aparece com o primeiro lançamento',
@@ -12114,9 +12140,11 @@ function patrimonioHoje(){
   const partes = [];
   if(rb && rb.contas) partes.push('saldos das contas');
   partes.push(temCart ? 'carteira do InvestifyONE' : (rb && rb.invests ? 'investimentos do banco' : ''));
-  return {valor: caixa + invest, caixa, invest,
+  /* 3.73: as dívidas (modulos/dividas.js) saem do patrimônio, à vista */
+  const dividas = window.Dividas ? Dividas.total() : 0;
+  return {valor: caixa + invest - dividas, caixa, invest, dividas,
           rotulo: 'patrimônio de hoje',
-          sub: partes.filter(Boolean).join(' + ') + (rb && rb.data ? ' · ' + fmtData(rb.data) : '')};
+          sub: partes.filter(Boolean).join(' + ') + (dividas ? ' · dívidas: −' + fmt(dividas) : '') + (rb && rb.data ? ' · ' + fmtData(rb.data) : '')};
 }
 
 function viewBFluxo(){
@@ -12347,7 +12375,7 @@ function desenharWizard(){
       '</div>';
     if(!ativos.length){
       h += '<p class="small muted">Você não cadastrou nada ainda. Pode voltar e preencher, ou fechar e ' +
-           'cadastrar depois em Custos fixos.</p>';
+           'cadastrar depois em Contas fixas.</p>';
     }else{
       h += '<div class="card2-box"><b class="small">' + ativos.length + ' compromissos cadastrados</b>' +
         '<ul class="small muted" style="margin:7px 0 0 18px;padding:0">' +
@@ -12362,7 +12390,7 @@ function desenharWizard(){
     }
     h += '<div class="card2-box" style="margin-top:12px"><b class="small">O que dá para fazer agora</b>' +
       '<ul class="small muted" style="margin:7px 0 0 18px;padding:0">' +
-      '<li>Ver a agenda dos próximos 45 dias em <b>Custos fixos</b>.</li>' +
+      '<li>Ver a agenda dos próximos 45 dias em <b>Contas fixas</b>.</li>' +
       '<li>Importar a planilha de gastos ou o extrato do banco, em <b>Lançamentos → Importar arquivo</b>.</li>' +
       '<li>Escolher os avisos da fita do topo em <b>Configurações → BudgetONE</b>.</li>' +
       '</ul></div>';
@@ -17297,6 +17325,7 @@ function viewBCustos(){
          dec.sobra >= 0 ? 'up' : 'down') +
     '</div>';
 
+  h += (window.MoneyModulos ? MoneyModulos.html('custos.contas', {}) : '');   /* 3.75: o mês com o status de cada conta (modulos/contas-mes.js) */
   h += (window.MoneyModulos ? MoneyModulos.html('custos.topo', {}) : '');
   const econ = Abat.doAno(hojeISO().slice(0,4));
   if(econ.n)
@@ -18457,9 +18486,9 @@ const AJUDA_TELAS = {
          f:['Filters split by period, group, category, who paid and how.','An imported statement or a receipt photo records without typing.']}
   },
   'b-custos': {
-    pt: {t:'Custos', o:'O que se repete (aluguel, diarista) e o que foi pontual, com o dia de cada um.',
+    pt: {t:'Contas fixas', o:'As contas fixas e os gastos que se repetem (aluguel, diarista) e o que foi pontual, com o dia de cada um.',
          f:['Conta recorrente com o dia certo ganha aviso antes de vencer.','Revisar mostra o que venceu sem marcar e o que parece conta fixa nova.']},
-    en: {t:'Costs', o:'What repeats (rent, cleaner) and what was one-off, with the day of each.',
+    en: {t:'Fixed bills', o:'Fixed bills and recurring expenses (rent, cleaner) and what was one-off, with the day of each.',
          f:['A recurring bill with the right day gets a reminder before it is due.','Review shows what passed its date unmarked and what looks like a new fixed bill.']}
   },
   'b-renda': {
@@ -18712,7 +18741,7 @@ const Assist = {
       item('📷', de('Fotografar um cupom', 'Photograph a receipt'),
            de('QR de nota fiscal, código de boleto ou leitura do cupom pela câmera.', 'Invoice QR, boleto barcode or receipt reading through the camera.'), 'as-camera') +
       item('🔑', de('Ligar as chaves gratuitas', 'Turn on the free keys'),
-           de('Duas chaves gratuitas destravam cotações dos EUA e mais manchetes.', 'Two free keys unlock US quotes and more headlines.'), 'as-chaves') +
+           de('Duas chaves gratuitas liberam cotações dos EUA e mais manchetes.', 'Two free keys unlock US quotes and more headlines.'), 'as-chaves') +
       '</div>';
   },
 
@@ -24692,9 +24721,10 @@ function viewPainel(){
 
   /* 3.45: o que não dá para sacar (módulos, ex.: FGTS) entra no total, separado do líquido */
   const semLiq = (window.MoneyModulos ? MoneyModulos.itens('patrimonio.extra') : []).reduce((s2, x) => s2 + (Number(x.valor) || 0), 0);
+  const dividas = window.Dividas ? Dividas.total() : 0;   /* 3.73: as dívidas saem do total, à vista */
   h += '<div class="grid g4" style="margin-bottom:14px">' +
-    kpi('Patrimônio total', fmt(t.valor + semLiq), 'patrimonio',
-        semLiq ? 'Líquido: ' + fmt(t.valor) + ' · 🔒 sem liquidez: ' + fmt(semLiq) : 'Investido: ' + fmt(t.custo), 'hero') +
+    kpi('Patrimônio total', fmt(t.valor + semLiq - dividas), 'patrimonio',
+        (semLiq ? 'Líquido: ' + fmt(t.valor) + ' · 🔒 sem liquidez: ' + fmt(semLiq) : 'Investido: ' + fmt(t.custo)) + (dividas ? ' · dívidas: −' + fmt(dividas) : ''), 'hero') +
     kpi('Lucro / prejuízo', fmt(t.pl), 'lucro-prejuizo',
         '<span class="' + cls(t.pl) + '">' + fmtPct(t.plPct, true) + '</span>') +
     kpi('Hoje', fmt(t.dia), null,
@@ -26160,7 +26190,7 @@ function viewMovimentos(){
   if(presumidas){
     h += '<div class="aviso-box" style="margin-bottom:14px"><b>' + presumidas + ' lançamentos estão com a data de hoje</b>' +
       '<p class="small">Eles foram criados a partir dos ativos que você cadastrou, e como não havia data de compra o app usou a de hoje. ' +
-      'Informar desde quando cada posição existe é o que destrava o cálculo de rentabilidade.</p>' +
+      'Informar desde quando cada posição existe é o que libera o cálculo de rentabilidade.</p>' +
       '<button class="btn sm primary" data-acao="datas-iniciais" style="margin-top:9px">Informar as datas</button></div>';
   }
 
@@ -26898,7 +26928,7 @@ function viewConfig(){
       '<tr><td><b>' + (I18n.atual === 'pt' ? 'Biometria neste aparelho' : 'Biometrics on this device') + '</b>' +
         '<div class="t-sub">' + (Acesso.biometriaDisponivel()
           ? (I18n.atual === 'pt'
-              ? 'A digital destrava a senha guardada aqui. Nada sai do aparelho.'
+              ? 'A digital desbloqueia a senha guardada aqui. Nada sai do aparelho.'
               : 'Your fingerprint unlocks the password stored here. Nothing leaves the device.')
           : (I18n.atual === 'pt' ? 'Este navegador não oferece biometria.' : 'This browser has no biometrics.')) +
         '</div></td><td class="num">' +
@@ -27981,6 +28011,7 @@ function abrirInbox(){
   h += '<div class="f-actions" style="margin-top:12px">' +
     '<button class="btn sm" data-irpara="b-custos" data-close="genModal">📌 ' + esc(pt ? 'Ver compromissos' : 'See commitments') + '</button>' +
     '<button class="btn sm" data-irpara="config" data-close="genModal">🔔 ' + esc(pt ? 'Avisos' : 'Alerts') + '</button>' +
+    (window.MoneyModulos ? MoneyModulos.html('inbox.rodape', {}) : '') +   /* 3.75: ex.: "👪 Visão da família" (modulos/visao-casa.js) */
     '<button class="btn primary sm" data-close="genModal">' + esc(pt ? 'Fechar' : 'Close') + '</button></div>';
   $('#genTitle').textContent = pt ? 'Mensagens' : 'Messages';
   $('#genBody').innerHTML = Verter.html(h);
@@ -28521,7 +28552,10 @@ function ligarEventos(){
     if(d.bmarca){ bFiltro[d.bmarca] = !bFiltro[d.bmarca]; bPagina = 0; bProj = null; render(); return; }
     if(d.bpag != null && d.bpag !== ''){ bPagina = Number(d.bpag); render(); window.scrollTo({top:0,behavior:'smooth'}); return; }
     if(d.banos){ bAnos = Number(d.banos); if(bProj && bProj.series) bProj = Orcamento.projetar(bAnos, bProj.series); render(); return; }
-    if(d.irpara){ if(appDaView(d.irpara) !== (ST.appAtual || 'investify')) abrirApp(appDaView(d.irpara)); irPara(d.irpara); return; }
+    /* 3.75: Configurações é de todos os apps: abre no app em que a pessoa está (antes trocava para o InvestifyONE); data-rolar leva ao cartão */
+    if(d.irpara){ if(d.irpara !== 'config' && appDaView(d.irpara) !== (ST.appAtual || 'investify')) abrirApp(appDaView(d.irpara)); irPara(d.irpara);
+      if(d.rolar && d.irpara === 'config'){ cfgSecao = 'todos'; render(); }   /* a aba "Compartilhadas", no app em que está */
+      if(d.rolar) setTimeout(() => { const alvo = document.getElementById(d.rolar); if(alvo) alvo.scrollIntoView({block:'start', behavior:'smooth'}); }, 120); return; }
     if(d.bid){ abrirLancamento(d.bid); return; }
     if(d.bpreco){ verHistoriaPreco(d.bpreco); return; }
     if(d.idioma !== undefined){ I18n.definir(d.idioma || I18n.outro()); return; }
@@ -28998,7 +29032,7 @@ function ligarEventos(){
         const n = salvarPassoWizard();
         fechar('assetModal'); render(); renderFita();
         const total = (wz && wz.criados) || n;
-        toast(total ? total + ' compromissos cadastrados. A agenda já está em Custos fixos.' : 'Pronto.');
+        toast(total ? total + ' compromissos cadastrados. A agenda já está em Contas fixas.' : 'Pronto.');
         wz = null;
         break;
       }
@@ -29264,7 +29298,7 @@ function ligarEventos(){
       case 'trj-salvar':    salvarTrajeto(); break;
       case 'trj-excluir':   Desloc.excluirTrajeto(d.id); Store.salvar(); fechar('assetModal'); render(); break;
       case 'desloc-fixo':   { const n = Desloc.lancarComoFixo(); Store.salvar(); render();
-        toast(I18n.atual === 'pt' ? n + ' compromisso(s) de transporte atualizados em Custos fixos.' : n + ' transport commitment(s) updated in Fixed costs.'); break; }
+        toast(I18n.atual === 'pt' ? n + ' compromisso(s) de transporte atualizados em Contas fixas.' : n + ' transport commitment(s) updated in Fixed costs.'); break; }
       /* TaxONE */
       case 'tx-ir':           irPara(d.tela); break;
       case 'tx-ano':          ST.config.taxAno = Number(d.ano); Store.salvar(); render(); break;
@@ -29935,11 +29969,11 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/previsto.js?v=1.0.0"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
 <script src="modulos/calendario-menu.js?v=1.2.0"></script>
-<script src="modulos/pessoas.js?v=1.2.0"></script>
+<script src="modulos/pessoas.js?v=1.3.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=2.1.0"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
-<script src="modulos/tour.js?v=1.0.0"></script>
+<script src="modulos/tour.js?v=1.0.1"></script>
 <script src="modulos/cartoes.js?v=1.0.0"></script>
 <script src="modulos/cartao-foto.js?v=1.0.0"></script>
 <script src="modulos/contraparte.js?v=1.0.0"></script>
@@ -29948,10 +29982,17 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/apelido.js?v=1.1.0"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
-<script src="modulos/visao-casa.js?v=1.0.2"></script>
-<script src="modulos/previsao.js?v=1.0.0"></script>
-<script src="modulos/orcamento.js?v=1.1.0"></script>
-<script src="modulos/patrimonio-mes.js?v=1.0.0"></script>
-<script src="nuvem.js?v=1.14.2"></script>
+<script src="modulos/visao-casa.js?v=1.1.0"></script>
+<script src="modulos/previsao.js?v=1.1.0"></script>
+<script src="modulos/orcamento.js?v=1.1.1"></script>
+<script src="modulos/patrimonio-mes.js?v=1.1.0"></script>
+<script src="modulos/dividas.js?v=1.0.0"></script>
+<script src="modulos/seguros.js?v=1.0.0"></script>
+<script src="modulos/mes-a-mes.js?v=1.0.0"></script>
+<script src="modulos/parcelados.js?v=1.0.0"></script>
+<script src="modulos/contas-fixas.js?v=1.0.0"></script>
+<script src="modulos/documentos.js?v=1.0.0"></script>
+<script src="modulos/contas-mes.js?v=1.0.0"></script>
+<script src="nuvem.js?v=1.14.3"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/patrimonio-mes.js — o patrimônio de verdade, mês a mês, para o Fluxo (3.69)        1.0.0 · 13/Nov/2026
+   modulos/patrimonio-mes.js — o patrimônio de verdade, mês a mês, para o Fluxo (3.69)        1.1.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · Uma foto por mês do patrimônio de hoje (a mesma conta do patrimonioHoje(): saldos das contas + carteira do
@@ -13,6 +13,7 @@
        P(m−1) = P(m) − (entrou(m) − gastou(m)); depois do último real, para a frente: P(m) = P(m−1) + sobra(m).
        Aplicar em investimento não muda o patrimônio; rendimento não entra (por isso "estimado, sem rendimentos").
        Sem nenhum ponto real: só a estimativa, a partir de zero, e o aviso de que falta a carteira ou os saldos.
+     · 1.1.0 (3.73): as dívidas (modulos/dividas.js) saem do valor: o de hoje já vem sem elas; o remontado tira a dívida daquele mês.
      · Visão da casa: nada disso (ela não vê patrimônio nem investimento); a foto nem é tirada no aparelho dela.
    API (window.PatrimonioMes)
      registrar() → foto do mês (ou null) · realDe(mes) → {valor, caixa, invest, fonte} | null
@@ -72,7 +73,8 @@
         if (v == null) falta = true; else invest += v;
       });
       if (falta) return null;
-      return { valor: n0(caixa + invest), caixa: n0(caixa), invest: n0(invest), fonte: 'fontes' };
+      var div = window.Dividas ? Dividas.emMes(mes) : 0;   /* 1.1.0: as dívidas daquele mês saem, como no patrimônio de hoje */
+      return { valor: n0(caixa + invest - div), caixa: n0(caixa), invest: n0(invest), fonte: 'fontes' };
     },
     /* meses: a série do Gasto.serieMensal ({t, entrada, saida}); devolve o patrimônio de cada mês, real ou estimado */
     serie: function (meses) {
@@ -87,6 +89,6 @@
     temReal: function (s) { return (s || []).some(function (x) { return x.real; }); }
   };
 
-  MoneyModulos.registrar({ id: 'patrimonio-mes', versao: '1.0.0', colecoes: [COL] });
+  MoneyModulos.registrar({ id: 'patrimonio-mes', versao: '1.1.0', colecoes: [COL] });
   window.PatrimonioMes = API;
 })();

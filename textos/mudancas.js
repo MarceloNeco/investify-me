@@ -1,11 +1,34 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.72 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.75 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.75', d:'2026-11-13', t:'Contas fixas com o status de cada conta, e a família arrumada', itens:[
+    'Contas fixas: no topo da tela, "Este mês" ou "Próximos 45 dias", "Por dia" ou "Por grupo" (a escolha fica guardada), e cada conta com o status: ✓ Paga (com a data e o valor pago), ⚠ Atrasada, ⏰ Vence hoje, ○ A vencer e 🔄 Débito automático. O resumo diz quanto é, quanto já foi pago, quanto falta e quanto está atrasado, com uma barra.',
+    'Nos próximos 45 dias, as contas atrasadas que ficaram para trás aparecem no topo, com o total. Por grupo, cada grupo mostra o total e quantas já foram pagas.',
+    '"Parece conta fixa": quando o mesmo recebedor aparece 3 meses seguidos com valor e dia parecidos, o app pergunta se quer cadastrar (dois boletos diferentes do mesmo lugar viram duas contas). O mesmo mês em anos seguidos vira conta anual (IPTU, matrícula). Respondeu "não", não pergunta de novo.',
+    'Família: o aviso do 📥 diz o que falta e por quê e abre as Configurações sem trocar de app. Em "Quem é da casa", o app pergunta uma vez qual ficha é você; você (o chefe) não aparece mais, e a ficha que veio da conta pode ser juntada à sua sem perder lançamentos, o nome aparece com o apelido entre parênteses e quem não é da família fica separado. Sem o PIN da conta, "Preparar" fica travado, com o botão para criar o PIN.'
+  ]},
+  {v:'3.74', d:'2026-11-13', t:'Parcelados do cartão, Contas fixas e Documentos que o app pede', itens:[
+    'Compras parceladas no cartão: o app lê a parcela no fim da descrição ("LOJA 03/10") e mostra em "Parcelados no cartão" (Painel e Futuro) o que ainda vem — quanto falta, em quantos meses e quanto cai em cada mês. O previsto do mês já conta cada parcela a vir como conta certa.',
+    'A tela "Custos" passou a se chamar "Contas fixas" (e gastos recorrentes), que é como você procura. No Painel, um cartão "Contas fixas do mês": quantas são, o total por mês e as próximas a vencer.',
+    '"Documentos que o app pede": quando chega a hora de subir um documento que se repete (a fatura do cartão Porto, o saldo das cotas do consórcio, a apólice), o app lembra em "Precisa da sua atenção" e no 📥, com o passo a passo e o botão de subir, que já abre o leitor certo. Dá para adiar 7 dias e copiar um pedido pronto para o Claude in Chrome baixar o documento.'
+  ]},
+  {v:'3.73', d:'2026-11-13', t:'Dívidas, fatura do cartão Porto, seguro e Mês a mês', itens:[
+    'Novo cartão "Dívidas" no Painel do InvestifyONE e no do BudgetONE: consórcio, financiamento ou outra dívida, cada uma com uma barra (cheia = o que já foi pago, tracejada = o que falta), o saldo, a parcela e "quita em ~mm/aaaa (estimativa)", agrupadas pelo bem a que pertencem. O bem mostra "valor − dívida = parte sua".',
+    'O patrimônio total (no Painel do InvestifyONE e no Fluxo) agora desconta as dívidas, com a linha "dívidas: −R$ X" à vista. Cada parcela paga que o app reconhece baixa o saldo (estimativa) até a próxima atualização; a parcela continua como gasto fixo no orçamento.',
+    'Posições do consórcio por arquivo CSV (grupo e cota, % pago, saldo, parcela): uma prévia antes de importar; a cota que já existe é atualizada e o saldo antigo fica no histórico.',
+    'Fatura do cartão Porto (planilha .xlsx ou PDF): o app lê as compras e as guarda como detalhe do pagamento "PORTOSEG" que veio do banco, sem gasto em dobro, e mostra a diferença se houver. As parcelas "PORTO SEGURO CONSORCIO" vão para a cota certa pela parcela; se houver dúvida, fica "A confirmar" para você escolher.',
+    'Em Custos, "🛡️ Seguro (apólice)": leia a apólice (PDF ou foto) ou preencha à mão; o seguro vira um compromisso com as parcelas do prêmio, e 30 dias antes do fim da vigência o app lembra de renovar.',
+    '"Mês a mês" refeito: a barra de cada mês é o que sobrou na conta, tudo o que entrou menos o que foi gasto e o que foi para investimento (aportes menos resgates), numa cor só.',
+    'Marcas no mês: ★ renda extraordinária, 📈 investiu mais que a renda média do mês e 🔗 quando as duas estão ligadas (por exemplo, "rescisão investida no mês seguinte"). Toque no mês para ver os números numa linha.',
+    'Duas vistas, com a escolha guardada: "Sobrou na conta" e "Dia a dia" (a renda que se repete menos o que foi gasto). A escala ignora o mês fora da curva, que aparece cortado (⫽) com o valor inteiro.',
+    'Quando entra um valor maior que o dobro da sua renda de sempre, o app pergunta em "Precisa da sua atenção" (e no 📥) se é renda extraordinária.',
+    'As mensagens de segurança falam em desbloquear também nos botões e avisos que faltavam ("Desbloquear com a digital", "Desbloquear com o código de recuperação"), e "destrava" virou "libera" nas dicas.'
+  ]},
   {v:'3.72', d:'2026-11-13', t:'Mensagens da nuvem mais claras', itens:[
     'As mensagens de entrar e de segurança falam em desbloquear, chave e acesso, em vez de "cadeado" (por exemplo: "Desbloqueie com o PIN ou a digital", "O acesso desta família ainda não foi liberado para você", "Você bloqueou o app").',
     'As telas de entrar, de PIN e de "MoneyTRIO bloqueado" mostram a mesma imagem de fundo do app, nos dois temas.'

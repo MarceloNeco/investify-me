@@ -559,6 +559,10 @@ let BASE = '';
       const ruins = msgs.filter((m) => /cadeado|family lock|the lock\b|this lock\b/i.test(m));
       ok(msgs.length > 100 && ruins.length === 0, 'mensagens da nuvem sem "cadeado" (' + msgs.length + ' conferidas' + (ruins.length ? '; sobrou: ' + ruins.slice(0, 2).join(' | ') : '') + ')');
       ok(/Desbloqueie|desbloquear/.test(src) && /O acesso desta família ainda não foi liberado/.test(src), 'as mensagens novas estão lá ("Desbloqueie…", "O acesso desta família…")');
+      /* 3.73: os botões e avisos que faltavam também dizem desbloquear */
+      const abrir = msgs.filter((m) => /Abrir com a digital|Abrir com o código de recuperação|Abra pelo PIN ou pela digital|abra de novo com o PIN|para abrir de novo|consegue abrir com segurança|Open with (the )?fingerprint|open again with the PIN/.test(m));
+      ok(abrir.length === 0 && /Desbloquear com a digital neste aparelho/.test(src) && /Desbloquear com o código de recuperação/.test(src) && /pede o PIN ou a digital para desbloquear/.test(src),
+        'sem "abrir com a digital / abra de novo" no portão: "Desbloquear com a digital", "Desbloquear com o código de recuperação"' + (abrir.length ? '; sobrou: ' + abrir[0] : ''));
     }
     console.log('8) cadeado (relógio falso)');
     const C = await abrirPagina(browser, { width: 390, height: 800 }, 'C', false);
@@ -580,7 +584,7 @@ let BASE = '';
     ok(!(await trancado()) && !(await C.$('.nv-avisotr')), 'C: 13 min e 50 s sem uso: não tranca nem avisa');
     await C.clock.fastForward('00:20'); await C.clock.runFor(1500);
     if (!(await C.$('.nv-avisotr'))) console.log('    (depuração) último uso por:', await C.evaluate(() => MoneyNuvem._teste.Trava.porque), 'parado (s):', await C.evaluate(() => (Date.now() - MoneyNuvem._teste.Trava.ultimo) / 1000));
-    ok(!(await trancado()) && /vai trancar em/.test(await C.textContent('.nv-avisotr', { timeout: 3000 }).catch(() => '')), 'C: aos 14 min aparece o aviso "vai trancar em … s"');
+    ok(!(await trancado()) && /vai bloquear em/.test(await C.textContent('.nv-avisotr', { timeout: 3000 }).catch(() => '')), 'C: aos 14 min aparece o aviso "vai trancar em … s"');
     await C.evaluate(() => document.querySelector('#nvContinuar').click());   /* sem mexer o mouse (mexer já conta como uso) */
     ok(!(await C.$('.nv-avisotr')), 'C: "Continuar usando" tira o aviso e zera o tempo');
     await C.clock.fastForward('14:10'); await C.clock.runFor(1500);

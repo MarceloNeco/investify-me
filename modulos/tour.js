@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/tour.js — o passeio de verdade, com spotlight (3.65)        1.0.0 · 11/Nov/2026
+   modulos/tour.js — o passeio de verdade, com spotlight (3.65)        1.0.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      O tutorial deixou de ser uma janela no meio da tela. Cada passo leva o balão até o elemento de verdade:
@@ -41,6 +41,9 @@
     { alvo: ['#sidenav .nav-item[data-view="b-lanc"]', '.tabbar .tab[data-view="b-lanc"]', '#sidenav .nav-item[data-view="movimentos"]', '.tabbar .tab[data-view="movimentos"]'], ico: '🧾',
       pt: { t: 'Lançamentos', x: 'Cada gasto e cada entrada. Importe o extrato, escaneie a nota ou lance à mão; o robô do banco também lança aqui.' },
       en: { t: 'Entries', x: 'Every expense and every income. Import the statement, scan the receipt or type it in; the bank robot adds entries here too.' } },
+    { alvo: ['#sidenav .nav-item[data-view="b-custos"]', '.tabbar .tab[data-view="b-custos"]', '#sidenav #navLista', '#btnMenu'], ico: '📌',   /* 3.74 */
+      pt: { t: 'Contas fixas', x: 'As contas fixas e os gastos que se repetem (aluguel, escola, assinaturas), com o dia de cada uma e o aviso antes de vencer. No BudgetONE, fica no menu como "Contas fixas".' },
+      en: { t: 'Fixed bills', x: 'Fixed bills and recurring expenses (rent, school, subscriptions), with each one\'s day and a reminder before it is due. In BudgetONE it is in the menu as "Fixed bills".' } },
     { alvo: ['#btnPerfil', '#nvSelo'], ico: '☁️',
       pt: { t: 'Sua conta e a nuvem', x: 'Aqui ficam a sua conta, a nuvem (tudo fechado com a chave da família) e as Configurações. Seus dados são seus.' },
       en: { t: 'Your account and the cloud', x: 'Your account, the cloud (everything sealed with the family key) and Settings live here. Your data is yours.' } },
@@ -156,6 +159,6 @@
     }
   };
 
-  MoneyModulos.registrar({ id: 'tour', versao: '1.0.0' });
+  MoneyModulos.registrar({ id: 'tour', versao: '1.0.1' });
   window.Tour = API;
 })();

@@ -50,7 +50,7 @@ const IPCA = JSON.stringify({ s1639: { codigo: 1639, ano: 4, meses: [], em: Date
     await p.evaluate(() => { irPara('b-painel'); render(); });
     const card = await p.evaluate(() => { const c = document.querySelector('.pv-atencao'); return c ? c.textContent.replace(/\s+/g, ' ') : ''; });
     ok(/Precisa da sua atenção/.test(card) && /Parece que teve viagem entre 24\/Out\/2026 e 26\/Out\/2026 \(R\$ 445,00 de combustível\)\. Foi viagem\?/.test(card), 'o Painel pergunta em "Precisa da sua atenção" (' + card.slice(0, 140) + ')');
-    const inbox = await p.evaluate(() => inboxItens().filter((x) => x.tipo === 'atencao').length);
+    const inbox = await p.evaluate(() => inboxItens().filter((x) => x.tipo === 'atencao' && x.ico === '🧳').length);   /* 3.75: o 📥 tem outras perguntas (ex.: "Parece conta fixa") */
     ok(inbox === 1, 'e o 📥 também mostra a pergunta');
     ok(await p.evaluate(() => !Gasto.todos().some((g) => g.evento)), 'nada é marcado sozinho antes da resposta');
     await p.fill('.pv-dest', 'Praia Exemplo'); await p.click('[data-acao="pv-sim"]'); await p.waitForTimeout(150);

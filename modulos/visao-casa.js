@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.0.2 · 13/Nov/2026
+   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.1.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 11/Nov/2026; desenho em DESENHO-visao-da-casa.md)
      Um membro da família com a visão "Só a casa" vê a parte da casa; o resto fica RESERVADO e nem chega ao aparelho dele
@@ -18,6 +18,11 @@
      gastos da família (sem renda, investimento nem transferência). Quem calcula é o aparelho de quem vê tudo, logo antes
      de subir (Escopo.antesDeSubir).
      · 3.68 (1.0.2): o apelido da origem (modulos/apelido.js) é da casa quando algum lançamento dessa origem é da casa.
+     · 3.75 (1.1.0): em "Quem é da casa" o chefe não aparece: o app pergunta uma vez "Qual destas fichas é você?" (vínculo
+       guardado em ST.config.vcEu) e a outra ficha da conta, se houver, recebe
+       "Juntar" as duas (Pessoas.juntar: nada se perde); nome de exibição com o apelido entre parênteses; quem é de fora
+       (tipo 'outra') fica separado; sem PIN da conta, "Preparar" fica travado com o botão de criar o PIN; aviso no 📥
+       com o que se pede e por quê, e o botão que abre o cartão sem trocar de app.
    API (window.Escopo)
      de(colecao, item) → 'casa' | 'reservado'      deConfig(chave) → 'casa' | 'reservado'
      preparar(estado)  · ehPJ(item)  · pessoasDela()  · antesDeSubir(estado)
@@ -133,7 +138,24 @@
   }
 
   /* Configurações → "Família no MoneyTRIO" (só no aparelho do chefe) */
-  var Tela = { lista: null, erro: '' };
+  var Tela = { lista: null, erro: '', pinConta: undefined };
+  /* 1.1.0 (3.75): o chefe (dono da conta) nunca entra em "Quem é da casa". Sem adivinhar pelo nome: o app pergunta UMA vez
+     "Qual destas fichas é você?" e guarda o vínculo (ST.config.vcEu = {uid, pessoa: id | 'nenhuma'}; a ficha ganha o uid).
+     Daí em diante essa ficha é o chefe; a outra ficha da conta (uid da conta ou o nome da conta), se existir, recebe "Juntar".
+     Quem é de fora (tipo 'outra') fica separado. */
+  function Nn(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
+  function nomeComp(p) { return window.Pessoas ? Pessoas.nomeCompleto(p) : (p.nome || ''); }
+  function contaNome() { return window.MoneyNuvem && MoneyNuvem.nomePessoa ? String(MoneyNuvem.nomePessoa() || '') : ''; }
+  function ehDaConta(p, eu) { var c = Nn(contaNome()); return (eu && p.uid === eu) || (!!c && Nn(nomeComp(p)) === c); }
+  function vinculo(eu) { var v = ST.config && ST.config.vcEu; return v && eu && v.uid === eu ? v.pessoa : null; }
+  API.chefeEJuntar = function (pessoas, eu) {
+    var v = vinculo(eu), euP = v && v !== 'nenhuma' ? pessoas.filter(function (p) { return p.id === v; })[0] || null : null;
+    var conta = pessoas.filter(function (p) { return p !== euP && ehDaConta(p, eu); })[0] || null;
+    var nao = (ST.config && ST.config.vcJuntarNao) || {};
+    return { eu: euP, conta: conta, perguntar: !!eu && !v && pessoas.length > 0,
+      juntar: euP && conta && !nao[conta.id + '|' + euP.id] ? { fica: euP, sai: conta } : null };
+  };
+  API.nomeVer = function (p) { var n = nomeComp(p) || p.apelido || ''; return n + (p.apelido && Nn(p.apelido) !== Nn(p.nome) && Nn(p.apelido) !== Nn(n) ? ' (' + p.apelido + ')' : ''); };
   function cartaoChefe() {
     var n = nv(); if (!n) return '';
     var e = n.estado(); if (!e.tudo) return '';
@@ -144,19 +166,36 @@
     }
     var h = '<div class="card" id="vcFamilia"><div class="card-head"><h2>👪 ' + esc(tr('Família no MoneyTRIO', 'Family in MoneyTRIO')) + '</h2></div>';
     if (Tela.erro === 'chefe') return h + '<p class="small muted">' + esc(tr('Só o chefe da família escolhe quem vê o quê.', 'Only the family head chooses who sees what.')) + '</p></div>';
-    var pessoas = (ST.pessoas || []).filter(function (p) { return p.tipo === 'casa' && !p.arquivada; });
+    var eu = n.eu ? n.eu() : '';
+    if (Tela.pinConta === undefined && n.pinConta) { Tela.pinConta = null; n.pinConta().then(function (t) { Tela.pinConta = t; if (typeof render === 'function') render(); }); }
+    var daCasa = (ST.pessoas || []).filter(function (p) { return p.tipo === 'casa' && !p.arquivada; });
+    var cj = API.chefeEJuntar(daCasa, eu);
+    var pessoas = daCasa.filter(function (p) { return p !== cj.conta && p !== cj.eu && !(eu && p.uid === eu); });
+    var deFora = (ST.pessoas || []).filter(function (p) { return p.tipo === 'outra' && !p.arquivada; });
     var marcadas = (ST.visaoCasa && ST.visaoCasa.pessoas) || [];
     var membros = (Tela.lista || []).filter(function (m) { return m.papel !== 'chefe'; });
     if (!e.feito) {
       h += '<p class="small">' + esc(tr('Para alguém da família ver só a parte da casa (compromissos, contas da casa, os gastos dela e os totais da família), o MoneyTRIO separa antes o que é da casa e o que é só seu. É feito uma vez, neste aparelho.',
         'For someone in the family to see only the household part (commitments, household bills, their own spending and the family totals), MoneyTRIO first separates what belongs to the household and what is yours only. Done once, on this device.')) + '</p>' +
         '<p class="small"><b>' + esc(tr('Quem é da casa (os lançamentos dessas pessoas e dos cartões que elas usam ficam na parte da casa):', 'Who belongs to the household (their entries and the cards they use go to the household part):')) + '</b></p>' +
+        (cj.perguntar ? '<div class="aviso-box vc-quem-sou"><p class="small" style="margin:0 0 6px"><b>' + esc(tr('Qual destas fichas é você?', 'Which of these cards is you?')) + '</b> ' +
+          esc(tr('Você (o chefe) vê tudo e não entra na lista da casa. Pergunto uma vez só.', 'You (the head) see everything and are not on the household list. I ask only once.')) + '</p>' +
+          daCasa.map(function (p) { return '<button class="btn sm" data-acao="vc-sou" data-id="' + esc(p.id) + '">' + esc(API.nomeVer(p)) + '</button> '; }).join('') +
+          '<button class="btn sm" data-acao="vc-sou" data-id="nenhuma">' + esc(tr('Nenhuma', 'None')) + '</button></div>' : '') +
+        (cj.juntar ? '<div class="aviso-box vc-juntar"><p class="small" style="margin:0 0 6px">' + esc(API.nomeVer(cj.juntar.fica) + tr(' e ', ' and ') + API.nomeVer(cj.juntar.sai) +
+          tr(' são a mesma pessoa (você)? Juntar: os lançamentos das duas ficam com uma só.', ' the same person (you)? Merge: the entries of both stay with one.')) + '</p>' +
+          '<button class="btn sm primary" data-acao="vc-juntar" data-fica="' + esc(cj.juntar.fica.id) + '" data-sai="' + esc(cj.juntar.sai.id) + '">' + esc(tr('Juntar', 'Merge')) + '</button> ' +
+          '<button class="btn sm" data-acao="vc-juntar-nao" data-par="' + esc(cj.juntar.sai.id + '|' + cj.juntar.fica.id) + '">' + esc(tr('Não são', 'They are not')) + '</button></div>' : '') +
         '<div class="vc-pessoas">' + (pessoas.length ? pessoas.map(function (p) {
-          return '<label class="linha-check" style="margin-right:18px"><input type="checkbox" data-acao="vc-pessoa" data-id="' + esc(p.id) + '"' + (marcadas.indexOf(p.id) >= 0 ? ' checked' : '') + '> ' + esc(p.apelido || p.nome) + '</label>';
+          return '<label class="linha-check" style="margin-right:18px"><input type="checkbox" data-acao="vc-pessoa" data-id="' + esc(p.id) + '"' + (marcadas.indexOf(p.id) >= 0 ? ' checked' : '') + '> ' + esc(API.nomeVer(p)) + '</label>';
         }).join(' ') : '<span class="small muted">' + esc(tr('Cadastre as pessoas da casa em "Pessoas da família".', 'Add the household people in "Family people".')) + '</span>') + '</div>' +
+        '<p class="tiny muted">' + esc(tr('Você (o chefe) vê tudo e não precisa estar na lista. Alguém aqui não é da família (ex.: quem paga aluguel)? Mude o tipo para "Outras pessoas" em Pessoas da família.',
+          'You (the head) see everything and need not be on the list. Someone here is not family (e.g. a tenant)? Change their type to "Other people" in Family people.')) + '</p>' +
+        (deFora.length ? '<p class="small muted vc-fora">' + esc(tr('Outras pessoas (não são da família): ', 'Other people (not family): ') + deFora.map(API.nomeVer).join(', ')) + '</p>' : '') +
         '<p class="small muted">' + esc(tr('Compromissos de PJ (contador, DAS, TFE…) ficam sempre só seus. Você pode mudar um item depois.', 'Business commitments (accountant, taxes…) always stay yours only. You can change an item later.')) + '</p>' +
-        '<button class="btn primary" data-acao="vc-preparar"' + (marcadas.length ? '' : ' disabled') + '>' + esc(tr('Preparar a visão da família', 'Prepare the family view')) + '</button>' +
-        (e.pin ? '' : '<p class="small muted">' + esc(tr('Abra pelo PIN ou pela digital antes de preparar (🔒 Bloquear agora e abrir de novo).', 'Unlock with the PIN or fingerprint before preparing.')) + '</p>');
+        '<button class="btn primary" data-acao="vc-preparar"' + (marcadas.length && Tela.pinConta !== false ? '' : ' disabled') + '>' + esc(tr('Preparar a visão da família', 'Prepare the family view')) + '</button>' +
+        (Tela.pinConta === false ? '<p class="small vc-sem-pin">🔢 ' + esc(tr('Crie o PIN da conta primeiro.', 'Create the account PIN first.')) + ' <button class="btn sm" data-acao="vc-criar-pin">' + esc(tr('Criar o PIN da conta', 'Create the account PIN')) + '</button></p>'
+          : (e.pin ? '' : '<p class="small muted">' + esc(tr('Desbloqueie com o PIN ou a digital antes de preparar.', 'Unlock with the PIN or fingerprint before preparing.')) + '</p>'));
       return h + '</div>';
     }
     h += '<p class="small">' + esc(tr('Escolha o que cada pessoa vê. "Só a casa": compromissos, contas da casa, os lançamentos dela e os totais da família.', 'Choose what each person sees. "Household only": commitments, household bills, their own entries and the family totals.')) + '</p>';
@@ -176,13 +215,36 @@
     return h + '</div>';
   }
 
+  function pendente() { var n = nv(); if (!n) return false; var e = n.estado(); return !!(e.tudo && !e.feito); }
+  function fraseAviso() {
+    var m = (ST.pessoas || []).filter(function (p) { return p.tipo === 'casa' && !p.arquivada && p.papel === 'responsavel' && !ehDaConta(p, nv() && nv().eu ? nv().eu() : '') && p.id !== vinculo(nv() && nv().eu ? nv().eu() : ''); })[0];
+    var quem = m ? (m.apelido || m.nome) : tr('quem é da família', 'family members');
+    return tr('Escolha quem é da casa para ', 'Choose who belongs to the household so ') + quem + tr(' poder ver só a parte da casa', ' can see only the household part') +
+      (Tela.pinConta === false ? tr('. Antes, crie o PIN da sua conta.', '. First, create your account PIN.') : '.');
+  }
+
   MoneyModulos.registrar({
-    id: 'visao-casa', versao: '1.0.2', colecoes: [COL],
+    id: 'visao-casa', versao: '1.1.0', colecoes: [COL],
     pontos: {
       'budget.painel': function () { return API.soCasa() ? gastosDaFamilia() : ''; },
+      /* 1.1.0 (3.75): no 📥, o que se pede e por quê, numa linha; o botão abre o cartão sem trocar de app */
+      'inbox.itens': function () { return pendente() ? [{ tipo: 'atencao', ico: '👪', nome: tr('Visão da família', 'Family view'), valor: 0, data: hojeISO(), sub: fraseAviso() }] : []; },
+      'inbox.rodape': function () { return pendente() ? '<button class="btn sm" data-irpara="config" data-rolar="vcFamilia" data-close="genModal">👪 ' + esc(tr('Visão da família', 'Family view')) + '</button>' : ''; },
       'config.todos': function () { return cartaoChefe(); }
     },
     acoes: {
+      'vc-sou': function (el) {
+        var n = nv(), eu = n && n.eu ? n.eu() : ''; if (!eu) return;
+        var c = ST.config = ST.config || {}; c.vcEu = { uid: eu, pessoa: el.dataset.id };
+        var p = el.dataset.id !== 'nenhuma' && window.Pessoas ? Pessoas.porId(el.dataset.id) : null; if (p) p.uid = eu;
+        Store.salvar(); render();
+      },
+      'vc-juntar': function (el) {
+        var n = window.Pessoas ? Pessoas.juntar(el.dataset.fica, el.dataset.sai) : 0; Store.salvar(); render();
+        toast(tr('Juntado: ', 'Merged: ') + n + tr(' registro(s) passaram para uma ficha só.', ' record(s) moved to a single card.'));
+      },
+      'vc-juntar-nao': function (el) { var c = ST.config = ST.config || {}; c.vcJuntarNao = c.vcJuntarNao || {}; c.vcJuntarNao[el.dataset.par] = 1; Store.salvar(); render(); },
+      'vc-criar-pin': function () { var n = nv(); if (n && n.criarPinConta) { Tela.pinConta = undefined; n.criarPinConta(); } },
       'vc-pessoa': function (el) {
         var v = ST.visaoCasa = Object.assign({ pessoas: [] }, ST.visaoCasa), id = el.dataset.id;
         v.pessoas = v.pessoas.filter(function (x) { return x !== id; }); if (el.checked) v.pessoas.push(id);

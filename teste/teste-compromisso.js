@@ -29,7 +29,7 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       console.log('tela ' + vp.width + 'x' + vp.height);
       const ctx = await b.newContext({ viewport: vp, serviceWorkers: 'block' });
       await ctx.route('**/*', (r) => r.request().url().startsWith(BASE) ? r.continue() : r.abort());
-      await ctx.addInitScript((t) => { if (!sessionStorage.getItem('semeado')) { localStorage.setItem('investifyme.dados.v1', t); localStorage.setItem('moneytrio.soNesteAparelho', '1'); sessionStorage.setItem('semeado', '1'); } }, JSON.stringify(LOCAL));
+      await ctx.addInitScript((t) => { if (!sessionStorage.getItem('semeado')) { localStorage.setItem('investifyme.dados.v1', t); localStorage.setItem('moneytrio.soNesteAparelho', '1'); localStorage.setItem('moneytrio.tutorial.v1', 'visto'); sessionStorage.setItem('semeado', '1'); } }, JSON.stringify(LOCAL));
       const p = await ctx.newPage(); const erros = []; p.on('pageerror', (e) => erros.push(String(e)));
       await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.recorrentes || []).length === 2);
       await p.evaluate(() => { I18n.atual = 'pt'; abrirApp('budget'); irPara('b-custos'); custosAba = 'recorrentes'; render(); });

@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.72 · 13/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.75 · 13/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2633,3 +2633,42 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .mm-valor{text-align:right}
 .mm-det{margin:4px 0 6px 102px}
 @media (max-width:560px){ .mm-linha{grid-template-columns:78px 1fr 118px; gap:6px} .mm-nome{overflow:visible; text-overflow:clip} .mm-det{margin-left:0} }
+
+/* 3.73: Dívidas (modulos/dividas.js) — barra cheia = pago, tracejada = o que falta */
+.dv-linha{padding:10px 0; border-top:1px solid var(--line)}
+.dv-linha:first-of-type{border-top:0}
+.dv-topo{display:flex; justify-content:space-between; gap:10px; align-items:baseline}
+.dv-saldo{font-weight:600; white-space:nowrap}
+.dv-barra{position:relative; height:12px; margin:6px 0 4px; border:1.5px dashed var(--muted); border-radius:6px; overflow:hidden; box-sizing:border-box}
+.dv-pago{position:absolute; left:0; top:0; bottom:0; background:var(--accent); border-radius:4px 0 0 4px}
+.dv-bem{margin:12px 0 2px; padding-top:8px; border-top:1px solid var(--line)}
+.dv-acoes{margin:12px 0 4px}
+.dv-dif{color:var(--warn, #d9822b)}
+.dv-prev{margin-top:12px}
+.dv-itens td{font-size:.85em}
+.dv-tag{font-size:.75em}
+
+/* 3.73: "Mês a mês" refeito (modulos/mes-a-mes.js) — as duas vistas */
+.mm-modos{display:inline-flex; gap:6px; margin:0 0 10px; flex-wrap:wrap}
+
+/* 3.74: "Contas fixas e gastos recorrentes" no menu; cartões novos do Painel */
+.nav-item .nav-sub{display:block; font-size:.72em; color:var(--txt2); margin-left:1.9em; line-height:1.1}
+.cf-frase, .pc-frase{margin:0 0 8px}
+.orc-proj .card-head .orc-cf{margin-left:auto}
+
+/* 3.74: "Documentos que o app pede" */
+.doc-ped{padding:8px 0; border-top:1px solid var(--line)}
+.doc-ped:first-child{border-top:0}
+.doc-passos ol{margin:4px 0 8px; padding-left:20px}
+
+/* 3.75: "Contas fixas" — o status de cada conta: faixa fina à esquerda + selo com ícone; o valor na cor normal */
+.cm-linha{display:flex; justify-content:space-between; gap:10px; align-items:center; padding:8px 10px; margin:6px 0; border-left:4px solid var(--cm-cor); border-radius:6px; background:var(--card2, transparent); cursor:pointer}
+.cm-dir{display:flex; flex-direction:column; align-items:flex-end; gap:2px; white-space:nowrap}
+.cm-selo{font-size:.75em; padding:1px 6px; border-radius:10px; border:1px solid var(--cm-cor); color:var(--cm-cor)}
+.cm-resumo{margin:0 0 6px}
+.cm-barra{position:relative; height:10px; border:1.5px solid var(--muted, var(--txt3)); border-radius:6px; overflow:hidden; margin-bottom:10px}
+.cm-barra span{position:absolute; left:0; top:0; bottom:0; background:var(--up)}
+.cm-grupo{margin:6px 0}
+.cm-grupo > summary{display:flex; justify-content:space-between; gap:10px; cursor:pointer; padding:6px 0}
+.cfs-item{padding:8px 0; border-top:1px solid var(--line)}
+.cfs-item:first-child{border-top:0}

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.2.0 · 13/Nov/2026
+   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.3.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      Um cadastro só de "quem": Da casa (responsáveis e dependentes), Outras pessoas (pai, amigo, sócio) e
@@ -28,6 +28,7 @@
      mesma(a, b)                 → mesmo ID, ou a mesma pessoa pelos apelidos
      salvar(dados)               → cria ou edita (e propaga o nome)
      arquivar(id) / desarquivar(id)  (nunca apaga quem tem lançamento)
+     juntar(ficaId, saiId)       → 1.3.0: duas fichas da mesma pessoa viram uma (os registros passam, nada se perde)
      propagar(id)                → reescreve o nome mostrado em todos os registros com aquele ID
      migrar()                    → uma vez: os "quem" de hoje viram pessoas
      prepreencher(membros, omni) → junta os membros da plataforma e as pessoas do OmniLife (sem duplicar)
@@ -183,6 +184,21 @@
       else { p = Object.assign({ id: novoId(), criadoEm: new Date().toISOString() }, limpo); lista().push(p); }
       API.religar(); API.propagar(p.id);
       return p;
+    },
+    /* 1.3.0 (3.75): duas fichas da MESMA pessoa (ex.: o cadastro com o apelido e a ficha que veio da conta, com o nome da conta) viram uma
+       só: os registros da que sai passam para a que fica (nenhum lançamento se perde), os nomes dela viram apelidos conhecidos
+       (aliases) e o uid/perfil da conta passam para a que fica. Devolve quantos registros mudaram. */
+    juntar: function (ficaId, saiId) {
+      var fica = API.porId(ficaId), sai = API.porId(saiId); if (!fica || !sai || fica === sai) return 0;
+      var n = 0;
+      cadaRegistro(function (o) { PARES.forEach(function (x) { if (o[x[1]] === saiId) { o[x[1]] = ficaId; n++; } }); });
+      if (sai.uid && !fica.uid) fica.uid = sai.uid;
+      if (sai.perfil && !fica.perfil) fica.perfil = sai.perfil;
+      fica.banco = (fica.banco || []).concat((sai.banco || []).filter(function (b) { return (fica.banco || []).indexOf(b) < 0; }));
+      fica.aliases = (fica.aliases || []).concat([API.nomeCompleto(sai), sai.apelido].concat(sai.aliases || []).filter(function (a) { return a && (fica.aliases || []).indexOf(a) < 0; }));
+      ST[COL] = lista().filter(function (p) { return p.id !== saiId; });
+      API.propagar(ficaId);
+      return n;
     },
     arquivar: function (id) { var p = API.porId(id); if (p) p.arquivada = true; return p; },
     desarquivar: function (id) { var p = API.porId(id); if (p) delete p.arquivada; return p; },
@@ -426,7 +442,7 @@
 
   MoneyModulos.registrar({
     id: 'pessoas',
-    versao: '1.2.0',
+    versao: '1.3.0',
     colecoes: [COL],
     iniciar: function () {
       try { if (ST && !cfg().pessoasV && (ST.gastos || []).length + (ST.recorrentes || []).length) { API.migrar(); Store.salvar(); } } catch (e) { console.warn('pessoas', e); }
