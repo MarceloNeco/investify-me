@@ -164,15 +164,14 @@
         var nPos = ps.lista.filter(function (x) { return x.marcado; }).length;
         h += '<label class="linha-check"><input type="checkbox" id="dePos"' + (nPos ? ' checked' : '') + '> <span><b>' + esc(tr('Montar ou atualizar a carteira com os investimentos de 31/12/', 'Build or update the portfolio with the investments of 31/12/') + ano) + '</b><br><span class="small muted">' +
           esc(tr('No InvestifyONE. O que já existe vem desmarcado. Ação e ETF no exterior: o preço médio vai em dólar (o R$ da declaração fica na nota).', 'In InvestifyONE. What already exists comes unticked. Foreign shares and ETFs: the average price goes in dollars (the R$ on the return stays in the note).')) + '</span></span></label>';
-        h += '<div class="tbl-wrap" style="overflow-x:auto;max-width:100%"><table class="tbl imp-tbl dec-pos"><thead><tr><th></th><th>' + esc(tr('Investimento', 'Investment')) + '</th><th>' + esc(tr('Tipo', 'Type')) + '</th><th class="num">' + esc(tr('31/12', '31/12')) + '</th><th>' + esc(tr('De quem é', 'Whose')) + '</th></tr></thead><tbody>' +
-          ps.lista.map(function (x, k) {
-            var it = x.item || {}, nome = it.ticker && it.nome && it.ticker !== it.nome ? it.ticker + ' · ' + it.nome : (it.nome || it.ticker || '');
-            var qt = it.qtd && it.tipo !== 'caixa' && it.qtd !== 1 ? ' <span class="t-sub">' + esc(String(it.qtd).replace('.', ',')) + tr(' un.', ' units') + '</span>' : '';
-            var aviso = x.problema ? '<div class="t-sub" style="color:var(--down)">' + esc(x.problema) + '</div>' : x.jaExiste ? '<div class="t-sub" style="color:var(--warn)">' + esc(tr('já existe: ', 'already there: ') + x.jaExiste + tr(' — atualizar?', ' — update?')) + '</div>' : '';
-            var donos = '<select class="de-pos-dono" data-k="' + k + '" aria-label="' + esc(tr('De quem é', 'Whose')) + '"><option value="">' + esc(tr('titular', 'holder')) + '</option>' + casa.map(function (p) { return '<option value="' + esc(p.id) + '"' + (x.dono === p.id ? ' selected' : '') + '>' + esc(Pessoas.rotulo(p)) + '</option>'; }).join('') + '</select>';
-            return '<tr><td><input type="checkbox" class="de-pos" data-k="' + k + '"' + (x.marcado ? ' checked' : '') + (x.problema ? ' disabled' : '') + '></td><td><span class="t-main">' + esc(nome) + '</span>' + qt + aviso + '</td>' +
-              '<td>' + esc((TIPOS[it.tipo] || {}).curto || it.tipo || '') + '</td><td class="num">' + fmt(x.bem.depois) + '</td><td>' + donos + '</td></tr>';
-          }).join('') + '</tbody></table></div>';
+        h += '<ul class="dec-bens dec-pos">' + ps.lista.map(function (x, k) {
+            var it = x.item || {}, nome = it.tipo !== 'caixa' && it.ticker && it.nome && it.ticker !== it.nome ? it.ticker + ' · ' + it.nome : (it.nome || it.ticker || '');
+            var qt = it.qtd && it.tipo !== 'caixa' && it.qtd !== 1 ? ' · ' + String(it.qtd).replace('.', ',') + tr(' un.', ' units') : '';
+            var aviso = x.problema ? ' <span style="color:var(--down)">' + esc(x.problema) + '</span>' : x.jaExiste ? ' <span style="color:var(--warn)">' + esc(tr('já existe: ', 'already there: ') + x.jaExiste + tr(' — atualizar?', ' — update?')) + '</span>' : '';
+            var donos = '<select class="de-pos-dono" data-k="' + k + '" aria-label="' + esc(tr('De quem é', 'Whose')) + '"><option value="">' + esc(tr('de quem é: titular', 'whose: holder')) + '</option>' + casa.map(function (p) { return '<option value="' + esc(p.id) + '"' + (x.dono === p.id ? ' selected' : '') + '>' + esc(tr('de quem é: ', 'whose: ') + Pessoas.rotulo(p)) + '</option>'; }).join('') + '</select>';
+            return '<li><label class="linha-check small"><input type="checkbox" class="de-pos" data-k="' + k + '"' + (x.marcado ? ' checked' : '') + (x.problema ? ' disabled' : '') + '> <span>' + esc(nome) +
+              ' <span class="muted">' + esc(((TIPOS[it.tipo] || {}).curto || it.tipo || '') + qt) + '</span> · <b>' + fmt(x.bem.depois) + '</b>' + aviso + '</span></label>' + donos + '</li>';
+          }).join('') + '</ul>';
       }
       if (ps.conferir.length) h += '<p class="tiny muted" style="margin:2px 0 8px">' + esc(tr('Para conferir à mão (' + ps.conferir.length + '): ', 'To check by hand (' + ps.conferir.length + '): ') +
         ps.conferir.slice(0, 6).map(function (b) { return nomeBem(b) + ' ' + fmt(b.depois); }).join(' · ')) + '</p>';

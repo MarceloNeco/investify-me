@@ -70,7 +70,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, gastos: [], recorrentes: []
     await p.evaluate((dd) => abrirDeclaracao(dd, true), d); await p.waitForTimeout(200);
     const t = await p.evaluate(() => {
       const ps = DeclEscolhas.posicoes(txDec).lista.map((x) => ({ t: x.item.ticker, tipo: x.item.tipo, q: x.item.qtd, pm: x.item.pm, moeda: x.item.moeda, m: x.marcado, ja: x.jaExiste, dono: x.dono, val: x.bem.depois }));
-      const rows = [...document.querySelectorAll('.dec-pos tbody tr')].map((tr) => ({ ck: tr.querySelector('.de-pos').checked, txt: tr.textContent, dono: tr.querySelector('.de-pos-dono').value }));
+      const rows = [...document.querySelectorAll('.dec-pos li')].map((tr) => ({ ck: tr.querySelector('.de-pos').checked, txt: tr.textContent, dono: tr.querySelector('.de-pos-dono').value }));
       return { ps, rows, pos: document.getElementById('dePos') && document.getElementById('dePos').checked, base: (document.querySelector('.dec-base') || {}).textContent, deps: (document.getElementById('deDeps') || {}).checked,
         fontes: [...document.querySelectorAll('.de-fonte')].map((c) => c.checked), comps: [...document.querySelectorAll('.de-comp')].map((c) => c.checked), conferir: (document.querySelector('.dec-esc') || {}).textContent };
     });
