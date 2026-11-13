@@ -709,6 +709,16 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **3.82 — FiscalONE, gestão da PJ (itens 1, 6, 7 e 9).** `modulos/pj-gestao.js` 1.0.0 (`window.PJGestao`), no ponto novo `pj.empresa` da tela
+  `t-pj` (pj 1.1.0: as empresas pela `CofreEmpresa.ordenadas()`, a ativa primeiro). `serie(e, mesFim)`: 12 meses com receita (faturamento + entradas que
+  não são transferência; `moedas` pelo `valorMoeda`), impostos (DAS+DARF), contador, taxas (TFE), tarifas, câmbio (`rb_cambio-`/"IOF / TED / DOC"), custos,
+  margem e PF (pró-labore + lucros); gráfico com `Viz.auto` no desenho do BudgetONE (`.viz-duplo` `col-e`/`col-s`, `viz-zero`, `viz-saldo`) e tabela
+  com 12 meses e o ano. `ST.pj_contas` (receber/pagar, `empresaId`, moeda); `casar(e)`: a entrada da empresa ±2% (na moeda, se estrangeira) e ±10 dias
+  marca `feitoEm`/`gid`; `aPagar(e, 90)` = compromissos com `empresaId` + contas à mão; `fluxo(e)`: saldo das contas da PJ, realizado 3 meses (sem as
+  conversões entre contas da empresa) e os próximos 90 dias com saldo corrido (moeda estrangeira ≈ pela última PTAX guardada). Custos do negócio no CPF:
+  `REGRAS_CPF` (revisáveis), `candidatosCpf()` (gastos da PF, não PJ, 12 meses, por `Origem.origemDe`), `ST.pj_cpf` (negocio/casa/dividido %),
+  `cpfDoMes(mes)`. Cofre da empresa 1.2.0: ficha (fantasia, CNAEs, anexo, abertura, inscrição municipal, endereço, sócios e %, honorário, situação e
+  data), documentos certificado digital e CND. Teste: `teste/teste-pj-gestao.js`.
   **3.81 — PJ no FiscalONE; importador BS2; dados para receber.** `modulos/pj.js` 1.0.0 (`window.PJ`, tela `t-pj` em `ABAS.tax`): a empresa é a
   do Cofre (`ST.empresas`); `sugestoes()` = fontes pagadoras da declaração cujo nome tem o `titular` (📥 grupo novo 'pj': `pj-cadastrar`/`pj-recusar`,
   `ST.config.pjRecusadas`); `contasSemEmpresa()` (rótulos do robô com `irTexto` 'PJ' ou contraparte = CNPJ de empresa) → `pj-conta` (`empresa.contasRobo`).

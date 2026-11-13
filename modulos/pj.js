@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pj.js — FiscalONE: a PJ, por empresa (3.81)        1.0.0 · 13/Nov/2026
+   modulos/pj.js — FiscalONE: a PJ, por empresa (3.81)        1.1.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · A base é o Cofre da empresa (modulos/cofre-empresa.js, ST.empresas). Sugestão, sem IA: a fonte pagadora PJ da
@@ -17,6 +17,7 @@
        No saldo previsto, cada uma sai UM DIA ANTES, como "Transferir para a PJ"; no 📥, 5 dias antes: "Transfira R$ X para a
        PJ até DD/MM".
      · Visão da casa: nada (empresas, contas e lançamentos da PJ são reservados).
+     · 1.1.0 (3.82): as empresas na ordem da situação (a ativa primeiro) e o ponto pj.empresa (modulos/pj-gestao.js).
    API (window.PJ)
      sugestoes() → [{nome, cnpj, de}] · contasSemEmpresa() → [conta] · empresaDe(g) · lancamentos(e, de, ate) · categoria(g)
      resumo(e, mes) → {faturamento, conversao, impostos, das, darf, contador, tfe, tarifas, prolabore, lucros, n}
@@ -168,11 +169,11 @@
   function tela() {
     var h = '<div class="card-head"><h1>🏢 ' + esc(tr('PJ', 'Company')) + '</h1></div>';
     if (casa()) return h + '<div class="card"><p class="small">' + esc(tr('Só o responsável vê a PJ.', 'Only the account holder sees the company.')) + '</p></div>';
-    var es = empresas();
+    var es = window.CofreEmpresa && CofreEmpresa.ordenadas ? CofreEmpresa.ordenadas() : empresas();   /* 1.1.0 (3.82): a ativa primeiro */
     if (!es.length) return h + '<div class="card"><p class="small">' + esc(tr('Cadastre a empresa no Cofre da empresa (ou aceite a sugestão no 📥) para ver o painel da PJ.', 'Add the company in the Company vault (or accept the suggestion in 📥) to see the company panel.')) + '</p><button class="btn primary" data-irpara="t-empresa">' + esc(tr('Abrir o Cofre da empresa', 'Open the Company vault')) + '</button></div>';
     var e = es.find(function (x) { return x.id === atual; }) || es[0]; atual = e.id;
     var mes = mesTela || hoje().slice(0, 7);
-    h += '<div class="pj-abas">' + es.map(function (x) { return '<button class="cfg-aba' + (x.id === e.id ? ' on' : '') + '" data-acao="pj-aba" data-id="' + esc(x.id) + '"><b>' + esc(x.razao || fmtCnpj(x.cnpj)) + '</b><span>' + esc(fmtCnpj(x.cnpj)) + '</span></button>'; }).join('') + '</div>';
+    h += '<div class="pj-abas">' + es.map(function (x) { return '<button class="cfg-aba' + (x.id === e.id ? ' on' : '') + '" data-acao="pj-aba" data-id="' + esc(x.id) + '"><b>' + esc(x.razao || fmtCnpj(x.cnpj)) + '</b><span>' + esc(fmtCnpj(x.cnpj) + (x.situacao && x.situacao !== 'ativa' ? ' · ' + (x.situacao === 'a-encerrar' ? tr('a encerrar', 'to close') : tr('a reativar', 'to reactivate')) : '')) + '</span></button>'; }).join('') + '</div>';
     /* contas desta empresa */
     var sem = API.contasSemEmpresa();
     h += '<div class="card"><div class="card-head"><h3>' + esc(tr('Contas desta empresa', 'Accounts of this company')) + '</h3></div>' +
@@ -199,12 +200,13 @@
     h += '<div class="card"><div class="card-head"><h3>' + esc(tr('Calendário fiscal', 'Tax calendar')) + '</h3>' +
       '<button class="btn sm" data-acao="pj-calendario" data-id="' + esc(e.id) + '">' + esc(cal.length ? tr('Completar', 'Complete') : tr('Criar como contas fixas da PJ', 'Create as company bills')) + '</button></div>' +
       (cal.length ? '<ul class="em-ul">' + cal.map(function (x) { return '<li>' + esc(x.nome + ' · ' + (x.regra === 'anual' ? tr('anual, dia ', 'yearly, day ') + x.dia + '/' + ('0' + x.mes).slice(-2) : tr('dia ', 'day ') + x.dia) + ' · ~' + fmt(x.valor)) + '</li>'; }).join('') + '</ul>' : '<p class="small muted">' + esc(tr('DAS e DARF dia 20, contador dia 10, TFE em julho. No saldo previsto, cada uma aparece um dia antes, como "Transferir para a PJ".', 'DAS and DARF on day 20, accountant on day 10, TFE in July. In the forecast balance each shows one day earlier, as "Transfer to the company".')) + '</p>') + '</div>';
+    h += (window.MoneyModulos ? MoneyModulos.html('pj.empresa', { e: e, mes: mes }) : '');   /* 1.1.0 (3.82): gráficos, contas a pagar e receber, fluxo de caixa (modulos/pj-gestao.js) */
     h += '<p class="small"><button class="btn sm" data-acao="bs2-importar">⬆️ ' + esc(tr('Importar extrato do BS2 (CSV ou OFX)', 'Import a BS2 statement (CSV or OFX)')) + '</button></p>';
     return h;
   }
 
   MoneyModulos.registrar({
-    id: 'pj', versao: '1.0.0',
+    id: 'pj', versao: '1.1.0',
     pontos: {
       'inbox.grupos': function () {
         if (casa()) return [];

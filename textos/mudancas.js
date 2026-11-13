@@ -1,11 +1,17 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.81 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.82 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.82', d:'2026-11-13', t:'FiscalONE: gestão da PJ', itens:[
+    'Na tela PJ, por empresa: gráfico de 12 meses com a receita (e a moeda de origem), os custos da PJ (impostos, contador, taxas, tarifas, câmbio) e a margem, mais a tabela do mês a mês, dos 12 meses e do ano, com o que foi para você.',
+    'Contas a receber (a nota emitida, com cliente, moeda e data) e a pagar (o calendário fiscal e as que você cadastra), com pago, atrasado e a vencer; o recebimento em dólar se confirma sozinho quando cai na conta. E o fluxo de caixa da PJ: o realizado e os próximos 90 dias, separado da casa.',
+    'Ficha completa da empresa no Cofre: nome fantasia, CNAEs, anexo, abertura, inscrição municipal, endereço, sócios e %, honorário do contador e a situação (ativa, a reativar, a encerrar); certificado digital e CND com lembrete no 📥. A empresa ativa aparece primeiro.',
+    '"Custos do negócio pagos no CPF": o app aponta assinaturas e contas com cara de negócio (IA, GitHub, nuvem, domínio, internet); você marca do negócio, da casa ou dividido, e vê quanto do negócio está saindo do CPF por mês, com o aviso honesto sobre pagar serviços do exterior pela PJ.'
+  ]},
   {v:'3.81', d:'2026-11-13', t:'PJ no FiscalONE e importador do extrato BS2', itens:[
     'Nova tela "PJ" no FiscalONE, uma aba por empresa: faturamento do mês (a conta em US$ convertida) e a conversão que chegou na PJ, DAS, DARF, contador, TFE, tarifas, o que foi para você (pró-labore e lucros), o saldo de cada conta da PJ e o Fator R dos 12 meses, com o alerta de Anexo V (abaixo de 28%) ou III.',
     'A empresa da sua declaração aparece no 📥 como "Cadastrar esta empresa?", e o app pergunta de qual empresa é cada conta do robô. O calendário fiscal (DAS e DARF dia 20, contador dia 10, TFE em julho; DEFIS em março) vira contas fixas da PJ, e o saldo previsto e o 📥 avisam "Transfira R$ X para a PJ até o dia anterior".',

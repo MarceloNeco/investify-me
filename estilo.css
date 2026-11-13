@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.81 · 13/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.82 · 13/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2737,3 +2737,9 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .pj-tbl td:first-child{color:var(--txt2)}
 .pj-fr{font-size:1.4em}
 .em-receber td{vertical-align:middle; word-break:break-word}
+/* 3.82: gestão da PJ (modulos/pj-gestao.js) */
+.pjg-tbl th, .pjg-tbl td{white-space:nowrap}
+.pjg-tbl .pjg-ano th, .pjg-tbl .pjg-ano td{font-weight:700}
+.pjg-atrasado b{color:var(--down)}
+.pjg-feito{opacity:.7}
+.pjg-cpf .inb-acoes{display:inline-flex; gap:6px; flex-wrap:wrap; margin-left:6px}

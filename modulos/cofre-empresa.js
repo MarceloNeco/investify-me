@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/cofre-empresa.js — FiscalONE: o "Cofre da empresa" (3.77)        1.1.0 · 13/Nov/2026
+   modulos/cofre-empresa.js — FiscalONE: o "Cofre da empresa" (3.77)        1.2.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      Por empresa (PJ), num lugar só: o cartão CNPJ (PDF ou foto), CNPJ, razão social, regime (Simples, Simples com
@@ -14,6 +14,9 @@
        o painel "Dados para receber": 📋 por campo, "Copiar tudo" PT/EN (wire instructions), e-mail pelo mailto: do aparelho e
        Compartilhar (Web Share), com confirmação antes. Na empresa: o nome do sócio no extrato, pró-labore bruto/IRRF/líquido e
        o CNPJ do contador (as regras do importador do BS2 usam).
+     · 1.2.0 (3.82): a ficha completa da empresa — nome fantasia, CNAEs, anexo, abertura, inscrição municipal, endereço fiscal,
+       sócios e %, honorário do contador, situação (ativa, a reativar, a encerrar) com a data; documentos novos: certificado
+       digital e CND (com validade e lembrete no 📥, como os outros). API.situacao(e) e API.ordenadas() (a ativa primeiro).
    API (window.CofreEmpresa)
      lista() · achar(id) · vencendo(hoje?) → [{e, d, dias}] · REGIMES
    DADOS
@@ -36,11 +39,16 @@
   function dias(iso, h) { return Math.round((new Date(iso + 'T12:00:00Z') - new Date(h + 'T12:00:00Z')) / 86400000); }
   var REGIMES = [['simples', 'Simples Nacional', 'Simples Nacional'], ['fator-r', 'Simples com Fator R', 'Simples with "Fator R"'], ['mei', 'MEI', 'MEI'],
     ['presumido', 'Lucro Presumido', 'Presumed profit'], ['real', 'Lucro Real', 'Actual profit'], ['outro', 'Outro', 'Other']];
-  var TIPOS = [['cartao-cnpj', 'Cartão CNPJ', 'CNPJ card'], ['contrato-social', 'Contrato social', 'Articles of association'], ['alvara', 'Alvará', 'Business licence'], ['outro', 'Outro documento', 'Other document']];
+  var TIPOS = [['cartao-cnpj', 'Cartão CNPJ', 'CNPJ card'], ['contrato-social', 'Contrato social', 'Articles of association'], ['alvara', 'Alvará', 'Business licence'],
+    ['certificado', 'Certificado digital', 'Digital certificate'], ['cnd', 'CND (certidão negativa)', 'Tax clearance certificate (CND)'], ['outro', 'Outro documento', 'Other document']];   /* 1.2.0: certificado e CND */
+  var SITUACOES = [['ativa', 'Ativa', 'Active'], ['a-reativar', 'A reativar', 'To reactivate'], ['a-encerrar', 'A encerrar', 'To close']];
+  var ANEXOS = ['I', 'II', 'III', 'IV', 'V'];
   function rot(l, id) { var x = l.find(function (r) { return r[0] === id; }) || l[l.length - 1]; return pt() ? x[1] : x[2]; }
 
   var API = {
     REGIMES: REGIMES, lista: lista,
+    situacao: function (e) { return (e && e.situacao) || 'ativa'; },
+    ordenadas: function () { var o = { 'ativa': 0, 'a-reativar': 1, 'a-encerrar': 2 }; return lista().slice().sort(function (a, b) { return (o[API.situacao(a)] || 0) - (o[API.situacao(b)] || 0); }); },
     achar: function (id) { return lista().find(function (e) { return e.id === id; }) || null; },
     vencendo: function (h) {
       h = h || API._hoje || hojeISO(); var out = [];
@@ -57,8 +65,12 @@
     var h = API._hoje || hojeISO();
     return '<div class="card em-card" data-emp="' + esc(e.id) + '"><div class="card-head"><h3>🏢 ' + esc(e.razao || tr('Empresa sem nome', 'Unnamed company')) + '</h3>' +
       '<button class="btn sm" data-acao="em-editar" data-id="' + esc(e.id) + '">' + esc(tr('Editar', 'Edit')) + '</button></div>' +
-      linha('CNPJ', fmtCnpj(e.cnpj) + (e.cnpj && !cnpjOk(e.cnpj) ? tr(' (não confere)', ' (invalid)') : '')) + linha(tr('Regime', 'Tax regime'), e.regime ? rot(REGIMES, e.regime) : '') +
-      linha(tr('Contador', 'Accountant'), [e.contador && e.contador.nome, e.contador && e.contador.contato].filter(Boolean).join(' · ')) +
+      linha('CNPJ', fmtCnpj(e.cnpj) + (e.cnpj && !cnpjOk(e.cnpj) ? tr(' (não confere)', ' (invalid)') : '')) + linha(tr('Nome fantasia', 'Trade name'), e.fantasia) +
+      linha(tr('Situação', 'Status'), e.situacao ? rot(SITUACOES, e.situacao) + (e.situacaoData ? ' · ' + I18n.data(e.situacaoData) : '') : '') +
+      linha(tr('Regime', 'Tax regime'), e.regime ? rot(REGIMES, e.regime) + (e.anexo ? ' · ' + tr('Anexo ', 'Annex ') + e.anexo : '') : '') +
+      linha('CNAE', (e.cnaes || []).join(' · ')) + linha(tr('Aberta em', 'Opened on'), e.abertura ? I18n.data(e.abertura) : '') + linha(tr('Inscrição municipal', 'City registration'), e.im) +
+      linha(tr('Endereço fiscal', 'Registered address'), e.endereco) + linha(tr('Sócios', 'Partners'), (e.socios || []).map(function (x) { return x.nome + (x.pct ? ' (' + x.pct + '%)' : ''); }).join(' · ')) +
+      linha(tr('Contador', 'Accountant'), [e.contador && e.contador.nome, e.contador && e.contador.contato, e.contador && e.contador.honorario ? tr('honorário ', 'fee ') + fmt(e.contador.honorario) : ''].filter(Boolean).join(' · ')) +
       ((e.contas || []).length ? '<div class="em-lin"><span class="muted small">' + esc(tr('Contas da PJ', 'Company accounts')) + '</span><ul class="em-ul">' +
         e.contas.map(function (c, i) { return '<li>' + esc([c.internacional ? '🌎' : '', c.banco || c.bancoNome, c.agencia && tr('ag. ', 'branch ') + c.agencia, c.conta && tr('conta ', 'acct ') + c.conta + (c.digito ? '-' + c.digito : ''), c.iban, c.moeda, c.rotuloRobo && '(' + c.rotuloRobo + ')'].filter(Boolean).join(' · ')) +
           ' <button class="linkinho" data-acao="em-conta" data-id="' + esc(e.id) + '" data-i="' + i + '">' + esc(tr('dados completos', 'full details')) + '</button> · <button class="linkinho" data-acao="em-receber" data-id="' + esc(e.id) + '" data-i="' + i + '">📋 ' + esc(tr('Dados para receber', 'Payment details')) + '</button></li>'; }).join('') + '</ul></div>' : '') +
@@ -98,6 +110,16 @@
       campo('CNPJ', '<input id="emCnpj" inputmode="numeric" maxlength="18" value="' + esc(fmtCnpj(e.cnpj)) + '">') +
       campo(tr('Razão social', 'Legal name'), '<input id="emRazao" maxlength="120" value="' + esc(e.razao || '') + '">') +
       campo(tr('Regime', 'Tax regime'), '<select id="emRegime"><option value="">—</option>' + REGIMES.map(function (r) { return '<option value="' + r[0] + '"' + (e.regime === r[0] ? ' selected' : '') + '>' + esc(pt() ? r[1] : r[2]) + '</option>'; }).join('') + '</select>') +
+      campo(tr('Nome fantasia', 'Trade name'), '<input id="emFantasia" maxlength="120" value="' + esc(e.fantasia || '') + '">') +
+      campo(tr('Anexo do Simples', 'Simples annex'), '<select id="emAnexo"><option value="">—</option>' + ANEXOS.map(function (a) { return '<option' + (e.anexo === a ? ' selected' : '') + '>' + a + '</option>'; }).join('') + '</select>') +
+      campo(tr('Situação', 'Status'), '<select id="emSituacao">' + SITUACOES.map(function (x) { return '<option value="' + x[0] + '"' + ((e.situacao || 'ativa') === x[0] ? ' selected' : '') + '>' + esc(pt() ? x[1] : x[2]) + '</option>'; }).join('') + '</select>') +
+      campo(tr('Desde (situação)', 'Since (status)'), Cal.campo('emSitData', e.situacaoData || '', {})) +
+      campo(tr('Data de abertura', 'Opening date'), Cal.campo('emAbertura', e.abertura || '', {})) +
+      campo(tr('Inscrição municipal', 'City registration'), '<input id="emIm" maxlength="40" value="' + esc(e.im || '') + '">') +
+      campo(tr('CNAEs (um por linha)', 'CNAE codes (one per line)'), '<textarea id="emCnaes" rows="2">' + esc((e.cnaes || []).join('\n')) + '</textarea>') +
+      campo(tr('Endereço fiscal', 'Registered address'), '<textarea id="emEndereco" rows="2">' + esc(e.endereco || '') + '</textarea>') +
+      campo(tr('Sócios (um por linha: nome; %)', 'Partners (one per line: name; %)'), '<textarea id="emSocios" rows="2">' + esc((e.socios || []).map(function (x) { return x.nome + (x.pct ? '; ' + x.pct : ''); }).join('\n')) + '</textarea>') +
+      campo(tr('Contador: honorário mensal (R$)', 'Accountant: monthly fee (R$)'), '<input id="emContHon" type="number" step="0.01" value="' + esc(ct.honorario || '') + '">') +
       campo(tr('Contador: nome', 'Accountant: name'), '<input id="emContNome" maxlength="80" value="' + esc(ct.nome || '') + '">') +
       campo(tr('Contador: contato (telefone ou e-mail)', 'Accountant: contact (phone or e-mail)'), '<input id="emContContato" maxlength="120" value="' + esc(ct.contato || '') + '">') +
       campo(tr('Contador: CNPJ (para reconhecer o boleto)', 'Accountant: CNPJ (to recognise the bill)'), '<input id="emContCnpj" inputmode="numeric" maxlength="18" value="' + esc(fmtCnpj(ct.cnpj)) + '">') +
@@ -181,7 +203,7 @@
   API.textoReceber = textoReceber; API.mailto = mailto; API.linhasReceber = linhasReceber;
 
   MoneyModulos.registrar({
-    id: 'cofre-empresa', versao: '1.1.0', colecoes: [COL],
+    id: 'cofre-empresa', versao: '1.2.0', colecoes: [COL],
     pontos: {
       'inbox.grupos': function () {
         var vistos = (ST.config && ST.config.inboxVistos) || {}, l = API.vencendo().filter(function (x) { return !vistos['emp|' + x.d.id + '|' + x.d.validade]; });
@@ -210,7 +232,11 @@
         var contas = Array.prototype.map.call(document.querySelectorAll('#emContas .em-conta'), function (r, i) {   /* 1.1.0: os dados completos da conta continuam */
           return Object.assign({}, antes[i] || {}, { banco: r.querySelector('.em-banco').value.trim(), agencia: r.querySelector('.em-ag').value.trim(), conta: r.querySelector('.em-cc').value.trim() });
         }).filter(function (c) { return c.banco || c.agencia || c.conta || c.iban || c.swift; });
-        var dados = { cnpj: cnpj, razao: razao, regime: val('emRegime'), contador: { nome: val('emContNome'), contato: val('emContContato'), cnpj: dig(val('emContCnpj')) }, contas: contas,
+        var iso = function (id) { return /^\d{4}-\d{2}-\d{2}$/.test(val(id)) ? val(id) : ''; };
+        var dados = { cnpj: cnpj, razao: razao, regime: val('emRegime'), contador: { nome: val('emContNome'), contato: val('emContContato'), cnpj: dig(val('emContCnpj')), honorario: Number(val('emContHon')) || 0 }, contas: contas,
+          fantasia: val('emFantasia'), anexo: val('emAnexo'), situacao: val('emSituacao') || 'ativa', situacaoData: iso('emSitData'), abertura: iso('emAbertura'), im: val('emIm'), endereco: val('emEndereco'),
+          cnaes: val('emCnaes').split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean),
+          socios: val('emSocios').split(/\n+/).map(function (l) { var q = l.split(';'); return { nome: q[0].trim(), pct: Number(String(q[1] || '').replace(',', '.').replace('%', '')) || 0 }; }).filter(function (x) { return x.nome; }),
           pix: val('emPix').split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean),
           socio: val('emSocio'), prolabore: { bruto: Number(val('emPlBruto')) || 0, irrf: Number(val('emPlIrrf')) || 0, liquido: Number(val('emPlLiq')) || 0 } };
         var e = API.achar(el.dataset.id);
