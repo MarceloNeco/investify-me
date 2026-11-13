@@ -41,13 +41,16 @@ const ARQ = { tipo: 'moneytrio-compromissos', versao: 1, criado_em: '2026-11-03'
       console.log('tela ' + vp.width + 'x' + vp.height);
       const ctx = await b.newContext({ viewport: vp, serviceWorkers: 'block' });
       await ctx.route('**/*', (r) => r.request().url().startsWith(BASE) ? r.continue() : r.abort());
-      await ctx.addInitScript((t) => { if (!sessionStorage.getItem('semeado')) { localStorage.setItem('investifyme.dados.v1', t); localStorage.setItem('moneytrio.soNesteAparelho', '1'); sessionStorage.setItem('semeado', '1'); } }, JSON.stringify(LOCAL));
+      await ctx.addInitScript((t) => { if (!sessionStorage.getItem('semeado')) { localStorage.setItem('investifyme.dados.v1', t); localStorage.setItem('moneytrio.soNesteAparelho', '1'); localStorage.setItem('moneytrio.tutorial.v1', 'visto'); sessionStorage.setItem('semeado', '1'); } }, JSON.stringify(LOCAL));
       const p = await ctx.newPage(); const erros = []; p.on('pageerror', (e) => erros.push(String(e)));
       await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && Array.isArray(Store.estado.recorrentes) && Store.estado.recorrentes.length === 1);
       await p.evaluate(() => { abrirApp('budget'); irPara('b-custos'); });
-      await p.waitForSelector('#view-b-custos [data-acao="rec-importar"]');
-      ok(true, 'Custos tem o botão "Importar compromissos"');
-      const abrirArquivo = async (arq) => { const [fc] = await Promise.all([p.waitForEvent('filechooser'), p.click('#view-b-custos [data-acao="rec-importar"]')]); await fc.setFiles(arq); };
+      /* 3.76: o "Importar" mora no "+ Adicionar" de Contas fixas */
+      await p.waitForSelector('#view-b-custos [data-acao="cf-adicionar"]');
+      await p.click('#view-b-custos [data-acao="cf-adicionar"]');
+      ok(await p.isVisible('#genBody [data-acao="rec-importar"]'), 'Contas fixas tem "Importar de uma planilha" no "+ Adicionar"');
+      await p.evaluate(() => fechar('genModal'));
+      const abrirArquivo = async (arq) => { await p.click('#view-b-custos [data-acao="cf-adicionar"]'); const [fc] = await Promise.all([p.waitForEvent('filechooser'), p.click('#genBody [data-acao="rec-importar"]')]); await fc.setFiles(arq); };
       await abrirArquivo(quebrado); await p.waitForSelector('#genModal:not(.hidden) .imp-erro');
       ok(/não é um JSON válido/.test(await p.textContent('.imp-erro')), 'arquivo quebrado: avisa que não é JSON válido');
       await p.click('#genModal [data-close="genModal"] >> nth=-1');

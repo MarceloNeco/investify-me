@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/profissionais.js — profissionais conhecidos (N39)        1.2.0 · 11/Nov/2026
+   modulos/profissionais.js — profissionais conhecidos (N39)        1.2.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      Reconhece o mesmo médico, dentista, pediatra, escola… no extrato pelo nome, SEM IA:
@@ -195,7 +195,7 @@
 
   MoneyModulos.registrar({
     id: 'profissionais',
-    versao: '1.2.0',
+    versao: '1.2.1',
     colecoes: [COL],
     /* 1.1.0: uma vez, o nome que o profissional tinha posto no "quem" passa para "Para quem" */
     iniciar: function () {
@@ -212,7 +212,9 @@
     ouvir: {
       'gasto.novo': function (g) { API.classificar(g); }
     },
-    pontos: { 'custos.revisar': cartaoPerguntas },
+    /* 1.2.1 (3.76): a aba Revisar saiu de Contas fixas; as perguntas vão para o 📥 (Confirmar classificação) */
+    pontos: { 'custos.revisar': cartaoPerguntas,
+      'inbox.grupos': function () { var q = API.perguntas(); return q.length ? [{ id: 'confirmar', n: q.length, html: '<li class="inb-item inb-oc">' + cartaoPerguntas() + '</li>' }] : []; } },
     telas: { 'b-profissionais': { app: 'budget', render: telaProfissionais,
       ajuda: { pt: { t: 'Profissionais conhecidos', o: 'Quem o app reconhece no extrato e como classifica, sem perguntar de novo.' },
                en: { t: 'Known professionals', o: 'Who the app recognises in statements and how it classifies them.' } } } },

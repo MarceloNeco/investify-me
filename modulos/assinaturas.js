@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/assinaturas.js — assinaturas: anual × mensal e renovação (N29 b)   1.1.0 · 11/Nov/2026
+   modulos/assinaturas.js — assinaturas: anual × mensal e renovação (N29 b)   1.1.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      Compromisso que é assinatura (streaming, app, clube…) ganha: plano mensal ou anual pré-pago, data
@@ -116,7 +116,7 @@
 
   MoneyModulos.registrar({
     id: 'assinaturas',
-    versao: '1.1.0',
+    versao: '1.1.1',
     colecoes: [COL],
     pontos: {
       'compromisso.detalhes': function (ctx) {
@@ -140,10 +140,13 @@
             '<div class="small">' + esc(I18n.data(x.a.data) + ' · ' + fmt(x.a.valor)) + ' <button class="linkinho" data-acao="as-alerta-ok" data-id="' + esc(x.reg.id) + '" data-gid="' + esc(x.a.gid) + '">' + (pt() ? 'ok, vi' : 'ok, seen') + '</button></div></div>';
         });
         if (v.length) h += '<div class="aviso-box as-aviso">' + v.map(function (x) { return '<div class="small">📺 ' + esc(frase(x)) + '</div>'; }).join('') + '</div>';
-        h += '<div class="row as-pp" style="gap:6px;flex-wrap:wrap;margin:0 0 12px">' + pp.map(function (x) {
+        if (pp.length) h += '<div class="row as-pp" style="gap:6px;flex-wrap:wrap;margin:0 0 12px">' + pp.map(function (x) {
           return '<span class="chip">📺 ' + esc(x.nome + (pt() ? ' · paga até ' : ' · paid until ') + I18n.data(x.pagoAte)) + ' <button class="linkinho" data-acao="as-pp-tirar" data-id="' + esc(x.id) + '" aria-label="' + (pt() ? 'tirar' : 'remove') + '">✕</button></span>';
-        }).join('') + '<button class="btn sm" data-acao="as-pp-nova">' + (pt() ? '+ Assinatura já paga' : '+ Prepaid subscription') + '</button></div>';
+        }).join('') + '</div>';   /* 1.1.1 (3.76): "+ Assinatura já paga" foi para o "+ Adicionar" de Contas fixas */
         return h;
+      },
+      'custos.adicionar': function () {
+        return [{ ico: '📺', pt: 'Assinatura já paga', en: 'Prepaid subscription', dpt: 'Uma assinatura paga por um período inteiro (ex.: o ano): o app não cobra de novo até o fim.', den: 'A subscription paid for a whole period (e.g. the year): no new charge until it ends.', acao: 'as-pp-nova' }];
       },
       'fita.budget': function () {
         return API.alertas().map(function (x) { return { ico: '⚠', texto: API.nomeDe(x.reg) + (pt() ? ' cobrou de novo depois do fim que você marcou' : ' charged again after the end you set'), tom: 'down' }; })

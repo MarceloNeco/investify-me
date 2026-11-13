@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.75">
+<link rel="stylesheet" href="estilo.css?v=3.76">
 </head>
 <body>
 
@@ -322,7 +322,7 @@ const TEXTOS = {
   'nav.custos.sub':    {pt:'e gastos recorrentes', en:'and recurring expenses'},
   'nav.renda':         {pt:'Renda',             en:'Income'},
   'nav.desloc':        {pt:'Deslocamentos',     en:'Commutes'},
-  'nav.futuro':        {pt:'Futuro',            en:'Forecast'},
+  'nav.futuro':        {pt:'Projeção',          en:'Projection'},   /* 3.76: antes "Futuro" */
   'nav.precos':        {pt:'Preços',            en:'Prices'},
   'nav.agenda':        {pt:'Agenda',            en:'Calendar'},
   'nav.mais':          {pt:'Mais',              en:'More'},
@@ -634,7 +634,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.75"></script>
+<script src="textos/frases-en.js?v=3.76"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7608,7 +7608,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.75"></script>
+<script src="textos/mudancas.js?v=3.76"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -9549,6 +9549,29 @@ const Orcamento = {
     return reg;
   },
 
+  /* 3.76: o que está guardado, sem buscar nada ({codigo: série}) */
+  seriesDoCache(){
+    const c = this.carregar(), out = {};
+    Object.keys(c).forEach(k => { if(/^s\d+$/.test(k) && c[k] && c[k].ano != null) out[k.slice(1)] = c[k]; });
+    return out;
+  },
+  /* falta algum grupo usado, ou o guardado tem mais de 7 dias? */
+  velho(){
+    const c = this.carregar(), semana = 7 * 86400000, cods = {433: 1};
+    Gasto.todos().forEach(g => { const G = GRUPOS[g.grupo]; if(G && G.fluxo === 'saida') cods[G.ipca] = 1; });
+    return Object.keys(cods).some(cod => !c['s' + cod] || (Date.now() - c['s' + cod].em) >= semana);
+  },
+  /* 3.76: IPCA automático — em segundo plano, uma vez por sessão, só com internet e só se o guardado envelheceu */
+  _buscando: false, _tentou: false,
+  atualizarSeVelho(){
+    if(this._buscando || this._tentou || !Gasto.todos().length || !this.velho() || (typeof navigator !== 'undefined' && navigator.onLine === false)) return false;
+    this._buscando = true; this._tentou = true;
+    this.todosOsGrupos(() => {}).then(r => {
+      if(r && r.series && Object.keys(r.series).length){ bProj = this.projetar(bAnos, r.series); bProj.series = r.series; }
+    }).catch(() => {}).then(() => { this._buscando = false; if(typeof render === 'function' && viewAtual === 'b-futuro') render(); });
+    return true;
+  },
+
   /* busca o IPCA de todos os grupos que a carteira de gastos usa */
   async todosOsGrupos(aviso){
     const usados = {};
@@ -9696,9 +9719,10 @@ const ABAS = {
     {v:'b-painel',   ico:'📊', chave:'nav.painel',      mobile:true,  fixa:true},
     {v:'b-lanc',     ico:'🧾', chave:'nav.lancamentos', mobile:true},
     {v:'b-custos',   ico:'📌', chave:'nav.custos',      mobile:true, sub:'nav.custos.sub'},
-    {v:'b-fluxo',    ico:'📈', chave:'nav.fluxo',       mobile:true},
     {v:'b-renda',    ico:'💰', chave:'nav.renda',       mobile:false},
-    {v:'b-desloc',   ico:'🗺️', chave:'nav.desloc',      mobile:false},
+    {v:'b-fluxo',    ico:'📈', chave:'nav.fluxo',       mobile:true},
+    /* 3.76: "Deslocamentos" saiu do menu (virou Contas fixas → Gastos planejados → Carro e deslocamentos; o id b-desloc
+       continua e leva para lá); "Futuro" passou a se chamar "Projeção" (o id b-futuro continua) */
     {v:'b-futuro',   ico:'🔮', chave:'nav.futuro',      mobile:false},
     {v:'b-precos',   ico:'🏷️', chave:'nav.precos',      mobile:false},
     {v:'config',     ico:'⚙️', chave:'nav.config',      mobile:false}
@@ -10067,7 +10091,7 @@ const B_VAZIO = {
   'b-renda':  {h:'Renda',       ico:'💰', t:'Cadastre o que entra',
                p:'Salário, benefícios, aluguel recebido, freelance: é daqui que o app sabe quanto sobra no mês.',
                acoes:[['sal-cad-novo','💰 Cadastrar salário',true],['renda-nova','➕ Nova renda'],['ben-novo','🛒 Benefício']]},
-  'b-futuro': {h:'Futuro',      ico:'🔮', t:'O futuro se desenha com o histórico',
+  'b-futuro': {h:'Projeção',    ico:'🔮', t:'O futuro se desenha com o histórico',
                p:'Com alguns meses de lançamentos o app projeta os próximos. Comece por uma foto, pela planilha ou na mão.'}
 };
 const B_VAZIO_ACOES = [['b-escanear','📷 Ler comprovante',true],['wz-abrir','✨ Começar pelo básico'],['b-importar','📄 Importar arquivo'],['b-novo','+ Novo lançamento']];
@@ -10915,86 +10939,90 @@ function viewBRenda(){
 /* =========================================================
    BudgetONE — Futuro (projeção pelo IPCA de cada grupo)
    ========================================================= */
-let bProj = null, bAnos = 5, bProjCarregando = false;
+let bProj = null, bAnos = 5;
 
+/* 3.76: "Futuro" virou "Projeção" (id b-futuro mantido) e ficou só a projeção de longo prazo.
+   · IPCA automático: a tela projeta na hora com o que está guardado; se o guardado tiver mais de 7 dias (ou faltar um grupo)
+     e houver internet, busca em segundo plano no Banco Central (a mesma fonte de antes) e projeta de novo. Sem internet,
+     usa o guardado e diz "IPCA de <mês/ano>". O previsto (modulos/previsao.js) usa o mesmo cache.
+   · Uma tabela só: linhas = grupos (tocar abre as categorias, com o IPCA do grupo); colunas = IPCA 12m · Hoje/mês ·
+     <ano corrente> (realizado até hoje + o mês de hoje até dezembro, "parcial") · ano+1 … ano+N (o seletor 3/5/10/20).
+     Acima de 6 anos: 1 a 5 e o último, com "ver todos os anos". "por mês | por ano". Linha de total.
+     Celular: a 1ª coluna fica fixa; por padrão Hoje · ano+1 · último ano, e "mais colunas" mostra o resto. */
+let projModo = 'mes', projAbertos = {}, projTodosAnos = false, projMaisCol = false;
+function projValor(mensal, taxa, k){ return mensal * Math.pow(1 + (taxa || 0), k); }
 function viewBFuturo(){
   if(!Gasto.todos().length) return bVazio('b-futuro');
+  const pt = I18n.atual !== 'en';
+  if(!bProj){ const sc = Orcamento.seriesDoCache(); if(Object.keys(sc).length){ bProj = Orcamento.projetar(bAnos, sc); bProj.series = sc; } }
+  Orcamento.atualizarSeVelho();
 
-  let h = '<div class="card-head"><h1>Futuro</h1>' +
-    '<div class="seg" id="bAnosSeg">' +
-      [3,5,10,20].map(a => '<button data-banos="' + a + '"' + (a === bAnos ? ' class="active"' : '') + '>' +
-        a + ' anos</button>').join('') +
-    '</div></div>';
-  if(window.MoneyModulos) h += MoneyModulos.html('futuro.topo', {});   /* 3.69: viagens e eventos (modulos/previsao.js) */
+  const segAnos = '<div class="seg" id="bAnosSeg">' + [3,5,10,20].map(a => '<button data-banos="' + a + '"' + (a === bAnos ? ' class="active"' : '') + '>' + a + (pt ? ' anos' : ' years') + '</button>').join('') + '</div>';
+  const segModo = '<div class="seg proj-modo">' + [['mes', pt ? 'por mês' : 'per month'], ['ano', pt ? 'por ano' : 'per year']].map(m =>
+    '<button data-acao="proj-modo" data-v="' + m[0] + '"' + (projModo === m[0] ? ' class="active"' : '') + '>' + m[1] + '</button>').join('') + '</div>';
+  let h = '<div class="card-head"><h1>' + esc(t('nav.futuro')) + '</h1>' + segAnos + '</div>';
 
   if(!bProj){
-    h += '<div class="card"><div class="vazio">' +
-      '<div class="vazio-ico">🔮</div><h3>Quanto a mesma vida vai custar</h3>' +
-      '<p>Cada grupo de despesa sobe por uma inflação diferente. Educação e saúde costumam correr ' +
-      'bem acima do IPCA cheio; transporte e comunicação costumam ficar abaixo. O app busca o IPCA ' +
-      'de cada grupo no Banco Central e projeta o seu orçamento com a taxa certa em cada linha.</p>' +
-      '<button class="btn primary" data-acao="b-projetar"' + (bProjCarregando ? ' disabled' : '') + '>' +
-      (bProjCarregando ? 'Buscando no Banco Central…' : '📥 Buscar o IPCA e projetar') + '</button>' +
-      '</div></div>';
-    return h;
+    const busca = Orcamento._buscando;
+    return h + '<div class="card"><div class="vazio"><div class="vazio-ico">🔮</div><h3>' + esc(pt ? 'Quanto a mesma vida vai custar' : 'What the same life will cost') + '</h3>' +
+      '<p>' + esc(busca ? (pt ? 'Buscando o IPCA de cada grupo no Banco Central…' : 'Fetching each group’s IPCA from the Central Bank…')
+        : (pt ? 'Sem internet e sem IPCA guardado: a projeção aparece sozinha quando houver internet.' : 'No internet and no saved IPCA: the projection shows up by itself when online.')) + '</p></div></div>';
   }
 
-  const p = bProj;
+  const p = bProj, anoAtual = Number(hojeISO().slice(0, 4)), mesAtual = Number(hojeISO().slice(5, 7));
+  const em12 = p.linhas.reduce((s2, l) => s2 + projValor(l.mensal, l.taxa, 1), 0);
+  const ref = (p.series && (p.series[433] || Object.values(p.series)[0])) || null;
+  const mesIpca = ref && ref.ultimo ? (pt ? 'IPCA de ' : 'IPCA as of ') + ref.ultimo.slice(3) : '';
   h += '<div class="kpis kpis-3">' +
-    kpiB('Custa hoje', fmt(p.hojeMensal) + '/mês', null, fmt(p.hoje) + ' no ano') +
-    kpiB('Em ' + p.anos + ' anos', fmt(p.fimMensal) + '/mês', null, fmt(p.fim) + ' no ano', 'down') +
-    kpiB('Aumento', '+' + pnum(p.alta,1) + '%', 'inflacao-por-grupo',
-         'a mesma vida, mais cara') + '</div>';
+    kpiB(pt ? 'Custa hoje' : 'Costs today', fmt(p.hojeMensal) + (pt ? '/mês' : '/mo'), null, fmt(p.hoje) + (pt ? ' no ano' : ' a year')) +
+    kpiB(pt ? 'Em 12 meses' : 'In 12 months', fmt(em12) + (pt ? '/mês' : '/mo'), null, fmt(em12 * 12) + (pt ? ' no ano' : ' a year'), 'down') +
+    kpiB((pt ? 'Em ' : 'In ') + p.anos + (pt ? ' anos' : ' years'), fmt(p.fimMensal) + (pt ? '/mês' : '/mo'), 'inflacao-por-grupo', '+' + pnum(p.alta, 1) + '% · ' + (pt ? 'a mesma vida, mais cara' : 'the same life, dearer'), 'down') + '</div>';
+
+  /* as colunas de ano */
+  const celular = window.matchMedia && matchMedia('(max-width:560px)').matches;
+  let anos = []; for(let k = 1; k <= p.anos; k++) anos.push(k);
+  if(anos.length > 6 && !projTodosAnos) anos = [1,2,3,4,5,p.anos];
+  if(celular && !projMaisCol) anos = [1, p.anos].filter((x, i, a) => a.indexOf(x) === i);
+  const mostraParcial = !celular || projMaisCol, mostraIpca = !celular || projMaisCol;
+  const fator = projModo === 'ano' ? 12 : 1;
+  /* o ano corrente: o que já foi (este ano, até hoje) + o mês de hoje até dezembro */
+  const realAno = {}; Gasto.todos().forEach(g => { if(g.fluxo === 'saida' && String(g.data || '').slice(0, 4) === String(anoAtual)) realAno[g.grupo] = (realAno[g.grupo] || 0) + (Number(g.valor) || 0); });
+  const parcial = (grupo, mensal) => ((realAno[grupo] || 0) + mensal * (12 - mesAtual)) / 12;
+  const cel = v => '<td class="num">' + fmt(v * fator) + '</td>';
+  const linha = (rot, sub, taxa, mensal, grupo, cls, attrs) => '<tr class="' + (cls || '') + '"' + (attrs || '') + '><th scope="row" class="proj-col1">' + rot + (sub ? '<div class="t-sub">' + esc(sub) + '</div>' : '') + '</th>' +
+    (mostraIpca ? '<td class="num">' + (taxa == null ? '<span class="muted">—</span>' : pnum(taxa * 100, 2) + '%') + '</td>' : '') +
+    cel(mensal) + (mostraParcial ? cel(grupo === '__total' ? p.linhas.reduce((s2, l) => s2 + parcial(l.grupo, l.mensal), 0) : (cls === 'proj-sub' ? mensal : parcial(grupo, mensal))) : '') +
+    anos.map(k => cel(grupo === '__total' ? p.linhas.reduce((s2, l) => s2 + projValor(l.mensal, l.taxa, k), 0) : projValor(mensal, taxa, k))).join('') + '</tr>';
+  let tb = '<div class="tbl-wrap proj-wrap"><table class="tbl proj-tbl"><thead><tr><th class="proj-col1">' + esc(pt ? 'Grupo' : 'Group') + '</th>' +
+    (mostraIpca ? '<th class="num">' + esc(pt ? 'IPCA 12m' : 'IPCA 12m') + '</th>' : '') + '<th class="num">' + esc(pt ? 'Hoje' : 'Today') + '</th>' +
+    (mostraParcial ? '<th class="num">' + anoAtual + '<div class="t-sub">' + esc(pt ? 'parcial' : 'partial') + '</div></th>' : '') +
+    anos.map(k => '<th class="num">' + (anoAtual + k) + '</th>').join('') + '</tr></thead><tbody>';
+  const janela = Gasto.janela(), doze = Gasto.filtrar({de: janela.de, ate: janela.ate, fluxo: 'saida'});
+  p.linhas.forEach(l => {
+    const G = GRUPOS[l.grupo] || {}, aberto = !!projAbertos[l.grupo];
+    tb += linha('<button type="button" class="linkinho proj-g" data-acao="proj-grupo" data-g="' + esc(l.grupo) + '" aria-expanded="' + aberto + '">' + (aberto ? '▾ ' : '▸ ') + (G.ico || '') + ' ' + esc(l.nome) + '</button>',
+      '', l.taxa, l.mensal, l.grupo, 'proj-grupo');
+    if(aberto) Gasto.porChave(doze.filter(g => g.grupo === l.grupo), 'sub').forEach(c =>
+      tb += linha('<span class="proj-cat">' + esc(c.chave) + '</span>', '', l.taxa, c.valor / 12, l.grupo, 'proj-sub'));
+  });
+  tb += '</tbody><tfoot>' + linha('<b>' + esc(pt ? 'Total' : 'Total') + '</b>', '', null, p.hojeMensal, '__total', 'proj-total') + '</tfoot></table></div>';
+  h += '<div class="card sem-pad proj-card"><div class="card-head" style="padding:12px 14px 0">' + segModo +
+    '<span class="small muted">' + esc(mesIpca) + (Orcamento._buscando ? ' · ' + esc(pt ? 'atualizando…' : 'updating…') : '') + '</span></div>' + tb +
+    '<div class="row" style="gap:8px;padding:8px 14px 12px;flex-wrap:wrap">' +
+    (p.anos > 6 && (!celular || projMaisCol) ? '<button class="btn sm" data-acao="proj-todos">' + esc(projTodosAnos ? (pt ? 'menos anos' : 'fewer years') : (pt ? 'ver todos os anos' : 'see every year')) + '</button>' : '') +
+    (celular ? '<button class="btn sm" data-acao="proj-mais">' + esc(projMaisCol ? (pt ? 'menos colunas' : 'fewer columns') : (pt ? 'mais colunas' : 'more columns')) + '</button>' : '') + '</div></div>';
 
   if(p.diferenca != null && Math.abs(p.diferenca) > p.hoje * 0.005){
     const maior = p.diferenca > 0;
-    h += '<div class="card2-box"><b class="small">' +
-      (maior ? 'A sua cesta corre acima do IPCA cheio' : 'A sua cesta corre abaixo do IPCA cheio') + '</b>' +
-      '<p class="small muted" style="margin:6px 0 0">Projetando cada grupo pela inflação dele, o total em ' +
-      p.anos + ' anos fica <b>' + fmt(Math.abs(p.diferenca)) + (maior ? ' maior' : ' menor') +
-      '</b> do que se você aplicasse o IPCA cheio em tudo. ' +
-      (maior ? 'Isso acontece quando o peso está em educação e saúde, que sobem mais que a média.'
-             : 'Isso acontece quando o peso está em itens que sobem menos que a média.') + '</p></div>';
+    h += '<div class="card2-box"><b class="small">' + esc(maior ? (pt ? 'A sua cesta corre acima do IPCA cheio' : 'Your basket runs above headline IPCA') : (pt ? 'A sua cesta corre abaixo do IPCA cheio' : 'Your basket runs below headline IPCA')) + '</b>' +
+      '<p class="small muted" style="margin:6px 0 0">' + esc((pt ? 'Projetando cada grupo pela inflação dele, o total em ' : 'Projecting each group by its own inflation, the total in ') + p.anos + (pt ? ' anos fica ' : ' years is ') +
+      fmt(Math.abs(p.diferenca)) + (maior ? (pt ? ' maior' : ' higher') : (pt ? ' menor' : ' lower')) + (pt ? ' do que com o IPCA cheio em tudo.' : ' than with headline IPCA on everything.')) + '</p></div>';
   }
 
-  h += '<div class="card sem-pad"><table class="tbl"><thead><tr><th>Grupo</th>' +
-       '<th class="num">IPCA do grupo</th><th class="num">hoje /mês</th>' +
-       '<th class="num">em ' + p.anos + ' anos</th></tr></thead><tbody>';
-  p.linhas.forEach(l => {
-    const G = GRUPOS[l.grupo] || {};
-    h += '<tr><td><span class="t-main">' + (G.ico || '') + ' ' + esc(l.nome) + '</span>' +
-         '<div class="t-sub">' + esc(IPCA_GRUPOS[l.ipca] || '') + '</div></td>' +
-         '<td class="num">' + (l.taxa == null ? '<span class="muted">—</span>' : pnum(l.taxa*100,2) + '%') + '</td>' +
-         '<td class="num">' + fmt(l.mensal) + '</td>' +
-         '<td class="num down">' + fmt(l.fim/12) + '</td></tr>';
-  });
-  h += '</tbody><tfoot><tr><th>Total</th><th></th><th class="num">' + fmt(p.hojeMensal) +
-       '</th><th class="num">' + fmt(p.fimMensal) + '</th></tr></tfoot></table></div>';
-
-  /* a curva de cada grupo ao longo dos anos */
-  const series = p.linhas.slice(0,6).map(l => ({
-    nome: l.nome, cor: 'var(' + ((GRUPOS[l.grupo] || {}).cor || '--s1') + ')',
-    pontos: l.serie.map(s => {
-      const d = new Date(); d.setFullYear(d.getFullYear() + s.ano);
-      return {t: d.toISOString().slice(0,10), v: s.valor / 12};
-    })
-  }));
-  h += '<div class="card"><div class="card-head"><h3>Quanto cada grupo vai custar por mês</h3></div>' +
-       '<table class="tbl tbl-proj"><thead><tr><th>Grupo</th>' +
-       [0,1,2,3].map(i => '<th class="num">' + (new Date().getFullYear() + Math.round(p.anos*i/3)) + '</th>').join('') +
-       '</tr></thead><tbody>' +
-       p.linhas.map(l => '<tr><td>' + ((GRUPOS[l.grupo]||{}).ico || '') + ' ' + esc(l.nome) + '</td>' +
-         [0,1,2,3].map(i => {
-           const a = Math.round(p.anos*i/3);
-           const pt = l.serie[Math.min(a, l.serie.length-1)];
-           return '<td class="num">' + fmt(pt.valor/12) + '</td>';
-         }).join('') + '</tr>').join('') +
-       '</tbody></table></div>';
-
   /* fôlego: quanto tempo a carteira aguenta */
-  const t = (typeof totais === 'function' && (ST.posicoes || []).length) ? totais() : null;
-  if(t && t.valor){
-    const f = Orcamento.folego(t.valor);
+  const tt = (typeof totais === 'function' && (ST.posicoes || []).length) ? totais() : null;
+  if(tt && tt.valor){
+    const f = Orcamento.folego(tt.valor);
     const meses = n => n == null ? '—' : (n >= 120 ? '10 anos ou mais'
       : (n >= 24 ? pnum(n/12,1) + ' anos' : pnum(n,0) + ' meses'));
     h += '<div class="card"><div class="card-head"><h3>Quanto tempo a carteira aguenta</h3>' +
@@ -11008,25 +11036,11 @@ function viewBFuturo(){
          'sem contar o que ele ainda renderia nem o efeito da inflação. Serve para ter ordem de grandeza.</p></div>';
   }
 
-  h += '<p class="tiny muted" style="margin-top:4px">IPCA por grupo, séries ' +
+  h += '<p class="tiny muted" style="margin-top:4px">' + esc(pt ? 'IPCA por grupo, séries ' : 'IPCA by group, series ') +
        Object.keys(IPCA_GRUPOS).filter(k => k !== '433').join(', ') +
-       ' do Banco Central, acumulado dos últimos 12 meses. Projeção de juros compostos sobre o gasto ' +
-       'dos últimos 12 meses — supõe que você mantenha o mesmo padrão de vida.</p>';
+       esc(pt ? ' do Banco Central, acumulado dos últimos 12 meses (o app busca sozinho, uma vez por semana). Projeção de juros compostos sobre o gasto dos últimos 12 meses: supõe o mesmo padrão de vida.'
+              : ' from the Central Bank, last 12 months (the app fetches it by itself, once a week). Compound projection over the last 12 months of spending: assumes the same lifestyle.') + '</p>';
   return h;
-}
-
-async function bProjetar(){
-  bProjCarregando = true; render();
-  try{
-    const {series, falhas} = await Orcamento.todosOsGrupos(m => toast(m));
-    if(!Object.keys(series).length) throw new Error('não veio nenhuma série');
-    bProj = Orcamento.projetar(bAnos, series);
-    if(falhas.length) toast('Sem IPCA de: ' + falhas.join(', ') + '. Usei o IPCA cheio nesses.');
-    bProj.series = series;
-  }catch(e){
-    toast('Não consegui falar com o Banco Central agora. ' + (e.message || ''));
-  }
-  bProjCarregando = false; render();
 }
 
 /* =========================================================
@@ -17290,6 +17304,8 @@ function linhaOcorrencia(o, op){
    foi pontual. E o calendário do mês por cima de tudo.
    ========================================================= */
 
+let custosSecao = 'contas';       /* 3.76: contas | planejados */
+let planejadosParte = '';        /* 3.76: carro | viagens | parcelados | manutencao ('' = a primeira) */
 let custosAba = 'recorrentes';    /* todos | recorrentes | pontuais | calendario | revisar */
 
 function viewBCustos(){
@@ -17297,33 +17313,42 @@ function viewBCustos(){
 
   const dec = Recorrente.porMes();
   const atrasados = Recorrente.atrasados();
-  const paraRevisar = Gasto.todos().filter(g => g.revisar);
+  const pt = I18n.atual === 'pt';
+  /* 3.76: "Revisar" e "Todos" saíram daqui: o que é para conferir vai para o 📥 */
+  if(custosAba === 'todos' || custosAba === 'revisar') custosAba = 'recorrentes';
 
   const ABAS_C = [
-    {id:'todos',       ico:'📋', nome: I18n.atual === 'pt' ? 'Todos' : 'All'},
-    {id:'recorrentes', ico:'🔁', nome: t('per.recorrentes'), n: Recorrente.ativos().length},
+    {id:'recorrentes', ico:'🔁', nome: pt ? 'Todas as contas fixas' : 'All fixed bills', n: Recorrente.ativos().length},
     {id:'pontuais',    ico:'📍', nome: t('per.pontuais')},
-    {id:'calendario',  ico:'📅', nome: t('nav.agenda')},
-    {id:'revisar',     ico:'🚩', nome: t('cus.revisar'), n: paraRevisar.length + atrasados.length}
+    {id:'calendario',  ico:'📅', nome: t('nav.agenda')}
   ];
 
+  /* 3.76: um botão só, "+ Adicionar", com as opções explicadas (o menu junta as do app e as dos módulos) */
   let h = '<div class="card-head"><h1>' + esc(t('nav.custos')) + '</h1>' +
-    '<div class="head-acoes">' +
-      '<button class="btn sm" data-acao="wz-abrir">✨ ' +
-        (I18n.atual === 'pt' ? 'Passo a passo' : 'Step by step') + '</button>' +
-      '<button class="btn sm" data-acao="rec-importar">⬆ ' +
-        (I18n.atual === 'pt' ? 'Importar compromissos' : 'Import commitments') + '</button>' +
-      '<button class="btn primary sm" data-acao="rec-novo">+ ' +
-        (I18n.atual === 'pt' ? 'Novo compromisso' : 'New commitment') + '</button>' +
-    '</div></div>';
+    '<div class="head-acoes"><button class="btn primary sm" data-acao="cf-adicionar">+ ' + (pt ? 'Adicionar' : 'Add') + '</button></div></div>';
+  /* 3.76: duas partes — as contas que se repetem e os gastos que dá para prever (viagens, carro, parcelados) */
+  const sec = (s, rot) => '<button type="button" class="btn sm' + (custosSecao === s ? ' primary' : '') + '" data-acao="cf-secao" data-v="' + s + '" aria-pressed="' + (custosSecao === s) + '">' + rot + '</button>';
+  h += '<div class="seg cf-secoes" role="group" style="margin:0 0 12px">' + sec('contas', '📌 ' + esc(pt ? 'Contas fixas' : 'Fixed bills')) + sec('planejados', '🧭 ' + esc(pt ? 'Gastos planejados' : 'Planned expenses')) + '</div>';
+  if(custosSecao === 'planejados')
+    return h + (window.MoneyModulos ? MoneyModulos.html('custos.planejados', {parte: planejadosParte}) : '');
 
-  h += '<div class="kpis kpis-3">' +
-    kpiB(I18n.atual === 'pt' ? 'Entra todo mês' : 'In every month', fmt(dec.entra), null, null, 'up') +
-    kpiB(I18n.atual === 'pt' ? 'Sai todo mês' : 'Out every month', fmt(dec.sai), null, null, 'down') +
-    kpiB(t('fin.sobrou'), fmt(dec.sobra), null,
-         I18n.atual === 'pt' ? 'antes do gasto variável' : 'before variable spending',
-         dec.sobra >= 0 ? 'up' : 'down') +
-    '</div>';
+  /* sem renda cadastrada, "Sobrou" seria só o gasto com sinal trocado: no lugar, o convite para cadastrar a renda */
+  const temRenda = dec.entra > 0 || Recorrente.ativos().some(r => (GRUPOS[r.grupo] || {}).fluxo === 'entrada');
+  if(temRenda)
+    h += '<div class="kpis kpis-3">' +
+      kpiB(pt ? 'Entra todo mês' : 'In every month', fmt(dec.entra), null, pt ? 'a renda que se repete' : 'recurring income', 'up') +
+      kpiB(pt ? 'Sai todo mês' : 'Out every month', fmt(dec.sai), null, null, 'down') +
+      kpiB(t('fin.sobrou'), fmt(dec.sobra), null,
+           pt ? 'antes do gasto variável' : 'before variable spending',
+           dec.sobra >= 0 ? 'up' : 'down') +
+      '</div>';
+  else
+    h += '<div class="kpis kpis-2">' +
+      kpiB(pt ? 'Sai todo mês' : 'Out every month', fmt(dec.sai), null, null, 'down') +
+      '<div class="kpi cf-sem-renda"><div class="lbl">' + esc(pt ? 'Quanto sobra' : 'What is left') + '</div>' +
+        '<p class="small" style="margin:6px 0 8px">' + esc(pt ? 'Cadastre as suas rendas para ver quanto sobra.' : 'Add your income to see what is left.') + '</p>' +
+        '<button class="btn sm" data-irpara="b-renda">💰 ' + esc(pt ? 'Cadastrar renda' : 'Add income') + '</button></div>' +
+      '</div>';
 
   h += (window.MoneyModulos ? MoneyModulos.html('custos.contas', {}) : '');   /* 3.75: o mês com o status de cada conta (modulos/contas-mes.js) */
   h += (window.MoneyModulos ? MoneyModulos.html('custos.topo', {}) : '');
@@ -17333,43 +17358,54 @@ function viewBCustos(){
       ? 'Em ' + hojeISO().slice(0,4) + ' você economizou <b>' + fmt(econ.total) + '</b> com pontos, cashback e créditos (' + econ.n + (econ.n === 1 ? ' vez' : ' vezes') + ').'
       : 'In ' + hojeISO().slice(0,4) + ' you saved <b>' + fmt(econ.total) + '</b> with points, cashback and credits (' + econ.n + ' times).') + '</p>';
 
-  if(typeof Desloc !== 'undefined' && Flags.ligada('deslocamentos')){
-    const rd = Desloc.resumo(hojeISO());
-    h += '<button class="card card-link" data-irpara="b-desloc"><span>🗺️ ' + (I18n.atual === 'pt' ? 'Deslocamentos' : 'Commutes') + '</span>' +
-      '<span class="small muted">' + (Desloc.trajetos().length ? fmt(rd.total) + (I18n.atual === 'pt' ? ' por mês estimado em combustível, pedágio e transporte' : ' per month estimated')
-                                                              : (I18n.atual === 'pt' ? 'quanto custa ir e vir: cadastre lugares e trajetos' : 'what going back and forth costs')) + ' ›</span></button>';
-  }
   if(atrasados.length)
     h += '<div class="aviso-box"><b>' + atrasados.length + ' ' +
       (I18n.atual === 'pt' ? 'vencimentos passaram sem você marcar nada' : 'due dates went by unmarked') +
       '</b><p class="small" style="margin:6px 0 0">' +
       (I18n.atual === 'pt'
-        ? 'Pode ser que já tenham sido pagos e ninguém avisou o app. Veja em Revisar.'
-        : 'They may already be paid and nobody told the app. Check the Review tab.') + '</p></div>';
+        ? 'Pode ser que já tenham sido pagos e ninguém avisou o app. Veja no 📥 (Contas atrasadas).'
+        : 'They may already be paid and nobody told the app. Check 📥 (Overdue bills).') + '</p></div>';
 
   h += '<div class="abas-c">' + ABAS_C.map(a =>
     '<button class="aba-c' + (custosAba === a.id ? ' on' : '') + '" data-custaba="' + a.id + '">' +
     a.ico + ' ' + esc(a.nome) + (a.n ? ' <b>' + a.n + '</b>' : '') + '</button>').join('') + '</div>';
 
   /* uma linha dizendo o que é a aba aberta */
-  const pt = I18n.atual === 'pt';
   const EXPLICA_C = {
-    todos:       pt ? 'Tudo junto: os compromissos que se repetem e os gastos pontuais mais recentes.' : 'Everything together: recurring commitments and the latest one-off costs.',
     recorrentes: pt ? 'O que se repete (aluguel, escola, assinaturas), com o dia em que cai e o período em que vale.' : 'What repeats (rent, school, subscriptions), with the day it falls and the period it applies.',
     pontuais:    pt ? 'Gastos que aconteceram uma vez e acabaram.' : 'Costs that happened once and ended.',
-    calendario:  pt ? 'O mês no calendário: o que entra e o que sai em cada dia.' : 'The month on a calendar: what comes in and goes out each day.',
-    revisar:     pt ? 'Lançamentos marcados para conferir e vencimentos que passaram sem ninguém marcar.' : 'Entries flagged to check and due dates that went by unmarked.'
+    calendario:  pt ? 'O mês no calendário: o que entra e o que sai em cada dia.' : 'The month on a calendar: what comes in and goes out each day.'
   };
   h += '<p class="small muted aba-explica" style="margin:-8px 0 14px">' + esc(EXPLICA_C[custosAba] || EXPLICA_C.recorrentes) + '</p>';
 
-  if(custosAba === 'todos')           h += blocoTodos();
-  else if(custosAba === 'calendario') h += blocoCalendario();
+  if(custosAba === 'calendario')      h += blocoCalendario();
   else if(custosAba === 'pontuais')   h += blocoPontuais();
-  else if(custosAba === 'revisar')    h += blocoRevisar(paraRevisar, atrasados);
   else                                h += blocoRecorrentes();
 
   return h;
 }
+
+/* 3.76: "+ Adicionar" em Contas fixas — um menu com cada jeito de cadastrar, explicado numa linha.
+   Os módulos entram pelo ponto custos.adicionar: [{ico, pt, en, dpt, den, acao | label}] (label = id de um <input type=file>). */
+function abrirAdicionarConta(){
+  const pt = I18n.atual !== 'en';
+  const base = [
+    {ico:'📌', pt:'Nova conta fixa', en:'New fixed bill', dpt:'Digite uma conta que se repete: aluguel, escola, condomínio.', den:'Type a bill that repeats: rent, school, condo fee.', acao:'rec-novo'},
+    {ico:'✨', pt:'Passo a passo', en:'Step by step', dpt:'O app pergunta o que você paga todo mês e cadastra tudo de uma vez.', den:'The app asks what you pay every month and adds it all at once.', acao:'wz-abrir'},
+    {ico:'⬆', pt:'Importar de uma planilha', en:'Import from a spreadsheet', dpt:'Traz as contas de uma planilha (Excel ou CSV) que você já tem.', den:'Brings the bills from a spreadsheet (Excel or CSV) you already have.', acao:'rec-importar'}
+  ];
+  const itens = base.concat(window.MoneyModulos ? MoneyModulos.itens('custos.adicionar', {}) : []);
+  const h = '<ul class="cf-add">' + itens.map(x =>
+    '<li>' + (x.label ? '<label class="cf-add-op" for="' + esc(x.label) + '">' : '<button type="button" class="cf-add-op" data-acao="' + esc(x.acao) + '">') +
+      '<span class="cf-add-ico">' + x.ico + '</span><span><b>' + esc(pt ? x.pt : x.en) + '</b><span class="t-sub">' + esc(pt ? x.dpt : x.den) + '</span></span>' +
+    (x.label ? '</label>' : '</button>') + '</li>').join('') + '</ul>';
+  $('#genTitle').textContent = pt ? 'Adicionar' : 'Add';
+  $('#genBody').innerHTML = Verter.html(h);
+  abrir('genModal');
+}
+
+/* o menu fecha ANTES de a opção rodar (na captura): a opção pode abrir outra janela no mesmo lugar */
+document.addEventListener('click', ev => { if(ev.target.closest && ev.target.closest('#genBody .cf-add-op')) fechar('genModal'); }, true);
 
 /* ---------- o calendário do mês ---------- */
 function blocoCalendario(){
@@ -17504,37 +17540,6 @@ document.addEventListener('change', e => {
   if(b){ b.textContent = rotuloDetectados(n); b.disabled = !n; }
 });
 
-/* ---------- todos juntos: o que se repete e o que foi pontual ---------- */
-function blocoTodos(){
-  const pt = I18n.atual === 'pt';
-  const rec = Recorrente.ativos();
-  const pont = bLista({fluxo:'saida'})
-    .filter(g => !g.recorrenteId && (!g.per || g.per === 'Pontual' || g.per === 'Frequente'))
-    .sort((a,b) => (b.data || '').localeCompare(a.data || '')).slice(0, 80);
-  if(!rec.length && !pont.length)
-    return '<div class="card"><p class="muted small" style="margin:0">' + (pt ? 'Nada cadastrado ainda.' : 'Nothing here yet.') + '</p></div>';
-  let h = '<div class="card sem-pad"><table class="tbl tbl-todos"><thead><tr><th></th>' +
-    '<th>' + (pt ? 'O quê' : 'What') + '</th><th>' + (pt ? 'Quando' : 'When') + '</th>' +
-    '<th class="num">' + esc(t('fin.valor')) + '</th></tr></thead><tbody>';
-  rec.forEach(r => {
-    const G = GRUPOS[r.grupo] || {}, per = Recorrente.periodoCurto(r);
-    h += '<tr class="linha-click" data-recedit="' + r.id + '"><td title="' + esc(t('per.recorrentes')) + '">🔁</td>' +
-      '<td><span class="t-main">' + esc(r.nome) + '</span><div class="t-sub">' + (G.ico || '') + ' ' + esc(r.sub) + (r.quem ? ' · ' + esc(quemVer(r.quem)) : '') + '</div></td>' +
-      '<td class="t-sub">' + esc(Recorrente.explicar(r)) + (per ? '<div class="t-sub rec-periodo">' + esc(per) + '</div>' : '') + '</td>' +
-      '<td class="num ' + (r.fluxo === 'entrada' ? 'up' : '') + '">' + (r.fluxo === 'entrada' ? '+' : '') +
-        fmt(r.porVisita ? Recorrente.mediaDoServico(r) : Recorrente.valorEm(r, hojeISO())) + '</td></tr>';
-  });
-  if(pont.length) h += '<tr class="tr-sep"><td colspan="4">' + esc(pt ? 'Pontuais (os 80 mais recentes)' : 'One-offs (80 most recent)') + '</td></tr>';
-  pont.forEach(g => {
-    const G = GRUPOS[g.grupo] || {};
-    h += '<tr class="linha-click" data-bid="' + g.id + '"><td title="' + esc(t('per.pontuais')) + '">📍</td>' +
-      '<td><span class="t-main">' + esc(g.sub) + '</span><div class="t-sub">' + (G.ico || '') + ' ' + esc((g.desc || '').slice(0,70)) + '</div></td>' +
-      '<td class="nowrap t-sub">' + (g.data ? esc(I18n.data(g.data)) : '—') + '</td>' +
-      '<td class="num down">' + fmt(g.valor) + Abat.marca(g) + '</td></tr>';
-  });
-  return h + '</tbody></table></div>';
-}
-
 /* ---------- o que foi pontual ---------- */
 function blocoPontuais(){
   const lista = bLista({fluxo:'saida'})
@@ -17576,65 +17581,6 @@ function blocoPontuais(){
     h += '<p class="tiny muted">' + (I18n.atual === 'pt'
       ? 'Mostrando os 80 mais recentes. Use os filtros para achar o resto.'
       : 'Showing the 80 most recent. Use the filters to find the rest.') + '</p>';
-  return h;
-}
-
-/* ---------- o que merece um olhar ---------- */
-function blocoRevisar(paraRevisar, atrasados){
-  let h = (window.MoneyModulos ? MoneyModulos.html('custos.revisar', {}) : '');
-
-  if(atrasados.length){
-    h += '<div class="card"><div class="card-head"><h3>' +
-      (I18n.atual === 'pt' ? 'Venceu e ninguém marcou' : 'Due and unmarked') + '</h3></div>' +
-      '<div class="oc-lista">' + atrasados.map(o => linhaOcorrencia(o)).join('') + '</div></div>';
-  }
-
-  if(paraRevisar.length){
-    h += '<div class="card sem-pad"><div class="card-head" style="padding:14px 16px 0"><h3>🚩 ' +
-      (I18n.atual === 'pt' ? 'Marcados para conferir' : 'Flagged to check') + '</h3></div>' +
-      '<table class="tbl"><tbody>' + paraRevisar.slice(0,40).map(g =>
-        '<tr class="linha-click" data-bid="' + g.id + '">' +
-        '<td class="nowrap">' + (g.data ? esc(I18n.data(g.data)) : '—') + '</td>' +
-        '<td><span class="t-main">' + esc(g.sub) + '</span>' + (g.roboSugeriu ? ' <span class="tag-rep" title="' + esc(I18n.atual === 'pt' ? 'o robô sugeriu outra coisa: abra para decidir' : 'the robot suggested something else: open to decide') + '">🤖 ' + (I18n.atual === 'pt' ? 'robô sugeriu outra coisa' : 'robot suggests') + '</span>' : '') +
-          '<div class="t-sub">' + esc((g.desc || '').slice(0,70)) + '</div></td>' +
-        '<td class="num">' + fmt(g.valor) + '</td>' +
-        '<td class="num"><button class="btn sm" data-grev="' + g.id + '">' +
-          (I18n.atual === 'pt' ? 'resolvido' : 'resolved') + '</button></td></tr>').join('') +
-      '</tbody></table></div>';
-  }
-
-  /* lançamentos que parecem ser de uma categoria que se repete */
-  const candidatos = [];
-  const vistos = new Set();
-  Gasto.todos().slice(-400).forEach(g => {
-    const k = g.grupo + '|' + g.sub;
-    if(vistos.has(k)) return;
-    vistos.add(k);
-    const s = Recorrente.pareceRecorrente(g);
-    if(s) candidatos.push(s);
-  });
-  /* o que parou (ex.: um contrato que acabou) não é conta fixa */
-  const vivos = new Set(Recorrente.detectar().map(x => x.chave));
-  for(let i = candidatos.length - 1; i >= 0; i--)
-    if(!vivos.has(candidatos[i].grupo + '|' + String(candidatos[i].sub).trim().toLowerCase())) candidatos.splice(i, 1);
-  if(candidatos.length){
-    h += '<div class="card"><div class="card-head"><h3>' +
-      (I18n.atual === 'pt' ? 'Isto parece ser conta fixa' : 'These look like fixed bills') + '</h3></div>' +
-      '<p class="small muted" style="margin:0 0 12px">' +
-      (I18n.atual === 'pt'
-        ? 'Apareceu em vários meses seguidos e não está cadastrado como compromisso. Se for conta fixa, cadastre para entrar na agenda.'
-        : 'Showed up several months in a row and is not registered as a commitment.') + '</p>' +
-      '<div class="chips">' + candidatos.slice(0,10).map(x =>
-        '<button class="chip click" data-recsug="' + esc(x.grupo + '|' + x.sub) + '">' +
-        (GRUPOS[x.grupo] || {}).ico + ' ' + esc(x.sub) + ' · ' + x.meses + ' ' +
-        (I18n.atual === 'pt' ? 'meses' : 'months') + '</button>').join('') + '</div></div>';
-  }
-
-  if(!h) h = '<div class="card"><div class="vazio"><div class="vazio-ico">✅</div><h3>' +
-    (I18n.atual === 'pt' ? 'Nada pendente' : 'Nothing pending') + '</h3><p>' +
-    (I18n.atual === 'pt'
-      ? 'Nenhum vencimento em aberto e nada marcado para conferir.'
-      : 'No open due dates and nothing flagged.') + '</p></div></div>';
   return h;
 }
 
@@ -18486,9 +18432,9 @@ const AJUDA_TELAS = {
          f:['Filters split by period, group, category, who paid and how.','An imported statement or a receipt photo records without typing.']}
   },
   'b-custos': {
-    pt: {t:'Contas fixas', o:'As contas fixas e os gastos que se repetem (aluguel, diarista) e o que foi pontual, com o dia de cada um.',
+    pt: {t:'Contas fixas', o:'Em cima, "Contas fixas" e "Gastos planejados" (carro, viagens, parcelados). As contas fixas e os gastos que se repetem (aluguel, diarista) e o que foi pontual, com o dia de cada um.',
          f:['Conta recorrente com o dia certo ganha aviso antes de vencer.','Revisar mostra o que venceu sem marcar e o que parece conta fixa nova.']},
-    en: {t:'Fixed bills', o:'Fixed bills and recurring expenses (rent, cleaner) and what was one-off, with the day of each.',
+    en: {t:'Fixed bills', o:'At the top, "Fixed bills" and "Planned expenses" (car, trips, instalments). Fixed bills and recurring expenses (rent, cleaner) and what was one-off, with the day of each.',
          f:['A recurring bill with the right day gets a reminder before it is due.','Review shows what passed its date unmarked and what looks like a new fixed bill.']}
   },
   'b-renda': {
@@ -18510,9 +18456,9 @@ const AJUDA_TELAS = {
          f:['The app finds each place on the map from its address.','Two people in the same car count once.','Post the estimate as a fixed cost so it counts in the cost of living.']}
   },
   'b-futuro': {
-    pt: {t:'Futuro', o:'Quanto a vida vai custar daqui a alguns anos, com a inflação de cada grupo (IPCA por grupo).',
+    pt: {t:'Projeção', o:'Quanto a vida vai custar daqui a alguns anos, com a inflação de cada grupo (IPCA por grupo, buscado sozinho).',
          f:['Saúde e educação sobem mais que a média; transporte e comunicação, menos.','Mostra quanto a renda precisa crescer só para ficar no lugar.']},
-    en: {t:'Future', o:'What life will cost a few years ahead, using each group’s own inflation (IPCA by group).',
+    en: {t:'Projection', o:'What life will cost a few years ahead, using each group’s own inflation (IPCA by group, fetched on its own).',
          f:['Health and education rise faster than average; transport and communication, slower.','Shows how much income must grow just to stand still.']}
   },
   'b-precos': {
@@ -27546,6 +27492,7 @@ function sairDoWizard(idDoModal){
 }
 
 function abrir(id){ const el = $('#' + id); el.classList.remove('hidden'); el.classList.remove('larga'); if(id === 'assetModal') delete el.dataset.fixo;
+  if(id === 'genModal') delete $('#genBody').dataset.inbox;   /* 3.76: só o 📥 marca de novo, logo depois */
   setTimeout(() => { try{ if(typeof UX !== 'undefined'){ UX.envolverTabelas(el); UX.cabecalhoFixo(el, true); } }catch(e){} }, 0); }   /* larga: quem precisa põe depois de abrir */
 function fechar(id){ $('#' + id).classList.add('hidden'); }
 const MAX_TOASTS = 3;
@@ -27574,6 +27521,8 @@ function toast(msg, tipo){
 }
 
 function irPara(v){
+  /* 3.76: links antigos — Deslocamentos virou uma parte de Contas fixas (Gastos planejados → Carro e deslocamentos) */
+  if(v === 'b-desloc'){ custosSecao = 'planejados'; planejadosParte = 'carro'; v = 'b-custos'; }
   if(v !== 'config' && appsVisiveis().indexOf(appDaView(v)) < 0) v = 'b-painel';   /* 3.66: visão da casa */
   /* clicou numa aba do outro app: troca de app junto */
   const dono = appDaView(v);
@@ -27981,15 +27930,57 @@ function inboxItens(){
   return itens;
 }
 
+/* 3.76: o 📥 é a lista de PENDÊNCIAS, em grupos, cada item com a ação ali mesmo (sem levar a outra tela sem explicar).
+   Os módulos entram pelo ponto inbox.grupos: [{id, n, html}] (id = um dos grupos abaixo; html = os itens, com os botões).
+   O contador do sino é a soma dos itens (os avisos só enquanto não forem vistos). inboxItens() continua (lista simples). */
+const INBOX_GRUPOS = [
+  ['confirmar', '✅', 'Confirmar classificação', 'Confirm categories', 'O que o banco mandou e o app não tem certeza da categoria: confirme ou corrija aqui mesmo.', 'What the bank sent and the app is unsure about: confirm or fix right here.'],
+  ['atrasadas', '⚠️', 'Contas atrasadas', 'Overdue bills', 'Passaram do vencimento e ninguém marcou: se já pagou, marque; senão, pague.', 'Past due and unmarked: if paid, mark it; if not, pay it.'],
+  ['contafixa', '📌', 'Parece conta fixa: cadastrar?', 'Looks like a fixed bill: add it?', 'O mesmo recebedor se repete todo mês. Cadastrando, ele entra na agenda e no previsto.', 'The same payee repeats every month. Adding it puts it in the schedule and the forecast.'],
+  ['docs', '📄', 'Documentos para subir', 'Documents to upload', 'Arquivos que o app pede de tempos em tempos para manter os números certos.', 'Files the app asks for from time to time to keep the numbers right.'],
+  ['viagem', '🧳', 'Foi viagem?', 'Was it a trip?', 'Combustível acima do normal em poucos dias. Se foi viagem, sai da média.', 'Fuel above normal in a few days. If it was a trip, it leaves the average.'],
+  ['familia', '👪', 'Família e segurança', 'Family and security', 'Os passos, na ordem, para a família usar o app com segurança.', 'The steps, in order, for the family to use the app safely.'],
+  ['avisos', '🔔', 'Avisos do app', 'App notices', 'Só informação: contas que vencem logo, o que entra hoje.', 'Information only: bills due soon, what lands today.']
+];
+function inboxVistos(){ ST.config = ST.config || {}; return (ST.config.inboxVistos = ST.config.inboxVistos || {}); }
+function inboxGrupos(){
+  const pt = I18n.atual !== 'en', por = {};
+  const add = (id, n, html) => { if(!n) return; por[id] = por[id] || {n: 0, html: ''}; por[id].n += n; por[id].html += html; };
+  /* confirmar: as origens "A confirmar"/"A identificar" e os marcados para conferir */
+  if(window.Origem){
+    Origem.grupos().forEach(x => add('confirmar', 1, '<li class="inb-item"><div><b>' + esc(x.rotulo) + '</b><span class="t-sub">' +
+      esc(x.itens.length + (pt ? ' lançamento(s) · ' : ' entr(ies) · ') + ((GRUPOS[x.grupo] || {}).nome || x.grupo) + ' › ' + x.sub) + '</span></div><span class="inb-acoes">' +
+      (x.status === 'confirmar' ? '<button class="btn sm primary" data-acao="or-confirmar-grupo" data-chave="' + esc(x.chave) + '">✓ ' + esc(pt ? 'Confirmar' : 'Confirm') + '</button>' : '') +
+      '<button class="btn sm" data-acao="or-mudar" data-id="' + esc(x.itens[0].id) + '">' + esc(pt ? 'Corrigir' : 'Fix') + '</button></span></li>'));
+  }
+  Gasto.todos().filter(g => g.revisar).slice(0, 40).forEach(g => add('confirmar', 1, '<li class="inb-item"><div><b>🚩 ' + esc(g.sub || '') + ' · ' + fmt(g.valor) + '</b><span class="t-sub">' +
+    esc((g.data ? I18n.data(g.data) + ' · ' : '') + String(g.desc || '').slice(0, 60)) + '</span></div><span class="inb-acoes">' +
+    '<button class="btn sm primary" data-grev="' + esc(g.id) + '">✓ ' + esc(pt ? 'Conferido' : 'Checked') + '</button><button class="btn sm" data-acao="or-mudar" data-id="' + esc(g.id) + '">' + esc(pt ? 'Corrigir' : 'Fix') + '</button></span></li>'));
+  /* contas atrasadas, com a mesma linha (e os mesmos botões) da agenda */
+  try{ (Recorrente.atrasados() || []).forEach(o => add('atrasadas', 1, '<li class="inb-item"><div><b>' + esc(o.r.nome) + ' · ' + fmt(o.valor) + '</b><span class="t-sub">' +
+    esc((pt ? 'venceu em ' : 'was due on ') + I18n.data(o.data)) + '</span></div><span class="inb-acoes">' +
+    '<button class="btn sm primary" data-acao="inb-pago" data-rid="' + esc(o.r.id) + '" data-data="' + esc(o.data) + '">✓ ' + esc(pt ? 'Já paguei' : 'Already paid') + '</button>' +
+    '<button class="btn sm" data-acao="inb-nao-pago" data-rid="' + esc(o.r.id) + '" data-data="' + esc(o.data) + '">' + esc(pt ? 'Não vou pagar' : 'Will not pay') + '</button></span></li>')); }catch(e){}
+  /* avisos: o que vence logo e o que entra hoje (só informação; "ok, entendi" tira) */
+  const vistos = inboxVistos();
+  inboxItens().filter(x => x.tipo === 'vencer' || x.tipo === 'entrada').forEach(x => {
+    const k = x.tipo + '|' + x.nome + '|' + x.data; if(vistos[k]) return;
+    add('avisos', 1, '<li class="inb-item"><div><b>' + x.ico + ' ' + esc(x.nome) + ' · ' + fmt(x.valor) + '</b><span class="t-sub">' + esc(x.sub) + '</span></div>' +
+      '<span class="inb-acoes"><button class="btn sm" data-acao="inb-visto" data-k="' + esc(k) + '">' + esc(pt ? 'ok, entendi' : 'ok, got it') + '</button></span></li>');
+  });
+  if(window.MoneyModulos) MoneyModulos.itens('inbox.grupos', {}).forEach(g => g && add(g.id, g.n || 0, g.html || ''));
+  return INBOX_GRUPOS.filter(g => por[g[0]]).map(g => ({id: g[0], ico: g[1], titulo: pt ? g[2] : g[3], explica: pt ? g[4] : g[5], n: por[g[0]].n, html: por[g[0]].html}));
+}
+function inboxContagem(){ return inboxGrupos().reduce((s, g) => s + g.n, 0); }
+
 function renderInboxN(){
   const n = $('#inboxN'), bt = $('#btnInbox');
   if(!n || !bt) return;
-  const itens = inboxItens();
-  const q = itens.filter(x => x.tipo !== 'entrada').length;
+  const q = inboxContagem();   /* 3.76: o mesmo número da lista */
   n.textContent = q > 99 ? '99+' : String(q);
   n.classList.toggle('hidden', !q);
   const pt = I18n.atual !== 'en';
-  const rotulo = (pt ? 'Mensagens' : 'Messages') + (q ? (pt ? ' — ' + q + ' pendente' + (q > 1 ? 's' : '') : ' — ' + q + ' pending') : '');
+  const rotulo = (pt ? 'Pendências' : 'To do') + (q ? (pt ? ' — ' + q + ' pendente' + (q > 1 ? 's' : '') : ' — ' + q + ' pending') : '');
   bt.setAttribute('aria-label', rotulo);
   const live = $('#inboxLive');
   if(live && live.textContent !== rotulo) live.textContent = rotulo;
@@ -27997,26 +27988,39 @@ function renderInboxN(){
 
 function abrirInbox(){
   const pt = I18n.atual !== 'en';
-  const itens = inboxItens();
+  const gs = inboxGrupos();
   let h = '';
-  if(!itens.length){
-    h += '<p class="small muted">' + esc(pt ? 'Nada pendente. Contas a vencer, atrasadas e entradas do dia aparecem aqui.'
-                                           : 'Nothing pending. Bills due, overdue bills and today\'s income show up here.') + '</p>';
+  if(!gs.length){
+    h += '<p class="small muted">' + esc(pt ? 'Nada pendente. O que precisar de você (confirmar uma categoria, uma conta atrasada, um documento) aparece aqui.'
+                                           : 'Nothing pending. Whatever needs you (confirm a category, an overdue bill, a document) shows up here.') + '</p>';
   }else{
-    h += '<ul class="inbox-lista">' + itens.map(x =>
-      '<li class="inbox-item ' + x.tipo + '"><i>' + x.ico + '</i><div><b>' + esc(x.nome) + '</b>' +
-      '<span class="t-sub">' + esc(x.sub) + '</span></div>' +
-      '<span class="inbox-val">' + fmt(x.valor) + '</span></li>').join('') + '</ul>';
+    h += gs.map(g => '<details class="inb-grupo" data-inbgrupo="' + g.id + '" open><summary><span>' + g.ico + ' <b>' + esc(g.titulo) + '</b></span>' +
+      '<span class="inb-n">' + g.n + '</span></summary><p class="tiny muted inb-explica">' + esc(g.explica) + '</p><ul class="inb-lista">' + g.html + '</ul></details>').join('');
   }
   h += '<div class="f-actions" style="margin-top:12px">' +
-    '<button class="btn sm" data-irpara="b-custos" data-close="genModal">📌 ' + esc(pt ? 'Ver compromissos' : 'See commitments') + '</button>' +
     '<button class="btn sm" data-irpara="config" data-close="genModal">🔔 ' + esc(pt ? 'Avisos' : 'Alerts') + '</button>' +
-    (window.MoneyModulos ? MoneyModulos.html('inbox.rodape', {}) : '') +   /* 3.75: ex.: "👪 Visão da família" (modulos/visao-casa.js) */
     '<button class="btn primary sm" data-close="genModal">' + esc(pt ? 'Fechar' : 'Close') + '</button></div>';
-  $('#genTitle').textContent = pt ? 'Mensagens' : 'Messages';
+  $('#genTitle').textContent = pt ? 'Pendências' : 'To do';
   $('#genBody').innerHTML = Verter.html(h);
   abrir('genModal');
+  $('#genBody').dataset.inbox = '1';
 }
+/* 3.76: a ação feita dentro do 📥 resolve ali mesmo: a lista e o contador se refazem (o grupo aberto continua aberto) */
+document.addEventListener('click', ev => {
+  const b = ev.target.closest && ev.target.closest('#genBody[data-inbox="1"] [data-acao], #genBody[data-inbox="1"] [data-grev], #genBody[data-inbox="1"] [data-ocestado], #genBody[data-inbox="1"] [data-pgest]');
+  if(!b || b.hasAttribute('data-close')) return;
+  setTimeout(() => {
+    const gm = $('#genModal'), corpo = $('#genBody');
+    if(!gm || gm.classList.contains('hidden') || !corpo || corpo.dataset.inbox !== '1') return;
+    const abertos = [...corpo.querySelectorAll('details.inb-grupo[open]')].map(d => d.dataset.inbgrupo);
+    const vistos = [...corpo.querySelectorAll('details.inb-grupo')].map(d => d.dataset.inbgrupo);
+    abrirInbox();
+    corpo.dataset.vistos = vistos.join(',');
+    const antes = corpo.dataset.vistos ? corpo.dataset.vistos.split(',') : [];
+    corpo.querySelectorAll('details.inb-grupo').forEach(d => { if(antes.indexOf(d.dataset.inbgrupo) >= 0 && abertos.indexOf(d.dataset.inbgrupo) < 0) d.open = false; });
+    renderInboxN();
+  }, 120);
+});
 
 function ligarTopoPadrao(){
   const bp = $('#btnPerfil');
@@ -28898,7 +28902,10 @@ function ligarEventos(){
       /* o motor não teve certeza do valor: a pessoa toca no certo */
       case 'esc-ia': tentarIAEscaneado(Number(d.idx)); break;
       case 'esc-valor': { const r = escaneados[d.idx]; if(r){ r.valor = Number(d.v); r.confiavel = true; r.escolhido = true; r.confianca = Math.max(r.confianca || 0, 7); mostrarLidos(escaneados); } break; }
-      case 'b-projetar': bProjetar(); break;
+      case 'proj-modo': projModo = d.v === 'ano' ? 'ano' : 'mes'; render(); break;   /* 3.76: Projeção */
+      case 'proj-grupo': projAbertos[d.g] = !projAbertos[d.g]; render(); break;
+      case 'proj-todos': projTodosAnos = !projTodosAnos; render(); break;
+      case 'proj-mais': projMaisCol = !projMaisCol; render(); break;
       case 'b-novo-preco': fechar('genModal'); abrirPreco(d.item || ''); break;
       case 'b-filtros': bFiltroAberto = !bFiltroAberto; render(); break;
       case 'fechar-anuncio': Anuncio.fechar(); break;
@@ -29037,6 +29044,11 @@ function ligarEventos(){
         break;
       }
       case 'rec-novo': abrirRecorrente(null); break;
+      case 'cf-adicionar': abrirAdicionarConta(); break;
+      case 'inb-visto': inboxVistos()[d.k] = 1; Store.salvar(); renderInboxN(); break;   /* 3.76: aviso do 📥 visto */
+      case 'inb-pago': Pagamento.marcar(d.rid, d.data, 'pago'); Store.salvar(); render(); renderFita(); break;            /* 3.76: conta atrasada resolvida no 📥 */
+      case 'inb-nao-pago': Pagamento.marcar(d.rid, d.data, 'cancelado'); Store.salvar(); render(); renderFita(); break;   /* 3.76: o menu único de Contas fixas */
+      case 'cf-secao': custosSecao = d.v === 'planejados' ? 'planejados' : 'contas'; if(d.parte) planejadosParte = d.parte; render(); break;
       case 'rec-importar': ImportRec.escolher(); break;
       case 'rec-importar-ok': ImportRec.importar(); break;
       case 'rec-detectar-ok': {
@@ -29667,6 +29679,8 @@ function comecarApp(r){
     if(n) setTimeout(() => toast('Criei ' + n + ' lançamentos de saldo inicial em Movimentações.'), 1400);
   }
   I18n.iniciar();
+  /* 3.76: o IPCA da Projeção (e do previsto) se atualiza sozinho, em segundo plano, se o guardado tiver mais de 7 dias */
+  setTimeout(() => { try{ Orcamento.atualizarSeVelho(); }catch(e){} }, 4000);
 
   /* quem está usando: a sessão guardada manda; sem ela, o modo é
      o de sempre (carteira aberta com senha, ou arquivo local) */
@@ -29958,15 +29972,15 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/arquivos.js?v=1.0.0"></script>
 <script src="modulos/agendamentos.js?v=1.0.0"></script>
 <script src="modulos/nf-ir.js?v=1.0.1"></script>
-<script src="modulos/profissionais.js?v=1.2.0"></script>
+<script src="modulos/profissionais.js?v=1.2.1"></script>
 <script src="modulos/saude.js?v=1.1.0"></script>
 <script src="modulos/ponte-omnilife.js?v=1.0.0"></script>
 <script src="modulos/patrimonio-iliquido.js?v=1.1.1"></script>
 <script src="modulos/fgts.js?v=1.0.0"></script>
 <script src="modulos/importar-posicoes.js?v=1.0.0"></script>
-<script src="modulos/assinaturas.js?v=1.1.0"></script>
-<script src="modulos/compromisso-de.js?v=1.7.0"></script>
-<script src="modulos/previsto.js?v=1.0.0"></script>
+<script src="modulos/assinaturas.js?v=1.1.1"></script>
+<script src="modulos/compromisso-de.js?v=1.7.1"></script>
+<script src="modulos/previsto.js?v=1.0.1"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
 <script src="modulos/calendario-menu.js?v=1.2.0"></script>
 <script src="modulos/pessoas.js?v=1.3.0"></script>
@@ -29982,17 +29996,18 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/apelido.js?v=1.1.0"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
-<script src="modulos/visao-casa.js?v=1.1.0"></script>
-<script src="modulos/previsao.js?v=1.1.0"></script>
+<script src="modulos/visao-casa.js?v=1.1.1"></script>
+<script src="modulos/previsao.js?v=1.2.0"></script>
 <script src="modulos/orcamento.js?v=1.1.1"></script>
 <script src="modulos/patrimonio-mes.js?v=1.1.0"></script>
 <script src="modulos/dividas.js?v=1.0.0"></script>
-<script src="modulos/seguros.js?v=1.0.0"></script>
-<script src="modulos/mes-a-mes.js?v=1.0.0"></script>
-<script src="modulos/parcelados.js?v=1.0.0"></script>
+<script src="modulos/seguros.js?v=1.0.1"></script>
+<script src="modulos/mes-a-mes.js?v=1.0.1"></script>
+<script src="modulos/parcelados.js?v=1.0.1"></script>
 <script src="modulos/contas-fixas.js?v=1.0.0"></script>
-<script src="modulos/documentos.js?v=1.0.0"></script>
-<script src="modulos/contas-mes.js?v=1.0.0"></script>
+<script src="modulos/documentos.js?v=1.0.1"></script>
+<script src="modulos/contas-mes.js?v=1.0.1"></script>
+<script src="modulos/planejados.js?v=1.0.0"></script>
 <script src="nuvem.js?v=1.14.3"></script>
 </body>
 </html>

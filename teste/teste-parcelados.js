@@ -62,8 +62,8 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recor
     await p.evaluate(() => { abrirApp('budget'); irPara('b-painel'); render(); });
     const t4 = await p.evaluate(() => (document.querySelector('#view-b-painel .pc-card') || {}).textContent || '');
     ok(/Faltam R\$ 2\.590,00 em 11 meses/.test(t4) && /LOJA X/.test(t4) && /4\/10 · última em 07\/2027/.test(t4) && /Quanto cai em cada mês/.test(t4), 'Painel: "Parcelados no cartão: faltam R$ 2.590,00 em 11 meses", a lista e o total por mês');
-    await p.evaluate(() => { irPara('b-futuro'); render(); });
-    ok(await p.evaluate(() => !!document.querySelector('#view-b-futuro .pc-card')), 'o mesmo cartão no Futuro');
+    await p.evaluate(() => { irPara('b-custos'); custosSecao = 'planejados'; planejadosParte = 'parcelados'; render(); });   /* 3.76: saiu do Futuro */
+    ok(await p.evaluate(() => !!document.querySelector('#view-b-custos .pc-card')), 'o mesmo cartão em Contas fixas → Gastos planejados → Parcelados');
 
     console.log('5) visão da casa');
     const vc = await p.evaluate(() => { const o = Gasto.todos; Gasto.todos = () => o.call(Gasto).filter((g) => g.id !== 'nat' && g.id !== 'cur'); const r = Parcelados.resumo().total; Gasto.todos = o; return r; });

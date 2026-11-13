@@ -1,11 +1,18 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.75 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.76 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.76', d:'2026-11-13', t:'Pendências no 📥, Contas fixas e Gastos planejados, Projeção', itens:[
+    '📥 Pendências: o sino agora é a lista do que precisa de você, em grupos (Confirmar classificação, Contas atrasadas, Parece conta fixa, Documentos para subir, Foi viagem?, Família e segurança, Avisos do app), cada item com uma frase e o botão para resolver ali mesmo. O número do sino é a soma da lista.',
+    'Contas fixas: um botão só, "+ Adicionar", com cada jeito de cadastrar explicado numa linha. Sem renda cadastrada, a tela não mostra mais "Sobrou" negativo: convida a cadastrar a renda. "Todos" e "Revisar" saíram; o que era para revisar está no 📥.',
+    'Gastos planejados, dentro de Contas fixas: Carro e deslocamentos (passo a passo: a rotina de todo dia, o fim de semana e as viagens longas do ano, que viram uma reserva mensal no previsto do combustível), Viagens e eventos, Parcelados no cartão e o lugar da Manutenção do carro. "Deslocamentos" saiu do menu; os links antigos levam para cá.',
+    '"Futuro" agora se chama "Projeção". O IPCA de cada grupo é buscado sozinho (uma vez por semana, com internet), sem botão; sem internet, a tela usa o último e diz de quando é. Uma tabela só: cada grupo abre as categorias, com uma coluna por ano (o ano de hoje parcial), "por mês" ou "por ano", e a linha de total. No celular, a primeira coluna fica fixa.',
+    'Menu do BudgetONE na ordem: Painel, Lançamentos, Contas fixas, Renda, Fluxo, Projeção, Preços, Configurações.'
+  ]},
   {v:'3.75', d:'2026-11-13', t:'Contas fixas com o status de cada conta, e a família arrumada', itens:[
     'Contas fixas: no topo da tela, "Este mês" ou "Próximos 45 dias", "Por dia" ou "Por grupo" (a escolha fica guardada), e cada conta com o status: ✓ Paga (com a data e o valor pago), ⚠ Atrasada, ⏰ Vence hoje, ○ A vencer e 🔄 Débito automático. O resumo diz quanto é, quanto já foi pago, quanto falta e quanto está atrasado, com uma barra.',
     'Nos próximos 45 dias, as contas atrasadas que ficaram para trás aparecem no topo, com o total. Por grupo, cada grupo mostra o total e quantas já foram pagas.',

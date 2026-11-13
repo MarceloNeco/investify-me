@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.0.0 · 13/Nov/2026
+   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.0.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · No topo da tela (id b-custos), dois seletores guardados: período "Este mês | Próximos 45 dias" e arrumação
@@ -188,21 +188,25 @@
     if (!l.length) h += '<p class="small muted">' + esc(tr('Nenhuma conta fixa no período.', 'No fixed bills in the period.')) + '</p>';
     return h + '</div>';
   }
-  function cartaoSugestoes() {
-    var s = API.sugestoes(); if (!s.length) return '';
-    return '<div class="card cfs-atencao"><div class="card-head"><h3>' + esc(tr('Precisa da sua atenção', 'Needs your attention')) + '</h3></div>' + s.map(function (x) {
+  function itensSugestoes(s, li) {
+    return s.map(function (x) {
       var quando = x.tipo === 'anual' ? tr('todo ano em ', 'every year in ') + new Date(2026, x.mes - 1, 15).toLocaleDateString(pt() ? 'pt-BR' : 'en-US', { month: 'long' }) : tr('todo dia ~', 'every month on day ~') + x.dia;
       return '<div class="cfs-item"><p class="small" style="margin:0 0 6px">📌 ' + esc(tr('Parece conta fixa: ', 'Looks like a fixed bill: ') + x.nome + ' · ~' + fmt(x.valor) + ' · ' + quando + tr('. Cadastrar?', '. Add it?')) + '</p>' +
         '<button type="button" class="btn sm primary" data-acao="cfs-sim" data-chave="' + esc(x.chave) + '">' + esc(tr('Sim, cadastrar', 'Yes, add it')) + '</button> ' +
         '<button type="button" class="btn sm" data-acao="cfs-nao" data-chave="' + esc(x.chave) + '">' + esc(tr('Não é', 'No')) + '</button></div>';
-    }).join('') + '</div>';
+    }).map(function (h) { return li ? '<li class="inb-item">' + h + '</li>' : h; }).join('');
+  }
+  function cartaoSugestoes() {
+    var s = API.sugestoes(); if (!s.length) return '';
+    return '<div class="card cfs-atencao"><div class="card-head"><h3>' + esc(tr('Precisa da sua atenção', 'Needs your attention')) + '</h3></div>' + itensSugestoes(s) + '</div>';
   }
 
   MoneyModulos.registrar({
-    id: 'contas-mes', versao: '1.0.0',
+    id: 'contas-mes', versao: '1.0.1',
     pontos: {
       'custos.contas': cartao,
       'budget.atencao': cartaoSugestoes,
+      'inbox.grupos': function () { var s = API.sugestoes(); return s.length ? [{ id: 'contafixa', n: s.length, html: itensSugestoes(s, true) }] : []; },   /* 1.0.1 (3.76) */
       'inbox.itens': function () {
         return API.sugestoes().map(function (x) { return { tipo: 'atencao', ico: '📌', nome: tr('Parece conta fixa', 'Looks like a fixed bill'), valor: x.valor, data: hoje(), sub: x.nome + tr(' — responda no Painel', ' — answer on the Panel') }; });
       }

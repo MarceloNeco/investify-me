@@ -84,8 +84,8 @@ const IPCA = JSON.stringify({ s1639: { codigo: 1639, ano: 4, meses: [], em: Date
     const f = await p.evaluate(() => { Previsao._hoje = '2026-11-15'; ST.config.veiculo = { consumo: 10, precoLitro: 6 }; const sem = Previsao.previstoMes('VEICULO', 'Combustível', '2026-12').previsto;
       const e = Previsao.salvarEvento({ destino: 'Serra Exemplo', de: '2026-12-20', ate: '2026-12-27', carro: true, km: 300 }); return { g: Previsao.gasolinaDe(e), sem, com: Previsao.previstoMes('VEICULO', 'Combustível', '2026-12').previsto }; });
     ok(f.g === 360 && Math.abs(f.com - f.sem - 360) < 0.01, '300 km de ida × 2 ÷ 10 km/l × R$ 6 = R$ 360 a mais no combustível de dezembro');
-    await p.evaluate(() => { irPara('b-futuro'); render(); });
-    ok(await p.evaluate(() => /Serra Exemplo/.test((document.querySelector('.pv-eventos') || {}).textContent || '')), 'o Futuro lista a viagem');
+    await p.evaluate(() => { irPara('b-custos'); custosSecao = 'planejados'; planejadosParte = 'viagens'; render(); });   /* 3.76: saiu do Futuro */
+    ok(await p.evaluate(() => /Serra Exemplo/.test((document.querySelector('#view-b-custos .pv-eventos') || {}).textContent || '')), 'Contas fixas → Gastos planejados → Viagens e eventos lista a viagem');
 
     console.log('6) o cartão do Painel');
     await p.evaluate(() => { irPara('b-painel'); render(); });

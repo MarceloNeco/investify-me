@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/previsao.js — previsto × realizado por categoria (3.69)        1.1.0 · 13/Nov/2026
+   modulos/previsao.js — previsto × realizado por categoria (3.69)        1.2.0 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (regra aprovada pelo dono, 13/Nov/2026)
      Para cada grupo › categoria de saída, o PREVISTO do mês M é a soma de três partes:
@@ -23,6 +23,9 @@
         Não: nada muda (não pergunta de novo). Nunca marca sozinho.
      a2) 1.1.0 (3.74): as parcelas do cartão (modulos/parcelados.js) também são contas certas: a que já chegou pelo valor real,
         as que faltam pelo valor da última vista, no vencimento da fatura; fora da média dos variáveis.
+     c2) 1.2.0 (3.76): as viagens longas de Gastos planejados (modulos/planejados.js) entram no combustível como provisão
+        mensal (custo do ano ÷ 12, sem as que já têm data); o km delas vale para "Foi viagem?" e para a viagem com data.
+        O cartão "Viagens e eventos" saiu do Futuro (agora Projeção) para Contas fixas → Gastos planejados.
      e) O limite digitado à mão (orçamento 3.67) continua como META; o previsto é a estimativa. O cartão mostra os dois.
      Visão da casa: só o que ela já vê (os lançamentos e compromissos dela); sem renda e sem "sobra"; não pergunta de viagem.
    API (window.Previsao)
@@ -124,6 +127,9 @@
     var k = N(destino); if (!k) return null;
     var ap = eventos().filter(function (e) { return N(e.destino) === k && Number(e.km) > 0; }).sort(function (a, b) { return String(b.de).localeCompare(String(a.de)); })[0];
     if (ap) return Number(ap.km);
+    /* 1.2.0 (3.76): a viagem longa cadastrada em Gastos planejados (modulos/planejados.js) sabe o km do destino */
+    var vl = window.Planejados ? Planejados.viagens().filter(function (v) { return N(v.destino) === k && Number(v.km) > 0; })[0] : null;
+    if (vl) return Number(vl.km);
     if (typeof Desloc !== 'undefined') {
       var lg = Desloc.lugares().filter(function (l) { return N(l.nome) === k; })[0], c = Desloc.lugares().filter(function (l) { return l.tipo === 'casa'; })[0];
       var d = lg && c ? Desloc.reta(c, lg) : null; if (d != null) return Math.round(d * 1.3);
@@ -138,7 +144,9 @@
   }
   function eventoNoMes(grupo, sub, mes) {
     var cc = catComb(); if (cc.grupo !== grupo || cc.sub !== sub) return 0;
-    return eventos().reduce(function (t, e) { return t + (!e.detectado && mesDe(e.de) === mes ? gasolinaDe(e) : 0); }, 0);
+    var ev = eventos().reduce(function (t, e) { return t + (!e.detectado && mesDe(e.de) === mes ? gasolinaDe(e) : 0); }, 0);
+    /* 1.2.0 (3.76): a provisão das viagens longas sem data (custo do ano ÷ 12; as que já têm data entram no mês delas, acima) */
+    return ev + (window.Planejados ? Planejados.provisaoMes(mes) : 0);
   }
 
   /* ---- o previsto de uma categoria ---- */
@@ -279,21 +287,25 @@
       '<button type="button" class="btn sm primary" data-acao="pv-salvar">' + esc(tr('Registrar', 'Register')) + '</button></form></div>';
     return h;
   }
-  function cartaoAtencao() {
-    var s = suspeitas(); if (!s.length) return '';
-    return '<div class="card pv-atencao"><div class="card-head"><h3>' + esc(tr('Precisa da sua atenção', 'Needs your attention')) + '</h3></div>' + s.map(function (x) {
+  function itensViagem(s, li) {
+    return s.map(function (x) {
       return '<div class="pv-pergunta" data-chave="' + esc(x.chave) + '"><p class="small" style="margin:0 0 6px">🧳 ' + esc(tr('Parece que teve viagem entre ', 'Looks like there was a trip between ') + I18n.data(x.de) + tr(' e ', ' and ') + I18n.data(x.ate) +
         ' (' + fmt(x.valor) + tr(' de combustível). Foi viagem?', ' of fuel). Was it a trip?')) + '</p>' +
         '<input class="pv-dest" maxlength="60" placeholder="' + esc(tr('Destino (opcional)', 'Destination (optional)')) + '" aria-label="' + esc(tr('Destino (opcional)', 'Destination (optional)')) + '"> ' +
         '<button type="button" class="btn sm primary" data-acao="pv-sim" data-chave="' + esc(x.chave) + '">' + esc(tr('Sim, foi viagem', 'Yes, it was a trip')) + '</button> ' +
         '<button type="button" class="btn sm" data-acao="pv-nao" data-chave="' + esc(x.chave) + '">' + esc(tr('Não', 'No')) + '</button></div>';
-    }).join('') + '</div>';
+    }).map(function (h) { return li ? '<li class="inb-item">' + h + '</li>' : h; }).join('');
+  }
+  function cartaoAtencao() {
+    var s = suspeitas(); if (!s.length) return '';
+    return '<div class="card pv-atencao"><div class="card-head"><h3>' + esc(tr('Precisa da sua atenção', 'Needs your attention')) + '</h3></div>' + itensViagem(s) + '</div>';
   }
 
   MoneyModulos.registrar({
-    id: 'previsao', versao: '1.1.0', colecoes: [COL],
+    id: 'previsao', versao: '1.2.0', colecoes: [COL],
     pontos: {
-      'futuro.topo': cartaoEventos, 'budget.atencao': cartaoAtencao,
+      'planejados.viagens': cartaoEventos, 'budget.atencao': cartaoAtencao,
+      'inbox.grupos': function () { var s = suspeitas(); return s.length ? [{ id: 'viagem', n: s.length, html: itensViagem(s, true) }] : []; },   /* 1.2.0 (3.76) */   /* 1.2.0 (3.76): as viagens saíram do Futuro para Contas fixas → Gastos planejados */
       'inbox.itens': function () {
         return suspeitas().map(function (x) {
           return { tipo: 'atencao', ico: '🧳', nome: tr('Foi viagem?', 'Was it a trip?'), valor: x.valor, data: x.de,

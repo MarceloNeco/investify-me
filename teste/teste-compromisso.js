@@ -34,7 +34,7 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.recorrentes || []).length === 2);
       await p.evaluate(() => { I18n.atual = 'pt'; abrirApp('budget'); irPara('b-custos'); custosAba = 'recorrentes'; render(); });
       const recs = () => p.evaluate(() => Store.estado.recorrentes.map((r) => JSON.parse(JSON.stringify(r))));
-      const novo = async () => { await p.click('#view-b-custos [data-acao="rec-novo"]'); await p.waitForSelector('#assetModal:not(.hidden) #rcNome'); };
+      const novo = async () => { await p.click('#view-b-custos [data-acao="cf-adicionar"]'); await p.click('#genBody [data-acao="rec-novo"]');   /* 3.76: "+ Adicionar" */ await p.waitForSelector('#assetModal:not(.hidden) #rcNome'); };
 
       /* (a)(l) frente simples, no topo */
       await novo();

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.7.0 · 11/Nov/2026
+   modulos/compromisso-de.js — compromisso a partir de um lançamento ou de um contrato (PDF)   1.7.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · No formulário de um lançamento: "📌 Virar compromisso" abre o "Novo compromisso" já preenchido
@@ -611,14 +611,15 @@
 
   MoneyModulos.registrar({
     id: 'compromisso-de',
-    versao: '1.7.0',
+    versao: '1.7.1',
     pontos: {
       'lancamento.form': function (ctx) {
         if (!ctx.g || ctx.g.fluxo === 'entrada' && ctx.g.grupo !== 'RENDA') return '';
         return '<div class="row" style="margin:4px 0 10px"><button type="button" class="btn sm" data-acao="cdl-lanc" data-id="' + esc(ctx.g.id) + '">📌 ' + (pt() ? 'Virar compromisso' : 'Make it a commitment') + '</button></div>';
       },
-      'custos.topo': function () {
-        return '<div class="row" style="gap:8px;margin:0 0 12px;flex-wrap:wrap"><button class="btn sm" data-acao="cdl-contrato">📄 ' + (pt() ? 'Compromisso de um contrato (PDF)' : 'Commitment from a contract (PDF)') + '</button></div>';
+      /* 1.7.1 (3.76): o botão entrou no "+ Adicionar" de Contas fixas */
+      'custos.adicionar': function () {
+        return [{ ico: '📄', pt: 'De um contrato (PDF)', en: 'From a contract (PDF)', dpt: 'O app lê o contrato da escola e cria as parcelas do ano.', den: 'The app reads the school contract and creates the year\'s instalments.', acao: 'cdl-contrato' }];
       }
     },
     acoes: {

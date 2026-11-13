@@ -38,7 +38,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, recorrentes: [], gastos: [
       ok(u.n === 'fulana tal', 'normaliza: tira PIX, ENVIADO, DRA., DE, LTDA e números → "fulana tal"');
       ok(u.a === 1 && u.c === 1, '1 letra trocada (SORRISSO) e PIX/DRA a mais ainda são o mesmo nome');
       ok(u.b === 0.5, 'MARIANA COSTA × MARIANA SOUZA: meio parecido (0,5)');
-      await p.evaluate(() => { irPara('b-custos'); custosAba = 'revisar'; render(); });
+      await p.evaluate(() => abrirInbox());   /* 3.76: as perguntas saíram da aba Revisar (que saiu) para o 📥 */
       await p.waitForSelector('.prof-card');
       let qs = await p.$$eval('.prof-q .t-main', (e) => e.map((x) => x.textContent));
       ok(qs.length === 2 && qs.some((t) => /MARIANA SOUZA/.test(t)) && qs.some((t) => /SORRISO/.test(t)) && !qs.some((t) => /MERCADO/.test(t)), 'Revisar pergunta 2 nomes (Mariana: os 3 lançamentos juntos; Clínica), e não o mercado');
@@ -55,21 +55,22 @@ const LOCAL = { v: 1, posicoes: [], config: {}, recorrentes: [], gastos: [
       /* um novo, com 1 letra diferente, chega do "robô" */
       const novo = await p.evaluate(() => { const g = Gasto.add({ data: hojeISO(), valor: 450, grupo: 'OUTROS', sub: 'Sem categoria', desc: 'PIX DRA MARIANA SOUSA', origem: 'robo' }); return [g.grupo, g.sub, g.paraQuem, g.irpf, !!g.profissional].join('|'); });
       ok(novo === 'SAUDE|Pediatra|Bia|true|true', 'lançamento novo "MARIANA SOUSA" já entra classificado, sem perguntar');
-      await p.evaluate(() => render());
+      await p.evaluate(() => abrirInbox());
       qs = await p.$$eval('.prof-q .t-main', (e) => e.map((x) => x.textContent));
       ok(!qs.some((t) => /MARIANA/.test(t)), 'e a Mariana não volta para as perguntas');
       /* não é profissional */
       await semToasts();
       await p.click('.prof-q:has-text("SORRISO") [data-acao="prof-ignorar"]');
+      await p.waitForFunction(() => !document.querySelector('.prof-q'), null, { timeout: 3000 }).catch(() => {});   /* 3.76: o 📥 se refaz logo depois da ação */
       ok(!(await p.$('.prof-q')), '"Não é profissional": a clínica não é mais perguntada');
       ok(await p.evaluate(() => Profissionais.classificar(Gasto.add({ data: hojeISO(), valor: 300, grupo: 'SAUDE', sub: 'Dentista', desc: 'PIX CLINICA ODONTO SORRISO LTDA', origem: 'robo' }))) === '', 'nem quando chega outro lançamento dela');
       /* parecido mas diferente: pergunta com sugestão */
-      await p.evaluate(() => { Gasto.add({ data: hojeISO(), valor: 200, grupo: 'OUTROS', sub: 'Sem categoria', desc: 'PIX MARIANA COSTA', origem: 'robo' }); render(); });
+      await p.evaluate(() => { Gasto.add({ data: hojeISO(), valor: 200, grupo: 'OUTROS', sub: 'Sem categoria', desc: 'PIX MARIANA COSTA', origem: 'robo' }); abrirInbox(); });
       ok(/parece Dra\. Mariana Souza/.test(await p.textContent('.prof-q:has-text("MARIANA COSTA")')), 'nome meio parecido (MARIANA COSTA): pergunta, sugerindo a Dra. Mariana Souza');
       ok(await p.evaluate(() => Gasto.todos().find((g) => g.desc === 'PIX MARIANA COSTA').grupo) === 'OUTROS', 'e não classifica sozinho enquanto não confirmar');
       /* lançamento que a pessoa editou não é mexido */
       ok(await p.evaluate(() => { const g = Gasto.add({ data: hojeISO(), valor: 450, grupo: 'LAZER', sub: 'Outro', desc: 'PIX DRA MARIANA SOUZA', origem: 'robo', editadoPessoa: true }); return g.grupo; }) === 'LAZER', 'lançamento editado pela pessoa não é reclassificado');
-      await p.evaluate(() => irPara('b-profissionais'));
+      await p.evaluate(() => { fechar('genModal'); irPara('b-profissionais'); });
       await p.waitForSelector('#view-b-profissionais');
       ok(/Dra\. Mariana Souza/.test(await p.textContent('#view-b-profissionais')) && /Pediatra · Bia · IR/.test(await p.textContent('#view-b-profissionais')), 'tela "Profissionais conhecidos"');
       await p.reload(); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.profissionais || []).length === 2);

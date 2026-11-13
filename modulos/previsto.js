@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/previsto.js — valor que varia: época do ano e boleto que chegou (N28)   1.0.0 · 06/Nov/2026
+   modulos/previsto.js — valor que varia: época do ano e boleto que chegou (N28)   1.0.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · Época do ano (sazonalidade): com 12 meses ou mais de histórico de um compromisso "o valor varia",
@@ -105,7 +105,7 @@
 
   MoneyModulos.registrar({
     id: 'previsto',
-    versao: '1.0.0',
+    versao: '1.0.1',
     colecoes: [CFG, BOL],
     pontos: {
       'compromisso.varia': function (ctx) {
@@ -124,9 +124,10 @@
         var p = API.pesos(r); if (!p) return [];
         return [{ valor: n2(ctx.valor * (p.pesos[Number(ctx.iso.slice(5, 7))] || 1)), fonte: 'sazonal' }];
       },
-      'custos.topo': function () {
-        if (!Recorrente.todos().some(function (r) { return r.ativo !== false; })) return '';
-        return '<div class="row" style="gap:8px;margin:0 0 12px;flex-wrap:wrap"><button class="btn sm" data-acao="prev-boleto">🧾 ' + (pt() ? 'Chegou um boleto (PDF)' : 'A bill arrived (PDF)') + '</button></div>';
+      /* 3.76: o botão entrou no "+ Adicionar" de Contas fixas */
+      'custos.adicionar': function () {
+        if (!Recorrente.todos().some(function (r) { return r.ativo !== false; })) return [];
+        return [{ ico: '🧾', pt: 'Chegou um boleto (PDF)', en: 'A bill arrived (PDF)', dpt: 'O app lê o valor e o vencimento e põe na conta fixa certa.', den: 'The app reads the amount and due date and puts it on the right bill.', acao: 'prev-boleto' }];
       }
     },
     ouvir: {

@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.75 · 13/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.76 · 13/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2672,3 +2672,41 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .cm-grupo > summary{display:flex; justify-content:space-between; gap:10px; cursor:pointer; padding:6px 0}
 .cfs-item{padding:8px 0; border-top:1px solid var(--line)}
 .cfs-item:first-child{border-top:0}
+
+/* 3.76: "+ Adicionar" de Contas fixas — cada jeito de cadastrar numa linha explicada */
+.cf-add{list-style:none; margin:0; padding:0}
+.cf-add li{margin:0 0 6px}
+.cf-add-op{display:flex; gap:10px; align-items:flex-start; width:100%; text-align:left; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:transparent; color:inherit; cursor:pointer; font:inherit}
+.cf-add-op:hover, .cf-add-op:focus-visible{border-color:var(--accent)}
+.cf-add-ico{font-size:1.3em; line-height:1}
+.cf-add-op .t-sub{display:block}
+.cf-sem-renda .btn{margin-top:0}
+
+/* 3.76: Contas fixas → Gastos planejados */
+.pl-aj{display:flex; flex-direction:column; gap:2px; width:120px}
+.pl-aj input{width:100%}
+.pl-ajustes summary{cursor:pointer}
+.pl-vazio .btn{margin-top:6px}
+
+/* 3.76: o 📥 de pendências — grupos com contador, cada item com a ação ao lado */
+.inb-grupo{border:1px solid var(--line); border-radius:10px; margin:0 0 10px; padding:6px 10px}
+.inb-grupo > summary{display:flex; justify-content:space-between; align-items:center; gap:10px; cursor:pointer; padding:4px 0}
+.inb-n{min-width:24px; text-align:center; border-radius:12px; padding:1px 8px; font-size:.8em; font-weight:700; background:var(--accent); color:#05150e}
+.inb-explica{margin:2px 0 6px}
+.inb-lista{list-style:none; margin:0; padding:0}
+.inb-item{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:8px 0; border-top:1px solid var(--line)}
+.inb-item:first-child{border-top:0}
+.inb-item > div{flex:1 1 200px; min-width:0}
+.inb-item .t-sub{display:block}
+.inb-acoes{display:flex; gap:6px; flex-wrap:wrap}
+.inb-oc{display:block}
+
+/* 3.76: Projeção — uma tabela só; no celular a 1ª coluna fica fixa e as outras rolam */
+.proj-wrap{overflow-x:auto}
+.proj-tbl .proj-col1{position:sticky; left:0; z-index:1; background:var(--card); text-align:left; white-space:nowrap}
+.proj-tbl th.proj-col1{font-weight:normal}
+.proj-tbl .proj-sub .proj-col1{padding-left:28px}
+.proj-tbl .proj-sub td, .proj-tbl .proj-sub th{font-size:.9em; color:var(--txt2)}
+.proj-tbl tfoot th, .proj-tbl tfoot td{font-weight:700}
+.proj-g{font:inherit; color:inherit; text-align:left}
+.proj-card .card-head{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap}

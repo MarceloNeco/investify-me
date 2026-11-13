@@ -81,7 +81,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos, recorrentes: [
       ok(await p.evaluate(() => { const s2 = CompromissoDe.sementeContrato({ ano: 2027, parcelas: 11, parcela: 3000, dia: 5, aluno: 'Bia' }); return s2.desde + '|' + s2.ate; }) === '2027-02-01|2027-12-31', '11 parcelas: de fevereiro a dezembro');
       await p.evaluate(() => { irPara('b-custos'); }); await p.waitForFunction(() => window.scrollY === 0);
       await semToasts();
-      const [fc] = await Promise.all([p.waitForEvent('filechooser'), p.click('#view-b-custos [data-acao="cdl-contrato"]')]);
+      const [fc] = await Promise.all([p.waitForEvent('filechooser'), p.click('#view-b-custos [data-acao="cf-adicionar"]').then(() => p.click('#genBody [data-acao="cdl-contrato"]'))]);   /* 3.76: "+ Adicionar" */
       await fc.setFiles(contrato); await p.waitForSelector('#assetModal:not(.hidden) #rcNome');
       const fc2 = await p.evaluate(() => lerFormRecorrente());
       ok(fc2.nome === 'Escola Bia ' + (ANO + 1) && fc2.valor === 3000 && fc2.dia === 5 && fc2.grupo === 'DEPENDENTES' && fc2.quem === 'Bia' && fc2.irpf && fc2.desde === (ANO + 1) + '-01-01' && fc2.ate === (ANO + 1) + '-12-31' && /Exemplo/.test(fc2.obs), 'contrato PDF → "Novo compromisso" preenchido (Escola Bia ' + (ANO + 1) + ', R$ 3.000, dia 5, jan–dez, IR)');
@@ -97,7 +97,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos, recorrentes: [
       ok(oJan.f === 'sazonal' && oJan.v > 430 * 1.3 && /previsto pela época do ano/.test(oJan.h), 'janeiro que vem: previsto pela época do ano (R$ ' + oJan.v + ')');
       ok(await p.evaluate(() => { const r = Previsto.linhaDigitavel('34191090012345678901234567890127' + '7' + '1000' + '0000041237'); return r.valor === 412.37 && r.venc === '2025-02-22'; }), 'linha digitável: valor nos 10 últimos e vencimento pelo fator (fator 1000 = 22/02/2025)');
       await semToasts();
-      const [fc3] = await Promise.all([p.waitForEvent('filechooser'), p.click('#view-b-custos [data-acao="prev-boleto"]')]);
+      const [fc3] = await Promise.all([p.waitForEvent('filechooser'), p.click('#view-b-custos [data-acao="cf-adicionar"]').then(() => p.click('#genBody [data-acao="prev-boleto"]'))]);   /* 3.76: "+ Adicionar" */
       await fc3.setFiles(boleto); await p.waitForSelector('#genModal:not(.hidden) #pvOc');
       ok(await p.inputValue('#pvValor') === '412.37' && /Conta de luz/.test(await p.$eval('#pvOc', (s) => s.options[s.selectedIndex].text)), 'boleto lido: R$ 412,37 e proposto para a "Conta de luz" do vencimento');
       await semToasts(); await p.click('[data-acao="prev-boleto-ok"]');

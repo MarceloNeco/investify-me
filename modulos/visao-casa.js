@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.1.0 · 13/Nov/2026
+   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.1.1 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 11/Nov/2026; desenho em DESENHO-visao-da-casa.md)
      Um membro da família com a visão "Só a casa" vê a parte da casa; o resto fica RESERVADO e nem chega ao aparelho dele
@@ -224,11 +224,22 @@
   }
 
   MoneyModulos.registrar({
-    id: 'visao-casa', versao: '1.1.0', colecoes: [COL],
+    id: 'visao-casa', versao: '1.1.1', colecoes: [COL],
     pontos: {
       'budget.painel': function () { return API.soCasa() ? gastosDaFamilia() : ''; },
       /* 1.1.0 (3.75): no 📥, o que se pede e por quê, numa linha; o botão abre o cartão sem trocar de app */
       'inbox.itens': function () { return pendente() ? [{ tipo: 'atencao', ico: '👪', nome: tr('Visão da família', 'Family view'), valor: 0, data: hojeISO(), sub: fraseAviso() }] : []; },
+      /* 1.1.1 (3.76): no 📥, os passos na ordem certa, um botão para cada */
+      'inbox.grupos': function () {
+        if (!pendente()) return [];
+        var n = nv(); if (Tela.pinConta === undefined && n && n.pinConta) { Tela.pinConta = null; n.pinConta().then(function (t) { Tela.pinConta = t; if (typeof renderInboxN === 'function') renderInboxN(); }); }
+        var semPin = Tela.pinConta === false, h = '';
+        if (semPin) h += '<li class="inb-item"><div><b>1 · ' + esc(tr('Crie o PIN da sua conta', 'Create your account PIN')) + '</b><span class="t-sub">' + esc(tr('Ele protege tudo e vale em todos os seus aparelhos. Vem antes de separar a parte da casa.', 'It protects everything and works on all your devices. It comes before separating the household part.')) + '</span></div>' +
+          '<span class="inb-acoes"><button class="btn sm primary" data-acao="vc-criar-pin" data-close="genModal">' + esc(tr('Criar o PIN', 'Create the PIN')) + '</button></span></li>';
+        h += '<li class="inb-item"><div><b>' + (semPin ? '2 · ' : '') + esc(tr('Escolha quem é da casa', 'Choose who belongs to the household')) + '</b><span class="t-sub">' + esc(fraseAviso()) + '</span></div>' +
+          '<span class="inb-acoes"><button class="btn sm' + (semPin ? '' : ' primary') + '" data-irpara="config" data-rolar="vcFamilia" data-close="genModal">' + esc(tr('Abrir', 'Open')) + '</button></span></li>';
+        return [{ id: 'familia', n: semPin ? 2 : 1, html: h }];
+      },
       'inbox.rodape': function () { return pendente() ? '<button class="btn sm" data-irpara="config" data-rolar="vcFamilia" data-close="genModal">👪 ' + esc(tr('Visão da família', 'Family view')) + '</button>' : ''; },
       'config.todos': function () { return cartaoChefe(); }
     },
