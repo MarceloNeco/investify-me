@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.1.1 · 13/Nov/2026
+   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.1.2 · 13/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 11/Nov/2026; desenho em DESENHO-visao-da-casa.md)
      Um membro da família com a visão "Só a casa" vê a parte da casa; o resto fica RESERVADO e nem chega ao aparelho dele
@@ -63,9 +63,10 @@
         if (manual(c) === 'casa' || (quem && dela[quem]) || (c.finais || []).some(function (f) { return f.titularId && dela[f.titularId]; })) cartoes[c.id] = 1;
       });
       (est.recorrentes || []).forEach(function (r) { if (recCasa(r)) { rec[r.id] = 1; if (r.cartaoId) cartoes[r.cartaoId] = 1; } });
-      C = { dela: dela, cartoes: cartoes, rec: rec, origCasa: {} };
-      /* 3.68: o apelido é da casa quando algum lançamento da mesma origem é da casa (modulos/apelido.js) */
-      if (window.Apelido) (est.gastos || []).forEach(function (g) { if (API.de('gastos', g) === 'casa') { var k = Apelido.origem(g); if (k) C.origCasa[k] = 1; } });
+      C = { dela: dela, cartoes: cartoes, rec: rec, origCasa: {}, gCasa: {} };
+      /* 3.68: o apelido é da casa quando algum lançamento da mesma origem é da casa (modulos/apelido.js);
+         3.79: e os lançamentos da casa, para o valor a receber seguir o seu */
+      (est.gastos || []).forEach(function (g) { if (API.de('gastos', g) === 'casa') { C.gCasa[g.id] = 1; if (window.Apelido) { var k = Apelido.origem(g); if (k) C.origCasa[k] = 1; } } });
     },
     de: function (col, x) {
       if (CASA_COLS[col]) return 'casa';
@@ -81,6 +82,10 @@
         case 'cartoes': return C.cartoes[x.id] ? 'casa' : 'reservado';
         case 'assinaturas': return manual(x) || (ehPJ(x) ? 'reservado' : 'casa');
         case 'apelidos': return C.origCasa && C.origCasa[x.origem] ? 'casa' : 'reservado';   /* 3.68 */
+        case 'a_receber': {   /* 3.79 (1.1.2): o valor a receber segue o lançamento de origem; sem ele, o que o chefe marcou */
+          if (manual(x)) return manual(x);
+          return x.gastoId && C.gCasa && C.gCasa[x.gastoId] ? 'casa' : 'reservado';
+        }
         default: return 'reservado';
       }
     },
@@ -224,7 +229,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'visao-casa', versao: '1.1.1', colecoes: [COL],
+    id: 'visao-casa', versao: '1.1.2', colecoes: [COL],
     pontos: {
       'budget.painel': function () { return API.soCasa() ? gastosDaFamilia() : ''; },
       /* 1.1.0 (3.75): no 📥, o que se pede e por quê, numa linha; o botão abre o cartão sem trocar de app */

@@ -1,11 +1,16 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.78 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.79 · 13/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.79', d:'2026-11-13', t:'Valores a receber: estornos, reembolsos e contestações', itens:[
+    'Nova tela "A receber" (Contas fixas → "+ Adicionar", e o cartão no topo de Contas fixas): de quem, o quê (estorno, reembolso do plano, contestação, restituição, devolução), o valor à vista ou em parcelas, onde deve cair, a data prometida e o protocolo. No lançamento, "↩ Pedi estorno disto" já preenche tudo, até o parcelado.',
+    'O app vigia o cartão e a conta: quando cai o crédito de quem você pediu, marca "recebido" (ou "recebido em parte: X de Y") e avisa "Caiu o estorno". Se passar da data prometida (ou 30 dias), avisa em "Precisa da sua atenção" e no 📥, todo mês, com "Já recebi", "Cobrei de novo" e "Desisti".',
+    'Crédito que chegou sem cadastro, de quem antes cobrou uma compra, vira a pergunta "Parece um estorno de …. Marcar?". A tela mostra também a restituição do IR prevista e o reembolso de saúde estimado.'
+  ]},
   {v:'3.78', d:'2026-11-13', t:'TaxONE agora se chama FiscalONE', itens:[
     'O app de imposto de renda e da empresa (PJ) agora se chama FiscalONE, em todo lugar: tela inicial, menu, títulos, passeio, glossário e ajuda. A cor, o ícone e os seus dados continuam iguais; a busca acha pelos dois nomes.'
   ]},
