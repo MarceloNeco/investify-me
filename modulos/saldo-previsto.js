@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.0.2 · 13/Nov/2026
+   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.1.0 · 14/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · Para cada conta corrente com saldo vindo do robô (SaldoBanco): parte do saldo de hoje e soma, dia a dia, nos
@@ -16,11 +16,17 @@
      · Gráfico simples da linha (zero sempre à vista, a parte abaixo de zero em vermelho) no Painel e em Contas fixas.
      · "Já resgatei / já agendei": valor e data; a linha se refaz.
      · Visão da casa: nada (é a conta do chefe).
+     · 1.1.0 (3.86): cada aviso diz DE QUEM é a conta ("Itaú do Marcelo ···1292": o banco, a pessoa do app pelo dono que o
+       robô manda — o apelido —, o final; sem repetir o banco) e DE QUANDO são os dados ("dados de 13/11 14:44", à direita,
+       em letra menor; mais de 24 h → "pode estar desatualizado" em amarelo). "Já agendei" no aviso: valor e data; conta
+       como entrada planejada até 2 dias depois da data; o lançamento real (entrada nesta conta, ±5%) o substitui sem contar
+       duas vezes; sem o real até 2 dias depois, o aviso volta. As contas atrasadas do 📥 também dizem a conta e a data.
    API (window.SaldoPrevisto)
      contas() · eventos(conta) → [{data, valor, nome}] · linha(conta) → [{data, saldo}] · alerta(conta) → {dia, valor, resgate,
-     pedirAte, de: {nome, dias, valor} | null} | null · resgate(buraco) · liquidez(p)
+     pedirAte, de: {nome, dias, valor} | null} | null · resgate(buraco) · liquidez(p) · 1.1.0: nome(conta) · dono(conta) ·
+     dados(conta) → {txt, velho} · contaDe(recorrente) · substituido(ajuste, conta)
    DADOS
-     ST.saldo_ajustes = [{id, contaId, data, valor, nota}]   (cofre reservado)
+     ST.saldo_ajustes = [{id, contaId, data, valor, nota, criadoEm (1.1.0)}]   (cofre reservado)
    PONTOS QUE USA
      budget.painel · custos.contas · budget.atencao · inbox.grupos ('saldo')
    ===================================================================== */
@@ -62,7 +68,8 @@
         var entra = r.fluxo === 'entrada'; if (!entra && pagoNoCartao(r)) return;
         var c = contaPara([r.conta, r.forma, r.pagador, r.nome].join(' ')); if (!c || c.id !== id) return;
         /* 1.0.2 (3.81): conta da PJ — o dono transfere da PF um dia antes */
-        if (r.empresaId) { if (mais(o.data, -1) > h) ev.push({ data: mais(o.data, -1), valor: n2(-o.valor), nome: tr('Transferir para a PJ: ', 'Transfer to the company: ') + r.nome }); return; }
+        /* 1.0.3 (3.86): até o dia útil anterior (PJ.ateTransferir) */
+        if (r.empresaId) { var at = window.PJ && PJ.ateTransferir ? PJ.ateTransferir(o.data) : mais(o.data, -1); if (at > h) ev.push({ data: at, valor: n2(-o.valor), nome: tr('Transferir para a PJ: ', 'Transfer to the company: ') + r.nome }); return; }
         ev.push({ data: o.data, valor: n2(entra ? o.valor : -o.valor), nome: r.nome });
       });
       /* faturas: a aberta que o robô mandou, no vencimento; depois, os parcelados de cada mês */
@@ -86,7 +93,8 @@
         var c = contaPara(bn); if (!c || c.id !== id) return;
         pc.futuras.forEach(function (f) { if (f.data > mais(h, 31) && f.data <= fim) ev.push({ data: f.data, valor: n2(-f.valor), nome: pc.desc + ' ' + f.k + '/' + pc.n }); });
       });
-      ajustes().forEach(function (a) { if (a.contaId === id && a.data > h && a.data <= fim) ev.push({ data: a.data, valor: n2(a.valor), nome: a.nota || tr('Resgate / agendado', 'Redemption / scheduled') }); });
+      /* 1.1.0 (3.86): o "Já agendei" conta como entrada planejada até 2 dias depois da data; o real que chegar o substitui */
+      ajustes().forEach(function (a) { if (a.contaId === id && mais(a.data, 2) >= h && a.data <= fim && !API.substituido(a, conta)) ev.push({ data: a.data > h ? a.data : mais(h, 1), valor: n2(a.valor), nome: a.nota || tr('Resgate / agendado', 'Redemption / scheduled'), planejado: true }); });
       return ev.sort(function (a, b) { return a.data < b.data ? -1 : 1; });
     },
     linha: function (conta) {
@@ -98,6 +106,31 @@
       }
       return out;
     },
+    /* o lançamento real (entrada nesta conta, valor parecido, entre o dia em que foi agendado e 2 dias depois da data) */
+    substituido: function (a, conta) {
+      var ls = window.SaldoBanco && SaldoBanco.lancamentos ? SaldoBanco.lancamentos(conta) : [], de = String(a.criadoEm || '').slice(0, 10) || mais(a.data, -7);
+      return ls.some(function (g) { var v = Math.abs(Number(g.valor) || 0); return (g.fluxo === 'entrada' || g.grupo === 'RENDA' || g.grupo === 'INVESTIMENTO') && g.data >= de && g.data <= mais(a.data, 2) && Math.abs(v - a.valor) <= a.valor * 0.05; });
+    },
+    /* de quem é a conta (a pessoa do app, pelo dono que o robô manda) e de quando são os dados */
+    dono: function (c) {
+      var p = c.dono && window.Pessoas && Pessoas.achar ? Pessoas.achar(c.dono) : null, n = p ? Pessoas.rotulo(p) : String(c.dono || '').trim();
+      if (!p && /^[a-z]/.test(n)) n = n.charAt(0).toUpperCase() + n.slice(1);
+      return { nome: n, fem: p && p.genero ? p.genero === 'f' : /a$/i.test(N(n).split(' ')[0] || '') };
+    },
+    nome: function (c) {
+      var d = API.dono(c), b = String(c.banco || '').trim(), ct = String(c.conta || '').trim();
+      var extra = d.nome ? (d.fem ? tr(' da ', ' — ') : tr(' do ', ' — ')) + d.nome : (ct && N(ct).indexOf(N(b)) < 0 && N(b).indexOf(N(ct)) < 0 ? ' ' + ct : '');
+      return (b || ct) + extra + (c.final ? ' ···' + c.final : '');
+    },
+    dados: function (c) {
+      var em = c.atualizadoEm && !isNaN(Date.parse(c.atualizadoEm)) ? new Date(Date.parse(c.atualizadoEm)) : null, agora = API._agora || Date.now();
+      var dd = function (x) { return ('0' + x).slice(-2); };
+      var txt = em ? tr('dados de ', 'data from ') + dd(em.getDate()) + '/' + dd(em.getMonth() + 1) + ' ' + dd(em.getHours()) + ':' + dd(em.getMinutes()) : (c.data ? tr('dados de ', 'data from ') + dm(c.data) : '');
+      var t = em ? em.getTime() : (c.data ? Date.parse(c.data + 'T23:59:59') : 0);
+      return { txt: txt, velho: !!t && agora - t > 24 * 3600 * 1000 };
+    },
+    /* a conta corrente que paga esta conta fixa (para os outros avisos que dependem do banco) */
+    contaDe: function (r) { if (casa() || !r || pagoNoCartao(r)) return null; return contaPara([r.conta, r.forma, r.pagador, r.nome].join(' ')); },
     resgate: function (buraco) { return Math.ceil(Math.abs(buraco) * 1.05 / 100) * 100; },
     /* dias até o dinheiro cair; null = não serve para resgate rápido */
     liquidez: function (p) {
@@ -123,7 +156,17 @@
   };
 
   /* ---------- a tela ---------- */
-  function nomeConta(c) { return [c.banco, c.conta && c.conta !== c.banco ? c.conta : '', c.final ? '···' + c.final : ''].filter(Boolean).join(' '); }
+  function nomeConta(c) { return API.nome(c); }
+  /* 1.1.0 (3.86): à direita, em letra menor, "dados de 13/11 14:44"; passou de 24 h → "pode estar desatualizado" em amarelo */
+  function selo(c) {
+    var d = API.dados(c); if (!d.txt) return '';
+    return '<span class="tiny sp-dados' + (d.velho ? ' sp-velho' : '') + '" style="margin-left:auto;white-space:nowrap' + (d.velho ? ';color:var(--warn)' : '') + '">' + esc(d.txt + (d.velho ? tr(' · pode estar desatualizado', ' · may be out of date') : '')) + '</span>';
+  }
+  function formAjuste(c) {
+    return '<div class="row sp-form" style="gap:8px;flex-wrap:wrap;margin-top:6px"><input class="sp-valor" inputmode="decimal" placeholder="' + esc(tr('valor (R$)', 'amount (R$)')) + '">' +
+      (typeof Cal !== 'undefined' ? Cal.campo('spData' + c.id, mais(hoje(), 1), {}) : '<input id="spData' + esc(c.id) + '" type="date">') +
+      '<button class="btn sm primary" data-acao="sp-salvar" data-id="' + esc(c.id) + '">' + esc(tr('Guardar', 'Save')) + '</button></div>';
+  }
   function frase(c, a) {
     var s = tr('Sua conta ', 'Your account ') + nomeConta(c) + tr(' fica negativa em ', ' goes negative on ') + dm(a.dia) + ' (−' + fmt(Math.abs(a.valor)) + '). ' +
       tr('Resgate ', 'Redeem ') + fmt(a.resgate) + tr(' até ', ' by ') + dm(a.ate) + '.';
@@ -140,46 +183,47 @@
       '<line class="sp-zero" x1="0" x2="' + W + '" y1="' + z.toFixed(1) + '" y2="' + z.toFixed(1) + '"/>' +
       '<polyline class="sp-pos" clip-path="url(#' + id + 'a)" points="' + pts + '"/><polyline class="sp-neg" clip-path="url(#' + id + 'b)" points="' + pts + '"/></svg>';
   }
-  var aberto = null;
+  var aberto = null, aondeForm = 'card';
   function cartao() {
     var cs = API.contas(); if (!cs.length) return '';
     return '<div class="card sp-card"><div class="card-head"><h3>📉 ' + esc(tr('Saldo previsto da conta', 'Forecast account balance')) + '</h3><span class="small muted">' + esc(tr('próximos 45 dias', 'next 45 days')) + '</span></div>' +
       cs.map(function (c) {
         var l = API.linha(c), a = API.alerta(c), fimS = l[l.length - 1].saldo;
         return '<div class="sp-conta"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap"><b>' + esc(nomeConta(c)) + '</b><span class="small">' +
-          esc(tr('hoje ', 'today ') + fmt(c.saldo) + ' · ' + tr('em 45 dias ', 'in 45 days ') + fmt(fimS)) + '</span></div>' + grafico(l) +
+          esc(tr('hoje ', 'today ') + fmt(c.saldo) + ' · ' + tr('em 45 dias ', 'in 45 days ') + fmt(fimS)) + '</span>' + selo(c) + '</div>' + grafico(l) +
           (a ? '<div class="aviso-box sp-alerta"><b>⚠ ' + esc(frase(c, a)) + '</b></div>' : '') +
           '<p class="tiny muted" style="margin:4px 0 0"><button class="linkinho" data-acao="sp-ajustar" data-id="' + esc(c.id) + '">' + esc(tr('Já resgatei / já agendei', 'Already redeemed / scheduled')) + '</button></p>' +
-          (aberto === c.id ? '<div class="row sp-form" style="gap:8px;flex-wrap:wrap;margin-top:6px"><input class="sp-valor" inputmode="decimal" placeholder="' + esc(tr('valor (R$)', 'amount (R$)')) + '">' +
-            (typeof Cal !== 'undefined' ? Cal.campo('spData' + c.id, mais(hoje(), 1), {}) : '<input id="spData' + esc(c.id) + '" type="date">') +
-            '<button class="btn sm primary" data-acao="sp-salvar" data-id="' + esc(c.id) + '">' + esc(tr('Guardar', 'Save')) + '</button></div>' : '') + '</div>';
+          (aberto === c.id && aondeForm === 'card' ? formAjuste(c) : '') + '</div>';
       }).join('') + '</div>';
   }
   function alertas() { return API.contas().map(function (c) { var a = API.alerta(c); return a ? { c: c, a: a } : null; }).filter(Boolean); }
 
   MoneyModulos.registrar({
-    id: 'saldo-previsto', versao: '1.0.2', colecoes: [COL],
+    id: 'saldo-previsto', versao: '1.1.0', colecoes: [COL],
     pontos: {
       'budget.painel': cartao, 'custos.contas': cartao,
       'budget.atencao': function () {
         var l = alertas(); if (!l.length) return '';
         return '<div class="card sp-atencao"><div class="card-head"><h3>' + esc(tr('Precisa da sua atenção', 'Needs your attention')) + '</h3></div>' +
-          l.map(function (x) { return '<p class="small" style="margin:0 0 6px">⚠ ' + esc(frase(x.c, x.a)) + '</p>'; }).join('') + '</div>';
+          l.map(function (x) { return '<div class="sp-aviso sp-conta" style="margin:0 0 8px"><div class="row" style="gap:8px;align-items:flex-start"><p class="small" style="margin:0">⚠ ' + esc(frase(x.c, x.a)) + '</p>' + selo(x.c) + '</div>' +
+            '<button class="btn sm" data-acao="sp-ajustar" data-onde="atencao" data-id="' + esc(x.c.id) + '">' + esc(tr('Já agendei', 'Already scheduled')) + '</button>' +
+            (aberto === x.c.id && aondeForm === 'atencao' ? formAjuste(x.c) : '') + '</div>'; }).join('') + '</div>';
       },
       'inbox.grupos': function () {
         var l = alertas(); if (!l.length) return [];
         return [{ id: 'saldo', n: l.length, html: l.map(function (x) {
-          return '<li class="inb-item"><div><b>' + esc(frase(x.c, x.a)) + '</b></div><span class="inb-acoes"><button class="btn sm" data-acao="sp-ajustar" data-id="' + esc(x.c.id) + '" data-close="genModal" data-irpara="b-painel">' +
-            esc(tr('Já resgatei / agendei', 'Already redeemed / scheduled')) + '</button></span></li>';
+          var d = API.dados(x.c);
+          return '<li class="inb-item"><div><b>' + esc(frase(x.c, x.a)) + '</b>' + (d.txt ? '<span class="t-sub' + (d.velho ? ' sp-velho' : '') + '"' + (d.velho ? ' style="color:var(--warn)"' : '') + '>' + esc(d.txt + (d.velho ? tr(' · pode estar desatualizado', ' · may be out of date') : '')) + '</span>' : '') + '</div><span class="inb-acoes"><button class="btn sm" data-acao="sp-ajustar" data-onde="atencao" data-id="' + esc(x.c.id) + '" data-close="genModal" data-irpara="b-painel">' +
+            esc(tr('Já agendei', 'Already scheduled')) + '</button></span></li>';
         }).join('') }];
       }
     },
     acoes: {
-      'sp-ajustar': function (el) { aberto = aberto === el.dataset.id ? null : el.dataset.id; render(); setTimeout(function () { var i = document.querySelector('.view:not(.hidden) .sp-valor'); if (i) i.focus(); }, 60); },
+      'sp-ajustar': function (el) { var onde = el.dataset.onde || 'card'; aberto = aberto === el.dataset.id && aondeForm === onde ? null : el.dataset.id; aondeForm = onde; render(); setTimeout(function () { var i = document.querySelector('.view:not(.hidden) .sp-valor'); if (i) i.focus(); }, 60); },
       'sp-salvar': function (el) {
         var box = el.closest('.sp-conta'), v = Number(String((box.querySelector('.sp-valor') || {}).value || '').replace(/\./g, '').replace(',', '.')), d = (box.querySelector('[id^="spData"]') || {}).value;
         if (!(v > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(d || '')) return toast(tr('Diga o valor e a data.', 'Enter the amount and the date.'), 'warn');
-        ajustes().push({ id: 'sa' + Date.now().toString(36), contaId: el.dataset.id, data: d, valor: n2(v), nota: tr('Resgate / agendado', 'Redemption / scheduled') });
+        ajustes().push({ id: 'sa' + Date.now().toString(36), contaId: el.dataset.id, data: d, valor: n2(v), nota: tr('Resgate / agendado', 'Redemption / scheduled'), criadoEm: hoje() });
         aberto = null; Store.salvar(); render(); toast(tr('Guardado: a linha do saldo foi refeita.', 'Saved: the balance line was redone.'));
       }
     }

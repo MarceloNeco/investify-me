@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.1.1 · 13/Nov/2026
+   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.1.2 · 14/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      O robô manda, na mesma caixa (money_entrada), itens que NUNCA viram lançamento (nuvem.js desvia para cá):
@@ -22,7 +22,7 @@
      receber(item) · receberInvest(item) · contas() · secoes() · conferir(reg)
    DADOS
      Store.estado.saldos_banco = [{id, tipo: 'conta'|'poupanca'|'cartao'|'investimento', banco, conta, contaId, final, dono, moeda, saldo,
-       data, abertura, hist, cartao: {fatura, vence, fecha, limite, disponivel, bandeira}, inv: {classe, subtipo, vencimento, taxa, indexador}}]
+       data, atualizadoEm (2.1.2), abertura, hist, cartao: {fatura, vence, fecha, limite, disponivel, bandeira}, inv: {classe, subtipo, vencimento, taxa, indexador}}]
    ===================================================================== */
 (function () {
   'use strict';
@@ -68,6 +68,9 @@
       if (contaId) r.contaId = contaId;
       r.final = String(it.final_conta || '').replace(/\D/g, '').slice(-4) || r.final || '';
       r.dono = String(it.dono || '').trim().slice(0, 60); r.moeda = String(it.moeda || 'BRL').slice(0, 3);
+      /* 2.1.2 (3.86): quando chegaram estes dados (o horário do robô, se ele mandar; senão, o da chegada no app) */
+      var em = [it.atualizado_em, it.coletado_em, it.criado_em].filter(function (x) { return x && !isNaN(Date.parse(x)); })[0];
+      r.atualizadoEm = em ? new Date(Date.parse(em)).toISOString() : new Date().toISOString();
       r.cartao = r.tipo === 'cartao' ? { fatura: Math.abs(num(it.fatura_aberta) !== null ? num(it.fatura_aberta) : saldo), vence: it.vence || '', fecha: it.fecha || '',
         limite: num(it.limite), disponivel: num(it.disponivel), bandeira: String(it.bandeira || '').slice(0, 30) } : false;
       hist(r, data, saldo);

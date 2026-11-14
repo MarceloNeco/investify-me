@@ -89,10 +89,11 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     ok(c5.l.join(' ; ') === ['Contador (PJ)|dia|10|0|reservado|400', 'DARF (PJ)|dia|20|0|reservado|600', 'DAS Simples Nacional (PJ)|dia|20|0|reservado|1200', 'TFE Prefeitura SP (PJ)|anual|10|7|reservado|1'].join(' ; '), 'DAS e DARF dia 20, contador dia 10, TFE em julho, todas reservadas, com a média como valor: ' + c5.l.join(' ; '));
     ok(await p.evaluate(() => Recorrente.todos().filter((r) => r.empresaId).every((r) => Escopo.de('recorrentes', r) === 'reservado')), 'visão da casa: as contas da PJ são reservadas');
     const c5b = await p.evaluate(() => { PJ._hoje = '2026-11-16'; return PJ.transferir().map((x) => x.r.sub + '|' + x.ate + '|' + x.valor); });
-    ok(c5b.length === 2 && c5b.every((x) => /\|2026-11-19\|/.test(x)), 'em 16/11: DAS e DARF de 20/11 → transferir até 19/11: ' + c5b.join());
+    ok(c5b.length === 2 && c5b.some((x) => /^DAS.*\|2026-11-19\|/.test(x)) && c5b.some((x) => /^DARF.*\|2026-11-18\|/.test(x)), 'em 16/11: 20/11 é feriado → o DAS prorroga para 23/11 (transferir até 19/11) e o DARF antecipa para 19/11 (transferir até 18/11): ' + c5b.join());
+    ok(await p.evaluate(() => Recorrente.ocorrencias('2026-11-01', '2026-11-30').filter((o) => o.r.empresaId && /DA(S|RF)/.test(o.r.sub)).map((o) => o.r.sub.slice(0, 4) + o.data).sort().join()) === 'DARF2026-11-19,DAS 2026-11-23', 'o DARF do pró-labore antecipa (19/11) e o DAS prorroga (23/11)');
     ok(/Transfira R\$\s?1\.200,00 para a PJ até 19\/Nov\/2026/.test(await p.evaluate(() => (inboxGrupos().find((g) => g.id === 'pj') || {}).html || '')), '📥: "Transfira R$ 1.200,00 para a PJ até 19/Nov/2026"');
     const c5c = await p.evaluate(() => { SaldoPrevisto._hoje = '2026-11-16'; const cs = SaldoPrevisto.contas(); const ev = SaldoPrevisto.eventos(cs[0]); return { n: cs.map((c) => c.id), ev: ev.filter((e) => /PJ/.test(e.nome)).map((e) => e.data + '|' + e.valor) }; });
-    ok(c5c.n.join() === 'sbpf' && c5c.ev.indexOf('2026-11-19|-1200') >= 0 && c5c.ev.indexOf('2026-11-19|-600') >= 0, 'saldo previsto: só a conta da PF; DAS e DARF saem em 19/11 como "Transferir para a PJ" ' + JSON.stringify(c5c));
+    ok(c5c.n.join() === 'sbpf' && c5c.ev.indexOf('2026-11-19|-1200') >= 0 && c5c.ev.indexOf('2026-11-18|-600') >= 0, 'saldo previsto: só a conta da PF; DAS sai em 19/11 e DARF em 18/11 como "Transferir para a PJ" ' + JSON.stringify(c5c));
     ok(await p.evaluate(() => { PJ._hoje = '2027-03-05'; return PJ.avisosAnuais().some((a) => /DEFIS de FULANO EXEMPLO CONSULTORIA LTDA/.test(a.txt)); }), 'em março: "DEFIS de … entregar até 31/03"');
 
     console.log('6) visão da casa');

@@ -1,11 +1,17 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.85 · 13/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.86 · 14/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.86', d:'2026-11-14', t:'"Parece conta fixa" mais seguro', itens:[
+    '"Parece conta fixa" não sugere mais gasto frequente (mercado, padaria, restaurante, farmácia, combustível, transporte, compras): ele continua no previsto da categoria.',
+    'Em vez de "Sim, cadastrar / Não é", agora há "Revisar" e "Não acompanhar". "Revisar" abre uma janela curta: o tipo (conta fixa, valor variável, imposto ou custo da empresa, gasto frequente, foi só uma vez), nome, categoria, quem paga, o dia com a janela, o valor (média ou o último), até quando e a prévia do que vai mudar. Depois de salvar, dá para desfazer por 10 segundos, e tudo continua editável em Contas fixas.',
+    'Impostos da PJ (DAS, DARF): a previsão do DAS só entra no mês seguinte a um mês com receita e o valor vem da receita (a alíquota efetiva dos últimos meses). Os dois vencem no dia 20; em fim de semana ou feriado, o DAS passa para o próximo dia útil e o DARF do pró-labore antecipa para o dia útil anterior. Quando o contador muda de valor, o 📥 oferece "usar o último valor". Empresa "a encerrar" com data para de prever depois dela, sem apagar o histórico.',
+    'Avisos de saldo dizem de quem é a conta e de quando são os dados: "Itaú do Fulano ···1234" e, à direita, "dados de 13/11 14:44" (passou de 24 horas: "pode estar desatualizado", em amarelo). O botão "Já agendei" registra o resgate ou a transferência: o saldo previsto conta como entrada planejada, o aviso some, e quando o lançamento real chega ele substitui o planejado sem contar duas vezes. As contas atrasadas do 📥 também dizem a conta e a data dos dados.'
+  ]},
   {v:'3.85', d:'2026-11-13', t:'Reforma tributária: a data de revisar', itens:[
     'FiscalONE, cartão da reforma: a escolha do regime do IBS/CBS no Simples é feita por semestre no Portal do Simples Nacional (setembro para o 1º semestre, março para o 2º); quem não escolhe paga IBS/CBS dentro do DAS. O "Revisar com o contador" passa a ser 15/02/2027, antes da janela de março, com o link do aviso oficial.'
   ]},
