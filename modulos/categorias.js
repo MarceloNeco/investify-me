@@ -17,8 +17,8 @@
   'use strict';
   var STREAMING = 'Streaming e mídias';
   var INICIAIS = { 'LAZER|Locação de Vídeo/DVD/Midias': STREAMING, 'LAZER|CDs/DVDs/Jogos/Fitas/acessórios': STREAMING };
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function temST() { return typeof ST !== 'undefined' && !!ST; }
   function mapa() { return temST() ? ((ST.config = ST.config || {}).subAlias = ST.config.subAlias || {}) : {}; }
 

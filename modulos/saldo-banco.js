@@ -27,8 +27,8 @@
 (function () {
   'use strict';
   var COL = 'saldos_banco';
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function lista() { return (ST[COL] = Array.isArray(ST[COL]) ? ST[COL] : []); }
   function N(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
   function menos(iso, dias) { return new Date(Date.parse(iso + 'T12:00:00Z') - dias * 86400000).toISOString().slice(0, 10); }

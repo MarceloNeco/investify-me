@@ -18,8 +18,8 @@
    ===================================================================== */
 (function () {
   'use strict';
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function casa() { return !!(window.Escopo && Escopo.soCasa && Escopo.soCasa()); }
   function hoje() { return API._hoje || hojeISO(); }
   function cfg() { return (ST.config = ST.config || {}); }
@@ -112,7 +112,7 @@
       return '<div class="doc-ped"><p class="small" style="margin:0 0 6px">📄 ' + esc(tr('Suba a ', 'Upload the ') + p.nome + tr(' de ', ' for ') + mesNome(p)) + '</p>' + passoHtml(p) + '</div>';
     }).join('') + '</div>';
   }
-  function mesNome(p) { return p.periodo.tipo === 'anual' ? p.cicloAtual : new Date(p.cicloAtual + '-15T12:00:00').toLocaleDateString(pt() ? 'pt-BR' : 'en-US', { month: 'long', year: 'numeric' }); }
+  function mesNome(p) { return p.periodo.tipo === 'anual' ? p.cicloAtual : new Date(p.cicloAtual + '-15T12:00:00').toLocaleDateString(I18n.locale(), { month: 'long', year: 'numeric' }); }
   function adiar(idc) { var c = cfg(); c.docsAdiados = c.docsAdiados || {}; var x = new Date(hoje() + 'T12:00:00'); x.setDate(x.getDate() + 7); c.docsAdiados[idc] = x.toISOString().slice(0, 10); }
 
   MoneyModulos.registrar({

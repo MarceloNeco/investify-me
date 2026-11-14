@@ -35,8 +35,8 @@
   var COL = 'a_receber', DIAS = 30;
   var TIPOS = [['estorno', 'Estorno', 'Refund'], ['reembolso-saude', 'Reembolso do plano de saúde', 'Health plan reimbursement'], ['contestacao', 'Contestação no cartão', 'Card dispute'],
     ['restituicao-ir', 'Restituição do IR', 'Tax refund'], ['devolucao', 'Devolução', 'Return'], ['outro', 'Outro', 'Other']];
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function n2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
   function lista() { return (ST[COL] = Array.isArray(ST[COL]) ? ST[COL] : []); }
   function hoje() { return API._hoje || hojeISO(); }

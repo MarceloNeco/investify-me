@@ -46,8 +46,8 @@
 (function () {
   'use strict';
   var COL = 'eventos', RX_COMB = /combust|gasolin|etanol|diesel|posto|abastec/i;
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function n2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
   function hoje() { return API._hoje || hojeISO(); }
@@ -63,7 +63,7 @@
   function cfg() { return (ST.config = ST.config || {}); }
   function saidas() { return Gasto.todos().filter(function (g) { return g.fluxo === 'saida' && g.data; }); }
   function ehComb(g) { return g.grupo === 'VEICULO' && RX_COMB.test((g.sub || '') + ' ' + (g.desc || '')); }
-  function nomeMes(mes) { return new Date(mes + '-15T12:00:00').toLocaleDateString(pt() ? 'pt-BR' : 'en-US', { month: 'long' }); }
+  function nomeMes(mes) { return new Date(mes + '-15T12:00:00').toLocaleDateString(I18n.locale(), { month: 'long' }); }
 
   /* a categoria do combustível: a mais usada nos abastecimentos */
   function catComb() {

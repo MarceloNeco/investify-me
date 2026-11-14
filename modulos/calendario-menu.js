@@ -23,7 +23,7 @@
 (function () {
   'use strict';
   var CHAVE = 'moneytrio.calMenu.recolhido';
-  function pt() { return I18n.atual !== 'en'; }
+  function pt() { return I18n.atual === 'pt'; }
   function ler() { try { return localStorage.getItem(CHAVE) === '1'; } catch (e) { return false; } }
   function gravar(v) { try { if (v) localStorage.setItem(CHAVE, '1'); else localStorage.removeItem(CHAVE); } catch (e) {} }
   var SETA_CIMA = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M4 10l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';

@@ -28,8 +28,8 @@
 (function () {
   'use strict';
   var RX_LINK = /^https:\/\/docs\.google\.com\/spreadsheets\/[A-Za-z0-9/_?=&#.%-]+$/;
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function nuvem() { return window.MoneyNuvem && MoneyNuvem.espelho; }
   function cfg() { return (ST.config = ST.config || {}); }
 

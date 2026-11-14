@@ -39,8 +39,8 @@
    ===================================================================== */
 (function () {
   'use strict';
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function N(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
   var SEM_LIQUIDEZ = { '01': 'imovel', '02': 'outro', '99': 'outro' };
   /* 3.70 (dados reais): imóvel é sempre imóvel ("QUITADO VIA CONSORCIO" na descrição não muda isso); consórcio só no 99.05;

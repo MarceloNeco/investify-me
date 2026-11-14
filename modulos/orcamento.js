@@ -26,8 +26,8 @@
 (function () {
   'use strict';
   var COL = 'orcamentos', PERTO = 0.8;
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function lista() { return (ST[COL] = Array.isArray(ST[COL]) ? ST[COL] : []); }
   function mesDe(d) { return String(d || '').slice(0, 7); }
@@ -96,7 +96,7 @@
   function cartaoOrcamento() {
     var l = lista().map(function (o) { return { o: o, s: API.situacao(o) }; }).sort(function (a, b) { return b.s.pct - a.s.pct; });
     var alertas = l.filter(function (x) { return x.s.estado !== 'ok'; });
-    var nomeMes = new Date(hojeISO() + 'T12:00:00').toLocaleDateString(pt() ? 'pt-BR' : 'en-US', { month: 'long', year: 'numeric' });
+    var nomeMes = new Date(hojeISO() + 'T12:00:00').toLocaleDateString(I18n.locale(), { month: 'long', year: 'numeric' });
     var h = '<div class="card orc"><div class="card-head"><h3>' + esc(tr('Orçamento do mês', 'Monthly budget')) + '</h3><span class="small muted pn-periodo">' + esc(nomeMes) + '</span></div>';
     if (alertas.length) h += '<p class="orc-alerta small" role="status">⚠️ ' + esc(alertas.map(function (x) { return x.o.sub + ' ' + Math.round(x.s.pct * 100) + '%'; }).join(' · ')) + '</p>';
     /* 3.69: as categorias com limite e as maiores pelo previsto, cada uma com a barra empilhada */

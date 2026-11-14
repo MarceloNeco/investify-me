@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.3 · 14/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.4 · 14/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -60,6 +60,7 @@
       (o definitivo que chegou substitui o pendente; o que sumiu da entrega há 7 dias é liberado).
   18. 1.15.1 (3.81) — MoneyNuvem.converterRobo(l): a conversão da caixa do robô, para o importador do extrato BS2 no app.
   19. 1.15.2 (3.84) — N10: depois de abrir da nuvem, cartões, metas, bancos e empresas em ordem alfabética (estável entre aparelhos).
+  21. 1.15.4 (3.89) — o idioma segue o I18n do app (3 idiomas: tt(pt, en, es); sem ES, o inglês).
   20. 1.15.3 (3.87) — o robô mandar de novo um lançamento DIVIDIDO pela pessoa não desfaz a divisão (corrigir compara com o total).
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
@@ -88,8 +89,9 @@
   var BUSCA_MS = 20000, OCIOSO_MS = 15 * 60000, FORA_MS = 10 * 60000, AVISO_MS = 60000;
 
   /* ---------------- pequenas ajudas ---------------- */
-  function lang() { try { return localStorage.getItem('investifyme.idioma.v1') === 'en' ? 'en' : 'pt'; } catch (e) { return 'pt'; } }
-  function tt(pt, en) { return lang() === 'en' ? en : pt; }
+  /* 1.15.4 (3.89): segue o I18n do app (no espanhol de teste, o que não tem ES sai em inglês) */
+  function lang() { try { if (typeof I18n !== 'undefined') return I18n.atual === 'pt' ? 'pt' : 'en'; return localStorage.getItem('investifyme.idioma.v1') === 'en' ? 'en' : 'pt'; } catch (e) { return 'pt'; } }
+  function tt(pt, en, es) { return typeof I18n !== 'undefined' && I18n.tr ? I18n.tr(pt, en, es) : (lang() === 'en' ? en : pt); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function lsGet(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }

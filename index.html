@@ -276,19 +276,25 @@ function desligadoPelaAdm(id){ return !!(window.SolverRecursos && SolverRecursos
 
 const IDIOMAS = {
   pt: {nome:'Português', curto:'PT', bandeira:'🇧🇷', locale:'pt-BR', moeda:'BRL'},
-  en: {nome:'English',   curto:'EN', bandeira:'🇺🇸', locale:'en-US', moeda:'USD'}
+  en: {nome:'English',   curto:'EN', bandeira:'🇺🇸', locale:'en-US', moeda:'USD'},
+  /* 3.89: o espanhol (da Espanha) entra pela estrutura, ESCONDIDO: não aparece no seletor até o app estar 100% traduzido e
+     revisado (diretriz "Idioma e datas"). Só o interruptor de teste ?lang=es liga. Moeda continua a de quem usa (R$). */
+  es: {nome:'Español',   curto:'ES', bandeira:'🇪🇸', locale:'es-ES', moeda:'BRL', oculto:true}
 };
 
 const MESES_CURTOS = {
   pt: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
-  en: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  en: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+  es: ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']   /* 3.89: em espanhol o mês vai em minúsculas */
 };
 
 const MESES_LONGOS = {
   pt: ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto',
        'setembro','outubro','novembro','dezembro'],
   en: ['January','February','March','April','May','June','July','August',
-       'September','October','November','December']
+       'September','October','November','December'],
+  es: ['enero','febrero','marzo','abril','mayo','junio','julio','agosto',
+       'septiembre','octubre','noviembre','diciembre']
 };
 
 const DIAS_SEMANA = {
@@ -297,7 +303,10 @@ const DIAS_SEMANA = {
        minimo:['D','S','T','Q','Q','S','S']},
   en: {curto:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
        longo:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
-       minimo:['S','M','T','W','T','F','S']}
+       minimo:['S','M','T','W','T','F','S']},
+  es: {curto:['dom','lun','mar','mié','jue','vie','sáb'],
+       longo:['domingo','lunes','martes','miércoles','jueves','viernes','sábado'],
+       minimo:['D','L','M','X','J','V','S']}
 };
 
 /* ---------------------------------------------------------
@@ -533,6 +542,13 @@ const I18n = {
   faltando: {},          /* o que foi pedido e não existe no dicionário */
 
   iniciar(){
+    /* 3.89: interruptor ESCONDIDO de teste do espanhol: ?lang=es liga nesta aba (sessionStorage; não vai para a nuvem
+       nem para o seletor); ?lang=pt ou ?lang=en desliga */
+    try{
+      const q = /[?&]lang=(pt|en|es)\b/.exec(location.search);
+      if(q) sessionStorage.setItem(CHAVE_IDIOMA + '.teste', q[1] === 'es' ? 'es' : '');
+      if(sessionStorage.getItem(CHAVE_IDIOMA + '.teste') === 'es'){ this.definir('es', true); return; }
+    }catch(e){}
     let escolhido = null;
     try{ escolhido = localStorage.getItem(CHAVE_IDIOMA); }catch(e){}
     if(!escolhido && typeof ST !== 'undefined' && ST && ST.config) escolhido = ST.config.idioma;
@@ -548,8 +564,10 @@ const I18n = {
   definir(id, calado){
     if(!IDIOMAS[id]) return;
     this.atual = id;
-    try{ localStorage.setItem(CHAVE_IDIOMA, id); }catch(e){}
-    if(typeof ST !== 'undefined' && ST && ST.config){
+    /* 3.89: o idioma escondido (teste) não fica guardado nem sobe para a nuvem */
+    if(IDIOMAS[id].oculto){ try{ sessionStorage.setItem(CHAVE_IDIOMA + '.teste', id); }catch(e){} }
+    else{ try{ sessionStorage.removeItem(CHAVE_IDIOMA + '.teste'); localStorage.setItem(CHAVE_IDIOMA, id); }catch(e){} }
+    if(typeof ST !== 'undefined' && ST && ST.config && !IDIOMAS[id].oculto){
       ST.config.idioma = id;
       if(typeof Store !== 'undefined' && !calado) Store.salvar();
     }
@@ -565,17 +583,29 @@ const I18n = {
 
   outro(){ return this.atual === 'pt' ? 'en' : 'pt'; },
 
+  /* 3.89: o caminho único para 3 idiomas. tr('Olá', 'Hello', 'Hola'): o que não tiver espanhol cai no inglês, e o que não
+     tiver inglês, no português. de({pt, en, es}) faz o mesmo com um objeto. */
+  tr(pt, en, es){
+    if(this.atual === 'pt') return pt;
+    if(this.atual === 'es' && es != null) return es;
+    return en != null ? en : pt;
+  },
+  de(o){ return o == null || typeof o !== 'object' ? o : this.tr(o.pt, o.en, o.es); },
+  /* os idiomas que o seletor mostra (o escondido só aparece se for o atual, para a pessoa poder sair dele) */
+  visiveis(){ return Object.keys(IDIOMAS).filter(k => !IDIOMAS[k].oculto || k === this.atual); },
+
   /* t('fin.entrou') · t('ft.ultimos', {n:12}) */
   t(chave, vars){
     const e = TEXTOS[chave];
     if(!e){ this.faltando[chave] = true; return chave; }
-    let s = e[this.atual] != null ? e[this.atual] : (e.pt || chave);
+    if(this.atual === 'es' && e.es == null) this.marcarEs('t:' + chave);
+    let s = this.tr(e.pt != null ? e.pt : chave, e.en, e.es);
     if(vars) Object.keys(vars).forEach(k => { s = s.split('{' + k + '}').join(vars[k]); });
     return s;
   },
 
   /* ---------- datas ---------- */
-  /* 18/Set/2026 em português, Sep/18/2026 em inglês */
+  /* 18/Set/2026 em português, Sep/18/2026 em inglês, 18/sep/2026 em espanhol (3.89) */
   data(iso, op){
     if(!iso) return '—';
     const s = String(iso).slice(0,10);
@@ -583,8 +613,9 @@ const I18n = {
     if(!m) return s;
     const [ , ano, mes, dia] = m;
     const mmm = MESES_CURTOS[this.atual][Number(mes) - 1];
-    if(op && op.semAno) return this.atual === 'pt' ? (dia + '/' + mmm) : (mmm + '/' + dia);
-    return this.atual === 'pt' ? (dia + '/' + mmm + '/' + ano) : (mmm + '/' + dia + '/' + ano);
+    const diaAntes = this.atual !== 'en';
+    if(op && op.semAno) return diaAntes ? (dia + '/' + mmm) : (mmm + '/' + dia);
+    return diaAntes ? (dia + '/' + mmm + '/' + ano) : (mmm + '/' + dia + '/' + ano);
   },
 
   /* só mês e ano: Set/2026 ou Sep/2026 */
@@ -607,8 +638,8 @@ const I18n = {
     if(d === 0) return this.t('ac.hoje');
     if(d === 1) return this.t('ac.amanha');
     if(d === -1) return this.t('ac.ontem');
-    if(d > 0) return this.atual === 'pt' ? ('em ' + d + ' dias') : ('in ' + d + ' days');
-    return this.atual === 'pt' ? ('há ' + (-d) + ' dias') : ((-d) + ' days ago');
+    if(d > 0) return this.tr('em ' + d + ' dias', 'in ' + d + ' days', 'en ' + d + ' días');
+    return this.tr('há ' + (-d) + ' dias', (-d) + ' days ago', 'hace ' + (-d) + ' días');
   },
 
   /* ---------- números ---------- */
@@ -628,7 +659,20 @@ const I18n = {
     const semPar = Object.keys(TEXTOS).filter(k => !TEXTOS[k].pt || !TEXTOS[k].en);
     return {semChave: faltam, semTraducao: semPar,
             total: Object.keys(TEXTOS).length,
-            ok: faltam.length === 0 && semPar.length === 0};
+            ok: faltam.length === 0 && semPar.length === 0,
+            es: this.pendenciasEs()};
+  },
+
+  /* 3.89: o andamento do espanhol. O dicionário (chaves e frases inteiras) e, por tela, o que o app pediu em espanhol
+     e caiu no inglês nesta sessão (anotado só quando o idioma é 'es'; não custa nada em PT e EN) */
+  faltaEs: {},
+  marcarEs(s){ const v = (typeof viewAtual !== 'undefined' && viewAtual) || '—'; (this.faltaEs[v] = this.faltaEs[v] || {})[s] = 1; },
+  pendenciasEs(){
+    const chaves = Object.keys(TEXTOS), frases = Object.keys(typeof FRASES_EN !== 'undefined' ? FRASES_EN : {});
+    const fes = typeof FRASES_ES !== 'undefined' ? FRASES_ES : {};
+    const porTela = {}; Object.keys(this.faltaEs).forEach(v => { porTela[v] = Object.keys(this.faltaEs[v]).length; });
+    return {chaves: chaves.length, chavesEs: chaves.filter(k => TEXTOS[k].es != null).length,
+            frases: frases.length, frasesEs: frases.filter(f => fes[f] != null).length, porTela: porTela};
   }
 };
 
@@ -636,7 +680,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.88"></script>
+<script src="textos/frases-en.js?v=3.89"></script>
+<script src="textos/frases-es.js?v=3.89"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -679,19 +724,29 @@ const Verter = {
     return achou === null ? txt : (pre + achou + pos);
   },
 
+  /* 3.89: a frase no idioma atual; em espanhol, FRASES_ES e, sem ela, o inglês (e anota o que falta) */
+  dic(s){
+    if(I18n.atual === 'es'){
+      if(typeof FRASES_ES !== 'undefined' && FRASES_ES[s] !== undefined) return FRASES_ES[s];
+      if(FRASES_EN[s] !== undefined){ I18n.marcarEs(s); return FRASES_EN[s]; }
+      return undefined;
+    }
+    return FRASES_EN[s];
+  },
+
   nucleo(s){
-    if(FRASES_EN[s] !== undefined) return FRASES_EN[s];
+    if(this.dic(s) !== undefined) return this.dic(s);
 
     /* com emoji na frente */
     const m = RE_EMOJI_INI.exec(s);
     if(m){
       const resto = s.slice(m[1].length);
-      if(FRASES_EN[resto] !== undefined) return m[1] + FRASES_EN[resto];
+      if(this.dic(resto) !== undefined) return m[1] + this.dic(resto);
     }
 
     /* número na frente: "-1,357% do que entrou" procura "do que entrou" */
     const num = /^([+\-−]?[\d.,]+\s*%?\s+)(.+)$/.exec(s);
-    if(num && FRASES_EN[num[2]] !== undefined) return num[1] + FRASES_EN[num[2]];
+    if(num && this.dic(num[2]) !== undefined) return num[1] + this.dic(num[2]);
 
     /* composições: "Habitação · mensal", "Saúde: 33,6%", "A — B" */
     for(const sep of [' · ', ': ', ' — ']){
@@ -712,7 +767,7 @@ const Verter = {
 
   /* o HTML inteiro de uma tela */
   html(h){
-    if(I18n.atual !== 'en' || typeof h !== 'string' || !h) return h;
+    if(I18n.atual === 'pt' || typeof h !== 'string' || !h) return h;
     /* só o texto entre etiquetas — nunca dentro de uma etiqueta */
     let saida = h.replace(/>([^<>]+)</g, (todo, txt) => {
       if(!/[A-Za-zÀ-ÿ]{2,}/.test(txt)) return todo;
@@ -742,7 +797,7 @@ Verter.no = function(raiz){
   nos.forEach(x => {
     if(!this.originais.has(x)) this.originais.set(x, x.nodeValue);
     const orig = this.originais.get(x);
-    x.nodeValue = (I18n.atual === 'en') ? this.frase(orig) : orig;
+    x.nodeValue = (I18n.atual !== 'pt') ? this.frase(orig) : orig;
   });
   /* e os rótulos que o usuário lê nos atributos */
   raiz.querySelectorAll('[placeholder],[title]').forEach(el => {
@@ -752,14 +807,14 @@ Verter.no = function(raiz){
       let guardados = this.originais.get(el);
       if(!guardados){ guardados = {}; this.originais.set(el, guardados); }
       if(guardados[chave] === undefined) guardados[chave] = el.getAttribute(a);
-      el.setAttribute(a, (I18n.atual === 'en') ? this.frase(guardados[chave]) : guardados[chave]);
+      el.setAttribute(a, (I18n.atual !== 'pt') ? this.frase(guardados[chave]) : guardados[chave]);
     });
   });
 };
 
 /* um texto solto (título de modal, aviso) */
 Verter.txt = function(s){
-  return (I18n.atual === 'en') ? this.frase(s) : s;
+  return (I18n.atual !== 'pt') ? this.frase(s) : s;
 };
 
 </script>
@@ -1081,7 +1136,7 @@ const GLOS_MAP = {};
 GLOSSARIO.forEach(g => { GLOS_MAP[g.k] = g; });
 
 /* ---------- acessores que respeitam idioma e nível ---------- */
-function glosIdioma(){ return (typeof I18n !== 'undefined' && I18n.atual === 'en') ? 'en' : 'pt'; }
+function glosIdioma(){ return (typeof I18n !== 'undefined' && I18n.atual !== 'pt') ? 'en' : 'pt'; }
 function glosTitulo(g){ return (glosIdioma() === 'en' && g.te) ? g.te : g.t; }
 function glosCategoria(g){ return (glosIdioma() === 'en' && g.ce) ? g.ce : g.c; }
 function glosNivel(nivel){ return (nivel === 'iniciante' || nivel === 'medio' || nivel === 'expert') ? nivel : 'medio'; }
@@ -1251,7 +1306,7 @@ const COACH_MAP = {};
 COACH.forEach(c => { COACH_MAP[c.id] = c; });
 
 /* ---------- acessores que respeitam idioma ---------- */
-function coachIdioma(){ return (typeof I18n !== 'undefined' && I18n.atual === 'en') ? 'en' : 'pt'; }
+function coachIdioma(){ return (typeof I18n !== 'undefined' && I18n.atual !== 'pt') ? 'en' : 'pt'; }
 function coachTitulo(m){ return (coachIdioma() === 'en' && m.te) ? m.te : m.t; }
 function coachLead(m){ return (coachIdioma() === 'en' && m.leade) ? m.leade : m.lead; }
 function coachTexto(m, nivel){
@@ -2759,7 +2814,7 @@ function vizBarras(itens, fmt){
 /* 3.67: "Para onde foi" com drill-down: o grupo abre as categorias; a categoria leva aos lançamentos dela, no mesmo período */
 function vizBarrasDrill(porGrupo, lista, fmt){
   const total = porGrupo.reduce((s, x) => s + Math.abs(x.valor), 0) || 1;
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   return porGrupo.map(x => {
     const G = GRUPOS[x.chave] || {}, cor = 'var(' + (G.cor || '--s1') + ')', pct = Math.abs(x.valor) / total * 100, aberto = painelGrupoAberto === x.chave;
     let h = '<div class="alloc-row pn-grupo' + (aberto ? ' aberto' : '') + '">' +
@@ -2818,7 +2873,7 @@ function vizDivergente(itens, fmt){
    itens: [{nome, rec, extra, entRec, saida, aplic}] (rec = entRec − saida; total = rec + extra) */
 function vizMesAMes(itens, fmt){
   if(!itens.length) return '<p class="muted small">Sem dados ainda.</p>';
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   /* com renda extraordinária, a escala deixa 15% de folga: o amarelo sempre aparece até a borda, mesmo no maior mês */
   const max = (Math.max(...itens.map(i => Math.abs(i.rec))) || 1) * (itens.some(i => i.extra) ? 1 / 0.85 : 1);
   const umLado = itens.every(i => i.rec >= 0 && i.rec + i.extra >= 0);
@@ -3210,7 +3265,7 @@ function vizFluxoPatrimonioDesenho(ms, op, W, H){
      rendimentos"); área clara "dos quais investido" quando há fotos da carteira. Embaixo, igual ao "Mês a mês": entrou
      (verde, a parte extraordinária em amarelo com ★), gastou (vermelho) e "foi para investimento" (outra cor), e a linha
      do saldo do mês = entrou − gastou (o aporte não diminui o saldo). Na visão da casa, só o bloco de baixo, sem aporte. */
-  const pt = I18n.atual !== 'en', casa = !!op.casa, pat = op.pat || [], extra = op.extra || {};
+  const pt = I18n.atual === 'pt', casa = !!op.casa, pat = op.pat || [], extra = op.extra || {};
   const estreito = W < 520;
   const mL = estreito ? 54 : 66, mR = 14, tit = 20, mB = 24, gap = casa ? 0 : 30;
   const util = H - (casa ? 1 : 2) * tit - gap - mB;
@@ -3834,7 +3889,7 @@ const Inst = {
      id = o id do input escondido que guarda o valor, para o resto
      do app continuar lendo $('#aInst').value como sempre leu. */
   campo(id, valor){
-    const pt = I18n.atual !== 'en';
+    const pt = I18n.atual === 'pt';
     return '<div class="inst-campo" data-instcampo="' + id + '">' +
       '<input type="hidden" id="' + id + '" value="' + esc(valor || '') + '">' +
       '<div class="inst-escolhida" data-instabrir="' + id + '">' +
@@ -3852,7 +3907,7 @@ const Inst = {
   },
 
   htmlLista(id, busca){
-    const pt = I18n.atual !== 'en';
+    const pt = I18n.atual === 'pt';
     const q = this.chave(busca);
     const casa = n => !q || this.chave(n).indexOf(q) >= 0;
     const favs = this.todas().filter(n => this.ehFavorita(n) && casa(n));
@@ -4028,7 +4083,7 @@ const Arquivos = {
   async ler(arquivo, aviso){
     const tipo = await this.detectar(arquivo);
     const diz = m => { if(aviso) aviso(m); };
-    const pt = (typeof I18n === 'undefined' || I18n.atual !== 'en');
+    const pt = (typeof I18n === 'undefined' || I18n.atual === 'pt');
 
     if(tipo === 'xls' || tipo === 'doc')
       return {tipo: tipo, texto: '', tabela: null, erro: pt
@@ -4318,7 +4373,7 @@ const Arquivos = {
   ACEITA: '.csv,.tsv,.txt,.xml,.ofx,.qfx,.xlsx,.xlsm,.docx,.pdf,.xls,.doc',
 
   nomeDoTipo(tipo){
-    const pt = (typeof I18n === 'undefined' || I18n.atual !== 'en');
+    const pt = (typeof I18n === 'undefined' || I18n.atual === 'pt');
     const n = {csv:'CSV', tsv:'TSV', txt: pt?'texto':'text', xml:'XML', ofx: pt?'extrato OFX':'OFX statement',
       xlsx: pt?'planilha do Excel':'Excel sheet', docx: pt?'documento do Word':'Word document',
       pdf:'PDF', xls: pt?'Excel antigo':'old Excel', doc: pt?'Word antigo':'old Word', zip:'ZIP'};
@@ -4754,7 +4809,7 @@ const Voz = {
            !!(window.SpeechRecognition || window.webkitSpeechRecognition);
   },
 
-  idioma(){ return I18n.atual === 'en' ? 'en-US' : 'pt-BR'; },
+  idioma(){ return I18n.locale(); },   /* 3.89: segue o idioma (es-ES no espanhol) */
 
   /* ---------- ler em voz alta ---------- */
   vozEscolhida(){
@@ -7619,7 +7674,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.88"></script>
+<script src="textos/mudancas.js?v=3.89"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -8251,7 +8306,7 @@ const Feriados = {
     const local = this.locais().find(f => f.data === iso);
     if(local) return local.nome || (I18n.atual === 'pt' ? 'Feriado local' : 'Local holiday');
     const n = this.doAno(Number(String(iso).slice(0,4)))[iso];
-    return n ? n[I18n.atual] || n.pt : null;
+    return n ? I18n.de(n) : null;
   },
 
   ehFeriado(iso){ return !!this.qual(iso); },
@@ -8268,7 +8323,7 @@ const Feriados = {
     const mapa = this.doAno(ano);
     const out = [];
     Object.keys(mapa).forEach(k => {
-      if(k.indexOf(pre) === 0) out.push({data: k, nome: mapa[k][I18n.atual] || mapa[k].pt});
+      if(k.indexOf(pre) === 0) out.push({data: k, nome: I18n.de(mapa[k])});
     });
     this.locais().forEach(f => { if(f.data.indexOf(pre) === 0) out.push({data: f.data, nome: f.nome}); });
     return out.sort((a,b) => a.data.localeCompare(b.data));
@@ -9195,7 +9250,7 @@ const FitaBudget = {
     const add = (ico, txt, tom) => out.push({tipo:'aviso', ico, texto: txt, tom: tom || ''});
     /* a fita mistura texto e número na mesma frase, então ela se
        traduz aqui na fonte, e não pelo dicionário de frases */
-    const en = I18n.atual === 'en';
+    const en = I18n.atual !== 'pt';
     const de = (a2, b2) => en ? b2 : a2;
 
     /* --- o que vence --- */
@@ -9896,7 +9951,7 @@ function menuDeApps(){
   /* diretriz do topo: o nome do sub-app atual com ▾ abre "Início" (o
      MoneyTRIO, com o seletor dos três) e os OUTROS sub-apps */
   const atual = ST.appAtual || 'investify';
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const outros = Object.keys(APPS).filter(k => APPS[k].pronto && k !== atual && appsVisiveis().indexOf(k) >= 0);
   return '<div class="app-menu" id="appMenu">' +
   '<button class="app-op app-op-inicio" role="menuitem" data-trocaapp="__hub">' +
@@ -9955,7 +10010,7 @@ function rendaExtra(g){
 }
 /* 3.67: o período do Painel inteiro (o filtro, ou os últimos 12 meses) e quantos meses ele tem: todo "por mês" divide por ele */
 function periodoPainel(lista){
-  const jan = Gasto.janela(), pt = I18n.atual !== 'en', datas = (lista || []).map(g => g.data).filter(Boolean).sort();
+  const jan = Gasto.janela(), pt = I18n.atual === 'pt', datas = (lista || []).map(g => g.data).filter(Boolean).sort();
   const de = bFiltro.de || datas[0] || jan.de, ate = bFiltro.ate || datas[datas.length - 1] || jan.ate;
   let meses = 12;
   if(de && ate){ const d = (new Date(ate + 'T12:00:00') - new Date(de + 'T12:00:00')) / 86400000 + 1; meses = Math.max(1, Math.round(d / 30.44)); }
@@ -10046,7 +10101,7 @@ function viewBPainel(){
   const NOMES_MES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   if(saz.some(m => m.media > 0)){
     h += '<div class="card"><div class="card-head"><h3>Os meses caros do seu ano</h3>' +
-         '<button class="info-dot" data-info="sazonalidade">i</button><span class="small muted pn-periodo">' + esc(I18n.atual === 'en' ? 'all the years recorded' : 'todos os anos registrados') + '</span></div>' +
+         '<button class="info-dot" data-info="sazonalidade">i</button><span class="small muted pn-periodo">' + esc(I18n.atual !== 'pt' ? 'all the years recorded' : 'todos os anos registrados') + '</span></div>' +
          vizColunas(saz.map((m,i) => ({nome: NOMES_MES[i], valor: m.media})), fmt) +   /* 3.65.2: 12 colunas, não 12 linhas */
          '<p class="tiny muted" style="margin-top:8px">Média de cada mês em todos os anos que você registrou. ' +
          'É onde aparecem IPTU, IPVA, material escolar e as festas de fim de ano.</p></div>';
@@ -10081,7 +10136,7 @@ function kpiB(rotulo, valor, info, sub, classe, irpara){
 function avisoDensidade(real){
   if(!real.ralo) return '';
   /* tem data no meio da frase, então a tradução é feita aqui */
-  const en = I18n.atual === 'en';
+  const en = I18n.atual !== 'pt';
   const quando = real.ultimoDenso ? fmtData(real.ultimoDenso + '-01')
                                   : (en ? 'a certain point' : 'certo ponto');
   return '<div class="aviso-box"><b>' +
@@ -10196,7 +10251,7 @@ function viewBLanc(){
     h += '<tr data-bid="' + g.id + '" class="linha-click">' +
       '<td class="nowrap">' + (g.data ? fmtData(g.data) : '<span class="muted">sem data</span>') +
         (() => { const cb = g.cartaoId || g.dataCobranca ? Gasto.cobranca(g) : null;
-                 return cb && cb !== g.data ? '<div class="t-sub" title="' + (I18n.atual === 'en' ? 'invoice due date' : 'vencimento da fatura') +
+                 return cb && cb !== g.data ? '<div class="t-sub" title="' + (I18n.atual !== 'pt' ? 'invoice due date' : 'vencimento da fatura') +
                    '">💳 ' + fmtData(cb) + '</div>' : ''; })() + '</td>' +
       '<td><span class="t-main">' + esc(g.sub) + '</span>' +
         '<div class="t-sub">' + (G.ico || '') + ' ' + esc(G.nome || g.grupo) +
@@ -10449,7 +10504,7 @@ const Sugestor = {
     if(!out.grupo) return null;
     /* para quem é: a pessoa do nome; Habitação é da casa */
     if(pessoa) out.quem = pessoa;
-    else if(out.grupo === 'HABITACAO') out.quem = CASA_TODA[I18n.atual] || CASA_TODA.pt;
+    else if(out.grupo === 'HABITACAO') out.quem = I18n.de(CASA_TODA);
     /* escola, seguro: contrato do ano — o ano que vem a partir de julho */
     if(d && d[3] && d[3].anual && d[1] === out.grupo){
       const y = Number(hoje.slice(0,4)) + (Number(hoje.slice(5,7)) >= 7 ? 1 : 0);
@@ -10469,7 +10524,7 @@ const Sugestor = {
 
 function recOpcoesPessoa(listaId){
   const cad = window.Pessoas ? Pessoas.ativas().map(p => Pessoas.rotulo(p)) : [];   /* 3.64: as cadastradas primeiro */
-  return '<datalist id="' + listaId + '">' + [CASA_TODA[I18n.atual] || CASA_TODA.pt].concat(cad, recPessoas().filter(q => cad.indexOf(q) < 0))
+  return '<datalist id="' + listaId + '">' + [I18n.de(CASA_TODA)].concat(cad, recPessoas().filter(q => cad.indexOf(q) < 0))
     .map(quemVer).filter((q, i, l) => l.indexOf(q) === i)   /* 3.68: o nome do cadastro (o código volta ao salvar) */
     .map(q => '<option value="' + esc(q) + '"></option>').join('') + '</datalist>';
 }
@@ -10856,7 +10911,7 @@ function blocoFeriadosCfg(){
   const cidades = R ? Object.keys(R.cidades || {}) : [];
   const ano = Number(hojeISO().slice(0,4));
   const regionais = [];
-  if(R){ (R.estado || []).concat((R.cidades || {})[rg.cidade] || []).forEach(f => regionais.push(I18n.data(ano + '-' + f.md, {semAno:true}) + ' · ' + (f.nome[I18n.atual] || f.nome.pt))); }
+  if(R){ (R.estado || []).concat((R.cidades || {})[rg.cidade] || []).forEach(f => regionais.push(I18n.data(ano + '-' + f.md, {semAno:true}) + ' · ' + (I18n.de(f.nome)))); }
   const locais = Feriados.locais().slice().sort((a,b) => a.data.localeCompare(b.data));
   return '<div class="card cfg-sec" data-sec="budget"><div class="card-head"><h3>' + (pt ? 'Feriados' : 'Holidays') + '</h3></div>' +
     '<p class="small muted">' + (pt
@@ -10979,7 +11034,7 @@ let projModo = 'mes', projAbertos = {}, projTodosAnos = false, projMaisCol = fal
 function projValor(mensal, taxa, k){ return mensal * Math.pow(1 + (taxa || 0), k); }
 function viewBFuturo(){
   if(!Gasto.todos().length) return bVazio('b-futuro');
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   if(!bProj){ const sc = Orcamento.seriesDoCache(); if(Object.keys(sc).length){ bProj = Orcamento.projetar(bAnos, sc); bProj.series = sc; } }
   Orcamento.atualizarSeVelho();
 
@@ -11160,7 +11215,7 @@ function abrirLancamento(id){
         '<option value="">—</option>' +
         FORMAS_PGTO.map(f => '<option value="' + f.id + '"' +
           (g && g.formaId === f.id ? ' selected' : '') + '>' + f.ico + ' ' +
-          esc(f.nome[I18n.atual === 'en' ? 'en' : 'pt']) + '</option>').join('') + '</select>') +
+          esc(f.nome[I18n.atual !== 'pt' ? 'en' : 'pt']) + '</option>').join('') + '</select>') +
     '</div>' +
     '<div id="glOnde">' + campoOndePagou(g) + '</div>' +
     '<div id="glFixo"></div>' +
@@ -11253,7 +11308,7 @@ function abrirLancamento(id){
    Fica num bloco próprio para poder ser redesenhado sozinho. */
 function campoOndePagou(g){
   const pede = ((FORMA_POR_ID[(g && g.formaId) || ''] || {}).pede) || '';
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
 
   if(pede === 'cartao'){
     const cartoes = Banco.cartoes();
@@ -11449,7 +11504,7 @@ let bImportado = null;
 
 function abrirImportarPlanilha(){
   bImportado = null;
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   $('#assetModalTitle').textContent = pt ? 'Importar arquivo' : 'Import file';
   $('#assetModalBody').innerHTML = Verter.html('<div class="solta" id="plSolta">' +
       '<div class="solta-ico">📄</div>' +
@@ -11539,7 +11594,7 @@ function desenharPreviaPlanilha(){
   const ruins = (bImportado || []).filter(x => x.erro);
   const extratos = (bImportado || []).filter(x => x.ofx);
   const soltos = (bImportado || []).filter(x => x.solto);
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   let h = '';
 
   /* ---------- extrato do banco (OFX) ----------
@@ -11749,7 +11804,7 @@ function aplicarPlanilha(){
   bProj = null; bPagina = 0;
   Store.salvar(); fechar('assetModal'); render();
 
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const per = Gasto.periodo();
   const titulo = novos
     ? (pt ? 'Importação concluída' : 'Import complete')
@@ -11871,7 +11926,7 @@ let bPlanoOfx = [];
 
 function planoOfx(extratos){
   const todos = Gasto.todos();
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const idsJa = new Map();                 /* ofxId → chave */
   const pool = new Map();                  /* quantos já existem por chave */
   /* data|valor|sentido, mais o número da parcela: a parcela 4/10 não é
@@ -11995,7 +12050,7 @@ function aplicarOfx(incluirParecidos, tirarIds){
 
 /* cartão do extrato que não está cadastrado: cadastra com o final e os dois dias */
 function cadastrarCartaoDoExtrato(fim){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const fecha = Number(($('#ofxFecha' + fim) || {}).value), vence = Number(($('#ofxVence' + fim) || {}).value);
   if(!(fecha >= 1 && fecha <= 31) || !(vence >= 1 && vence <= 31)){
     toast(pt ? 'Informe o dia de fechamento e o de vencimento (1 a 31).' : 'Enter the closing and due days (1 to 31).', 'warn');
@@ -12084,8 +12139,8 @@ function barraFiltros(op){
   const celular = window.innerWidth <= 600;
   h += '<div class="bf-linha' + (celular ? ' bf-cel' : '') + '">' +
     (celular
-      ? '<select class="chip-select bf-per-sel' + (bFiltro.periodo ? ' on' : '') + '" id="bPer" aria-label="' + esc(I18n.atual === 'en' ? 'Period' : 'Período') + '">' +
-          (bFiltro.periodo ? '' : '<option value="" selected>' + esc(I18n.atual === 'en' ? 'Custom dates' : 'Datas escolhidas') + '</option>') +
+      ? '<select class="chip-select bf-per-sel' + (bFiltro.periodo ? ' on' : '') + '" id="bPer" aria-label="' + esc(I18n.atual !== 'pt' ? 'Period' : 'Período') + '">' +
+          (bFiltro.periodo ? '' : '<option value="" selected>' + esc(I18n.atual !== 'pt' ? 'Custom dates' : 'Datas escolhidas') + '</option>') +
           nomeados.concat(anosLista).map(p => '<option value="' + p.id + '"' + (bFiltro.periodo === p.id ? ' selected' : '') + '>📅 ' + esc(p.nome) + '</option>').join('') + '</select>'
       : '') +
     '<div class="chips bf-per' + (celular ? ' hidden' : '') + '">' +
@@ -12093,8 +12148,8 @@ function barraFiltros(op){
         '" data-bper="' + p.id + '">' + esc(p.nome) + '</button>').join('') +
       (anosLista.length
         ? '<select class="chip-select' + (anoEscolhido ? ' on' : '') + '" id="bAno" aria-label="' +
-          esc(I18n.atual === 'en' ? 'Year' : 'Ano') + '">' +
-          '<option value="">' + esc(I18n.atual === 'en' ? 'Year…' : 'Ano…') + '</option>' +
+          esc(I18n.atual !== 'pt' ? 'Year' : 'Ano') + '">' +
+          '<option value="">' + esc(I18n.atual !== 'pt' ? 'Year…' : 'Ano…') + '</option>' +
           anosLista.map(p => '<option value="' + p.id + '"' + (bFiltro.periodo === p.id ? ' selected' : '') + '>' +
             esc(p.nome) + '</option>').join('') + '</select>'
         : '') +
@@ -12216,7 +12271,7 @@ function viewBFluxo(){
       'Escolha um período maior lá em cima.</p></div>';
 
   /* 3.69 (pedido do dono): o patrimônio real mês a mês (modulos/patrimonio-mes.js); a barra de aporte separada do gasto */
-  const pt = I18n.atual !== 'en', casa = !!(window.Escopo && Escopo.soCasa && Escopo.soCasa());
+  const pt = I18n.atual === 'pt', casa = !!(window.Escopo && Escopo.soCasa && Escopo.soCasa());
   if(window.PatrimonioMes && !casa){ const antes = JSON.stringify(ST.patrimonio_mes || []); PatrimonioMes.registrar(); if(JSON.stringify(ST.patrimonio_mes || []) !== antes) Store.salvar(); }
   const real = casa ? null : patrimonioHoje();
   const pat = (window.PatrimonioMes && !casa) ? PatrimonioMes.serie(serie) : [];
@@ -12380,7 +12435,7 @@ const SUGESTOES_WZ = {
 };
 
 /* o texto na língua da vez */
-const wzTxt = x => (x && typeof x === 'object') ? (x[I18n.atual] || x.pt) : x;
+const wzTxt = x => (x && typeof x === 'object') ? (I18n.de(x)) : x;
 
 function sugestoesDoPasso(id){
   const jaTem = new Set(Recorrente.todos().map(r => (r.grupo + '|' + r.sub).toLowerCase()));
@@ -13950,7 +14005,7 @@ const CupomTexto = {
    ========================================================= */
 const Leitor = (() => {
   const BASE = new URL('assets/ocr/', document.baseURI).href;
-  const tx = (pt, en) => (typeof I18n !== 'undefined' && I18n.atual === 'en') ? en : pt;
+  const tx = (pt, en) => (typeof I18n !== 'undefined' && I18n.atual !== 'pt') ? en : pt;
 
   const ORDERED_FIELD_KEYS = [
     'Estabelecimento',
@@ -15886,7 +15941,7 @@ const Anuncio = {
   },
 
   htmlAnuncio(){
-    const L = I18n.atual === 'en' ? 'en' : 'pt';
+    const L = I18n.atual !== 'pt' ? 'en' : 'pt';
     const a = this.atual();
     if(!a) return '<a class="anuncio-a" href="' + ALVO_ANUNCIO + '" target="_blank" rel="noopener noreferrer">' +
       '<span class="anuncio-tag">' + esc(t('ad.anuncie')) + '</span></a>';
@@ -15952,7 +16007,7 @@ const Anuncio = {
     if(!candidatos.length) return;
     const a = candidatos[Math.floor(Math.random() * candidatos.length)];
     this.ultimoPopup = a.id;
-    const L = I18n.atual === 'en' ? 'en' : 'pt';
+    const L = I18n.atual !== 'pt' ? 'en' : 'pt';
     const caixa = document.createElement('div');
     caixa.className = 'popup-an';
     caixa.setAttribute('data-recurso', 'anuncios');
@@ -17431,7 +17486,7 @@ function viewBCustos(){
 /* 3.76: "+ Adicionar" em Contas fixas — um menu com cada jeito de cadastrar, explicado numa linha.
    Os módulos entram pelo ponto custos.adicionar: [{ico, pt, en, dpt, den, acao | label}] (label = id de um <input type=file>). */
 function abrirAdicionarConta(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const base = [
     {ico:'📌', pt:'Nova conta fixa', en:'New fixed bill', dpt:'Digite uma conta que se repete: aluguel, escola, condomínio.', den:'Type a bill that repeats: rent, school, condo fee.', acao:'rec-novo'},
     {ico:'✨', pt:'Passo a passo', en:'Step by step', dpt:'O app pergunta o que você paga todo mês e cadastra tudo de uma vez.', den:'The app asks what you pay every month and adds it all at once.', acao:'wz-abrir'},
@@ -17643,7 +17698,7 @@ function abrirEstado(chave){
         esc(chave) + '" data-est="' + k + '">' +
         '<span class="estado-ico" style="color:var(' + E.cor + ')">' + E.ico + '</span>' +
         '<b>' + esc(t(E.t)) + '</b>' +
-        (E.desc ? '<i>' + esc(E.desc[I18n.atual] || E.desc.pt) + '</i>' : '') + '</button>';
+        (E.desc ? '<i>' + esc(I18n.de(E.desc)) + '</i>' : '') + '</button>';
     }).join('') + '</div>' +
     campo(I18n.atual === 'pt' ? 'Valor de verdade, se foi diferente' : 'Actual amount, if different',
       '<input type="number" id="pgValor" step="0.01" min="0" value="' +
@@ -18128,7 +18183,7 @@ const UX = {
   /* ---------- 2. explicações longas dobradas ---------- */
   dobrarExplicacoes(raiz){
     if(!raiz) return;
-    const en = (typeof I18n !== 'undefined' && I18n.atual === 'en');
+    const en = (typeof I18n !== 'undefined' && I18n.atual !== 'pt');
     raiz.querySelectorAll('.card > p.small.muted, .card > p.tiny.muted, .card > .card-head + p.small, .aviso-box > p, .aviso-box p.small').forEach(p => {
       if(p.classList.contains('explica') || p.closest('.cfg-corpo-acc')) return;
       const txt = p.textContent.trim();
@@ -18192,7 +18247,7 @@ const UX = {
   reguaDeValor(input){
     if(!input || input.dataset.regua) return;
     input.dataset.regua = '1';
-    const pt = (typeof I18n === 'undefined' || I18n.atual !== 'en');
+    const pt = (typeof I18n === 'undefined' || I18n.atual === 'pt');
 
     const caixa = document.createElement('div');
     caixa.className = 'val-regua';
@@ -18367,7 +18422,7 @@ const UX = {
   /* ---------- 5. ouvir o texto de um cartão ---------- */
   botoesDeVoz(raiz){
     if(!raiz || typeof Voz === 'undefined' || !Voz.podeLer()) return;
-    const pt = (typeof I18n === 'undefined' || I18n.atual !== 'en');
+    const pt = (typeof I18n === 'undefined' || I18n.atual === 'pt');
     raiz.querySelectorAll('[data-ouvir]').forEach(alvo => {
       if(alvo.querySelector(':scope > .voz-ler')) return;
       const b = document.createElement('button');
@@ -18659,7 +18714,7 @@ const Assist = {
   },
 
   render(){
-    const L = I18n.atual === 'en' ? 'en' : 'pt';
+    const L = I18n.atual !== 'pt' ? 'en' : 'pt';
     const de = (a,b) => L === 'pt' ? a : b;
     const abas = [
       {id:'tela',     ico:'💡', nome: de('Esta tela', 'This screen')},
@@ -18847,7 +18902,7 @@ const AssistOne = {
   },
 
   html(modo){
-    const L = I18n.atual === 'en' ? 'en' : 'pt';
+    const L = I18n.atual !== 'pt' ? 'en' : 'pt';
     const de = (a, b) => L === 'pt' ? a : b;
     const v = Assist.telaAtual();
     const a = (AJUDA_TELAS[v] || (window.MoneyModulos && (MoneyModulos.infoTela(v) || {}).ajuda) || {})[L];   /* 3.42: ajuda das telas dos módulos */
@@ -18888,7 +18943,7 @@ const AssistOne = {
    ========================================================= */
 
 function blocoBancosCartoes(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const bancos = Banco.todos();
   const cartoes = Banco.cartoes();
 
@@ -18955,7 +19010,7 @@ function blocoBancosCartoes(){
 
 /* ---------- formulário do banco ---------- */
 function abrirBanco(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   $('#assetModalTitle').textContent = pt ? 'Cadastrar banco' : 'Add bank';
   $('#assetModalBody').innerHTML = Verter.html(
     campo(pt ? 'Qual instituição' : 'Which institution',
@@ -19040,7 +19095,7 @@ function salvarBanco(){
 
 /* ---------- formulário do cartão ---------- */
 function abrirCartao(id, semente){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const c = id ? Banco.acharCartao(id) : null;
   const sm = !c && semente ? semente : null;   /* 3.65: "Cartões encontrados" abre o cadastro já preenchido */
   const bancos = Banco.todos();
@@ -19150,7 +19205,7 @@ function abrirSalario(aba){
 }
 
 function desenharSalario(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   $('#genTitle').textContent = pt ? 'Salário' : 'Salary';
   const abas = [
     {id:'liquido', t: pt ? 'Bruto → líquido' : 'Gross → net'},
@@ -19178,7 +19233,7 @@ function desenharSalario(){
    bruto → líquido
    --------------------------------------------------------- */
 function htmlLiquido(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const bruto = Number(($('#slBruto') || {}).value) || Number(ST.config.salarioBruto) || 0;
   const dep = Number(($('#slDep') || {}).value) || Number(ST.config.salarioDependentes) || 0;
   const r = Salario.liquido(bruto, {dependentes: dep, outros: salOutros});
@@ -19266,7 +19321,7 @@ function linhaSal(nome, valor, nota){
    PJ × CLT
    --------------------------------------------------------- */
 function htmlPjClt(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const clt = Number(($('#pjClt') || {}).value) || Number(ST.config.pjSalarioClt) || 0;
   const fat = Number(($('#pjFat') || {}).value) || Number(ST.config.pjFaturamento) || 0;
   const cont = Number(($('#pjCont') || {}).value);
@@ -19374,7 +19429,7 @@ function ligarSalario(){
   const alvo = $('#slAlvo');
   if(alvo) alvo.addEventListener('change', () => {
     const v = Number(alvo.value) || 0;
-    const pt = I18n.atual !== 'en';
+    const pt = I18n.atual === 'pt';
     $('#slInverso').innerHTML = v > 0
       ? '<b>' + fmt(Salario.bruto(v, {dependentes: Number(($('#slDep')||{}).value) || 0})) + '</b>' +
         '<span class="t-sub tiny muted">' + (pt ? 'de salário bruto' : 'of gross salary') + '</span>'
@@ -19702,7 +19757,7 @@ function somaDiasSal(iso, n){
 
 let salCad = null;          /* o que está sendo editado na janela */
 
-function ptSal(){ return (typeof I18n === 'undefined' || I18n.atual !== 'en'); }
+function ptSal(){ return (typeof I18n === 'undefined' || I18n.atual === 'pt'); }
 
 /* ---------- 1. o cadastro ---------- */
 function abrirCadastroSalario(id){
@@ -20107,7 +20162,7 @@ const Beneficios = {
   doSalario(salId){ return this.todos().filter(b => b.salarioId === salId); },
   novoId(){ return 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); },
   cat(tipo){ return CATALOGO_BEN.find(c => c.id === tipo) || CATALOGO_BEN[CATALOGO_BEN.length - 1]; },
-  nome(b){ const L = I18n.atual === 'en' ? 'en' : 'pt'; return b.nome || this.cat(b.tipo)[L]; },
+  nome(b){ const L = I18n.atual !== 'pt' ? 'en' : 'pt'; return b.nome || this.cat(b.tipo)[L]; },
   vigente(b, iso){
     const d = String(iso || hojeISO()).slice(0, 10);
     const s = Salarios.todos().find(r => r.id === b.salarioId);
@@ -20225,7 +20280,7 @@ const Beneficios = {
 /* ---------- o formulário do benefício ---------- */
 let benCad = null;
 function abrirBeneficio(id, salarioId){
-  const pt = I18n.atual !== 'en', L = pt ? 'pt' : 'en';
+  const pt = I18n.atual === 'pt', L = pt ? 'pt' : 'en';
   const b = id ? Beneficios.achar(id) : null;
   const sals = Salarios.todos().slice().sort((a, c) => (c.desde || '').localeCompare(a.desde || ''));
   if(!sals.length){
@@ -20302,7 +20357,7 @@ function abrirBeneficio(id, salarioId){
 }
 
 async function lerExtratoBeneficio(arq){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const info = $('#bnExtratoInfo');
   info.innerHTML = '<p class="tiny muted">' + (pt ? 'Lendo o extrato…' : 'Reading the statement…') + '</p>';
   let texto = '';
@@ -20333,7 +20388,7 @@ async function lerExtratoBeneficio(arq){
   mostrarExtratoBeneficio(r);
 }
 function mostrarExtratoBeneficio(r){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   $('#bnExtratoInfo').innerHTML = Verter.html('<div class="aviso-box" style="margin-top:8px"><p class="small"><b>📄 ' + esc(r.arquivo || (pt ? 'extrato' : 'statement')) + '</b>' +
     (r.operadora ? ' · ' + esc(r.operadora) : '') + (r.valor ? ' · ' + (pt ? 'carga ' : 'top-up ') + fmt(r.valor) : '') +
     (r.data ? ' · ' + fmtData(r.data) : '') + '</p></div>');
@@ -20352,7 +20407,7 @@ function lerFormBeneficio(){
   };
 }
 function salvarBeneficio(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const d = lerFormBeneficio();
   const erro = !d.salarioId ? (pt ? 'Escolha o salário a que este benefício pertence.' : 'Pick the salary this benefit belongs to.')
     : (d.tipo === 'outro' && !d.nome) ? (pt ? 'Dê um nome ao benefício.' : 'Name the benefit.')
@@ -20369,7 +20424,7 @@ function salvarBeneficio(){
   fechar('assetModal');
 }
 function excluirBeneficio(id){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   if(!confirm(pt ? 'Excluir este benefício?' : 'Delete this benefit?')) return;
   Beneficios.excluir(id); Store.salvar();
   const voltar = benCad && benCad.voltar; benCad = null;
@@ -20380,7 +20435,7 @@ function excluirBeneficio(id){
 
 /* ---------- os benefícios de um salário, dentro do formulário do salário ---------- */
 function blocoBeneficiosDoSalario(salId){
-  const pt = I18n.atual !== 'en', L = pt ? 'pt' : 'en';
+  const pt = I18n.atual === 'pt', L = pt ? 'pt' : 'en';
   let h = '<div class="ben-sal"><div class="card-head" style="margin-bottom:6px"><h3 style="font-size:.95rem">' + (pt ? 'Benefícios desta empresa' : 'Benefits from this employer') + '</h3>';
   if(!salId) return h + '</div><p class="tiny muted" style="margin:0">' + (pt ? 'Salve o salário e depois pendure aqui o vale-alimentação, o plano de saúde e o resto.'
                                                                                 : 'Save the salary, then hang the food card, health plan and the rest here.') + '</p></div>';
@@ -20397,7 +20452,7 @@ function blocoBeneficiosDoSalario(salId){
 
 /* ---------- o cartão de Benefícios na tela de Renda ---------- */
 function blocoBeneficios(){
-  const pt = I18n.atual !== 'en', L = pt ? 'pt' : 'en';
+  const pt = I18n.atual === 'pt', L = pt ? 'pt' : 'en';
   const todos = Beneficios.todos();
   const mes = Beneficios.doMes(hojeISO());
   let h = '<div class="card"><div class="card-head"><h3>' + (pt ? 'Benefícios' : 'Benefits') + '</h3>' +
@@ -20583,7 +20638,7 @@ const Desloc = {
 
 /* ---------- a tela ---------- */
 function viewBDesloc(){
-  const pt = I18n.atual !== 'en', L = pt ? 'pt' : 'en';
+  const pt = I18n.atual === 'pt', L = pt ? 'pt' : 'en';
   const V = Desloc.veiculo();
   const lugares = Desloc.lugares(), trajetos = Desloc.trajetos();
   const r = Desloc.resumo(hojeISO());
@@ -20651,7 +20706,7 @@ function viewBDesloc(){
 /* ---------- lugar ---------- */
 let lugCad = null;
 function abrirLugar(id){
-  const pt = I18n.atual !== 'en', L = pt ? 'pt' : 'en';
+  const pt = I18n.atual === 'pt', L = pt ? 'pt' : 'en';
   const l = id ? Desloc.lugar(id) : null;
   lugCad = {id: l ? l.id : null, lat: l ? l.lat : null, lon: l ? l.lon : null};
   const pessoas = (typeof Gasto !== 'undefined' ? Gasto.pessoas() : []).map(p => p.chave);
@@ -20680,7 +20735,7 @@ function abrirLugar(id){
   abrir('assetModal');
 }
 async function localizarLugar(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const alvo = $('#lgGeo');
   alvo.textContent = pt ? 'Procurando…' : 'Searching…';
   try{
@@ -20690,7 +20745,7 @@ async function localizarLugar(){
   }catch(e){ alvo.textContent = (pt ? 'Não achei: ' : 'Not found: ') + (e.message || e); }
 }
 function salvarLugar(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const nome = $('#lgNome').value.trim();
   if(!nome){ toast(pt ? 'Dê um nome ao lugar.' : 'Name the place.', 'warn'); return; }
   const lat = $('#lgLat').value === '' ? null : Number($('#lgLat').value), lon = $('#lgLon').value === '' ? null : Number($('#lgLon').value);
@@ -20701,7 +20756,7 @@ function salvarLugar(){
 /* ---------- trajeto ---------- */
 let trjCad = null;
 function abrirTrajeto(id){
-  const pt = I18n.atual !== 'en', L = pt ? 'pt' : 'en';
+  const pt = I18n.atual === 'pt', L = pt ? 'pt' : 'en';
   const t = id ? Desloc.trajeto(id) : null;
   trjCad = {id: t ? t.id : null};
   const lug = Desloc.lugares();
@@ -20768,7 +20823,7 @@ function abrirTrajeto(id){
   refazer();
 }
 function salvarTrajeto(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const modo = (document.querySelector('#tjModo .chip.on') || {}).dataset ? document.querySelector('#tjModo .chip.on').dataset.modo : 'carro';
   const d = {
     id: trjCad && trjCad.id, origemId: $('#tjDe').value, destinoId: $('#tjPara').value, modo,
@@ -20821,7 +20876,7 @@ const RECEBE_RENDA = {
 /* o seletor de banco: os cadastrados primeiro e, embaixo, a lista
    inteira — escolher um da lista inteira já cadastra o banco */
 function selectBancoHTML(id, sel){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const meus = Banco.todos();
   const lista = BANCOS_BR.slice().sort((a, b) => (a.cod === '000') - (b.cod === '000') || a.nome.localeCompare(b.nome, 'pt', {sensitivity:'base'}));
   return '<select id="' + id + '"><option value="">—</option>' +
@@ -20853,7 +20908,7 @@ const Rendas = {
 
 let rendaCad = null;
 function abrirRenda(id, semente){
-  const pt = I18n.atual !== 'en', L = pt ? 'pt' : 'en';
+  const pt = I18n.atual === 'pt', L = pt ? 'pt' : 'en';
   const r = id ? Recorrente.achar(id) : null;
   const s = semente || {};
   const info = (r && r.renda) || {};
@@ -20931,7 +20986,7 @@ function abrirRenda(id, semente){
 }
 
 function salvarRenda(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const tipo = $('#rdTipo').value, cat = Rendas.cat(tipo);
   const valor = Number($('#rdValor').value) || 0;
   const nome = tipo === 'outro' ? $('#rdNome').value.trim() : cat.sub;
@@ -20976,7 +21031,7 @@ function salvarRenda(){
 
 /* o cartão "Outras rendas" na tela de Renda */
 function blocoOutrasRendas(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const lista = Rendas.todos().slice().sort((a, b) => (b.ativo !== false) - (a.ativo !== false));
   const jan = Gasto.janela();
   const avulsas = Gasto.filtrar({de: jan.de, ate: jan.ate, fluxo:'entrada'}).filter(g => !/sal[aá]rio/i.test(g.sub || ''));
@@ -21003,7 +21058,7 @@ function blocoOutrasRendas(){
 
 /* no lançamento: "isso se repete — quer cadastrar com o dia certo?" */
 function blocoFixoLancamento(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const per = ($('#glPer') || {}).value, grupo = ($('#glGrupo') || {}).value;
   if(!per || per === 'Pontual' || per === 'Frequente' || per === 'Diario') return '';
   const renda = grupo === 'RENDA';
@@ -21975,7 +22030,7 @@ const Tax = {
 
   /* avisos para a fita do topo, no FiscalONE */
   avisos(){
-    const pt = I18n.atual !== 'en';
+    const pt = I18n.atual === 'pt';
     const l = [];
     const comMalha = new Set(this.abertos().filter(p => p.numero).map(p => p.numero));
     this.abertos().forEach(p => {
@@ -22005,7 +22060,7 @@ const Tax = {
    Restituição e processos · Deduções
    ========================================================= */
 
-function ptT(){ return I18n.atual !== 'en'; }
+function ptT(){ return I18n.atual === 'pt'; }
 function anoTax(){ return Number((ST.config || {}).taxAno) || Number(hojeISO().slice(0, 4)); }
 function seletorAno(){
   const A = Number(hojeISO().slice(0, 4)), sel = anoTax();
@@ -24276,7 +24331,7 @@ const IA = {
 
   /* ---------- o que a IA vê: um resumo curto, nunca a carteira inteira ---------- */
   contexto(){
-    const L = I18n.atual === 'en' ? 'en' : 'pt';
+    const L = I18n.atual !== 'pt' ? 'en' : 'pt';
     const linhas = [];
     const app = (typeof ST !== 'undefined' && ST.appAtual) || 'investify';
     const tela = (typeof viewAtual !== 'undefined') ? viewAtual : '';
@@ -24320,7 +24375,7 @@ const IA = {
   },
 
   sistema(){
-    return I18n.atual === 'en'
+    return I18n.atual !== 'pt'
       ? 'You are the assistant inside MoneyTRIO, a personal finance app used by a Brazilian family. Answer in English, ' +
         'plainly and briefly (at most 8 short sentences), with no jargon unless you explain it. Use the numbers given as context. ' +
         'Never recommend buying or selling a specific asset; describe options and trade-offs and leave the decision to the person. ' +
@@ -24542,7 +24597,7 @@ let timerAuto = null;
 
 /* ---------------- formatação ---------------- */
 /* o locale dos números segue o idioma escolhido */
-const loc = () => (typeof I18n !== 'undefined' && I18n.atual === 'en') ? 'en-US' : 'pt-BR';
+const loc = () => (typeof I18n !== 'undefined') ? I18n.locale() : 'pt-BR';   /* 3.89: es-ES no espanhol */
 
 const SIMB = {BRL:'R$', USD:'US$', EUR:'€', GBP:'£', JPY:'¥', CHF:'CHF', CAD:'C$', AUD:'A$', ARS:'AR$', CNY:'CN¥'};
 function fmt(v, moeda, casas){
@@ -26416,11 +26471,11 @@ function viewCoach(){
   const feito = ST.coachFeitos.indexOf(m.id) >= 0;
 
   let art = '<div class="card lesson"><div class="row" style="margin-bottom:10px">' +
-    '<span class="chip">' + (I18n.atual === 'en' ? 'Lesson ' : 'Módulo ') + (idx+1) + (I18n.atual === 'en' ? ' of ' : ' de ') + COACH.length + '</span>' +
-    '<span class="chip">' + (I18n.atual === 'en' ? 'Level: ' : 'Nível: ') + nomeNivel(ST.nivel) + '</span>' +
+    '<span class="chip">' + (I18n.atual !== 'pt' ? 'Lesson ' : 'Módulo ') + (idx+1) + (I18n.atual !== 'pt' ? ' of ' : ' de ') + COACH.length + '</span>' +
+    '<span class="chip">' + (I18n.atual !== 'pt' ? 'Level: ' : 'Nível: ') + nomeNivel(ST.nivel) + '</span>' +
     '<div class="spacer"></div>' +
     '<button class="btn sm ' + (feito ? '' : 'primary') + '" data-coach-feito="' + m.id + '">' +
-      (feito ? (I18n.atual === 'en' ? '✓ Done' : '✓ Concluído') : (I18n.atual === 'en' ? 'Mark as read' : 'Marcar como lido')) + '</button></div>' +
+      (feito ? (I18n.atual !== 'pt' ? '✓ Done' : '✓ Concluído') : (I18n.atual !== 'pt' ? 'Mark as read' : 'Marcar como lido')) + '</button></div>' +
     '<h2>' + m.ic + ' ' + esc(coachTitulo(m)) + '</h2><p class="lead">' + esc(coachLead(m)) + '</p>' +
     '<div class="lesson-body">' + coachTexto(m, ST.nivel) + '</div>' +
     '<div class="lesson-nav">' +
@@ -26429,10 +26484,10 @@ function viewCoach(){
     '</div></div>';
 
   const cabeca = '<div class="card-head"><h1>Invest Coach</h1><div class="spacer"></div>' +
-    '<span class="small muted">' + feitos + (I18n.atual === 'en' ? ' of ' : ' de ') + COACH.length + (I18n.atual === 'en' ? ' lessons' : ' módulos') + '</span></div>' +
+    '<span class="small muted">' + feitos + (I18n.atual !== 'pt' ? ' of ' : ' de ') + COACH.length + (I18n.atual !== 'pt' ? ' lessons' : ' módulos') + '</span></div>' +
     '<div class="progress"><i style="width:' + pct + '%"></i></div>' +
     '<div class="busca-coach">' +
-      '<input id="coachBusca" placeholder="' + (I18n.atual === 'en' ? '🔎 Search the Coach and the glossary: dividend, PN, IPCA, bitcoin…' : '🔎 Buscar no Coach e no glossário: dividendo, PN, IPCA, bitcoin…') + '" ' +
+      '<input id="coachBusca" placeholder="' + (I18n.atual !== 'pt' ? '🔎 Search the Coach and the glossary: dividend, PN, IPCA, bitcoin…' : '🔎 Buscar no Coach e no glossário: dividendo, PN, IPCA, bitcoin…') + '" ' +
         'value="' + esc(coachBusca) + '" autocomplete="off">' +
       (coachBusca ? '<button class="btn sm ghost" data-acao="limpar-busca">limpar</button>' : '') +
     '</div>';
@@ -26477,7 +26532,7 @@ function resultadosBusca(q){
 }
 
 function nomeNivel(n){
-  const en = (typeof I18n !== 'undefined' && I18n.atual === 'en');
+  const en = (typeof I18n !== 'undefined' && I18n.atual !== 'pt');
   return n === 'iniciante' ? (en ? 'Beginner' : 'Iniciante') : (n === 'medio' ? (en ? 'Medium' : 'Médio') : 'Expert');
 }
 
@@ -26486,7 +26541,7 @@ function nomeNivel(n){
    ========================================================= */
 let glBusca = '', glLetra = '';
 function viewGlossario(){
-  const en = I18n.atual === 'en';
+  const en = I18n.atual !== 'pt';
   glosOrdenar();                                   /* a ordem alfabética muda com o idioma */
   const q = glBusca.trim().toLowerCase();
   let itens = GLOSSARIO.filter(g => {
@@ -26761,7 +26816,7 @@ function viewConfig(){
     'o valor é o que você informar. Renda fixa é estimada a partir da taxa contratada.</p></div>';
 
   /* versão e histórico de mudanças */
-  h += '<div class="card cfg-sec" data-sec="todos"><div class="card-head"><h3>' + (I18n.atual === 'en' ? 'Version and what changed' : 'Versão e o que mudou') + '</h3>' +
+  h += '<div class="card cfg-sec" data-sec="todos"><div class="card-head"><h3>' + (I18n.atual !== 'pt' ? 'Version and what changed' : 'Versão e o que mudou') + '</h3>' +
     '<span class="small muted">' + esc(VERSAO) + ' · ' + fmtData(VERSAO_DATA) + '</span></div>' +
     '<p class="small muted" style="margin:0 0 14px">Cada entrega ganha um número e fica registrada aqui, ' +
     'da mais nova para a mais antiga. Serve para saber o que passou a existir desde a última vez que você abriu.</p>' +
@@ -26771,7 +26826,7 @@ function viewConfig(){
      É texto de aviso legal: traduzido aqui na fonte, inteiro, e não
      por pedaço, para não sair meia frase em cada idioma. */
   {
-    const enL = I18n.atual === 'en';
+    const enL = I18n.atual !== 'pt';
     const P = (tit, corpo) => '<p class="small"><b>' + tit + '</b> ' + corpo + '</p>';
     h += '<div class="card cfg-sec" data-sec="todos"><div class="card-head"><h3>' +
       (enL ? 'Use, confidentiality and liability' : 'Uso, sigilo e responsabilidade') + '</h3></div>' +
@@ -26874,7 +26929,7 @@ function viewConfig(){
   /* ---- compartilhadas: idioma, biometria, compartilhar ---- */
   h += '<div class="card cfg-sec" data-sec="todos"><div class="card-head"><h3>' +
     (I18n.atual === 'pt' ? 'Idioma e formatos' : 'Language and formats') + '</h3></div>' +
-    '<div class="chips" style="margin-bottom:12px">' + Object.keys(IDIOMAS).map(k =>
+    '<div class="chips" style="margin-bottom:12px">' + I18n.visiveis().map(k =>
       '<button class="chip click' + (I18n.atual === k ? ' on' : '') + '" data-idioma="' + k + '">' +
       IDIOMAS[k].bandeira + ' ' + esc(IDIOMAS[k].nome) + '</button>').join('') + '</div>' +
     '<p class="small muted" style="margin:0 0 10px">' +
@@ -26900,7 +26955,12 @@ function viewConfig(){
         (I18n.atual === 'pt'
           ? 'O Coach e o Glossário existem inteiros nos dois idiomas, com um texto próprio para cada nível — iniciante, médio e expert.'
           : 'The Coach and the Glossary exist in full in both languages, with a text of their own for each level — beginner, medium and expert.') +
-        '</p></div>';
+        '</p>' +
+        /* 3.89: o andamento do espanhol (só aparece no teste ?lang=es; o ES ainda não está no seletor) */
+        (I18n.atual === 'es' ? '<p class="tiny" style="margin:8px 0 0"><b>Español (prueba):</b> ' +
+          p2.es.chavesEs + '/' + p2.es.chaves + ' claves · ' + p2.es.frasesEs + '/' + p2.es.frases + ' frases' +
+          (Object.keys(p2.es.porTela).length ? ' · ' + esc(Object.keys(p2.es.porTela).map(v => v + ': ' + p2.es.porTela[v]).join(' · ')) + ' sin traducir (en inglés)' : '') + '</p>' : '') +
+        '</div>';
     })() + '</div>';
 
   /* conta, avisos e instalação: as diretrizes que valem nos três apps */
@@ -27329,7 +27389,7 @@ function abrirInfo(chave){
   infoChaveAtual = chave;
   $('#infoTitle').textContent = g.titulo;
   $('#infoBody').innerHTML = Verter.html('<div class="lvl-tag">' + esc(g.categoria) + ' · ' +
-    (I18n.atual === 'en' ? 'level ' : 'nível ') + nomeNivel(ST.nivel).toLowerCase() + '</div>' + g.html);
+    (I18n.atual !== 'pt' ? 'level ' : 'nível ') + nomeNivel(ST.nivel).toLowerCase() + '</div>' + g.html);
   abrir('infoModal');
 }
 
@@ -27360,7 +27420,7 @@ function ligarGraficos(raiz){
       cursor.setAttribute('opacity', '1');
       const [ano, mes] = m.t.split('-');
       /* 3.69: saldo do mês = entrou − gastou (o aporte não diminui); patrimônio real ou estimado; nada de patrimônio na visão da casa */
-      const saldoMes = m.e - m.s, ptb = I18n.atual !== 'en';
+      const saldoMes = m.e - m.s, ptb = I18n.atual === 'pt';
       balao.innerHTML = Verter.html('<b>' + mes + '/' + ano + '</b>' +
         (m.p != null ? '<div class="bl-l"><i class="dot" style="background:var(--s1)"></i>' + (ptb ? 'Patrimônio' : 'Net worth') + (m.r ? '' : (ptb ? ' (estimado)' : ' (estimated)')) + '<span>' + fmt(m.p) + '</span></div>' : '') +
         (m.i != null ? '<div class="bl-l"><i class="dot pat-inv-dot"></i>' + (ptb ? 'dos quais investido' : 'of which invested') + '<span>' + fmt(m.i) + '</span></div>' : '') +
@@ -27434,7 +27494,7 @@ function ligarGraficos(raiz){
 /* rodapé: versão e data da última mudança */
 function renderVersao(){
   const v = $('#fvVersao'), d = $('#fvData');
-  const en = I18n.atual === 'en';
+  const en = I18n.atual !== 'pt';
   if(v) v.textContent = (en ? 'version ' : 'versão ') + VERSAO;
   if(d) d.textContent = (en ? 'updated on ' : 'atualizado em ') + fmtData(VERSAO_DATA);
 }
@@ -27519,7 +27579,7 @@ function sairDoWizard(idDoModal){
   if(typeof wz === 'undefined' || !wz) return true;
   if(!$('#assetModalBody') || !$('#assetModalBody').querySelector('.wz-trilha')) return true;
 
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const preenchidos = $$('.wz-v').filter(c => Number(c.value) > 0).length;
   if(preenchidos){
     const salvar = confirm(pt
@@ -27792,7 +27852,7 @@ function renderCalendarioMenu(){
   if(nivel) nivel.classList.toggle('hidden', !temNivel);
   const tit = $('#navNivelTit');
   if(tit){
-    const en = I18n.atual === 'en';
+    const en = I18n.atual !== 'pt';
     let sub = '';
     if(viewAtual === 'coach') sub = en ? 'changes the lesson text' : 'muda o texto da aula';
     else if(viewAtual === 'glossario') sub = en ? 'changes every entry' : 'muda todos os verbetes';
@@ -27804,7 +27864,7 @@ function renderCalendarioMenu(){
   const rot = {iniciante:{pt:'Iniciante',en:'Beginner'}, medio:{pt:'Médio',en:'Medium'}, expert:{pt:'Expert',en:'Expert'}};
   $$('#levelSeg button').forEach(b2 => {
     const k = b2.dataset.level;
-    if(rot[k]) b2.textContent = rot[k][I18n.atual] || rot[k].pt;
+    if(rot[k]) b2.textContent = I18n.de(rot[k]);
   });
 }
 
@@ -27816,7 +27876,7 @@ function renderTopo(){
   renderInboxN();
 }
 function horaCotacoes(){
-  return Mercado.ultima ? fmtHora(Mercado.ultima) : (I18n.atual === 'en' ? 'never' : 'nunca');
+  return Mercado.ultima ? fmtHora(Mercado.ultima) : (I18n.atual !== 'pt' ? 'never' : 'nunca');
 }
 
 /* =========================================================
@@ -27824,7 +27884,7 @@ function horaCotacoes(){
    ========================================================= */
 /* quem está conectado, numa frase: vale para o topo e para o menu */
 function identidade(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const s = (typeof Sessao !== 'undefined') ? Sessao.resumo() : {};
   const admin = s.tipo !== 'visitante' && !s.apelido && (typeof Acesso !== 'undefined') && Acesso.ehAdmin();
   const visitante = s.tipo === 'visitante' || (!s.tipo && !admin);
@@ -27846,7 +27906,7 @@ function renderPerfilTopo(){
   const av = $('#perfilAv'), nm = $('#perfilNome'), bt = $('#btnPerfil');
   if(!bt) return;
   const id = identidade();
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   if(av) av.textContent = id.iniciais;
   if(nm) nm.textContent = id.nome;
   const rotulo = (pt ? 'Perfil: ' : 'Profile: ') + id.nome + (id.email ? ' · ' + id.email : '') + ' · ' + id.papel;
@@ -27855,7 +27915,7 @@ function renderPerfilTopo(){
 }
 
 function htmlPerfilMenu(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const id = identidade();
   const op = (acao, ico, txt, extra, cls) => '<button type="button" role="menuitem" class="perfil-op' + (cls ? ' ' + cls : '') +
     '" data-perfil="' + acao + '"><i>' + ico + '</i>' + esc(txt) + (extra || '') + '</button>';
@@ -27953,7 +28013,7 @@ function acaoPerfil(qual){
 function inboxItens(){
   const itens = [];
   if(typeof Recorrente === 'undefined') return itens;
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const hoje = hojeISO();
   const dias = (typeof Avisos !== 'undefined') ? (Avisos.carregar().diasAntes || 3) : 3;
   try{
@@ -27994,11 +28054,11 @@ function inboxVistos(){ ST.config = ST.config || {}; return (ST.config.inboxVist
 /* 3.86: o aviso que depende do banco diz a conta (com o dono) e de quando são os dados (modulos/saldo-previsto.js) */
 function inboxDadosConta(r){
   const c = window.SaldoPrevisto && SaldoPrevisto.contaDe ? SaldoPrevisto.contaDe(r) : null; if(!c) return '';
-  const d = SaldoPrevisto.dados(c), pt = I18n.atual !== 'en';
+  const d = SaldoPrevisto.dados(c), pt = I18n.atual === 'pt';
   return esc(' · ' + (pt ? 'conta ' : 'account ') + SaldoPrevisto.nome(c) + (d.txt ? ' · ' + d.txt : '') + (d.velho ? (pt ? ' · pode estar desatualizado' : ' · may be out of date') : ''));
 }
 function inboxGrupos(){
-  const pt = I18n.atual !== 'en', por = {};
+  const pt = I18n.atual === 'pt', por = {};
   const add = (id, n, html) => { if(!n) return; por[id] = por[id] || {n: 0, html: ''}; por[id].n += n; por[id].html += html; };
   /* confirmar: as origens "A confirmar"/"A identificar" e os marcados para conferir */
   if(window.Origem){
@@ -28034,7 +28094,7 @@ function renderInboxN(){
   const q = inboxContagem();   /* 3.76: o mesmo número da lista */
   n.textContent = q > 99 ? '99+' : String(q);
   n.classList.toggle('hidden', !q);
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const rotulo = (pt ? 'Pendências' : 'To do') + (q ? (pt ? ' — ' + q + ' pendente' + (q > 1 ? 's' : '') : ' — ' + q + ' pending') : '');
   bt.setAttribute('aria-label', rotulo);
   const live = $('#inboxLive');
@@ -28042,7 +28102,7 @@ function renderInboxN(){
 }
 
 function abrirInbox(){
-  const pt = I18n.atual !== 'en';
+  const pt = I18n.atual === 'pt';
   const gs = inboxGrupos();
   let h = window.MoneyModulos ? MoneyModulos.html('inbox.topo', {}) : '';   /* 3.87: "📋 Colar print" (modulos/print-colar.js) */
   if(!gs.length){
@@ -30075,6 +30135,6 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/bs2-extrato.js?v=1.0.1"></script>
 <script src="modulos/pj-gestao.js?v=1.0.1"></script>
 <script src="modulos/pj-oportunidades.js?v=1.0.1"></script>
-<script src="nuvem.js?v=1.15.3"></script>
+<script src="nuvem.js?v=1.15.4"></script>
 </body>
 </html>

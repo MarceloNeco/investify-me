@@ -35,8 +35,8 @@
    ===================================================================== */
 (function () {
   'use strict';
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function n2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
   function hoje() { return API._hoje || hojeISO(); }
   function cfg() { return (ST.config = ST.config || {}); }
@@ -213,7 +213,7 @@
   }
   function itensSugestoes(s, li) {
     return s.map(function (x) {
-      var quando = x.tipo === 'anual' ? tr('todo ano em ', 'every year in ') + new Date(2026, x.mes - 1, 15).toLocaleDateString(pt() ? 'pt-BR' : 'en-US', { month: 'long' }) : tr('todo dia ~', 'every month on day ~') + x.dia;
+      var quando = x.tipo === 'anual' ? tr('todo ano em ', 'every year in ') + new Date(2026, x.mes - 1, 15).toLocaleDateString(I18n.locale(), { month: 'long' }) : tr('todo dia ~', 'every month on day ~') + x.dia;
       return '<div class="cfs-item"><p class="small" style="margin:0 0 6px">📌 ' + esc((x.pj ? tr('Parece imposto ou custo da empresa: ', 'Looks like a company tax or cost: ') : tr('Parece conta fixa: ', 'Looks like a fixed bill: ')) + x.nome + ' · ~' + fmt(x.valor) + ' · ' + quando + '.') + '</p>' +
         '<button type="button" class="btn sm primary" data-acao="cfs-revisar" data-chave="' + esc(x.chave) + '">' + esc(tr('Revisar', 'Review')) + '</button> ' +
         '<button type="button" class="btn sm" data-acao="cfs-nao" data-chave="' + esc(x.chave) + '">' + esc(tr('Não acompanhar', 'Do not track')) + '</button></div>';
