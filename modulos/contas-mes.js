@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.0.1 · 13/Nov/2026
+   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.1.0 · 14/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · No topo da tela (id b-custos), dois seletores guardados: período "Este mês | Próximos 45 dias" e arrumação
@@ -18,11 +18,18 @@
        faixas de valor e dia diferentes = duas contas. O mesmo recebedor no mesmo mês em anos seguidos = conta anual.
        "Sim" abre o cadastro já preenchido (nome editável); "Não" não volta. Quem aparece mais de 2× por mês (posto, mercado)
        não é sugerido.
+     · 1.1.0 (3.86): gasto FREQUENTE (mercado, padaria, restaurante, farmácia, combustível, transporte, compras — pela
+       categoria e pelo MCC) não é sugerido. "Sim, cadastrar / Não é" viraram "Revisar" e "Não acompanhar". "Revisar" abre
+       uma janela curta (boa no celular): o tipo (conta fixa · valor variável · imposto ou custo da empresa · gasto frequente
+       · foi só uma vez), nome, grupo, categoria, quem paga, empresa (PJ), o dia com a janela, o valor (média ou "usar o
+       último valor"), "só nos meses em que houver receita" (imposto), até quando, a prévia e "Salvar"; depois, "Desfazer"
+       por 10 s. Imposto da PJ (DAS, DARF, "PGTO CONCES.PUB … RECEITA FED") já abre como imposto da empresa certa.
+       Visão da casa: nada da PJ.
      · Retrocompatível: nada muda nos dados guardados; as abas de antes continuam embaixo. Visão da casa: só o que ela vê.
    API (window.ContasMes)
      itens(modo) → [{r, data, valor, status, pagoEm, grupo}] · atrasadasAntigas() · resumo(itens) · sugestoes() · STATUS
    DADOS
-     ST.config.contasModo ('mes' | '45') · ST.config.contasArruma ('dia' | 'grupo') · ST.config.cfRecusadas {chave: 1}
+     ST.config.contasModo ('mes' | '45') · ST.config.contasArruma ('dia' | 'grupo') · ST.config.cfRecusadas {chave: 1} · ST.config.cfFrequentes {origem: 1} (1.1.0) · recorrente: janela [de, até], diaUtilSeguinte, condicional, empresaId
    PONTOS QUE USA
      custos.contas (index.html, topo da tela) · budget.atencao · inbox.itens · ações cm-*, cfs-*
    ===================================================================== */
@@ -37,6 +44,15 @@
   function ultimoDia(mes) { return mes + '-' + ('0' + new Date(+mes.slice(0, 4), +mes.slice(5, 7), 0).getDate()).slice(-2); }
   function somaMes(mes, k) { var y = +mes.slice(0, 4), m = +mes.slice(5, 7) + k; while (m < 1) { m += 12; y--; } while (m > 12) { m -= 12; y++; } return y + '-' + ('0' + m).slice(-2); }
   function saida(r) { return (GRUPOS[r.grupo] || {}).fluxo !== 'entrada'; }
+  function casa() { return !!(window.Escopo && Escopo.soCasa && Escopo.soCasa()); }
+  /* 1.1.0 (3.86): GASTO FREQUENTE nunca vira "Parece conta fixa": fica no previsto da categoria (pela categoria e pelo MCC) */
+  var FREQ_SUB = /mercado|supermerc|padaria|restaur|lanchon|delivery|ifood|farm[aá]cia|drogaria|combust|posto|gasolina|transporte|uber|metr[oô]|[oô]nibus|estacionamento|compras|shopping|vestu|roupa/i;
+  var FREQ_MCC = { 5411: 1, 5412: 1, 5499: 1, 5462: 1, 5812: 1, 5813: 1, 5814: 1, 5912: 1, 5541: 1, 5542: 1, 4111: 1, 4121: 1, 4131: 1, 4789: 1, 5310: 1, 5311: 1, 5651: 1, 5691: 1, 5699: 1 };
+  function frequente(g) { var mcc = g.contraparte && g.contraparte.mcc; return g.grupo === 'TRANSPORTE' || FREQ_SUB.test(g.sub || '') || !!(mcc && FREQ_MCC[mcc]); }
+  /* imposto ou custo da empresa: DAS, DARF, "PGTO CONCES.PUB ... RECEITA FED", ou um lançamento de conta da PJ */
+  var IMPOSTO = /das[- ]simples|das[- ]mei|\bdarf\b|pgto conces\.? ?pub.*receita fed/i;
+  function textoG(g) { return [g.desc, g.descRobo, g.sub].filter(Boolean).join(' '); }
+  function empresaDe(g) { return window.PJ && PJ.empresaDe ? PJ.empresaDe(g) : null; }
 
   var STATUS = {
     paga: { ico: '✓', pt: 'Paga', en: 'Paid', cor: '--up' },
@@ -96,11 +112,14 @@
     /* ---------- "Parece conta fixa" ---------- */
     sugestoes: function () {
       if (!window.Origem || typeof Gasto === 'undefined') return [];
-      var h = hoje(), desde = somaMes(h.slice(0, 7), -24) + '-01', por = {}, recus = cfg().cfRecusadas || {};
+      var h = hoje(), desde = somaMes(h.slice(0, 7), -24) + '-01', por = {}, recus = cfg().cfRecusadas || {}, freqs = cfg().cfFrequentes || {};
       Gasto.todos().forEach(function (g) {
         if (g.fluxo !== 'saida' || !g.data || g.data < desde || g.recorrenteId) return;
         if (Gasto.parcela && Gasto.parcela(g.desc, g)) return;
-        var k = Origem.origemDe(g); if (!k || k.indexOf('u:') === 0) return;
+        if (frequente(g)) return;
+        /* visão da casa: nada da PJ */
+        if (casa() && (IMPOSTO.test(textoG(g)) || empresaDe(g) || /^pj\b/i.test(String(g.irTexto || '')))) return;
+        var k = Origem.origemDe(g); if (!k || k.indexOf('u:') === 0 || freqs[k]) return;
         (por[k] = por[k] || []).push(g);
       });
       var out = [];
@@ -129,6 +148,7 @@
           }
           if (!tipo) return;
           var media = n2(c.media), g0 = c.itens[c.itens.length - 1];
+          var ult = c.itens.slice().sort(function (a, b) { return a.data < b.data ? 1 : -1; })[0];
           var chave = k + '|' + tipo + '|' + Math.round(Math.log(media) / Math.log(1.3)) + '|' + Math.round(c.dia / 10);
           if (recus[chave]) return;
           /* já tem conta fixa parecida? */
@@ -139,7 +159,10 @@
           });
           if (ja) return;
           out.push({ chave: chave, tipo: tipo, nome: window.Apelido ? Apelido.texto(g0) : (g0.desc || ''), valor: media, dia: c.dia, mes: c.mes || 0,
-            grupo: g0.grupo, sub: g0.sub, n: c.itens.length });
+            grupo: g0.grupo, sub: g0.sub, n: c.itens.length, origem: k, ultimo: n2(ult.valor), quem: ult.quem || '',
+            diaMin: Math.min.apply(null, c.itens.map(function (g) { return +g.data.slice(8, 10); })), diaMax: Math.max.apply(null, c.itens.map(function (g) { return +g.data.slice(8, 10); })),
+            pj: !casa() && (IMPOSTO.test(textoG(ult)) || !!empresaDe(ult)), empresaId: (empresaDe(ult) || {}).id || '',
+            pjTipo: /\bdas\b/i.test(ult.desc || ult.descRobo || '') ? 'das' : /\bdarf\b|receita fed/i.test(ult.desc || ult.descRobo || '') ? 'darf' : '' });
         });
       });
       return out.sort(function (a, b) { return b.valor - a.valor; });
@@ -191,10 +214,102 @@
   function itensSugestoes(s, li) {
     return s.map(function (x) {
       var quando = x.tipo === 'anual' ? tr('todo ano em ', 'every year in ') + new Date(2026, x.mes - 1, 15).toLocaleDateString(pt() ? 'pt-BR' : 'en-US', { month: 'long' }) : tr('todo dia ~', 'every month on day ~') + x.dia;
-      return '<div class="cfs-item"><p class="small" style="margin:0 0 6px">📌 ' + esc(tr('Parece conta fixa: ', 'Looks like a fixed bill: ') + x.nome + ' · ~' + fmt(x.valor) + ' · ' + quando + tr('. Cadastrar?', '. Add it?')) + '</p>' +
-        '<button type="button" class="btn sm primary" data-acao="cfs-sim" data-chave="' + esc(x.chave) + '">' + esc(tr('Sim, cadastrar', 'Yes, add it')) + '</button> ' +
-        '<button type="button" class="btn sm" data-acao="cfs-nao" data-chave="' + esc(x.chave) + '">' + esc(tr('Não é', 'No')) + '</button></div>';
+      return '<div class="cfs-item"><p class="small" style="margin:0 0 6px">📌 ' + esc((x.pj ? tr('Parece imposto ou custo da empresa: ', 'Looks like a company tax or cost: ') : tr('Parece conta fixa: ', 'Looks like a fixed bill: ')) + x.nome + ' · ~' + fmt(x.valor) + ' · ' + quando + '.') + '</p>' +
+        '<button type="button" class="btn sm primary" data-acao="cfs-revisar" data-chave="' + esc(x.chave) + '">' + esc(tr('Revisar', 'Review')) + '</button> ' +
+        '<button type="button" class="btn sm" data-acao="cfs-nao" data-chave="' + esc(x.chave) + '">' + esc(tr('Não acompanhar', 'Do not track')) + '</button></div>';
     }).map(function (h) { return li ? '<li class="inb-item">' + h + '</li>' : h; }).join('');
+  }
+  /* ---------- 1.1.0 (3.86): a janela "Revisar" ---------- */
+  var TIPOS = [
+    ['fixa', 'Conta fixa (valor quase igual)', 'Fixed bill (almost the same amount)'],
+    ['variavel', 'Conta recorrente de valor variável (imposto, energia)', 'Recurring bill with a varying amount (tax, power)'],
+    ['imposto', 'Imposto ou custo da empresa', 'Company tax or cost'],
+    ['frequente', 'Gasto frequente (mercado etc.)', 'Frequent spending (groceries etc.)'],
+    ['umavez', 'Foi só uma vez', 'It was just once']
+  ];
+  var aberta = null, desfazer = null;
+  function val(id) { var e = document.getElementById(id); return e ? String(e.value || '').trim() : ''; }
+  function marcado(nome) { var e = document.querySelector('#genBody input[name="' + nome + '"]:checked'); return e ? e.value : ''; }
+  function campo(rot, h, id) { return '<label class="field"' + (id ? ' id="' + id + '"' : '') + '><span>' + esc(rot) + '</span>' + h + '</label>'; }
+  function radio(nome, v, rot, on) { return '<label class="cfr-op" style="display:block;padding:6px 0"><input type="radio" name="' + nome + '" value="' + v + '"' + (on ? ' checked' : '') + '> ' + esc(rot) + '</label>'; }
+  /* o que a janela vai gravar, lido dos campos */
+  function lido() {
+    var x = aberta, tipo = marcado('cfrTipo') || 'fixa', v = marcado('cfrValor') === 'ultimo' ? x.ultimo : Number(val('cfrV')) || x.valor;
+    if (marcado('cfrValor') === 'ultimo') { var ev = document.getElementById('cfrV'); if (ev) ev.value = x.ultimo; }
+    var dia = Math.min(31, Math.max(1, Number(val('cfrDia')) || x.dia)), de = Number(val('cfrDe')) || dia, ate = Number(val('cfrAte')) || dia;
+    return { tipo: tipo, nome: val('cfrNome') || x.nome, grupo: val('cfrGrupo') || x.grupo, sub: val('cfrSub') || x.sub, pagador: val('cfrQuem'), empresaId: val('cfrEmp'),
+      dia: dia, janela: [Math.min(de, dia), Math.max(ate, dia)], valor: n2(v), condicional: val('cfrCond'), ate: marcado('cfrFim') === 'data' && /^\d{4}-\d{2}-\d{2}$/.test(val('cfrFimData')) ? val('cfrFimData') : '' };
+  }
+  function previa(l) {
+    if (l.tipo === 'frequente') return tr('Não vira conta fixa: o gasto continua no previsto da categoria e este recebedor não é mais sugerido.', 'Not a fixed bill: the spending stays in the category forecast and this payee is no longer suggested.');
+    if (l.tipo === 'umavez') return tr('Nada é cadastrado e esta sugestão não volta.', 'Nothing is added and this suggestion will not come back.');
+    var t = (l.tipo === 'imposto' ? tr('Vai criar o imposto/custo da empresa ', 'Will add the company tax/cost ') : tr('Vai criar a conta fixa ', 'Will add the fixed bill ')) + '"' + l.nome + '" · ' +
+      (l.tipo === 'imposto' && l.condicional === 'receita' ? tr('valor pela receita do mês anterior (hoje ~', 'amount from last month\'s revenue (today ~') + fmt(l.valor) + ')' : (l.tipo === 'fixa' ? '' : '~') + fmt(l.valor)) + ' · ' +
+      tr('por volta do dia ', 'around day ') + l.dia + (l.janela[0] !== l.janela[1] ? tr(', entre ', ', between ') + l.janela[0] + tr(' e ', ' and ') + l.janela[1] : '') +
+      (l.tipo === 'imposto' ? tr(' (fim de semana ou feriado → próximo dia útil)', ' (weekend or holiday → next business day)') : '') +
+      (l.condicional === 'receita' && l.tipo === 'imposto' ? tr(' · só nos meses depois de um mês com receita', ' · only in months after a month with revenue') : '') +
+      ' · ' + (l.ate ? tr('até ', 'until ') + I18n.data(l.ate) : tr('em aberto', 'open-ended')) + '.';
+    return t + ' ' + tr('Tudo continua editável em Contas fixas.', 'Everything stays editable in Fixed bills.');
+  }
+  function mostra() {
+    var l = lido(), pj = document.getElementById('cfrPJ'); if (pj) pj.style.display = l.tipo === 'imposto' ? '' : 'none';
+    var cp = document.getElementById('cfrCampos'); if (cp) cp.style.display = l.tipo === 'frequente' || l.tipo === 'umavez' ? 'none' : '';
+    var p = document.getElementById('cfrPrevia'); if (p) p.textContent = Verter.txt(previa(l));
+  }
+  function abrirRevisar(x) {
+    aberta = x;
+    var emps = casa() ? [] : (window.CofreEmpresa && CofreEmpresa.ordenadas ? CofreEmpresa.ordenadas() : (ST.empresas || []));
+    var tipo0 = x.pj ? 'imposto' : (Math.abs(x.ultimo - x.valor) > x.valor * 0.05 ? 'variavel' : 'fixa');
+    var grupos = Object.keys(GRUPOS).filter(function (g) { return GRUPOS[g].fluxo !== 'entrada'; });
+    $('#genTitle').textContent = tr('Revisar: ', 'Review: ') + x.nome;
+    $('#genBody').innerHTML = Verter.html(
+      '<fieldset class="cfr-tipos" style="border:0;padding:0;margin:0 0 8px"><legend class="small"><b>' + esc(tr('O que é?', 'What is it?')) + '</b></legend>' +
+        TIPOS.filter(function (t) { return t[0] !== 'imposto' || !casa(); }).map(function (t) { return radio('cfrTipo', t[0], pt() ? t[1] : t[2], t[0] === tipo0); }).join('') + '</fieldset>' +
+      '<div id="cfrCampos"><div class="grid g2">' +
+        campo(tr('Nome', 'Name'), '<input id="cfrNome" maxlength="80" value="' + esc(x.nome) + '">') +
+        campo(tr('Grupo', 'Group'), '<select id="cfrGrupo">' + grupos.map(function (g) { return '<option value="' + g + '"' + (g === x.grupo ? ' selected' : '') + '>' + esc((GRUPOS[g].ico || '') + ' ' + GRUPOS[g].nome) + '</option>'; }).join('') + '</select>') +
+        campo(tr('Categoria', 'Category'), '<input id="cfrSub" maxlength="60" value="' + esc(x.sub || '') + '">') +
+        campo(tr('Quem paga', 'Who pays'), '<input id="cfrQuem" maxlength="60" value="' + esc(x.quem || '') + '">') +
+        campo(tr('Por volta do dia', 'Around day'), '<input id="cfrDia" type="number" min="1" max="31" inputmode="numeric" value="' + x.dia + '">') +
+        campo(tr('Janela: entre o dia… e o dia…', 'Window: between day… and day…'), '<span class="row" style="gap:6px"><input id="cfrDe" type="number" min="1" max="31" inputmode="numeric" value="' + x.diaMin + '" style="width:5em"><input id="cfrAte" type="number" min="1" max="31" inputmode="numeric" value="' + x.diaMax + '" style="width:5em"></span>') + '</div>' +
+        campo(tr('Valor estimado (R$)', 'Estimated amount (R$)'), '<input id="cfrV" type="number" min="0" step="0.01" inputmode="decimal" value="' + x.valor + '">') +
+        radio('cfrValor', 'media', tr('Média dos últimos: ', 'Average of the last ones: ') + fmt(x.valor), Math.abs(x.ultimo - x.valor) <= x.valor * 0.15) +
+        radio('cfrValor', 'ultimo', tr('Usar o último valor: ', 'Use the last amount: ') + fmt(x.ultimo), Math.abs(x.ultimo - x.valor) > x.valor * 0.15) +
+        (casa() ? '' : '<div id="cfrPJ">' +
+          campo(tr('Empresa', 'Company'), '<select id="cfrEmp"><option value="">—</option>' + emps.map(function (e) { return '<option value="' + esc(e.id) + '"' + (e.id === x.empresaId ? ' selected' : '') + '>' + esc(e.fantasia || e.nome || e.id) + '</option>'; }).join('') + '</select>') +
+          campo(tr('Só nos meses em que houver…', 'Only in months with…'), '<select id="cfrCond"><option value="receita"' + (x.pjTipo !== 'darf' ? ' selected' : '') + '>' + esc(tr('nota emitida / receita da empresa no mês anterior', 'invoice issued / company revenue in the previous month')) + '</option><option value=""' + (x.pjTipo === 'darf' ? ' selected' : '') + '>' + esc(tr('todo mês', 'every month')) + '</option></select>') +
+          '<p class="tiny muted">' + esc(tr('O DAS vence no dia 20 do mês seguinte; em fim de semana ou feriado passa para o próximo dia útil (por isso às vezes dia 22).', 'The DAS is due on the 20th of the next month; on weekends or holidays it moves to the next business day (hence sometimes the 22nd).')) + '</p></div>') +
+        '<p class="small" style="margin:8px 0 2px"><b>' + esc(tr('Até quando', 'Until when')) + '</b></p>' +
+        radio('cfrFim', 'aberto', tr('Em aberto', 'Open-ended'), true) + radio('cfrFim', 'data', tr('Até uma data:', 'Until a date:'), false) + Cal.campo('cfrFimData', '', {}) +
+      '</div>' +
+      '<p class="aviso-box small" id="cfrPrevia" aria-live="polite"></p>' +
+      '<div class="f-actions"><button class="btn" data-close="genModal">' + esc(t('ac.cancelar')) + '</button><button class="btn primary" data-acao="cfs-salvar">' + esc(t('ac.salvar')) + '</button></div>');
+    var b = document.getElementById('genBody'); b.oninput = mostra; b.onchange = mostra;
+    mostra(); abrir('genModal');
+  }
+  /* grava e devolve como desfazer */
+  function salvar(x, l) {
+    var c = cfg(), rec = c.cfRecusadas = c.cfRecusadas || {};
+    if (l.tipo === 'frequente') { var fr = c.cfFrequentes = c.cfFrequentes || {}; fr[x.origem] = 1; return function () { delete fr[x.origem]; }; }
+    if (l.tipo === 'umavez') { rec[x.chave] = 1; return function () { delete rec[x.chave]; }; }
+    var d = { nome: l.nome, valor: l.valor, grupo: l.grupo, sub: l.sub, pagador: l.pagador, dia: l.dia, regra: x.tipo === 'anual' ? 'anual' : 'dia', mes: x.mes || 0,
+      janela: l.janela, desde: hoje().slice(0, 7) + '-01', ate: l.ate, varia: l.tipo !== 'fixa',
+      obs: tr('Sugerido pelo app: o mesmo recebedor se repete (dia ', 'Suggested by the app: the same payee repeats (day ') + l.janela[0] + '–' + l.janela[1] + ').' };
+    if (l.tipo === 'imposto') {
+      d.diaUtilSeguinte = true; d.escopo = 'reservado';
+      if (l.empresaId) { d.empresaId = l.empresaId; if (x.pjTipo) d.pjTipo = x.pjTipo; }
+      if (l.condicional === 'receita' && l.empresaId) d.condicional = 'receita';
+    }
+    var r = Recorrente.add(d);
+    return function () { ST.recorrentes = (ST.recorrentes || []).filter(function (y) { return y.id !== r.id; }); };
+  }
+  function barraDesfazer(msg) {
+    var caixa = document.getElementById('toasts'); if (!caixa) return;
+    var v = document.getElementById('cfrDesfazer'); if (v) v.remove();
+    var d = document.createElement('div'); d.className = 'toast'; d.id = 'cfrDesfazer';
+    d.innerHTML = '<span>' + esc(Verter.txt(msg)) + '</span> <button type="button" class="btn sm" data-acao="cfs-desfazer">' + esc(tr('Desfazer', 'Undo')) + '</button>';
+    caixa.appendChild(d);
+    setTimeout(function () { if (d.parentNode) d.remove(); desfazer = null; }, API._desfazerMs || 10000);
   }
   function cartaoSugestoes() {
     var s = API.sugestoes(); if (!s.length) return '';
@@ -202,7 +317,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'contas-mes', versao: '1.0.1',
+    id: 'contas-mes', versao: '1.1.0',
     pontos: {
       'custos.contas': cartao,
       'budget.atencao': cartaoSugestoes,
@@ -215,11 +330,20 @@
       'cm-modo': function (el) { cfg().contasModo = el.dataset.v === '45' ? '45' : 'mes'; Store.salvar(); render(); },
       'cm-arruma': function (el) { cfg().contasArruma = el.dataset.v === 'grupo' ? 'grupo' : 'dia'; Store.salvar(); render(); },
       'cm-abrir': function (el) { if (typeof abrirRecorrente === 'function') abrirRecorrente(el.dataset.id); },
-      'cfs-sim': function (el) {
-        var x = API.sugestoes().filter(function (s) { return s.chave === el.dataset.chave; })[0]; if (!x) return;
-        var sem = { nome: x.nome, valor: x.valor, grupo: x.grupo, sub: x.sub, dia: x.tipo === 'anual' ? 10 : x.dia, regra: x.tipo === 'anual' ? 'anual' : 'dia', mes: x.mes || 0,
-          desde: hoje().slice(0, 7) + '-01', obs: tr('Sugerido pelo app: o mesmo recebedor se repete.', 'Suggested by the app: the same payee repeats.') };
-        if (typeof abrirRecorrente === 'function') abrirRecorrente(null, sem, { abrirMais: true });
+      /* 1.1.0 (3.86): "Revisar" abre a janela curta; "Salvar" grava e oferece "Desfazer" por 10 s */
+      'cfs-revisar': function (el) {
+        var x = API.sugestoes().filter(function (s) { return s.chave === el.dataset.chave; })[0]; if (x) abrirRevisar(x);
+      },
+      'cfs-salvar': function () {
+        if (!aberta) return; var l = lido();
+        if (!(l.valor > 0) && l.tipo !== 'frequente' && l.tipo !== 'umavez') { toast(tr('Informe o valor estimado.', 'Enter the estimated amount.'), 'err'); return; }
+        desfazer = salvar(aberta, l); aberta = null;
+        Store.salvar(); fechar('genModal'); render(); if (typeof renderInboxN === 'function') renderInboxN();
+        barraDesfazer(l.tipo === 'frequente' ? tr('Marcado como gasto frequente.', 'Marked as frequent spending.') : l.tipo === 'umavez' ? tr('Não vamos sugerir de novo.', 'We will not suggest it again.') : tr('Salvo em Contas fixas.', 'Saved in Fixed bills.'));
+      },
+      'cfs-desfazer': function () {
+        if (desfazer) { desfazer(); desfazer = null; Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); }
+        var v = document.getElementById('cfrDesfazer'); if (v) v.remove();
       },
       'cfs-nao': function (el) { var c = cfg(); c.cfRecusadas = c.cfRecusadas || {}; c.cfRecusadas[el.dataset.chave] = 1; Store.salvar(); render(); }
     }

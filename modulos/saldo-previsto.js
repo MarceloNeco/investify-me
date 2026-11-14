@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.0.2 · 13/Nov/2026
+   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.0.3 · 14/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · Para cada conta corrente com saldo vindo do robô (SaldoBanco): parte do saldo de hoje e soma, dia a dia, nos
@@ -62,7 +62,8 @@
         var entra = r.fluxo === 'entrada'; if (!entra && pagoNoCartao(r)) return;
         var c = contaPara([r.conta, r.forma, r.pagador, r.nome].join(' ')); if (!c || c.id !== id) return;
         /* 1.0.2 (3.81): conta da PJ — o dono transfere da PF um dia antes */
-        if (r.empresaId) { if (mais(o.data, -1) > h) ev.push({ data: mais(o.data, -1), valor: n2(-o.valor), nome: tr('Transferir para a PJ: ', 'Transfer to the company: ') + r.nome }); return; }
+        /* 1.0.3 (3.86): até o dia útil anterior (PJ.ateTransferir) */
+        if (r.empresaId) { var at = window.PJ && PJ.ateTransferir ? PJ.ateTransferir(o.data) : mais(o.data, -1); if (at > h) ev.push({ data: at, valor: n2(-o.valor), nome: tr('Transferir para a PJ: ', 'Transfer to the company: ') + r.nome }); return; }
         ev.push({ data: o.data, valor: n2(entra ? o.valor : -o.valor), nome: r.nome });
       });
       /* faturas: a aberta que o robô mandou, no vencimento; depois, os parcelados de cada mês */
@@ -158,7 +159,7 @@
   function alertas() { return API.contas().map(function (c) { var a = API.alerta(c); return a ? { c: c, a: a } : null; }).filter(Boolean); }
 
   MoneyModulos.registrar({
-    id: 'saldo-previsto', versao: '1.0.2', colecoes: [COL],
+    id: 'saldo-previsto', versao: '1.0.3', colecoes: [COL],
     pontos: {
       'budget.painel': cartao, 'custos.contas': cartao,
       'budget.atencao': function () {

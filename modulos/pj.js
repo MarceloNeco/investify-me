@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pj.js — FiscalONE: a PJ, por empresa (3.81)        1.1.0 · 13/Nov/2026
+   modulos/pj.js — FiscalONE: a PJ, por empresa (3.81)        1.2.0 · 14/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · A base é o Cofre da empresa (modulos/cofre-empresa.js, ST.empresas). Sugestão, sem IA: a fonte pagadora PJ da
@@ -18,6 +18,10 @@
        PJ até DD/MM".
      · Visão da casa: nada (empresas, contas e lançamentos da PJ são reservados).
      · 1.1.0 (3.82): as empresas na ordem da situação (a ativa primeiro) e o ponto pj.empresa (modulos/pj-gestao.js).
+     · 1.2.0 (3.86): previsão CONDICIONAL do DAS (r.condicional 'receita': só no mês seguinte a um mês com receita ou nota a
+       receber; o valor = receita do mês anterior × alíquota efetiva dos últimos meses), DAS/DARF no próximo dia útil
+       (r.diaUtilSeguinte), a empresa "a encerrar" com data para de prever depois dela (pontos recorrente.pula e
+       recorrente.previsto), e "o contador mudou: usar o último valor" no 📥.
    API (window.PJ)
      sugestoes() → [{nome, cnpj, de}] · contasSemEmpresa() → [conta] · empresaDe(g) · lancamentos(e, de, ate) · categoria(g)
      resumo(e, mes) → {faturamento, conversao, impostos, das, darf, contador, tfe, tarifas, prolabore, lucros, n}
@@ -126,14 +130,16 @@
     calendario: function (e) {
       var nome = e.razao || fmtCnpj(e.cnpj), base = { grupo: 'OUTROS', regra: 'dia', escopo: 'reservado', empresaId: e.id, estadoPadrao: 'pendente', fluxo: 'saida', varia: true, pagador: tr('PJ ', 'Company ') + nome };
       var l = [];
-      if (e.regime === 'mei') l.push({ k: 'das', nome: 'DAS-MEI · ' + nome, sub: 'DAS Simples Nacional (PJ)', dia: 20 });
+      /* 1.2.0 (3.86): DAS e DARF vencem dia 20 e passam para o próximo dia útil; o DAS do Simples só entra depois de um mês com receita */
+      if (e.regime === 'mei') l.push({ k: 'das', nome: 'DAS-MEI · ' + nome, sub: 'DAS Simples Nacional (PJ)', dia: 20, util: true });
       else if (e.regime === 'simples' || e.regime === 'fator-r' || !e.regime) {
-        l.push({ k: 'das', nome: 'DAS Simples · ' + nome, sub: 'DAS Simples Nacional (PJ)', dia: 20 });
-        l.push({ k: 'darf', nome: tr('DARF do pró-labore · ', 'Pro-labore DARF · ') + nome, sub: 'DARF (PJ)', dia: 20 });
+        l.push({ k: 'das', nome: 'DAS Simples · ' + nome, sub: 'DAS Simples Nacional (PJ)', dia: 20, util: true, condicional: 'receita' });
+        l.push({ k: 'darf', nome: tr('DARF do pró-labore · ', 'Pro-labore DARF · ') + nome, sub: 'DARF (PJ)', dia: 20, util: true });
       }
       if (e.contador && e.contador.nome || API.media(e, 'contador')) l.push({ k: 'contador', nome: tr('Contador · ', 'Accountant · ') + nome, sub: 'Contador (PJ)', dia: 10, forma: 'Boleto' });
       l.push({ k: 'tfe', nome: 'TFE · ' + nome, sub: 'TFE Prefeitura SP (PJ)', dia: 10, regra: 'anual', mes: 7 });
-      return l.map(function (x) { return Object.assign({}, base, { nome: x.nome, sub: x.sub, dia: x.dia, regra: x.regra || 'dia', mes: x.mes || 0, forma: x.forma || '', valor: API.media(e, x.k) || 1, pjTipo: x.k }); });
+      return l.map(function (x) { var d = Object.assign({}, base, { nome: x.nome, sub: x.sub, dia: x.dia, regra: x.regra || 'dia', mes: x.mes || 0, forma: x.forma || '', valor: API.media(e, x.k) || 1, pjTipo: x.k });
+        if (x.util) d.diaUtilSeguinte = true; if (x.condicional) d.condicional = x.condicional; return d; });
     },
     criarCalendario: function (e) {
       var ja = (typeof Recorrente !== 'undefined' ? Recorrente.todos() : []).filter(function (r) { return r.empresaId === e.id; }), n = 0;
@@ -141,11 +147,13 @@
       return n;
     },
     /* as contas da PJ dos próximos dias: o dono transfere da PF um dia antes */
+    /* 1.2.0 (3.86): transferir até o dia útil ANTERIOR ao vencimento (o DAS de 23/11, depois do feriado e do fim de semana → 19/11) */
+    ateTransferir: function (iso) { var d = mais(iso, -1), k = 0; while (k++ < 7 && typeof Feriados !== 'undefined' && Feriados.ehNaoUtil(d)) d = mais(d, -1); return d; },
     transferir: function (h, dias) {
       h = h || hoje(); var fim = mais(h, dias || 5);
       if (casa() || typeof Recorrente === 'undefined') return [];
-      return Recorrente.ocorrencias(mais(h, 1), mais(fim, 1)).filter(function (o) { return o.r.empresaId && (ESTADOS_PG[o.estado] || {}).conta; })
-        .map(function (o) { return { r: o.r, data: o.data, ate: mais(o.data, -1), valor: n2(o.valor) }; }).filter(function (x) { return x.ate >= h && x.ate <= fim; });
+      return Recorrente.ocorrencias(mais(h, 1), mais(fim, 8)).filter(function (o) { return o.r.empresaId && (ESTADOS_PG[o.estado] || {}).conta; })
+        .map(function (o) { return { r: o.r, data: o.data, ate: API.ateTransferir(o.data), valor: n2(o.valor) }; }).filter(function (x) { return x.ate >= h && x.ate <= fim; });
     },
     avisosAnuais: function (h) {
       h = h || hoje(); var m = +h.slice(5, 7), out = [];
@@ -155,6 +163,41 @@
         if (e.regime === 'mei' && m === 5) out.push({ k: 'dasn|' + e.id + '|' + h.slice(0, 4), txt: tr('DASN-SIMEI de ', 'DASN-SIMEI for ') + nome + tr(': entregar até 31/05.', ': file by 31 May.') });
       });
       return out;
+    },
+    /* ---------- 1.2.0 (3.86): a receita do mês, a alíquota efetiva e a previsão condicional ---------- */
+    receitaMes: function (e, mes) {
+      var v = 0;
+      API.lancamentos(e, mes + '-01', mes + '-31').forEach(function (g) { var c = API.categoria(g); if ((c === 'faturamento' || c === 'entrada') && String(g.id || '').indexOf('tf_') !== 0) v += Math.abs(Number(g.valor) || 0); });
+      return n2(v);
+    },
+    /* as notas a receber do mês (modulos/pj-gestao.js), para "nota emitida" contar como receita prevista */
+    notasMes: function (e, mes) {
+      return n2((Array.isArray(ST.pj_contas) ? ST.pj_contas : []).filter(function (x) { return x.empresaId === e.id && x.tipo === 'receber' && String(x.data).slice(0, 7) === mes; })
+        .reduce(function (s, x) { return s + (window.PJGestao ? PJGestao.emReais(x).v : (x.moeda && x.moeda !== 'BRL' ? 0 : Number(x.valor) || 0)); }, 0));
+    },
+    /* DAS pago no mês seguinte ÷ receita do mês, nos últimos 6 meses com receita */
+    aliquota: function (e, ateMes) {
+      var rec = 0, das = 0;
+      for (var k = 1; k <= 7; k++) {
+        var m = somaMes(ateMes, -k), r = API.receitaMes(e, m); if (!(r > 0)) continue;
+        var d = API.lancamentos(e, somaMes(m, 1) + '-01', somaMes(m, 1) + '-31').filter(function (g) { return API.categoria(g) === 'das'; }).reduce(function (s, g) { return s + Math.abs(Number(g.valor) || 0); }, 0);
+        if (d > 0) { rec += r; das += d; }
+      }
+      return rec > 0 ? das / rec : null;
+    },
+    /* a ocorrência não entra: empresa encerrada depois da data; condicional sem receita (nem nota) no mês anterior */
+    pula: function (r, iso) {
+      if (!r || !r.empresaId) return false;
+      var e = empresas().find(function (x) { return x.id === r.empresaId; }); if (!e) return false;
+      if (e.situacao === 'a-encerrar' && e.situacaoData && iso > e.situacaoData) return true;
+      if (r.condicional === 'receita') { var ant = somaMes(iso.slice(0, 7), -1); return !(API.receitaMes(e, ant) > 0 || API.notasMes(e, ant) > 0); }
+      return false;
+    },
+    previsto: function (r, iso) {
+      if (!r || !r.empresaId || r.condicional !== 'receita') return null;
+      var e = empresas().find(function (x) { return x.id === r.empresaId; }); if (!e) return null;
+      var ant = somaMes(iso.slice(0, 7), -1), base = API.receitaMes(e, ant) || API.notasMes(e, ant), a = API.aliquota(e, ant);
+      return base > 0 && a ? { valor: n2(base * a), fonte: 'receita', aliquota: a, base: base } : null;
     },
     ehContaPJ: function (r) { return empresas().some(function (e) { return API.saldos(e).indexOf(r) >= 0; }); },
     saldos: function (e) {
@@ -206,8 +249,10 @@
   }
 
   MoneyModulos.registrar({
-    id: 'pj', versao: '1.1.0',
+    id: 'pj', versao: '1.2.0',
     pontos: {
+      'recorrente.pula': function (c) { return [API.pula(c.r, c.iso)]; },   /* 1.2.0 (3.86) */
+      'recorrente.previsto': function (c) { var p = API.previsto(c.r, c.iso); return p ? [p] : []; },
       'inbox.grupos': function () {
         if (casa()) return [];
         var html = '', n = 0, vistos = cfg().inboxVistos || {};
@@ -218,6 +263,15 @@
             empresas().map(function (e) { return '<button class="btn sm' + (s.palpite === e.id ? ' primary' : '') + '" data-acao="pj-conta" data-id="' + esc(e.id) + '" data-conta="' + esc(s.conta) + '">' + esc(e.razao || fmtCnpj(e.cnpj)) + '</button>'; }).join('') + '</span></li>';
         });
         API.transferir().forEach(function (x) { var k = 'pjt|' + x.r.id + '|' + x.data; if (vistos[k]) return; n++; html += '<li class="inb-item"><div><b>↗ ' + esc(tr('Transfira ', 'Transfer ') + fmt(x.valor) + tr(' para a PJ até ', ' to the company by ') + I18n.data(x.ate)) + '</b><span class="t-sub">' + esc(x.r.nome + tr(' vence ', ' due ') + I18n.data(x.data)) + '</span></div><span class="inb-acoes"><button class="btn sm" data-acao="inb-visto" data-k="' + esc(k) + '">' + esc(tr('ok, entendi', 'ok, got it')) + '</button></span></li>'; });
+        /* 1.2.0 (3.86): o contador mudou de valor → "usar o último valor" */
+        (typeof Recorrente !== 'undefined' ? Recorrente.ativos() : []).filter(function (r) { return r.empresaId && r.pjTipo === 'contador'; }).forEach(function (r) {
+          var e = empresas().find(function (x) { return x.id === r.empresaId; }); if (!e) return;
+          var u = API.lancamentos(e).filter(function (g) { return API.categoria(g) === 'contador'; }).sort(function (a, b) { return a.data < b.data ? 1 : -1; })[0];
+          var prev = Recorrente.valorEm ? Recorrente.valorEm(r, hoje()) : r.valor, k = 'pjc|' + r.id + '|' + (u && u.id);
+          if (!u || vistos[k] || Math.abs(u.valor - prev) <= prev * 0.15) return;
+          n++; html += '<li class="inb-item"><div><b>🧾 ' + esc(tr('O contador mudou: último ', 'The accountant changed: last ') + fmt(u.valor) + tr(' (previsto ', ' (expected ') + fmt(prev) + ').') + '</b><span class="t-sub">' + esc(r.nome) + '</span></div><span class="inb-acoes">' +
+            '<button class="btn sm primary" data-acao="pj-ultimo" data-id="' + esc(r.id) + '" data-v="' + u.valor + '">' + esc(tr('Usar o último valor', 'Use the last amount')) + '</button><button class="btn sm" data-acao="inb-visto" data-k="' + esc(k) + '">' + esc(tr('Manter', 'Keep')) + '</button></span></li>';
+        });
         API.avisosAnuais().forEach(function (a) { if (vistos[a.k]) return; n++; html += '<li class="inb-item"><div><b>📅 ' + esc(a.txt) + '</b></div><span class="inb-acoes"><button class="btn sm" data-acao="inb-visto" data-k="' + esc(a.k) + '">' + esc(tr('ok, entendi', 'ok, got it')) + '</button></span></li>'; });
         return n ? [{ id: 'pj', n: n, html: html }] : [];
       }
@@ -228,6 +282,7 @@
                  en: { t: 'Company', o: 'Per company: revenue, taxes, what went to you, balances, Fator R and the tax calendar.', f: ['Choose which company owns each robot account.', 'Fator R below 28%: Annex V.'] } } }
     },
     acoes: {
+      'pj-ultimo': function (el) { var r = Recorrente.achar(el.dataset.id), v = Number(el.dataset.v); if (!r || !(v > 0)) return; Recorrente.reajustar(r.id, v, hoje()); Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); toast(tr('Previsão do contador: ', 'Accountant forecast: ') + fmt(v)); },
       'pj-aba': function (el) { atual = el.dataset.id; render(); },
       'pj-cadastrar': function (el) {
         ST.empresas = empresas(); ST.empresas.push({ id: 'em' + Date.now().toString(36), cnpj: dig(el.dataset.cnpj), razao: el.dataset.nome, regime: '', contador: { nome: '', contato: '' }, contas: [], pix: [], docs: [], contasRobo: [], criadoEm: hoje() });

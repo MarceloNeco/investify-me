@@ -63,7 +63,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recor
       ok((await ler()).sino === '2' && await p.evaluate(() => !Gasto.todos().find((g) => g.id === 'r1').revisar), '"✓ Conferido" no marcado para conferir');
       await p.click('#genBody [data-acao="cfs-nao"]'); await p.waitForTimeout(400);
       const b5 = await ler();
-      ok(b5.grupos.join(' ') === 'docs:1' && b5.sino === '1', '"Não é" na sugestão de conta fixa: sobra só o documento');
+      ok(b5.grupos.join(' ') === 'docs:1' && b5.sino === '1', '"Não acompanhar" na sugestão de conta fixa: sobra só o documento');
       ok(p.erros.length === 0, 'sem erro de página' + (p.erros.length ? ': ' + p.erros[0] : ''));
       await ctx.close();
     }

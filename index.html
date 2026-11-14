@@ -636,7 +636,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.85"></script>
+<script src="textos/frases-en.js?v=3.86"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7619,7 +7619,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.85"></script>
+<script src="textos/mudancas.js?v=3.86"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -8599,6 +8599,10 @@ const Recorrente = {
       const ultimo = new Date(ano, mes, 0).getDate();
       d = new Date(ano, mes - 1, Math.min(r.dia, ultimo));
     }
+    /* 3.86: "em fim de semana ou feriado, passa para o próximo dia útil" (ex.: o DAS, dia 20 → às vezes dia 22) */
+    if(d && r.diaUtilSeguinte && typeof Feriados !== 'undefined'){
+      let k = 0; while(k++ < 7 && (d.getDay() === 0 || d.getDay() === 6 || Feriados.ehFeriado(this.iso(d)))) d.setDate(d.getDate() + 1);
+    }
     if(d){ const s = this.iso(d); if(dentro(s)) out.push(s); }
     return out;
   },
@@ -8738,6 +8742,9 @@ const Recorrente = {
       meses.forEach(([a,m]) => {
         this.datasNoMes(r, a, m).forEach(iso => {
           if(iso < de || iso > ate) return;
+          /* 3.86: um módulo pode dizer que esta não entra (o DAS sem receita no mês anterior; a empresa encerrada);
+             a que já tem pagamento marcado continua (o histórico não some) */
+          if(window.MoneyModulos && !Pagamento.achar(r.id, iso) && MoneyModulos.itens('recorrente.pula', {r: r, iso: iso}).some(Boolean)) return;
           out.push(this.ocorrencia(r, iso));
         });
       });
@@ -30029,14 +30036,14 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/parcelados.js?v=1.0.1"></script>
 <script src="modulos/contas-fixas.js?v=1.0.0"></script>
 <script src="modulos/documentos.js?v=1.1.0"></script>
-<script src="modulos/contas-mes.js?v=1.0.1"></script>
+<script src="modulos/contas-mes.js?v=1.1.0"></script>
 <script src="modulos/planejados.js?v=1.0.0"></script>
-<script src="modulos/saldo-previsto.js?v=1.0.2"></script>
+<script src="modulos/saldo-previsto.js?v=1.0.3"></script>
 <script src="modulos/debito-auto.js?v=1.0.0"></script>
 <script src="modulos/cofre-empresa.js?v=1.2.0"></script>
 <script src="modulos/a-receber.js?v=1.0.0"></script>
 <script src="modulos/pre-autorizacao.js?v=1.0.0"></script>
-<script src="modulos/pj.js?v=1.1.0"></script>
+<script src="modulos/pj.js?v=1.2.0"></script>
 <script src="modulos/bs2-extrato.js?v=1.0.1"></script>
 <script src="modulos/pj-gestao.js?v=1.0.1"></script>
 <script src="modulos/pj-oportunidades.js?v=1.0.1"></script>
