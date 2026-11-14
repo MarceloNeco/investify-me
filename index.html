@@ -27973,6 +27973,12 @@ const INBOX_GRUPOS = [
   ['avisos', '🔔', 'Avisos do app', 'App notices', 'Só informação: contas que vencem logo, o que entra hoje.', 'Information only: bills due soon, what lands today.']
 ];
 function inboxVistos(){ ST.config = ST.config || {}; return (ST.config.inboxVistos = ST.config.inboxVistos || {}); }
+/* 3.86: o aviso que depende do banco diz a conta (com o dono) e de quando são os dados (modulos/saldo-previsto.js) */
+function inboxDadosConta(r){
+  const c = window.SaldoPrevisto && SaldoPrevisto.contaDe ? SaldoPrevisto.contaDe(r) : null; if(!c) return '';
+  const d = SaldoPrevisto.dados(c), pt = I18n.atual !== 'en';
+  return esc(' · ' + (pt ? 'conta ' : 'account ') + SaldoPrevisto.nome(c) + (d.txt ? ' · ' + d.txt : '') + (d.velho ? (pt ? ' · pode estar desatualizado' : ' · may be out of date') : ''));
+}
 function inboxGrupos(){
   const pt = I18n.atual !== 'en', por = {};
   const add = (id, n, html) => { if(!n) return; por[id] = por[id] || {n: 0, html: ''}; por[id].n += n; por[id].html += html; };
@@ -27988,7 +27994,7 @@ function inboxGrupos(){
     '<button class="btn sm primary" data-grev="' + esc(g.id) + '">✓ ' + esc(pt ? 'Conferido' : 'Checked') + '</button><button class="btn sm" data-acao="or-mudar" data-id="' + esc(g.id) + '">' + esc(pt ? 'Corrigir' : 'Fix') + '</button></span></li>'));
   /* contas atrasadas, com a mesma linha (e os mesmos botões) da agenda */
   try{ (Recorrente.atrasados() || []).forEach(o => add('atrasadas', 1, '<li class="inb-item"><div><b>' + esc(o.r.nome) + ' · ' + fmt(o.valor) + '</b><span class="t-sub">' +
-    esc((pt ? 'venceu em ' : 'was due on ') + I18n.data(o.data)) + '</span></div><span class="inb-acoes">' +
+    esc((pt ? 'venceu em ' : 'was due on ') + I18n.data(o.data)) + inboxDadosConta(o.r) + '</span></div><span class="inb-acoes">' +
     '<button class="btn sm primary" data-acao="inb-pago" data-rid="' + esc(o.r.id) + '" data-data="' + esc(o.data) + '">✓ ' + esc(pt ? 'Já paguei' : 'Already paid') + '</button>' +
     '<button class="btn sm" data-acao="inb-nao-pago" data-rid="' + esc(o.r.id) + '" data-data="' + esc(o.data) + '">' + esc(pt ? 'Não vou pagar' : 'Will not pay') + '</button></span></li>')); }catch(e){}
   /* avisos: o que vence logo e o que entra hoje (só informação; "ok, entendi" tira) */
@@ -30015,7 +30021,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/calendario-menu.js?v=1.2.0"></script>
 <script src="modulos/pessoas.js?v=1.3.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
-<script src="modulos/saldo-banco.js?v=2.1.1"></script>
+<script src="modulos/saldo-banco.js?v=2.1.2"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
 <script src="modulos/tour.js?v=1.0.2"></script>
 <script src="modulos/cartoes.js?v=1.0.0"></script>
@@ -30038,7 +30044,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/documentos.js?v=1.1.0"></script>
 <script src="modulos/contas-mes.js?v=1.1.0"></script>
 <script src="modulos/planejados.js?v=1.0.0"></script>
-<script src="modulos/saldo-previsto.js?v=1.0.3"></script>
+<script src="modulos/saldo-previsto.js?v=1.1.0"></script>
 <script src="modulos/debito-auto.js?v=1.0.0"></script>
 <script src="modulos/cofre-empresa.js?v=1.2.0"></script>
 <script src="modulos/a-receber.js?v=1.0.0"></script>

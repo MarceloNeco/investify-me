@@ -722,6 +722,12 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   alíquota, fonte 'receita') pelos pontos `recorrente.pula`/`recorrente.previsto`; o calendário cria o DAS do Simples condicional e DAS/DARF no próximo
   dia útil; `ateTransferir` (o dia útil anterior ao vencimento, também no saldo-previsto 1.0.3); no 📥 "O contador mudou … Usar o último valor"
   (`pj-ultimo` → `Recorrente.reajustar`). Teste: `teste/teste-conta-fixa-revisar.js`.
+  **3.86 — o aviso de saldo diz de quem e de quando.** saldo-banco 2.1.2 grava `atualizadoEm` (o `atualizado_em`/`coletado_em`/`criado_em` do item do
+  robô, se vier; senão, a hora em que chegou ao app). saldo-previsto 1.1.0: `nome(c)` = banco + " do/da " + o apelido da pessoa (`Pessoas.achar(c.dono)`;
+  "da" por `pessoa.genero === 'f'` ou nome terminado em "a") + "···final", sem repetir o banco; `dados(c)` → "dados de dd/mm hh:mm" e `velho` (> 24 h,
+  amarelo, "pode estar desatualizado"); "Já agendei" no aviso (Painel e 📥) grava `saldo_ajustes` com `criadoEm`; o ajuste conta até data + 2 dias e sai
+  quando `substituido()` acha a entrada real na conta (±5%, entre `criadoEm` e data + 2). `contaDe(r)` e `inboxDadosConta(r)` (index.html) põem a conta e a
+  data dos dados nas contas atrasadas do 📥. Teste: `teste/teste-saldo-dono.js`.
   **3.85 — a data de revisar a reforma.** `PJ_TEXTOS.reformaRevisar` = '2027-02-15' (antes da janela de março de 2027; a de setembro de 2026, para o 1º
   semestre, já passou) e `fontes.simplesIbsCbs` (aviso oficial do Portal do Simples). `PJOport.revisarEm(e)` (pj-oportunidades 1.0.1): sem data gravada,
   15/02/2027; a gravada mais cedo continua; a mais tarde cai para 15/02/2027 enquanto ela não chega; depois, vale a gravada. O texto da regra diz que a
