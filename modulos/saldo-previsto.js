@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.1.0 · 14/Nov/2026
+   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.1.1 · 14/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · Para cada conta corrente com saldo vindo do robô (SaldoBanco): parte do saldo de hoje e soma, dia a dia, nos
@@ -87,6 +87,8 @@
         var d = f.vencimento > h ? f.vencimento : mais(h, 1);
         if (d <= fim) ev.push({ data: d, valor: n2(-p.valor), nome: (p.caucao ? '🔒 ' : '⏳ ') + PreAut.quem(p) });
       });
+      /* 1.1.1 (3.87): o Pix/pagamento do print numa conta do robô, ainda não entregue */
+      if (window.PrintColar) PrintColar.eventos(conta).forEach(function (e) { if (e.data <= fim) ev.push(e); });
       if (window.Parcelados) Parcelados.compras().forEach(function (pc) {
         var ct = pc.cartaoId && typeof Banco !== 'undefined' ? Banco.acharCartao(pc.cartaoId) : null;
         var bn = ct && ct.bancoId && Banco.achar(ct.bancoId) ? Banco.achar(ct.bancoId).nome : (ct ? ct.apelido : '');
@@ -199,7 +201,7 @@
   function alertas() { return API.contas().map(function (c) { var a = API.alerta(c); return a ? { c: c, a: a } : null; }).filter(Boolean); }
 
   MoneyModulos.registrar({
-    id: 'saldo-previsto', versao: '1.1.0', colecoes: [COL],
+    id: 'saldo-previsto', versao: '1.1.1', colecoes: [COL],
     pontos: {
       'budget.painel': cartao, 'custos.contas': cartao,
       'budget.atencao': function () {

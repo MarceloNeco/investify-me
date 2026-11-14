@@ -636,7 +636,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.86"></script>
+<script src="textos/frases-en.js?v=3.87"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7619,7 +7619,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.86"></script>
+<script src="textos/mudancas.js?v=3.87"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -27988,7 +27988,8 @@ function inboxGrupos(){
   const add = (id, n, html) => { if(!n) return; por[id] = por[id] || {n: 0, html: ''}; por[id].n += n; por[id].html += html; };
   /* confirmar: as origens "A confirmar"/"A identificar" e os marcados para conferir */
   if(window.Origem){
-    Origem.grupos().forEach(x => add('confirmar', 1, '<li class="inb-item"><div><b>' + esc(x.rotulo) + '</b><span class="t-sub">' +
+    /* 3.87: a loja nova (modulos/loja-nova.js) pergunta "O que é?" no lugar do "A identificar" dela */
+    Origem.grupos().filter(x => !(window.LojaNova && LojaNova.trata(x))).forEach(x => add('confirmar', 1, '<li class="inb-item"><div><b>' + esc(x.rotulo) + '</b><span class="t-sub">' +
       esc(x.itens.length + (pt ? ' lançamento(s) · ' : ' entr(ies) · ') + ((GRUPOS[x.grupo] || {}).nome || x.grupo) + ' › ' + x.sub) + '</span></div><span class="inb-acoes">' +
       (x.status === 'confirmar' ? '<button class="btn sm primary" data-acao="or-confirmar-grupo" data-chave="' + esc(x.chave) + '">✓ ' + esc(pt ? 'Confirmar' : 'Confirm') + '</button>' : '') +
       '<button class="btn sm" data-acao="or-mudar" data-id="' + esc(x.itens[0].id) + '">' + esc(pt ? 'Corrigir' : 'Fix') + '</button></span></li>'));
@@ -28029,7 +28030,7 @@ function renderInboxN(){
 function abrirInbox(){
   const pt = I18n.atual !== 'en';
   const gs = inboxGrupos();
-  let h = '';
+  let h = window.MoneyModulos ? MoneyModulos.html('inbox.topo', {}) : '';   /* 3.87: "📋 Colar print" (modulos/print-colar.js) */
   if(!gs.length){
     h += '<p class="small muted">' + esc(pt ? 'Nada pendente. O que precisar de você (confirmar uma categoria, uma conta atrasada, um documento) aparece aqui.'
                                            : 'Nothing pending. Whatever needs you (confirm a category, an overdue bill, a document) shows up here.') + '</p>';
@@ -30048,15 +30049,18 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/documentos.js?v=1.1.0"></script>
 <script src="modulos/contas-mes.js?v=1.1.0"></script>
 <script src="modulos/planejados.js?v=1.0.0"></script>
-<script src="modulos/saldo-previsto.js?v=1.1.0"></script>
+<script src="modulos/saldo-previsto.js?v=1.1.1"></script>
 <script src="modulos/debito-auto.js?v=1.0.0"></script>
 <script src="modulos/cofre-empresa.js?v=1.2.0"></script>
 <script src="modulos/a-receber.js?v=1.0.0"></script>
-<script src="modulos/pre-autorizacao.js?v=1.0.0"></script>
+<script src="modulos/pre-autorizacao.js?v=1.0.1"></script>
+<script src="modulos/dividir.js?v=1.0.0"></script>
+<script src="modulos/print-colar.js?v=1.0.0"></script>
+<script src="modulos/loja-nova.js?v=1.0.0"></script>
 <script src="modulos/pj.js?v=1.2.0"></script>
 <script src="modulos/bs2-extrato.js?v=1.0.1"></script>
 <script src="modulos/pj-gestao.js?v=1.0.1"></script>
 <script src="modulos/pj-oportunidades.js?v=1.0.1"></script>
-<script src="nuvem.js?v=1.15.2"></script>
+<script src="nuvem.js?v=1.15.3"></script>
 </body>
 </html>
