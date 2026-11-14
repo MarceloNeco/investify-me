@@ -19,8 +19,8 @@
      · Visão da casa: nada (empresas, contas e lançamentos da PJ são reservados).
      · 1.1.0 (3.82): as empresas na ordem da situação (a ativa primeiro) e o ponto pj.empresa (modulos/pj-gestao.js).
      · 1.2.0 (3.86): previsão CONDICIONAL do DAS (r.condicional 'receita': só no mês seguinte a um mês com receita ou nota a
-       receber; o valor = receita do mês anterior × alíquota efetiva dos últimos meses), DAS/DARF no próximo dia útil
-       (r.diaUtilSeguinte), a empresa "a encerrar" com data para de prever depois dela (pontos recorrente.pula e
+       receber; o valor = receita do mês anterior × alíquota efetiva dos últimos meses), o DAS no próximo dia útil
+       (r.diaUtilSeguinte), o DARF do pró-labore no dia útil ANTERIOR (r.diaUtilAnterior), a empresa "a encerrar" com data para de prever depois dela (pontos recorrente.pula e
        recorrente.previsto), e "o contador mudou: usar o último valor" no 📥.
    API (window.PJ)
      sugestoes() → [{nome, cnpj, de}] · contasSemEmpresa() → [conta] · empresaDe(g) · lancamentos(e, de, ate) · categoria(g)
@@ -130,16 +130,17 @@
     calendario: function (e) {
       var nome = e.razao || fmtCnpj(e.cnpj), base = { grupo: 'OUTROS', regra: 'dia', escopo: 'reservado', empresaId: e.id, estadoPadrao: 'pendente', fluxo: 'saida', varia: true, pagador: tr('PJ ', 'Company ') + nome };
       var l = [];
-      /* 1.2.0 (3.86): DAS e DARF vencem dia 20 e passam para o próximo dia útil; o DAS do Simples só entra depois de um mês com receita */
+      /* 1.2.0 (3.86): DAS e DARF vencem dia 20. O DAS PRORROGA para o próximo dia útil (e o do Simples só entra depois de um mês com
+         receita); o DARF do pró-labore (IRRF: Lei 11.196/2005, art. 70, I, d; INSS: Lei 8.212/91, art. 30, I, b) ANTECIPA para o dia útil anterior */
       if (e.regime === 'mei') l.push({ k: 'das', nome: 'DAS-MEI · ' + nome, sub: 'DAS Simples Nacional (PJ)', dia: 20, util: true });
       else if (e.regime === 'simples' || e.regime === 'fator-r' || !e.regime) {
         l.push({ k: 'das', nome: 'DAS Simples · ' + nome, sub: 'DAS Simples Nacional (PJ)', dia: 20, util: true, condicional: 'receita' });
-        l.push({ k: 'darf', nome: tr('DARF do pró-labore · ', 'Pro-labore DARF · ') + nome, sub: 'DARF (PJ)', dia: 20, util: true });
+        l.push({ k: 'darf', nome: tr('DARF do pró-labore · ', 'Pro-labore DARF · ') + nome, sub: 'DARF (PJ)', dia: 20, antecipa: true });
       }
       if (e.contador && e.contador.nome || API.media(e, 'contador')) l.push({ k: 'contador', nome: tr('Contador · ', 'Accountant · ') + nome, sub: 'Contador (PJ)', dia: 10, forma: 'Boleto' });
       l.push({ k: 'tfe', nome: 'TFE · ' + nome, sub: 'TFE Prefeitura SP (PJ)', dia: 10, regra: 'anual', mes: 7 });
       return l.map(function (x) { var d = Object.assign({}, base, { nome: x.nome, sub: x.sub, dia: x.dia, regra: x.regra || 'dia', mes: x.mes || 0, forma: x.forma || '', valor: API.media(e, x.k) || 1, pjTipo: x.k });
-        if (x.util) d.diaUtilSeguinte = true; if (x.condicional) d.condicional = x.condicional; return d; });
+        if (x.util) d.diaUtilSeguinte = true; if (x.antecipa) d.diaUtilAnterior = true; if (x.condicional) d.condicional = x.condicional; return d; });
     },
     criarCalendario: function (e) {
       var ja = (typeof Recorrente !== 'undefined' ? Recorrente.todos() : []).filter(function (r) { return r.empresaId === e.id; }), n = 0;

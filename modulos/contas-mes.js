@@ -29,7 +29,7 @@
    API (window.ContasMes)
      itens(modo) → [{r, data, valor, status, pagoEm, grupo}] · atrasadasAntigas() · resumo(itens) · sugestoes() · STATUS
    DADOS
-     ST.config.contasModo ('mes' | '45') · ST.config.contasArruma ('dia' | 'grupo') · ST.config.cfRecusadas {chave: 1} · ST.config.cfFrequentes {origem: 1} (1.1.0) · recorrente: janela [de, até], diaUtilSeguinte, condicional, empresaId
+     ST.config.contasModo ('mes' | '45') · ST.config.contasArruma ('dia' | 'grupo') · ST.config.cfRecusadas {chave: 1} · ST.config.cfFrequentes {origem: 1} (1.1.0) · recorrente: janela [de, até], diaUtilSeguinte (DAS) / diaUtilAnterior (DARF), condicional, empresaId
    PONTOS QUE USA
      custos.contas (index.html, topo da tela) · budget.atencao · inbox.itens · ações cm-*, cfs-*
    ===================================================================== */
@@ -246,7 +246,7 @@
     var t = (l.tipo === 'imposto' ? tr('Vai criar o imposto/custo da empresa ', 'Will add the company tax/cost ') : tr('Vai criar a conta fixa ', 'Will add the fixed bill ')) + '"' + l.nome + '" · ' +
       (l.tipo === 'imposto' && l.condicional === 'receita' ? tr('valor pela receita do mês anterior (hoje ~', 'amount from last month\'s revenue (today ~') + fmt(l.valor) + ')' : (l.tipo === 'fixa' ? '' : '~') + fmt(l.valor)) + ' · ' +
       tr('por volta do dia ', 'around day ') + l.dia + (l.janela[0] !== l.janela[1] ? tr(', entre ', ', between ') + l.janela[0] + tr(' e ', ' and ') + l.janela[1] : '') +
-      (l.tipo === 'imposto' ? tr(' (fim de semana ou feriado → próximo dia útil)', ' (weekend or holiday → next business day)') : '') +
+      (l.tipo === 'imposto' ? (aberta.pjTipo === 'darf' ? tr(' (fim de semana ou feriado → antecipa para o dia útil anterior)', ' (weekend or holiday → moves back to the previous business day)') : tr(' (fim de semana ou feriado → próximo dia útil)', ' (weekend or holiday → next business day)')) : '') +
       (l.condicional === 'receita' && l.tipo === 'imposto' ? tr(' · só nos meses depois de um mês com receita', ' · only in months after a month with revenue') : '') +
       ' · ' + (l.ate ? tr('até ', 'until ') + I18n.data(l.ate) : tr('em aberto', 'open-ended')) + '.';
     return t + ' ' + tr('Tudo continua editável em Contas fixas.', 'Everything stays editable in Fixed bills.');
@@ -278,7 +278,7 @@
         (casa() ? '' : '<div id="cfrPJ">' +
           campo(tr('Empresa', 'Company'), '<select id="cfrEmp"><option value="">—</option>' + emps.map(function (e) { return '<option value="' + esc(e.id) + '"' + (e.id === x.empresaId ? ' selected' : '') + '>' + esc(e.fantasia || e.nome || e.id) + '</option>'; }).join('') + '</select>') +
           campo(tr('Só nos meses em que houver…', 'Only in months with…'), '<select id="cfrCond"><option value="receita"' + (x.pjTipo !== 'darf' ? ' selected' : '') + '>' + esc(tr('nota emitida / receita da empresa no mês anterior', 'invoice issued / company revenue in the previous month')) + '</option><option value=""' + (x.pjTipo === 'darf' ? ' selected' : '') + '>' + esc(tr('todo mês', 'every month')) + '</option></select>') +
-          '<p class="tiny muted">' + esc(tr('O DAS vence no dia 20 do mês seguinte; em fim de semana ou feriado passa para o próximo dia útil (por isso às vezes dia 22).', 'The DAS is due on the 20th of the next month; on weekends or holidays it moves to the next business day (hence sometimes the 22nd).')) + '</p></div>') +
+          '<p class="tiny muted">' + esc(tr('O DAS vence no dia 20 do mês seguinte; em fim de semana ou feriado passa para o próximo dia útil (por isso às vezes dia 22). O DARF do pró-labore (IRRF e INSS) também vence no dia 20, mas antecipa para o dia útil anterior.', 'The DAS is due on the 20th of the next month; on weekends or holidays it moves to the next business day (hence sometimes the 22nd). The pro-labore DARF (income tax and INSS) is also due on the 20th, but moves back to the previous business day.')) + '</p></div>') +
         '<p class="small" style="margin:8px 0 2px"><b>' + esc(tr('Até quando', 'Until when')) + '</b></p>' +
         radio('cfrFim', 'aberto', tr('Em aberto', 'Open-ended'), true) + radio('cfrFim', 'data', tr('Até uma data:', 'Until a date:'), false) + Cal.campo('cfrFimData', '', {}) +
       '</div>' +
@@ -296,7 +296,8 @@
       janela: l.janela, desde: hoje().slice(0, 7) + '-01', ate: l.ate, varia: l.tipo !== 'fixa',
       obs: tr('Sugerido pelo app: o mesmo recebedor se repete (dia ', 'Suggested by the app: the same payee repeats (day ') + l.janela[0] + '–' + l.janela[1] + ').' };
     if (l.tipo === 'imposto') {
-      d.diaUtilSeguinte = true; d.escopo = 'reservado';
+      /* o DAS prorroga para o próximo dia útil; o DARF do pró-labore (IRRF/INSS) antecipa para o dia útil anterior */
+      if (x.pjTipo === 'darf') d.diaUtilAnterior = true; else d.diaUtilSeguinte = true; d.escopo = 'reservado';
       if (l.empresaId) { d.empresaId = l.empresaId; if (x.pjTipo) d.pjTipo = x.pjTipo; }
       if (l.condicional === 'receita' && l.empresaId) d.condicional = 'receita';
     }

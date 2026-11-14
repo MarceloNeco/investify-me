@@ -22,6 +22,7 @@ const gastos = [];
   gastos.push(G('ac' + k, m + '-05', 120, 'SAUDE', 'Academia', 'ACADEMIA FICTICIA'));
   /* a PJ: receita (RENDA) de 10.000 em jul–set e 12.000 em out; DAS de 600 no mês seguinte (6%) */
   gastos.push(G('ft' + k, m + '-03', k === 3 ? 12000 : 10000, 'RENDA', 'Receita PJ', 'RECEBIMENTO CLIENTE FICTICIO', { fluxo: 'entrada', conta: CPJ, irTexto: 'PJ' }));
+  if (k) gastos.push(G('df' + k, m + '-19', 250, 'BANCARIOS', 'IRPF / DARF', 'RECEITA FED-DARF', { conta: CPJ, irTexto: 'PJ' }));
   if (k) gastos.push(G('das' + k, m + (k === 2 ? '-21' : '-20'), 600, 'BANCARIOS', 'IRPF / DARF', 'DAS-SIMPLES', { conta: CPJ, irTexto: 'PJ' }));
   gastos.push(G('ct' + k, m + '-10', k === 3 ? 227 : 405, 'BANCARIOS', 'Contador (PJ)', 'CONTABILIDADE FICTICIA', { conta: CPJ, irTexto: 'PJ' }));
 });
@@ -83,10 +84,20 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     ok(rd.oc.length === 1 && rd.oc[0] === '2026-11-23=720:receita', 'novembro: 12.000 de receita em outubro × 6% = R$ 720 em 23/11 (20/11 é feriado, 21–22 fim de semana); dezembro e janeiro sem receita antes → sem previsão: ' + rd.oc.join(' '));
     const util = await p.evaluate(() => { let r = ST.recorrentes.find((x) => /DAS/.test(x.nome)); r = Object.assign({}, r, { desde: '' }); return [Recorrente.datasNoMes(r, 2026, 9)[0], Recorrente.datasNoMes(Object.assign({}, r, { diaUtilSeguinte: false }), 2026, 9)[0]]; });
     ok(util[0] === '2026-09-21' && util[1] === '2026-09-20', 'dia útil seguinte: 20/09/2026 é domingo → 21/09 (sem a marca, ficaria no 20): ' + util);
+    const ant = await p.evaluate(() => { let r = ST.recorrentes.find((x) => /DAS/.test(x.nome)); r = Object.assign({}, r, { desde: '', diaUtilSeguinte: false, diaUtilAnterior: true }); return [Recorrente.datasNoMes(r, 2026, 9)[0], Recorrente.datasNoMes(r, 2026, 11)[0]]; });
+    ok(ant.join() === '2026-09-18,2026-11-19', 'dia útil anterior (o DARF): 20/09 domingo → 18/09; 20/11 feriado → 19/11: ' + ant);
     await p.evaluate(() => { ST.gastos.push({ id: 'ftn', data: '2026-11-04', valor: 5000, grupo: 'RENDA', sub: 'Receita PJ', desc: 'RECEBIMENTO CLIENTE FICTICIO', fluxo: 'entrada', conta: 'Conta PJ Ficticia', irTexto: 'PJ' }); });
     const oc2 = await p.evaluate(() => { const r = ST.recorrentes.find((x) => /DAS/.test(x.nome)); return Recorrente.ocorrencias('2026-12-01', '2026-12-31').filter((o) => o.r.id === r.id).map((o) => o.data + '=' + o.valor); });
     ok(oc2.join() === '2026-12-21=300', 'com receita em novembro (5.000), dezembro prevê 300 (alíquota 6%) no dia 21 (20/12 é domingo): ' + oc2);
 
+    console.log('3b) o DARF do pró-labore antecipa');
+    const df = (await sug()).find((x) => /RECEITA FED-DARF/.test(x.nome));
+    await p.evaluate((c) => document.querySelector('[data-acao="cfs-revisar"][data-chave="' + CSS.escape(c) + '"]').click(), df.chave); await p.waitForTimeout(150);
+    const jf = await p.evaluate(() => ({ tipo: (document.querySelector('#genBody input[name="cfrTipo"]:checked') || {}).value, cond: document.getElementById('cfrCond').value, previa: document.getElementById('cfrPrevia').textContent, txt: document.getElementById('genBody').textContent }));
+    ok(jf.tipo === 'imposto' && jf.cond === '' && /antecipa para o dia útil anterior/.test(jf.previa) && /O DARF do pró-labore \(IRRF e INSS\) também vence no dia 20, mas antecipa para o dia útil anterior/.test(jf.txt), 'o DARF abre como imposto, todo mês, e a linha diz que o DAS prorroga e o DARF antecipa');
+    await p.click('#genBody [data-acao="cfs-salvar"]'); await p.waitForTimeout(200);
+    const rf = await p.evaluate(() => { const r = ST.recorrentes.find((x) => /DARF/.test(x.nome)); return [r.pjTipo, !!r.diaUtilAnterior, !!r.diaUtilSeguinte, Recorrente.ocorrencias('2026-11-01', '2026-11-30').filter((o) => o.r.id === r.id).map((o) => o.data).join()].join('|'); });
+    ok(rf === 'darf|true|false|2026-11-19', 'gravado com diaUtilAnterior: o DARF de novembro vence em 19/11 (20/11 é feriado): ' + rf);
     console.log('4) o contador mudou: "usar o último valor"');
     await p.evaluate(() => { Recorrente.add({ nome: 'Contador · Ficticia', valor: 405, grupo: 'OUTROS', sub: 'Contador (PJ)', dia: 10, regra: 'dia', empresaId: 'e1', pjTipo: 'contador', escopo: 'reservado', desde: '2026-01-01' }); Store.salvar(); });
     const pj = await p.evaluate(() => (inboxGrupos().find((g) => g.id === 'pj') || {}).html || '');
@@ -99,7 +110,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     const antes = await p.evaluate(() => Recorrente.ocorrencias('2026-12-01', '2027-02-28').filter((o) => o.r.pjTipo === 'contador').length);
     await p.evaluate(() => { const e = ST.empresas[0]; e.situacao = 'a-encerrar'; e.situacaoData = '2026-12-31'; });
     const depois = await p.evaluate(() => Recorrente.ocorrencias('2026-12-01', '2027-02-28').filter((o) => o.r.pjTipo === 'contador').map((o) => o.data));
-    ok(antes === 3 && depois.join() === '2026-12-10' && await p.evaluate(() => ST.gastos.filter((g) => /CONTABILIDADE/.test(g.desc)).length === 4 && ST.recorrentes.length === 2), 'encerra em 31/12: prevê só dezembro (antes 3 meses); o histórico e a conta fixa ficam');
+    ok(antes === 3 && depois.join() === '2026-12-10' && await p.evaluate(() => ST.gastos.filter((g) => /CONTABILIDADE/.test(g.desc)).length === 4 && ST.recorrentes.length === 3), 'encerra em 31/12: prevê só dezembro (antes 3 meses); o histórico e a conta fixa ficam');
 
     console.log('6) visão da casa: nada da PJ');
     await p.evaluate(() => { ST.config.cfFrequentes = {}; Escopo.soCasa = () => true; });

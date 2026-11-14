@@ -718,9 +718,9 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   `cfRecusadas`; barra "Desfazer" por 10 s (`cfs-desfazer`). index.html: `Recorrente.datasNoMes` com `r.diaUtilSeguinte` (fim de semana/feriado → próximo
   dia útil) e o ponto novo `recorrente.pula` em `ocorrencias` (o módulo diz que a ocorrência não entra; um pagamento registrado sempre entra).
   `modulos/pj.js` 1.2.0: `receitaMes`, `notasMes` (pj_contas a receber), `aliquota` (DAS do mês seguinte ÷ receita, últimos 6 meses com receita),
-  `pula` (empresa `a-encerrar` depois de `situacaoData`; condicional sem receita nem nota no mês anterior), `previsto` (receita do mês anterior ×
-  alíquota, fonte 'receita') pelos pontos `recorrente.pula`/`recorrente.previsto`; o calendário cria o DAS do Simples condicional e DAS/DARF no próximo
-  dia útil; `ateTransferir` (o dia útil anterior ao vencimento, também no saldo-previsto 1.0.3); no 📥 "O contador mudou … Usar o último valor"
+  `diaUtilAnterior` (index: em fim de semana/feriado antecipa; o DARF do pró-labore, IRRF/INSS), `pula` (empresa `a-encerrar` depois de `situacaoData`; condicional sem receita nem nota no mês anterior), `previsto` (receita do mês anterior ×
+  alíquota, fonte 'receita') pelos pontos `recorrente.pula`/`recorrente.previsto`; o calendário cria o DAS do Simples condicional e no próximo dia útil e o DARF
+  no dia útil anterior; `ateTransferir` (o dia útil anterior ao vencimento, também no saldo-previsto 1.0.3); no 📥 "O contador mudou … Usar o último valor"
   (`pj-ultimo` → `Recorrente.reajustar`). Teste: `teste/teste-conta-fixa-revisar.js`.
   **3.86 — o aviso de saldo diz de quem e de quando.** saldo-banco 2.1.2 grava `atualizadoEm` (o `atualizado_em`/`coletado_em`/`criado_em` do item do
   robô, se vier; senão, a hora em que chegou ao app). saldo-previsto 1.1.0: `nome(c)` = banco + " do/da " + o apelido da pessoa (`Pessoas.achar(c.dono)`;
