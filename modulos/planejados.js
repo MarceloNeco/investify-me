@@ -131,7 +131,7 @@
         var de = Desloc.lugar(t.origemId), pa = Desloc.lugar(t.destinoId);
         var nome = t.plano === 'fds' ? tr('Fim de semana', 'Weekends') : ((de ? de.nome : '?') + ' → ' + (pa ? pa.nome : '?'));
         var sub = t.plano === 'fds' ? t.vezes + tr(' por mês', ' a month') : (t.dias || []).map(function (d) { var x = DIAS.filter(function (y) { return y[0] === String(d); })[0]; return x ? (pt() ? x[1] : x[2]) : ''; }).join(' ') + (t.idaVolta === false ? '' : tr(' · ida e volta', ' · round trip'));
-        return '<tr><td><span class="t-main">' + esc(nome) + '</span><div class="t-sub">' + esc(sub) + '</div></td><td class="num">' + esc(API.kmMesRotina(t).toLocaleStringI18n.locale()) + ' km/' + esc(tr('mês', 'mo')) +
+        return '<tr><td><span class="t-main">' + esc(nome) + '</span><div class="t-sub">' + esc(sub) + '</div></td><td class="num">' + esc(API.kmMesRotina(t).toLocaleString(I18n.locale())) + ' km/' + esc(tr('mês', 'mo')) +
           ' <button class="linkinho" data-acao="pl-tirar" data-id="' + esc(t.id) + '" aria-label="' + esc(tr('Tirar', 'Remove')) + '">✕</button></td></tr>';
       }).join('') + vs.map(function (v) {
         return '<tr><td><span class="t-main">🧳 ' + esc(v.destino) + '</span><div class="t-sub">' + esc(v.vezesAno + tr('× por ano · ', '× a year · ') + v.km + ' km · ' + fmt(API.custoViagem(v)) + tr(' por viagem', ' per trip')) + '</div></td>' +
