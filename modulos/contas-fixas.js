@@ -13,8 +13,8 @@
    ===================================================================== */
 (function () {
   'use strict';
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function hoje() { return API._hoje || hojeISO(); }
   function mais(iso, d) { var x = new Date(iso + 'T12:00:00'); x.setDate(x.getDate() + d); return x.toISOString().slice(0, 10); }
   function saida(r) { return (GRUPOS[r.grupo] || {}).fluxo !== 'entrada'; }

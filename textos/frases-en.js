@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.88 · 14/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.89 · 14/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.89 */
+  'Preparação para o espanhol':'Getting ready for Spanish',
+  'Por dentro: o app ficou pronto para um terceiro idioma, o espanhol (da Espanha). Ele ainda não aparece na escolha de idioma: só entra quando o app inteiro estiver traduzido e revisado. Nada muda para quem usa português ou inglês.':'Under the hood: the app is now ready for a third language, Spanish (from Spain). It does not show in the language choice yet: it comes in only when the whole app is translated and reviewed. Nothing changes for those using Portuguese or English.',
   /* 3.88 */
   'Leitura de fotos sem internet':'Reading photos without internet',
   'A leitura de fotos (cupom, apólice, documento do banco) usa o leitor de texto que já vem no app, em português, e funciona sem internet; antes ele buscava uma parte na internet.':'Reading photos (receipt, insurance policy, bank document) uses the text reader that already comes with the app, in Portuguese, and works without internet; before, it fetched a part from the internet.',

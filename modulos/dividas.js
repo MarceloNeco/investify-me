@@ -35,8 +35,8 @@
   'use strict';
   var COL = 'dividas', FCOL = 'faturas_cartao';
   var TIPOS = { consorcio: ['Consórcio', 'Consortium'], financiamento: ['Financiamento', 'Financing'], outro: ['Outra dívida', 'Other debt'] };
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function lista() { return (ST[COL] = Array.isArray(ST[COL]) ? ST[COL] : []); }
   function faturas() { return (ST[FCOL] = Array.isArray(ST[FCOL]) ? ST[FCOL] : []); }
   function casa() { return !!(window.Escopo && Escopo.soCasa && Escopo.soCasa()); }

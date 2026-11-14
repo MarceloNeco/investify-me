@@ -28,8 +28,8 @@
 (function () {
   'use strict';
   var TIPOS = { fisico: ['físico', 'physical'], virtual: ['virtual', 'virtual'], adicional: ['adicional', 'additional'], naosei: ['não sei', 'not sure'] };
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function so4(f) { return String(f || '').replace(/\D/g, '').slice(-4); }
   function cartoes() { return (typeof ST !== 'undefined' && ST && ST.cartoes) || []; }
   function cfg() { return typeof ST !== 'undefined' && ST ? (ST.config = ST.config || {}) : {}; }

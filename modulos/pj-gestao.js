@@ -39,8 +39,8 @@
     ['internet', /internet|fibra|banda larga|vivo fibra|claro net|\bnet virtua\b/i, tr0('Internet', 'Internet'), false]
   ];
   function tr0(a) { return a; }
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function n2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
   function casa() { return !!(window.Escopo && Escopo.soCasa && Escopo.soCasa()); }
   function hoje() { return API._hoje || hojeISO(); }

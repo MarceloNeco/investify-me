@@ -33,8 +33,8 @@
 (function () {
   'use strict';
   var COL = 'saldo_ajustes', DIAS = 45;
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function n2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
   function hoje() { return API._hoje || hojeISO(); }
   function mais(iso, d) { var x = new Date(iso + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + d); return x.toISOString().slice(0, 10); }

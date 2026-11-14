@@ -17,7 +17,7 @@
    ===================================================================== */
 (function () {
   'use strict';
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
   function N(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
   function dig(t) { return String(t || '').replace(/\D/g, ''); }
   var GEN = ('ltda sa eireli mei cia companhia financ financeira invest investimento credito debito cartao fatura conta contas pagamento boleto ' +

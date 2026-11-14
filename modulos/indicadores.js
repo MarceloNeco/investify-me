@@ -20,8 +20,8 @@
 (function () {
   'use strict';
   var DIVIDA = /presta[cç]|cons[oó]rcio|financiament|parcel|juros|tarifa|empr[eé]stimo|iof|anuidade|m[uú]tuo/i;
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function mesAnt(m) { var a = Number(m.slice(0, 4)), n = Number(m.slice(5, 7)) - 1; if (!n) { a--; n = 12; } return a + '-' + String(n).padStart(2, '0'); }
   function pct(x) { return x == null || !isFinite(x) ? '—' : Math.round(x * 100) + '%'; }
   function ehDivida(g) { return g.fluxo === 'saida' && (DIVIDA.test(String(g.sub || '') + ' ' + String(g.desc || '')) || !!g.parcelas || /^\d+\s*\/\s*\d+$/.test(String(g.parcela || ''))); }

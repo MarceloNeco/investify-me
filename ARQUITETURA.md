@@ -709,6 +709,16 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **3.89 — estrutura para 3 idiomas (PT, EN, ES da Espanha), com o ES escondido.** `IDIOMAS.es` (es-ES, moeda R$, `oculto: true`);
+  `I18n.tr(pt, en, es)` e `I18n.de({pt, en, es})` (sem ES → EN → PT); `t()` com `es`; `I18n.visiveis()` (o seletor de ⚙ mostra o escondido só
+  quando é o atual); `?lang=es` liga só na aba (sessionStorage `<CHAVE_IDIOMA>.teste`; não vai ao localStorage nem ao `ST.config`, logo não
+  sobe para a nuvem); `?lang=pt|en` desliga. Datas: `MESES_CURTOS.es` em minúsculas (`18/sep/2026`), `MESES_LONGOS.es`, `DIAS_SEMANA.es`;
+  números e voz pelo `I18n.locale()`. `textos/frases-es.js` (`FRASES_ES`, o mesmo esquema; o Verter procura nele e cai no `FRASES_EN`).
+  Os testes binários viraram "é português?" (`I18n.atual === 'pt'`; 136 trocas mecânicas `!== 'en'`→`=== 'pt'` e `=== 'en'`→`!== 'pt'`, o
+  que mantém PT e EN iguais e faz o ES cair no EN), `X[I18n.atual] || X.pt` → `I18n.de(X)`, o `tr` dos 33 módulos ganhou o 3º argumento,
+  nuvem.js 1.15.4 `tt(pt, en, es)` pelo I18n. Os ternários `pt ? … : …` continuam binários e caem no EN no espanhol; viram `tr(pt, en, es)` à
+  medida que o texto ganha ES. `I18n.pendenciasEs()`: chaves e frases com ES e, por tela, o que caiu no inglês na sessão (em ⚙ só no teste).
+  Teste: `teste/teste-idioma-es.js`.
   **3.88 — N70: o Ocr lê sem internet.** `Ocr.idioma()` = 'por' com o motor local (leitor/tesseract/ tem só o português) e 'por+eng' só com o da CDN;
   `Ocr.texto` usa `createWorker(lingua, …, opcoesTrabalhador(lingua))` nos dois caminhos (o simples, com um trabalhador que fecha no fim, e o de
   psm/lote). Antes, o simples (`T.recognize`) buscava o trabalhador na CDN e o de psm buscava o idioma na rede. Teste: `teste/teste-ocr-local.js`.

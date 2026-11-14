@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.88 · 14/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.89 · 14/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.89', d:'2026-11-14', t:'Preparação para o espanhol', itens:[
+    'Por dentro: o app ficou pronto para um terceiro idioma, o espanhol (da Espanha). Ele ainda não aparece na escolha de idioma: só entra quando o app inteiro estiver traduzido e revisado. Nada muda para quem usa português ou inglês.'
+  ]},
   {v:'3.88', d:'2026-11-14', t:'Leitura de fotos sem internet', itens:[
     'A leitura de fotos (cupom, apólice, documento do banco) usa o leitor de texto que já vem no app, em português, e funciona sem internet; antes ele buscava uma parte na internet.'
   ]},

@@ -24,8 +24,8 @@
   var SEGURADORAS = [['Porto Seguro', /porto seguro/], ['Azul Seguros', /azul seguros/], ['Itaú Seguros', /itau seguros/], ['Bradesco Seguros', /bradesco seguros/],
     ['SulAmérica', /sul ?america/], ['Allianz', /allianz/], ['Tokio Marine', /tokio marine/], ['HDI', /\bhdi\b/], ['Yelum', /yelum|liberty/], ['Mapfre', /mapfre/],
     ['Zurich', /zurich/], ['Suhai', /suhai/], ['Youse', /youse/], ['Caixa Seguradora', /caixa seguradora/], ['MAG Seguros', /mongeral|\bmag seguros/]];
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function lista() { return (ST[COL] = Array.isArray(ST[COL]) ? ST[COL] : []); }
   function casa() { return !!(window.Escopo && Escopo.soCasa && Escopo.soCasa()); }
   function hoje() { return API._hoje || hojeISO(); }

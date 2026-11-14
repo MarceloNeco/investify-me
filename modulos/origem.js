@@ -22,8 +22,8 @@
    ===================================================================== */
 (function () {
   'use strict';
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   var CAMPOS = ['grupo', 'sub', 'paraQuem', 'paraQuemId', 'irpf'];
   var ultimo = null;   /* o que dá para desfazer: [{id, antes}] */
 

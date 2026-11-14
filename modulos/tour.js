@@ -17,7 +17,7 @@
    ===================================================================== */
 (function () {
   'use strict';
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
   function visivel(el) {
     if (!el) return false;
     var r = el.getBoundingClientRect(), cs = getComputedStyle(el);

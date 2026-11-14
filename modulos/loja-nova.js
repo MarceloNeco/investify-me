@@ -17,8 +17,8 @@
    ===================================================================== */
 (function () {
   'use strict';
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function n2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
   function cfg() { return (ST.config = ST.config || {}); }
   function doRobo(g) { return g.origem === 'robo' || !!g.idRobo; }

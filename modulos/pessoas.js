@@ -49,8 +49,8 @@
   var PARTICULAS = { de: 1, da: 1, do: 1, das: 1, dos: 1, e: 1 };
   var TIPOS = { casa: ['Da casa', 'Household'], outra: ['Outras pessoas', 'Other people'], empresa: ['Empresas e instituições', 'Companies and institutions'] };
   var PAPEIS = { responsavel: ['Responsável', 'Guardian'], dependente: ['Dependente', 'Dependant'], '': ['papel a definir', 'role not set'] };
-  function pt() { return typeof I18n === 'undefined' || I18n.atual !== 'en'; }
-  function tr(a, b) { return pt() ? a : b; }
+  function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
+  function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function temST() { return typeof ST !== 'undefined' && !!ST; }
   function lista() { if (!temST()) return []; return (ST[COL] = Array.isArray(ST[COL]) ? ST[COL] : []); }
   function N(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
