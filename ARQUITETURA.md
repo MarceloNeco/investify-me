@@ -709,6 +709,9 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **3.88 — N70: o Ocr lê sem internet.** `Ocr.idioma()` = 'por' com o motor local (leitor/tesseract/ tem só o português) e 'por+eng' só com o da CDN;
+  `Ocr.texto` usa `createWorker(lingua, …, opcoesTrabalhador(lingua))` nos dois caminhos (o simples, com um trabalhador que fecha no fim, e o de
+  psm/lote). Antes, o simples (`T.recognize`) buscava o trabalhador na CDN e o de psm buscava o idioma na rede. Teste: `teste/teste-ocr-local.js`.
   **3.87 — Colar print, Dividir e Loja nova (sem IA).** `modulos/print-colar.js` 1.0.0 (`window.PrintColar`): botões "📋 Colar print" e "🖼️ Escolher
   imagem" em `lancamentos.topo` e no ponto novo `inbox.topo` (index.html `abrirInbox`); Ctrl+V de imagem em Lançamentos ou com o 📥 aberto;
   `navigator.clipboard.read()` (sem permissão → escolher arquivo); Web Share Target (manifest.json `share_target` POST multipart `imagens` →

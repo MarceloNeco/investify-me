@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.87 · 14/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.88 · 14/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.88 */
+  'Leitura de fotos sem internet':'Reading photos without internet',
+  'A leitura de fotos (cupom, apólice, documento do banco) usa o leitor de texto que já vem no app, em português, e funciona sem internet; antes ele buscava uma parte na internet.':'Reading photos (receipt, insurance policy, bank document) uses the text reader that already comes with the app, in Portuguese, and works without internet; before, it fetched a part from the internet.',
   /* 3.87 */
   'Colar print, Dividir e Loja nova':'Paste a screenshot, Split and New store',
   '"📋 Colar print" em Lançamentos e no 📥: cole o print da notificação do banco (Ctrl+V no computador, o botão "Colar" no celular, escolher a imagem ou o "Compartilhar" do Android com o app instalado). O texto é lido no próprio aparelho, sem IA e sem internet: compra aprovada, Pix enviado ou recebido e comprovante; um print com várias notificações vira vários itens.':'"📋 Paste screenshot" in Entries and in the 📥: paste the screenshot of the bank notification (Ctrl+V on a computer, the "Paste" button on the phone, pick the image, or Android\'s "Share" with the app installed). The text is read on the device itself, with no AI and no internet: approved purchase, Pix sent or received and receipt; a screenshot with several notifications becomes several items.',

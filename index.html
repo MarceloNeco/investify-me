@@ -636,7 +636,7 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.87"></script>
+<script src="textos/frases-en.js?v=3.88"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7619,7 +7619,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.87"></script>
+<script src="textos/mudancas.js?v=3.88"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -13649,13 +13649,18 @@ const Ocr = {
      as linhas de tabela inteiras — é o que serve para documento de banco;
      o automático é melhor para foto. Com opcoes.lote, o mesmo "leitor"
      fica aberto entre as páginas (bem mais rápido); feche com fecharLote(). */
+  /* 3.88 (N70): com o motor de leitor/tesseract/ (o normal), só o português, que está lá: o trabalhador, o núcleo e o
+     idioma vêm do aparelho e a leitura funciona sem internet. "por+eng" só com o motor da CDN (o inglês viria da rede). */
+  idioma(){ return this.origem === 'local' ? 'por' : 'por+eng'; },
+
   async texto(arquivo, aviso, opcoes){
     const T = await this.carregar(aviso);
+    const lingua = this.idioma();
     if(opcoes && opcoes.psm && typeof T.createWorker === 'function'){
       try{
         if(!this.trab){
           if(aviso) aviso('Preparando o leitor de texto…');
-          this.trab = await T.createWorker('por+eng', 1, Object.assign(this.opcoesTrabalhador('por+eng'), {logger: m => {
+          this.trab = await T.createWorker(lingua, 1, Object.assign(this.opcoesTrabalhador(lingua), {logger: m => {
             if(this.avisoAtual && m.status === 'recognizing text') this.avisoAtual('Lendo… ' + Math.round((m.progress || 0) * 100) + '%');
           }}));
           this.trabPsm = null;
@@ -13667,8 +13672,17 @@ const Ocr = {
         return (r && r.data && r.data.text) || '';
       }catch(e){ await this.fecharLote(); /* cai no caminho simples abaixo */ }
     }
+    /* 3.88 (N70): o motor local lê com um trabalhador local (o T.recognize simples buscava o trabalhador na CDN) */
+    if(this.origem === 'local' && typeof T.createWorker === 'function'){
+      if(aviso) aviso('Lendo a imagem…');
+      const w = await T.createWorker(lingua, 1, Object.assign(this.opcoesTrabalhador(lingua), {logger: m => {
+        if(aviso && m.status === 'recognizing text') aviso('Lendo a imagem… ' + Math.round((m.progress || 0) * 100) + '%');
+      }}));
+      try{ const r = await w.recognize(arquivo); return (r && r.data && r.data.text) || ''; }
+      finally{ try{ await w.terminate(); }catch(e){} }
+    }
     if(aviso) aviso('Lendo a imagem…');
-    const r = await T.recognize(arquivo, 'por+eng', {
+    const r = await T.recognize(arquivo, lingua, {
       logger: m => {
         if(aviso && m.status === 'recognizing text')
           aviso('Lendo a imagem… ' + Math.round((m.progress || 0) * 100) + '%');

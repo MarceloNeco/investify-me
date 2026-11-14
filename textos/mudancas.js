@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.87 · 14/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.88 · 14/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.88', d:'2026-11-14', t:'Leitura de fotos sem internet', itens:[
+    'A leitura de fotos (cupom, apólice, documento do banco) usa o leitor de texto que já vem no app, em português, e funciona sem internet; antes ele buscava uma parte na internet.'
+  ]},
   {v:'3.87', d:'2026-11-14', t:'Colar print, Dividir e Loja nova', itens:[
     '"📋 Colar print" em Lançamentos e no 📥: cole o print da notificação do banco (Ctrl+V no computador, o botão "Colar" no celular, escolher a imagem ou o "Compartilhar" do Android com o app instalado). O texto é lido no próprio aparelho, sem IA e sem internet: compra aprovada, Pix enviado ou recebido e comprovante; um print com várias notificações vira vários itens.',
     'Na prévia, cada item tem valor, loja, data e hora, cartão ou conta, quem pagou, categoria e "Dividir". Num cartão ou conta que o robô traz, o item fica "⏳ aguardando o banco" (entra no saldo previsto e na fatura) e, quando o lançamento do banco chega, os dois viram um só, com a sua classificação e a nota "conferido com o print". Se a loja vier com outro nome, o 📥 pergunta. Numa conta à mão, já vira lançamento. A imagem só é guardada se você marcar "guardar como comprovante" (no cofre, criptografado).',
