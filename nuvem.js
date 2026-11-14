@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.2 · 13/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.3 · 14/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -60,6 +60,7 @@
       (o definitivo que chegou substitui o pendente; o que sumiu da entrega há 7 dias é liberado).
   18. 1.15.1 (3.81) — MoneyNuvem.converterRobo(l): a conversão da caixa do robô, para o importador do extrato BS2 no app.
   19. 1.15.2 (3.84) — N10: depois de abrir da nuvem, cartões, metas, bancos e empresas em ordem alfabética (estável entre aparelhos).
+  20. 1.15.3 (3.87) — o robô mandar de novo um lançamento DIVIDIDO pela pessoa não desfaz a divisão (corrigir compara com o total).
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
       conta" sem o PIN antigo (sol_pin_definir com o atual nulo); "Trocar o PIN" só quando a conta já tem PIN. Conta sem PIN da
@@ -1708,6 +1709,12 @@
     CAMPOS_META: ['finalCartao', 'contaCartao', 'contraparte'],
     corrigir: function (ja, g) {
       var muda = {}, n = 0;
+      /* 1.15.3 (3.87): lançamento DIVIDIDO pela pessoa (modulos/dividir.js): o valor do robô é o total, e a pessoa, a categoria e
+         o para quem são das partes; só um total diferente é correção de verdade */
+      if (ja.divisao) {
+        g = Object.assign({}, g, { grupo: ja.grupo, sub: ja.sub, quem: ja.quem, paraQuem: ja.paraQuem });
+        if (Math.abs((Number(g.valor) || 0) - (Number(ja.divisao.total) || 0)) < 0.005) g.valor = ja.valor;
+      }
       if (g.paraQuem && g.paraQuem !== ja.paraQuem) { muda.paraQuem = g.paraQuem; n++; }   /* "para_quem" só quando o robô manda */
       this.CAMPOS_ROBO.forEach(function (k) {
         var a = ja[k] == null ? '' : ja[k], b = g[k] == null ? '' : g[k];
@@ -3167,6 +3174,7 @@
     },
     /* 1.15.1 (3.81): o importador de extrato do app (modulos/bs2-extrato.js) usa a MESMA conversão do robô */
     converterRobo: function (l) { return Caixa.converter(l); },
+    corrigirRobo: function (ja, g) { return Caixa.corrigir(ja, g); },   /* 1.15.3 (3.87): o robô mandou de novo (teste da divisão) */
     /* para os testes automáticos (teste/nuvem.js): as peças, sem estado aberto */
     _teste: { Pin: Pin, Painel: Painel, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao, Espelho: Espelho, Escopos: Escopos, Visao: Visao, Arquivos: Arquivos }
   };

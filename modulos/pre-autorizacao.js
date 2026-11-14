@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pre-autorizacao.js — PRÉ-AUTORIZAÇÕES DO CARTÃO (pendentes e cauções) (3.80)        1.0.0 · 13/Nov/2026
+   modulos/pre-autorizacao.js — PRÉ-AUTORIZAÇÕES DO CARTÃO (pendentes e cauções) (3.80)        1.0.1 · 14/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      O robô manda os lançamentos de cartão ainda PENDENTES no banco com "pendente": true e "caucao_provavel": true|false
@@ -12,6 +12,8 @@
        → SUBSTITUI o pendente, sem contar duas vezes. Não depende do id do banco (que muda entre um e outro).
      · Sumiu da entrega do robô (que manda os últimos 40 dias a cada rodada) e não virou definitivo em 7 dias → retirado com
        a nota "liberado (não foi cobrado)"; na caução, aviso no 📥 "A caução de <quem> foi liberada".
+     · 1.0.1 (3.87): os itens do "📋 Colar print" (doPrint) moram aqui como "⏳ aguardando o banco" (fatura, saldo previsto,
+       previsto da categoria), mas a conciliação e a saída são do modulos/print-colar.js.
      · Sem IA. Visão da casa: segue a regra do lançamento (Escopo.de('cartao_pendentes') = a dos gastos).
    API (window.PreAut)
      receber(g, l) → true se mudou · entrega(hoje?) · ativos() · lista() · doCartao(cartaoId) · comprometidos(grupo, sub, mes)
@@ -47,6 +49,7 @@
     return window.Profissionais ? Profissionais.parecido(x, y) >= 0.8 : x.join(' ') === y.join(' ');
   }
   function casa(p, g) {
+    if (p.doPrint) return false;   /* 1.0.1 (3.87): o item do print tem a conciliação dele (modulos/print-colar.js) */
     if (!g || g.estorno || g.fluxo === 'entrada' || !(Number(g.valor) > 0)) return false;
     var v = Number(p.valor) || 0, d = Number(g.valor) || 0;
     if (Math.abs(d - v) > v * 0.1 + 0.005) return false;
@@ -84,6 +87,7 @@
     limpar: function (h) {
       h = h || hoje(); var ult = cfg().preEntrega || '', out = [];
       API.ativos().forEach(function (p) {
+        if (p.doPrint) return;
         var def = (typeof Gasto !== 'undefined' ? Gasto.todos() : []).find(function (x) { return casa(p, x) && !lista().some(function (y) { return y.gastoId === x.id; }); });
         if (def) { p.estado = 'cobrado'; p.gastoId = def.id; p.saiuEm = def.data || h; out.push(p); return; }
         if (ult && p.vistoEm < ult && mais(p.vistoEm, SUMIU) <= h) { p.estado = 'liberado'; p.nota = tr('liberado (não foi cobrado)', 'released (not charged)'); p.saiuEm = h; out.push(p); }
@@ -97,6 +101,7 @@
         .map(function (p) { return { nome: '⏳ ' + quem(p), dia: +String(p.data).slice(8, 10), data: p.data, valor: n2(p.valor), pendente: true }; });
     },
     selo: function (p) {
+      if (p.doPrint) return '<span class="pa-selo">⏳ ' + esc(tr('aguardando o banco (print)', 'waiting for the bank (screenshot)')) + '</span>';
       return p.caucao ? '<span class="pa-selo pa-caucao" title="' + esc(tr('costuma ser liberado; o valor final vem depois', 'usually released; the final amount comes later')) + '">🔒 ' + esc(tr('Caução (valor bloqueado no limite)', 'Hold (amount blocked on the limit)')) + '</span>'
         : '<span class="pa-selo">⏳ ' + esc(tr('Pendente no cartão', 'Pending on the card')) + '</span>';
     },
@@ -115,7 +120,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'pre-autorizacao', versao: '1.0.0', colecoes: [COL],
+    id: 'pre-autorizacao', versao: '1.0.1', colecoes: [COL],
     pontos: {
       'lancamentos.topo': function () { if (API.limpar().length) Store.salvar(); return cartaoLista(); },
       'inbox.grupos': function () {

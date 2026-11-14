@@ -709,6 +709,28 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **3.87 — Colar print, Dividir e Loja nova (sem IA).** `modulos/print-colar.js` 1.0.0 (`window.PrintColar`): botões "📋 Colar print" e "🖼️ Escolher
+  imagem" em `lancamentos.topo` e no ponto novo `inbox.topo` (index.html `abrirInbox`); Ctrl+V de imagem em Lançamentos ou com o 📥 aberto;
+  `navigator.clipboard.read()` (sem permissão → escolher arquivo); Web Share Target (manifest.json `share_target` POST multipart `imagens` →
+  sw.js guarda no cache de passagem `partilha-moneytrio` e redireciona para `./?print=1`; o app lê e apaga). OCR no aparelho no `Fundo`:
+  `Tesseract.createWorker('por')` com `Ocr.opcoesTrabalhador('por')` (trabalhador, núcleo e idioma de `leitor/tesseract/`, sem internet).
+  `itensDoTexto(texto)`: notificação de compra ("Compra aprovada de R$ X em LOJA no dia DD/MM às HH:MM…", também a cortada "R$ X em LOJA… HH:MM"),
+  Pix enviado/recebido, comprovante; um item por valor. Prévia (genModal): valor, loja, data, hora, onde (`opcoes()`: cartão com lançamento do robô
+  = `c:`, conta do `saldos_banco` = `b:`, o resto "à mão" = `mc:`/`m:`), quem pagou, grupo, categoria (regra da loja ou o que já foi usado),
+  "Dividir". Confirmado em `c:`/`b:` → `ST.cartao_pendentes` com `doPrint: true` (pre-autorizacao 1.0.1 não concilia nem libera esses; selo
+  "⏳ aguardando o banco (print)"; fatura e previsto pela PreAut; saldo-previsto 1.1.1 `PrintColar.eventos` para a conta). `conciliar()` (em
+  `gasto.novo` do robô, `lancamentos.topo` e no 📥): valor exato, ±3 dias, mesmo cartão/conta, `lojaParecida` (palavras normalizadas, ≥ 60% da
+  menor) → `unir`: o lançamento do robô fica com grupo, categoria, quem, a divisão e "conferido com o print"; loja diferente → `p.par` e no 📥
+  "No banco veio como: …" (`pc-par` / `pc-parnao`); 5 dias sem o banco → "Lançar à mão" / "Tirar". `m:`/`mc:` → `Gasto.add` com origem 'print'
+  e forma "manual (print)". "Guardar como comprovante" → `ArquivosFamilia.guardar` (tipo 'comprovante'); sem marcar, a imagem só vive na memória.
+  `modulos/dividir.js` 1.0.0 (`window.Divisao`): `aplicar(gid, partes)` faz lançamentos de verdade (o original fica com a 1ª parte e o mesmo id;
+  as outras `<id>~k`, sem `idRobo`), todos com `divisao {id, total, n, k}` e `divNota`; `desfazer`; `blocoHtml`/`ler` (o mesmo bloco na edição
+  via `lancamento.form`, na prévia e na loja nova; soma ao vivo); `lembrar`/`ultima` (a última divisão por ORIGEM, em proporção) → no 📥
+  "dividir como da última vez?" (`dv-sugerida`, nunca sozinho). nuvem.js 1.15.3: `corrigir` de um lançamento dividido compara o valor com o total e
+  ignora grupo/categoria/quem/para quem (o robô mandar de novo não desfaz); `MoneyNuvem.corrigirRobo` para o teste. `modulos/loja-nova.js` 1.0.0
+  (`window.LojaNova`): `lojas()` = os grupos "A identificar" do Origem com lançamento do robô e nenhum já confirmado/editado; no 📥 "🏪 Loja nova:
+  X. O que é?" (o index tira o "A identificar" dessa origem); `ln-salvar` atualiza o último, `Espelho.registrar` (regra para a planilha),
+  `Origem.replicar`, `ST.config.lojaRegras[origem]` e, em `gasto.novo`, classifica o próximo dessa loja. Teste: `teste/teste-print-colar.js`.
   **3.86 — "Parece conta fixa" com Revisar.** `modulos/contas-mes.js` 1.1.0: `sugestoes()` pula o GASTO FREQUENTE (categoria por regex — mercado,
   padaria, restaurante, farmácia, combustível, transporte, compras; grupo TRANSPORTE — e MCC 5411/5412/5499/5462/5812–5814/5912/5541/5542/4111/4121/
   4131/4789/5310/5311/5651/5691/5699) e a origem em `ST.config.cfFrequentes`; cada sugestão traz `ultimo`, `diaMin/diaMax`, `pj`/`empresaId`/`pjTipo`
