@@ -709,6 +709,15 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **3.90 — conciliação do print pelo caso real (14/11).** print-colar 1.1.0: `lojaParecida` compara antes a forma compacta (sem espaço, acento e
+  pontuação, maiúsculas, sem o "BR" do fim): se uma começa com a outra (5+ letras), é a mesma loja ("LOJAGUARUJABR"); as palavras ficam como
+  alternativa. `mesmoLugar`: com o final no print (`it.final`, "final 1234"), o mesmo cartão ou o mesmo final; sem ele, qualquer cartão do mesmo banco
+  (`bancoCartao`: o banco do cadastro ou o apelido) e o lançamento sem cartão que traz o banco em `conta`. `candidatos` inclui as PENDENTES do robô
+  (`ST.cartao_pendentes`); 1 igual → une, 2+ → `p.par` e o 📥 pergunta ("No banco (ainda pendente) veio como: …"). `unirPendente`: o print vira
+  `estado: 'unido'` e a pendente ganha grupo, categoria, quem, `partes`, a nota, o cartão escolhido, `doPrintClass` e `printId`; `levarClassificacao`
+  leva tudo ao lançamento postado quando a 3.80 a substitui (`cobrado`, `gastoId`). pre-autorizacao 1.0.2: `mesmoCartao` sem final em nenhum dos dois
+  = o mesmo banco; com o cartão de um lado e o final do outro, o final do cadastro; `receber` guarda a classificação da pendente casada e emite
+  `preaut.novo` (o print concilia na hora); `gasto.novo` também substitui o lançamento sem `cartaoId`. Teste: `teste/teste-print-pluggy.js`.
   **3.89 — estrutura para 3 idiomas (PT, EN, ES da Espanha), com o ES escondido.** `IDIOMAS.es` (es-ES, moeda R$, `oculto: true`);
   `I18n.tr(pt, en, es)` e `I18n.de({pt, en, es})` (sem ES → EN → PT); `t()` com `es`; `I18n.visiveis()` (o seletor de ⚙ mostra o escondido só
   quando é o atual); `?lang=es` liga só na aba (sessionStorage `<CHAVE_IDIOMA>.teste`; não vai ao localStorage nem ao `ST.config`, logo não

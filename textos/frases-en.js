@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.89 · 14/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.90 · 17/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.90 */
+  'Print e banco: conciliação mais certa':'Screenshot and bank: better matching',
+  '"📋 Colar print": o app reconhece a loja mesmo quando o banco cola a cidade no nome (ex.: "LOJAGUARUJABR"), aceita o cartão do mesmo banco quando a notificação não diz o final e casa o print também com a compra ainda pendente no banco. Assim a mesma compra nunca aparece duas vezes na fatura nem no previsto, e a sua categoria e a divisão vão junto até o lançamento definitivo. Se houver dúvida entre duas compras, o 📥 pergunta.':'"📋 Paste screenshot": the app recognizes the store even when the bank glues the city to the name (e.g. "STOREGUARUJABR"), accepts a card from the same bank when the notification does not show the last digits, and also matches the screenshot with the purchase still pending at the bank. So the same purchase never shows twice in the card bill or the forecast, and your category and split go along to the final entry. If two purchases could match, the 📥 asks.',
   /* 3.89 */
   'Preparação para o espanhol':'Getting ready for Spanish',
   'Por dentro: o app ficou pronto para um terceiro idioma, o espanhol (da Espanha). Ele ainda não aparece na escolha de idioma: só entra quando o app inteiro estiver traduzido e revisado. Nada muda para quem usa português ou inglês.':'Under the hood: the app is now ready for a third language, Spanish (from Spain). It does not show in the language choice yet: it comes in only when the whole app is translated and reviewed. Nothing changes for those using Portuguese or English.',
