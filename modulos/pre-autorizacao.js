@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pre-autorizacao.js — PRÉ-AUTORIZAÇÕES DO CARTÃO (pendentes e cauções) (3.80)        1.0.1 · 14/Nov/2026
+   modulos/pre-autorizacao.js — PRÉ-AUTORIZAÇÕES DO CARTÃO (pendentes e cauções) (3.80)        1.0.2 · 17/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      O robô manda os lançamentos de cartão ainda PENDENTES no banco com "pendente": true e "caucao_provavel": true|false
@@ -14,6 +14,8 @@
        a nota "liberado (não foi cobrado)"; na caução, aviso no 📥 "A caução de <quem> foi liberada".
      · 1.0.1 (3.87): os itens do "📋 Colar print" (doPrint) moram aqui como "⏳ aguardando o banco" (fatura, saldo previsto,
        previsto da categoria), mas a conciliação e a saída são do modulos/print-colar.js.
+     · 1.0.2 (3.90): pendente e postada sem o final do cartão: vale o mesmo banco; a pendente que casou com o print guarda a
+       classificação quando o robô a manda de novo; evento 'preaut.novo' a cada pendente recebida.
      · Sem IA. Visão da casa: segue a regra do lançamento (Escopo.de('cartao_pendentes') = a dos gastos).
    API (window.PreAut)
      receber(g, l) → true se mudou · entrega(hoje?) · ativos() · lista() · doCartao(cartaoId) · comprometidos(grupo, sub, mes)
@@ -38,9 +40,17 @@
   function norm(t) { t = String(t || '').replace(/^↩\s*/, ''); return window.Profissionais ? Profissionais.norm(t) : t.toLowerCase().split(/[^a-z0-9]+/).filter(function (w) { return w.length >= 2; }); }
   function quem(p) { return (p.contraparte && p.contraparte.nome) || String(p.descRobo || p.desc || '').trim() || p.sub || ''; }
   function mesmoCartao(p, g) {
-    if (p.cartaoId || g.cartaoId) return p.cartaoId === g.cartaoId;
-    return !!p.finalCartao && p.finalCartao === g.finalCartao;
+    if (p.cartaoId && g.cartaoId) return p.cartaoId === g.cartaoId;
+    if (p.finalCartao && g.finalCartao) return p.finalCartao === g.finalCartao;
+    if ((p.cartaoId || g.cartaoId) && (p.finalCartao || g.finalCartao) && !(p.cartaoId && g.cartaoId)) {
+      /* um tem o cartão, o outro só o final: o final do cadastro */
+      var c = typeof Banco !== 'undefined' ? Banco.acharCartao(p.cartaoId || g.cartaoId) : null, f = p.finalCartao || g.finalCartao;
+      if (c && c.fim) return String(c.fim) === String(f) || (c.finais || []).some(function (x) { return String(x.fim || x) === String(f); });
+    }
+    /* 1.0.2 (3.90): o banco às vezes manda o cartão sem o final (a pendente e a postada): vale o mesmo banco */
+    var a = N(p.conta).split(' ')[0]; return !!a && a === N(g.conta).split(' ')[0];
   }
+  function N(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
   function mesmoRecebedor(p, g) {
     var a = p.contraparte && p.contraparte.cnpj, b = g.contraparte && g.contraparte.cnpj;
     if (a && b) return a === b;
@@ -72,7 +82,11 @@
       /* o definitivo já chegou antes? não entra */
       var def = (typeof Gasto !== 'undefined' ? Gasto.todos() : []).find(function (x) { return casa(novo, x) && !lista().some(function (y) { return y.gastoId === x.id; }); });
       if (def) { if (p) { p.estado = 'cobrado'; p.gastoId = def.id; p.saiuEm = hoje(); } return !!p; }
-      if (p) Object.assign(p, novo); else lista().push(novo);
+      /* 1.0.2 (3.90): a pendente que já casou com o print (modulos/print-colar.js) guarda a classificação da pessoa quando o robô
+         a manda de novo */
+      var guarda = p && p.doPrintClass ? { grupo: p.grupo, sub: p.sub, quem: p.quem, quemId: p.quemId, obs: p.obs, partes: p.partes, doPrintClass: true, printId: p.printId, cartaoId: p.cartaoId || novo.cartaoId } : null;
+      if (p) Object.assign(p, novo, guarda || {}); else lista().push(novo);
+      if (window.MoneyModulos) MoneyModulos.emitir('preaut.novo', p || novo);
       return true;
     },
     entrega: function (h) { cfg().preEntrega = h || hoje(); },
@@ -120,7 +134,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'pre-autorizacao', versao: '1.0.1', colecoes: [COL],
+    id: 'pre-autorizacao', versao: '1.0.2', colecoes: [COL],
     pontos: {
       'lancamentos.topo': function () { if (API.limpar().length) Store.salvar(); return cartaoLista(); },
       'inbox.grupos': function () {
@@ -132,7 +146,7 @@
         }).join('') }];
       }
     },
-    ouvir: { 'gasto.novo': function (g) { if (g && g.cartaoId && API.substituir(g)) setTimeout(function () { Store.salvar(); }, 0); } }
+    ouvir: { 'gasto.novo': function (g) { if (g && (g.cartaoId || g.finalCartao || g.conta) && API.substituir(g)) setTimeout(function () { Store.salvar(); }, 0); } }
   });
   window.PreAut = API;
 })();

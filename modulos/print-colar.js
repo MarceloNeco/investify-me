@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/print-colar.js — "📋 Colar print": notificação do banco vira lançamento (3.87)        1.0.0 · 14/Nov/2026
+   modulos/print-colar.js — "📋 Colar print": notificação do banco vira lançamento (3.87)        1.1.0 · 17/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 14/Nov/2026; sem IA)
      · Entradas: colar da área de transferência (Ctrl+V no computador; no celular o botão "Colar", com
@@ -20,6 +20,11 @@
      · Conta que o robô não traz: a pessoa escolhe a conta e o item já vira lançamento ("manual (print)").
      · A imagem não é guardada, a não ser que a pessoa marque "guardar como comprovante" (ArquivosFamilia: no cofre,
        fechado com a chave da família).
+     · 1.1.0 (3.90), pelo caso real de 14/11: a loja na forma compacta (o Itaú cola loja + cidade + "BR": "GLITZMANIAGUARUJABR"),
+       se uma começa com a outra (5+ letras) é a mesma; sem o final do cartão no print, vale qualquer cartão do mesmo banco (e o
+       lançamento sem cartão, só com o banco); mais de um candidato → pergunta no 📥; o print casa também com a PENDENTE do robô
+       (pré-autorização): os dois viram um só (fica a pendente, com a classificação, a divisão e a nota) e, quando a postada
+       substitui a pendente (3.80), a classificação vai junto. Nunca dois na fatura nem no previsto.
    API (window.PrintColar)
      itensDoTexto(texto, hoje?) → [{tipo, valor, loja, data, hora, banco}] · processar(arquivos) · abrirPrevia(itens)
      conciliar() → n · pendentes() · lojaParecida(a, b)
@@ -82,6 +87,7 @@
     ms.forEach(function (x, k) {
       var antes = t.slice(k ? ms[k - 1].fim : 0, x.i), depois = t.slice(x.fim, k + 1 < ms.length ? ms[k + 1].i : t.length);
       var seg = antes.slice(-80) + ' R$ ' + x.v + depois, it = { valor: n2(num(x.v)), banco: bancoDe(seg) || banco, hora: '' };
+      var fm = depois.match(/final\s*(\d{4})/i); if (fm) it.final = fm[1];   /* 1.1.0 (3.90): "cartão final 1234", quando a notificação diz */
       var hm = depois.match(/[àa]s (\d{1,2})[:h](\d{2})/i) || depois.match(/\b(\d{1,2}):(\d{2})\b/) || antes.slice(-30).match(/\b(\d{1,2}):(\d{2})\b/);
       if (hm) it.hora = ('0' + hm[1]).slice(-2) + ':' + hm[2];
       it.data = dataDe(depois.match(/no dia (\d{2}\/\d{2}(?:\/\d{2,4})?)/i) ? depois.match(/no dia (\d{2}\/\d{2}(?:\/\d{2,4})?)/i)[1] : depois.slice(0, 60), h) || h;
@@ -127,7 +133,12 @@
     return g ? { grupo: g.grupo, sub: g.sub } : { grupo: 'OUTROS', sub: '' };
   }
   function tokens(t) { return (window.Profissionais ? Profissionais.norm(t) : N(t).split(' ')).filter(function (w) { return w.length >= 3 && !/^(compra|pag|pagto|pagamento|pix|ltda|eireli|me|sa|com|br)$/.test(w); }); }
+  /* 1.1.0 (3.90): o Itaú cola a loja, a cidade e o "BR" sem espaço ("GLITZMANIAGUARUJABR", "FABIOLA COELHOSAO PAULOBR"):
+     na forma compacta (sem espaço, acento ou pontuação), se uma começa com a outra (5 letras ou mais), é a mesma loja */
+  function compacta(t) { return N(String(t || '').replace(/\s*(…|\.\.\.).*$/, '')).replace(/ /g, '').toUpperCase().replace(/BR$/, ''); }
   function lojaParecida(a, b) {
+    var ca = compacta(a), cb = compacta(b);
+    if (Math.min(ca.length, cb.length) >= 5 && (ca.indexOf(cb) === 0 || cb.indexOf(ca) === 0)) return true;
     var A = tokens(a), B = tokens(b); if (!A.length || !B.length) return false;
     var n = A.filter(function (w) { return B.some(function (x) { return x === w || (w.length >= 5 && x.length >= 5 && (x.indexOf(w) === 0 || w.indexOf(x) === 0)); }); }).length;
     return n / Math.min(A.length, B.length) >= 0.6;
@@ -205,7 +216,7 @@
     var os = opcoes(), gs = Object.keys(GRUPOS);
     var bloco = function (it, k) {
       var cat = palpiteCat(it), onde = palpiteOnde(it, os), T = TIPOS[it.tipo] || TIPOS.compra;
-      return '<div class="card pc-item" data-pck="' + k + '" data-tipo="' + esc(it.tipo || 'compra') + '" style="padding:10px;margin:0 0 10px">' +
+      return '<div class="card pc-item" data-pck="' + k + '" data-tipo="' + esc(it.tipo || 'compra') + '" data-final="' + esc(it.final || '') + '" style="padding:10px;margin:0 0 10px">' +
         '<div class="row" style="justify-content:space-between"><b>' + esc(pt() ? T[0] : T[1]) + '</b><button type="button" class="icon-btn" data-acao="pc-tirar" aria-label="' + esc(tr('Tirar este item', 'Remove this item')) + '">✕</button></div>' +
         '<div class="grid g2">' +
         '<label class="field"><span>' + esc(tr('Valor (R$)', 'Amount (R$)')) + '</span><input data-pc="valor" inputmode="decimal" value="' + (it.valor ? String(it.valor).replace('.', ',') : '') + '"></label>' +
@@ -231,7 +242,7 @@
   }
   function lerItem(el) {
     var v = function (k) { var e = el.querySelector('[data-pc="' + k + '"]'); return e ? String(e.value || '').trim() : ''; };
-    var it = { tipo: el.dataset.tipo, valor: n2(num(v('valor'))), loja: v('loja'), data: /^\d{4}-\d{2}-\d{2}$/.test(v('data')) ? v('data') : hoje(), hora: v('hora'), onde: v('onde'), quem: v('quem'), grupo: v('grupo'), sub: v('sub') };
+    var it = { tipo: el.dataset.tipo, final: el.dataset.final || '', valor: n2(num(v('valor'))), loja: v('loja'), data: /^\d{4}-\d{2}-\d{2}$/.test(v('data')) ? v('data') : hoje(), hora: v('hora'), onde: v('onde'), quem: v('quem'), grupo: v('grupo'), sub: v('sub') };
     var b = el.querySelector('.pc-div:not([hidden]) [data-dvbloco]');
     if (b && window.Divisao) { var r = Divisao.ler(b.dataset.dvbloco, it.valor); if (r.erro) it.erroDiv = r.erro; else it.partes = r.partes; }
     return it;
@@ -244,7 +255,7 @@
     if (window.Pessoas) Pessoas.ligar(base, 'quem', 'quemId');
     if (o.robo) {
       var p = Object.assign({}, base, { id: novoId(), doPrint: true, estado: 'pendente', pendente: true, vistoEm: hoje(), partes: it.partes || null });
-      if (tipo === 'c') p.cartaoId = ref; else { var sb = (ST.saldos_banco || []).find(function (x) { return x.id === ref; }); p.contaSaldo = ref; p.conta = sb ? sb.banco : ''; }
+      if (tipo === 'c') { p.cartaoId = ref; if (it.final) p.final = it.final; } else { var sb = (ST.saldos_banco || []).find(function (x) { return x.id === ref; }); p.contaSaldo = ref; p.conta = sb ? sb.banco : ''; }
       lista().push(p); return { pendente: p };
     }
     var b = tipo === 'm' && ref && typeof Banco !== 'undefined' ? Banco.achar(ref) : null;
@@ -254,18 +265,39 @@
   }
 
   /* ---------- conciliação com o lançamento do robô ---------- */
+  /* o banco de um cartão (pelo cadastro do banco ou pelo apelido): "itau" */
+  function bancoCartao(id) {
+    var c = id && typeof Banco !== 'undefined' ? Banco.acharCartao(id) : null; if (!c) return '';
+    var b = c.bancoId && Banco.achar(c.bancoId);
+    return (N((b && b.nome) || c.apelido || '').split(' ').filter(function (w) { return w.length >= 2 && !/^(banco|cartao|card|credito|debito)$/.test(w); })[0]) || '';
+  }
+  /* 1.1.0 (3.90): o mesmo lugar. Com o final no print, o mesmo cartão (ou o mesmo final); sem o final ("no seu cartão Itau"),
+     qualquer cartão do mesmo banco da família, e também o lançamento do robô que veio sem cartão (só o banco) */
   function mesmoLugar(p, g) {
-    if (p.cartaoId) return g.cartaoId === p.cartaoId;
+    if (p.cartaoId) {
+      if (g.cartaoId === p.cartaoId) return true;
+      if (p.final) return !!g.finalCartao && g.finalCartao === p.final;
+      var b = bancoCartao(p.cartaoId); if (!b) return false;
+      if (g.cartaoId) return bancoCartao(g.cartaoId) === b;
+      return N([g.conta, g.contaCartao, g.cartaoNome].join(' ')).split(' ').indexOf(b) >= 0;
+    }
     var a = N(p.conta).split(' ')[0]; return !!a && !g.cartaoId && N(g.conta).split(' ')[0] === a;
   }
+  /* 1.1.0 (3.90): o robô manda a compra primeiro como PENDENTE (ST.cartao_pendentes) e dias depois como postada: o print casa
+     com as duas (a pendente do robô e o lançamento), para nunca contar duas vezes */
   function candidatos(p) {
-    var usados = {}; lista().forEach(function (x) { if (x.gastoId) usados[x.gastoId] = 1; });
-    return Gasto.todos().filter(function (g) {
-      return (g.origem === 'robo' || g.idRobo) && !usados[g.id] && !g.divisao && (g.fluxo === 'entrada') === (p.fluxo === 'entrada') &&
-        Math.abs((Number(g.valor) || 0) - p.valor) < 0.005 && Math.abs(dias(g.data, p.data)) <= JANELA && mesmoLugar(p, g) && !(p.parNao || {})[g.id];
-    });
+    var usados = {}; lista().forEach(function (x) { if (x.gastoId) usados[x.gastoId] = 1; if (x.pendenteId) usados[x.pendenteId] = 1; });
+    var ok = function (g) {
+      return !usados[g.id] && (g.fluxo === 'entrada') === (p.fluxo === 'entrada') && Math.abs((Number(g.valor) || 0) - p.valor) < 0.005 &&
+        Math.abs(dias(g.data, p.data)) <= JANELA && mesmoLugar(p, g) && !(p.parNao || {})[g.id];
+    };
+    var pend = lista().filter(function (r) { return !r.doPrint && r.estado === 'pendente' && !r.printId && ok(r); });
+    return Gasto.todos().filter(function (g) { return (g.origem === 'robo' || g.idRobo) && !g.divisao && ok(g); }).concat(pend);
   }
+  function alvo(id) { return Gasto.todos().find(function (x) { return x.id === id; }) || lista().find(function (x) { return x.id === id && !x.doPrint; }) || null; }
+  function lojaDe(g) { return (g.contraparte && g.contraparte.nome) || g.descRobo || g.desc; }
   function unir(p, g) {
+    if (!Gasto.todos().some(function (x) { return x.id === g.id; })) return unirPendente(p, g);
     var d = { grupo: p.grupo || g.grupo, sub: p.sub || g.sub, obs: [g.obs, tr('conferido com o print', 'checked against the screenshot')].filter(Boolean).join(' · '), editadoPessoa: true, confirmadoEm: new Date().toISOString(), revisar: false };
     if (p.quem) { d.quem = p.quem; if (p.quemId) d.quemId = p.quemId; }
     Gasto.atualizar(g.id, d);
@@ -273,14 +305,41 @@
     if (p.partes && window.Divisao) Divisao.aplicar(g.id, p.partes);
     p.estado = 'cobrado'; p.gastoId = g.id; p.saiuEm = hoje(); delete p.par;
   }
-  function conciliar() {
+  /* o print e a pendente do robô viram um só: fica a pendente (é ela que o lançamento postado vai substituir, pela regra da 3.80),
+     com a classificação, a divisão e a nota da pessoa; o cartão escolhido no print, se o robô não disse qual */
+  function unirPendente(p, r) {
+    r.grupo = p.grupo || r.grupo; r.sub = p.sub || r.sub;
+    if (p.quem) { r.quem = p.quem; if (p.quemId) r.quemId = p.quemId; }
+    r.obs = [r.obs, tr('conferido com o print', 'checked against the screenshot', 'comprobado con la captura')].filter(Boolean).join(' · ');
+    if (p.partes) r.partes = p.partes;
+    if (!r.cartaoId && p.cartaoId) r.cartaoId = p.cartaoId;
+    r.doPrintClass = true; r.printId = p.id;
+    p.estado = 'unido'; p.pendenteId = r.id; p.saiuEm = hoje(); delete p.par;
+  }
+  /* a postada chegou e a 3.80 tirou a pendente (cobrado, gastoId): a classificação do print vai junto para o lançamento */
+  function levarClassificacao() {
     var n = 0;
-    lista().filter(function (p) { return p.doPrint && p.estado === 'pendente'; }).forEach(function (p) {
-      var cs = candidatos(p); if (!cs.length) { delete p.par; return; }
-      var igual = cs.find(function (g) { return lojaParecida(p.desc, (g.contraparte && g.contraparte.nome) || g.descRobo || g.desc); });
-      if (igual) { unir(p, igual); n++; } else if (p.par !== cs[0].id) { p.par = cs[0].id; n++; }
+    lista().filter(function (r) { return r.doPrintClass && r.estado === 'cobrado' && r.gastoId && !r.printAplicado; }).forEach(function (r) {
+      var g = Gasto.todos().find(function (x) { return x.id === r.gastoId; }); if (!g) return;
+      var d = { grupo: r.grupo || g.grupo, sub: r.sub || g.sub, obs: [g.obs, tr('conferido com o print', 'checked against the screenshot', 'comprobado con la captura')].filter(Boolean).join(' · '), editadoPessoa: true, confirmadoEm: new Date().toISOString(), revisar: false };
+      if (r.quem) { d.quem = r.quem; if (r.quemId) d.quemId = r.quemId; }
+      Gasto.atualizar(g.id, d);
+      var x = Gasto.todos().find(function (y) { return y.id === g.id; }); if (x) delete x.confianca;
+      if (r.partes && window.Divisao && Math.abs((Number(g.valor) || 0) - r.partes.reduce(function (s, q) { return s + q.valor; }, 0)) < 0.005) Divisao.aplicar(g.id, r.partes);
+      r.printAplicado = true; n++;
     });
     return n;
+  }
+  function conciliar() {
+    var n = levarClassificacao();
+    lista().filter(function (p) { return p.doPrint && p.estado === 'pendente'; }).forEach(function (p) {
+      var cs = candidatos(p); if (!cs.length) { delete p.par; return; }
+      var iguais = cs.filter(function (g) { return lojaParecida(p.desc, lojaDe(g)); });
+      /* um só igual: une; mais de um (ex.: dois cartões do mesmo banco sem o final): pergunta no 📥 */
+      if (iguais.length === 1) { unir(p, iguais[0]); n++; }
+      else { var c = (iguais[0] || cs[0]).id; if (p.par !== c) { p.par = c; n++; } }
+    });
+    return n + levarClassificacao();
   }
   function pendentes() { return lista().filter(function (p) { return p.doPrint && p.estado === 'pendente'; }); }
 
@@ -300,7 +359,7 @@
   };
 
   MoneyModulos.registrar({
-    id: 'print-colar', versao: '1.0.0',
+    id: 'print-colar', versao: '1.1.0',
     pontos: {
       'lancamentos.topo': function () {
         if (conciliar()) Store.salvar();
@@ -311,9 +370,10 @@
         if (conciliar()) Store.salvar();
         var h = '', n = 0;
         pendentes().forEach(function (p) {
-          var g = p.par && Gasto.todos().find(function (x) { return x.id === p.par; });
+          var g = p.par && alvo(p.par);
           if (g) {
-            n++; h += '<li class="inb-item"><div><b>📋 ' + esc(p.desc + ' · ' + fmt(p.valor) + ' (' + I18n.data(p.data) + ')') + '</b><span class="t-sub">' + esc(tr('No banco veio como: ', 'At the bank it came as: ') + ((g.contraparte && g.contraparte.nome) || g.descRobo || g.desc) + ' · ' + I18n.data(g.data)) + '</span></div>' +
+            var pend = !Gasto.todos().some(function (x) { return x.id === g.id; });
+            n++; h += '<li class="inb-item"><div><b>📋 ' + esc(p.desc + ' · ' + fmt(p.valor) + ' (' + I18n.data(p.data) + ')') + '</b><span class="t-sub">' + esc((pend ? tr('No banco (ainda pendente) veio como: ', 'At the bank (still pending) it came as: ', 'En el banco (aún pendiente) llegó como: ') : tr('No banco veio como: ', 'At the bank it came as: ', 'En el banco llegó como: ')) + lojaDe(g) + ' · ' + I18n.data(g.data) + (g.cartaoId && typeof Banco !== 'undefined' ? ' · ' + Banco.rotuloCartao(g.cartaoId) : '')) + '</span></div>' +
               '<span class="inb-acoes"><button class="btn sm primary" data-acao="pc-par" data-id="' + esc(p.id) + '">' + esc(tr('É o mesmo', 'Same one')) + '</button><button class="btn sm" data-acao="pc-parnao" data-id="' + esc(p.id) + '">' + esc(tr('Não é', 'Not it')) + '</button></span></li>';
           } else if (dias(hoje(), p.vistoEm) >= LEMBRAR) {
             n++; h += '<li class="inb-item"><div><b>⏳ ' + esc(p.desc + ' · ' + fmt(p.valor) + tr(': o banco ainda não mandou', ': the bank has not sent it yet')) + '</b><span class="t-sub">' + esc(tr('do print de ', 'from the screenshot of ') + I18n.data(p.data)) + '</span></div>' +
@@ -323,7 +383,11 @@
         return n ? [{ id: 'confirmar', n: n, html: h }] : [];
       }
     },
-    ouvir: { 'gasto.novo': function (g) { if (g && (g.origem === 'robo' || g.idRobo) && pendentes().length) setTimeout(function () { if (conciliar()) Store.salvar(); }, 0); } },
+    ouvir: {
+      'gasto.novo': function (g) { if (g && (g.origem === 'robo' || g.idRobo)) setTimeout(function () { if (conciliar()) Store.salvar(); }, 0); },
+      /* 1.1.0 (3.90): a pendente do robô chegou: casa com o print na hora (a fatura e o previsto não contam duas vezes) */
+      'preaut.novo': function () { if (pendentes().length && conciliar()) setTimeout(function () { Store.salvar(); }, 0); }
+    },
     acoes: {
       'pc-colar': function () { colar(); },
       'pc-escolher': function () { escolher(); },
@@ -351,7 +415,7 @@
         lido = null; conciliar(); fechar('genModal'); depois();
         toast(its.length + tr(' item(ns) do print: ', ' screenshot item(s): ') + (np ? np + tr(' aguardando o banco', ' waiting for the bank') : '') + (np && np < its.length ? ' · ' : '') + (its.length - np ? (its.length - np) + tr(' lançado(s)', ' added') : ''));
       },
-      'pc-par': function (el) { var p = lista().find(function (x) { return x.id === el.dataset.id; }), g = p && Gasto.todos().find(function (x) { return x.id === p.par; }); if (p && g) { unir(p, g); depois(); } },
+      'pc-par': function (el) { var p = lista().find(function (x) { return x.id === el.dataset.id; }), g = p && alvo(p.par); if (p && g) { unir(p, g); depois(); } },
       'pc-parnao': function (el) { var p = lista().find(function (x) { return x.id === el.dataset.id; }); if (!p) return; (p.parNao = p.parNao || {})[p.par] = 1; delete p.par; depois(); },
       'pc-amao': function (el) {
         var p = lista().find(function (x) { return x.id === el.dataset.id; }); if (!p) return;

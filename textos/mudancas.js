@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.89 · 14/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.90 · 17/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.90', d:'2026-11-17', t:'Print e banco: conciliação mais certa', itens:[
+    '"📋 Colar print": o app reconhece a loja mesmo quando o banco cola a cidade no nome (ex.: "LOJAGUARUJABR"), aceita o cartão do mesmo banco quando a notificação não diz o final e casa o print também com a compra ainda pendente no banco. Assim a mesma compra nunca aparece duas vezes na fatura nem no previsto, e a sua categoria e a divisão vão junto até o lançamento definitivo. Se houver dúvida entre duas compras, o 📥 pergunta.'
+  ]},
   {v:'3.89', d:'2026-11-14', t:'Preparação para o espanhol', itens:[
     'Por dentro: o app ficou pronto para um terceiro idioma, o espanhol (da Espanha). Ele ainda não aparece na escolha de idioma: só entra quando o app inteiro estiver traduzido e revisado. Nada muda para quem usa português ou inglês.'
   ]},
