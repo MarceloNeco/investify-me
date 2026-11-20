@@ -7,7 +7,8 @@
    ===================================================================== */
 const MUDANCAS = [
   {v:'3.92', d:'2026-11-20', t:'Conferir canhotos', itens:[
-    '"🧾 Conferir canhotos" em Lançamentos: tire uma foto (ou várias) dos canhotos da maquininha, cupons e recibos. O app lê no aparelho, sem internet e sem IA, e separa em: ✅ já está no banco, 🟡 parecido (confirme), ➕ não veio do banco (lançar à mão ou esperar o banco) e ❓ valor em dúvida (escolha ou digite). No que casou, você classifica ali mesmo (quem, categoria, ✂️ dividir) e a classificação vai para o lançamento do banco. Nada é lançado duas vezes.'
+    '"🧾 Conferir canhotos" em Lançamentos: tire uma foto (ou várias) dos canhotos da maquininha, cupons e recibos. O app lê no aparelho, sem internet e sem IA, e separa em: ✅ já está no banco, 🟡 parecido (confirme), ➕ não veio do banco (lançar à mão ou esperar o banco) e ❓ valor em dúvida (escolha ou digite). No que casou, você classifica ali mesmo (quem, categoria, ✂️ dividir) e a classificação vai para o lançamento do banco. Nada é lançado duas vezes.',
+    'Correção: em Pendências (📥), o botão "Renovei" da transferência agendada abria o campo da nova data e ele sumia logo em seguida. Agora o campo fica.'
   ]},
   {v:'3.91', d:'2026-11-20', t:'Agendamentos, salto de preço, despesas médicas e recibos', itens:[
     'Transferência agendada no banco (em Contas fixas → + Adicionar): valor, de qual conta para qual, dia e o prazo do banco (12 meses). O 📥 avisa 30 e 7 dias antes de acabar ("Renove no app do banco"), o saldo previsto conta cada transferência no prazo e, se acabar sem você renovar, o aviso de saldo diz a causa provável. O app também sugere cadastrar quando vê a mesma transferência 3 meses seguidos.',

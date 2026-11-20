@@ -28123,7 +28123,8 @@ function abrirInbox(){
 /* 3.76: a ação feita dentro do 📥 resolve ali mesmo: a lista e o contador se refazem (o grupo aberto continua aberto) */
 document.addEventListener('click', ev => {
   const b = ev.target.closest && ev.target.closest('#genBody[data-inbox="1"] [data-acao], #genBody[data-inbox="1"] [data-grev], #genBody[data-inbox="1"] [data-ocestado], #genBody[data-inbox="1"] [data-pgest]');
-  if(!b || b.hasAttribute('data-close')) return;
+  /* 3.92: o botão que só abre um campo ali mesmo (ex.: "Renovei" pede a nova data) não redesenha o 📥, senão o campo some */
+  if(!b || b.hasAttribute('data-close') || b.hasAttribute('data-inb-fica')) return;
   setTimeout(() => {
     const gm = $('#genModal'), corpo = $('#genBody');
     if(!gm || gm.classList.contains('hidden') || !corpo || corpo.dataset.inbox !== '1') return;
@@ -30131,7 +30132,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/dividir.js?v=1.0.0"></script>
 <script src="modulos/print-colar.js?v=1.2.0"></script>
 <script src="modulos/loja-nova.js?v=1.0.0"></script>
-<script src="modulos/transf-agendada.js?v=1.0.0"></script>
+<script src="modulos/transf-agendada.js?v=1.0.1"></script>
 <script src="modulos/salto-preco.js?v=1.0.0"></script>
 <script src="modulos/recibo-exterior.js?v=1.0.0"></script>
 <script src="modulos/recebi-dinheiro.js?v=1.0.0"></script>
