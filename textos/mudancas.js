@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.91 · 20/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.92 · 20/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.92', d:'2026-11-20', t:'Conferir canhotos', itens:[
+    '"🧾 Conferir canhotos" em Lançamentos: tire uma foto (ou várias) dos canhotos da maquininha, cupons e recibos. O app lê no aparelho, sem internet e sem IA, e separa em: ✅ já está no banco, 🟡 parecido (confirme), ➕ não veio do banco (lançar à mão ou esperar o banco) e ❓ valor em dúvida (escolha ou digite). No que casou, você classifica ali mesmo (quem, categoria, ✂️ dividir) e a classificação vai para o lançamento do banco. Nada é lançado duas vezes.'
+  ]},
   {v:'3.91', d:'2026-11-20', t:'Agendamentos, salto de preço, despesas médicas e recibos', itens:[
     'Transferência agendada no banco (em Contas fixas → + Adicionar): valor, de qual conta para qual, dia e o prazo do banco (12 meses). O 📥 avisa 30 e 7 dias antes de acabar ("Renove no app do banco"), o saldo previsto conta cada transferência no prazo e, se acabar sem você renovar, o aviso de saldo diz a causa provável. O app também sugere cadastrar quando vê a mesma transferência 3 meses seguidos.',
     'Alerta de salto de preço: conta fixa ou gasto que se repete todo mês, acima da média dos 3 anteriores (15% por padrão; geral em Configurações e um por conta), vira aviso no 📥 com "Esperado (novo valor)", "Contestar/ver" e "Ignorar desta vez". Reajuste anual marcado não assusta.',
