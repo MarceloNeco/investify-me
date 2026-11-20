@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.93 · 20/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.94 · 20/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.94', d:'2026-11-20', t:'RachAI: planejar viagem', itens:[
+    'RachAI ganhou "Viagens": os custos (pousada, carro, combustível, mercado, passeios) com quem pagou, as famílias com dias, adultos e crianças (a criança vale meio, ajustável) e a regra de cada custo (por pessoa-dia, por família, por pessoa ou só alguns). O app faz o rateio, diz quem faz Pix para quem com o menor número de Pix e põe a parte da sua família nos Gastos planejados → Viagens. Dá para guardar o link do roteiro.'
+  ]},
   {v:'3.93', d:'2026-11-20', t:'RachAI: rachar a conta da mesa', itens:[
     'Novo no BudgetONE, o RachAI (nome provisório), sem internet: crie a mesa e as pessoas, monte o cardápio por foto ou à mão, marque o consumo com toques (+ e −, ou "dividir entre…"), e quem não bebe fica fora das bebidas. Serviço proporcional ao consumo, couvert por pessoa e gorjeta opcional. No fechamento: quanto cada um paga, quem faz Pix para quem com o menor número de Pix, a mensagem pronta para compartilhar e a parte da família lançada no BudgetONE. Também confere a foto da conta do bar com o que foi marcado.'
   ]},

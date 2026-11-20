@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/rachai.js — RachAI (nome provisório): RACHAR A CONTA da mesa, dentro do BudgetONE (3.93)        1.0.0 · 20/Nov/2026
+   modulos/rachai.js — RachAI (nome provisório): RACHAR A CONTA da mesa e PLANEJAR VIAGEM, dentro do BudgetONE (3.93)        1.1.0 · 20/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 18–20/Nov/2026; protótipo SEM INTERNET e SEM IA; nada de convite nem servidor)
      · Tela "RachAI" (b-rachai), com cartão de destaque no Painel e item no menu do BudgetONE.
@@ -13,12 +13,20 @@
      · Fechamento: quanto cada um deve, quem pagou, e "quem paga para quem" com o menor número de Pix; a mensagem pronta para
        compartilhar (texto e imagem); a parte da família vira um lançamento no BudgetONE (Lazer › Restaurantes, com a divisão
        por pessoa, modulos/dividir.js).
+     · 1.1.0 (3.94) PLANEJAR VIAGEM: custos (pousada, carro, combustível, mercado, passeios) com quem pagou; participantes ou
+       famílias com dias, adultos e crianças (peso da criança, 0,5 por padrão); cada custo com a regra: por pessoa-dia, por
+       família (igual), por pessoa (igual) ou só alguns; o rateio, "quem paga para quem" com o menor número de Pix; a parte da
+       família vira gasto previsto (um compromisso no mês da viagem, Lazer › Viagens; aparece em Contas fixas → Gastos
+       planejados → Viagens); o link do roteiro (o guia express do dono) fica guardado na viagem.
      · Visão da casa: a mesa é de quem criou (reservada), a não ser que marque "da casa".
    API (window.RachAI)
      calcMesa(mesa) → {pessoas: {pid: {consumo, servico, couvert, gorjeta, total, pago, saldo}}, subtotal, total}
      pix(saldos {pid: valor}) → [{de, para, valor}] · lerCardapio(texto) · lerConta(texto) · conferir(mesa, conta)
-     mensagem(mesa) · lancarFamilia(mesa) · mesas()
+     mensagem(mesa) · lancarFamilia(mesa) · mesas() · 1.1.0: viagens() · calcViagem(v) → {unidades: {id: {devido, pago, saldo}}, total}
+     · planejarFamilia(v) → o compromisso previsto
    DADOS
+     ST.rachai_viagens = [{id, nome, inicio, fim, roteiro, escopo?, pesoCrianca, unidades: [{id, nome, dias, adultos, criancas, nossa}],
+       custos: [{id, nome, valor, pagou, regra: 'pessoadia'|'familia'|'igual'|'alguns', alguns: [id]}], planejadoId?}]
      ST.rachai_mesas = [{id, nome, local, data, link, escopo?, servicoPct, couvert, gorjeta, pessoas: [{id, nome, pessoaId?,
        semBebida?, presente}], itens: [{id, nome, preco, bebida, por: {pid: qtd}, divide: [pid] | null, qtd}],
        pagamentos: {pid: valor}, conta?: {total, linhas}, lancadoId?}]
@@ -27,7 +35,7 @@
    ===================================================================== */
 (function () {
   'use strict';
-  var COL = 'rachai_mesas';
+  var COL = 'rachai_mesas', COLV = 'rachai_viagens';
   var BEBIDA = /cerveja|chop+e?|refri|refrigerante|suco|[aá]gua|vinho|drink|caipi|coca|guaran|dose|whisk|gin\b|vodka|caf[eé]|ch[aá]\b|long ?neck|soda|t[oô]nica|beer|wine|juice|water|cerveza|vino|zumo|refresco/i;
   function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
   function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
@@ -220,7 +228,99 @@
       : (r.difTotal > 0 ? tr('A conta veio ', 'The bill came ', 'La cuenta vino ') + fmt(r.difTotal) + tr(' a mais', ' higher', ' de más') : tr('A conta veio ', 'The bill came ', 'La cuenta vino ') + fmt(-r.difTotal) + tr(' a menos', ' lower', ' de menos')) + ' (' + fmt(r.totalConta) + tr(' × marcado ', ' × marked ', ' × marcado ') + fmt(r.esperado) + ')') + '</b>' +
       (r.difs.length ? '<ul style="margin:6px 0 0">' + r.difs.map(function (d) { return '<li>' + esc(d.nome + ': ' + tr('na conta ', 'on the bill ', 'en la cuenta ') + fmt(d.conta) + tr(' · marcado ', ' · marked ', ' · marcado ') + fmt(d.marcado) + ' (' + (d.dif > 0 ? '+' : '') + fmt(d.dif) + ')') + '</li>'; }).join('') + '</ul>' : '') + '</div>';
   }
-  function tela() { var m = mesa(); return m ? telaMesa(m) : telaLista(); }
+  /* ---------- 1.1.0 (3.94): PLANEJAR VIAGEM (rateio proporcional) ---------- */
+  function viagens() { return (ST[COLV] = Array.isArray(ST[COLV]) ? ST[COLV] : []); }
+  var REGRAS = [['pessoadia', 'Por pessoa-dia', 'Per person-day', 'Por persona y día'], ['familia', 'Por família (igual)', 'Per family (equal)', 'Por familia (igual)'],
+    ['igual', 'Por pessoa (igual)', 'Per person (equal)', 'Por persona (igual)'], ['alguns', 'Só alguns', 'Only some', 'Solo algunos']];
+  /* o peso de cada participante (pessoa ou família) em cada regra */
+  function peso(v, u, regra, c) {
+    var pc = v.pesoCrianca != null ? Number(v.pesoCrianca) : 0.5, gente = (Number(u.adultos) || 0) + (Number(u.criancas) || 0) * pc;
+    if (regra === 'pessoadia') return gente * (Number(u.dias) || 0);
+    if (regra === 'familia') return 1;
+    if (regra === 'igual') return (Number(u.adultos) || 0) + (Number(u.criancas) || 0);
+    if (regra === 'alguns') return (c.alguns || []).indexOf(u.id) >= 0 ? 1 : 0;
+    return 0;
+  }
+  API.viagens = viagens;
+  API.calcViagem = function (v) {
+    var out = {}, total = 0; (v.unidades || []).forEach(function (u) { out[u.id] = { devido: 0, pago: 0, saldo: 0 }; });
+    (v.custos || []).forEach(function (c) {
+      var vc = cent(c.valor); total += vc;
+      var pesos = {}; (v.unidades || []).forEach(function (u) { pesos[u.id] = peso(v, u, c.regra || 'pessoadia', c); });
+      var r = repartir(vc, pesos); Object.keys(r).forEach(function (k) { out[k].devido += r[k]; });
+      if (out[c.pagou]) out[c.pagou].pago += vc;
+    });
+    Object.keys(out).forEach(function (k) { var x = out[k]; x.saldo = (x.pago - x.devido) / 100; x.devido /= 100; x.pago /= 100; });
+    return { unidades: out, total: total / 100 };
+  };
+  /* a parte da família vira gasto previsto (um compromisso só, no mês da viagem: Gastos planejados → Viagens e o previsto) */
+  API.planejarFamilia = function (v) {
+    var c = API.calcViagem(v), nossa = (v.unidades || []).filter(function (u) { return u.nossa; });
+    var tot = n2(nossa.reduce(function (s, u) { return s + c.unidades[u.id].devido; }, 0)); if (!(tot > 0) || typeof Recorrente === 'undefined') return null;
+    var dados = { nome: tr('Viagem: ', 'Trip: ', 'Viaje: ') + v.nome, valor: tot, grupo: 'LAZER', sub: tr('Viagens', 'Trips', 'Viajes'), regra: 'dia', dia: +String(v.inicio).slice(8, 10) || 1,
+      desde: v.inicio, ate: v.inicio, estadoPadrao: 'pendente', obs: 'RachAI', rachaiViagem: v.id };
+    var r = v.planejadoId && Recorrente.achar(v.planejadoId);
+    if (r) Object.assign(r, dados); else { r = Recorrente.add(dados); v.planejadoId = r.id; }
+    return r;
+  };
+  var vAberta = null, aba = 'mesas';
+  function viagem() { return viagens().find(function (v) { return v.id === vAberta; }) || null; }
+  function abas() {
+    return '<div class="row" role="group" style="gap:6px;margin:0 0 12px">' + bt('ra-aba', '🍽️ ' + esc(tr('Mesas', 'Tables', 'Mesas')), ' data-v="mesas" aria-pressed="' + (aba === 'mesas') + '"', aba === 'mesas' ? 'sm primary' : 'sm') +
+      bt('ra-aba', '🧳 ' + esc(tr('Viagens', 'Trips', 'Viajes')), ' data-v="viagens" aria-pressed="' + (aba === 'viagens') + '"', aba === 'viagens' ? 'sm primary' : 'sm') + '</div>';
+  }
+  function telaViagens() {
+    return '<div class="card-head"><h1>🧳 RachAI</h1></div>' + abas() + '<p class="small muted aba-explica">' + esc(tr('Planejar a viagem com outras famílias: os custos, quem pagou e a regra de cada um; o app faz o rateio proporcional e diz quem faz Pix para quem.', 'Plan a trip with other families: the costs, who paid and each one\'s rule; the app splits proportionally and says who sends Pix to whom.', 'Planificar el viaje con otras familias: los gastos, quién pagó y la regla de cada uno; la app reparte proporcionalmente y dice quién hace Pix a quién.')) + '</p>' +
+      '<div class="row" style="margin:0 0 12px">' + bt('ra-vnova', '➕ ' + esc(tr('Nova viagem', 'New trip', 'Nuevo viaje')), '', 'primary') + '</div>' +
+      viagens().map(function (v) { var c = API.calcViagem(v); return '<button class="card card-link" data-acao="ra-vabrir" data-id="' + esc(v.id) + '" style="width:100%;text-align:left"><span><b>' + esc(v.nome) + '</b><span class="t-sub">' + esc(I18n.data(v.inicio) + ' – ' + I18n.data(v.fim) + ' · ' + (v.unidades || []).length + tr(' participantes', ' participants', ' participantes')) + '</span></span><span>' + fmt(c.total) + '</span></button>'; }).join('');
+  }
+  function telaViagem(v) {
+    var c = API.calcViagem(v), nomeU = function (id) { var u = (v.unidades || []).find(function (x) { return x.id === id; }); return u ? u.nome : '?'; };
+    var px = API.pix(Object.keys(c.unidades).reduce(function (o, k) { o[k] = c.unidades[k].saldo; return o; }, {}));
+    var opU = function (sel) { return (v.unidades || []).map(function (u) { return '<option value="' + esc(u.id) + '"' + (u.id === sel ? ' selected' : '') + '>' + esc(u.nome) + '</option>'; }).join(''); };
+    var h = '<div class="ra-viagem" style="font-size:1.05em"><div class="card-head"><h1>🧳 ' + esc(v.nome) + '</h1>' + bt('ra-vvoltar', '← ' + esc(tr('Viagens', 'Trips', 'Viajes'))) + '</div>' +
+      '<div class="card"><div class="grid g2"><label class="field"><span>' + esc(tr('Nome', 'Name', 'Nombre')) + '</span><input data-rv="nome" value="' + esc(v.nome) + '"></label>' +
+      '<label class="field"><span>' + esc(tr('Ida', 'From', 'Ida')) + '</span><input data-rv="inicio" type="date" value="' + esc(v.inicio) + '"></label>' +
+      '<label class="field"><span>' + esc(tr('Volta', 'To', 'Vuelta')) + '</span><input data-rv="fim" type="date" value="' + esc(v.fim) + '"></label>' +
+      '<label class="field"><span>' + esc(tr('Peso da criança', 'Child weight', 'Peso del niño')) + '</span><input data-rv="pesoCrianca" type="number" min="0" max="1" step="0.1" value="' + (v.pesoCrianca != null ? v.pesoCrianca : 0.5) + '"></label></div>' +
+      '<label class="field"><span>' + esc(tr('Roteiro (link do guia)', 'Itinerary (guide link)', 'Itinerario (enlace de la guía)')) + '</span><input data-rv="roteiro" value="' + esc(v.roteiro || '') + '" placeholder="https://"></label>' +
+      '<label class="linha-check"><input type="checkbox" data-rv="casa"' + (v.escopo === 'casa' ? ' checked' : '') + '> ' + esc(tr('Da casa (a família vê)', 'Household (the family sees it)', 'De casa (la familia la ve)')) + '</label></div>';
+    h += '<div class="card"><h3>👨‍👩‍👧 ' + esc(tr('Quem vai', 'Who is going', 'Quién va')) + '</h3>' + (v.unidades || []).map(function (u) {
+      return '<div class="grid g2" data-ru="' + esc(u.id) + '" style="border-top:1px solid var(--line);padding:6px 0"><label class="field"><span>' + esc(tr('Pessoa ou família', 'Person or family', 'Persona o familia')) + '</span><input data-ru-k="nome" value="' + esc(u.nome) + '"></label>' +
+        '<label class="field"><span>' + esc(tr('Dias', 'Days', 'Días')) + '</span><input data-ru-k="dias" type="number" min="0" value="' + (u.dias || 0) + '"></label>' +
+        '<label class="field"><span>' + esc(tr('Adultos', 'Adults', 'Adultos')) + '</span><input data-ru-k="adultos" type="number" min="0" value="' + (u.adultos || 0) + '"></label>' +
+        '<label class="field"><span>' + esc(tr('Crianças', 'Children', 'Niños')) + '</span><input data-ru-k="criancas" type="number" min="0" value="' + (u.criancas || 0) + '"></label>' +
+        '<label class="linha-check"><input type="checkbox" data-ru-k="nossa"' + (u.nossa ? ' checked' : '') + '> ' + esc(tr('é a nossa família', 'is our family', 'es nuestra familia')) + '</label>' + bt('ra-utira', '✕', ' data-id="' + esc(u.id) + '"') + '</div>';
+    }).join('') + bt('ra-uadd', '+ ' + esc(tr('Participante', 'Participant', 'Participante'))) + '</div>';
+    h += '<div class="card"><h3>💰 ' + esc(tr('Custos', 'Costs', 'Gastos')) + '</h3>' + (v.custos || []).map(function (k) {
+      return '<div data-rc="' + esc(k.id) + '" style="border-top:1px solid var(--line);padding:6px 0"><div class="grid g2"><label class="field"><span>' + esc(tr('O quê', 'What', 'Qué')) + '</span><input data-rc-k="nome" value="' + esc(k.nome) + '"></label>' +
+        '<label class="field"><span>' + esc(tr('Valor (R$)', 'Amount (R$)', 'Importe (R$)')) + '</span><input data-rc-k="valor" inputmode="decimal" value="' + (k.valor || '') + '"></label>' +
+        '<label class="field"><span>' + esc(tr('Quem pagou', 'Who paid', 'Quién pagó')) + '</span><select data-rc-k="pagou"><option value="">—</option>' + opU(k.pagou) + '</select></label>' +
+        '<label class="field"><span>' + esc(tr('Regra', 'Rule', 'Regla')) + '</span><select data-rc-k="regra">' + REGRAS.map(function (r) { return '<option value="' + r[0] + '"' + ((k.regra || 'pessoadia') === r[0] ? ' selected' : '') + '>' + esc(tr(r[1], r[2], r[3])) + '</option>'; }).join('') + '</select></label></div>' +
+        (k.regra === 'alguns' ? '<div class="row" style="gap:6px;flex-wrap:wrap">' + (v.unidades || []).map(function (u) { var on = (k.alguns || []).indexOf(u.id) >= 0; return bt('ra-calguns', (on ? '✓ ' : '') + esc(u.nome), ' data-c="' + esc(k.id) + '" data-u="' + esc(u.id) + '"', on ? 'sm primary' : 'sm'); }).join('') + '</div>' : '') +
+        bt('ra-ctira', '✕', ' data-id="' + esc(k.id) + '"') + '</div>';
+    }).join('') + bt('ra-cadd', '+ ' + esc(tr('Custo', 'Cost', 'Gasto'))) + '</div>';
+    h += '<div class="card ra-vfecha"><h3>✅ ' + esc(tr('Rateio', 'Split', 'Reparto')) + ' · ' + fmt(c.total) + '</h3><table class="tbl"><tbody>' + (v.unidades || []).map(function (u) {
+      var x = c.unidades[u.id]; return '<tr><td>' + esc(u.nome) + (u.nossa ? ' 🏠' : '') + '</td><td class="num">' + fmt(x.devido) + '<div class="t-sub">' + esc(tr('pagou ', 'paid ', 'pagó ') + fmt(x.pago)) + '</div></td></tr>';
+    }).join('') + '</tbody></table>' +
+      (px.length ? '<h4>💸 ' + esc(tr('Quem paga para quem', 'Who pays whom', 'Quién paga a quién')) + ' (' + px.length + ' Pix)</h4><ul>' + px.map(function (x) { return '<li>' + esc(nomeU(x.de) + ' → ' + nomeU(x.para) + ': ') + '<b>' + fmt(x.valor) + '</b></li>'; }).join('') + '</ul>' : '') +
+      bt('ra-vplanejar', '🧳 ' + esc(v.planejadoId ? tr('Atualizar nos Gastos planejados', 'Update in Planned expenses', 'Actualizar en Gastos planificados') : tr('Pôr a parte da família nos Gastos planejados', 'Add the family share to Planned expenses', 'Poner la parte de la familia en Gastos planificados')), '', 'sm primary') + '</div></div>';
+    return h;
+  }
+  function tela() {
+    if (aba === 'viagens') { var v = viagem(); return v ? telaViagem(v) : telaViagens(); }
+    var m = mesa(); return m ? telaMesa(m) : telaLista().replace('</h1></div>', '</h1></div>' + abas());
+  }
+  /* os campos da viagem gravam ao mudar */
+  document.addEventListener('change', function (ev) {
+    var el = ev.target, v = viagem(); if (!v || !el || !el.closest || !el.closest('.ra-viagem')) return;
+    if (el.dataset.rv) { var k = el.dataset.rv; if (k === 'casa') { if (el.checked) v.escopo = 'casa'; else delete v.escopo; } else if (k === 'pesoCrianca') v.pesoCrianca = Number(el.value); else v[k] = String(el.value || '').trim(); }
+    else if (el.dataset.ruK) { var u = v.unidades.find(function (x) { return x.id === el.closest('[data-ru]').dataset.ru; }); if (!u) return; var q = el.dataset.ruK; u[q] = q === 'nossa' ? el.checked : q === 'nome' ? el.value.trim() : Number(el.value) || 0; }
+    else if (el.dataset.rcK) { var c = v.custos.find(function (x) { return x.id === el.closest('[data-rc]').dataset.rc; }); if (!c) return; var q2 = el.dataset.rcK; c[q2] = q2 === 'valor' ? n2(num(el.value)) : el.value; }
+    else return;
+    Store.salvar(); render();
+  });
+  API.abrirViagem = function (id) { aba = 'viagens'; vAberta = id; render(); };
   function salvar() { Store.salvar(); render(); }
   function item(m, id) { return (m.itens || []).find(function (x) { return x.id === id; }); }
 
@@ -238,7 +338,7 @@
   }
   API.fotoCardapio = function (texto) { var m = mesa(); if (!m) return 0; var l = API.lerCardapio(texto); l.forEach(function (x) { m.itens.push({ id: novoId('i'), nome: x.nome, preco: x.preco, bebida: x.bebida, por: {}, divide: null }); }); salvar(); return l.length; };
   API.fotoConta = function (texto) { var m = mesa(); if (!m) return null; m.conferido = API.lerConta(texto); salvar(); return API.conferir(m, m.conferido); };
-  API.abrir = function (id) { aberta = id; render(); };
+  API.abrir = function (id) { aba = 'mesas'; aberta = id; render(); };
 
   /* os campos da mesa gravam ao mudar */
   document.addEventListener('change', function (ev) {
@@ -256,16 +356,39 @@
   });
 
   MoneyModulos.registrar({
-    id: 'rachai', versao: '1.0.0', colecoes: [COL],
+    id: 'rachai', versao: '1.1.0', colecoes: [COL, COLV],
     pontos: {
+      /* 1.1.0 (3.94): as viagens com a parte da família, em Contas fixas → Gastos planejados → Viagens */
+      'planejados.viagens': function () {
+        var l = viagens().filter(function (v) { return (v.unidades || []).some(function (u) { return u.nossa; }); }); if (!l.length) return '';
+        return '<div class="card ra-planejadas"><div class="card-head"><h3>🧳 ' + esc(tr('Viagens do RachAI', 'RachAI trips', 'Viajes de RachAI')) + '</h3></div>' + l.map(function (v) {
+          var c = API.calcViagem(v), tot = n2(v.unidades.filter(function (u) { return u.nossa; }).reduce(function (s, u) { return s + c.unidades[u.id].devido; }, 0));
+          return '<button class="card card-link" data-acao="ra-irviagem" data-id="' + esc(v.id) + '" style="width:100%;text-align:left"><span><b>' + esc(v.nome) + '</b><span class="t-sub">' + esc(I18n.data(v.inicio) + ' – ' + I18n.data(v.fim) + ' · ' + tr('parte da família', 'family share', 'parte de la familia') + (v.planejadoId ? '' : tr(' (ainda não no previsto)', ' (not in the forecast yet)', ' (aún no en la previsión)'))) + '</span></span><span>' + fmt(tot) + '</span></button>';
+        }).join('') + '</div>';
+      },
       'budget.painel': function () {
-        return '<button class="card card-link ra-destaque" data-irpara="b-rachai" style="width:100%;text-align:left;font-size:1.05em"><span>🍽️ <b>RachAI</b> · ' + esc(tr('rachar a conta da mesa, sem internet', 'split the table bill, offline', 'dividir la cuenta de la mesa, sin internet')) + '</span><span class="small muted">›</span></button>';
+        return '<button class="card card-link ra-destaque" data-irpara="b-rachai" style="width:100%;text-align:left;font-size:1.05em"><span>🍽️ <b>RachAI</b> · ' + esc(tr('rachar a conta da mesa e planejar viagem, sem internet', 'split the table bill and plan a trip, offline', 'dividir la cuenta de la mesa y planificar el viaje, sin internet')) + '</span><span class="small muted">›</span></button>';
       }
     },
     telas: { 'b-rachai': { app: 'budget', render: tela,
       ajuda: { pt: { t: 'RachAI', o: 'Rachar a conta da mesa, sem internet.', f: ['Crie a mesa e as pessoas.', 'Marque o que cada um consumiu com + e −, ou divida um item entre algumas pessoas.', 'O fechamento mostra quanto cada um paga e quem faz Pix para quem.'] },
                en: { t: 'RachAI', o: 'Split the table bill, offline.', f: ['Create the table and the people.', 'Tap + and − for what each person had, or split an item among some people.', 'The settle-up shows how much each pays and who sends Pix to whom.'] } } } },
     acoes: {
+      'ra-irviagem': function (el) { aba = 'viagens'; vAberta = el.dataset.id; if (typeof irPara === 'function') irPara('b-rachai'); render(); },
+      'ra-aba': function (el) { aba = el.dataset.v === 'viagens' ? 'viagens' : 'mesas'; aberta = null; vAberta = null; render(); },
+      'ra-vnova': function () { var h = hojeISO(); var v = { id: novoId('v'), nome: tr('Viagem ', 'Trip ', 'Viaje ') + I18n.mesAno(h), inicio: h, fim: h, pesoCrianca: 0.5, unidades: [], custos: [] }; viagens().push(v); vAberta = v.id; salvar(); },
+      'ra-vabrir': function (el) { vAberta = el.dataset.id; render(); },
+      'ra-vvoltar': function () { vAberta = null; render(); },
+      'ra-uadd': function () { var v = viagem(); if (!v) return; v.unidades.push({ id: novoId('u'), nome: tr('Família ', 'Family ', 'Familia ') + (v.unidades.length + 1), dias: 1, adultos: 2, criancas: 0, nossa: !v.unidades.length }); salvar(); },
+      'ra-utira': function (el) { var v = viagem(); if (!v) return; v.unidades = v.unidades.filter(function (u) { return u.id !== el.dataset.id; }); salvar(); },
+      'ra-cadd': function () { var v = viagem(); if (!v) return; v.custos.push({ id: novoId('c'), nome: '', valor: 0, pagou: (v.unidades[0] || {}).id || '', regra: 'pessoadia' }); salvar(); },
+      'ra-ctira': function (el) { var v = viagem(); if (!v) return; v.custos = v.custos.filter(function (c) { return c.id !== el.dataset.id; }); salvar(); },
+      'ra-calguns': function (el) { var v = viagem(), c = v && v.custos.find(function (x) { return x.id === el.dataset.c; }); if (!c) return; var a = c.alguns || [], i = a.indexOf(el.dataset.u); if (i >= 0) a.splice(i, 1); else a.push(el.dataset.u); c.alguns = a; salvar(); },
+      'ra-vplanejar': function () {
+        var v = viagem(); if (!v) return; var r = API.planejarFamilia(v);
+        if (!r) return toast(tr('Marque "é a nossa família" num participante.', 'Tick "is our family" on a participant.', 'Marca "es nuestra familia" en un participante.'), 'warn');
+        salvar(); toast(tr('Nos Gastos planejados: ', 'In Planned expenses: ', 'En Gastos planificados: ') + fmt(r.valor) + ' · ' + I18n.data(v.inicio));
+      },
       'ra-nova': function () {
         var m = { id: novoId('m'), nome: tr('Mesa ', 'Table ', 'Mesa ') + I18n.data(hojeISO(), { semAno: true }), local: '', data: hojeISO(), servicoPct: 10, couvert: 0, gorjeta: 0, pessoas: [], itens: [], pagamentos: {} };
         var eu = pessoasDaCasa()[0]; if (eu) m.pessoas.push({ id: novoId('p'), nome: Pessoas.rotulo(eu), pessoaId: eu.id });

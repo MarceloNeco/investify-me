@@ -77,8 +77,28 @@ const MESA = { id: 'm1', nome: 'Aniversário fictício', local: 'Bar Inventado',
     const tela = await p.evaluate(() => ({ m: RachAI.calcMesa(ST.rachai_mesas[1]), txt: document.querySelector('#view-b-rachai .ra-fecha').textContent }));
     ok(tela.m.total === 59.4 && /Quem paga para quem \(1 Pix\)/.test(tela.txt) && /Fulano → Amigo X: R\$ 22,00/.test(tela.txt), 'com toques: a porção dividida entre todos e 2 refrigerantes para o Amigo X; ele pagou tudo → 1 Pix de R$ 22,00: ' + tela.m.total);
 
+    console.log('5b) planejar viagem (rateio proporcional)');
+    const V = { id: 'v1', nome: 'Praia fictícia', inicio: '2026-12-27', fim: '2027-01-01', pesoCrianca: 0.5,
+      unidades: [{ id: 'A', nome: 'Nossa família', dias: 5, adultos: 2, criancas: 1, nossa: true }, { id: 'B', nome: 'Família B', dias: 3, adultos: 2, criancas: 0 }, { id: 'C', nome: 'Família C', dias: 5, adultos: 1, criancas: 2 }],
+      custos: [{ id: 'k1', nome: 'Pousada', valor: 3000, pagou: 'A', regra: 'pessoadia' }, { id: 'k2', nome: 'Mercado', valor: 600, pagou: 'B', regra: 'familia' },
+        { id: 'k3', nome: 'Passeio de barco', valor: 400, pagou: 'C', regra: 'alguns', alguns: ['A', 'C'] }, { id: 'k4', nome: 'Carro', valor: 900, pagou: 'A', regra: 'igual' }] };
+    const cv = await p.evaluate((v) => { ST.rachai_viagens = [v]; return RachAI.calcViagem(v); }, V);
+    ok(cv.total === 4900 && cv.unidades.A.devido === 2053.29 && cv.unidades.B.devido === 1056.58 && cv.unidades.C.devido === 1790.13, 'pousada por pessoa-dia (criança vale 0,5; a Família B ficou 3 dias), mercado por família, passeio só de A e C, carro por pessoa: 2.053,29 · 1.056,58 · 1.790,13 (soma 4.900): ' + JSON.stringify(cv.unidades));
+    const pv = await p.evaluate(() => { const c = RachAI.calcViagem(ST.rachai_viagens[0]); return RachAI.pix(Object.keys(c.unidades).reduce((o, k) => { o[k] = c.unidades[k].saldo; return o; }, {})); });
+    ok(pv.map((x) => x.de + '>' + x.para + '=' + x.valor).join() === 'C>A=1390.13,B>A=456.58', 'o saldo final com o mínimo de Pix (2): C → nós 1.390,13 · B → nós 456,58');
+    const pl = await p.evaluate(() => { const v = ST.rachai_viagens[0], r = RachAI.planejarFamilia(v); const r2 = RachAI.planejarFamilia(v); return { r: [r.nome, r.valor, r.grupo, r.desde, r.ate].join('|'), mesmo: r.id === r2.id && Recorrente.todos().filter((x) => x.rachaiViagem === v.id).length === 1, oc: Recorrente.ocorrencias('2026-12-01', '2027-01-31').filter((o) => o.r.id === r.id).map((o) => o.data + '=' + o.valor).join() }; });
+    ok(pl.r === 'Viagem: Praia fictícia|2053.29|LAZER|2026-12-27|2026-12-27' && pl.mesmo && pl.oc === '2026-12-27=2053.29', 'a parte da família vira gasto previsto no mês da viagem (um só, atualizado se refizer): ' + pl.r + ' · ' + pl.oc);
+    await p.evaluate(() => { irPara('b-custos'); render(); });
+    ok(/Viagens do RachAI/.test(await p.evaluate(() => MoneyModulos.html('planejados.viagens', {}))) , 'aparece em Contas fixas → Gastos planejados → Viagens');
+    await p.evaluate(() => { irPara('b-rachai'); render(); });
+    await p.click('#view-b-rachai [data-acao="ra-voltar"]').catch(() => {});
+    await p.evaluate(() => RachAI.abrirViagem('v1'));
+    ok(await p.evaluate(() => /Rateio · R\$ 4\.900,00/.test(document.querySelector('#view-b-rachai .ra-vfecha').textContent) && /2 Pix/.test(document.querySelector('#view-b-rachai .ra-vfecha').textContent)), 'a tela da viagem: o rateio e os 2 Pix');
+    ok(await p.evaluate(() => Escopo.de('rachai_viagens', ST.rachai_viagens[0]) === 'reservado'), 'a viagem também é de quem criou (reservada)');
+
     console.log('5) visão da casa');
     ok(await p.evaluate(() => Escopo.de('rachai_mesas', ST.rachai_mesas[0]) === 'reservado' && Escopo.de('rachai_mesas', Object.assign({}, ST.rachai_mesas[0], { escopo: 'casa' })) === 'casa'), 'a mesa é de quem criou (reservada), a não ser que marque "da casa"');
+    await p.evaluate(() => RachAI.abrir(ST.rachai_mesas[1].id));
     await p.evaluate(() => { const ck = document.querySelector('#view-b-rachai [data-ra="casa"]'); ck.checked = true; ck.dispatchEvent(new Event('change', { bubbles: true })); });
     ok(await p.evaluate(() => ST.rachai_mesas[1].escopo === 'casa'), 'o "Da casa" grava na mesa');
     ok(p.erros.length === 0, 'sem erro de página' + (p.erros.length ? ': ' + p.erros[0] : ''));
