@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.92 · 20/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.94 · 20/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,12 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.94 — rascunho, revisar */
+  'RachAI: planejar viagem':'RachAI: planificar un viaje',
+  'RachAI ganhou "Viagens": os custos (pousada, carro, combustível, mercado, passeios) com quem pagou, as famílias com dias, adultos e crianças (a criança vale meio, ajustável) e a regra de cada custo (por pessoa-dia, por família, por pessoa ou só alguns). O app faz o rateio, diz quem faz Pix para quem com o menor número de Pix e põe a parte da sua família nos Gastos planejados → Viagens. Dá para guardar o link do roteiro.':'RachAI ahora tiene "Viajes": los gastos (alojamiento, coche, combustible, supermercado, excursiones) con quién pagó, las familias con días, adultos y niños (un niño cuenta como medio, ajustable) y la regla de cada gasto (por persona y día, por familia, por persona o solo algunos). La app reparte, dice quién hace Pix a quién con el menor número de Pix y pone la parte de tu familia en Gastos planificados → Viajes. Se puede guardar el enlace del itinerario.',
+  /* 3.93 — rascunho, revisar */
+  'RachAI: rachar a conta da mesa':'RachAI: dividir la cuenta de la mesa',
+  'Novo no BudgetONE, o RachAI (nome provisório), sem internet: crie a mesa e as pessoas, monte o cardápio por foto ou à mão, marque o consumo com toques (+ e −, ou "dividir entre…"), e quem não bebe fica fora das bebidas. Serviço proporcional ao consumo, couvert por pessoa e gorjeta opcional. No fechamento: quanto cada um paga, quem faz Pix para quem com o menor número de Pix, a mensagem pronta para compartilhar e a parte da família lançada no BudgetONE. Também confere a foto da conta do bar com o que foi marcado.':'Nuevo en BudgetONE, RachAI (nombre provisional), sin internet: crea la mesa y las personas, monta la carta por foto o a mano, marca con toques lo que tomó cada uno (+ y −, o "dividir entre…"), y quien no bebe queda fuera de las bebidas. Servicio proporcional al consumo, cubierto por persona y propina opcional. En el cierre: cuánto paga cada uno, quién hace Pix a quién con el menor número de Pix, el mensaje listo para compartir y la parte de la familia registrada en BudgetONE. También revisa la foto de la cuenta del bar con lo marcado.',
   /* 3.92 — rascunho, revisar */
   'Conferir canhotos':'Revisar tickets',
   '"🧾 Conferir canhotos" em Lançamentos: tire uma foto (ou várias) dos canhotos da maquininha, cupons e recibos. O app lê no aparelho, sem internet e sem IA, e separa em: ✅ já está no banco, 🟡 parecido (confirme), ➕ não veio do banco (lançar à mão ou esperar o banco) e ❓ valor em dúvida (escolha ou digite). No que casou, você classifica ali mesmo (quem, categoria, ✂️ dividir) e a classificação vai para o lançamento do banco. Nada é lançado duas vezes.':'"🧾 Revisar tickets" en Movimientos: haz una foto (o varias) de los tickets del datáfono, tiques y recibos. La app los lee en el dispositivo, sin internet y sin IA, y los separa en: ✅ ya está en el banco, 🟡 parecido (confirma), ➕ no vino del banco (registrar a mano o esperar al banco) y ❓ importe dudoso (elige o escribe). En los que coinciden, clasificas ahí mismo (quién, categoría, ✂️ dividir) y la clasificación pasa al movimiento del banco. Nada se registra dos veces.',
