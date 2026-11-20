@@ -1,11 +1,17 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.90 · 17/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.91 · 20/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.91', d:'2026-11-20', t:'Agendamentos, salto de preço, despesas médicas e recibos', itens:[
+    'Transferência agendada no banco (em Contas fixas → + Adicionar): valor, de qual conta para qual, dia e o prazo do banco (12 meses). O 📥 avisa 30 e 7 dias antes de acabar ("Renove no app do banco"), o saldo previsto conta cada transferência no prazo e, se acabar sem você renovar, o aviso de saldo diz a causa provável. O app também sugere cadastrar quando vê a mesma transferência 3 meses seguidos.',
+    'Alerta de salto de preço: conta fixa ou gasto que se repete todo mês, acima da média dos 3 anteriores (15% por padrão; geral em Configurações e um por conta), vira aviso no 📥 com "Esperado (novo valor)", "Contestar/ver" e "Ignorar desta vez". Reajuste anual marcado não assusta.',
+    'Despesas médicas: cada gasto de Saúde tem o andamento da nota (comprovante → nota pedida → recebida → guardada no IR), quem foi atendido, o profissional e o tipo. O 📥 lembra o que falta, com Anexar, "Pedi a nota" (lembra de novo em 7 dias), "Foi para outra pessoa" e "Só recibo"; o nome do arquivo sai no padrão "AAAA-MM-DD Pessoa - tipo - sessão.pdf", e o Relatório do IR mostra o ano por pessoa.',
+    'Recibo de serviço do exterior (print ou PDF): o app casa com o lançamento do cartão e mostra o câmbio e o IOF ("Recibo US$ 700,00 (≈ R$ 3.850,00) × cartão R$ 4.066,01 + IOF R$ 142,31"); marque se é do negócio ou da casa. E "💵 Recebi em dinheiro" em Lançamentos, com o rótulo do IR (ex.: saque do FGTS, isento).'
+  ]},
   {v:'3.90', d:'2026-11-17', t:'Print e banco: conciliação mais certa', itens:[
     '"📋 Colar print": o app reconhece a loja mesmo quando o banco cola a cidade no nome (ex.: "LOJAGUARUJABR"), aceita o cartão do mesmo banco quando a notificação não diz o final e casa o print também com a compra ainda pendente no banco. Assim a mesma compra nunca aparece duas vezes na fatura nem no previsto, e a sua categoria e a divisão vão junto até o lançamento definitivo. Se houver dúvida entre duas compras, o 📥 pergunta.'
   ]},

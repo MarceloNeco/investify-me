@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.1.1 · 14/Nov/2026
+   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.2.0 · 20/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · Para cada conta corrente com saldo vindo do robô (SaldoBanco): parte do saldo de hoje e soma, dia a dia, nos
@@ -88,6 +88,8 @@
         if (d <= fim) ev.push({ data: d, valor: n2(-p.valor), nome: (p.caucao ? '🔒 ' : '⏳ ') + PreAut.quem(p) });
       });
       /* 1.1.1 (3.87): o Pix/pagamento do print numa conta do robô, ainda não entregue */
+      /* 1.2.0 (3.91): as transferências agendadas no banco, enquanto estão no prazo (modulos/transf-agendada.js) */
+      if (window.TransfAgendada) TransfAgendada.eventos(conta, mais(h, 1), fim).forEach(function (e) { ev.push(e); });
       if (window.PrintColar) PrintColar.eventos(conta).forEach(function (e) { if (e.data <= fim) ev.push(e); });
       if (window.Parcelados) Parcelados.compras().forEach(function (pc) {
         var ct = pc.cartaoId && typeof Banco !== 'undefined' ? Banco.acharCartao(pc.cartaoId) : null;
@@ -172,6 +174,7 @@
   function frase(c, a) {
     var s = tr('Sua conta ', 'Your account ') + nomeConta(c) + tr(' fica negativa em ', ' goes negative on ') + dm(a.dia) + ' (−' + fmt(Math.abs(a.valor)) + '). ' +
       tr('Resgate ', 'Redeem ') + fmt(a.resgate) + tr(' até ', ' by ') + dm(a.ate) + '.';
+    var cz = window.TransfAgendada ? TransfAgendada.causa(c) : ''; if (cz) s += ' ' + cz;   /* 1.2.0 (3.91) */
     if (a.de) s += ' ' + tr('De: ', 'From: ') + a.de.nome + ' — ' + (a.de.dias === 0 ? tr('cai no mesmo dia', 'lands the same day') : tr('cai no dia seguinte: peça até ', 'lands the next day: ask by ') + dm(a.pedirAte)) + '.';
     return s;
   }
@@ -201,7 +204,7 @@
   function alertas() { return API.contas().map(function (c) { var a = API.alerta(c); return a ? { c: c, a: a } : null; }).filter(Boolean); }
 
   MoneyModulos.registrar({
-    id: 'saldo-previsto', versao: '1.1.1', colecoes: [COL],
+    id: 'saldo-previsto', versao: '1.2.0', colecoes: [COL],
     pontos: {
       'budget.painel': cartao, 'custos.contas': cartao,
       'budget.atencao': function () {

@@ -680,8 +680,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.90"></script>
-<script src="textos/frases-es.js?v=3.90"></script>
+<script src="textos/frases-en.js?v=3.91"></script>
+<script src="textos/frases-es.js?v=3.91"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7674,7 +7674,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.90"></script>
+<script src="textos/mudancas.js?v=3.91"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -17495,7 +17495,7 @@ function abrirAdicionarConta(){
   const itens = base.concat(window.MoneyModulos ? MoneyModulos.itens('custos.adicionar', {}) : []);
   const h = '<ul class="cf-add">' + itens.map(x =>
     '<li>' + (x.label ? '<label class="cf-add-op" for="' + esc(x.label) + '">' : '<button type="button" class="cf-add-op" data-acao="' + esc(x.acao) + '">') +
-      '<span class="cf-add-ico">' + x.ico + '</span><span><b>' + esc(pt ? x.pt : x.en) + '</b><span class="t-sub">' + esc(pt ? x.dpt : x.den) + '</span></span>' +
+      '<span class="cf-add-ico">' + x.ico + '</span><span><b>' + esc(I18n.tr(x.pt, x.en, x.es)) + '</b><span class="t-sub">' + esc(I18n.tr(x.dpt, x.den, x.des)) + '</span></span>' +   /* 3.91: com o espanhol */
     (x.label ? '</label>' : '</button>') + '</li>').join('') + '</ul>';
   $('#genTitle').textContent = pt ? 'Adicionar' : 'Add';
   $('#genBody').innerHTML = Verter.html(h);
@@ -30086,7 +30086,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/base.js?v=1.1.0"></script>
 <script src="modulos/arquivos.js?v=1.0.0"></script>
 <script src="modulos/agendamentos.js?v=1.0.0"></script>
-<script src="modulos/nf-ir.js?v=1.0.1"></script>
+<script src="modulos/nf-ir.js?v=1.1.0"></script>
 <script src="modulos/profissionais.js?v=1.2.1"></script>
 <script src="modulos/saude.js?v=1.1.0"></script>
 <script src="modulos/ponte-omnilife.js?v=1.0.0"></script>
@@ -30123,14 +30123,18 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/documentos.js?v=1.1.0"></script>
 <script src="modulos/contas-mes.js?v=1.1.0"></script>
 <script src="modulos/planejados.js?v=1.0.0"></script>
-<script src="modulos/saldo-previsto.js?v=1.1.1"></script>
+<script src="modulos/saldo-previsto.js?v=1.2.0"></script>
 <script src="modulos/debito-auto.js?v=1.0.0"></script>
 <script src="modulos/cofre-empresa.js?v=1.2.0"></script>
 <script src="modulos/a-receber.js?v=1.0.0"></script>
 <script src="modulos/pre-autorizacao.js?v=1.0.2"></script>
 <script src="modulos/dividir.js?v=1.0.0"></script>
-<script src="modulos/print-colar.js?v=1.1.0"></script>
+<script src="modulos/print-colar.js?v=1.2.0"></script>
 <script src="modulos/loja-nova.js?v=1.0.0"></script>
+<script src="modulos/transf-agendada.js?v=1.0.0"></script>
+<script src="modulos/salto-preco.js?v=1.0.0"></script>
+<script src="modulos/recibo-exterior.js?v=1.0.0"></script>
+<script src="modulos/recebi-dinheiro.js?v=1.0.0"></script>
 <script src="modulos/pj.js?v=1.2.0"></script>
 <script src="modulos/bs2-extrato.js?v=1.0.1"></script>
 <script src="modulos/pj-gestao.js?v=1.0.1"></script>
