@@ -88,6 +88,8 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     ok(c5.n === 4 && c5.n2 === 0, '4 contas fixas da PJ criadas; de novo, nenhuma repetida');
     ok(c5.l.join(' ; ') === ['Contador (PJ)|dia|10|0|reservado|400', 'DARF (PJ)|dia|20|0|reservado|600', 'DAS Simples Nacional (PJ)|dia|20|0|reservado|1200', 'TFE Prefeitura SP (PJ)|anual|10|7|reservado|1'].join(' ; '), 'DAS e DARF dia 20, contador dia 10, TFE em julho, todas reservadas, com a média como valor: ' + c5.l.join(' ; '));
     ok(await p.evaluate(() => Recorrente.todos().filter((r) => r.empresaId).every((r) => Escopo.de('recorrentes', r) === 'reservado')), 'visão da casa: as contas da PJ são reservadas');
+    /* o teste simula 16/11: as contas da PJ nascem antes (no relógio de verdade o 19/11 pode já ter passado) */
+    await p.evaluate(() => Recorrente.todos().filter((r) => r.empresaId).forEach((r) => { r.criadoEm = '2026-11-01'; }));
     const c5b = await p.evaluate(() => { PJ._hoje = '2026-11-16'; return PJ.transferir().map((x) => x.r.sub + '|' + x.ate + '|' + x.valor); });
     ok(c5b.length === 2 && c5b.some((x) => /^DAS.*\|2026-11-19\|/.test(x)) && c5b.some((x) => /^DARF.*\|2026-11-18\|/.test(x)), 'em 16/11: 20/11 é feriado → o DAS prorroga para 23/11 (transferir até 19/11) e o DARF antecipa para 19/11 (transferir até 18/11): ' + c5b.join());
     ok(await p.evaluate(() => Recorrente.ocorrencias('2026-11-01', '2026-11-30').filter((o) => o.r.empresaId && /DA(S|RF)/.test(o.r.sub)).map((o) => o.r.sub.slice(0, 4) + o.data).sort().join()) === 'DARF2026-11-19,DAS 2026-11-23', 'o DARF do pró-labore antecipa (19/11) e o DAS prorroga (23/11)');
