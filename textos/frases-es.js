@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.94 · 20/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.95 · 20/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,11 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.95 — rascunho, revisar */
+  'Comprovantes do e-mail':'Comprobantes del correo',
+  '"🧾 Comprovantes a conferir" em Lançamentos e no 📥: o robô passa a mandar o que lê nos e-mails (sem IA) — compras, reembolsos, notas fiscais, recibos do exterior e boletos. Nenhum vira lançamento sozinho: a compra liga ao lançamento do cartão (com o produto e o pedido, e uma sugestão de categoria), o reembolso entra em Valores a receber, a nota fiscal liga à compra e à despesa médica (para o IR), o recibo do exterior vai para o Recibo × cartão e o boleto avisa 2 dias antes (e diz "não pague" se a conta está no débito automático).':'"🧾 Comprobantes por revisar" en Movimientos y en 📥: el robot ahora manda lo que lee en tus correos (sin IA): compras, reembolsos, facturas, recibos del exterior y boletos. Ninguno se convierte en movimiento solo: la compra se vincula al movimiento de la tarjeta (con el producto y el pedido, y una sugerencia de categoría), el reembolso entra en Valores a cobrar, la factura se vincula a la compra y al gasto médico (para la renta), el recibo del exterior va a Recibo × tarjeta y el boleto avisa 2 días antes (y dice "no pagues" si la cuenta está en débito automático).',
+  'Comprovantes a conferir':'Comprobantes por revisar',
+  'Vieram dos e-mails (pelo robô, sem IA): ligue cada um ao lançamento do banco, diga o que é ou dispense. Nenhum vira lançamento sozinho.':'Vienen de tus correos (por el robot, sin IA): vincula cada uno al movimiento del banco, di qué es o descártalo. Ninguno se convierte en movimiento solo.',
   /* 3.94 — rascunho, revisar */
   'RachAI: planejar viagem':'RachAI: planificar un viaje',
   'RachAI ganhou "Viagens": os custos (pousada, carro, combustível, mercado, passeios) com quem pagou, as famílias com dias, adultos e crianças (a criança vale meio, ajustável) e a regra de cada custo (por pessoa-dia, por família, por pessoa ou só alguns). O app faz o rateio, diz quem faz Pix para quem com o menor número de Pix e põe a parte da sua família nos Gastos planejados → Viagens. Dá para guardar o link do roteiro.':'RachAI ahora tiene "Viajes": los gastos (alojamiento, coche, combustible, supermercado, excursiones) con quién pagó, las familias con días, adultos y niños (un niño cuenta como medio, ajustable) y la regla de cada gasto (por persona y día, por familia, por persona o solo algunos). La app reparte, dice quién hace Pix a quién con el menor número de Pix y pone la parte de tu familia en Gastos planificados → Viajes. Se puede guardar el enlace del itinerario.',

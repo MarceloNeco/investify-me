@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.94 · 20/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.95 · 20/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.95 */
+  'Comprovantes do e-mail':'E-mail receipts',
+  '"🧾 Comprovantes a conferir" em Lançamentos e no 📥: o robô passa a mandar o que lê nos e-mails (sem IA) — compras, reembolsos, notas fiscais, recibos do exterior e boletos. Nenhum vira lançamento sozinho: a compra liga ao lançamento do cartão (com o produto e o pedido, e uma sugestão de categoria), o reembolso entra em Valores a receber, a nota fiscal liga à compra e à despesa médica (para o IR), o recibo do exterior vai para o Recibo × cartão e o boleto avisa 2 dias antes (e diz "não pague" se a conta está no débito automático).':'"🧾 Receipts to check" in Entries and in 📥: the robot now sends what it reads in your e-mails (no AI) — purchases, refunds, invoices, foreign receipts and bank slips. None becomes an entry on its own: a purchase links to the card entry (with the product and the order, and a category suggestion), a refund goes into Money to receive, an invoice links to the purchase and to the medical expense (for taxes), a foreign receipt goes to Receipt × card and a bank slip warns 2 days ahead (and says "do not pay" if the bill is on direct debit).',
   /* 3.94 */
   'RachAI: planejar viagem':'RachAI: plan a trip',
   'RachAI ganhou "Viagens": os custos (pousada, carro, combustível, mercado, passeios) com quem pagou, as famílias com dias, adultos e crianças (a criança vale meio, ajustável) e a regra de cada custo (por pessoa-dia, por família, por pessoa ou só alguns). O app faz o rateio, diz quem faz Pix para quem com o menor número de Pix e põe a parte da sua família nos Gastos planejados → Viagens. Dá para guardar o link do roteiro.':'RachAI now has "Trips": the costs (lodging, car, fuel, groceries, outings) with who paid, the families with days, adults and children (a child counts as half, adjustable) and each cost\'s rule (per person-day, per family, per person or only some). The app splits it, says who sends Pix to whom with the fewest Pix and puts your family\'s share in Planned expenses → Trips. You can keep the itinerary link.',

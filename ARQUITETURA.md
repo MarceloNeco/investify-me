@@ -714,6 +714,15 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   alguns = 1 nos escolhidos; `repartir` em centavos), `pix`, `planejarFamilia` (os participantes com `nossa` → um compromisso de uma vez, Lazer ›
   Viagens, `desde = ate = inicio`, `rachaiViagem`; refazer atualiza o mesmo) e o ponto `planejados.viagens` (Contas fixas → Gastos planejados →
   Viagens). O link do roteiro (`roteiro`) é o ponto de ligação com o guia express do dono. Teste: `teste/teste-rachai.js` (seção 5b).
+  **3.95 — Comprovantes do e-mail.** A caixa do robô (`nuvem.js` 1.15.5, `Caixa.esvaziar`) aceita o tipo novo `comprovante` e entrega a
+  `modulos/comprovantes.js` 1.0.0 (`window.Comprovantes`, coleção nova `comprovantes`, escopo = o da linha da caixa, reservado por padrão;
+  visao-casa 1.1.5). Nunca cria lançamento. Por subtipo: `compra` → `Canhotos.classificar` (valor da 1ª parcela, data ±3, final/descritor
+  desempatam; pendente do robô espera o definitivo) e `gasto.ficha = {cid, produto, pedido, loja, nf}` + sugestão de categoria (LojaNova ou a
+  última da mesma loja); `reembolso` → `AReceber.salvar` (tipo estorno, cartão pelo final, protocolo = referência); `nota_fiscal` → a compra
+  (mesmo produto ou loja, ±30 dias) e a despesa médica (`NfIr.marcar(…,'recebida')` + `guardarDados` prestador/CNPJ/nº); `recibo_exterior` →
+  `ReciboExterior.receber`; `boleto` → 📥 a partir de 2 dias antes, `DebitoAuto.conflito` ("NÃO PAGUE"), pago = gasto do mesmo valor até 5
+  dias depois do vencimento; `outro` → a pessoa escolhe; `fotos_a_ler` → botão do 🧾 Conferir canhotos. Grupo novo do 📥 `comprovantes`;
+  `lancamentos.topo` ("🧾 Comprovantes a conferir") e `lancamento.form` (a ficha). Testes: `teste/teste-comprovantes.js` e `teste-nuvem` (seção 3).
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem
