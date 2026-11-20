@@ -1,6 +1,7 @@
 /* =====================================================================
-   modulos/transf-agendada.js — TRANSFERÊNCIA AGENDADA NO BANCO entre contas da família, com prazo (3.91)        1.0.0 · 20/Nov/2026
+   modulos/transf-agendada.js — TRANSFERÊNCIA AGENDADA NO BANCO entre contas da família, com prazo (3.91)        1.0.1 · 20/Nov/2026
    ---------------------------------------------------------------------
+   1.0.1 (3.92): "Renovei" tem data-inb-fica — o 📥 não se redesenha e o campo da nova data não some.
    O QUE FAZ (pedido do dono, 18/Nov/2026; sem IA)
      · Contas fixas → "+ Adicionar" → "Transferência agendada no banco": valor, de qual conta para qual conta, dia do mês,
        a data em que o agendamento começou e o prazo máximo do banco (12 meses, editável). Ex.: Pix de R$ 700 todo mês da
@@ -149,7 +150,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'transf-agendada', versao: '1.0.0', colecoes: [COL],
+    id: 'transf-agendada', versao: '1.0.1', colecoes: [COL],
     pontos: {
       'custos.adicionar': function () {
         return [{ ico: '🔁', pt: 'Transferência agendada no banco', en: 'Scheduled bank transfer', es: 'Transferencia programada en el banco',
@@ -164,7 +165,7 @@
             ? tr('O agendamento de ', 'The scheduled transfer of ', 'La transferencia programada de ') + fmt(x.a.valor) + tr(' para a conta ', ' to the account ', ' a la cuenta ') + nomeConta(x.a.para, x.a.paraNome) + tr(' acabou em ', ' ended on ', ' terminó el ') + I18n.data(x.ultima) + tr('. Renove no app do banco.', '. Renew it in the bank app.', '. Renuévala en la app del banco.')
             : tr('O agendamento de ', 'The scheduled transfer of ', 'La transferencia programada de ') + fmt(x.a.valor) + tr(' para a conta ', ' to the account ', ' a la cuenta ') + nomeConta(x.a.para, x.a.paraNome) + tr(' acaba em ', ' ends on ', ' termina el ') + I18n.data(x.ultima) + tr('. Renove no app do banco.', '. Renew it in the bank app.', '. Renuévala en la app del banco.');
           h += '<li class="inb-item"><div><b>' + (x.etapa === '30' ? '🔁 ' : '⚠ ') + esc(frase) + '</b><span class="t-sub tg-renovar-box" data-id="' + esc(x.a.id) + '"></span></div><span class="inb-acoes">' +
-            '<button class="btn sm primary" data-acao="tg-renovei" data-id="' + esc(x.a.id) + '">' + esc(tr('Renovei', 'I renewed it', 'La renové')) + '</button>' +
+            '<button class="btn sm primary" data-acao="tg-renovei" data-inb-fica="1" data-id="' + esc(x.a.id) + '">' + esc(tr('Renovei', 'I renewed it', 'La renové')) + '</button>' +
             (x.etapa !== 'acabou' ? '<button class="btn sm" data-acao="inb-visto" data-k="' + esc(x.k) + '">' + esc(tr('ok, entendi', 'ok, got it', 'vale, entendido')) + '</button>' : '') + '</span></li>';
         });
         API.sugestoes().forEach(function (s) {

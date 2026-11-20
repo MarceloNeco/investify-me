@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.91 · 20/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.92 · 20/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.92 */
+  'Conferir canhotos':'Check receipts',
+  '"🧾 Conferir canhotos" em Lançamentos: tire uma foto (ou várias) dos canhotos da maquininha, cupons e recibos. O app lê no aparelho, sem internet e sem IA, e separa em: ✅ já está no banco, 🟡 parecido (confirme), ➕ não veio do banco (lançar à mão ou esperar o banco) e ❓ valor em dúvida (escolha ou digite). No que casou, você classifica ali mesmo (quem, categoria, ✂️ dividir) e a classificação vai para o lançamento do banco. Nada é lançado duas vezes.':'"🧾 Check receipts" in Entries: take a photo (or several) of card machine slips, receipts and invoices. The app reads them on the device, with no internet and no AI, and sorts them into: ✅ already at the bank, 🟡 similar (confirm), ➕ not from the bank (enter manually or wait for the bank) and ❓ amount unsure (pick or type). On matched ones, you classify right there (who, category, ✂️ split) and the classification goes to the bank entry. Nothing is entered twice.',
+  'Correção: em Pendências (📥), o botão "Renovei" da transferência agendada abria o campo da nova data e ele sumia logo em seguida. Agora o campo fica.':'Fix: in To do (📥), the "I renewed it" button of a scheduled transfer opened the new date field and it vanished right after. Now the field stays.',
   /* 3.91 */
   'Agendamentos, salto de preço, despesas médicas e recibos':'Scheduled transfers, price jumps, medical expenses and receipts',
   'Transferência agendada no banco (em Contas fixas → + Adicionar): valor, de qual conta para qual, dia e o prazo do banco (12 meses). O 📥 avisa 30 e 7 dias antes de acabar ("Renove no app do banco"), o saldo previsto conta cada transferência no prazo e, se acabar sem você renovar, o aviso de saldo diz a causa provável. O app também sugere cadastrar quando vê a mesma transferência 3 meses seguidos.':'Scheduled bank transfer (in Fixed bills → + Add): amount, from which account to which, day and the bank\'s term (12 months). The 📥 warns 30 and 7 days before it ends ("Renew it in the bank app"), the forecast balance counts each transfer within the term and, if it ends without renewal, the balance warning names the likely cause. The app also suggests adding it when it sees the same transfer 3 months in a row.',

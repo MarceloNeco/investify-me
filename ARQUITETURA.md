@@ -709,7 +709,16 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
-  **3.91 — pedidos do dono de 18/11 (sem IA).** `modulos/transf-agendada.js` 1.0.0 (`window.TransfAgendada`, coleção reservada
+  **3.92 — canhotos pelo Leitor OCR.** O motor do leitor-ocr 0.9.5 (motor 1.12.0, `Leitura.lerVarios`, contrato 1) copiado SEM alterar:
+  `leitor/leitura.js`, `leitor/leitura/` (com `varios.js`; `foto.js` e `texto.js` atualizados) e `leitor/leitores/` (todos); `leitor/tesseract/` já era
+  igual. No sw.js, `varios.js`, `relacoes.js`, `estabelecimentos.js`, `modelos.js` e os leitores. Não copiados: `leitor/dados/` (a base de lojas e os
+  modelos: sem eles, o motor segue com a base vazia) e `libs/` (QR/código de barras, que o canhoto não usa). `modulos/canhotos.js` 1.0.0
+  (`window.Canhotos`): carrega o motor só quando usado e desliga `Leitura.consultaCnpjLigada` nesta página (a consulta de CNPJ na internet seria
+  integração nova); `classificar(itens)` → casou (valor 'alta' + data ±3 com um lançamento de saída OU uma pendente do robô; único, ou o que ganha
+  de todos no desempate: final 2, loja 2, hora 1, mesmo dia 1), parecido (valor não 'alta' ou empate), novo, dúvida (`valor` null, com `opcoes`);
+  `mesmaCompra` conta uma vez. Casado: quem, grupo, categoria e ✂️ dividir → `Gasto.atualizar` (ou, na pendente, `doPrintClass`/`partes`, que o
+  print-colar leva ao postado). "Lançar à mão" (origem 'canhoto') e "Esperar o banco" (item `doPrint` do print). Teste: `teste/teste-canhotos.js`.
+  **3.91 — pedidos do dono de 18/11 (sem IA).** `modulos/transf-agendada.js` 1.0.0 → 1.0.1 na 3.92 ("Renovei" com `data-inb-fica`: o 📥 do index não se redesenha num botão que só abre um campo ali mesmo) (`window.TransfAgendada`, coleção reservada
   `transf_agendadas`; diferente do `modulos/agendamentos.js` da N37, que é a conta fixa paga "Agendado no banco"): `primeira`/`ultima` (dia do mês a
   partir do início, até o prazo em meses), `eventos(conta)` no saldo-previsto 1.2.0 (sai de `de`, entra em `para`, só no prazo), `causa(conta)` na
   frase do aviso de saldo quando acabou e nada de valor parecido chegou no mês, 📥 30/7 dias e "acabou" com "Renovei" (nova data de início), e
