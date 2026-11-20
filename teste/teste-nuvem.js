@@ -398,6 +398,11 @@ let BASE = '';
     await entregar(Object.assign({}, lanc, { id: 'pluggy-pend-1', descricao: 'LOCADORA TESTE', valor: 500, pendente: true, caucao_provavel: true }));
     let pa = await A.evaluate(() => ({ g: Store.estado.gastos.some((g) => /LOCADORA TESTE/.test(g.desc)), p: (Store.estado.cartao_pendentes || []).map((x) => x.id + '|' + x.estado + '|' + x.caucao) }));
     ok(!pa.g && pa.p.join() === 'pa_pluggy-pend-1|pendente|true', 'pendente do robô (caução) fica fora do livro, em cartao_pendentes: ' + pa.p.join());
+    /* 3.95: o comprovante do e-mail (tipo "comprovante") vai para modulos/comprovantes.js; nunca vira lançamento, e o mesmo id não duplica */
+    const nG = (await estado(A)).gastos.length, cpv = { id: 'evid-drive-teste-1', tipo: 'comprovante', subtipo: 'compra', data: '2026-11-03', valor: 87.5, loja: 'Loja Ficticia', produto: 'Produto de exemplo', pedido: 'PED-0001' };
+    await entregar(cpv); await entregar(cpv);
+    const cpr = await A.evaluate(() => ({ c: (Store.estado.comprovantes || []).filter((x) => x.id === 'evid-drive-teste-1').map((x) => x.subtipo + '|' + x.escopo + '|' + x.pedido), n: Store.estado.gastos.length }));
+    ok(cpr.c.join() === 'compra|reservado|PED-0001' && cpr.n === nG && db.money_entrada.find((e) => e.id === 'evid-drive-teste-1').consumido_em, 'comprovante do robô: guardado uma vez (reservado), nenhum lançamento novo, marcado como aproveitado: ' + JSON.stringify(cpr));
     await entregar(Object.assign({}, lanc, { id: 'pluggy-def-1', descricao: 'LOCADORA TESTE', valor: 480, data: '2026-11-05' }));
     pa = await A.evaluate(() => ({ n: Store.estado.gastos.filter((g) => /LOCADORA TESTE/.test(g.desc)).length, p: (Store.estado.cartao_pendentes || []).map((x) => x.estado + '|' + x.gastoId) }));
     ok(pa.n === 1 && pa.p.join() === 'cobrado|rb_pluggy-def-1', 'o definitivo (outro id) substitui o pendente: um lançamento só: ' + JSON.stringify(pa));

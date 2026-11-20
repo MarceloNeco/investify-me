@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.4 · 14/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.5 · 20/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -61,6 +61,7 @@
   18. 1.15.1 (3.81) — MoneyNuvem.converterRobo(l): a conversão da caixa do robô, para o importador do extrato BS2 no app.
   19. 1.15.2 (3.84) — N10: depois de abrir da nuvem, cartões, metas, bancos e empresas em ordem alfabética (estável entre aparelhos).
   21. 1.15.4 (3.89) — o idioma segue o I18n do app (3 idiomas: tt(pt, en, es); sem ES, o inglês).
+  22. 1.15.5 (3.95) — caixa do robô: tipo "comprovante" (dos e-mails) vai para modulos/comprovantes.js; nunca vira lançamento.
   20. 1.15.3 (3.87) — o robô mandar de novo um lançamento DIVIDIDO pela pessoa não desfaz a divisão (corrigir compara com o total).
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
@@ -1821,6 +1822,10 @@
           var tp = l ? String(l.tipo || '').toLowerCase() : '';
           if (tp === 'saldo' || tp === 'investimento') {   /* a conferência com o banco (1.11.0) e os investimentos (1.12.0); nunca viram lançamento */
             if (window.SaldoBanco && (tp === 'saldo' ? SaldoBanco.receber(l) : SaldoBanco.receberInvest(l))) mudou = true; else ignorados++;
+            prontos.push(rows[i].id); continue;
+          }
+          if (tp === 'comprovante') {   /* 1.15.5 (3.95): o comprovante do e-mail; nunca vira lançamento (modulos/comprovantes.js) */
+            if (window.Comprovantes && Comprovantes.receber(l, rows[i].escopo)) mudou = true; else ignorados++;
             prontos.push(rows[i].id); continue;
           }
           if (l && !this.TIPOS[tp]) {              /* tipo que este app não conhece: anota e deixa de lado */
