@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/rachai.js — RachAI (nome provisório): RACHAR A CONTA da mesa, dentro do BudgetONE (3.93)        1.0.0 · 20/Nov/2026
+   modulos/rachai.js — RachAI (nome provisório): RACHAR A CONTA da mesa, dentro do BudgetONE (3.93)        1.0.1 · 20/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 18–20/Nov/2026; protótipo SEM INTERNET e SEM IA; nada de convite nem servidor)
      · Tela "RachAI" (b-rachai), com cartão de destaque no Painel e item no menu do BudgetONE.
@@ -34,7 +34,8 @@
   function cent(v) { return Math.round((Number(v) || 0) * 100); }
   function n2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
   function num(t) { var s = String(t == null ? '' : t).trim(); if (/,\d{1,2}$/.test(s)) s = s.replace(/\./g, '').replace(',', '.'); return Number(s) || 0; }
-  function lista() { return (ST[COL] = Array.isArray(ST[COL]) ? ST[COL] : []); }
+  /* 1.0.1: antes de abrir o cofre (ST ainda vazio) o cartão do Painel não quebra */
+  function lista() { if (!ST) return []; return (ST[COL] = Array.isArray(ST[COL]) ? ST[COL] : []); }
   function novoId(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
   function N(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
 
@@ -256,7 +257,7 @@
   });
 
   MoneyModulos.registrar({
-    id: 'rachai', versao: '1.0.0', colecoes: [COL],
+    id: 'rachai', versao: '1.0.1', colecoes: [COL],
     pontos: {
       'budget.painel': function () {
         return '<button class="card card-link ra-destaque" data-irpara="b-rachai" style="width:100%;text-align:left;font-size:1.05em"><span>🍽️ <b>RachAI</b> · ' + esc(tr('rachar a conta da mesa, sem internet', 'split the table bill, offline', 'dividir la cuenta de la mesa, sin internet')) + '</span><span class="small muted">›</span></button>';
