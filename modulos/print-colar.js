@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/print-colar.js — "📋 Colar print": notificação do banco vira lançamento (3.87)        1.1.0 · 17/Nov/2026
+   modulos/print-colar.js — "📋 Colar print": notificação do banco vira lançamento (3.87)        1.2.0 · 20/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 14/Nov/2026; sem IA)
      · Entradas: colar da área de transferência (Ctrl+V no computador; no celular o botão "Colar", com
@@ -25,6 +25,8 @@
        lançamento sem cartão, só com o banco); mais de um candidato → pergunta no 📥; o print casa também com a PENDENTE do robô
        (pré-autorização): os dois viram um só (fica a pendente, com a classificação, a divisão e a nota) e, quando a postada
        substitui a pendente (3.80), a classificação vai junto. Nunca dois na fatura nem no previsto.
+     · 1.2.0 (3.91): "Escolher arquivo" também aceita PDF; recibo de serviço do exterior (imagem ou PDF de texto) vai para o
+       modulos/recibo-exterior.js (casa com o cartão e mostra o câmbio e o IOF).
    API (window.PrintColar)
      itensDoTexto(texto, hoje?) → [{tipo, valor, loja, data, hora, banco}] · processar(arquivos) · abrirPrevia(itens)
      conciliar() → n · pendentes() · lojaParecida(a, b)
@@ -147,15 +149,24 @@
   /* ---------- ler: OCR no aparelho, no Fundo ---------- */
   var lido = null;   /* {itens, arquivos} até a pessoa confirmar ou fechar; a imagem nunca vai para o Store */
   async function processar(arquivos) {
-    arquivos = [].slice.call(arquivos || []).filter(function (a) { return a && /^image\//.test(a.type || ''); });
+    /* 1.2.0 (3.91): também PDF (recibo de serviço do exterior; o texto vem do PdfTexto) */
+    arquivos = [].slice.call(arquivos || []).filter(function (a) { return a && (/^image\//.test(a.type || '') || /pdf$/i.test(a.type || '') || /\.pdf$/i.test(a.name || '')); });
     if (!arquivos.length) return toast(tr('Nenhuma imagem para ler. Copie o print e tente de novo, ou escolha a imagem.', 'No image to read. Copy the screenshot and try again, or pick the image.'), 'warn');
-    var id = 'print-ler', temFundo = typeof Fundo !== 'undefined', itens = [];
+    var id = 'print-ler', temFundo = typeof Fundo !== 'undefined', itens = [], recibos = [];
     if (temFundo) Fundo.comecar({ id: id, titulo: tr('Lendo o print…', 'Reading the screenshot…'), aoAbrir: function () { if (lido) abrirPrevia(lido.itens); } });
     try {
       for (var i = 0; i < arquivos.length; i++) {
         if (temFundo) Fundo.passo(id, tr('Lendo o print ', 'Reading screenshot ') + (i + 1) + '/' + arquivos.length + '…', i / arquivos.length);
-        var txt = await (API._ocr || lerImagem)(arquivos[i], function (m) { if (temFundo) Fundo.passo(id, m); });
+        var pdf = !/^image\//.test(arquivos[i].type || '');
+        var txt = pdf ? (typeof PdfTexto !== 'undefined' ? await PdfTexto.extrair(arquivos[i], { linhas: true, aceitaVazio: true }) : '')
+          : await (API._ocr || lerImagem)(arquivos[i], function (m) { if (temFundo) Fundo.passo(id, m); });
+        if (window.ReciboExterior && ReciboExterior.ehRecibo(txt)) { var rc = ReciboExterior.ler(txt); if (rc) { recibos.push(rc); continue; } }
         itens = itens.concat(itensDoTexto(txt));
+      }
+      if (recibos.length && window.ReciboExterior) {
+        if (temFundo) { Fundo.terminar(id, tr('Recibo lido', 'Receipt read', 'Recibo leído')); Fundo.limpar(id); }
+        ReciboExterior.receber(recibos, !itens.length);
+        if (!itens.length) { lido = null; return; }
       }
       lido = { itens: itens, arquivos: arquivos };
       if (temFundo) { Fundo.terminar(id, itens.length ? tr('Print lido: ', 'Screenshot read: ') + itens.length + tr(' item(ns)', ' item(s)') : tr('Print lido: complete à mão', 'Screenshot read: fill in by hand')); Fundo.limpar(id); }
@@ -186,7 +197,7 @@
   }
   function escolher() {
     var inp = document.getElementById('pcArquivo');
-    if (!inp) { inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true; inp.id = 'pcArquivo'; inp.hidden = true; document.body.appendChild(inp);
+    if (!inp) { inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*,application/pdf,.pdf'; inp.multiple = true; inp.id = 'pcArquivo'; inp.hidden = true; document.body.appendChild(inp);
       inp.addEventListener('change', function () { var f = [].slice.call(inp.files || []); inp.value = ''; processar(f); }); }
     inp.click();
   }
@@ -345,7 +356,7 @@
 
   function botoes() {
     return '<button type="button" class="btn sm" data-acao="pc-colar">📋 ' + esc(tr('Colar print', 'Paste screenshot')) + '</button>' +
-      '<button type="button" class="btn sm" data-acao="pc-escolher">🖼️ ' + esc(tr('Escolher imagem', 'Pick image')) + '</button>';
+      '<button type="button" class="btn sm" data-acao="pc-escolher">🖼️ ' + esc(tr('Escolher arquivo', 'Pick a file', 'Elegir archivo')) + '</button>';
   }
   function depois() { Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); }
 
@@ -359,7 +370,7 @@
   };
 
   MoneyModulos.registrar({
-    id: 'print-colar', versao: '1.1.0',
+    id: 'print-colar', versao: '1.2.0',
     pontos: {
       'lancamentos.topo': function () {
         if (conciliar()) Store.salvar();

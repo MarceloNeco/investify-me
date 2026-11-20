@@ -76,7 +76,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [
 
       console.log(' N40 NF pendente e pasta do IR');
       ok(await p.evaluate(() => [NfIr.estado(Gasto.todos().find((g) => g.id === 'gd1')), NfIr.estado(Gasto.todos().find((g) => g.id === 'gm1'))].join()) === 'aguardando,', 'gasto com IR nasce "NF aguardando"; gasto sem IR não tem NF');
-      ok(await p.evaluate(() => NfIr.nomeArquivo(Gasto.todos().find((g) => g.id === 'gd1'))) === dataG + ' Dentista Bia.pdf', 'nome do arquivo: "' + dataG + ' Dentista Bia.pdf"');
+      ok(await p.evaluate(() => NfIr.nomeArquivo(Gasto.todos().find((g) => g.id === 'gd1'))) === dataG + ' Bia - dentista - consulta.pdf', 'nome do arquivo: "' + dataG + ' Bia - dentista - consulta.pdf"');
       await p.evaluate(() => { irPara('b-lanc'); bFiltro.periodo = 'tudo'; bFiltro.de = ''; bFiltro.ate = ''; render(); });
       ok(/2 notas fiscais faltando/.test(await p.textContent('#view-b-lanc .nf-topo')), 'Lançamentos: "2 notas fiscais faltando"');
       ok((await p.$$('#view-b-lanc .nf-falta')).length === 2, 'as duas linhas mostram "🧾 NF aguardando"');
@@ -94,7 +94,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [
       await p.click('#genBody [data-acao="nf-guardar"]');
       await p.waitForFunction(() => (Store.estado.arquivos || []).length === 1);
       const arq = await p.evaluate(() => JSON.parse(JSON.stringify(Store.estado.arquivos[0])));
-      ok(arq.nome === dataG + ' Dentista Bia.pdf' && arq.tipo === 'nf' && arq.ano === ANO && arq.ligado === 'gd1' && !arq.nuvem, 'guardado na Pasta do IR ' + ANO + ' como "' + arq.nome + '"');
+      ok(arq.nome === dataG + ' Bia - dentista - consulta.pdf' && arq.tipo === 'nf' && arq.ano === ANO && arq.ligado === 'gd1' && !arq.nuvem, 'guardado na Pasta do IR ' + ANO + ' como "' + arq.nome + '"');
       ok(await p.evaluate(() => NfIr.estado(Gasto.todos().find((g) => g.id === 'gd1'))) === 'recebida', 'e a NF do dentista deu baixa');
       ok(await p.evaluate(() => JSON.stringify(localStorage).indexOf('NFS-e') < 0), 'os bytes do PDF não vão para o localStorage (ficam no IndexedDB)');
       /* recebi sem arquivo */
@@ -108,7 +108,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [
       await p.evaluate(() => irPara('t-pasta-ir'));
       await p.waitForSelector('#view-t-pasta-ir');
       await p.waitForFunction(() => window.scrollY === 0);
-      ok((await p.textContent('#view-t-pasta-ir')).includes(dataG + ' Dentista Bia.pdf'), 'a pasta lista a NF');
+      ok((await p.textContent('#view-t-pasta-ir')).includes(dataG + ' Bia - dentista - consulta.pdf'), 'a pasta lista a NF');
       await semJanelas();
       const [fc2] = await Promise.all([p.waitForEvent('filechooser'), p.click('#view-t-pasta-ir [data-acao="ir-subir"][data-tipo="informe"]')]);
       await fc2.setFiles([inf]);
