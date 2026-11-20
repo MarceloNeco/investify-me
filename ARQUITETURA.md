@@ -709,6 +709,13 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas, tipo); PDF pelo PdfTexto, foto pelo Ocr, no Fundo (`seguro-ler`). `salvar` cria/atualiza o compromisso (prêmio/parcelas, grupo e
   categoria pelo tipo: VEICULO/Seguro Auto, HABITACAO, PESSOAL/Seguro de vida). `renovar()`: de 30 dias antes até o fim → aviso em Custos
   (`custos.topo`) e no 📥 (`inbox.itens`).
+  **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
+  `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
+  visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem
+  `semBebida` nas bebidas; serviço % proporcional ao consumo; couvert por pessoa presente; gorjeta proporcional; `repartir` não perde centavo);
+  `pix(saldos)` guloso (o maior devedor paga o maior credor); `lerCardapio` e `lerConta` (linhas "nome ... preço" do `Ocr.texto`, no Fundo);
+  `conferir` (item a item e o total × o marcado); `mensagem` (texto; a imagem é o texto num canvas, pelo compartilhar do aparelho);
+  `lancarFamilia` (as pessoas com `pessoaId` → Lazer › Restaurantes, dividido por pessoa pelo `Divisao`, uma vez só). Teste: `teste/teste-rachai.js`.
   **3.92 — canhotos pelo Leitor OCR.** O motor do leitor-ocr 0.9.5 (motor 1.12.0, `Leitura.lerVarios`, contrato 1) copiado SEM alterar:
   `leitor/leitura.js`, `leitor/leitura/` (com `varios.js`; `foto.js` e `texto.js` atualizados) e `leitor/leitores/` (todos); `leitor/tesseract/` já era
   igual. No sw.js, `varios.js`, `relacoes.js`, `estabelecimentos.js`, `modelos.js` e os leitores. Não copiados: `leitor/dados/` (a base de lojas e os

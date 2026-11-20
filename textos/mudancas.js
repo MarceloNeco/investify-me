@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.92 · 20/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.93 · 20/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.93', d:'2026-11-20', t:'RachAI: rachar a conta da mesa', itens:[
+    'Novo no BudgetONE, o RachAI (nome provisório), sem internet: crie a mesa e as pessoas, monte o cardápio por foto ou à mão, marque o consumo com toques (+ e −, ou "dividir entre…"), e quem não bebe fica fora das bebidas. Serviço proporcional ao consumo, couvert por pessoa e gorjeta opcional. No fechamento: quanto cada um paga, quem faz Pix para quem com o menor número de Pix, a mensagem pronta para compartilhar e a parte da família lançada no BudgetONE. Também confere a foto da conta do bar com o que foi marcado.'
+  ]},
   {v:'3.92', d:'2026-11-20', t:'Conferir canhotos', itens:[
     '"🧾 Conferir canhotos" em Lançamentos: tire uma foto (ou várias) dos canhotos da maquininha, cupons e recibos. O app lê no aparelho, sem internet e sem IA, e separa em: ✅ já está no banco, 🟡 parecido (confirme), ➕ não veio do banco (lançar à mão ou esperar o banco) e ❓ valor em dúvida (escolha ou digite). No que casou, você classifica ali mesmo (quem, categoria, ✂️ dividir) e a classificação vai para o lançamento do banco. Nada é lançado duas vezes.'
   ]},
