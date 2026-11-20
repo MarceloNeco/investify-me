@@ -73,7 +73,9 @@ const RECIBO = 'Receipt from Anthropic, PBC\nReceipt number 2345-6789\nDate paid
     const fr = await p.evaluate(() => { const c = ST.saldos_banco[1], a = SaldoPrevisto.alerta(c); return { a: !!a, inb: (inboxGrupos().find((g) => g.id === 'saldo') || {}).html || '' }; });
     ok(fr.a && /Causa provável: o agendamento de R\$ 700,00 vindo da conta Banco Ficticio do Fulano ···1111 acabou em 05\/Nov\/2026/.test(fr.inb), 'acabou e não chegou: o aviso de saldo da conta de destino cita a causa provável');
     ok(/acabou em 05\/Nov\/2026/.test(await inbox('avisos')), 'o 📥 continua até renovar');
-    await p.evaluate(() => abrirInbox()); await p.click('#genBody [data-acao="tg-renovei"]'); await p.evaluate(() => { document.querySelector('#genBody [id^="tgNovo"]').value = '2026-12-02'; }); await p.click('#genBody [data-acao="tg-renovar-ok"]'); await p.waitForTimeout(100);
+    await p.evaluate(() => abrirInbox()); await p.click('#genBody [data-acao="tg-renovei"]'); await p.waitForTimeout(300);
+    ok(await p.evaluate(() => !!document.querySelector('#genBody [id^="tgNovo"]')), '"Renovei" abre o campo da nova data e ele não some quando o 📥 se refaz');
+    await p.evaluate(() => { document.querySelector('#genBody [id^="tgNovo"]').value = '2026-12-02'; }); await p.click('#genBody [data-acao="tg-renovar-ok"]'); await p.waitForTimeout(100);
     ok(await p.evaluate(() => TransfAgendada.ultima(TransfAgendada.lista()[0]) === '2027-11-05' && !/O agendamento de R\$ 700/.test((inboxGrupos().find((g) => g.id === 'avisos') || {}).html || '')), '"Renovei" com a nova data de início: acaba em 05/11/2027 e o aviso sai');
     await p.evaluate(() => fechar('genModal'));
 
