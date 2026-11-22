@@ -24,6 +24,10 @@
        pergunta "Qual foi o PRIMEIRO gasto da viagem?" / "o ÚLTIMO?" com a lista do dia em ordem de hora (g.hora, que vem do robô,
        do print e dos canhotos; os sem hora no fim, para confirmar um a um); a resposta grava horaInicio/horaFim e o que foi antes
        do primeiro (ida) e depois do último (volta) fica fora. Com a hora conhecida, a margem daquele lado deixa de valer.
+     · "Como foi" (complemento do dono): ✈️ avião / 🚗 carro próprio / 🚌 ônibus / 🚆 outro / misto (sem dizer = misto). Cada meio
+       soma os seus sinais fortes: avião (aeroporto, terminal, códigos, bagagem), carro (combustível — também o de antes de sair no dia
+       da ida —, pedágio, restaurantes de estrada, estacionamento; km opcional → combustível estimado), ônibus (rodoviária, empresas de
+       ônibus, a passagem comprada antes). O "Foi viagem?" (pico de combustível) cria a viagem já como carro.
      · Resumo: total; por categoria, dia, pessoa e cartão; antes/durante/depois; previsto × realizado; custo por dia e por
        pessoa; a parte da família no RachAI; ✈️ no Mês a mês (MesAMes) nos meses da viagem.
      · 📥 ("viagem"): muitos gastos seguidos numa cidade que não é a de casa → "Parece que você está viajando (Gramado,
@@ -65,8 +69,18 @@
   var RX_ENTRA = /restaur|lanch|hamburg|burguer|snack|doceria|a[cç]a[ií]|padaria|panific|confeit|cafe|cafeter|bar\b|pizz|burger|churras|sorvet|food|ifood|rappi|mercad|empori|uber|\b99\b|99app|taxi|combust|gasolin|posto|pedag|sem ?parar|conectcar|veloe|estacion|park|locadora|localiza|movida|unidas|aluguel de carro|hotel|pousada|hosped|resort|airbnb|booking|hostel|ingresso|parque|passeio|museu|tour|teleferico|chocolat|lembranc|souvenir|artesan|presente|\biof\b|cambio|turism/i;
   /* 3.98 (complemento do dono): aeroporto, terminal e lojas de aeroporto são sinal forte (o aeroporto de casa também) */
   var RX_AERO = /aeroporto|airport|terminal|\b(gru|cgh|poa|vcp|gig|sdu|bsb|cnf|rec|ssa|for|flp|cwb)\b|duty ?free|dufry|hudson news|relay\b|casa do p[aã]o de queijo|viena\b|rei do mate|\bbobs?\b|starbucks/i;
+  /* 3.98 (complemento do dono): "Como foi" muda os sinais. Carro: combustível, pedágio, restaurantes de estrada, estacionamento;
+     ônibus: rodoviária, empresas de ônibus, Uber/táxi até lá. Avião: o RX_AERO acima + bagagem. Misto (ou sem dizer): todos. */
+  var RX_CARRO = /combust|gasolin|etanol|diesel|posto|auto ?posto|pedag|sem ?parar|conectcar|veloe|move ?mais|graal|frango assado|rodoserv|estrada|rodovia|\bkm ?\d|estacion/i;
+  var RX_AVIAO = /bagagem|despacho/i;
+  var MEIOS = ['aviao', 'carro', 'onibus', 'outro', 'misto'];
+  function meioTem(v, m) { return !v.meio || v.meio === 'misto' || v.meio === m; }
   var RX_SUB = /restaurante|alimenta|lanche|padaria|caf[eé]|combust|ped[aá]gio|estacion|t[aá]xi|aplicativo|uber|hosped|hotel|passeio|lazer|viage|ingresso|parque|lembran|presente/i;
-  var RX_ANTES = /\bgol\b|gol linhas|voegol|\bazul\b|voeazul|latam|\btam\b|passag|a[eé]rea|airlines|booking|airbnb|hotel|pousada|resort|hostel|decolar|123 ?milhas|maxmilhas|hurb|expedia|trivago|hoteis|localiza|movida|unidas|rent ?a ?car|aluguel de carro|seguro viagem|assist ?card|affinity|travel ace|cvc/i;
+  /* antes da viagem: hospedagem, carro alugado e seguro sempre; passagem aérea só se foi de avião; de ônibus só se foi de ônibus */
+  var RX_ANTES = /booking|airbnb|hotel|pousada|resort|hostel|decolar|123 ?milhas|maxmilhas|hurb|expedia|trivago|hoteis|localiza|movida|unidas|rent ?a ?car|aluguel de carro|seguro viagem|assist ?card|affinity|travel ace|cvc/i;
+  var RX_ANTES_AVIAO = /passag|\bgol\b|gol linhas|voegol|\bazul\b|voeazul|latam|\btam\b|a[eé]rea|airlines/i;
+  var RX_ANTES_ONIBUS = /passag|clickbus|buser|quero passagem|cometa|itapemirim|gontijo|[aá]guia branca|catarinense|via[cç][aã]o|rodovi[aá]ri/i;
+  function ehAntes(v, g) { var t = txt(g); return RX_ANTES.test(t) || (meioTem(v, 'aviao') && RX_ANTES_AVIAO.test(t)) || (meioTem(v, 'onibus') && RX_ANTES_ONIBUS.test(t)); }
   var RX_ASSIN = /anthropic|claude|openai|chatgpt|netflix|spotify|disney|hbo|\bmax\b|prime ?video|amazon ?prime|google|youtube|apple\.com|icloud|deezer|globoplay|paramount|microsoft|adobe|dropbox|canva|assinatura/i;
   var RX_FORA = /pagamento (de )?fatura|pgto fatura|pag(amento|to)? boleto|\bboleto\b|\bted\b|\btef\b|transfer|aplica[cç][aã]o|resgate|invest/i;
   var RX_GRANDE = /eletro|celular|iphone|samsung|notebook|computador|televis|\btv\b|geladeira|m[oó]vel|moveis|concession|ve[ií]culo|carro novo|magazine|casas bahia|fast shop|kabum/i;
@@ -79,7 +93,9 @@
   function forte(v, g) {
     var t = C(txt(g)), ds = (v.destinos || []).map(C).filter(function (d) { return d.length >= 4; });
     if (ds.some(function (d) { return t.indexOf(d) >= 0; })) return tr('a cidade do destino no banco', 'the destination city at the bank', 'la ciudad del destino en el banco');
-    if (RX_AERO.test(txt(g))) return tr('aeroporto', 'airport', 'aeropuerto');
+    if (meioTem(v, 'aviao') && (RX_AERO.test(txt(g)) || RX_AVIAO.test(txt(g)))) return tr('aeroporto', 'airport', 'aeropuerto');
+    if (meioTem(v, 'carro') && v.meio && RX_CARRO.test(txt(g))) return tr('estrada (carro)', 'road trip (car)', 'carretera (coche)');
+    if (meioTem(v, 'onibus') && v.meio && /rodovi[aá]ri|terminal rodov/i.test(txt(g))) return tr('rodoviária', 'bus station', 'estación de autobuses');
     if (g.moeda && g.moeda !== 'BRL') return tr('moeda estrangeira', 'foreign currency', 'moneda extranjera');
     if (mccTurismo(g.contraparte && g.contraparte.mcc)) return tr('tipo de loja de turismo', 'travel merchant type', 'tipo de comercio de turismo');
     return '';
@@ -133,7 +149,7 @@
       var f = fase(v, g.data), motivo = '';
       if (credito(g)) {   /* estorno ligado a um gasto da viagem (ou a uma reserva/passagem) */
         if (g.grupo === 'RENDA' || ehPJ(g)) return;
-        if (origensViagem[origem(g)] || (RX_ANTES.test(txt(g)) && f !== 'antes') || out.some(function (s) { return !s.estorno && origem(s.g) === origem(g); }))
+        if (origensViagem[origem(g)] || (ehAntes(v, g) && f !== 'antes') || out.some(function (s) { return !s.estorno && origem(s.g) === origem(g); }))
           motivo = tr('estorno ligado à viagem', 'refund linked to the trip', 'reembolso vinculado al viaje');
         if (motivo) { vistos[g.id] = 1; out.push({ g: g, fase: f, motivo: motivo, pend: ehPend, estorno: true }); }
         return;
@@ -148,7 +164,7 @@
         else if ((g.data <= v.inicio || g.data >= (v.fim || v.inicio)) && Number(g.valor) <= (Number(cfg().viagemPequena) || 300)) motivo = tr('dia de ida ou de volta', 'travel day (going or coming back)', 'día de ida o de vuelta');
       } else if (f === 'antes') {
         var hot = (v.destinos || []).concat(v.hotel ? [v.hotel] : []).map(C).filter(function (d) { return d.length >= 4; });
-        if (RX_ANTES.test(txt(g)) || hot.some(function (d) { return C(txt(g)).indexOf(d) >= 0; })) motivo = tr('reserva ou passagem antes da viagem', 'booking or ticket before the trip', 'reserva o billete antes del viaje');
+        if (ehAntes(v, g) || hot.some(function (d) { return C(txt(g)).indexOf(d) >= 0; })) motivo = tr('reserva ou passagem antes da viagem', 'booking or ticket before the trip', 'reserva o billete antes del viaje');
         else if (r) motivo = r;
       }
       if (motivo) { vistos[g.id] = 1; out.push({ g: g, fase: f, motivo: motivo, pend: ehPend, estorno: false }); }
@@ -211,6 +227,8 @@
     });
     var nd = Math.max(1, dias(v.fim || v.inicio, v.inicio) + 1), np = Math.max(1, (v.pessoas || []).length);
     r.dias = nd; r.pessoas = np; r.porDiaMedio = n2(r.total / nd); r.porPessoaMedio = n2(r.total / np);
+    /* carro: com os km rodados, o combustível estimado da viagem (consumo e preço do litro de Deslocamentos) */
+    if (v.km > 0) { var V = typeof Desloc !== 'undefined' && Desloc.veiculo ? Desloc.veiculo() : { consumo: 11, precoLitro: 6.2 }; r.combEstimado = n2(v.km / (Number(V.consumo) || 11) * (Number(V.precoLitro) || 6.2)); }
     r.orcamento = Number(v.orcamento) || orcamentoPlanejado(v) || 0; r.diferenca = n2(r.total - r.orcamento);
     r.pendentes = n2(pendentesSim(v).reduce(function (s, p) { return s + (Number(p.valor) || 0); }, 0));
     r.aReceber = window.AReceber ? n2(AReceber.abertos().filter(function (x) { return x.gastoId && l.some(function (g) { return g.id === x.gastoId; }); }).reduce(function (s, x) { return s + AReceber.restante(x); }, 0)) : 0;
@@ -289,6 +307,7 @@
       pessoas: d.pessoas || [], cartoes: d.cartoes || [], contas: d.contas || [],
       orcamento: Number(d.orcamento) > 0 ? n2(d.orcamento) : 0, link: /^https?:\/\//i.test(String(d.link || '').trim()) ? String(d.link).trim().slice(0, 300) : '',
       rachaiId: d.rachaiId || '', hotel: String(d.hotel || '').trim().slice(0, 60),
+      meio: MEIOS.indexOf(d.meio) >= 0 ? d.meio : '', km: Number(d.km) > 0 ? Math.round(Number(d.km)) : 0,
       horaInicio: /^\d{2}:\d{2}$/.test(String(d.horaInicio || '')) ? d.horaInicio : '', horaFim: /^\d{2}:\d{2}$/.test(String(d.horaFim || '')) ? d.horaFim : ''
     };
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dados.inicio || ''))) return null;
@@ -370,6 +389,7 @@
       '<p class="small">' + esc(tr('Por dia: ', 'Per day: ', 'Por día: ') + fmt(r.porDiaMedio) + ' (' + r.dias + tr(' dias', ' days', ' días') + ') · ' + tr('por pessoa: ', 'per person: ', 'por persona: ') + fmt(r.porPessoaMedio) + ' (' + r.pessoas + ')') + '</p>' +
       (r.orcamento ? '<p class="small vg-orc">' + esc(tr('Previsto ', 'Planned ', 'Previsto ') + fmt(r.orcamento) + ' × ' + tr('realizado ', 'actual ', 'realizado ') + fmt(r.total) + ' · ' + (r.diferenca > 0 ? tr('passou ', 'over by ', 'pasó ') + fmt(r.diferenca) : tr('sobrou ', 'under by ', 'sobró ') + fmt(-r.diferenca))) + '</p>' : '') +
       '<p class="small">' + esc(tr('Antes ', 'Before ', 'Antes ') + fmt(r.fases.antes) + ' · ' + tr('durante ', 'during ', 'durante ') + fmt(r.fases.durante) + ' · ' + tr('depois ', 'after ', 'después ') + fmt(r.fases.depois)) + '</p>' +
+      (r.combEstimado ? '<p class="small">⛽ ' + esc(tr('Combustível estimado pelos km: ', 'Fuel estimated from the km: ', 'Combustible estimado por los km: ') + fmt(r.combEstimado) + ' (' + v.km + ' km)') + '</p>' : '') +
       (r.pendentes ? '<p class="small muted">⏳ ' + esc(tr('Pendente no banco (ainda não conta): ', 'Pending at the bank (not counted yet): ', 'Pendiente en el banco (aún no cuenta): ') + fmt(r.pendentes)) + '</p>' : '') +
       (r.aReceber ? '<p class="small">↩ ' + esc(tr('A receber (estornos): ', 'To receive (refunds): ', 'Por cobrar (reembolsos): ') + fmt(r.aReceber)) + '</p>' : '') +
       (r.rachai ? '<p class="small">🧳 ' + esc(tr('RachAI "', 'RachAI "', 'RachAI "') + r.rachai.nome + '": ' + tr('total ', 'total ', 'total ') + fmt(r.rachai.total) + ' · ' + tr('a parte da família ', 'the family share ', 'la parte de la familia ') + fmt(r.rachai.nossa)) + '</p>' : '') +
@@ -402,6 +422,8 @@
       f(tr('Nome', 'Name', 'Nombre'), '<input id="vgNome" maxlength="80" value="' + esc(v.nome || '') + '" placeholder="' + esc(tr('Ex.: Serra em novembro', 'E.g.: Mountains in November', 'Ej.: Sierra en noviembre')) + '">') +
       f(tr('Destino(s), separados por vírgula', 'Destination(s), comma separated', 'Destino(s), separados por coma'), '<input id="vgDest" maxlength="160" value="' + esc((v.destinos || []).join(', ')) + '">') +
       f(tr('Início', 'Start', 'Inicio'), '<input id="vgIni" type="date" value="' + esc(v.inicio || '') + '">') + f(tr('Fim', 'End', 'Fin'), '<input id="vgFim" type="date" value="' + esc(v.fim || '') + '">') +
+      f(tr('Como foi', 'How you went', 'Cómo fue'), '<select id="vgMeio">' + [['', tr('—', '—', '—')], ['aviao', '✈️ ' + tr('Avião', 'Plane', 'Avión')], ['carro', '🚗 ' + tr('Carro próprio', 'Own car', 'Coche propio')], ['onibus', '🚌 ' + tr('Ônibus (rodoviária)', 'Bus (bus station)', 'Autobús (estación)')], ['outro', '🚆 ' + tr('Outro', 'Other', 'Otro')], ['misto', tr('Misto', 'Mixed', 'Mixto')]].map(function (o) { return '<option value="' + o[0] + '"' + ((v.meio || '') === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select>') +
+      f(tr('Km rodados (carro, opcional)', 'Km driven (car, optional)', 'Km recorridos (coche, opcional)'), '<input id="vgKm" type="number" min="0" value="' + (v.km || '') + '">') +
       f(tr('Saí de casa às (opcional)', 'Left home at (optional)', 'Salí de casa a las (opcional)'), '<input id="vgHIni" type="time" value="' + esc(v.horaInicio || '') + '">') +
       f(tr('Cheguei em casa às (opcional)', 'Got home at (optional)', 'Llegué a casa a las (opcional)'), '<input id="vgHFim" type="time" value="' + esc(v.horaFim || '') + '">') +
       f(tr('Dias antes (aeroporto, estrada)', 'Days before (airport, road)', 'Días antes (aeropuerto, carretera)'), '<input id="vgAntes" type="number" min="0" max="10" value="' + (v.antes != null ? v.antes : 1) + '">') +
@@ -473,7 +495,7 @@
       'vg-editar': function (el) { form(lerVia(el.dataset.v)); },
       'vg-criar': function (el) {
         var ch = el.dataset.ch || ''; combPendente = /^c\|/.test(ch) ? ch.slice(2) : '';
-        fechar('genModal'); form(null, { nome: el.dataset.n || '', destinos: el.dataset.n ? [el.dataset.n] : [], inicio: el.dataset.de, fim: el.dataset.ate });
+        fechar('genModal'); form(null, { nome: el.dataset.n || '', destinos: el.dataset.n ? [el.dataset.n] : [], inicio: el.dataset.de, fim: el.dataset.ate, meio: combPendente ? 'carro' : '' });
       },
       'vg-sug-nao': function (el) {
         var ch = el.dataset.ch || ''; cfg().viagemSugNao = Object.assign({}, cfg().viagemSugNao); cfg().viagemSugNao[ch] = 1;
@@ -483,7 +505,7 @@
       'vg-salvar': function () {
         var box = document.querySelector('.vg-form'), id = box && box.dataset.v;
         var d = { nome: val('vgNome'), destinos: val('vgDest').split(',').map(function (x) { return x.trim(); }).filter(Boolean), inicio: val('vgIni'), fim: val('vgFim'),
-          antes: val('vgAntes'), depois: val('vgDepois'), horaInicio: val('vgHIni'), horaFim: val('vgHFim'), orcamento: num(val('vgOrc')), hotel: val('vgHotel'), link: val('vgLink'), rachaiId: val('vgRachai'),
+          antes: val('vgAntes'), depois: val('vgDepois'), horaInicio: val('vgHIni'), horaFim: val('vgHFim'), meio: val('vgMeio'), km: val('vgKm'), orcamento: num(val('vgOrc')), hotel: val('vgHotel'), link: val('vgLink'), rachaiId: val('vgRachai'),
           pessoas: marcados('vgPess'), cartoes: marcados('vgCart'), contas: marcados('vgContas') };
         var antes = id && lerVia(id), casaMarc = (document.getElementById('vgCasa') || {}).checked;
         if (!antes || (antes.escopo === 'casa') !== casaMarc) d.escopo = casaMarc ? 'casa' : (antes || d.pessoas.length ? 'reservado' : undefined);

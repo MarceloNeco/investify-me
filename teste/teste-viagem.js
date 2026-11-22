@@ -153,6 +153,25 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
     });
     ok(cod.a.viagem === 'vg1' && cod.a.evento === 'ev1' && cod.a.hora === '12:30' && cod.a.descRobo === 'R GRAMADOBR' && cod.a.contraparte.nome === 'R' && cod.a.divisao.total === 300 && cod.a.ficha.cid === 'c', 'o formato compacto agora guarda a etiqueta da viagem, a hora, o texto do robô, a contraparte, a divisão e a ficha (antes se perdiam ao recarregar)');
     ok(cod.b.fluxo === 'entrada' && cod.b.estorno === true && cod.velho, 'o fluxo de entrada fora de Renda volta certo; o pacote antigo (sem a coluna nova) abre igual');
+    console.log('9) "Como foi": carro e ônibus');
+    const meios = await p.evaluate(() => {
+      const add = (id, data, valor, desc, extra) => Gasto.add(Object.assign({ id: 'rb_' + id, idRobo: id, data, valor, desc, descRobo: desc, fluxo: 'saida', grupo: 'OUTROS', sub: '', origem: 'robo', cartaoId: 'c1' }, extra || {}));
+      add('f0', '2026-10-03', 200, 'AUTO POSTO BAIRRO', { grupo: 'VEICULO', sub: 'Combustível' });          /* a semana anterior: fora */
+      add('f1', '2026-10-10', 250, 'AUTO POSTO ESTRADA', { grupo: 'VEICULO', sub: 'Combustível', hora: '07:30' });
+      add('f2', '2026-10-10', 30, 'SEM PARAR');
+      add('f3', '2026-10-10', 45, 'FRANGO ASSADO KM 50');
+      add('o1', '2026-08-15', 150, 'CLICKBUS PASSAGEM');                                                      /* passagem de ônibus comprada antes */
+      add('o2', '2026-09-20', 25, 'LANCHONETE RODOVIARIA TIETE');
+      const vc = Viagem.salvar({ nome: 'Praia de carro', destinos: ['Praia Ficticia'], inicio: '2026-10-10', fim: '2026-10-12', pessoas: ['p1'], meio: 'carro', km: 400 });
+      const vo = Viagem.salvar({ nome: 'Ônibus', destinos: ['Cidade Ficticia'], inicio: '2026-09-20', fim: '2026-09-21', pessoas: ['p1'], meio: 'onibus' });
+      const ids = (v) => Viagem.sugestoes(v).map((x) => x.g.id);
+      Viagem.confirmarTodos(vc);
+      return { c: ids(vo).length >= 0 && Viagem.itens(vc).map((g) => g.id).sort().join(), o: ids(vo).sort().join(), motivo: (Viagem.sugestoes(vo).find((x) => x.g.id === 'rb_o2') || {}).motivo, est: Viagem.resumo(vc).combEstimado,
+        carroSemOnibus: !Viagem.sugestoes(vc).some((x) => x.g.id === 'rb_o1') };
+    });
+    ok(meios.c === 'rb_f1,rb_f2,rb_f3', 'de carro: o combustível do dia da ida, o pedágio e o lanche de estrada entram; o combustível da semana anterior fica fora: ' + meios.c);
+    ok(meios.o.split(',').includes('rb_o1') && meios.o.split(',').includes('rb_o2') && /rodovi/.test(meios.motivo), 'de ônibus: a passagem comprada antes e o lanche na rodoviária entram: ' + meios.o);
+    ok(meios.carroSemOnibus && meios.est === 225.45, 'a passagem de ônibus não aparece na viagem de carro; 400 km → combustível estimado R$ 225,45 (11 km/l, R$ 6,20)');
     ok(p.erros.length === 0, 'sem erro de página' + (p.erros.length ? ': ' + p.erros[0] : ''));
   } catch (e) { falhas++; console.log('  ✗ ERRO: ' + (e && e.stack || e)); }
   await b.close(); srv.close();

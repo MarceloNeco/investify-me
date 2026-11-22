@@ -749,7 +749,9 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   da viagem?", lista do dia por `g.hora`); o que vem antes/depois fica fora (`foraDaHora`). `g.hora`: nuvem 1.15.6 (campo "hora" do robô),
   print-colar e canhotos (canhotos 1.1.1 leva a hora do canhoto ao lançamento do banco sem hora). **GastoCodec** (index): coluna 25 com os campos
   fora das colunas fixas (JSON; `fluxo` só se diferente do grupo) — antes, com > 200 lançamentos no modo "só neste aparelho", descRobo, idRobo,
-  contraparte, paraQuem, divisao, viagem, hora e ficha se perdiam ao recarregar; o pacote antigo abre igual. Teste: `teste/teste-viagem.js`.
+  contraparte, paraQuem, divisao, viagem, hora e ficha se perdiam ao recarregar; o pacote antigo abre igual. "Como foi" (`meio`: aviao/carro/
+  onibus/outro/misto; vazio = misto) escolhe os sinais fortes (`RX_AERO`/`RX_CARRO`/rodoviária) e as palavras de antes (`ehAntes`: base +
+  aérea se avião + ônibus se ônibus); `km` → `resumo().combEstimado` (Desloc.veiculo). Teste: `teste/teste-viagem.js`.
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem
