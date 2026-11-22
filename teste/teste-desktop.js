@@ -48,9 +48,11 @@ async function recolherAbrir(p, nome, antesDeMedir) {
   ok(a.grade && a.rec === 'true|Recolher o calendário' && !a.etq, nome + ': calendário aberto por padrão, com o botão de recolher no cabeçalho (aria-expanded=true)');
   const semAnimar = () => p.waitForFunction(() => !document.getElementById('navCal').getAnimations().length, null, { timeout: 5000 }).catch(() => {});
   await p.focus('#navCal .calm-rec'); await p.keyboard.press('Enter'); await semAnimar(); await p.waitForTimeout(50);
+  /* 3.96: o foco chega à etiqueta logo depois do redesenho; espera por ele (até 2 s) em vez de confiar nos 50 ms */
+  await p.waitForFunction(() => document.activeElement && document.activeElement.classList.contains('calm-etq'), null, { timeout: 2000 }).catch(() => {});
   const r = await cal();
   ok(!r.grade && r.etq === 'false' && /^[A-ZÇ][a-zç]+ de 20\d\d$/.test(r.mes) && !r.cortado && r.h < 60, nome + ': pelo teclado recolhe numa etiqueta "' + r.mes + '" (' + r.h + ' px, aria-expanded=false, sem cortar o texto)');
-  ok(r.foco === 'calm-etq' && r.salvo === '1', nome + ': o foco vai para a etiqueta e a escolha fica guardada no aparelho');
+  ok(r.foco === 'calm-etq' && r.salvo === '1', nome + ': o foco vai para a etiqueta e a escolha fica guardada no aparelho' + (r.foco === 'calm-etq' && r.salvo === '1' ? '' : ' (foco: ' + r.foco + ', salvo: ' + r.salvo + ')'));
   ok(r.bot <= r.H + 1 && r.navBot <= r.H + 1, nome + ': recolhido, a etiqueta e a barra cabem na tela (' + r.top + '–' + r.bot + ')');
   await p.reload(); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.recorrentes || []).length >= 1);
   await antesDeMedir(); await p.waitForTimeout(300);
