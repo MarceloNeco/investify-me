@@ -68,11 +68,12 @@ const IT = (papel, valor, extra) => Object.assign({ arquivo: 'foto.jpg', papel, 
     console.log('3) classificar, dividir, lançar à mão e esperar o banco (nada duplicado)');
     const n0 = await p.evaluate(() => ST.gastos.length);
     await p.evaluate((x) => { Canhotos._ler = async () => x; return Canhotos.processar([new File([new Uint8Array([1])], 'f.png', { type: 'image/png' })]); },
-      [IT(1, 120.51, { loja: 'AUTO POSTO EXEMPLO', final: '1234' }), IT(8, 236, { data: '16/11/2026', loja: 'LOJABRILHO' }), IT(5, 33.3, { data: '13/11/2026', final: '1234' }), IT(9, 12, { data: '13/11/2026', final: '9876' }), IT(6, null, { opcoes: [80] , data: '12/11/2026'})]);
+      [IT(1, 120.51, { loja: 'AUTO POSTO EXEMPLO', final: '1234', hora: '14:41' }), IT(8, 236, { data: '16/11/2026', loja: 'LOJABRILHO' }), IT(5, 33.3, { data: '13/11/2026', final: '1234' }), IT(9, 12, { data: '13/11/2026', final: '9876' }), IT(6, null, { opcoes: [80] , data: '12/11/2026'})]);
     await p.click('#genBody .cn-item[data-grupo="casou"][data-i="0"] [data-acao="cn-classe"]');
     await p.evaluate(() => { const c = document.querySelector('#genBody .cn-item[data-grupo="casou"][data-i="0"]'); c.querySelector('[data-cn="grupo"]').value = 'VEICULO'; c.querySelector('[data-cn="sub"]').value = 'Combustível'; c.querySelector('[data-cn="quem"]').value = 'Bia'; });
     await p.click('#genBody .cn-item[data-grupo="casou"][data-i="0"] [data-acao="cn-aplicar"]'); await p.waitForTimeout(100);
     ok(await p.evaluate(() => { const x = ST.gastos.find((y) => y.id === 'rb_g1'); return x.grupo === 'VEICULO' && x.sub === 'Combustível' && x.paraQuem === 'Bia' && /conferido com o canhoto/.test(x.obs); }), 'a classificação foi para o lançamento do banco (o mesmo id), com "conferido com o canhoto"');
+    ok(await p.evaluate(() => ST.gastos.find((y) => y.id === 'rb_g1').hora === '14:41'), '3.98: a hora do canhoto (14:41) vai para o lançamento do banco que não tinha hora');
     await p.click('#genBody .cn-item[data-grupo="casou"][data-i="1"] [data-acao="cn-classe"]');
     await p.click('#genBody .cn-item[data-grupo="casou"][data-i="1"] [data-acao="cn-dividir"]');
     await p.evaluate(() => { const ls = [...document.querySelectorAll('#genBody .cn-item[data-grupo="casou"][data-i="1"] [data-dvparte]')]; const put = (l, k, v) => { const e = l.querySelector('[data-dv="' + k + '"]'); e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); };

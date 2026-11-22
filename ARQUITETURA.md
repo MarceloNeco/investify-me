@@ -730,6 +730,28 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   valor do banco). comprovantes 1.1.0: os campos opcionais `confianca`/`opcoes` do robô seguem a mesma regra (`perto` + `cp-esse`).
   **3.97 — Foco do calendário do menu.** calendario-menu 1.2.1: um redesenho logo depois de recolher/abrir (o ajuste da barra lateral em telas
   muito largas) tirava o botão com o foco; `aplicar` devolve o foco ao botão novo se ele estava num botão do calendário há até 2 s (`focusin`).
+  **3.98 — Viagem por janela de tempo.** `modulos/viagem.js` 1.0.0 (`window.Viagem`, coleção nova `viagens`; escopo: da casa quando quem foi
+  é da casa, marcável — visao-casa 1.1.6). Tela `b-viagens` (menu ✈️ Viagens). Cadastro: nome, destinos, início/fim, margem antes/depois (1),
+  pessoas, cartões/contas (padrão: os de quem foi — `usaId`/`titularId` do cartão, `quemId`, `Pessoas.donoDe`), orçamento (o compromisso único
+  de Viagens perto das datas ou o do RachAI, `rachaiViagem`), hotel, link do roteiro (só o endereço; GuiaXpert como integração = regra zero),
+  `rachaiId`. Ao salvar cria/atualiza o evento de `Previsao` (`eventoId`); o confirmado ganha `g.viagem` + `g.evento` (sai da média, como
+  "Foi viagem?"). `sugestoes(v)`: janela ± margem (alimentação, transporte, hospedagem, passeios, compras; sinais fortes: cidade do destino
+  no texto do banco — qualquer um dos destinos —, aeroporto/terminal/loja de aeroporto, MCC de turismo, moeda estrangeira; nos dias de ida e volta,
+  compras pequenas até R$ 300 mesmo na cidade de casa, `config.viagemPequena`), antes até 180 dias (passagem, reserva, aluguel de carro, seguro viagem, hotel/
+  destino), estornos da mesma loja; `fora()`: PJ, `recorrenteId`, assinaturas, transferências/faturas/boletos/investimento, parcela k>1,
+  grande sem relação (`config.viagemLimite`, 1500), regra "não" da loja. Pendente confirmada: a etiqueta vai para o definitivo
+  (`PreAut.substituir` → `gastoId`). `confirmar` grava `decisoes` e a regra por loja (`config.viagemRegras`, por `Origem`); `parte` usa
+  `Divisao.aplicar`. `resumo(v)`: total, por categoria/dia/pessoa/cartão, fases, orçamento, por dia/pessoa, pendentes, a receber, RachAI.
+  `detectar()`: sufixo comum da cidade colada pelo banco ("…GRAMADOBR") em ≥ 3 gastos em ≤ 5 dias, que não seja a cidade de casa
+  (180 dias antes), e as suspeitas de combustível do `Previsao` → 📥 "viagem". mes-a-mes 1.0.2: ✈️ no mês com viagem (`Viagem.noMes`).
+  Complementos do dono: vários destinos; aeroporto/terminal como sinal forte; nos dias de ida/volta, compras pequenas contam mesmo em casa;
+  hora de saída/chegada (`horaInicio`/`horaFim`, a margem daquele lado deixa de valer) perguntada no 📥 ("Qual foi o PRIMEIRO / o ÚLTIMO gasto
+  da viagem?", lista do dia por `g.hora`); o que vem antes/depois fica fora (`foraDaHora`). `g.hora`: nuvem 1.15.6 (campo "hora" do robô),
+  print-colar e canhotos (canhotos 1.1.1 leva a hora do canhoto ao lançamento do banco sem hora). **GastoCodec** (index): coluna 25 com os campos
+  fora das colunas fixas (JSON; `fluxo` só se diferente do grupo) — antes, com > 200 lançamentos no modo "só neste aparelho", descRobo, idRobo,
+  contraparte, paraQuem, divisao, viagem, hora e ficha se perdiam ao recarregar; o pacote antigo abre igual. "Como foi" (`meio`: aviao/carro/
+  onibus/outro/misto; vazio = misto) escolhe os sinais fortes (`RX_AERO`/`RX_CARRO`/rodoviária) e as palavras de antes (`ehAntes`: base +
+  aérea se avião + ônibus se ônibus); `km` → `resumo().combEstimado` (Desloc.veiculo). Teste: `teste/teste-viagem.js`.
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem

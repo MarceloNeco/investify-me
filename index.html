@@ -334,6 +334,7 @@ const TEXTOS = {
   'nav.futuro':        {pt:'Projeção',          en:'Projection'},   /* 3.76: antes "Futuro" */
   'nav.precos':        {pt:'Preços',            en:'Prices'},
   'nav.rachai':        {pt:'RachAI',            en:'RachAI',            es:'RachAI'},
+  'nav.viagens':       {pt:'Viagens',           en:'Trips',             es:'Viajes'},
   'nav.agenda':        {pt:'Agenda',            en:'Calendar'},
   'nav.mais':          {pt:'Mais',              en:'More'},
   'nav.t.imposto':     {pt:'Imposto do ano',    en:'Year tax'},
@@ -681,8 +682,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.97"></script>
-<script src="textos/frases-es.js?v=3.97"></script>
+<script src="textos/frases-en.js?v=3.98"></script>
+<script src="textos/frases-es.js?v=3.98"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7675,7 +7676,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.97"></script>
+<script src="textos/mudancas.js?v=3.98"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -8154,7 +8155,8 @@ const GastoCodec = {
       Math.round((Number(g.bruto) || 0) * 100),   /* salário: o bruto (o valor que entra no caixa é o líquido) */
       idx('salBase', g.salBase),                  /* salário: o valor foi informado como 'bruto' ou 'liquido' */
       (g.abat && g.abat.length) ? JSON.stringify(g.abat) : '',   /* 3.38: abatimento (pontos, cashback…) */
-      Math.round((Number(g.cheio) || 0) * 100)                   /* 3.38: o preço cheio, quando houve abatimento */
+      Math.round((Number(g.cheio) || 0) * 100),                  /* 3.38: o preço cheio, quando houve abatimento */
+      this.extras(g)                                             /* 3.98: os outros campos (robô, divisão, viagem, hora…) */
     ]);
     return {v:1, d: dic, l: linhas};
   },
@@ -8179,7 +8181,19 @@ const GastoCodec = {
       abat: (() => { try{ return x[23] ? JSON.parse(x[23]) : undefined; }catch(e){ return undefined; } })(),
       cheio: (Number(x[24]) || 0) / 100 || undefined,
       fluxo: (GRUPOS[le('grupo', x[2])] || GRUPOS.OUTROS).fluxo
-    }));
+    })).map((g, i) => { const x = pac.l[i]; if(x[25]){ try{ Object.assign(g, JSON.parse(x[25])); }catch(e){} } return g; });
+  },
+
+  /* 3.98: com mais de 200 lançamentos, o que não está nas colunas fixas (descRobo, idRobo, contraparte, paraQuem, divisao,
+     viagem, evento, hora, ficha…) se perdia ao recarregar no modo "só neste aparelho". Agora vai junto, em JSON; o pacote
+     antigo (sem esta coluna) continua abrindo igual. O fluxo só vai quando é diferente do que o grupo diz. */
+  FIXOS: {valor:1, data:1, grupo:1, sub:1, per:1, status:1, quem:1, forma:1, conta:1, origem:1, irpf:1, desc:1, id:1, criadoEm:1,
+          favorito:1, revisar:1, recorrenteId:1, formaId:1, bancoId:1, cartaoId:1, ofxId:1, dataCobranca:1, bruto:1, salBase:1, abat:1, cheio:1, fluxo:1},
+  extras(g){
+    const o = {}; let n = 0;
+    Object.keys(g).forEach(k => { if(this.FIXOS[k] || g[k] === undefined || g[k] === null || g[k] === '') return; o[k] = g[k]; n++; });
+    if(g.fluxo && g.fluxo !== (GRUPOS[g.grupo] || GRUPOS.OUTROS).fluxo){ o.fluxo = g.fluxo; n++; }
+    return n ? JSON.stringify(o) : '';
   },
 
   /* quanto o empacotamento economiza — só para mostrar nas Configurações */
@@ -9803,6 +9817,7 @@ const ABAS = {
        continua e leva para lá); "Futuro" passou a se chamar "Projeção" (o id b-futuro continua) */
     {v:'b-futuro',   ico:'🔮', chave:'nav.futuro',      mobile:false},
     {v:'b-precos',   ico:'🏷️', chave:'nav.precos',      mobile:false},
+    {v:'b-viagens',  ico:'✈️', chave:'nav.viagens',     mobile:false},   /* 3.98: modulos/viagem.js */
     {v:'b-rachai',   ico:'🍽️', chave:'nav.rachai',      mobile:false},   /* 3.93: modulos/rachai.js */
     {v:'config',     ico:'⚙️', chave:'nav.config',      mobile:false}
   ],
@@ -30115,13 +30130,13 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/apelido.js?v=1.1.0"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
-<script src="modulos/visao-casa.js?v=1.1.5"></script>
+<script src="modulos/visao-casa.js?v=1.1.6"></script>
 <script src="modulos/previsao.js?v=1.2.1"></script>
 <script src="modulos/orcamento.js?v=1.1.1"></script>
 <script src="modulos/patrimonio-mes.js?v=1.1.0"></script>
 <script src="modulos/dividas.js?v=1.0.0"></script>
 <script src="modulos/seguros.js?v=1.0.1"></script>
-<script src="modulos/mes-a-mes.js?v=1.0.1"></script>
+<script src="modulos/mes-a-mes.js?v=1.0.2"></script>
 <script src="modulos/parcelados.js?v=1.0.1"></script>
 <script src="modulos/contas-fixas.js?v=1.0.0"></script>
 <script src="modulos/documentos.js?v=1.1.0"></script>
@@ -30139,13 +30154,14 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/salto-preco.js?v=1.0.0"></script>
 <script src="modulos/recibo-exterior.js?v=1.0.0"></script>
 <script src="modulos/recebi-dinheiro.js?v=1.0.0"></script>
-<script src="modulos/canhotos.js?v=1.1.0"></script>
+<script src="modulos/canhotos.js?v=1.1.1"></script>
 <script src="modulos/rachai.js?v=1.1.1"></script>
 <script src="modulos/comprovantes.js?v=1.1.0"></script>
+<script src="modulos/viagem.js?v=1.0.0"></script>
 <script src="modulos/pj.js?v=1.2.0"></script>
 <script src="modulos/bs2-extrato.js?v=1.0.1"></script>
 <script src="modulos/pj-gestao.js?v=1.0.1"></script>
 <script src="modulos/pj-oportunidades.js?v=1.0.1"></script>
-<script src="nuvem.js?v=1.15.5"></script>
+<script src="nuvem.js?v=1.15.6"></script>
 </body>
 </html>
