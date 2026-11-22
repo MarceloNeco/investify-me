@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/mes-a-mes.js — o "Mês a mês" do Painel do BudgetONE, refeito (3.73)        1.0.1 · 13/Nov/2026
+   modulos/mes-a-mes.js — o "Mês a mês" do Painel do BudgetONE, refeito (3.73)        1.0.2 · 22/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · A barra de cada mês é o que SOBROU NA CONTA: tudo o que entrou − o que foi gasto − o que foi para investimento
@@ -108,7 +108,7 @@
         var v = m[k], pos = v >= 0, w = Math.min(H, Math.abs(v) / lim * H), corta = Math.abs(v) > lim;
         var barra = '<div class="viz-div-zero" style="left:' + Z + '%"></div>' + (w > 0 ? '<div class="mm-seg ' + (pos ? 'mm-up' : 'mm-down') + '" style="left:' + (pos ? Z : Z - w).toFixed(2) + '%;width:' + w.toFixed(2) + '%"></div>' : '');
         if (corta) barra += '<span class="mm-quebra" style="' + (pos ? 'right' : 'left') + ':-2px" aria-hidden="true">⫽</span>';
-        var marcas = modo === 'dia' ? '' : (m.estrela ? ' ★' : '') + (m.invest ? ' 📈' : '') + (m.par ? ' 🔗' : '');
+        var marcas = (modo === 'dia' ? '' : (m.estrela ? ' ★' : '') + (m.invest ? ' 📈' : '') + (m.par ? ' 🔗' : '')) + (window.Viagem && Viagem.noMes(m.t) ? ' ✈️' : '');   /* 1.0.2 (3.98): mês com viagem */
         var det = API.linhaDet(m, modo);
         h += '<details class="mm-mes"><summary title="' + esc(det) + '"><div class="mm-linha"><div class="small mm-nome">' + esc(m.nome + marcas) + '</div>' +
           '<div class="mm-trilho">' + barra + '</div><div class="mm-valor"><div class="small mono ' + (pos ? 'up' : 'down') + '">' + (pos ? '+' : '−') + fmt(Math.abs(v)) + '</div></div></div></summary>' +
@@ -155,7 +155,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'mes-a-mes', versao: '1.0.1',
+    id: 'mes-a-mes', versao: '1.0.2',
     pontos: {
       'budget.atencao': cartaoAtencao,
       'inbox.grupos': function () { var q = API.perguntas(); return q.length ? [{ id: 'confirmar', n: q.length, html: itensPergunta(q, true) }] : []; },   /* 1.0.1 (3.76) */

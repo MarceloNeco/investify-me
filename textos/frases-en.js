@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.97 · 22/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.98 · 22/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.98 */
+  'Viagem por janela de tempo':'Trips by dates',
+  '"✈️ Viagens" no BudgetONE: diga o nome, o destino e as datas (com 1 dia de margem antes e depois, que dá para mudar), quem foi, os cartões que contam e o orçamento. O app sugere os gastos daquele período que parecem da viagem — restaurante, transporte, combustível, pedágio, hotel, passeios, compras na cidade do destino — e também a passagem e a reserva compradas antes e o estorno do hotel. Deixa de fora contas fixas, assinaturas, parcelas antigas, transferências, faturas e o que é da empresa.':'"✈️ Trips" in BudgetONE: give the name, the destination and the dates (with a 1-day margin before and after, which you can change), who went, the cards that count and the budget. The app suggests the spending of that period that looks like the trip — restaurants, transport, fuel, tolls, hotel, tours, shopping in the destination city — plus the ticket and the booking bought before and the hotel refund. It leaves out fixed bills, subscriptions, old installments, transfers, card bills and company spending.',
+  'Você confirma cada um (✅ é da viagem, ❌ não é, ✂️ só uma parte) ou todos de uma vez; a resposta vale para a mesma loja da próxima vez. A categoria de cada gasto não muda: a viagem é uma etiqueta. O resumo mostra o total, por categoria, dia, pessoa e cartão, antes/durante/depois, previsto × realizado e o custo por dia e por pessoa; o Mês a mês ganha ✈️ e o 📥 avisa "Parece que você está viajando… Criar a viagem?".':'You confirm each one (✅ trip, ❌ not trip, ✂️ just a part) or all at once; the answer applies to the same store next time. Each entry keeps its category: the trip is a tag. The summary shows the total, by category, day, person and card, before/during/after, planned × actual and the cost per day and per person; Month by month gets ✈️ and 📥 says "Looks like you are traveling… Create the trip?".',
   /* 3.97 */
   'Foco do teclado no calendário':'Keyboard focus on the calendar',
   'Correção: no computador de tela muito larga, ao recolher ou abrir o calendário do menu pelo teclado, o foco às vezes se perdia (quem usa teclado ficava sem saber onde estava). Agora ele fica no botão do calendário.':'Fix: on very wide computer screens, when collapsing or opening the menu calendar with the keyboard, the focus was sometimes lost (keyboard users could not tell where they were). Now it stays on the calendar button.',

@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.97 · 22/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.98 · 22/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,10 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.98 — rascunho, revisar */
+  'Viagem por janela de tempo':'Viaje por período',
+  '"✈️ Viagens" no BudgetONE: diga o nome, o destino e as datas (com 1 dia de margem antes e depois, que dá para mudar), quem foi, os cartões que contam e o orçamento. O app sugere os gastos daquele período que parecem da viagem — restaurante, transporte, combustível, pedágio, hotel, passeios, compras na cidade do destino — e também a passagem e a reserva compradas antes e o estorno do hotel. Deixa de fora contas fixas, assinaturas, parcelas antigas, transferências, faturas e o que é da empresa.':'"✈️ Viajes" en BudgetONE: indica el nombre, el destino y las fechas (con 1 día de margen antes y después, que se puede cambiar), quién fue, las tarjetas que cuentan y el presupuesto. La app sugiere los gastos de ese período que parecen del viaje —restaurantes, transporte, combustible, peajes, hotel, paseos, compras en la ciudad del destino— y también el billete y la reserva comprados antes y el reembolso del hotel. Deja fuera las cuentas fijas, suscripciones, cuotas antiguas, transferencias, facturas y lo de la empresa.',
+  'Você confirma cada um (✅ é da viagem, ❌ não é, ✂️ só uma parte) ou todos de uma vez; a resposta vale para a mesma loja da próxima vez. A categoria de cada gasto não muda: a viagem é uma etiqueta. O resumo mostra o total, por categoria, dia, pessoa e cartão, antes/durante/depois, previsto × realizado e o custo por dia e por pessoa; o Mês a mês ganha ✈️ e o 📥 avisa "Parece que você está viajando… Criar a viagem?".':'Confirmas cada uno (✅ es del viaje, ❌ no es, ✂️ solo una parte) o todos a la vez; la respuesta vale para la misma tienda la próxima vez. La categoría de cada gasto no cambia: el viaje es una etiqueta. El resumen muestra el total, por categoría, día, persona y tarjeta, antes/durante/después, previsto × realizado y el coste por día y por persona; Mes a mes gana ✈️ y 📥 avisa "Parece que estás de viaje… ¿Crear el viaje?".',
   /* 3.97 — rascunho, revisar */
   'Foco do teclado no calendário':'Foco del teclado en el calendario',
   'Correção: no computador de tela muito larga, ao recolher ou abrir o calendário do menu pelo teclado, o foco às vezes se perdia (quem usa teclado ficava sem saber onde estava). Agora ele fica no botão do calendário.':'Corrección: en ordenadores de pantalla muy ancha, al plegar o abrir el calendario del menú con el teclado, el foco a veces se perdía (quien usa el teclado no sabía dónde estaba). Ahora se queda en el botón del calendario.',

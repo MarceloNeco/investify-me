@@ -334,6 +334,7 @@ const TEXTOS = {
   'nav.futuro':        {pt:'Projeção',          en:'Projection'},   /* 3.76: antes "Futuro" */
   'nav.precos':        {pt:'Preços',            en:'Prices'},
   'nav.rachai':        {pt:'RachAI',            en:'RachAI',            es:'RachAI'},
+  'nav.viagens':       {pt:'Viagens',           en:'Trips',             es:'Viajes'},
   'nav.agenda':        {pt:'Agenda',            en:'Calendar'},
   'nav.mais':          {pt:'Mais',              en:'More'},
   'nav.t.imposto':     {pt:'Imposto do ano',    en:'Year tax'},
@@ -681,8 +682,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.97"></script>
-<script src="textos/frases-es.js?v=3.97"></script>
+<script src="textos/frases-en.js?v=3.98"></script>
+<script src="textos/frases-es.js?v=3.98"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7675,7 +7676,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.97"></script>
+<script src="textos/mudancas.js?v=3.98"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -9803,6 +9804,7 @@ const ABAS = {
        continua e leva para lá); "Futuro" passou a se chamar "Projeção" (o id b-futuro continua) */
     {v:'b-futuro',   ico:'🔮', chave:'nav.futuro',      mobile:false},
     {v:'b-precos',   ico:'🏷️', chave:'nav.precos',      mobile:false},
+    {v:'b-viagens',  ico:'✈️', chave:'nav.viagens',     mobile:false},   /* 3.98: modulos/viagem.js */
     {v:'b-rachai',   ico:'🍽️', chave:'nav.rachai',      mobile:false},   /* 3.93: modulos/rachai.js */
     {v:'config',     ico:'⚙️', chave:'nav.config',      mobile:false}
   ],
@@ -30115,13 +30117,13 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/apelido.js?v=1.1.0"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
-<script src="modulos/visao-casa.js?v=1.1.5"></script>
+<script src="modulos/visao-casa.js?v=1.1.6"></script>
 <script src="modulos/previsao.js?v=1.2.1"></script>
 <script src="modulos/orcamento.js?v=1.1.1"></script>
 <script src="modulos/patrimonio-mes.js?v=1.1.0"></script>
 <script src="modulos/dividas.js?v=1.0.0"></script>
 <script src="modulos/seguros.js?v=1.0.1"></script>
-<script src="modulos/mes-a-mes.js?v=1.0.1"></script>
+<script src="modulos/mes-a-mes.js?v=1.0.2"></script>
 <script src="modulos/parcelados.js?v=1.0.1"></script>
 <script src="modulos/contas-fixas.js?v=1.0.0"></script>
 <script src="modulos/documentos.js?v=1.1.0"></script>
@@ -30142,6 +30144,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/canhotos.js?v=1.1.0"></script>
 <script src="modulos/rachai.js?v=1.1.1"></script>
 <script src="modulos/comprovantes.js?v=1.1.0"></script>
+<script src="modulos/viagem.js?v=1.0.0"></script>
 <script src="modulos/pj.js?v=1.2.0"></script>
 <script src="modulos/bs2-extrato.js?v=1.0.1"></script>
 <script src="modulos/pj-gestao.js?v=1.0.1"></script>
