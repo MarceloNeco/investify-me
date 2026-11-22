@@ -8,7 +8,9 @@
        nova, regra zero) e a viagem do RachAI (rateio com outras famílias).
      · Sugestão, nunca sozinho: na janela (início − margem … fim + margem), os lançamentos do banco (postados e pendentes)
        de alimentação, transporte, hospedagem, passeios, compras no destino e IOF/câmbio; sinais fortes: a cidade do destino
-       no texto do banco (o Itaú cola a cidade: "…GRAMADOBR"), MCC de turismo, moeda estrangeira.
+       no texto do banco (qualquer um dos destinos; o Itaú cola a cidade: "…GRAMADOBR"), aeroporto/terminal/loja de aeroporto, MCC de
+       turismo, moeda estrangeira. Nos dias de ida e de volta, compras pequenas (até R$ 300, config.viagemPequena) contam mesmo na
+       cidade de casa; os supérfluos também (lanche, sorvete, lembrança): a ideia é o custo TOTAL da viagem.
        Ficam fora: contas fixas e recorrentes, assinaturas, parcelas de compras de antes, transferências, investimentos,
        faturas e boletos, tudo da PJ, compras grandes sem relação (acima de um valor, ajustável) e a loja que a pessoa já
        disse "não é da viagem".
@@ -56,7 +58,9 @@
   function ehPJ(g) { return !!(g.empresaId || g.pj || (window.Escopo && Escopo.ehPJ && Escopo.ehPJ(g))); }
 
   /* ---------- o que entra, o que fica fora ---------- */
-  var RX_ENTRA = /restaur|lanch|padaria|panific|confeit|cafe|cafeter|bar\b|pizz|burger|churras|sorvet|food|ifood|rappi|mercad|empori|uber|\b99\b|99app|taxi|combust|gasolin|posto|pedag|sem ?parar|conectcar|veloe|estacion|park|locadora|localiza|movida|unidas|aluguel de carro|hotel|pousada|hosped|resort|airbnb|booking|hostel|ingresso|parque|passeio|museu|tour|teleferico|chocolat|lembranc|souvenir|artesan|presente|\biof\b|cambio|turism/i;
+  var RX_ENTRA = /restaur|lanch|hamburg|burguer|snack|doceria|a[cç]a[ií]|padaria|panific|confeit|cafe|cafeter|bar\b|pizz|burger|churras|sorvet|food|ifood|rappi|mercad|empori|uber|\b99\b|99app|taxi|combust|gasolin|posto|pedag|sem ?parar|conectcar|veloe|estacion|park|locadora|localiza|movida|unidas|aluguel de carro|hotel|pousada|hosped|resort|airbnb|booking|hostel|ingresso|parque|passeio|museu|tour|teleferico|chocolat|lembranc|souvenir|artesan|presente|\biof\b|cambio|turism/i;
+  /* 3.98 (complemento do dono): aeroporto, terminal e lojas de aeroporto são sinal forte (o aeroporto de casa também) */
+  var RX_AERO = /aeroporto|airport|terminal|\b(gru|cgh|poa|vcp|gig|sdu|bsb|cnf|rec|ssa|for|flp|cwb)\b|duty ?free|dufry|hudson news|relay\b|casa do p[aã]o de queijo|viena\b|rei do mate|\bbobs?\b|starbucks/i;
   var RX_SUB = /restaurante|alimenta|lanche|padaria|caf[eé]|combust|ped[aá]gio|estacion|t[aá]xi|aplicativo|uber|hosped|hotel|passeio|lazer|viage|ingresso|parque|lembran|presente/i;
   var RX_ANTES = /\bgol\b|gol linhas|voegol|\bazul\b|voeazul|latam|\btam\b|passag|a[eé]rea|airlines|booking|airbnb|hotel|pousada|resort|hostel|decolar|123 ?milhas|maxmilhas|hurb|expedia|trivago|hoteis|localiza|movida|unidas|rent ?a ?car|aluguel de carro|seguro viagem|assist ?card|affinity|travel ace|cvc/i;
   var RX_ASSIN = /anthropic|claude|openai|chatgpt|netflix|spotify|disney|hbo|\bmax\b|prime ?video|amazon ?prime|google|youtube|apple\.com|icloud|deezer|globoplay|paramount|microsoft|adobe|dropbox|canva|assinatura/i;
@@ -71,6 +75,7 @@
   function forte(v, g) {
     var t = C(txt(g)), ds = (v.destinos || []).map(C).filter(function (d) { return d.length >= 4; });
     if (ds.some(function (d) { return t.indexOf(d) >= 0; })) return tr('a cidade do destino no banco', 'the destination city at the bank', 'la ciudad del destino en el banco');
+    if (RX_AERO.test(txt(g))) return tr('aeroporto', 'airport', 'aeropuerto');
     if (g.moeda && g.moeda !== 'BRL') return tr('moeda estrangeira', 'foreign currency', 'moneda extranjera');
     if (mccTurismo(g.contraparte && g.contraparte.mcc)) return tr('tipo de loja de turismo', 'travel merchant type', 'tipo de comercio de turismo');
     return '';
@@ -124,6 +129,8 @@
         var fo = forte(v, g);
         if (r) motivo = r; else if (fo) motivo = fo;
         else if (RX_ENTRA.test(txt(g)) || RX_SUB.test(g.sub || '')) motivo = tr('na janela da viagem', 'within the trip dates', 'dentro de las fechas del viaje');
+        /* nos dias de ida e de volta, compras pequenas contam mesmo na cidade de casa (o lanche no aeroporto, o Uber até lá) */
+        else if ((g.data <= v.inicio || g.data >= (v.fim || v.inicio)) && Number(g.valor) <= (Number(cfg().viagemPequena) || 300)) motivo = tr('dia de ida ou de volta', 'travel day (going or coming back)', 'día de ida o de vuelta');
       } else if (f === 'antes') {
         var hot = (v.destinos || []).concat(v.hotel ? [v.hotel] : []).map(C).filter(function (d) { return d.length >= 4; });
         if (RX_ANTES.test(txt(g)) || hot.some(function (d) { return C(txt(g)).indexOf(d) >= 0; })) motivo = tr('reserva ou passagem antes da viagem', 'booking or ticket before the trip', 'reserva o billete antes del viaje');
@@ -217,7 +224,8 @@
     var h = hoje(), de = mais(h, -30), base = mais(h, -180), gs = Gasto.todos().filter(function (g) { return g.data && !credito(g) && !g.viagem && !ehPJ(g); });
     var rec = gs.filter(function (g) { return g.data >= de && g.data <= h; }).map(function (g) { return { g: g, c: cidadeDe(g) }; }).filter(function (x) { return x.c; });
     var casaC = {}; gs.filter(function (g) { return g.data >= base && g.data < de; }).forEach(function (g) { var c = cidadeDe(g); if (c) casaC[c] = (casaC[c] || 0) + 1; });
-    var ehCasa = function (cid) { var n = 0; Object.keys(casaC).forEach(function (k) { if (k.slice(-cid.length) === cid) n += casaC[k]; }); return n >= 3; };
+    /* a cidade de casa: 3 ou mais gastos dos meses antes com o mesmo fim (6 letras ou mais em comum: "…BAIRROSAOPAULO" e "…VILASAOPAULO") */
+    var ehCasa = function (cid) { var n = 0; Object.keys(casaC).forEach(function (k) { if (sufixo(k, cid).length >= Math.min(6, cid.length)) n += casaC[k]; }); return n >= 3; };
     var grupos = {};
     rec.forEach(function (x, i) {
       rec.forEach(function (y, k) {

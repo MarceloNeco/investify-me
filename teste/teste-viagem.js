@@ -34,6 +34,9 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
     R('d7', '2026-11-20', 250, 'POSTO SERRA GRAMADOBR', { cartaoId: 'c2', grupo: 'VEICULO', sub: 'Combustível' }),
     R('d8', '2026-11-19', 900, 'CONDOMINIO FICTICIO', { recorrenteId: 'rCond', grupo: 'HABITACAO', sub: 'Condomínio' }),
     R('d9', '2026-11-19', 400, 'CONTABILIDADE FICTICIA', { empresaId: 'e1', pj: true }),
+    /* complemento do dono: o lanche no aeroporto de casa na volta entra; o mesmo lanche em casa fora da janela não; Canela também é destino */
+    R('d11', '2026-11-22', 45, 'HAMBURGUERIA AEROPORTO SAOPAULOBR'), R('h7', '2026-11-10', 45, 'HAMBURGUERIA BAIRROSAOPAULOBR'),
+    R('d12', '2026-11-21', 120, 'MALHARIA FICTICIA CANELABR'),
     /* depois: o estorno do hotel */
     R('a3', '2026-11-25', -200, 'HOTEL SERRA FICTICIA ESTORNO', { estorno: true })],
   cartao_pendentes: [Object.assign(R('px', '2026-11-21', 120, 'CAFE COLONIALGRAMADOBR'), { id: 'pa_px', estado: 'pendente', pendente: true, vistoEm: '2026-11-21' })] };
@@ -63,7 +66,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
 
     console.log('2) o cadastro');
     await p.evaluate(() => { const s = (id, v) => { document.getElementById(id).value = v; };
-      s('vgNome', 'Serra em novembro'); s('vgIni', '2026-11-18'); s('vgFim', '2026-11-22'); s('vgHotel', 'Hotel Serra Ficticia'); s('vgLink', 'https://exemplo.invalid/roteiro');
+      s('vgNome', 'Serra em novembro'); s('vgDest', 'Gramado, Canela, Porto Alegre'); s('vgIni', '2026-11-18'); s('vgFim', '2026-11-22'); s('vgHotel', 'Hotel Serra Ficticia'); s('vgLink', 'https://exemplo.invalid/roteiro');
       document.querySelectorAll('#vgPess input').forEach((x) => { x.checked = x.value === 'p1' || x.value === 'p2'; }); });
     ok(await p.evaluate(() => document.getElementById('vgOrc').value === '3000'), 'o orçamento vem do planejado em Viagens (R$ 3.000)');
     await p.click('#genBody [data-acao="vg-salvar"]'); await p.waitForTimeout(300);
@@ -79,12 +82,14 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
     ok(tem('rb_d1') && tem('rb_d2') && tem('rb_d3') && tem('rb_d6'), 'durante: extras do hotel no dia da saída, restaurante, loja de chocolate (a cidade no texto do banco) e o mercado');
     ok(sg.includes('pa_px:durante:pend'), 'a compra pendente aparece (⏳), para entrar quando virar definitiva');
     ok(sg.includes('rb_a3:depois:est'), 'o estorno do hotel aparece ligado à viagem');
+    ok(tem('rb_d11') && !tem('rb_h7'), 'o lanche no aeroporto de casa no dia da volta entra; o mesmo lanche em casa fora da janela não');
+    ok(tem('rb_d12') && await p.evaluate(() => /destino/.test(Viagem.sugestoes(Viagem.lista()[0]).find((s) => s.g.id === 'rb_d12').motivo)), 'vários destinos: Canela no texto do banco é sinal forte');
     ok(!tem('rb_d4') && !tem('rb_d5') && !tem('rb_d7') && !tem('rb_d8') && !tem('rb_d9') && !sg.some((x) => /rb_h/.test(x)), 'ficam fora: a assinatura, a parcela antiga (3/10), o posto no cartão de quem não foi, a conta fixa, a PJ e os gastos de casa: ' + sg.join());
     ok(await p.evaluate(() => Viagem.fora(Viagem.lista()[0], Gasto.todos().find((x) => x.id === 'rb_d5'), 'durante') === 'parcela' && Viagem.fora(Viagem.lista()[0], Gasto.todos().find((x) => x.id === 'rb_d4'), 'durante') === 'assinatura'), 'o motivo: "parcela" e "assinatura"');
 
     console.log('4) confirmar: ✅ ❌ ✂️ e todos');
     await p.evaluate(() => { Viagem.abrir(Viagem.lista()[0].id); render(); });
-    ok(await p.evaluate(() => /Gastos da viagem: confirme \(8\)/.test(document.getElementById('view-b-viagens').textContent)), 'tela da viagem: "Gastos da viagem: confirme (8)"');
+    ok(await p.evaluate(() => /Gastos da viagem: confirme \(10\)/.test(document.getElementById('view-b-viagens').textContent)), 'tela da viagem: "Gastos da viagem: confirme (10)"');
     await p.click('#view-b-viagens .vg-sug[data-g="rb_d6"] [data-acao="vg-nao"]'); await p.waitForTimeout(200);
     ok(await p.evaluate(() => { const v = Viagem.lista()[0], o = Origem.origemDe(Gasto.todos().find((x) => x.id === 'rb_d6')); return v.decisoes.rb_d6 === 'nao' && ST.config.viagemRegras[o] === 'nao'; }), '❌ "Não é": sai e vira regra da loja');
     await p.evaluate(() => { Gasto.add({ id: 'rb_d10', idRobo: 'd10', data: '2026-11-21', valor: 45, desc: 'MERCADO FICTICIO', descRobo: 'MERCADO FICTICIO', fluxo: 'saida', grupo: 'OUTROS', sub: '', origem: 'robo', cartaoId: 'c1' }); });
@@ -101,19 +106,19 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
 
     console.log('5) a pendente vira definitiva (sem dobrar)');
     let r = await p.evaluate(() => Viagem.resumo(Viagem.lista()[0]));
-    ok(r.total === 3280 && r.pendentes === 120, 'total 1.800 + 1.200 + 100 + 230 + 150 − 200 = R$ 3.280; a pendente (120) ainda não conta: ' + r.total + ' / ' + r.pendentes);
+    ok(r.total === 3445 && r.pendentes === 120, 'total 1.800 + 1.200 + 100 + 230 + 150 + 45 + 120 − 200 = R$ 3.445; a pendente (120) ainda não conta: ' + r.total + ' / ' + r.pendentes);
     await p.evaluate(() => { const g = Gasto.add({ id: 'rb_def', idRobo: 'def', data: '2026-11-22', valor: 120, desc: 'CAFE COLONIALGRAMADOBR', descRobo: 'CAFE COLONIALGRAMADOBR', fluxo: 'saida', grupo: 'OUTROS', sub: '', origem: 'robo', cartaoId: 'c1' }); PreAut.substituir(Gasto.todos().find((x) => x.id === 'rb_def')); Viagem.ligarTudo(); });
     r = await p.evaluate(() => Viagem.resumo(Viagem.lista()[0]));
-    ok(r.total === 3400 && r.pendentes === 0 && (await g('rb_def')).viagem, 'o definitivo chegou: entra na viagem uma vez (R$ 3.400), sem dobrar');
+    ok(r.total === 3565 && r.pendentes === 0 && (await g('rb_def')).viagem, 'o definitivo chegou: entra na viagem uma vez (R$ 3.565), sem dobrar');
 
     console.log('6) o resumo');
     ok(r.porCat['Lazer · Restaurantes'] === 230 && r.porCat['Lazer · Hospedagem'] === 1200, 'por categoria (Restaurantes 230, Hospedagem 1.200)');
-    ok(r.porDia['2026-11-19'] === 230 && r.porDia['2026-08-10'] === 1800 && r.porCartao['Cartao Ficticio ••1234'] === 3400 && r.porPessoa.todos === 3400, 'por dia, por cartão e por pessoa');
-    ok(r.fases.antes === 3000 && r.fases.durante === 600 && r.fases.depois === -200, 'antes 3.000 · durante 600 · depois −200 (o estorno)');
-    ok(r.orcamento === 3000 && r.diferenca === 400 && r.dias === 5 && r.porDiaMedio === 680 && r.porPessoaMedio === 1700, 'previsto 3.000 × realizado 3.400 (passou 400); por dia 680 (5 dias); por pessoa 1.700 (2 pessoas)');
+    ok(r.porDia['2026-11-19'] === 230 && r.porDia['2026-08-10'] === 1800 && r.porCartao['Cartao Ficticio ••1234'] === 3565 && r.porPessoa.todos === 3565, 'por dia, por cartão e por pessoa');
+    ok(r.fases.antes === 3000 && r.fases.durante === 765 && r.fases.depois === -200, 'antes 3.000 · durante 765 · depois −200 (o estorno)');
+    ok(r.orcamento === 3000 && r.diferenca === 565 && r.dias === 5 && r.porDiaMedio === 713 && r.porPessoaMedio === 1782.5, 'previsto 3.000 × realizado 3.565 (passou 565); por dia 713 (5 dias); por pessoa 1.782,50 (2 pessoas)');
     await p.evaluate(() => render());
     const tx = await p.evaluate(() => document.getElementById('view-b-viagens').textContent);
-    ok(/Previsto R\$\s?3\.000,00 × realizado R\$\s?3\.400,00 · passou R\$\s?400,00/.test(tx) && /Por categoria/.test(tx) && /Por cartão/.test(tx), 'a tela mostra o previsto × realizado e os blocos');
+    ok(/Previsto R\$\s?3\.000,00 × realizado R\$\s?3\.565,00 · passou R\$\s?565,00/.test(tx) && /Por categoria/.test(tx) && /Por cartão/.test(tx), 'a tela mostra o previsto × realizado e os blocos');
     ok(await p.evaluate(() => Viagem.noMes('2026-11') && !Viagem.noMes('2026-10')), 'Mês a mês: ✈️ em novembro');
     ok(await p.evaluate(() => { abrirLancamento('rb_d2'); const t = document.getElementById('assetModal').textContent; fechar('assetModal'); return /Da viagem: Serra em novembro/.test(t); }), 'a edição do lançamento mostra "✈️ Da viagem: Serra em novembro"');
 

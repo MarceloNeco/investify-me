@@ -736,7 +736,8 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   de Viagens perto das datas ou o do RachAI, `rachaiViagem`), hotel, link do roteiro (só o endereço; GuiaXpert como integração = regra zero),
   `rachaiId`. Ao salvar cria/atualiza o evento de `Previsao` (`eventoId`); o confirmado ganha `g.viagem` + `g.evento` (sai da média, como
   "Foi viagem?"). `sugestoes(v)`: janela ± margem (alimentação, transporte, hospedagem, passeios, compras; sinais fortes: cidade do destino
-  no texto do banco, MCC de turismo, moeda estrangeira), antes até 180 dias (passagem, reserva, aluguel de carro, seguro viagem, hotel/
+  no texto do banco — qualquer um dos destinos —, aeroporto/terminal/loja de aeroporto, MCC de turismo, moeda estrangeira; nos dias de ida e volta,
+  compras pequenas até R$ 300 mesmo na cidade de casa, `config.viagemPequena`), antes até 180 dias (passagem, reserva, aluguel de carro, seguro viagem, hotel/
   destino), estornos da mesma loja; `fora()`: PJ, `recorrenteId`, assinaturas, transferências/faturas/boletos/investimento, parcela k>1,
   grande sem relação (`config.viagemLimite`, 1500), regra "não" da loja. Pendente confirmada: a etiqueta vai para o definitivo
   (`PreAut.substituir` → `gastoId`). `confirmar` grava `decisoes` e a regra por loja (`config.viagemRegras`, por `Origem`); `parte` usa
