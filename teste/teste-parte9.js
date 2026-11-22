@@ -34,6 +34,8 @@ const ARQ = { tipo: 'moneytrio-posicoes', versao: 1, itens: [
       await ctx.addInitScript((t) => { if (!sessionStorage.getItem('semeado')) { localStorage.setItem('investifyme.dados.v1', t); localStorage.setItem('moneytrio.soNesteAparelho', '1'); localStorage.setItem('moneytrio.tutorial.v1', 'visto'); sessionStorage.setItem('semeado', '1'); } }, JSON.stringify(LOCAL));
       const p = await ctx.newPage(); const erros = []; p.on('pageerror', (e) => erros.push(String(e)));
       const semToasts = () => p.evaluate(() => document.querySelectorAll('#toasts .toast').forEach((e) => e.parentNode.removeChild(e)));
+      /* 3.96: o relógio do teste fica antes do dia 21 (crédito do JAM): os FGTS de 01/11 não ganham correção estimada (modulos/fgts.js) */
+      await p.clock.setFixedTime(new Date('2026-11-06T10:00:00-03:00'));
       await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.posicoes || []).length === 1 && window.ImportarPosicoes);
       await p.evaluate(() => { I18n.atual = 'pt'; abrirApp('investify'); irPara('carteira'); });
       await p.waitForFunction(() => window.scrollY === 0);

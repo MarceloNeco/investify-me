@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/canhotos.js — "🧾 Conferir canhotos" com o banco (3.92)        1.0.0 · 20/Nov/2026
+   modulos/canhotos.js — "🧾 Conferir canhotos" com o banco (3.92)        1.1.0 · 22/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 18/Nov/2026; sem IA)
      · Em Lançamentos, "🧾 Conferir canhotos": uma foto (ou várias) com os canhotos da maquininha, cupons e recibos. O motor do
@@ -17,6 +17,11 @@
      · A consulta do CNPJ na internet do motor fica DESLIGADA aqui (seria uma integração nova; regra zero).
    API (window.Canhotos)
      classificar(itens) → {casou, parecido, novo, duvida} · processar(arquivos)
+     perto(item) → [lançamentos do banco perto do valor lido] (1.1.0)
+   1.1.0 (3.96), pelo caso real do papel amassado (lido 512,87 com confiança baixa; o certo era 512,78): valor 'baixa' (ou null com
+     opções) nunca casa sozinho nem vem escolhido — vai para ❓ com "confira olhando o papel", as opções como sugestão e o campo para
+     digitar; se o banco (postado ou pendente) tem, no mesmo cartão/final e na data ±1 dia, um valor a até R$ 1,00 de uma opção ou com
+     os mesmos reais e outros centavos: "No banco tem R$ X nesse dia: é este?" [É este] (o valor do banco vale).
    PONTOS QUE USA
      lancamentos.topo · ações cn-*
    ===================================================================== */
@@ -68,7 +73,34 @@
     return p;
   }
 
+  /* 1.1.0 (3.96): ajuda na dúvida — no banco (postado ou pendente), o mesmo cartão/final, a data ±1 dia e o valor a até R$ 1,00
+     de uma das opções ou com os mesmos reais e outros centavos (512,87 lido × 512,78 no banco). Hora, bandeira, tipo e final ordenam */
+  function perto(it) {
+    var d = iso(it.data), ops = (it.opcoes || []).concat(it.valor != null ? [it.valor] : []).map(Number).filter(function (v) { return v > 0; });
+    if (!d || !ops.length) return [];
+    var usados = {}; pend().forEach(function (x) { if (x.gastoId) usados[x.gastoId] = 1; });
+    var fimDe = function (g) { return String(g.final || g.finalCartao || (g.cartaoId && typeof Banco !== 'undefined' ? (Banco.acharCartao(g.cartaoId) || {}).fim || '' : '')); };
+    var ok = function (g) {
+      var v = Number(g.valor) || 0;
+      if (!(v > 0) || !g.data || Math.abs(dias(g.data, d)) > 1) return false;
+      if (it.final && fimDe(g) && fimDe(g) !== String(it.final)) return false;
+      return ops.some(function (o) { return Math.abs(v - o) <= 1.005 || Math.floor(v) === Math.floor(o); });
+    };
+    var extra = function (g) {
+      var p = pontos(it, g), c = g.cartaoId && typeof Banco !== 'undefined' ? Banco.acharCartao(g.cartaoId) : null;
+      if (it.bandeira && c && c.bandeira && String(c.bandeira).toLowerCase() === String(it.bandeira).toLowerCase()) p += 1;
+      if (it.tipo === 'credito' && g.cartaoId) p += 1;
+      if (it.tipo === 'debito' && !g.cartaoId) p += 1;
+      return p;
+    };
+    var perto1 = function (g) { return Math.min.apply(null, ops.map(function (o) { return Math.abs((Number(g.valor) || 0) - o); })); };
+    return Gasto.todos().filter(function (g) { return g.fluxo === 'saida' && !usados[g.id] && !g.divisao && ok(g); })
+      .concat(pend().filter(function (r) { return !r.doPrint && r.estado === 'pendente' && ok(r); }))
+      .sort(function (a, b) { return (extra(b) - extra(a)) || (perto1(a) - perto1(b)); }).slice(0, 3);
+  }
+
   var API = {
+    perto: perto,
     classificar: function (itens) {
       var out = { casou: [], parecido: [], novo: [], duvida: [] }, tomados = {}, papelVisto = {};
       (itens || []).forEach(function (it, i) {
@@ -76,7 +108,12 @@
         /* a mesma compra (o recibo e o canhoto) conta uma vez */
         if (it.mesmaCompra != null && papelVisto[it.arquivo + '#' + it.mesmaCompra]) return;
         papelVisto[it.arquivo + '#' + it.papel] = 1;
-        if (it.valor == null) { out.duvida.push({ it: it }); return; }
+        /* 1.1.0 (3.96): valor com confiança 'baixa' (ou null com opções) nunca casa sozinho nem vem escolhido: vira dúvida,
+           com o que foi lido como sugestão e o que o banco tem perto ("No banco tem R$ X nesse dia: é este?") */
+        if (it.valor == null || (it.confianca && it.confianca.valor === 'baixa')) {
+          if (it.valor != null && (it.opcoes || []).indexOf(it.valor) < 0) it = Object.assign({}, it, { opcoes: [it.valor].concat(it.opcoes || []) });
+          out.duvida.push({ it: it, perto: API.perto(it) }); return;
+        }
         var todos = candidatos(it), cs = todos.filter(function (g) { return !tomados[g.id]; });
         if (!cs.length) { out.novo.push({ it: it }); return; }
         cs.sort(function (a, b) { return pontos(it, b) - pontos(it, a); });
@@ -150,7 +187,14 @@
           '<button type="button" class="btn sm" data-acao="cn-esperar" data-i="' + i + '">⏳ ' + esc(tr('Esperar o banco', 'Wait for the bank', 'Esperar al banco')) + '</button></div>';
       }) +
       sec('❓', tr('Valor em dúvida', 'Amount unsure', 'Importe dudoso'), gr.duvida, function (x, i) {
-        return '<div class="cn-item" data-grupo="duvida" data-i="' + i + '" style="padding:6px 0;border-top:1px solid var(--line)">' + esc(rot(x.it)) + ' · ' +
+        var tomados = {}; gr.casou.forEach(function (y) { tomados[y.g.id] = 1; });
+        return '<div class="cn-item" data-grupo="duvida" data-i="' + i + '" style="padding:6px 0;border-top:1px solid var(--line)">' + esc(rot(x.it)) +
+          '<span class="t-sub">⚠️ ' + esc(tr('Leitura incerta: confira olhando o papel.', 'Unsure reading: check against the paper.', 'Lectura dudosa: compruébalo mirando el papel.')) + '</span>' +
+          (x.perto || []).filter(function (g) { return !tomados[g.id]; }).map(function (g) {
+            return '<div class="cn-perto" style="margin:4px 0">' + esc(tr('No banco tem ', 'The bank has ', 'En el banco hay ') + fmt(g.valor) + tr(' nesse dia: é este?', ' on that day: is it this one?', ' ese día: ¿es este?')) +
+              '<span class="t-sub">' + esc(nomeG(g)) + '</span><button type="button" class="btn sm primary" data-acao="cn-perto" data-i="' + i + '" data-g="' + esc(g.id) + '">' + esc(tr('É este', 'This one', 'Es este')) + '</button></div>';
+          }).join('') +
+          ((x.it.opcoes || []).length ? '<span class="small muted">' + esc(tr('Pode ser: ', 'Could be: ', 'Puede ser: ')) + '</span>' : '') +
           (x.it.opcoes || []).map(function (v) { return '<button type="button" class="btn sm" data-acao="cn-valor" data-i="' + i + '" data-v="' + v + '">' + fmt(v) + '</button>'; }).join('') +
           '<input data-cn="valor" inputmode="decimal" placeholder="' + esc(tr('outro valor', 'other amount', 'otro importe')) + '" style="width:7em"><button type="button" class="btn sm" data-acao="cn-valor" data-i="' + i + '">' + esc(tr('Usar', 'Use', 'Usar')) + '</button></div>';
       }) +
@@ -179,7 +223,7 @@
   function depois() { Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); }
 
   MoneyModulos.registrar({
-    id: 'canhotos', versao: '1.0.0',
+    id: 'canhotos', versao: '1.1.0',
     pontos: {
       'lancamentos.topo': function () { return '<div class="row" style="margin:0 0 8px"><button type="button" class="btn sm" data-acao="cn-abrir">🧾 ' + esc(tr('Conferir canhotos', 'Check receipts', 'Revisar tickets')) + '</button></div>'; }
     },
@@ -213,6 +257,13 @@
         gr.duvida.splice(gr.duvida.indexOf(r.x), 1);
         var cs = candidatos(it); if (cs.length) gr.parecido.push({ it: it, cs: cs }); else gr.novo.push({ it: it });
         mostrar();
+      },
+      /* 1.1.0 (3.96): a pessoa confirma o lançamento do banco perto do valor lido; o valor do banco vale */
+      'cn-perto': function (el) {
+        var r = item(el), g = alvo(el.dataset.g); if (!g) return;
+        var gr = ultimo.grupos, it = Object.assign({}, r.x.it, { valor: n2(g.valor), confianca: Object.assign({}, r.x.it.confianca, { valor: 'conferido' }) });
+        gr.duvida.splice(gr.duvida.indexOf(r.x), 1);
+        aplicar(g, {}, null); gr.casou.push({ it: it, g: g }); depois(); mostrar();
       },
       'cn-amao': function (el) {
         var r = item(el), it = r.x.it, d = iso(it.data) || hojeISO();

@@ -21,7 +21,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
   gastos: [R('g0', '2026-10-10', 97, 'KVN *CURSO FICTICIO', { grupo: 'PESSOAL', sub: 'Cursos' }), R('g1', '2026-11-10', 97, 'KVN *CURSO FICTICIO'),
     R('g2', '2026-11-12', 45.9, 'AMAZON MARKETPLACE'), R('g3', '2026-11-12', 45.9, 'PADARIA INVENTADA', { cartaoId: 'c2' }),
     R('g5', '2026-11-05', 350, 'CLINICA FICTICIA', { grupo: 'SAUDE', sub: 'Psicologia', contraparte: { nome: 'Clinica Ficticia', cnpj: '11222333000181' } }),
-    R('g6', '2026-11-14', 115.2, 'ANTHROPIC* CLAUDE'), R('g7', '2026-11-14', 4.03, 'IOF COMPRA EXTERIOR')],
+    R('g6', '2026-11-14', 115.2, 'ANTHROPIC* CLAUDE'), R('g7', '2026-11-14', 4.03, 'IOF COMPRA EXTERIOR'), R('g11', '2026-11-18', 512.78, 'SUPERMERCADO FICTICIO')],
   cartao_pendentes: [Object.assign(R('p9', '2026-11-16', 59.9, 'HOTMART*PRODUTO FICTICIO'), { id: 'pa_p9', estado: 'pendente', pendente: true, vistoEm: '2026-11-16' })] };
 const C = (id, subtipo, extra) => Object.assign({ id: 'evid-' + id, tipo: 'comprovante', subtipo, remetente: 'nao-responda@exemplo.com', assunto: 'Assunto de exemplo' }, extra || {});
 
@@ -64,6 +64,16 @@ const C = (id, subtipo, extra) => Object.assign({ id: 'evid-' + id, tipo: 'compr
     await p.evaluate(() => fechar('genModal'));
     ok(await p.evaluate(() => { abrirLancamento('rb_g1'); return /Comprovante do e-mail/.test(document.querySelector('#assetModal').textContent) && /KV-0001/.test(document.querySelector('#assetModal').textContent); }), 'a edição do lançamento mostra a ficha do comprovante (produto, pedido)');
     await p.evaluate(() => fechar('assetModal'));
+
+    /* 3.96: valor incerto nunca casa sozinho; o banco perto vira pergunta */
+    await rec(C('inc', 'compra', { data: '2026-11-18', valor: 512.87, confianca: 'baixa', loja: 'Supermercado Ficticio', final: '1234' }));
+    x = await cp('inc');
+    ok(!x.gastoId && x.perto.join() === 'rb_g11' && /No banco tem R\$\s?512,78 nesse dia: é este\?/.test(await inbox()) && /Valor incerto: confira olhando o comprovante/.test(await inbox()), 'valor com confiança baixa (512,87): não casa sozinho; "No banco tem R$ 512,78 nesse dia: é este?"');
+    await p.evaluate(() => abrirInbox());
+    await p.click('#genBody [data-cp="evid-inc"] [data-acao="cp-esse"]'); await p.waitForTimeout(300);
+    x = await cp('inc');
+    ok(x.gastoId === 'rb_g11' && x.valor === 512.78 && (await g('rb_g11')).ficha.cid === 'evid-inc', '"É este": liga e vale o valor do banco (512,78)');
+    await p.evaluate(() => fechar('genModal'));
 
     console.log('2) reembolso');
     await rec(C('reemb', 'reembolso', { data: '2026-11-15', valor: 30, loja: 'Amazon', referencia: 'REF-0002', final: '1234' }));
@@ -118,7 +128,7 @@ const C = (id, subtipo, extra) => Object.assign({ id: 'evid-' + id, tipo: 'compr
     await p.evaluate(() => { irPara('b-lanc'); render(); });
     ok(await p.evaluate(() => !!document.querySelector('#view-b-lanc [data-acao="cp-abrir"]')), 'Lançamentos: "🧾 Comprovantes a conferir"');
     await p.click('#view-b-lanc [data-acao="cp-abrir"]'); await p.waitForTimeout(200);
-    ok(await p.evaluate(() => document.querySelectorAll('#cpLista .cp-item').length === 11 && /Em Valores a receber/.test(document.getElementById('cpLista').textContent)), 'a lista mostra todos, com a situação de cada um');
+    ok(await p.evaluate(() => document.querySelectorAll('#cpLista .cp-item').length === 12 && /Em Valores a receber/.test(document.getElementById('cpLista').textContent)), 'a lista mostra todos, com a situação de cada um');
     await p.evaluate(() => fechar('genModal'));
     await rec(C('casa1', 'compra', { data: '2026-11-15', valor: 11, loja: 'Mercado Ficticio' }), 'casa');
     ok(await p.evaluate(() => Escopo.de('comprovantes', Comprovantes.lista().find((x) => x.id === 'evid-casa1')) === 'casa' && Escopo.de('comprovantes', Comprovantes.lista().find((x) => x.id === 'evid-kvn')) === 'reservado'), 'visão da casa: segue o escopo da caixa do robô (reservado por padrão)');

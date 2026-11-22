@@ -18,7 +18,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
   cartoes: [{ id: 'c1', apelido: 'Itaú Ficticio', bandeira: 'visa', fim: '1234', vence: 10, fecha: 3 }, { id: 'c2', apelido: 'Outro Ficticio', bandeira: 'master', fim: '9876', vence: 10, fecha: 3 }],
   pessoas: [{ id: 'p1', tipo: 'casa', papel: 'dependente', nome: 'Bia', apelido: 'Bia' }, { id: 'p2', tipo: 'casa', papel: 'dependente', nome: 'Duda', apelido: 'Duda' }],
   gastos: [R('g1', '2026-11-14', 120.51, 'AUTO POSTO EXEMPLO'), R('g2', '2026-11-15', 45, 'PADARIA INVENTADA'), R('g3', '2026-11-15', 45, 'LIVRARIA FICTICIA', { cartaoId: 'c2' }),
-    R('g4', '2026-11-12', 80, 'FARMACIA FICTICIA')],
+    R('g4', '2026-11-12', 80, 'FARMACIA FICTICIA'), R('g11', '2026-11-18', 512.78, 'SUPERMERCADO FICTICIO'), R('g12', '2026-11-18', 512.78, 'OUTRA LOJA FICTICIA', { cartaoId: 'c2' })],
   cartao_pendentes: [Object.assign(R('p9', '2026-11-16', 236, 'LOJABRILHOGUARUJABR', { cartaoId: undefined }), { id: 'pa_p9', estado: 'pendente', pendente: true, vistoEm: '2026-11-16' })] };
 const IT = (papel, valor, extra) => Object.assign({ arquivo: 'foto.jpg', papel, documento: 'cartao', valor, opcoes: [], data: '14/11/2026', hora: null, loja: null, cnpj: null, bandeira: null, tipo: 'credito', parcelas: 1, final: null, nsu: null, aut: null, doc: null, mesmaCompra: null,
   confianca: { valor: valor == null ? 'baixa' : 'alta', data: 'alta' } }, extra || {});
@@ -92,6 +92,18 @@ const IT = (papel, valor, extra) => Object.assign({ arquivo: 'foto.jpg', papel, 
     ok(await p.evaluate(() => /Parecido, confirme/.test(document.getElementById('genBody').textContent) && /FARMACIA FICTICIA/.test(document.getElementById('genBody').textContent)), '❓ escolhendo 80,00 entre as opções: vai para 🟡 com a farmácia de R$ 80 para confirmar');
     await p.click('#genBody .cn-item[data-grupo="parecido"] [data-acao="cn-confirmar"]'); await p.waitForTimeout(100);
     ok(await p.evaluate((n) => /conferido com o canhoto/.test(ST.gastos.find((x) => x.id === 'rb_g4').obs || '') && ST.gastos.length === n + 3, n0), '"É este": liga ao lançamento do banco; só o "Lançar à mão", o postado do robô e a 2ª parte da divisão entraram — nada duplicado');
+    console.log('4) 3.96: valor incerto (papel amassado: lido 512,87, o certo era 512,78)');
+    await p.evaluate(() => fechar('genModal'));
+    const inc = await p.evaluate((x) => { const r = Canhotos.classificar(x); return { casou: r.casou.length, parecido: r.parecido.length, duvida: r.duvida.map((y) => y.it.papel + ':' + y.it.opcoes.join('/') + '>' + y.perto.map((g) => g.id).join('+')) }; },
+      [IT(20, null, { data: '18/11/2026', opcoes: [512.87], final: '1234' }), IT(21, 512.87, { data: '18/11/2026', final: '1234', confianca: { valor: 'baixa', data: 'alta' } }), IT(22, null, { data: '18/11/2026', opcoes: [512.87] })]);
+    ok(inc.casou === 0 && inc.parecido === 0, 'valor null com opções ou com confiança baixa: nada casa sozinho (nem vai para 🟡 com um lançamento já escolhido)');
+    ok(inc.duvida.join() === '20:512.87>rb_g11,21:512.87>rb_g11,22:512.87>rb_g11+rb_g12', 'vão para ❓; perto no banco: o mesmo cartão (final 1234) na data ±1 com valor a até R$ 1,00 (o do outro cartão só entra sem final lido): ' + inc.duvida.join());
+    const n4 = await p.evaluate(() => ST.gastos.length);
+    await p.evaluate((x) => { Canhotos._ler = async () => x; return Canhotos.processar([new File([new Uint8Array([1])], 'f.png', { type: 'image/png' })]); }, [IT(20, null, { data: '18/11/2026', opcoes: [512.87], final: '1234' })]);
+    const tela = await p.evaluate(() => { const c = document.querySelector('#genBody .cn-item[data-grupo="duvida"]'); return { t: c.textContent, sel: !!c.querySelector('select, .primary[data-acao="cn-valor"]') }; });
+    ok(/No banco tem R\$\s?512,78 nesse dia: é este\?/.test(tela.t) && /confira olhando o papel/.test(tela.t) && /Pode ser:/.test(tela.t) && !tela.sel, '"No banco tem R$ 512,78 nesse dia: é este?", "confira olhando o papel", a opção 512,87 só como sugestão (nada escolhido) e o campo para digitar');
+    await p.click('#genBody .cn-item[data-grupo="duvida"] [data-acao="cn-perto"]'); await p.waitForTimeout(100);
+    ok(await p.evaluate((n) => /conferido com o canhoto/.test(ST.gastos.find((x) => x.id === 'rb_g11').obs || '') && ST.gastos.length === n && /512,78/.test(document.querySelector('#genBody .cn-item[data-grupo="casou"]').textContent), n4), '"É este": liga ao lançamento do banco e vale o valor do banco (512,78); nenhum lançamento novo');
     ok(p.erros.length === 0, 'sem erro de página' + (p.erros.length ? ': ' + p.erros[0] : ''));
   } catch (e) { falhas++; console.log('  ✗ ERRO: ' + (e && e.stack || e)); }
   await b.close(); srv.close();

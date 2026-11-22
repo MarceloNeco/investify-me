@@ -48,9 +48,11 @@ async function recolherAbrir(p, nome, antesDeMedir) {
   ok(a.grade && a.rec === 'true|Recolher o calendário' && !a.etq, nome + ': calendário aberto por padrão, com o botão de recolher no cabeçalho (aria-expanded=true)');
   const semAnimar = () => p.waitForFunction(() => !document.getElementById('navCal').getAnimations().length, null, { timeout: 5000 }).catch(() => {});
   await p.focus('#navCal .calm-rec'); await p.keyboard.press('Enter'); await semAnimar(); await p.waitForTimeout(50);
+  /* 3.96: o foco chega à etiqueta logo depois do redesenho; espera por ele (até 2 s) em vez de confiar nos 50 ms */
+  await p.waitForFunction(() => document.activeElement && document.activeElement.classList.contains('calm-etq'), null, { timeout: 2000 }).catch(() => {});
   const r = await cal();
   ok(!r.grade && r.etq === 'false' && /^[A-ZÇ][a-zç]+ de 20\d\d$/.test(r.mes) && !r.cortado && r.h < 60, nome + ': pelo teclado recolhe numa etiqueta "' + r.mes + '" (' + r.h + ' px, aria-expanded=false, sem cortar o texto)');
-  ok(r.foco === 'calm-etq' && r.salvo === '1', nome + ': o foco vai para a etiqueta e a escolha fica guardada no aparelho');
+  ok(r.foco === 'calm-etq' && r.salvo === '1', nome + ': o foco vai para a etiqueta e a escolha fica guardada no aparelho' + (r.foco === 'calm-etq' && r.salvo === '1' ? '' : ' (foco: ' + r.foco + ', salvo: ' + r.salvo + ')'));
   ok(r.bot <= r.H + 1 && r.navBot <= r.H + 1, nome + ': recolhido, a etiqueta e a barra cabem na tela (' + r.top + '–' + r.bot + ')');
   await p.reload(); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.recorrentes || []).length >= 1);
   await antesDeMedir(); await p.waitForTimeout(300);
@@ -239,8 +241,13 @@ async function janelasTravam(p, nome, celular) {
       if (!tb.querySelector('.cresceu')) tb.querySelector('tbody tr td:nth-child(2)').insertAdjacentHTML('beforeend', '<span class="cresceu" style="white-space:nowrap"> ' + 'Z'.repeat(260) + '</span>');
       return tb.scrollWidth > tb.parentElement.clientWidth + 2;
     }, null, { polling: 200, timeout: 5000 });
-    await p.waitForTimeout(400);
-    const a3 = await acoes();
+    /* 3.96: sem espera fixa — até 3 s, reinjetando se o app redesenhar no meio (às vezes 400 ms não bastavam) */
+    let a3 = null;
+    for (let i = 0; i < 15; i++) {
+      await p.waitForTimeout(200);
+      a3 = await acoes(); if (a3.larga && a3.rola && !a3.cabe) break;
+      await p.evaluate(() => { const tb = [...document.querySelectorAll('#view-b-custos .tbl-wrap > table')].pop(); if (tb && !tb.querySelector('.cresceu')) tb.querySelector('tbody tr td:nth-child(2)').insertAdjacentHTML('beforeend', '<span class="cresceu" style="white-space:nowrap"> ' + 'Z'.repeat(260) + '</span>'); });
+    }
     ok(a3.larga && a3.rola && !a3.cabe, 'a tabela cresceu depois de desenhada: deixa de "caber", rola para o lado e as ações não ficam cortadas (' + JSON.stringify(a3) + ')');
     await p.evaluate(() => render());
     await p.setViewportSize({ width: 1280, height: 720 }); await p.waitForTimeout(600);

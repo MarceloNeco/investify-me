@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.95 · 20/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.96 · 22/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.96 */
+  'Valor incerto não casa sozinho':'Unsure amount never matches on its own',
+  'Conferir canhotos e comprovantes do e-mail: quando o valor foi lido com pouca certeza (papel amassado, por exemplo), o app não liga sozinho a nenhum lançamento nem escolhe uma opção por você. Mostra o que leu como sugestão, pede para conferir olhando o papel e deixa digitar. E ajuda: se o banco tem, no mesmo cartão e na mesma data (±1 dia), um valor bem perto, pergunta "No banco tem R$ X nesse dia: é este?" — com "É este", vale o valor do banco.':'Check receipts and e-mail receipts: when the amount was read with low certainty (crumpled paper, for example), the app does not link it to any entry on its own nor pick an option for you. It shows what it read as a suggestion, asks you to check against the paper and lets you type. And it helps: if the bank has, on the same card and date (±1 day), an amount very close, it asks "The bank has R$ X on that day: is it this one?" — with "This one", the bank amount counts.',
   /* 3.95 */
   'Comprovantes do e-mail':'E-mail receipts',
   '"🧾 Comprovantes a conferir" em Lançamentos e no 📥: o robô passa a mandar o que lê nos e-mails (sem IA) — compras, reembolsos, notas fiscais, recibos do exterior e boletos. Nenhum vira lançamento sozinho: a compra liga ao lançamento do cartão (com o produto e o pedido, e uma sugestão de categoria), o reembolso entra em Valores a receber, a nota fiscal liga à compra e à despesa médica (para o IR), o recibo do exterior vai para o Recibo × cartão e o boleto avisa 2 dias antes (e diz "não pague" se a conta está no débito automático).':'"🧾 Receipts to check" in Entries and in 📥: the robot now sends what it reads in your e-mails (no AI) — purchases, refunds, invoices, foreign receipts and bank slips. None becomes an entry on its own: a purchase links to the card entry (with the product and the order, and a category suggestion), a refund goes into Money to receive, an invoice links to the purchase and to the medical expense (for taxes), a foreign receipt goes to Receipt × card and a bank slip warns 2 days ahead (and says "do not pay" if the bill is on direct debit).',

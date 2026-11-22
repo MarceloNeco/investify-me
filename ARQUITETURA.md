@@ -723,6 +723,11 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   `ReciboExterior.receber`; `boleto` → 📥 a partir de 2 dias antes, `DebitoAuto.conflito` ("NÃO PAGUE"), pago = gasto do mesmo valor até 5
   dias depois do vencimento; `outro` → a pessoa escolhe; `fotos_a_ler` → botão do 🧾 Conferir canhotos. Grupo novo do 📥 `comprovantes`;
   `lancamentos.topo` ("🧾 Comprovantes a conferir") e `lancamento.form` (a ficha). Testes: `teste/teste-comprovantes.js` e `teste-nuvem` (seção 3).
+  **3.96 — Valor incerto não casa sozinho** (caso real: papel amassado, lido 512,87 com confiança baixa, o certo era 512,78). canhotos 1.1.0:
+  valor `baixa` (ou null com `opcoes`) vai sempre para ❓ (o lido vira sugestão, nada pré-escolhido, "confira olhando o papel", campo para
+  digitar) e `Canhotos.perto(it)` procura no banco (postado ou pendente) o mesmo cartão/final, data ±1 e valor a até R$ 1,00 de uma opção (ou
+  os mesmos reais) — ordenado por final, loja, hora, bandeira e tipo —, com "No banco tem R$ X nesse dia: é este?" [É este] (`cn-perto`; vale o
+  valor do banco). comprovantes 1.1.0: os campos opcionais `confianca`/`opcoes` do robô seguem a mesma regra (`perto` + `cp-esse`).
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem
