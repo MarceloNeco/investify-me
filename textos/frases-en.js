@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.96 · 22/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.97 · 22/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.97 */
+  'Foco do teclado no calendário':'Keyboard focus on the calendar',
+  'Correção: no computador de tela muito larga, ao recolher ou abrir o calendário do menu pelo teclado, o foco às vezes se perdia (quem usa teclado ficava sem saber onde estava). Agora ele fica no botão do calendário.':'Fix: on very wide computer screens, when collapsing or opening the menu calendar with the keyboard, the focus was sometimes lost (keyboard users could not tell where they were). Now it stays on the calendar button.',
   /* 3.96 */
   'Valor incerto não casa sozinho':'Unsure amount never matches on its own',
   'Conferir canhotos e comprovantes do e-mail: quando o valor foi lido com pouca certeza (papel amassado, por exemplo), o app não liga sozinho a nenhum lançamento nem escolhe uma opção por você. Mostra o que leu como sugestão, pede para conferir olhando o papel e deixa digitar. E ajuda: se o banco tem, no mesmo cartão e na mesma data (±1 dia), um valor bem perto, pergunta "No banco tem R$ X nesse dia: é este?" — com "É este", vale o valor do banco.':'Check receipts and e-mail receipts: when the amount was read with low certainty (crumpled paper, for example), the app does not link it to any entry on its own nor pick an option for you. It shows what it read as a suggestion, asks you to check against the paper and lets you type. And it helps: if the bank has, on the same card and date (±1 day), an amount very close, it asks "The bank has R$ X on that day: is it this one?" — with "This one", the bank amount counts.',

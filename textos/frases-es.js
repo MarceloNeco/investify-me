@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.96 · 22/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.97 · 22/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,9 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.97 — rascunho, revisar */
+  'Foco do teclado no calendário':'Foco del teclado en el calendario',
+  'Correção: no computador de tela muito larga, ao recolher ou abrir o calendário do menu pelo teclado, o foco às vezes se perdia (quem usa teclado ficava sem saber onde estava). Agora ele fica no botão do calendário.':'Corrección: en ordenadores de pantalla muy ancha, al plegar o abrir el calendario del menú con el teclado, el foco a veces se perdía (quien usa el teclado no sabía dónde estaba). Ahora se queda en el botón del calendario.',
   /* 3.96 — rascunho, revisar */
   'Valor incerto não casa sozinho':'Importe dudoso no se vincula solo',
   'Conferir canhotos e comprovantes do e-mail: quando o valor foi lido com pouca certeza (papel amassado, por exemplo), o app não liga sozinho a nenhum lançamento nem escolhe uma opção por você. Mostra o que leu como sugestão, pede para conferir olhando o papel e deixa digitar. E ajuda: se o banco tem, no mesmo cartão e na mesma data (±1 dia), um valor bem perto, pergunta "No banco tem R$ X nesse dia: é este?" — com "É este", vale o valor do banco.':'Revisar tickets y comprobantes del correo: cuando el importe se leyó con poca seguridad (papel arrugado, por ejemplo), la app no lo vincula sola a ningún movimiento ni elige una opción por ti. Muestra lo que leyó como sugerencia, pide comprobarlo mirando el papel y deja escribirlo. Y ayuda: si el banco tiene, en la misma tarjeta y fecha (±1 día), un importe muy cercano, pregunta "En el banco hay R$ X ese día: ¿es este?" — con "Es este", vale el importe del banco.',
