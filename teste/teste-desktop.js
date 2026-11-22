@@ -239,8 +239,13 @@ async function janelasTravam(p, nome, celular) {
       if (!tb.querySelector('.cresceu')) tb.querySelector('tbody tr td:nth-child(2)').insertAdjacentHTML('beforeend', '<span class="cresceu" style="white-space:nowrap"> ' + 'Z'.repeat(260) + '</span>');
       return tb.scrollWidth > tb.parentElement.clientWidth + 2;
     }, null, { polling: 200, timeout: 5000 });
-    await p.waitForTimeout(400);
-    const a3 = await acoes();
+    /* 3.96: sem espera fixa — até 3 s, reinjetando se o app redesenhar no meio (às vezes 400 ms não bastavam) */
+    let a3 = null;
+    for (let i = 0; i < 15; i++) {
+      await p.waitForTimeout(200);
+      a3 = await acoes(); if (a3.larga && a3.rola && !a3.cabe) break;
+      await p.evaluate(() => { const tb = [...document.querySelectorAll('#view-b-custos .tbl-wrap > table')].pop(); if (tb && !tb.querySelector('.cresceu')) tb.querySelector('tbody tr td:nth-child(2)').insertAdjacentHTML('beforeend', '<span class="cresceu" style="white-space:nowrap"> ' + 'Z'.repeat(260) + '</span>'); });
+    }
     ok(a3.larga && a3.rola && !a3.cabe, 'a tabela cresceu depois de desenhada: deixa de "caber", rola para o lado e as ações não ficam cortadas (' + JSON.stringify(a3) + ')');
     await p.evaluate(() => render());
     await p.setViewportSize({ width: 1280, height: 720 }); await p.waitForTimeout(600);
