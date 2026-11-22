@@ -34,7 +34,7 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.recorrentes || []).length === 2);
       await p.evaluate(() => { I18n.atual = 'pt'; abrirApp('budget'); irPara('b-custos'); custosAba = 'recorrentes'; render(); });
       const recs = () => p.evaluate(() => Store.estado.recorrentes.map((r) => JSON.parse(JSON.stringify(r))));
-      const novo = async () => { await p.click('#view-b-custos [data-acao="cf-adicionar"]'); await p.click('#genBody [data-acao="rec-novo"]');   /* 3.76: "+ Adicionar" */ await p.waitForSelector('#assetModal:not(.hidden) #rcNome'); };
+      const novo = async () => { await p.click('#view-b-custos [data-acao="cf-adicionar"]'); await p.click('#genBody [data-acao="rec-novo"]');   /* 3.76: "+ Adicionar" */ await p.waitForSelector('#assetModal:not(.hidden) #rcNome'); await p.waitForFunction(() => document.activeElement && document.activeElement.id === 'rcNome', null, { timeout: 1000 }).catch(() => {});   /* o app põe o foco no nome depois de 30 ms (3.97: senão o que se digita a seguir pode cair no nome) */ };
 
       /* (a)(l) frente simples, no topo */
       await novo();
@@ -71,7 +71,7 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       await p.fill('#rcConta', 'outro.email@exemplo.com'); await p.fill('#rcCartao', 'Itaú Black final 1101'); await p.fill('#rcObs', 'renova em fevereiro');
       /* (k) Salvar e copiar */
       await p.click('[data-acao="rec-salvar-copiar"]');
-      await p.waitForSelector('#assetModal:not(.hidden) #rcNome');
+      await p.waitForSelector('#assetModal:not(.hidden) #rcNome'); await p.waitForFunction(() => document.activeElement && document.activeElement.id === 'rcNome', null, { timeout: 1000 }).catch(() => {});   /* o app põe o foco no nome depois de 30 ms (3.97: senão o que se digita a seguir pode cair no nome) */
       ok(/cópia/.test(await p.textContent('#assetModalTitle')) && await p.inputValue('#rcNome') === 'Escola Bia', '"Salvar e copiar" salva e abre outro igual');
       let R = await recs(); const esc = R.find((r) => r.nome === 'Escola Bia');
       ok(esc && esc.fora.join() === '7' && esc.conta === 'outro.email@exemplo.com' && esc.cartao === 'Itaú Black final 1101' && esc.obs === 'renova em fevereiro' && esc.pagador === '', 'salvo com meses de fora, conta de acesso, cartão e observação');
@@ -80,7 +80,7 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       await p.fill('#rcNome', 'Ampliado Bia 2º sem'); await p.fill('#rcValor', '900');
       await p.evaluate((a) => { document.getElementById('rcDesde').value = a + '-08-01'; document.getElementById('rcAte').value = a + '-12-31'; }, ANO);
       const nAntes = (await recs()).length;
-      await p.click('[data-acao="rec-salvar-copiar"]'); await p.waitForSelector('#assetModal:not(.hidden) #rcNome');
+      await p.click('[data-acao="rec-salvar-copiar"]'); await p.waitForSelector('#assetModal:not(.hidden) #rcNome'); await p.waitForFunction(() => document.activeElement && document.activeElement.id === 'rcNome', null, { timeout: 1000 }).catch(() => {});   /* o app põe o foco no nome depois de 30 ms (3.97: senão o que se digita a seguir pode cair no nome) */
       ok((await recs()).length === nAntes + 1 && await p.isHidden('#genModal [data-acao="rec-rep-salvar"]').catch(() => true), '"Ampliado Bia 2º sem" × "1º sem": número diferente no nome, não pergunta nada');
       await p.fill('#rcNome', 'Ampliado Bia 1º sem'); await p.fill('#rcValor', '900');
       await p.evaluate((a) => { document.getElementById('rcDesde').value = a + '-08-01'; document.getElementById('rcAte').value = a + '-12-31'; }, ANO);
@@ -101,7 +101,7 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
         && !Recorrente.parecemRepetidos({ nome: 'Escola 2026', valor: 3000, grupo: 'DEPENDENTES', sub: 'Escola', desde: '2026-01-01', ate: '2026-12-31' }, { nome: 'Escola 2027', valor: 3000, grupo: 'DEPENDENTES', sub: 'Escola', desde: '2027-01-01', ate: '2027-12-31' })),
         'repetido: "auto × imóvel (6 cartas)" e "Prudential 1 × 2" não; mesmo nome (sem maiúsculas) ou mesma categoria/pessoa/valor ±10% sim; períodos que não se cruzam não');
       /* "Atualizar o existente": o que foi digitado vai para o que já existe */
-      await p.evaluate(() => abrirRecorrente(null, null, {})); await p.waitForSelector('#assetModal:not(.hidden) #rcNome');
+      await p.evaluate(() => abrirRecorrente(null, null, {})); await p.waitForSelector('#assetModal:not(.hidden) #rcNome'); await p.waitForFunction(() => document.activeElement && document.activeElement.id === 'rcNome', null, { timeout: 1000 }).catch(() => {});   /* o app põe o foco no nome depois de 30 ms (3.97: senão o que se digita a seguir pode cair no nome) */
       await p.fill('#rcNome', 'Ampliado Bia 2º sem'); await p.fill('#rcValor', '950');
       await p.evaluate((a) => { document.getElementById('rcDesde').value = a + '-08-01'; document.getElementById('rcAte').value = a + '-12-31'; }, ANO);
       const nAntes3 = (await recs()).length;
@@ -110,7 +110,7 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       R = await recs();
       ok(R.length === nAntes3 && R.filter((r) => r.nome === 'Ampliado Bia 2º sem').length === 1 && R.find((r) => r.nome === 'Ampliado Bia 2º sem').valor === 950, '"Atualizar o existente" não cria outro: o existente fica com o valor novo');
       /* N26 clonar */
-      await p.click('[data-recclone="r-seg"]'); await p.waitForSelector('#assetModal:not(.hidden) #rcNome');
+      await p.click('[data-recclone="r-seg"]'); await p.waitForSelector('#assetModal:not(.hidden) #rcNome'); await p.waitForFunction(() => document.activeElement && document.activeElement.id === 'rcNome', null, { timeout: 1000 }).catch(() => {});   /* o app põe o foco no nome depois de 30 ms (3.97: senão o que se digita a seguir pode cair no nome) */
       ok(await p.inputValue('#rcNome') === 'Seguro Auto ' + ANO && /cópia/.test(await p.textContent('#assetModalTitle')), 'Clonar abre um novo com tudo preenchido');
       await p.click('#assetModal .f-actions [data-close="assetModal"]');
       /* N26 rolar */
@@ -120,7 +120,7 @@ const LOCAL = { v: 1, posicoes: [], gastos, config: {}, recorrentes: [
       R = await recs(); const rol = R.find((r) => r.rolouDe === 'r-seg');
       ok(rol && rol.nome === 'Seguro Auto ' + (ANO + 1) && rol.desde === (ANO + 1) + '-01-01' && rol.ate === (ANO + 1) + '-12-31' && rol.aConfirmar, 'rolado: nome, datas 1 ano à frente e "a confirmar"');
       ok((await p.textContent('#view-b-custos')).includes('a confirmar'), 'a lista mostra "⚠ a confirmar"');
-      await p.click('[data-recedit="' + rol.id + '"]'); await p.waitForSelector('#assetModal:not(.hidden) #rcNome');
+      await p.click('[data-recedit="' + rol.id + '"]'); await p.waitForSelector('#assetModal:not(.hidden) #rcNome'); await p.waitForFunction(() => document.activeElement && document.activeElement.id === 'rcNome', null, { timeout: 1000 }).catch(() => {});   /* o app põe o foco no nome depois de 30 ms (3.97: senão o que se digita a seguir pode cair no nome) */
       ok(/A confirmar/.test(await p.textContent('#assetModalBody')), 'o formulário avisa "A confirmar"');
       await p.click('#assetModal [data-acao="rec-salvar"]');
       ok(!(await recs()).find((r) => r.id === rol.id).aConfirmar, 'salvar tira o "a confirmar"');

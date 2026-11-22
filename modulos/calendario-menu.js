@@ -48,7 +48,7 @@
     recolhido: ler,
     aplicar: function (alvo) {
       if (!alvo || !alvo.firstChild) return;
-      setTimeout(devolverFoco, 0);
+      if (focoEm) setTimeout(devolverFoco, 0);   /* só quando o foco esteve num botão do calendário */
       if (ler()) {
         alvo.innerHTML = '<button type="button" class="calm-etq" data-calmenu="abrir" aria-expanded="false" aria-controls="navCal" title="' +
           (pt() ? 'Abrir o calendário' : 'Open the calendar') + '" aria-label="' + (pt() ? 'Abrir o calendário' : 'Open the calendar') + ' — ' + esc(rotuloMes()) + '">' + ICONE + '<span class="calm-mes">' + esc(rotuloMes()) + '</span>' + SETA_CIMA + '</button>';

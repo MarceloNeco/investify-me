@@ -82,7 +82,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos, recorrentes: [
       await p.evaluate(() => { irPara('b-custos'); }); await p.waitForFunction(() => window.scrollY === 0);
       await semToasts();
       const [fc] = await Promise.all([p.waitForEvent('filechooser'), p.click('#view-b-custos [data-acao="cf-adicionar"]').then(() => p.click('#genBody [data-acao="cdl-contrato"]'))]);   /* 3.76: "+ Adicionar" */
-      await fc.setFiles(contrato); await p.waitForSelector('#assetModal:not(.hidden) #rcNome');
+      await fc.setFiles(contrato); await p.waitForSelector('#assetModal:not(.hidden) #rcNome'); await p.waitForFunction(() => document.activeElement && document.activeElement.id === 'rcNome', null, { timeout: 1000 }).catch(() => {});   /* o app põe o foco no nome depois de 30 ms (3.97: senão o que se digita a seguir pode cair no nome) */
       const fc2 = await p.evaluate(() => lerFormRecorrente());
       ok(fc2.nome === 'Escola Bia ' + (ANO + 1) && fc2.valor === 3000 && fc2.dia === 5 && fc2.grupo === 'DEPENDENTES' && fc2.quem === 'Bia' && fc2.irpf && fc2.desde === (ANO + 1) + '-01-01' && fc2.ate === (ANO + 1) + '-12-31' && /Exemplo/.test(fc2.obs), 'contrato PDF → "Novo compromisso" preenchido (Escola Bia ' + (ANO + 1) + ', R$ 3.000, dia 5, jan–dez, IR)');
       ok(await p.evaluate(() => (Store.estado.arquivos || []).some((a) => a.tipo === 'contrato')), 'o PDF do contrato fica guardado');
