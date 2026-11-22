@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/canhotos.js — "🧾 Conferir canhotos" com o banco (3.92)        1.1.0 · 22/Nov/2026
+   modulos/canhotos.js — "🧾 Conferir canhotos" com o banco (3.92)        1.1.1 · 22/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 18/Nov/2026; sem IA)
      · Em Lançamentos, "🧾 Conferir canhotos": uma foto (ou várias) com os canhotos da maquininha, cupons e recibos. O motor do
@@ -208,7 +208,8 @@
   function campo(c, k) { var e = c.querySelector('[data-cn="' + k + '"]'); return e ? String(e.value || '').trim() : ''; }
   function alvo(id) { return Gasto.todos().find(function (g) { return g.id === id; }) || pend().find(function (r) { return r.id === id; }) || null; }
   /* a classificação vai para o lançamento do banco; numa pendente, fica nela e vai para o postado depois (print-colar) */
-  function aplicar(g, d, partes) {
+  function aplicar(g, d, partes, it) {
+    if (it && it.hora && !g.hora && /^\d{2}:\d{2}$/.test(it.hora)) d = Object.assign({}, d, { hora: it.hora });   /* 1.1.1 (3.98): a hora do canhoto vai para o lançamento do banco sem hora */
     var ehGasto = Gasto.todos().some(function (x) { return x.id === g.id; });
     if (window.Pessoas && d.paraQuem) Pessoas.ligar(d, 'paraQuem', 'paraQuemId');
     var obs = [g.obs, tr('conferido com o canhoto', 'checked against the receipt', 'comprobado con el ticket')].filter(Boolean).join(' · ');
@@ -223,7 +224,7 @@
   function depois() { Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); }
 
   MoneyModulos.registrar({
-    id: 'canhotos', versao: '1.1.0',
+    id: 'canhotos', versao: '1.1.1',
     pontos: {
       'lancamentos.topo': function () { return '<div class="row" style="margin:0 0 8px"><button type="button" class="btn sm" data-acao="cn-abrir">🧾 ' + esc(tr('Conferir canhotos', 'Check receipts', 'Revisar tickets')) + '</button></div>'; }
     },
@@ -241,13 +242,13 @@
       'cn-aplicar': function (el) {
         var r = item(el), g = r.x.g, partes = null, box = r.c.querySelector('.cn-div:not([hidden]) [data-dvbloco]');
         if (box) { var l = Divisao.ler(box.dataset.dvbloco, n2(g.valor)); if (l.erro) return toast(l.erro, 'warn'); partes = l.partes; }
-        aplicar(g, { paraQuem: campo(r.c, 'quem'), grupo: campo(r.c, 'grupo') || g.grupo, sub: campo(r.c, 'sub') || g.sub }, partes);
+        aplicar(g, { paraQuem: campo(r.c, 'quem'), grupo: campo(r.c, 'grupo') || g.grupo, sub: campo(r.c, 'sub') || g.sub }, partes, r.x.it);
         depois(); r.c.querySelector('.cn-class').hidden = true; toast(tr('Classificado no lançamento do banco.', 'Classified on the bank entry.', 'Clasificado en el movimiento del banco.'));
       },
       'cn-confirmar': function (el) {
         var r = item(el), id = campo(r.c, 'par'), g = id && alvo(id);
         var gr = ultimo.grupos; gr.parecido.splice(gr.parecido.indexOf(r.x), 1);
-        if (g) { aplicar(g, {}, null); gr.casou.push({ it: r.x.it, g: g }); depois(); } else gr.novo.push({ it: r.x.it });
+        if (g) { aplicar(g, {}, null, r.x.it); gr.casou.push({ it: r.x.it, g: g }); depois(); } else gr.novo.push({ it: r.x.it });
         mostrar();
       },
       'cn-valor': function (el) {
@@ -263,7 +264,7 @@
         var r = item(el), g = alvo(el.dataset.g); if (!g) return;
         var gr = ultimo.grupos, it = Object.assign({}, r.x.it, { valor: n2(g.valor), confianca: Object.assign({}, r.x.it.confianca, { valor: 'conferido' }) });
         gr.duvida.splice(gr.duvida.indexOf(r.x), 1);
-        aplicar(g, {}, null); gr.casou.push({ it: it, g: g }); depois(); mostrar();
+        aplicar(g, {}, null, it); gr.casou.push({ it: it, g: g }); depois(); mostrar();
       },
       'cn-amao': function (el) {
         var r = item(el), it = r.x.it, d = iso(it.data) || hojeISO();

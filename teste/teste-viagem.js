@@ -37,6 +37,10 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
     /* complemento do dono: o lanche no aeroporto de casa na volta entra; o mesmo lanche em casa fora da janela não; Canela também é destino */
     R('d11', '2026-11-22', 45, 'HAMBURGUERIA AEROPORTO SAOPAULOBR'), R('h7', '2026-11-10', 45, 'HAMBURGUERIA BAIRROSAOPAULOBR'),
     R('d12', '2026-11-21', 120, 'MALHARIA FICTICIA CANELABR'),
+    /* ida e volta com hora: padaria às 7h em casa (fora), Uber às 9h (o primeiro), lanche no aeroporto às 10h (dentro);
+       na volta, lanche no aeroporto às 15h (dentro), Uber às 17h (o último), mercado às 19h em casa (fora) */
+    R('i1', '2026-11-18', 15, 'PADARIA BAIRROSAOPAULOBR', { hora: '07:00' }), R('i2', '2026-11-18', 60, 'UBER *TRIP', { hora: '09:00' }), R('i3', '2026-11-18', 35, 'LANCHONETE AEROPORTO GRU', { hora: '10:00' }),
+    R('v1', '2026-11-22', 40, 'LANCHE AEROPORTO POA', { hora: '15:00' }), R('v2', '2026-11-22', 70, 'UBER *TRIP', { hora: '17:00' }), R('v3', '2026-11-22', 90, 'SUPERMERCADO BAIRROSAOPAULOBR', { hora: '19:00' }),
     /* depois: o estorno do hotel */
     R('a3', '2026-11-25', -200, 'HOTEL SERRA FICTICIA ESTORNO', { estorno: true })],
   cartao_pendentes: [Object.assign(R('px', '2026-11-21', 120, 'CAFE COLONIALGRAMADOBR'), { id: 'pa_px', estado: 'pendente', pendente: true, vistoEm: '2026-11-21' })] };
@@ -75,6 +79,18 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
     ok(await p.evaluate(() => Escopo.de('viagens', Viagem.lista()[0]) === 'casa'), 'quem foi é da casa: a viagem é da casa');
     ok(!/Parece que você está viajando/.test(await inbox()), 'com a viagem criada, o 📥 não pergunta mais');
 
+    console.log('2b) ida e volta: o primeiro e o último gasto');
+    let ib = await inbox();
+    ok(/ida \(18\/Nov\): Qual foi o PRIMEIRO gasto da viagem\?/.test(ib) && /volta \(22\/Nov\): Qual foi o ÚLTIMO gasto da viagem\?/.test(ib), '📥: "Qual foi o PRIMEIRO gasto da viagem?" (ida) e "Qual foi o ÚLTIMO?" (volta)');
+    const ordem = await p.evaluate(() => Viagem.perguntasHora(Viagem.lista()[0]).map((q) => q.lado + ':' + q.l.map((g) => (g.hora || 'sem') + '/' + g.id).join(',')));
+    ok(ordem[0] === 'ida:07:00/rb_i1,09:00/rb_i2,10:00/rb_i3' && /^volta:15:00\/rb_v1,17:00\/rb_v2,19:00\/rb_v3,.*sem\//.test(ordem[1]), 'a lista do dia em ordem de hora, os sem hora no fim: ' + ordem.join(' | '));
+    await p.evaluate(() => abrirInbox());
+    await p.click('#genBody .vg-hora[data-lado="ida"] li[data-g="rb_i2"] [data-acao="vg-primeiro"]'); await p.waitForTimeout(300);
+    await p.click('#genBody .vg-hora[data-lado="volta"] li[data-g="rb_v2"] [data-acao="vg-ultimo"]'); await p.waitForTimeout(300);
+    await p.evaluate(() => fechar('genModal'));
+    ok(await p.evaluate(() => { const v = Viagem.lista()[0]; return v.horaInicio === '09:00' && v.horaFim === '17:00'; }), 'a resposta grava a hora de saída (09:00) e de chegada (17:00)');
+    ok(!/PRIMEIRO|ÚLTIMO/.test(await inbox()), 'respondido, o 📥 não pergunta mais');
+
     console.log('3) o que entra e o que fica fora');
     const sg = await p.evaluate(() => Viagem.sugestoes(Viagem.lista()[0]).map((s) => s.g.id + ':' + s.fase + (s.pend ? ':pend' : '') + (s.estorno ? ':est' : '')));
     const tem = (id) => sg.some((x) => x.indexOf(id + ':') === 0);
@@ -82,6 +98,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
     ok(tem('rb_d1') && tem('rb_d2') && tem('rb_d3') && tem('rb_d6'), 'durante: extras do hotel no dia da saída, restaurante, loja de chocolate (a cidade no texto do banco) e o mercado');
     ok(sg.includes('pa_px:durante:pend'), 'a compra pendente aparece (⏳), para entrar quando virar definitiva');
     ok(sg.includes('rb_a3:depois:est'), 'o estorno do hotel aparece ligado à viagem');
+    ok(!tem('rb_i1') && tem('rb_i2') && tem('rb_i3') && tem('rb_v1') && tem('rb_v2') && !tem('rb_v3'), 'ida: padaria às 7h fora, Uber às 9h e lanche às 10h dentro; volta: lanche às 15h e Uber às 17h dentro, mercado às 19h fora');
     ok(tem('rb_d11') && !tem('rb_h7'), 'o lanche no aeroporto de casa no dia da volta entra; o mesmo lanche em casa fora da janela não');
     ok(tem('rb_d12') && await p.evaluate(() => /destino/.test(Viagem.sugestoes(Viagem.lista()[0]).find((s) => s.g.id === 'rb_d12').motivo)), 'vários destinos: Canela no texto do banco é sinal forte');
     ok(!tem('rb_d4') && !tem('rb_d5') && !tem('rb_d7') && !tem('rb_d8') && !tem('rb_d9') && !sg.some((x) => /rb_h/.test(x)), 'ficam fora: a assinatura, a parcela antiga (3/10), o posto no cartão de quem não foi, a conta fixa, a PJ e os gastos de casa: ' + sg.join());
@@ -89,7 +106,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
 
     console.log('4) confirmar: ✅ ❌ ✂️ e todos');
     await p.evaluate(() => { Viagem.abrir(Viagem.lista()[0].id); render(); });
-    ok(await p.evaluate(() => /Gastos da viagem: confirme \(10\)/.test(document.getElementById('view-b-viagens').textContent)), 'tela da viagem: "Gastos da viagem: confirme (10)"');
+    ok(await p.evaluate(() => /Gastos da viagem: confirme \(14\)/.test(document.getElementById('view-b-viagens').textContent)), 'tela da viagem: "Gastos da viagem: confirme (14)"');
     await p.click('#view-b-viagens .vg-sug[data-g="rb_d6"] [data-acao="vg-nao"]'); await p.waitForTimeout(200);
     ok(await p.evaluate(() => { const v = Viagem.lista()[0], o = Origem.origemDe(Gasto.todos().find((x) => x.id === 'rb_d6')); return v.decisoes.rb_d6 === 'nao' && ST.config.viagemRegras[o] === 'nao'; }), '❌ "Não é": sai e vira regra da loja');
     await p.evaluate(() => { Gasto.add({ id: 'rb_d10', idRobo: 'd10', data: '2026-11-21', valor: 45, desc: 'MERCADO FICTICIO', descRobo: 'MERCADO FICTICIO', fluxo: 'saida', grupo: 'OUTROS', sub: '', origem: 'robo', cartaoId: 'c1' }); });
@@ -106,19 +123,19 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
 
     console.log('5) a pendente vira definitiva (sem dobrar)');
     let r = await p.evaluate(() => Viagem.resumo(Viagem.lista()[0]));
-    ok(r.total === 3445 && r.pendentes === 120, 'total 1.800 + 1.200 + 100 + 230 + 150 + 45 + 120 − 200 = R$ 3.445; a pendente (120) ainda não conta: ' + r.total + ' / ' + r.pendentes);
+    ok(r.total === 3650 && r.pendentes === 120, 'total 1.800 + 1.200 + 100 + 230 + 150 + 45 + 120 + 60 + 35 + 40 + 70 − 200 = R$ 3.650; a pendente (120) ainda não conta: ' + r.total + ' / ' + r.pendentes);
     await p.evaluate(() => { const g = Gasto.add({ id: 'rb_def', idRobo: 'def', data: '2026-11-22', valor: 120, desc: 'CAFE COLONIALGRAMADOBR', descRobo: 'CAFE COLONIALGRAMADOBR', fluxo: 'saida', grupo: 'OUTROS', sub: '', origem: 'robo', cartaoId: 'c1' }); PreAut.substituir(Gasto.todos().find((x) => x.id === 'rb_def')); Viagem.ligarTudo(); });
     r = await p.evaluate(() => Viagem.resumo(Viagem.lista()[0]));
-    ok(r.total === 3565 && r.pendentes === 0 && (await g('rb_def')).viagem, 'o definitivo chegou: entra na viagem uma vez (R$ 3.565), sem dobrar');
+    ok(r.total === 3770 && r.pendentes === 0 && (await g('rb_def')).viagem, 'o definitivo chegou: entra na viagem uma vez (R$ 3.770), sem dobrar');
 
     console.log('6) o resumo');
     ok(r.porCat['Lazer · Restaurantes'] === 230 && r.porCat['Lazer · Hospedagem'] === 1200, 'por categoria (Restaurantes 230, Hospedagem 1.200)');
-    ok(r.porDia['2026-11-19'] === 230 && r.porDia['2026-08-10'] === 1800 && r.porCartao['Cartao Ficticio ••1234'] === 3565 && r.porPessoa.todos === 3565, 'por dia, por cartão e por pessoa');
-    ok(r.fases.antes === 3000 && r.fases.durante === 765 && r.fases.depois === -200, 'antes 3.000 · durante 765 · depois −200 (o estorno)');
-    ok(r.orcamento === 3000 && r.diferenca === 565 && r.dias === 5 && r.porDiaMedio === 713 && r.porPessoaMedio === 1782.5, 'previsto 3.000 × realizado 3.565 (passou 565); por dia 713 (5 dias); por pessoa 1.782,50 (2 pessoas)');
+    ok(r.porDia['2026-11-19'] === 230 && r.porDia['2026-08-10'] === 1800 && r.porCartao['Cartao Ficticio ••1234'] === 3770 && r.porPessoa.todos === 3770, 'por dia, por cartão e por pessoa');
+    ok(r.fases.antes === 3000 && r.fases.durante === 970 && r.fases.depois === -200, 'antes 3.000 · durante 970 · depois −200 (o estorno)');
+    ok(r.orcamento === 3000 && r.diferenca === 770 && r.dias === 5 && r.porDiaMedio === 754 && r.porPessoaMedio === 1885, 'previsto 3.000 × realizado 3.770 (passou 770); por dia 754 (5 dias); por pessoa 1.885 (2 pessoas)');
     await p.evaluate(() => render());
     const tx = await p.evaluate(() => document.getElementById('view-b-viagens').textContent);
-    ok(/Previsto R\$\s?3\.000,00 × realizado R\$\s?3\.565,00 · passou R\$\s?565,00/.test(tx) && /Por categoria/.test(tx) && /Por cartão/.test(tx), 'a tela mostra o previsto × realizado e os blocos');
+    ok(/Previsto R\$\s?3\.000,00 × realizado R\$\s?3\.770,00 · passou R\$\s?770,00/.test(tx) && /Por categoria/.test(tx) && /Por cartão/.test(tx), 'a tela mostra o previsto × realizado e os blocos');
     ok(await p.evaluate(() => Viagem.noMes('2026-11') && !Viagem.noMes('2026-10')), 'Mês a mês: ✈️ em novembro');
     ok(await p.evaluate(() => { abrirLancamento('rb_d2'); const t = document.getElementById('assetModal').textContent; fechar('assetModal'); return /Da viagem: Serra em novembro/.test(t); }), 'a edição do lançamento mostra "✈️ Da viagem: Serra em novembro"');
 
@@ -126,6 +143,16 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
     await p.evaluate(() => { Viagem.salvar({ nome: 'Congresso', destinos: ['Recife'], inicio: '2026-10-05', fim: '2026-10-07', pessoas: ['p3'], escopo: 'reservado' }); });
     ok(await p.evaluate(() => { Escopo.soCasa = () => true; const n = Viagem.lista().filter((v) => Escopo.de('viagens', v) === 'casa').length; Escopo.soCasa = () => false; return n === 1; }), 'a viagem marcada como reservada fica fora da visão da casa');
     ok(await p.evaluate(() => { I18n.atual = 'en'; render(); const a = document.getElementById('view-b-viagens').textContent; I18n.atual = 'es'; render(); const b = document.getElementById('view-b-viagens').textContent; I18n.atual = 'pt'; render(); return /Trip summary/.test(a) && /Resumen del viaje/.test(b); }), 'EN e ES (rascunho)');
+    console.log('8) guardar no aparelho (mais de 200 lançamentos)');
+    const cod = await p.evaluate(() => {
+      const l = [{ id: 'x1', data: '2026-11-19', valor: 230, grupo: 'LAZER', sub: 'Restaurantes', desc: 'R', fluxo: 'saida', descRobo: 'R GRAMADOBR', idRobo: 'x1', viagem: 'vg1', evento: 'ev1', hora: '12:30', contraparte: { nome: 'R' }, divisao: { id: 'd', total: 300, n: 2, k: 1 }, ficha: { cid: 'c' } },
+        { id: 'x2', data: '2026-11-25', valor: -200, grupo: 'OUTROS', desc: 'E', fluxo: 'entrada', estorno: true }];
+      const pac = GastoCodec.empacotar(l), de = GastoCodec.desempacotar(JSON.parse(JSON.stringify(pac)));
+      const velho = JSON.parse(JSON.stringify(pac)); velho.l.forEach((x) => x.splice(25)); const dv = GastoCodec.desempacotar(velho);
+      return { a: de[0], b: de[1], velho: dv[0].id === 'x1' && dv[0].valor === 230 && !dv[0].viagem };
+    });
+    ok(cod.a.viagem === 'vg1' && cod.a.evento === 'ev1' && cod.a.hora === '12:30' && cod.a.descRobo === 'R GRAMADOBR' && cod.a.contraparte.nome === 'R' && cod.a.divisao.total === 300 && cod.a.ficha.cid === 'c', 'o formato compacto agora guarda a etiqueta da viagem, a hora, o texto do robô, a contraparte, a divisão e a ficha (antes se perdiam ao recarregar)');
+    ok(cod.b.fluxo === 'entrada' && cod.b.estorno === true && cod.velho, 'o fluxo de entrada fora de Renda volta certo; o pacote antigo (sem a coluna nova) abre igual');
     ok(p.erros.length === 0, 'sem erro de página' + (p.erros.length ? ': ' + p.erros[0] : ''));
   } catch (e) { falhas++; console.log('  ✗ ERRO: ' + (e && e.stack || e)); }
   await b.close(); srv.close();

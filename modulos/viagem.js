@@ -20,6 +20,10 @@
        resposta vira regra por loja (Origem). A viagem é uma ETIQUETA (g.viagem): a categoria não muda. O lançamento
        confirmado também ganha o evento da viagem (g.evento, modulos/previsao.js): sai da média do mês, como "Foi viagem?".
        Pendente confirmada: a etiqueta vai para o definitivo quando ele chegar (PreAut.substituir), sem contar em dobro.
+     · Hora (complemento do dono): a viagem guarda a hora em que saiu e chegou em casa (opcional). Nos dias de ida e de volta, o 📥
+       pergunta "Qual foi o PRIMEIRO gasto da viagem?" / "o ÚLTIMO?" com a lista do dia em ordem de hora (g.hora, que vem do robô,
+       do print e dos canhotos; os sem hora no fim, para confirmar um a um); a resposta grava horaInicio/horaFim e o que foi antes
+       do primeiro (ida) e depois do último (volta) fica fora. Com a hora conhecida, a margem daquele lado deixa de valer.
      · Resumo: total; por categoria, dia, pessoa e cartão; antes/durante/depois; previsto × realizado; custo por dia e por
        pessoa; a parte da família no RachAI; ✈️ no Mês a mês (MesAMes) nos meses da viagem.
      · 📥 ("viagem"): muitos gastos seguidos numa cidade que não é a de casa → "Parece que você está viajando (Gramado,
@@ -102,7 +106,18 @@
     return dn ? ps.indexOf(dn.id) >= 0 : true;
   }
 
-  function janela(v) { return { de: mais(v.inicio, -(v.antes != null ? Number(v.antes) : 1)), ate: mais(v.fim || v.inicio, v.depois != null ? Number(v.depois) : 1) }; }
+  /* com a hora de saída/chegada conhecida, a margem daquele lado some: a viagem começa e acaba ali */
+  function janela(v) {
+    return { de: v.horaInicio ? v.inicio : mais(v.inicio, -(v.antes != null ? Number(v.antes) : 1)),
+      ate: v.horaFim ? (v.fim || v.inicio) : mais(v.fim || v.inicio, v.depois != null ? Number(v.depois) : 1) };
+  }
+  /* nos dias de ida e de volta, o que foi antes de sair de casa ou depois de chegar fica fora (só quem tem hora) */
+  function foraDaHora(v, g) {
+    if (!g.hora) return false;
+    if (g.data === v.inicio && v.horaInicio && g.hora < v.horaInicio) return true;
+    if (g.data === (v.fim || v.inicio) && v.horaFim && g.hora > v.horaFim) return true;
+    return false;
+  }
   function fase(v, d) { var j = janela(v); return d < j.de ? 'antes' : d > j.ate ? 'depois' : 'durante'; }
   function decisao(v, id) { return (v.decisoes || {})[id] || ''; }
   function outra(v, g) { return g.viagem && g.viagem !== v.id; }
@@ -114,7 +129,7 @@
     Gasto.todos().forEach(function (g) { if (g.viagem === v.id) origensViagem[origem(g)] = 1; });
     var ver = function (g, ehPend) {
       if (!g || !g.data || g.data < de0 || g.data > ate0 || g.viagem === v.id || outra(v, g) || decisao(v, g.id) || vistos[g.id]) return;
-      if (!daConta(v, g) || Math.abs(Number(g.valor) || 0) === 0) return;
+      if (!daConta(v, g) || Math.abs(Number(g.valor) || 0) === 0 || foraDaHora(v, g)) return;
       var f = fase(v, g.data), motivo = '';
       if (credito(g)) {   /* estorno ligado a um gasto da viagem (ou a uma reserva/passagem) */
         if (g.grupo === 'RENDA' || ehPJ(g)) return;
@@ -213,6 +228,19 @@
     return r ? n2(r.valor) : 0;
   }
 
+  /* ---------- ida e volta: "Qual foi o PRIMEIRO / o ÚLTIMO gasto da viagem?" ---------- */
+  function doDia(v, d) {
+    return Gasto.todos().concat(pend().filter(function (p) { return p.estado === 'pendente'; })).filter(function (g) {
+      return g.data === d && !credito(g) && g.fluxo !== 'entrada' && daConta(v, g) && !fora(v, g, 'durante') && decisao(v, g.id) !== 'nao';
+    }).sort(function (a, b) { return a.hora && b.hora ? a.hora.localeCompare(b.hora) : a.hora ? -1 : b.hora ? 1 : 0; });
+  }
+  function perguntasHora(v) {
+    var out = [], h = hoje();
+    if (!v.horaInicio && v.inicio <= h) { var l = doDia(v, v.inicio); if (l.some(function (g) { return g.hora; })) out.push({ lado: 'ida', dia: v.inicio, l: l }); }
+    if (!v.horaFim && (v.fim || v.inicio) <= h && (v.fim || v.inicio) !== v.inicio) { var l2 = doDia(v, v.fim); if (l2.some(function (g) { return g.hora; })) out.push({ lado: 'volta', dia: v.fim, l: l2 }); }
+    return out;
+  }
+
   /* ---------- "Parece que você está viajando" ---------- */
   function cidadeDe(g) {
     var ws = String(g.descRobo || g.desc || '').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Z ]/g, ' ').trim().split(/\s+/);
@@ -260,7 +288,8 @@
       depois: d.depois != null && d.depois !== '' ? Math.max(0, Math.min(10, Number(d.depois) || 0)) : 1,
       pessoas: d.pessoas || [], cartoes: d.cartoes || [], contas: d.contas || [],
       orcamento: Number(d.orcamento) > 0 ? n2(d.orcamento) : 0, link: /^https?:\/\//i.test(String(d.link || '').trim()) ? String(d.link).trim().slice(0, 300) : '',
-      rachaiId: d.rachaiId || '', hotel: String(d.hotel || '').trim().slice(0, 60)
+      rachaiId: d.rachaiId || '', hotel: String(d.hotel || '').trim().slice(0, 60),
+      horaInicio: /^\d{2}:\d{2}$/.test(String(d.horaInicio || '')) ? d.horaInicio : '', horaFim: /^\d{2}:\d{2}$/.test(String(d.horaFim || '')) ? d.horaFim : ''
     };
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dados.inicio || ''))) return null;
     if (d.escopo === 'casa' || d.escopo === 'reservado') dados.escopo = d.escopo;
@@ -286,7 +315,7 @@
 
   var API = {
     _hoje: null, lista: lista, salvar: salvar, tirar: tirar, janela: janela, sugestoes: sugestoes, itens: itens, resumo: resumo,
-    detectar: detectar, cidadeDe: cidadeDe, fora: fora, orcamentoPlanejado: orcamentoPlanejado,
+    detectar: detectar, cidadeDe: cidadeDe, fora: fora, perguntasHora: perguntasHora, orcamentoPlanejado: orcamentoPlanejado,
     confirmar: function (v, id, sim) { var r = confirmar(v, id, sim); levarPendentes(v); return r; },
     confirmarTodos: function (v) { var n = 0; sugestoes(v).forEach(function (s) { if (confirmar(v, s.g.id, true)) n++; }); levarPendentes(v); return n; },
     parte: function (v, id, valor) {
@@ -373,6 +402,8 @@
       f(tr('Nome', 'Name', 'Nombre'), '<input id="vgNome" maxlength="80" value="' + esc(v.nome || '') + '" placeholder="' + esc(tr('Ex.: Serra em novembro', 'E.g.: Mountains in November', 'Ej.: Sierra en noviembre')) + '">') +
       f(tr('Destino(s), separados por vírgula', 'Destination(s), comma separated', 'Destino(s), separados por coma'), '<input id="vgDest" maxlength="160" value="' + esc((v.destinos || []).join(', ')) + '">') +
       f(tr('Início', 'Start', 'Inicio'), '<input id="vgIni" type="date" value="' + esc(v.inicio || '') + '">') + f(tr('Fim', 'End', 'Fin'), '<input id="vgFim" type="date" value="' + esc(v.fim || '') + '">') +
+      f(tr('Saí de casa às (opcional)', 'Left home at (optional)', 'Salí de casa a las (opcional)'), '<input id="vgHIni" type="time" value="' + esc(v.horaInicio || '') + '">') +
+      f(tr('Cheguei em casa às (opcional)', 'Got home at (optional)', 'Llegué a casa a las (opcional)'), '<input id="vgHFim" type="time" value="' + esc(v.horaFim || '') + '">') +
       f(tr('Dias antes (aeroporto, estrada)', 'Days before (airport, road)', 'Días antes (aeropuerto, carretera)'), '<input id="vgAntes" type="number" min="0" max="10" value="' + (v.antes != null ? v.antes : 1) + '">') +
       f(tr('Dias depois', 'Days after', 'Días después'), '<input id="vgDepois" type="number" min="0" max="10" value="' + (v.depois != null ? v.depois : 1) + '">') +
       f(tr('Orçamento (R$)', 'Budget (R$)', 'Presupuesto (R$)'), '<input id="vgOrc" inputmode="decimal" value="' + (orc ? String(orc).replace('.', ',') : '') + '">') +
@@ -408,6 +439,17 @@
             botao('vg-sug-nao', tr('Não foi viagem', 'Not a trip', 'No fue un viaje'), ' data-ch="' + esc(s.chave) + '"') + '</span></li>';
         });
         lista().filter(visivel).forEach(function (v) {
+          perguntasHora(v).forEach(function (q) {
+            n++;
+            h += '<li class="inb-item vg-hora" data-lado="' + q.lado + '"><div><b>✈️ ' + esc(v.nome + ' · ' + (q.lado === 'ida' ? tr('ida', 'going', 'ida') : tr('volta', 'coming back', 'vuelta')) + ' (' + I18n.data(q.dia, { semAno: true }) + '): ' +
+              (q.lado === 'ida' ? tr('Qual foi o PRIMEIRO gasto da viagem?', 'Which was the FIRST trip spending?', '¿Cuál fue el PRIMER gasto del viaje?') : tr('Qual foi o ÚLTIMO gasto da viagem?', 'Which was the LAST trip spending?', '¿Cuál fue el ÚLTIMO gasto del viaje?'))) + '</b>' +
+              '<span class="t-sub">' + esc(q.lado === 'ida' ? tr('O que veio antes dele fica fora.', 'What came before it stays out.', 'Lo anterior queda fuera.') : tr('O que veio depois dele fica fora.', 'What came after it stays out.', 'Lo posterior queda fuera.')) + '</span>' +
+              '<ul class="vg-hora-lista" style="margin:4px 0 0;padding-left:16px">' + q.l.map(function (g) {
+                return '<li class="small" data-g="' + esc(g.id) + '">' + esc((g.hora || tr('sem hora', 'no time', 'sin hora')) + ' · ' + (g.descRobo || g.desc || '') + ' · ' + fmt(g.valor)) +
+                  (g.hora ? ' ' + botao(q.lado === 'ida' ? 'vg-primeiro' : 'vg-ultimo', q.lado === 'ida' ? tr('É o primeiro', 'First one', 'Es el primero') : tr('É o último', 'Last one', 'Es el último'), ' data-v="' + esc(v.id) + '" data-h="' + esc(g.hora) + '"')
+                    : ' <span class="muted">(' + esc(tr('confirme um a um', 'confirm one by one', 'confirma uno a uno')) + ')</span>') + '</li>';
+              }).join('') + '</ul></div></li>';
+          });
           var k = sugestoes(v).length; if (!k) return; n++;
           h += '<li class="inb-item"><div><b>✈️ ' + esc(v.nome + ': ' + k + tr(' gastos para confirmar', ' spendings to confirm', ' gastos por confirmar')) + '</b><span class="t-sub">' + esc(fmtDias(v)) + '</span></div><span class="inb-acoes">' +
             botao('vg-abrir', tr('Confirmar', 'Confirm', 'Confirmar'), ' data-v="' + esc(v.id) + '" data-close="genModal"', 'primary') + '</span></li>';
@@ -441,7 +483,7 @@
       'vg-salvar': function () {
         var box = document.querySelector('.vg-form'), id = box && box.dataset.v;
         var d = { nome: val('vgNome'), destinos: val('vgDest').split(',').map(function (x) { return x.trim(); }).filter(Boolean), inicio: val('vgIni'), fim: val('vgFim'),
-          antes: val('vgAntes'), depois: val('vgDepois'), orcamento: num(val('vgOrc')), hotel: val('vgHotel'), link: val('vgLink'), rachaiId: val('vgRachai'),
+          antes: val('vgAntes'), depois: val('vgDepois'), horaInicio: val('vgHIni'), horaFim: val('vgHFim'), orcamento: num(val('vgOrc')), hotel: val('vgHotel'), link: val('vgLink'), rachaiId: val('vgRachai'),
           pessoas: marcados('vgPess'), cartoes: marcados('vgCart'), contas: marcados('vgContas') };
         var antes = id && lerVia(id), casaMarc = (document.getElementById('vgCasa') || {}).checked;
         if (!antes || (antes.escopo === 'casa') !== casaMarc) d.escopo = casaMarc ? 'casa' : (antes || d.pessoas.length ? 'reservado' : undefined);
@@ -453,6 +495,9 @@
       },
       'vg-tirar': function (el) { tirar(el.dataset.v); aberta = null; fechar('genModal'); depois(); },
       'vg-abrir': function (el) { aberta = el.dataset.v; if (typeof irPara === 'function') irPara('b-viagens'); if (typeof render === 'function') render(); },
+      /* a resposta grava a hora de saída / de chegada */
+      'vg-primeiro': function (el) { var v = lerVia(el.dataset.v); if (!v) return; v.horaInicio = el.dataset.h; depois(); },
+      'vg-ultimo': function (el) { var v = lerVia(el.dataset.v); if (!v) return; v.horaFim = el.dataset.h; depois(); },
       'vg-voltar': function () { aberta = null; if (typeof render === 'function') render(); },
       'vg-sim': function (el) { var v = lerVia(el.dataset.v); if (v && API.confirmar(v, el.dataset.id, true)) depois(); },
       'vg-nao': function (el) { var v = lerVia(el.dataset.v); if (v && API.confirmar(v, el.dataset.id, false)) depois(); },

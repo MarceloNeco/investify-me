@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.5 · 20/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.6 · 22/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -62,6 +62,7 @@
   19. 1.15.2 (3.84) — N10: depois de abrir da nuvem, cartões, metas, bancos e empresas em ordem alfabética (estável entre aparelhos).
   21. 1.15.4 (3.89) — o idioma segue o I18n do app (3 idiomas: tt(pt, en, es); sem ES, o inglês).
   22. 1.15.5 (3.95) — caixa do robô: tipo "comprovante" (dos e-mails) vai para modulos/comprovantes.js; nunca vira lançamento.
+  23. 1.15.6 (3.98) — o campo opcional "hora" (HH:MM, hora de SP) do robô vai para o lançamento (g.hora).
   20. 1.15.3 (3.87) — o robô mandar de novo um lançamento DIVIDIDO pela pessoa não desfaz a divisão (corrigir compara com o total).
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
@@ -1567,6 +1568,7 @@
       if (g.desc) g.descRobo = g.desc.slice(0, 160);                                    /* o texto original do extrato (regra do espelho) */
       if (l.conta) g.contaRobo = String(l.conta).trim().slice(0, 80);                   /* a conta do banco (conferência do saldo) */
       if (l.para_quem) g.paraQuem = String(l.para_quem).trim().slice(0, 80);
+      if (/^([01]\d|2[0-3]):[0-5]\d$/.test(String(l.hora || ''))) g.hora = String(l.hora);   /* 1.15.6 (3.98): a hora do banco (SP), quando ele informa */
       /* 1.12.0: a outra parte (contraparte): CNPJ, id_pessoa (o CPF virou HMAC no robô; nunca aparece na tela), nome no banco,
          meio e MCC. Reconhece contato/profissional nessa ordem (modulos/contraparte.js); MCC só vira palpite de categoria */
       if (l.contraparte && typeof l.contraparte === 'object') {
