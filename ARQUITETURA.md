@@ -728,6 +728,8 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   digitar) e `Canhotos.perto(it)` procura no banco (postado ou pendente) o mesmo cartão/final, data ±1 e valor a até R$ 1,00 de uma opção (ou
   os mesmos reais) — ordenado por final, loja, hora, bandeira e tipo —, com "No banco tem R$ X nesse dia: é este?" [É este] (`cn-perto`; vale o
   valor do banco). comprovantes 1.1.0: os campos opcionais `confianca`/`opcoes` do robô seguem a mesma regra (`perto` + `cp-esse`).
+  **3.97 — Foco do calendário do menu.** calendario-menu 1.2.1: um redesenho logo depois de recolher/abrir (o ajuste da barra lateral em telas
+  muito largas) tirava o botão com o foco; `aplicar` devolve o foco ao botão novo se ele estava num botão do calendário há até 2 s (`focusin`).
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem

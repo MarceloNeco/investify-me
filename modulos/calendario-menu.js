@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/calendario-menu.js — recolher e abrir o calendário do menu   1.2.0 · 13/Nov/2026
+   modulos/calendario-menu.js — recolher e abrir o calendário do menu   1.2.1 · 22/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      O calendário pequeno no pé do menu (BudgetONE; barra lateral no computador, menu ☰ no celular) ganha um
@@ -7,6 +7,8 @@
      Tocar na etiqueta abre de novo. O padrão é aberto; a escolha fica lembrada neste aparelho.
      Acessível: botões de verdade, aria-expanded, aria-controls, foco visível; depois de trocar, o foco vai para
      o botão que aparece no lugar (quem usa teclado não se perde).
+     1.2.1 (3.97): se o calendário é redesenhado de novo logo depois (ex.: o ajuste da barra lateral no monitor grande) e o
+     botão com o foco some, o foco volta para o botão novo (até 2 s depois de o foco ter ido para ele).
      1.1.0 (3.65): abre e fecha com animação de altura (~220 ms, ease) e o chevron gira junto (a seta mostra a ação:
      aberto = para cima, recolher; recolhido = para baixo, abrir). Com "reduzir movimento", troca sem animar. A barra
      lateral recalcula a altura no FIM da animação.
@@ -34,10 +36,19 @@
     nome = nome.charAt(0).toUpperCase() + nome.slice(1);
     return pt() ? nome + ' de ' + ano : nome + ' ' + ano;
   }
+  /* 1.2.1 (3.97): o último foco num botão do calendário; se um redesenho tira o botão, o foco volta ao novo */
+  var focoEm = 0;
+  document.addEventListener('focusin', function (e) { focoEm = e.target.closest && e.target.closest('#navCal [data-calmenu]') ? Date.now() : 0; });
+  function devolverFoco() {
+    if (!focoEm || Date.now() - focoEm > 2000) return;
+    var a = document.activeElement; if (a && a !== document.body && document.contains(a)) return;
+    var novo = document.querySelector('#navCal [data-calmenu]'); if (novo) novo.focus({ preventScroll: true });
+  }
   var API = {
     recolhido: ler,
     aplicar: function (alvo) {
       if (!alvo || !alvo.firstChild) return;
+      if (focoEm) setTimeout(devolverFoco, 0);   /* só quando o foco esteve num botão do calendário */
       if (ler()) {
         alvo.innerHTML = '<button type="button" class="calm-etq" data-calmenu="abrir" aria-expanded="false" aria-controls="navCal" title="' +
           (pt() ? 'Abrir o calendário' : 'Open the calendar') + '" aria-label="' + (pt() ? 'Abrir o calendário' : 'Open the calendar') + ' — ' + esc(rotuloMes()) + '">' + ICONE + '<span class="calm-mes">' + esc(rotuloMes()) + '</span>' + SETA_CIMA + '</button>';
@@ -73,6 +84,6 @@
     if (novo) novo.focus({ preventScroll: true });   /* o botão foi redesenhado: o foco vai para o que ficou no lugar, sem pular a página */
   });
 
-  MoneyModulos.registrar({ id: 'calendario-menu', versao: '1.2.0' });
+  MoneyModulos.registrar({ id: 'calendario-menu', versao: '1.2.1' });
   window.CalendarioMenu = API;
 })();

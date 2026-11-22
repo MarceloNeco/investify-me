@@ -150,7 +150,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [], recorrentes: [],
       ok(await p.evaluate(() => (Store.estado.arquivos || []).filter((a) => a.tipo === 'contrato').length === 2 && Store.estado.arquivos.some((a) => a.tipo === 'boleto')), 'os 3 PDFs ficam guardados (2 contratos e o boleto)');
       ok(await p.evaluate((t) => CompromissoDe.planoModelo([CompromissoDe.lerModelo(t)]).gasto.jaLancado, BOLETO.join('\n')), 'ler o boleto de novo: a 1ª parcela já aparece como lançada');
       ok((await p.textContent('#view-b-custos')).match(/a confirmar/g).length >= 2, 'a lista mostra "⚠ a confirmar" nos dois');
-      await p.evaluate(() => abrirRecorrente(Store.estado.recorrentes[0].id, null, {})); await p.waitForSelector('#assetModal:not(.hidden) #rcNome');
+      await p.evaluate(() => abrirRecorrente(Store.estado.recorrentes[0].id, null, {})); await p.waitForSelector('#assetModal:not(.hidden) #rcNome'); await p.waitForFunction(() => document.activeElement && document.activeElement.id === 'rcNome', null, { timeout: 1000 }).catch(() => {});   /* o app põe o foco no nome depois de 30 ms (3.97: senão o que se digita a seguir pode cair no nome) */
       ok(/Criado a partir do contrato/.test(await p.textContent('#assetModalBody')), 'abrir o compromisso explica: "Criado a partir do contrato. Confira…"');
       await p.click('#assetModal .f-actions [data-close="assetModal"]');
 
