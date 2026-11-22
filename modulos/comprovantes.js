@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.0.0 · 20/Nov/2026
+   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.1.0 · 22/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, "adiante tudo do e-mail"; sem IA)
      · A caixa do robô (nuvem.js, money_entrada) traz um tipo novo de item, tipo "comprovante", tirado dos e-mails lidos
@@ -21,6 +21,9 @@
        mandar a mesma foto.
      · Repetido (o mesmo id): atualiza, nunca duplica.
      · Visão da casa: segue o escopo da caixa do robô de onde veio (reservado por padrão; visao-casa 1.1.5).
+     · 1.1.0 (3.96): compra com valor incerto (confianca 'baixa', ou valor null com opcoes) nunca casa sozinho: "⚠️ Valor incerto:
+       confira olhando o comprovante" e, se o banco tem perto (mesmo cartão/final, data ±1, até R$ 1,00 ou os mesmos reais), "No banco
+       tem R$ X nesse dia: é este?" [É este]; confirmado, o valor do banco vale.
    API (window.Comprovantes)
      receber(l, escopo?) → true (guardado) | false · lista() · abertos() · ligarTudo() · casarCompra(x) · palpiteCat(loja)
    DADOS
@@ -70,18 +73,23 @@
   function casarCompra(x) {
     if (x.subtipo !== 'compra' || x.estado === 'dispensado') return;
     var g0 = gasto(x.gastoId); if (g0) return;
-    x.gastoId = ''; x.pendId = ''; x.cands = [];
-    if (!window.Canhotos || !(x.valor > 0) || !x.data) return;
+    x.gastoId = ''; x.pendId = ''; x.cands = []; x.perto = [];
+    var incerto = incertoDe(x);   /* 1.1.0 (3.96): valor incerto nunca casa sozinho */
+    if (!window.Canhotos || (!(x.valor > 0) && !incerto) || !x.data) return;
     var v = x.parcelas > 1 && x.valor_parcela > 0 ? x.valor_parcela : x.valor;
-    var it = { valor: n2(v), data: br(x.data), final: x.final || '', loja: x.descritor_fatura || x.loja || '', confianca: { valor: 'alta' }, arquivo: x.id, papel: 0 };
+    var it = { valor: v != null ? n2(v) : null, opcoes: x.opcoes || [], data: br(x.data), final: x.final || '', loja: x.descritor_fatura || x.loja || '', confianca: { valor: incerto ? 'baixa' : 'alta' }, arquivo: x.id, papel: 0 };
     var r = Canhotos.classificar([it]), tomado = function (g) { return g && ((g.ficha && g.ficha.cid && g.ficha.cid !== x.id) || (x.naoE || []).indexOf(g.id) >= 0); };
-    if (r.casou.length && !tomado(r.casou[0].g)) {
+    if (r.duvida.length) x.perto = (r.duvida[0].perto || []).filter(function (c) { return !tomado(c) && gasto(c.id); }).map(function (c) { return c.id; });
+    else if (r.casou.length && !tomado(r.casou[0].g)) {
       var g = r.casou[0].g;
       if (gasto(g.id)) ligarCompra(x, g); else x.pendId = g.id;   /* a pendente do robô: liga quando o definitivo chegar */
     } else if (r.parecido.length) x.cands = r.parecido[0].cs.filter(function (c) { return !tomado(c) && gasto(c.id); }).map(function (c) { return c.id; });
   }
+  function incertoDe(x) { return x.confianca === 'baixa' || (x.valor == null && (x.opcoes || []).length > 0); }
   function ligarCompra(x, g) {
-    x.gastoId = g.id; x.pendId = ''; x.cands = [];
+    x.gastoId = g.id; x.pendId = ''; x.cands = []; x.perto = [];
+    /* 1.1.0 (3.96): a pessoa confirmou um valor incerto: o valor do banco vale */
+    if (incertoDe(x)) { if (x.parcelas > 1) x.valor_parcela = n2(g.valor); else x.valor = n2(g.valor); x.confianca = 'conferido'; }
     g.ficha = { cid: x.id, produto: x.produto || '', pedido: x.pedido || '', loja: x.loja || '', nf: (g.ficha && g.ficha.nf) || '' };
     var s = palpiteCat(x.descritor_fatura) || palpiteCat(x.loja);
     x.sugestao = s && (s.grupo !== g.grupo || (s.sub || '') !== (g.sub || '')) ? s : null;
@@ -164,6 +172,8 @@
         moeda: /^usd$/i.test(l.moeda || '') ? 'USD' : 'BRL', parcelas: Math.max(0, Math.round(num(l.parcelas) || 0)),
         valor_parcela: num(l.valor_parcela) != null ? n2(Math.abs(num(l.valor_parcela))) : null,
         final: String(l.final || '').replace(/\D/g, '').slice(-4),
+        confianca: /^(baixa|media|alta)$/.test(String(l.confianca || '')) ? String(l.confianca) : '',
+        opcoes: Array.isArray(l.opcoes) ? l.opcoes.map(Number).filter(function (v) { return v > 0; }).slice(0, 5) : [],
         arquivos: Array.isArray(l.arquivos) ? l.arquivos.slice(0, 20).map(function (a) { return txt(a); }) : [],
         fotos_a_ler: Array.isArray(l.fotos_a_ler) ? l.fotos_a_ler.slice(0, 20).map(function (a) { return txt(a); }) : []
       };
@@ -182,7 +192,7 @@
       return API.abertos().filter(function (x) {
         if (x.fotos_a_ler && x.fotos_a_ler.length && !x.fotosLidas) return true;
         if (x.estado !== 'novo') return false;
-        if (x.subtipo === 'compra') return !!(x.gastoId || (x.cands && x.cands.length));
+        if (x.subtipo === 'compra') return !!(x.gastoId || (x.cands && x.cands.length) || (x.perto && x.perto.length));
         if (x.subtipo === 'boleto') return !!(x.vencimento || x.data) && dias(x.vencimento || x.data, h) <= 2;
         return x.subtipo === 'outro' || x.subtipo === 'nota_fiscal';
       });
@@ -200,6 +210,7 @@
           if (g) return '= ' + nomeG(g) + (x.estado === 'ok' ? ' ✓' : '');
           if (x.pendId) return '⏳ ' + tr('pendente no banco; liga quando o lançamento chegar', 'pending at the bank; links when the entry arrives', 'pendiente en el banco; se vincula cuando llegue el movimiento');
           if (x.cands && x.cands.length) return tr('Mais de um lançamento parecido: escolha qual é', 'More than one similar entry: pick the right one', 'Más de un movimiento parecido: elige cuál es');
+          if (incertoDe(x)) return '⚠️ ' + tr('Valor incerto: confira olhando o comprovante', 'Unsure amount: check against the receipt', 'Importe dudoso: compruébalo mirando el comprobante') + ((x.opcoes || []).length ? ' (' + tr('pode ser ', 'could be ', 'puede ser ') + x.opcoes.map(fmt).join(' / ') + ')' : '');
           return tr('O cartão ainda não mostrou esta compra', 'Not on the card yet', 'Aún no aparece en la tarjeta');
         case 'reembolso': return x.arId ? tr('Em Valores a receber; sai quando o crédito cair', 'In Money to receive; goes away when the credit lands', 'En Valores a cobrar; sale cuando llegue el crédito') : '';
         case 'nota_fiscal':
@@ -227,6 +238,8 @@
         if (x.sugestao) h += b('cp-cat', tr('Usar ', 'Use ', 'Usar ') + ((GRUPOS[x.sugestao.grupo] || {}).nome || x.sugestao.grupo) + (x.sugestao.sub ? ' · ' + x.sugestao.sub : ''));
         h += b('cp-ok', tr('Está certo', 'Correct', 'Es correcto')) + b('cp-naoe', tr('Não é este lançamento', 'Not this entry', 'No es este movimiento'));
       }
+      if (x.subtipo === 'compra' && !x.gastoId && x.perto && x.perto.length)
+        h += x.perto.map(function (gid) { var g = gasto(gid); return g ? '<span class="small">' + esc(tr('No banco tem ', 'The bank has ', 'En el banco hay ') + fmt(g.valor) + tr(' nesse dia: é este?', ' on that day: is it this one?', ' ese día: ¿es este?')) + '</span>' + b('cp-esse', tr('É este', 'This one', 'Es este'), ' data-g="' + esc(gid) + '"') : ''; }).join('');
       if (x.subtipo === 'compra' && !x.gastoId && x.cands && x.cands.length)
         h += x.cands.map(function (gid) { var g = gasto(gid); return g ? b('cp-esse', '= ' + nomeG(g), ' data-g="' + esc(gid) + '"') : ''; }).join('');
       if (x.subtipo === 'boleto') h += b('cp-ok', tr('Já paguei', 'Already paid', 'Ya pagué'));
@@ -253,7 +266,7 @@
   function achar(el) { return lista().find(function (y) { return y.id === el.dataset.id; }); }
 
   MoneyModulos.registrar({
-    id: 'comprovantes', versao: '1.0.0', colecoes: [COL],
+    id: 'comprovantes', versao: '1.1.0', colecoes: [COL],
     pontos: {
       'lancamentos.topo': function () {
         var n = API.abertos().length; if (!n) return '';

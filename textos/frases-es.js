@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.95 · 20/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.96 · 22/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,9 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.96 — rascunho, revisar */
+  'Valor incerto não casa sozinho':'Importe dudoso no se vincula solo',
+  'Conferir canhotos e comprovantes do e-mail: quando o valor foi lido com pouca certeza (papel amassado, por exemplo), o app não liga sozinho a nenhum lançamento nem escolhe uma opção por você. Mostra o que leu como sugestão, pede para conferir olhando o papel e deixa digitar. E ajuda: se o banco tem, no mesmo cartão e na mesma data (±1 dia), um valor bem perto, pergunta "No banco tem R$ X nesse dia: é este?" — com "É este", vale o valor do banco.':'Revisar tickets y comprobantes del correo: cuando el importe se leyó con poca seguridad (papel arrugado, por ejemplo), la app no lo vincula sola a ningún movimiento ni elige una opción por ti. Muestra lo que leyó como sugerencia, pide comprobarlo mirando el papel y deja escribirlo. Y ayuda: si el banco tiene, en la misma tarjeta y fecha (±1 día), un importe muy cercano, pregunta "En el banco hay R$ X ese día: ¿es este?" — con "Es este", vale el importe del banco.',
   /* 3.95 — rascunho, revisar */
   'Comprovantes do e-mail':'Comprobantes del correo',
   '"🧾 Comprovantes a conferir" em Lançamentos e no 📥: o robô passa a mandar o que lê nos e-mails (sem IA) — compras, reembolsos, notas fiscais, recibos do exterior e boletos. Nenhum vira lançamento sozinho: a compra liga ao lançamento do cartão (com o produto e o pedido, e uma sugestão de categoria), o reembolso entra em Valores a receber, a nota fiscal liga à compra e à despesa médica (para o IR), o recibo do exterior vai para o Recibo × cartão e o boleto avisa 2 dias antes (e diz "não pague" se a conta está no débito automático).':'"🧾 Comprobantes por revisar" en Movimientos y en 📥: el robot ahora manda lo que lee en tus correos (sin IA): compras, reembolsos, facturas, recibos del exterior y boletos. Ninguno se convierte en movimiento solo: la compra se vincula al movimiento de la tarjeta (con el producto y el pedido, y una sugerencia de categoría), el reembolso entra en Valores a cobrar, la factura se vincula a la compra y al gasto médico (para la renta), el recibo del exterior va a Recibo × tarjeta y el boleto avisa 2 días antes (y dice "no pagues" si la cuenta está en débito automático).',

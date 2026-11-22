@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.95 · 20/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.96 · 22/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.96', d:'2026-11-22', t:'Valor incerto não casa sozinho', itens:[
+    'Conferir canhotos e comprovantes do e-mail: quando o valor foi lido com pouca certeza (papel amassado, por exemplo), o app não liga sozinho a nenhum lançamento nem escolhe uma opção por você. Mostra o que leu como sugestão, pede para conferir olhando o papel e deixa digitar. E ajuda: se o banco tem, no mesmo cartão e na mesma data (±1 dia), um valor bem perto, pergunta "No banco tem R$ X nesse dia: é este?" — com "É este", vale o valor do banco.'
+  ]},
   {v:'3.95', d:'2026-11-20', t:'Comprovantes do e-mail', itens:[
     '"🧾 Comprovantes a conferir" em Lançamentos e no 📥: o robô passa a mandar o que lê nos e-mails (sem IA) — compras, reembolsos, notas fiscais, recibos do exterior e boletos. Nenhum vira lançamento sozinho: a compra liga ao lançamento do cartão (com o produto e o pedido, e uma sugestão de categoria), o reembolso entra em Valores a receber, a nota fiscal liga à compra e à despesa médica (para o IR), o recibo do exterior vai para o Recibo × cartão e o boleto avisa 2 dias antes (e diz "não pague" se a conta está no débito automático).'
   ]},
