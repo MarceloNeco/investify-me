@@ -50,7 +50,7 @@ const IT = (papel, valor, extra) => Object.assign({ arquivo: 'foto.jpg', papel, 
       await Canhotos.processar([new File([blob], 'canhotos.png', { type: 'image/png' })]);
       return { seg: Math.round((Date.now() - t0) / 1000), contrato: Leitura.lerVarios && Leitura.lerVarios.contrato, cnpj: Leitura.consultaCnpjLigada(), versao: Leitura.versao, titulo: document.getElementById('genTitle').textContent, txt: document.getElementById('genBody').textContent };
     });
-    ok(real.contrato === 1 && real.versao === '1.12.0' && real.cnpj === false, 'o motor 1.12.0, contrato 1, com a consulta do CNPJ na internet desligada');
+    ok(real.contrato === 1 && real.versao === '1.13.0' && real.cnpj === false, 'o motor 1.13.0 (Leitor OCR 0.9.7), contrato 1, com a consulta do CNPJ na internet desligada');
     ok(real.titulo === 'Conferir canhotos' && /120,51|45,00|Valor em dúvida/.test(real.txt), 'o OCR no aparelho leu a foto com os dois canhotos (' + real.seg + ' s) e abriu o resultado: ' + real.txt.replace(/\s+/g, ' ').slice(0, 220));
     ok(!fora.some((u) => /receita|brasilapi|cnpj/i.test(u)), 'nenhuma consulta de CNPJ na internet');
     await p.evaluate(() => fechar('genModal'));

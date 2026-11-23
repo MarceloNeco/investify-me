@@ -775,6 +775,16 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   `status(o, h)` para Contas do mês (contas-mes 1.1.1): paga / débito / atrasada (o que não dá para ver segue "paga" como antes).
   `antes()` = 3 dias antes. `avisosEmail()` = comprovantes com texto de atraso. 📥 grupo `atrasadas`. debito-auto 1.0.1: `conflito` ignora
   conta com débito que não caiu ("não pague" só até o vencimento); comprovantes 1.1.1: boleto diz "pague". Teste: `teste/teste-debito-nao-caiu.js`.
+  **3.101 — Ordem de serviço da oficina.** O motor do leitor-ocr 0.9.7 (motor 1.13.0, contrato 1) copiado SEM alterar: `leitor/leitura.js`,
+  `leitor/leitura/` (catalogo, foto, relacoes, texto, varios) e `leitor/leitores/` (cartao e o novo `os-oficina.js`, no sw.js). canhotos 1.3.0:
+  a leitura (`lerComOS`) é o mesmo caminho do `Leitura.lerVarios` com `Leitura.lerVarios.item` (o que o motor oferece "para quem já tem os
+  papéis lidos") e guarda o `result.financeiro` da OS (`daPapel`); `juntarOS`: a OS e o canhoto da mesma compra (`mesmaCompra`) viram um item
+  (fica o canhoto: data e hora do PAGAMENTO, final), com o nº da OS, o veículo, a categoria, o CNPJ e as parcelas da OS; a OS sozinha sem o
+  comprovante (`osLonge`, data da emissão) procura de 0 a 30 dias depois e só casa sozinha com a loja ou o CNPJ (o CNPJ do lançamento,
+  `contraparte.cnpj`, desempata +2); `osPadrao`: grupo VEICULO, a sub da OS e o carro (`acharCarro`: palavra do apelido no nome do veículo;
+  sem nome, o único ativo) no formulário, no "É este", no "Lançar à mão" e na ficha. compra-parcelada 1.1.0: `cnpj` (desempate) e `ate`
+  (até 45 dias; acima de 3, só liga com loja, CNPJ, cartão ou final). `result.operacional` não é usado nem enviado (é do OmniLifeONE; envio
+  seria integração nova). Teste: `teste/teste-os-oficina.js`.
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem

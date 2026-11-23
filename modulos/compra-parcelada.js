@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/compra-parcelada.js — a FICHA da compra parcelada (canhoto / print × parcelas do banco) (3.99)        1.0.0 · 23/Nov/2026
+   modulos/compra-parcelada.js — a FICHA da compra parcelada (canhoto / print × parcelas do banco) (3.99)        1.1.0 · 23/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 23/Nov/2026; sem IA)
      · O canhoto da maquininha (ou o print) de uma compra parcelada diz o TOTAL e as parcelas ("CRÉDITO R$ 6.500,00 · 5X SEM
@@ -11,11 +11,13 @@
        (ele usa a última parcela vista).
      · Foto antes da fatura: a ficha fica "⏳ aguardando o banco" e liga sozinha quando a 01/N chegar.
      · Vários candidatos empatados: não liga sozinha (fica aguardando; a pessoa liga pelo Conferir canhotos).
+     · 1.1.0 (3.101), a OS da oficina: o CNPJ da loja desempata (com o CNPJ do lançamento do banco); a OS sem o pagamento espera
+       a 01/N até 30 dias depois da emissão (ate), e aí só liga com a loja, o CNPJ, o cartão ou o final batendo.
    API (window.CompraParcelada)
      criar(d) → ficha · ligar(ficha) → n de parcelas ligadas · ligarTudo() · lista() · aguardando() · parcelas(ficha) → [gasto]
      base(desc) → a descrição sem o k/N
    DADOS
-     ST.compras_parceladas = [{id, total, n, vp, data, hora, loja, final, cartaoId, grupo, sub, paraQuem, paraQuemId, veiculoId,
+     ST.compras_parceladas = [{id, total, n, vp, data, hora, loja, final, cnpj?, ate?, cartaoId, grupo, sub, paraQuem, paraQuemId, veiculoId,
        docId, desc, estado: 'aguardando'|'ligada', gastoIds: [], escopo?, criadoEm}]
      lançamento: g.compraId (+ g.docId, g.veiculoId)
    PONTOS QUE USA
@@ -41,15 +43,16 @@
     return Gasto.todos().filter(function (g) {
       var p = parcela(g); if (!p || p.k !== 1 || p.n !== x.n || usadoPorOutra(x, g)) return false;
       if (Math.abs((Number(g.valor) || 0) - x.vp) > TOL || !g.data || !x.data) return false;
-      var d = dias(g.data, x.data); return d >= 0 && d <= ATE;
+      var d = dias(g.data, x.data); return d >= 0 && d <= (x.ate || ATE);
     });
   }
-  function pontos(x, g) { var p = 0; if (x.final && fimDe(g) === String(x.final)) p += 2; if (x.cartaoId && g.cartaoId === x.cartaoId) p += 2; if (lojaParecida(x.loja, g.descRobo || g.desc)) p += 2; return p; }
+  function pontos(x, g) { var p = 0; if (x.final && fimDe(g) === String(x.final)) p += 2; if (x.cartaoId && g.cartaoId === x.cartaoId) p += 2; if (lojaParecida(x.loja, g.descRobo || g.desc)) p += 2; if (x.cnpj && g.contraparte && String(g.contraparte.cnpj || '').replace(/\D/g, '') === x.cnpj) p += 2; return p; }
   function achar1(x) {
-    var cs = candidatos1(x); if (!cs.length) return null;
-    if (cs.length === 1) return cs[0];
+    var cs = candidatos1(x), longe = (x.ate || ATE) > ATE; if (!cs.length) return null;
+    if (cs.length === 1 && !longe) return cs[0];
     cs.sort(function (a, b) { return pontos(x, b) - pontos(x, a); });
-    return pontos(x, cs[0]) > pontos(x, cs[1]) ? cs[0] : null;   /* empate: não liga sozinha */
+    if (longe && pontos(x, cs[0]) < 2) return null;   /* 1.1.0: janela longa (OS sem o pagamento): só com a loja, o CNPJ, o cartão ou o final */
+    return cs.length === 1 || pontos(x, cs[0]) > pontos(x, cs[1]) ? cs[0] : null;   /* empate: não liga sozinha */
   }
   /* as irmãs: a mesma compra nos meses seguintes */
   function irmas(x, g1) {
@@ -91,6 +94,8 @@
         loja: String(d.loja || '').trim().slice(0, 60), final: String(d.final || '').replace(/\D/g, '').slice(-4), cartaoId: d.cartaoId || '', grupo: d.grupo || '', sub: d.sub || '',
         paraQuem: d.paraQuem || '', paraQuemId: d.paraQuemId || '', veiculoId: d.veiculoId || '', docId: d.docId || '', desc: String(d.desc || '').trim().slice(0, 80),
         estado: 'aguardando', gastoIds: [], criadoEm: hoje() };
+      if (/^\d{14}$/.test(String(d.cnpj || ''))) x.cnpj = d.cnpj;
+      if (Number(d.ate) > ATE) x.ate = Math.min(45, Math.round(Number(d.ate)));
       if (d.escopo) x.escopo = d.escopo;
       if (d.gastoId) x.gastoIds = [d.gastoId];
       lista().push(x); ligar(x);
@@ -103,7 +108,7 @@
   };
 
   MoneyModulos.registrar({
-    id: 'compra-parcelada', versao: '1.0.0', colecoes: [COL],
+    id: 'compra-parcelada', versao: '1.1.0', colecoes: [COL],
     ouvir: { 'gasto.novo': function () { if (lista().length && API.ligarTudo() && typeof Store !== 'undefined') Store.salvar(); } }
   });
   window.CompraParcelada = API;
