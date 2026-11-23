@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.99 · 23/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.100 · 23/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.100 */
+  'Débito automático que não caiu':'Auto-debit that did not go through',
+  'Conta no débito automático (na conta ou no cartão) agora só aparece como paga quando o débito aparece no banco. Se passar do vencimento sem o débito, o 📥 avisa em vermelho no primeiro dia útil: "O débito automático de … não apareceu no banco. Pague hoje para evitar multa e corte." O Pix ou boleto pago depois fecha a conta sozinho (ou toque em "Já paguei"). Três dias antes do vencimento, o app lembra de conferir o saldo ou o limite.':'A bill on auto-debit (account or card) now shows as paid only when the debit appears at the bank. If the due date passes without it, 📥 warns in red on the first business day: "The auto-debit of … did not show up at the bank. Pay today to avoid late fees and a service cut." A Pix or slip paid later closes it by itself (or tap "Already paid"). Three days before the due date, the app reminds you to check the balance or the limit.',
+  'O aviso "não pague: está no débito automático" só vale até o vencimento; se o débito não caiu, o boleto passa a dizer "pague". E-mail de aviso de atraso que o robô lê vira alerta urgente no 📥.':'The "do not pay: it is on auto-debit" notice only holds until the due date; if the debit did not go through, the slip says "pay". An overdue-notice e-mail read by the robot becomes an urgent alert in 📥.',
   /* 3.99 */
   'Quanto o carro custa':'What the car costs',
   'Canhoto de compra parcelada ("5X DE R$ 1.300,00"): o app liga à parcela 01/05 do banco pela data do pagamento e enriquece a compra inteira — as parcelas que já vieram e as que ainda vão vir — com a categoria, o carro, a descrição e a foto (guardada no cofre de arquivos). A foto nunca cria gasto. Se ela chegar antes da fatura, fica "⏳ aguardando o banco" e liga sozinha depois.':'Receipt of an installment purchase ("5X OF R$ 1,300.00"): the app links it to installment 01/05 at the bank by the payment date and enriches the whole purchase — the installments already in and those still to come — with the category, the car, the description and the photo (kept in the file vault). The photo never creates an expense. If it arrives before the card bill, it stays "⏳ waiting for the bank" and links by itself later.',

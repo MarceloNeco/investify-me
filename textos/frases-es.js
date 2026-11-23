@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.99 · 23/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.100 · 23/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,10 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.100 — rascunho, revisar */
+  'Débito automático que não caiu':'Débito automático que no se hizo',
+  'Conta no débito automático (na conta ou no cartão) agora só aparece como paga quando o débito aparece no banco. Se passar do vencimento sem o débito, o 📥 avisa em vermelho no primeiro dia útil: "O débito automático de … não apareceu no banco. Pague hoje para evitar multa e corte." O Pix ou boleto pago depois fecha a conta sozinho (ou toque em "Já paguei"). Três dias antes do vencimento, o app lembra de conferir o saldo ou o limite.':'Una cuenta en débito automático (en la cuenta o en la tarjeta) ahora solo aparece como pagada cuando el débito aparece en el banco. Si pasa el vencimiento sin el débito, 📥 avisa en rojo el primer día hábil: "El débito automático de … no apareció en el banco. Paga hoy para evitar recargos y el corte." El Pix o boleto pagado después la cierra solo (o toca "Ya pagué"). Tres días antes del vencimiento, la app recuerda revisar el saldo o el límite.',
+  'O aviso "não pague: está no débito automático" só vale até o vencimento; se o débito não caiu, o boleto passa a dizer "pague". E-mail de aviso de atraso que o robô lê vira alerta urgente no 📥.':'El aviso "no pagues: está en débito automático" solo vale hasta el vencimiento; si el débito no se hizo, el boleto pasa a decir "paga". El correo de aviso de atraso que lee el robot se convierte en alerta urgente en 📥.',
   /* 3.99 — rascunho, revisar */
   'Quanto o carro custa':'Cuánto cuesta el coche',
   'Canhoto de compra parcelada ("5X DE R$ 1.300,00"): o app liga à parcela 01/05 do banco pela data do pagamento e enriquece a compra inteira — as parcelas que já vieram e as que ainda vão vir — com a categoria, o carro, a descrição e a foto (guardada no cofre de arquivos). A foto nunca cria gasto. Se ela chegar antes da fatura, fica "⏳ aguardando o banco" e liga sozinha depois.':'Ticket de una compra a plazos ("5X DE R$ 1.300,00"): la app lo vincula a la cuota 01/05 del banco por la fecha del pago y completa toda la compra —las cuotas que ya llegaron y las que llegarán— con la categoría, el coche, la descripción y la foto (guardada en la caja fuerte de archivos). La foto nunca crea un gasto. Si llega antes de la factura, queda "⏳ esperando al banco" y se vincula sola después.',

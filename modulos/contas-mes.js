@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.1.0 · 14/Nov/2026
+   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.1.1 · 23/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · No topo da tela (id b-custos), dois seletores guardados: período "Este mês | Próximos 45 dias" e arrumação
@@ -75,7 +75,8 @@
   function item(o) {
     var h = hoje(), p = pago(o), st;
     if (p) st = 'paga';
-    else if (o.estado === 'automatico' || o.r.estadoPadrao === 'automatico') st = o.data < h ? 'paga' : 'debito';
+    /* 1.1.1 (3.100): o débito automático só é "paga" quando o débito ou o pagamento apareceu (modulos/debito-nao-caiu.js) */
+    else if (o.estado === 'automatico' || o.r.estadoPadrao === 'automatico') st = window.DebitoNaoCaiu ? DebitoNaoCaiu.status(o, h) : (o.data < h ? 'paga' : 'debito');
     else if (o.data < h) st = 'atrasada';
     else if (o.data === h) st = 'hoje';
     else st = 'avencer';
@@ -318,7 +319,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'contas-mes', versao: '1.1.0',
+    id: 'contas-mes', versao: '1.1.1',
     pontos: {
       'custos.contas': cartao,
       'budget.atencao': cartaoSugestoes,
