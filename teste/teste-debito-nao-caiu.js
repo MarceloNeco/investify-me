@@ -56,16 +56,16 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
 
     console.log('2) o "não pague" só até o vencimento');
     ok(await p.evaluate(() => DebitoAuto.conflito({ nome: 'Fatura Enel', cnpj: '11.222.333/0001-81' }) === null && !!DebitoAuto.conflito({ nome: 'Internet', cnpj: '99.888.777/0001-66' })), 'o boleto da energia não diz mais "não pague" (o débito não caiu); o da internet (ainda a vencer) continua dizendo');
-    await p.evaluate(() => Comprovantes.receber({ id: 'evid-bol', tipo: 'comprovante', subtipo: 'boleto', data: '2026-11-20', vencimento: '2026-11-25', valor: 467.02, loja: 'Energia Enel', cnpj: '11.222.333/0001-81' }));
+    await p.evaluate(() => Comprovantes.receber({ id: 'evid-bol', tipo: 'comprovante', subtipo: 'boleto', data: '2026-11-20', vencimento: '2026-11-25', valor: 468.50, loja: 'Energia Enel', cnpj: '11.222.333/0001-81' }));
     ok(await p.evaluate(() => /O débito automático não caiu: pague este boleto/.test(Comprovantes.situacao(Comprovantes.lista().find((x) => x.id === 'evid-bol')))), 'o boleto que chegou por e-mail diz "⚠️ O débito automático não caiu: pague este boleto"');
     await p.evaluate(() => Comprovantes.receber({ id: 'evid-aviso', tipo: 'comprovante', subtipo: 'outro', data: '2026-11-23', loja: 'Enel', remetente: 'cobranca@exemplo.invalid', assunto: 'Enel: Aviso Importante', descricao: 'Identificamos que você tem contas em atraso.' }));
     ib = await inbox();
     ok(/📧 Aviso de atraso por e-mail: Energia Enel — Enel: Aviso Importante/.test(ib), 'o e-mail de aviso de atraso vira alerta urgente, ligado à conta');
 
     console.log('3) o pagamento depois do vencimento fecha a conta');
-    await p.evaluate(() => { Gasto.add({ id: 'rb_pix', idRobo: 'pix', data: '2026-11-23', valor: 467.02, desc: 'PIX ENEL DISTRIBUICAO', descRobo: 'PIX ENEL DISTRIBUICAO', fluxo: 'saida', grupo: 'HABITACAO', sub: 'Luz', origem: 'robo', conta: 'Banco Ficticio' }); DebitoNaoCaiu.fechar(); });
+    await p.evaluate(() => { Gasto.add({ id: 'rb_pix', idRobo: 'pix', data: '2026-11-23', valor: 468.50, desc: 'PIX ENEL DISTRIBUICAO', descRobo: 'PIX ENEL DISTRIBUICAO', fluxo: 'saida', grupo: 'HABITACAO', sub: 'Luz', origem: 'robo', conta: 'Banco Ficticio' }); DebitoNaoCaiu.fechar(); });
     l = await nc();
-    ok(!l.some((x) => /^rLuz/.test(x)) && await st('rLuz') === 'paga' && await p.evaluate(() => Pagamento.achar('rLuz', '2026-11-09').gastoId === 'rb_pix'), 'o Pix de R$ 467,02 (com multa) em 23/11 fecha a ocorrência de 09/11: paga');
+    ok(!l.some((x) => /^rLuz/.test(x)) && await st('rLuz') === 'paga' && await p.evaluate(() => Pagamento.achar('rLuz', '2026-11-09').gastoId === 'rb_pix'), 'o Pix de R$ 468,50 (com multa) em 23/11 fecha a ocorrência de 09/11: paga');
     ok(!/Energia Enel \(R\$/.test(await inbox()), 'o alerta da energia sai do 📥');
     await p.evaluate(() => abrirInbox());
     await p.click('#genBody .dnc-item [data-acao="dnc-paguei"][data-r="rAgua"]'); await p.waitForTimeout(250);
