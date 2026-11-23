@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.1.0 · 22/Nov/2026
+   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.1.1 · 23/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, "adiante tudo do e-mail"; sem IA)
      · A caixa do robô (nuvem.js, money_entrada) traz um tipo novo de item, tipo "comprovante", tirado dos e-mails lidos
@@ -220,7 +220,8 @@
         case 'boleto': {
           if (x.pagoId) return tr('Pago: ', 'Paid: ', 'Pagado: ') + nomeG(gasto(x.pagoId) || {});
           var v = x.vencimento || x.data, dd = v ? dias(v, h) : null, c = debito(x);
-          return (c ? '⛔ ' + DebitoAuto.frase(c) + ' · ' : '') +
+          var nc = !c && window.DebitoNaoCaiu ? DebitoNaoCaiu.paraTexto([quem(x), x.assunto, x.descricao].join(' ')) : null;   /* 1.1.1 (3.100) */
+          return (c ? '⛔ ' + DebitoAuto.frase(c) + ' · ' : nc ? '⚠️ ' + tr('O débito automático não caiu: pague este boleto', 'The auto-debit did not go through: pay this slip', 'El débito automático no se hizo: paga este boleto') + ' · ' : '') +
             (dd == null ? '' : dd < 0 ? tr('venceu em ', 'was due on ', 'venció el ') + I18n.data(v) : dd === 0 ? tr('vence hoje', 'due today', 'vence hoy') : tr('vence em ', 'due on ', 'vence el ') + I18n.data(v));
         }
         default: return tr('Diga o que é', 'Say what it is', 'Di qué es');
@@ -266,7 +267,7 @@
   function achar(el) { return lista().find(function (y) { return y.id === el.dataset.id; }); }
 
   MoneyModulos.registrar({
-    id: 'comprovantes', versao: '1.1.0', colecoes: [COL],
+    id: 'comprovantes', versao: '1.1.1', colecoes: [COL],
     pontos: {
       'lancamentos.topo': function () {
         var n = API.abertos().length; if (!n) return '';

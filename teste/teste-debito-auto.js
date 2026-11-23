@@ -27,7 +27,9 @@ const hoje = new Date(), ANO = hoje.getFullYear();
 const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 const venc = new Date(ANO, hoje.getMonth() + 1, 15);
 const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
-  gastos: [{ id: 'g1', data: iso(new Date(ANO, hoje.getMonth() - 1, 15)), valor: 1500, grupo: 'OUTROS', sub: 'Outros', desc: 'DEBITO AUTOMATICO ALFASEG', fluxo: 'saida' }],
+  /* 3.100: o débito automático em dia (o deste mês também caiu): senão o app avisa, com razão, que ele não caiu (modulos/debito-nao-caiu.js) */
+  gastos: [{ id: 'g1', data: iso(new Date(ANO, hoje.getMonth() - 1, 15)), valor: 1500, grupo: 'OUTROS', sub: 'Outros', desc: 'DEBITO AUTOMATICO ALFASEG', fluxo: 'saida' },
+    { id: 'g0', data: iso(new Date(ANO, hoje.getMonth(), 15)), valor: 1500, grupo: 'OUTROS', sub: 'Outros', desc: 'DEBITO AUTOMATICO ALFASEG', fluxo: 'saida' }],
   recorrentes: [
     { id: 'r-fat', nome: 'Fatura cartão Alfa', valor: 1500, grupo: 'OUTROS', sub: 'Outros', regra: 'dia', dia: 15, estadoPadrao: 'automatico', conta: 'Banco Modelo', fluxo: 'saida' },
     { id: 'r-agua', nome: 'Água Modelo', valor: 90, grupo: 'HABITACAO', sub: 'Água', regra: 'dia', dia: 10, estadoPadrao: 'automatico', conta: 'Banco Modelo', fluxo: 'saida', contraparte: { cnpj: '11222333000181', nome: 'AGUAS DO MODELO' } },

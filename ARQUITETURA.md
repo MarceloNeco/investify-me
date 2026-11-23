@@ -767,6 +767,14 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.100 — Débito automático que não caiu.** `modulos/debito-nao-caiu.js` 1.0.0 (`window.DebitoNaoCaiu`, sem coleção: usa `ST.pagamentos`).
+  Ocorrências de compromissos em débito automático (`estadoPadrao 'automatico'`/`forma 'debaut'`) dos últimos 60 dias (desde o cadastro):
+  `naoCaiu()` = passou o vencimento e o 1º dia útil seguinte, não está paga (Pagamento confirmado/pago ou lançamento com `recorrenteId`
+  no mês) e o app consegue ver (`visto`: já caiu antes em até 4 meses, ou o robô traz o cartão/a conta dela). `fechar()` liga o
+  pagamento tardio (mesma categoria ou nome, valor −15%/+30%, de −10 até +45 dias; não usa o que está perto do vencimento seguinte).
+  `status(o, h)` para Contas do mês (contas-mes 1.1.1): paga / débito / atrasada (o que não dá para ver segue "paga" como antes).
+  `antes()` = 3 dias antes. `avisosEmail()` = comprovantes com texto de atraso. 📥 grupo `atrasadas`. debito-auto 1.0.1: `conflito` ignora
+  conta com débito que não caiu ("não pague" só até o vencimento); comprovantes 1.1.1: boleto diz "pague". Teste: `teste/teste-debito-nao-caiu.js`.
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem

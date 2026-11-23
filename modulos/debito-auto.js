@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/debito-auto.js — "NÃO PAGUE: ESTÁ EM DÉBITO AUTOMÁTICO" (3.77)        1.0.0 · 13/Nov/2026
+   modulos/debito-auto.js — "NÃO PAGUE: ESTÁ EM DÉBITO AUTOMÁTICO" (3.77)        1.0.1 · 23/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      Quando a pessoa cadastra ou importa um boleto (PDF em "Chegou um boleto", o boleto que vem no contrato, uma conta
@@ -12,6 +12,7 @@
      do nome que não é genérica (≥ 4 letras; "PORTOSEG" casa com "Porto", uma começa com a outra).
    API (window.DebitoAuto)
      conflito({nome, cnpj, texto}, ignorarId?) → {r, banco, dia} | null · aviso(b, ignorarId?) → html (vazio se não há)
+     1.0.1 (3.100): o "não pague" só vale até o vencimento — a conta cujo débito NÃO caiu (modulos/debito-nao-caiu.js) sai daqui.
    PONTOS QUE USA
      ação da-salvar (o "salvar mesmo assim" da conta fixa)
    ===================================================================== */
@@ -36,7 +37,7 @@
       if (typeof Recorrente === 'undefined') return null;
       var cn = [dig(b.cnpj)].concat(cnpjsDe(b.texto)).filter(function (x) { return x.length === 14; });
       var ws = palavras([b.nome, b.beneficiario].join(' '));
-      var r = Recorrente.ativos().filter(function (x) { return x.id !== ignorarId && x.fluxo !== 'entrada' && emDebito(x); }).find(function (x) {
+      var r = Recorrente.ativos().filter(function (x) { return x.id !== ignorarId && x.fluxo !== 'entrada' && emDebito(x) && !(window.DebitoNaoCaiu && DebitoNaoCaiu.temNaoCaiu(x)); }).find(function (x) {
         var cx = [dig(x.cnpj), dig(x.contraparte && x.contraparte.cnpj)].concat(cnpjsDe([x.nome, x.obs].join(' ')));
         if (cn.some(function (c) { return cx.indexOf(c) >= 0; })) return true;
         var wx = palavras([x.nome, x.recebedor, x.contraparte && x.contraparte.nome].join(' '));
@@ -69,7 +70,7 @@
   var pendente = null;
 
   MoneyModulos.registrar({
-    id: 'debito-auto', versao: '1.0.0',
+    id: 'debito-auto', versao: '1.0.1',
     acoes: {
       'da-salvar': function () { var op = Object.assign({}, pendente || {}, { debitoOk: true }); pendente = null; fechar('genModal'); salvarRecorrente(op); }
     }

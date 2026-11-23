@@ -1,11 +1,15 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.99 · 23/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.100 · 23/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.100', d:'2026-11-23', t:'Débito automático que não caiu', itens:[
+    'Conta no débito automático (na conta ou no cartão) agora só aparece como paga quando o débito aparece no banco. Se passar do vencimento sem o débito, o 📥 avisa em vermelho no primeiro dia útil: "O débito automático de … não apareceu no banco. Pague hoje para evitar multa e corte." O Pix ou boleto pago depois fecha a conta sozinho (ou toque em "Já paguei"). Três dias antes do vencimento, o app lembra de conferir o saldo ou o limite.',
+    'O aviso "não pague: está no débito automático" só vale até o vencimento; se o débito não caiu, o boleto passa a dizer "pague". E-mail de aviso de atraso que o robô lê vira alerta urgente no 📥.'
+  ]},
   {v:'3.99', d:'2026-11-23', t:'Quanto o carro custa', itens:[
     'Canhoto de compra parcelada ("5X DE R$ 1.300,00"): o app liga à parcela 01/05 do banco pela data do pagamento e enriquece a compra inteira — as parcelas que já vieram e as que ainda vão vir — com a categoria, o carro, a descrição e a foto (guardada no cofre de arquivos). A foto nunca cria gasto. Se ela chegar antes da fatura, fica "⏳ aguardando o banco" e liga sozinha depois.',
     '"🚗 Carro": cadastre cada carro com um apelido (nunca a placa) e veja quanto ele custa no mês e no ano, em três blocos — ter o carro (prestação, seguro, IPVA), usar (combustível, estacionamento, pedágio, lavagem, multas) e manutenção (mecânica, funilaria, pneus). O serviço parcelado aparece pelo valor contratado e pelo que caiu no mês, com o documento; e o total dos últimos 12 meses com a média por mês. Categorias novas do Veículo (Mecânica e revisão, Funilaria e pintura, Pneus, Multas, Lavagem…); a antiga continua valendo e o 📥 oferece reclassificar item a item. Com dois carros, o 📥 pergunta "Qual carro?" e aprende pela loja.',
