@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.100 · 23/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.101 · 23/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,10 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.101 — rascunho, revisar */
+  'Ordem de serviço da oficina':'Orden de trabajo del taller',
+  'Em "🧾 Conferir canhotos", a foto da ordem de serviço (OS) da oficina agora é lida no aparelho, sem IA: vale o "valor fechado" do rodapé ou o comprovante do cartão, com as parcelas. A OS e o canhoto do cartão são a mesma compra e contam uma vez só. A compra já vem no grupo Veículo, com a categoria da OS (por exemplo, Funilaria e pintura) e o carro, e liga às parcelas do banco pelo valor, pelas parcelas e pela loja ou CNPJ.':'En "🧾 Revisar tickets", la foto de la orden de trabajo del taller ahora se lee en el dispositivo, sin IA: vale el "importe cerrado" del pie o el comprobante de la tarjeta, con los plazos. La orden y el ticket de la tarjeta son la misma compra y cuentan una sola vez. La compra ya llega en el grupo Vehículo, con la categoría de la orden (por ejemplo, Chapa y pintura) y el coche, y se vincula a los plazos del banco por el importe, los plazos y la tienda o el CNPJ.',
+  'A OS fotografada sem o comprovante espera a parcela do banco até 30 dias depois da data da OS, e só liga sozinha quando a loja ou o CNPJ batem. A OS que ainda é orçamento aparece como "orçamento (ainda não pago)". Os dados do cliente, a placa e o cartão da OS nunca viram campo.':'La orden fotografiada sin el comprobante espera el plazo del banco hasta 30 días después de la fecha de la orden, y solo se vincula sola cuando coinciden la tienda o el CNPJ. La orden que aún es presupuesto aparece como "presupuesto (aún no pagado)". Los datos del cliente, la matrícula y la tarjeta de la orden nunca se convierten en campos.',
   /* 3.100 — rascunho, revisar */
   'Débito automático que não caiu':'Débito automático que no se hizo',
   'Conta no débito automático (na conta ou no cartão) agora só aparece como paga quando o débito aparece no banco. Se passar do vencimento sem o débito, o 📥 avisa em vermelho no primeiro dia útil: "O débito automático de … não apareceu no banco. Pague hoje para evitar multa e corte." O Pix ou boleto pago depois fecha a conta sozinho (ou toque em "Já paguei"). Três dias antes do vencimento, o app lembra de conferir o saldo ou o limite.':'Una cuenta en débito automático (en la cuenta o en la tarjeta) ahora solo aparece como pagada cuando el débito aparece en el banco. Si pasa el vencimiento sin el débito, 📥 avisa en rojo el primer día hábil: "El débito automático de … no apareció en el banco. Paga hoy para evitar recargos y el corte." El Pix o boleto pagado después la cierra solo (o toca "Ya pagué"). Tres días antes del vencimiento, la app recuerda revisar el saldo o el límite.',

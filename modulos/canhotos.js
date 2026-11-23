@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/canhotos.js — "🧾 Conferir canhotos" com o banco (3.92)        1.2.0 · 23/Nov/2026
+   modulos/canhotos.js — "🧾 Conferir canhotos" com o banco (3.92)        1.3.0 · 23/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 18/Nov/2026; sem IA)
      · Em Lançamentos, "🧾 Conferir canhotos": uma foto (ou várias) com os canhotos da maquininha, cupons e recibos. O motor do
@@ -22,6 +22,12 @@
      opções) nunca casa sozinho nem vem escolhido — vai para ❓ com "confira olhando o papel", as opções como sugestão e o campo para
      digitar; se o banco (postado ou pendente) tem, no mesmo cartão/final e na data ±1 dia, um valor a até R$ 1,00 de uma opção ou com
      os mesmos reais e outros centavos: "No banco tem R$ X nesse dia: é este?" [É este] (o valor do banco vale).
+   1.3.0 (3.101), ordem de serviço de oficina (leitor os_oficina do Leitor OCR 0.9.7, motor 1.13.0, cópia sem alterar): a leitura
+     guarda o result.financeiro da OS (Leitura.lerVarios.item + o financeiro; o resto igual ao lerVarios). A OS e o canhoto da
+     mesma compra ("mesmaCompra") viram UM item: fica o canhoto (data e hora do PAGAMENTO, final), com o que a OS sabe (veículo,
+     categoria, CNPJ, parcelas, nº da OS). A OS sozinha (sem o canhoto) traz a data da emissão: procura a parcela até 30 dias depois,
+     e só liga sozinha se a loja ou o CNPJ baterem. Grupo Veículo, a categoria da OS ("Funilaria e pintura") e o carro (pelo nome do
+     veículo; ou o único carro ativo) já vêm prontos. O CNPJ desempata. result.operacional NÃO é usado nem enviado (é do OmniLifeONE).
    PONTOS QUE USA
      lancamentos.topo · ações cn-*
    ===================================================================== */
@@ -29,14 +35,64 @@
   'use strict';
   var MOTOR = ['leitor/leitura.js', 'leitor/leitura/catalogo.js', 'leitor/leitura/texto.js', 'leitor/leitura/relacoes.js', 'leitor/leitura/estabelecimentos.js', 'leitor/leitura/modelos.js',
     'leitor/leitores/cartao.js', 'leitor/leitores/nfce.js', 'leitor/leitores/conta.js', 'leitor/leitores/transferencia.js', 'leitor/leitores/boleto.js', 'leitor/leitores/arrecadacao.js',
-    'leitor/leitores/extrato.js', 'leitor/leitores/cartao-plastico.js', 'leitor/leitura/varios.js'];
-  var JANELA = 3;
+    'leitor/leitores/extrato.js', 'leitor/leitores/cartao-plastico.js', 'leitor/leitores/os-oficina.js', 'leitor/leitura/varios.js'];
+  var JANELA = 3, JANELA_OS = 30;
   function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
   function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function n2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
   function iso(d) { var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(d || '')); return m ? m[3] + '-' + m[2] + '-' + m[1] : ''; }
   function dias(a, b) { return Math.round((Date.parse(a + 'T12:00:00Z') - Date.parse(b + 'T12:00:00Z')) / 86400000); }
   function pend() { return window.PreAut ? PreAut.lista() : []; }
+  function so(t) { return String(t || '').replace(/\D/g, ''); }
+  function norm(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+
+  /* ---------- 1.3.0 (3.101): a ordem de serviço da oficina ---------- */
+  /* um papel lido → o item do contrato 1, com o financeiro da OS */
+  function daPapel(p, i) { var it = Leitura.lerVarios.item(p, i); if (p.tipo === 'os_oficina' && p.result && p.result.financeiro) it.financeiro = p.result.financeiro; return it; }
+  /* o mesmo caminho do Leitura.lerVarios, guardando o financeiro */
+  async function lerComOS(arquivos, o) {
+    var L = Leitura; if (!L.lerVarios.item || !L.abrir || !L.ler || !L.acharPapeis) return L.lerVarios(arquivos, o);
+    var fontes = (await L.abrir(arquivos, o.aviso, null)).fontes;
+    for (var k = 0; k < fontes.length; k++) { var f = fontes[k]; if (!f.img) continue; o.aviso('Procurando os papéis na foto...'); var cx = await L.acharPapeis(f.img); f.boxes = cx.length >= 2 ? cx : null; }
+    var papeis = await L.ler(fontes, { tipo: 'auto', aviso: o.aviso, progresso: o.progresso });
+    if (L.relacionar) L.relacionar(papeis);
+    return papeis.map(daPapel).filter(function (v) { return !(v.valor === null && !v.opcoes.length && !v.data && !v.hora && !v.loja && !v.cnpj && !v.final); });
+  }
+  /* a OS vira os dados do item; a OS e o canhoto da mesma compra viram um item só (o canhoto, que tem o pagamento) */
+  function juntarOS(itens) {
+    var porPapel = {}, fora = {};
+    itens.forEach(function (it) { porPapel[it.papel] = it; });
+    itens.forEach(function (it) {
+      var f = it.financeiro; if (it.documento !== 'os_oficina' || !f) return;
+      it.os = { numero: f.os || '', veiculo: f.veiculo || '', sub: String(f.categoria || '').split(/\s*[›>]\s*/)[1] || 'Funilaria e pintura', situacao: f.situacao || '', fonte: f.fonte || '' };
+      if (f.valor != null) it.valor = f.valor;
+      if (f.parcelas > 1) it.parcelas = f.parcelas;
+      if (f.data) it.data = f.data;
+      if (f.estabelecimento) it.loja = f.estabelecimento;
+      if (f.cnpj) it.cnpj = f.cnpj;
+      var c = it.mesmaCompra != null && porPapel[it.mesmaCompra];
+      if (c && c.documento !== 'os_oficina') {
+        c.os = it.os; if (!(c.parcelas > 1) && it.parcelas > 1) c.parcelas = it.parcelas;
+        if (it.cnpj && !c.cnpj) c.cnpj = it.cnpj; if (it.loja) c.lojaOS = it.loja; if (!c.loja) c.loja = it.loja;
+        fora[it.papel] = 1;
+      } else if (f.fonte !== 'comprovante') it.osLonge = true;   /* sem o pagamento: a data é a da emissão */
+    });
+    return itens.filter(function (it) { return !fora[it.papel]; });
+  }
+  /* o carro pelo nome do veículo da OS (uma palavra do apelido, sem número); sem o nome, o único carro ativo */
+  function acharCarro(nome) {
+    if (!window.Veiculos) return '';
+    var at = Veiculos.ativos(), n = ' ' + norm(nome) + ' ';
+    if (!n.trim()) return at.length === 1 ? at[0].id : '';
+    var hit = at.filter(function (v) { return norm(v.apelido).split(' ').some(function (w) { return w.length >= 3 && !/^\d+$/.test(w) && n.indexOf(' ' + w + ' ') >= 0; }); });
+    return hit.length === 1 ? hit[0].id : '';
+  }
+  function osPadrao(it) {
+    if (!it || !it.os) return {};
+    var d = { grupo: 'VEICULO', sub: it.os.sub, desc: (it.lojaOS || it.loja || tr('Oficina', 'Repair shop', 'Taller')) + (it.os.numero ? ' (OS ' + it.os.numero + ')' : '') }, v = acharCarro(it.os.veiculo);
+    if (v) d.veiculoId = v;
+    return d;
+  }
 
   var carregando = null;
   function carregarMotor() {
@@ -60,19 +116,20 @@
      do canhoto (o PAGAMENTO, nunca a da OS) até +3 dias */
   function parc1(g, n) { var p = Gasto.parcela ? (Gasto.parcela(g.descRobo || g.desc, g) || Gasto.parcela(g.desc, g)) : ''; return p === '1/' + n; }
   function candidatos(it) {
-    var d = iso(it.data); if (!d || !(it.valor > 0)) return [];
+    var d = iso(it.data), ate = it.osLonge ? JANELA_OS : JANELA; if (!d || !(it.valor > 0)) return [];
     if (it.parcelas > 1) {
       var vp = n2(it.valor / it.parcelas);
-      return Gasto.todos().filter(function (g) { var x = g.data ? dias(g.data, d) : -1; return g.fluxo === 'saida' && !g.divisao && !g.compraId && Math.abs((Number(g.valor) || 0) - vp) <= 0.05 && x >= 0 && x <= JANELA && parc1(g, it.parcelas); });
+      return Gasto.todos().filter(function (g) { var x = g.data ? dias(g.data, d) : -1; return g.fluxo === 'saida' && !g.divisao && !g.compraId && Math.abs((Number(g.valor) || 0) - vp) <= 0.05 && x >= 0 && x <= ate && parc1(g, it.parcelas); });
     }
     var usados = {}; pend().forEach(function (x) { if (x.gastoId) usados[x.gastoId] = 1; });
-    var ok = function (g) { return Math.abs((Number(g.valor) || 0) - it.valor) < 0.005 && g.data && Math.abs(dias(g.data, d)) <= JANELA; };
+    var ok = function (g) { var x = g.data ? dias(g.data, d) : null; return Math.abs((Number(g.valor) || 0) - it.valor) < 0.005 && x !== null && (it.osLonge ? x >= 0 && x <= ate : Math.abs(x) <= JANELA); };
     return Gasto.todos().filter(function (g) { return g.fluxo === 'saida' && !usados[g.id] && !g.divisao && ok(g); })
       .concat(pend().filter(function (r) { return !r.doPrint && r.estado === 'pendente' && ok(r); }));
   }
-  /* desempate: a hora, o final do cartão e a loja */
+  /* desempate: a hora, o final do cartão e a loja (1.3.0: e o CNPJ) */
   function pontos(it, g) {
     var p = 0;
+    if (so(it.cnpj).length === 14 && g.contraparte && so(g.contraparte.cnpj) === so(it.cnpj)) p += 2;
     if (it.final && (g.finalCartao === it.final || (g.cartaoId && typeof Banco !== 'undefined' && String((Banco.acharCartao(g.cartaoId) || {}).fim) === it.final))) p += 2;
     if (it.loja && window.PrintColar && PrintColar.lojaParecida(it.loja, (g.contraparte && g.contraparte.nome) || g.descRobo || g.desc)) p += 2;
     if (it.hora && g.hora && g.hora === it.hora) p += 1;
@@ -128,7 +185,9 @@
         /* único de verdade: o único com o valor e a data, ou o que ganha de TODOS no desempate (mesmo dos já tomados) */
         var unico = todos.length === 1 || todos.every(function (g) { return g === cs[0] || pontos(it, cs[0]) > pontos(it, g); });
         var alta = it.confianca && it.confianca.valor === 'alta';
-        if (alta && unico) { tomados[cs[0].id] = 1; out.casou.push({ it: it, g: cs[0] }); }
+        /* 1.3.0: a OS sem o pagamento (janela de 30 dias) só casa sozinha com a loja ou o CNPJ batendo */
+        var perto = !it.osLonge || pontos(it, cs[0]) >= 2;
+        if (alta && unico && perto) { tomados[cs[0].id] = 1; out.casou.push({ it: it, g: cs[0] }); }
         else out.parecido.push({ it: it, cs: cs });
       });
       return out;
@@ -144,7 +203,8 @@
     try {
       await carregarMotor();
       if (!Leitura.lerVarios || Leitura.lerVarios.contrato !== 1) throw new Error('contrato');
-      var itens = await (API._ler || Leitura.lerVarios)(arquivos, { aviso: function (t) { if (temFundo) Fundo.passo(id, t); }, progresso: function (p) { if (temFundo) Fundo.passo(id, null, (Number(p) || 0) / 100); } });
+      var itens = await (API._ler || lerComOS)(arquivos, { aviso: function (t) { if (temFundo) Fundo.passo(id, t); }, progresso: function (p) { if (temFundo) Fundo.passo(id, null, (Number(p) || 0) / 100); } });
+      itens = juntarOS(itens);
       ultimo = { itens: itens, grupos: API.classificar(itens), arquivos: arquivos };
       if (temFundo) { Fundo.terminar(id, tr('Canhotos lidos: ', 'Receipts read: ', 'Tickets leídos: ') + itens.length); Fundo.limpar(id); }
       mostrar();
@@ -161,10 +221,11 @@
   }
 
   /* ---------- o resultado ---------- */
-  function rot(it) { return [it.loja || tr('(loja não lida)', '(store not read)', '(tienda no leída)'), it.data, it.hora, it.final ? '••' + it.final : '', it.parcelas > 1 && it.valor ? it.parcelas + 'x ' + tr('de ', 'of ', 'de ') + fmt(n2(it.valor / it.parcelas)) : ''].filter(Boolean).join(' · '); }
+  function rot(it) { return [it.loja || tr('(loja não lida)', '(store not read)', '(tienda no leída)'), it.data, it.hora, it.final ? '••' + it.final : '', it.parcelas > 1 && it.valor ? it.parcelas + 'x ' + tr('de ', 'of ', 'de ') + fmt(n2(it.valor / it.parcelas)) : '',
+    it.os ? '🔧 ' + [tr('OS', 'Work order', 'OT') + (it.os.numero ? ' ' + it.os.numero : ''), it.os.veiculo, it.os.situacao === 'orcamento' ? tr('orçamento (ainda não pago)', 'estimate (not paid yet)', 'presupuesto (aún no pagado)') : ''].filter(Boolean).join(' · ') : ''].filter(Boolean).join(' · '); }
   function nomeG(g) { return ((g.contraparte && g.contraparte.nome) || g.descRobo || g.desc || '') + ' · ' + I18n.data(g.data) + (g.pendente ? ' · ⏳ ' + tr('pendente no banco', 'pending at the bank', 'pendiente en el banco') : ''); }
-  function classificacao(k, g) {
-    var gs = Object.keys(GRUPOS);
+  function classificacao(k, g0, it) {
+    var gs = Object.keys(GRUPOS), g = Object.assign({}, g0, osPadrao(it));
     return '<div class="cn-class" data-k="' + k + '" hidden>' + (typeof recOpcoesPessoa === 'function' ? recOpcoesPessoa('cnPess' + k) : '') +
       '<div class="grid g2"><label class="field"><span>' + esc(tr('Para quem', 'For whom', 'Para quién')) + '</span><input data-cn="quem" list="cnPess' + k + '" value="' + esc(quemVer(g.paraQuem || '')) + '"></label>' +
       '<label class="field"><span>' + esc(tr('Grupo', 'Group', 'Grupo')) + '</span><select data-cn="grupo">' + gs.map(function (x) { return '<option value="' + x + '"' + (x === g.grupo ? ' selected' : '') + '>' + esc((GRUPOS[x].ico || '') + ' ' + GRUPOS[x].nome) + '</option>'; }).join('') + '</select></label>' +
@@ -184,7 +245,7 @@
     var h = '<p class="small muted" style="margin:0 0 6px">' + esc(tr('Lido no aparelho, sem internet e sem IA. Só "Lançar à mão" cria lançamento; o resto liga ao que o banco mandou.', 'Read on the device, with no internet and no AI. Only "Enter manually" creates an entry; the rest links to what the bank sent.', 'Leído en el dispositivo, sin internet y sin IA. Solo "Registrar a mano" crea un movimiento; lo demás se vincula a lo que mandó el banco.')) + '</p>' +
       sec('✅', tr('Já está no banco', 'Already at the bank', 'Ya está en el banco'), gr.casou, function (x, i) {
         return '<div class="cn-item" data-grupo="casou" data-i="' + i + '" style="padding:6px 0;border-top:1px solid var(--line)"><b>' + fmt(x.it.valor) + '</b> · ' + esc(rot(x.it)) + '<span class="t-sub">' + esc('= ' + nomeG(x.g)) + '</span>' +
-          '<button type="button" class="linkinho" data-acao="cn-classe" data-k="c' + i + '">' + esc(tr('classificar', 'classify', 'clasificar')) + '</button>' + classificacao('c' + i, x.g) + '</div>';
+          '<button type="button" class="linkinho" data-acao="cn-classe" data-k="c' + i + '">' + esc(tr('classificar', 'classify', 'clasificar')) + '</button>' + classificacao('c' + i, x.g, x.it) + '</div>';
       }) +
       sec('🟡', tr('Parecido, confirme', 'Similar, please confirm', 'Parecido, confirma'), gr.parecido, function (x, i) {
         return '<div class="cn-item" data-grupo="parecido" data-i="' + i + '" style="padding:6px 0;border-top:1px solid var(--line)"><b>' + fmt(x.it.valor) + '</b> · ' + esc(rot(x.it)) +
@@ -219,6 +280,7 @@
   function alvo(id) { return Gasto.todos().find(function (g) { return g.id === id; }) || pend().find(function (r) { return r.id === id; }) || null; }
   /* a classificação vai para o lançamento do banco; numa pendente, fica nela e vai para o postado depois (print-colar) */
   function aplicar(g, d, partes, it) {
+    var po = osPadrao(it); delete po.desc; d = Object.assign(po, d);   /* 1.3.0: o que a OS sabe (o que a pessoa escolheu vale mais) */
     if (it && it.hora && !g.hora && /^\d{2}:\d{2}$/.test(it.hora)) d = Object.assign({}, d, { hora: it.hora });   /* 1.1.1 (3.98): a hora do canhoto vai para o lançamento do banco sem hora */
     var ehGasto = Gasto.todos().some(function (x) { return x.id === g.id; });
     if (window.Pessoas && d.paraQuem) Pessoas.ligar(d, 'paraQuem', 'paraQuemId');
@@ -236,9 +298,10 @@
      as parcelas (as que já vieram e as que vierem) com a categoria, a pessoa, o carro, a descrição e a foto (cofre de arquivos) */
   function ficha(it, g, d) {
     if (!window.CompraParcelada) return null;
-    var dd = { total: it.valor, n: it.parcelas, data: iso(it.data) || (g && g.data) || hojeISO(), hora: it.hora || '', loja: it.loja || '', final: it.final || '',
-      cartaoId: (g && g.cartaoId) || (d && d.cartaoId) || '', grupo: (d && d.grupo) || (g && g.grupo !== 'OUTROS' ? g.grupo : ''), sub: (d && d.sub) || (g && g.sub) || '',
-      paraQuem: (d && d.paraQuem) || '', paraQuemId: (d && d.paraQuemId) || '', veiculoId: (d && d.veiculoId) || '', desc: it.loja || '' };
+    var po = osPadrao(it), dd = { total: it.valor, n: it.parcelas, data: iso(it.data) || (g && g.data) || hojeISO(), hora: it.hora || '', loja: it.loja || '', final: it.final || '',
+      cartaoId: (g && g.cartaoId) || (d && d.cartaoId) || '', grupo: (d && d.grupo) || po.grupo || (g && g.grupo !== 'OUTROS' ? g.grupo : ''), sub: (d && d.sub) || po.sub || (g && g.sub) || '',
+      paraQuem: (d && d.paraQuem) || '', paraQuemId: (d && d.paraQuemId) || '', veiculoId: (d && d.veiculoId) || po.veiculoId || '', desc: po.desc || it.loja || '',
+      cnpj: so(it.cnpj).length === 14 ? so(it.cnpj) : '', ate: it.osLonge ? JANELA_OS : 0 };
     var f = g && CompraParcelada.lista().find(function (x) { return (x.gastoIds || []).indexOf(g.id) >= 0; });
     if (f) { Object.keys(dd).forEach(function (k) { if (dd[k]) f[k] = dd[k]; }); CompraParcelada.ligar(f); }
     else f = CompraParcelada.criar(Object.assign(dd, g ? { gastoId: g.id } : {}));
@@ -255,7 +318,7 @@
   function depois() { Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); }
 
   MoneyModulos.registrar({
-    id: 'canhotos', versao: '1.2.0',
+    id: 'canhotos', versao: '1.3.0',
     pontos: {
       'lancamentos.topo': function () { return '<div class="row" style="margin:0 0 8px"><button type="button" class="btn sm" data-acao="cn-abrir">🧾 ' + esc(tr('Conferir canhotos', 'Check receipts', 'Revisar tickets')) + '</button></div>'; }
     },
@@ -300,7 +363,8 @@
       },
       'cn-amao': function (el) {
         var r = item(el), it = r.x.it, d = iso(it.data) || hojeISO();
-        Gasto.add({ data: d, valor: it.valor, desc: it.loja || tr('Compra (canhoto)', 'Purchase (receipt)', 'Compra (ticket)'), grupo: 'OUTROS', sub: '', fluxo: 'saida', cartaoId: campo(r.c, 'cartao') || undefined, hora: it.hora || '', origem: 'canhoto', forma: tr('manual (canhoto)', 'manual (receipt)', 'manual (ticket)'), editadoPessoa: true });
+        var po = osPadrao(it);
+        Gasto.add({ data: d, valor: it.valor, desc: po.desc || it.loja || tr('Compra (canhoto)', 'Purchase (receipt)', 'Compra (ticket)'), grupo: po.grupo || 'OUTROS', sub: po.sub || '', veiculoId: po.veiculoId || undefined, fluxo: 'saida', cartaoId: campo(r.c, 'cartao') || undefined, hora: it.hora || '', origem: 'canhoto', forma: tr('manual (canhoto)', 'manual (receipt)', 'manual (ticket)'), editadoPessoa: true });
         ultimo.grupos.novo.splice(ultimo.grupos.novo.indexOf(r.x), 1); depois(); mostrar();
       },
       'cn-esperar': function (el) {
@@ -317,6 +381,6 @@
       }
     }
   });
-  API.processar = processar;
+  API.processar = processar; API.daPapel = daPapel; API.juntarOS = juntarOS;
   window.Canhotos = API;
 })();
