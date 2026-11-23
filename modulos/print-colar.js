@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/print-colar.js — "📋 Colar print": notificação do banco vira lançamento (3.87)        1.2.0 · 20/Nov/2026
+   modulos/print-colar.js — "📋 Colar print": notificação do banco vira lançamento (3.87)        1.3.0 · 23/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 14/Nov/2026; sem IA)
      · Entradas: colar da área de transferência (Ctrl+V no computador; no celular o botão "Colar", com
@@ -25,6 +25,9 @@
        lançamento sem cartão, só com o banco); mais de um candidato → pergunta no 📥; o print casa também com a PENDENTE do robô
        (pré-autorização): os dois viram um só (fica a pendente, com a classificação, a divisão e a nota) e, quando a postada
        substitui a pendente (3.80), a classificação vai junto. Nunca dois na fatura nem no previsto.
+     · 1.3.0 (3.99): "em 5x de R$ 1.300,00" → a compra leva as parcelas (o valor da parcela não vira outro item); no cartão que o
+       robô traz, a parcelada vira a ficha da compra (modulos/compra-parcelada.js), que espera a parcela 01/N do banco; a imagem
+       compartilhada pergunta "É print do app do banco ou nota/canhoto/orçamento?" e vai para cá ou para o Conferir canhotos.
      · 1.2.0 (3.91): "Escolher arquivo" também aceita PDF; recibo de serviço do exterior (imagem ou PDF de texto) vai para o
        modulos/recibo-exterior.js (casa com o cartão e mostra o câmbio e o IOF).
    API (window.PrintColar)
@@ -88,7 +91,10 @@
     while ((m = VALOR.exec(t))) ms.push({ i: m.index, fim: m.index + m[0].length, v: m[1] });
     ms.forEach(function (x, k) {
       var antes = t.slice(k ? ms[k - 1].fim : 0, x.i), depois = t.slice(x.fim, k + 1 < ms.length ? ms[k + 1].i : t.length);
+      /* 1.3.0 (3.99): "em 5x de R$ 1.300,00": o valor da parcela não é outro item; a compra leva as parcelas */
+      if (/\b\d{1,2}\s*x\s*(?:sem juros\s*)?(?:de\s*)?$/i.test(antes.slice(-25))) return;
       var seg = antes.slice(-80) + ' R$ ' + x.v + depois, it = { valor: n2(num(x.v)), banco: bancoDe(seg) || banco, hora: '' };
+      var px = depois.slice(0, 40).match(/^\s*(?:em\s*)?(\d{1,2})\s*x\b/i); if (px && +px[1] >= 2 && +px[1] <= 24) it.parcelas = +px[1];
       var fm = depois.match(/final\s*(\d{4})/i); if (fm) it.final = fm[1];   /* 1.1.0 (3.90): "cartão final 1234", quando a notificação diz */
       var hm = depois.match(/[àa]s (\d{1,2})[:h](\d{2})/i) || depois.match(/\b(\d{1,2}):(\d{2})\b/) || antes.slice(-30).match(/\b(\d{1,2}):(\d{2})\b/);
       if (hm) it.hora = ('0' + hm[1]).slice(-2) + ':' + hm[2];
@@ -216,8 +222,19 @@
       var c = await caches.open('partilha-moneytrio'), ks = await c.keys(), fs = [];
       for (var i = 0; i < ks.length; i++) { var r = await c.match(ks[i]); if (r) { var b = await r.blob(); fs.push(new File([b], 'print', { type: b.type || 'image/png' })); } await c.delete(ks[i]); }
       history.replaceState(null, '', location.pathname + location.hash);
-      if (fs.length) processar(fs);
+      if (fs.length) perguntarDestino(fs);
     } catch (e) { /* nada a ler */ }
+  }
+  /* 1.3.0 (3.99): a foto compartilhada pode ser print do app do banco OU nota, canhoto ou orçamento: a pessoa diz e vai para o lugar certo */
+  var compartilhados = null;
+  function perguntarDestino(fs) {
+    if (!window.Canhotos || !Canhotos.processar) return processar(fs);
+    compartilhados = fs;
+    $('#genTitle').textContent = tr('O que é esta imagem?', 'What is this image?', '¿Qué es esta imagen?');
+    $('#genBody').innerHTML = Verter.html('<p>' + esc(tr('É print do app do banco ou nota/canhoto/orçamento?', 'Is it a screenshot of the bank app or an invoice/receipt/quote?', '¿Es una captura de la app del banco o una factura/ticket/presupuesto?')) + '</p>' +
+      '<div class="f-actions" style="flex-wrap:wrap;gap:6px"><button class="btn primary" data-acao="pc-dest" data-v="print">📱 ' + esc(tr('Print do app do banco', 'Bank app screenshot', 'Captura de la app del banco')) + '</button>' +
+      '<button class="btn primary" data-acao="pc-dest" data-v="canhoto">🧾 ' + esc(tr('Nota, canhoto ou orçamento', 'Invoice, receipt or quote', 'Factura, ticket o presupuesto')) + '</button></div>');
+    abrir('genModal');
   }
   setTimeout(compartilhado, 1500);
 
@@ -227,7 +244,7 @@
     var os = opcoes(), gs = Object.keys(GRUPOS);
     var bloco = function (it, k) {
       var cat = palpiteCat(it), onde = palpiteOnde(it, os), T = TIPOS[it.tipo] || TIPOS.compra;
-      return '<div class="card pc-item" data-pck="' + k + '" data-tipo="' + esc(it.tipo || 'compra') + '" data-final="' + esc(it.final || '') + '" style="padding:10px;margin:0 0 10px">' +
+      return '<div class="card pc-item" data-pck="' + k + '" data-tipo="' + esc(it.tipo || 'compra') + '" data-final="' + esc(it.final || '') + '" data-parcelas="' + (it.parcelas || '') + '" style="padding:10px;margin:0 0 10px">' +
         '<div class="row" style="justify-content:space-between"><b>' + esc(pt() ? T[0] : T[1]) + '</b><button type="button" class="icon-btn" data-acao="pc-tirar" aria-label="' + esc(tr('Tirar este item', 'Remove this item')) + '">✕</button></div>' +
         '<div class="grid g2">' +
         '<label class="field"><span>' + esc(tr('Valor (R$)', 'Amount (R$)')) + '</span><input data-pc="valor" inputmode="decimal" value="' + (it.valor ? String(it.valor).replace('.', ',') : '') + '"></label>' +
@@ -254,6 +271,7 @@
   function lerItem(el) {
     var v = function (k) { var e = el.querySelector('[data-pc="' + k + '"]'); return e ? String(e.value || '').trim() : ''; };
     var it = { tipo: el.dataset.tipo, final: el.dataset.final || '', valor: n2(num(v('valor'))), loja: v('loja'), data: /^\d{4}-\d{2}-\d{2}$/.test(v('data')) ? v('data') : hoje(), hora: v('hora'), onde: v('onde'), quem: v('quem'), grupo: v('grupo'), sub: v('sub') };
+    if (+el.dataset.parcelas > 1) it.parcelas = +el.dataset.parcelas;
     var b = el.querySelector('.pc-div:not([hidden]) [data-dvbloco]');
     if (b && window.Divisao) { var r = Divisao.ler(b.dataset.dvbloco, it.valor); if (r.erro) it.erroDiv = r.erro; else it.partes = r.partes; }
     return it;
@@ -264,6 +282,11 @@
     var base = { data: it.data, valor: it.valor, desc: it.loja || (TIPOS[it.tipo] || TIPOS.compra)[pt() ? 0 : 1].replace(/^\S+ /, ''), grupo: it.grupo || 'OUTROS', sub: it.sub || '', quem: it.quem, fluxo: entra ? 'entrada' : 'saida', hora: it.hora,
       obs: tr('do print', 'from screenshot') + (it.hora ? ' ' + it.hora : '') };
     if (window.Pessoas) Pessoas.ligar(base, 'quem', 'quemId');
+    /* 1.3.0 (3.99): compra parcelada num cartão que o robô traz: a ficha espera a parcela 01/N (modulos/compra-parcelada.js) */
+    if (o.robo && it.parcelas > 1 && tipo === 'c' && window.CompraParcelada) {
+      var f = CompraParcelada.criar({ total: it.valor, n: it.parcelas, data: it.data, hora: it.hora, loja: it.loja, final: it.final, cartaoId: ref, grupo: it.grupo && it.grupo !== 'OUTROS' ? it.grupo : '', sub: it.sub, paraQuem: it.quem, desc: it.loja });
+      if (f) return { pendente: { id: f.id }, ficha: f };
+    }
     if (o.robo) {
       var p = Object.assign({}, base, { id: novoId(), doPrint: true, estado: 'pendente', pendente: true, vistoEm: hoje(), partes: it.partes || null });
       if (tipo === 'c') { p.cartaoId = ref; if (it.final) p.final = it.final; } else { var sb = (ST.saldos_banco || []).find(function (x) { return x.id === ref; }); p.contaSaldo = ref; p.conta = sb ? sb.banco : ''; }
@@ -370,7 +393,7 @@
   };
 
   MoneyModulos.registrar({
-    id: 'print-colar', versao: '1.2.0',
+    id: 'print-colar', versao: '1.3.0',
     pontos: {
       'lancamentos.topo': function () {
         if (conciliar()) Store.salvar();
@@ -420,12 +443,13 @@
         var feitos = its.map(lancar), np = feitos.filter(function (f) { return f.pendente; }).length;
         var guardar = document.getElementById('pcGuardar') && document.getElementById('pcGuardar').checked;
         if (guardar && lido && lido.arquivos && window.ArquivosFamilia) {
-          var lig = feitos[0].gasto ? feitos[0].gasto.id : feitos[0].pendente.id;
-          for (var i = 0; i < lido.arquivos.length; i++) { try { await ArquivosFamilia.guardar({ nome: 'print ' + its[0].data + (i ? ' (' + (i + 1) + ')' : ''), tipo: 'comprovante', ano: +its[0].data.slice(0, 4), ligado: lig, mime: lido.arquivos[i].type }, new Uint8Array(await lido.arquivos[i].arrayBuffer())); } catch (e) { toast(tr('Não deu para guardar o comprovante.', 'Could not keep the receipt.'), 'warn'); } }
+          var lig = feitos[0].gasto ? feitos[0].gasto.id : feitos[0].pendente.id, fch = feitos[0].ficha;
+          for (var i = 0; i < lido.arquivos.length; i++) { try { await ArquivosFamilia.guardar({ nome: 'print ' + its[0].data + (i ? ' (' + (i + 1) + ')' : ''), tipo: 'comprovante', ano: +its[0].data.slice(0, 4), ligado: lig, mime: lido.arquivos[i].type }, new Uint8Array(await lido.arquivos[i].arrayBuffer())).then(function (m) { if (fch && m && m.id && !fch.docId) { fch.docId = m.id; CompraParcelada.ligar(fch); } }); } catch (e) { toast(tr('Não deu para guardar o comprovante.', 'Could not keep the receipt.'), 'warn'); } }
         }
         lido = null; conciliar(); fechar('genModal'); depois();
         toast(its.length + tr(' item(ns) do print: ', ' screenshot item(s): ') + (np ? np + tr(' aguardando o banco', ' waiting for the bank') : '') + (np && np < its.length ? ' · ' : '') + (its.length - np ? (its.length - np) + tr(' lançado(s)', ' added') : ''));
       },
+      'pc-dest': function (el) { var fs = compartilhados; compartilhados = null; fechar('genModal'); if (!fs) return; if (el.dataset.v === 'canhoto') Canhotos.processar(fs); else processar(fs); },
       'pc-par': function (el) { var p = lista().find(function (x) { return x.id === el.dataset.id; }), g = p && alvo(p.par); if (p && g) { unir(p, g); depois(); } },
       'pc-parnao': function (el) { var p = lista().find(function (x) { return x.id === el.dataset.id; }); if (!p) return; (p.parNao = p.parNao || {})[p.par] = 1; delete p.par; depois(); },
       'pc-amao': function (el) {
@@ -437,5 +461,6 @@
       'pc-desistir': function (el) { var p = lista().find(function (x) { return x.id === el.dataset.id; }); if (p) { p.estado = 'tirado'; depois(); } }
     }
   });
+  API._destino = perguntarDestino;   /* 3.99 (testes) */
   window.PrintColar = API;
 })();

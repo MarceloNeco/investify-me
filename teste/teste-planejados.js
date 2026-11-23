@@ -35,7 +35,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false, veiculo: { consumo: 10, preco
       if (vp.width > 800) {
         console.log('1) o menu');
         const menu = await p.evaluate(() => [...document.querySelectorAll('#navLista .nav-item')].map((b) => b.dataset.view).join(','));
-        ok(menu === 'b-painel,b-lanc,b-custos,b-renda,b-fluxo,b-futuro,b-precos,b-viagens,b-rachai,config', 'a ordem: Painel · Lançamentos · Contas fixas · Renda · Fluxo · Projeção · Preços · Viagens · RachAI · Configurações (sem Deslocamentos): ' + menu);
+        ok(menu === 'b-painel,b-lanc,b-custos,b-renda,b-fluxo,b-futuro,b-precos,b-viagens,b-carro,b-rachai,config', 'a ordem: Painel · Lançamentos · Contas fixas · Renda · Fluxo · Projeção · Preços · Viagens · Carro · RachAI · Configurações (sem Deslocamentos): ' + menu);
         ok(await p.evaluate(() => /Projeção/.test(document.querySelector('#navLista [data-view="b-futuro"]').textContent)), '"Futuro" agora se chama "Projeção" (o id b-futuro continua)');
       }
       console.log('2) o link antigo e a tela vazia');

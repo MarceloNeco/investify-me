@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/canhotos.js — "🧾 Conferir canhotos" com o banco (3.92)        1.1.1 · 22/Nov/2026
+   modulos/canhotos.js — "🧾 Conferir canhotos" com o banco (3.92)        1.2.0 · 23/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 18/Nov/2026; sem IA)
      · Em Lançamentos, "🧾 Conferir canhotos": uma foto (ou várias) com os canhotos da maquininha, cupons e recibos. O motor do
@@ -56,8 +56,15 @@
   }
 
   /* os candidatos do banco: lançamentos de saída e as pendentes do robô, com o mesmo valor e a data ±3 dias */
+  /* 1.2.0 (3.99): parcelado ("5X DE R$ 1.300,00"): o banco mostra a parcela "01/05" de valor ÷ parcelas (centavos de folga), da data
+     do canhoto (o PAGAMENTO, nunca a da OS) até +3 dias */
+  function parc1(g, n) { var p = Gasto.parcela ? (Gasto.parcela(g.descRobo || g.desc, g) || Gasto.parcela(g.desc, g)) : ''; return p === '1/' + n; }
   function candidatos(it) {
     var d = iso(it.data); if (!d || !(it.valor > 0)) return [];
+    if (it.parcelas > 1) {
+      var vp = n2(it.valor / it.parcelas);
+      return Gasto.todos().filter(function (g) { var x = g.data ? dias(g.data, d) : -1; return g.fluxo === 'saida' && !g.divisao && !g.compraId && Math.abs((Number(g.valor) || 0) - vp) <= 0.05 && x >= 0 && x <= JANELA && parc1(g, it.parcelas); });
+    }
     var usados = {}; pend().forEach(function (x) { if (x.gastoId) usados[x.gastoId] = 1; });
     var ok = function (g) { return Math.abs((Number(g.valor) || 0) - it.valor) < 0.005 && g.data && Math.abs(dias(g.data, d)) <= JANELA; };
     return Gasto.todos().filter(function (g) { return g.fluxo === 'saida' && !usados[g.id] && !g.divisao && ok(g); })
@@ -77,6 +84,7 @@
      de uma das opções ou com os mesmos reais e outros centavos (512,87 lido × 512,78 no banco). Hora, bandeira, tipo e final ordenam */
   function perto(it) {
     var d = iso(it.data), ops = (it.opcoes || []).concat(it.valor != null ? [it.valor] : []).map(Number).filter(function (v) { return v > 0; });
+    if (it.parcelas > 1) ops = ops.map(function (v) { return n2(v / it.parcelas); });   /* 1.2.0 (3.99): parcelado: perto da parcela */
     if (!d || !ops.length) return [];
     var usados = {}; pend().forEach(function (x) { if (x.gastoId) usados[x.gastoId] = 1; });
     var fimDe = function (g) { return String(g.final || g.finalCartao || (g.cartaoId && typeof Banco !== 'undefined' ? (Banco.acharCartao(g.cartaoId) || {}).fim || '' : '')); };
@@ -137,7 +145,7 @@
       await carregarMotor();
       if (!Leitura.lerVarios || Leitura.lerVarios.contrato !== 1) throw new Error('contrato');
       var itens = await (API._ler || Leitura.lerVarios)(arquivos, { aviso: function (t) { if (temFundo) Fundo.passo(id, t); }, progresso: function (p) { if (temFundo) Fundo.passo(id, null, (Number(p) || 0) / 100); } });
-      ultimo = { itens: itens, grupos: API.classificar(itens) };
+      ultimo = { itens: itens, grupos: API.classificar(itens), arquivos: arquivos };
       if (temFundo) { Fundo.terminar(id, tr('Canhotos lidos: ', 'Receipts read: ', 'Tickets leídos: ') + itens.length); Fundo.limpar(id); }
       mostrar();
     } catch (e) {
@@ -153,14 +161,16 @@
   }
 
   /* ---------- o resultado ---------- */
-  function rot(it) { return [it.loja || tr('(loja não lida)', '(store not read)', '(tienda no leída)'), it.data, it.hora, it.final ? '••' + it.final : ''].filter(Boolean).join(' · '); }
+  function rot(it) { return [it.loja || tr('(loja não lida)', '(store not read)', '(tienda no leída)'), it.data, it.hora, it.final ? '••' + it.final : '', it.parcelas > 1 && it.valor ? it.parcelas + 'x ' + tr('de ', 'of ', 'de ') + fmt(n2(it.valor / it.parcelas)) : ''].filter(Boolean).join(' · '); }
   function nomeG(g) { return ((g.contraparte && g.contraparte.nome) || g.descRobo || g.desc || '') + ' · ' + I18n.data(g.data) + (g.pendente ? ' · ⏳ ' + tr('pendente no banco', 'pending at the bank', 'pendiente en el banco') : ''); }
   function classificacao(k, g) {
     var gs = Object.keys(GRUPOS);
     return '<div class="cn-class" data-k="' + k + '" hidden>' + (typeof recOpcoesPessoa === 'function' ? recOpcoesPessoa('cnPess' + k) : '') +
       '<div class="grid g2"><label class="field"><span>' + esc(tr('Para quem', 'For whom', 'Para quién')) + '</span><input data-cn="quem" list="cnPess' + k + '" value="' + esc(quemVer(g.paraQuem || '')) + '"></label>' +
       '<label class="field"><span>' + esc(tr('Grupo', 'Group', 'Grupo')) + '</span><select data-cn="grupo">' + gs.map(function (x) { return '<option value="' + x + '"' + (x === g.grupo ? ' selected' : '') + '>' + esc((GRUPOS[x].ico || '') + ' ' + GRUPOS[x].nome) + '</option>'; }).join('') + '</select></label>' +
-      '<label class="field"><span>' + esc(tr('Categoria', 'Category', 'Categoría')) + '</span><input data-cn="sub" maxlength="60" value="' + esc(g.sub || '') + '"></label></div>' +
+      '<label class="field"><span>' + esc(tr('Categoria', 'Category', 'Categoría')) + '</span><input data-cn="sub" maxlength="60" value="' + esc(g.sub || '') + '"></label>' +
+      (window.Veiculos && Veiculos.ativos().length ? '<label class="field"><span>' + esc(tr('Carro (se for do Veículo)', 'Car (if Vehicle)', 'Coche (si es Vehículo)')) + '</span><select data-cn="veiculo"><option value="">—</option>' +
+        Veiculos.ativos().map(function (v) { return '<option value="' + esc(v.id) + '"' + (g.veiculoId === v.id ? ' selected' : '') + '>' + esc(v.apelido) + '</option>'; }).join('') + '</select></label>' : '') + '</div>' +
       '<p style="margin:4px 0"><button type="button" class="btn sm" data-acao="cn-dividir" data-k="' + k + '">✂️ ' + esc(tr('Dividir', 'Split', 'Dividir')) + '</button></p><div class="cn-div" hidden></div>' +
       '<button type="button" class="btn sm primary" data-acao="cn-aplicar" data-k="' + k + '">' + esc(tr('Aplicar no lançamento do banco', 'Apply to the bank entry', 'Aplicar al movimiento del banco')) + '</button></div>';
   }
@@ -220,11 +230,32 @@
     } else {
       Object.assign(g, d, { obs: obs, doPrintClass: true, printId: g.printId || 'canhoto' }); if (partes) g.partes = partes;
     }
+    if (ehGasto && it && it.parcelas > 1) ficha(it, g, d);
+  }
+  /* 1.2.0 (3.99): o canhoto parcelado NÃO cria gasto: vira a ficha da compra (modulos/compra-parcelada.js), que enriquece todas
+     as parcelas (as que já vieram e as que vierem) com a categoria, a pessoa, o carro, a descrição e a foto (cofre de arquivos) */
+  function ficha(it, g, d) {
+    if (!window.CompraParcelada) return null;
+    var dd = { total: it.valor, n: it.parcelas, data: iso(it.data) || (g && g.data) || hojeISO(), hora: it.hora || '', loja: it.loja || '', final: it.final || '',
+      cartaoId: (g && g.cartaoId) || (d && d.cartaoId) || '', grupo: (d && d.grupo) || (g && g.grupo !== 'OUTROS' ? g.grupo : ''), sub: (d && d.sub) || (g && g.sub) || '',
+      paraQuem: (d && d.paraQuem) || '', paraQuemId: (d && d.paraQuemId) || '', veiculoId: (d && d.veiculoId) || '', desc: it.loja || '' };
+    var f = g && CompraParcelada.lista().find(function (x) { return (x.gastoIds || []).indexOf(g.id) >= 0; });
+    if (f) { Object.keys(dd).forEach(function (k) { if (dd[k]) f[k] = dd[k]; }); CompraParcelada.ligar(f); }
+    else f = CompraParcelada.criar(Object.assign(dd, g ? { gastoId: g.id } : {}));
+    if (f && !f.docId) guardarFoto(f, it);
+    return f;
+  }
+  function guardarFoto(f, it) {
+    var arqs = (ultimo && ultimo.arquivos) || [], a = arqs.find(function (x) { return x && x.name === it.arquivo; }) || arqs[0];
+    if (!a || !window.ArquivosFamilia || !a.arrayBuffer) return;
+    a.arrayBuffer().then(function (buf) {
+      return ArquivosFamilia.guardar({ nome: tr('canhoto ', 'receipt ', 'ticket ') + f.data + (f.loja ? ' ' + f.loja : ''), tipo: 'comprovante', ano: +f.data.slice(0, 4), ligado: f.id, mime: a.type || 'image/jpeg' }, new Uint8Array(buf));
+    }).then(function (meta) { if (meta && meta.id) { f.docId = meta.id; CompraParcelada.ligar(f); Store.salvar(); } }).catch(function () { /* sem cofre: fica sem a foto */ });
   }
   function depois() { Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); }
 
   MoneyModulos.registrar({
-    id: 'canhotos', versao: '1.1.1',
+    id: 'canhotos', versao: '1.2.0',
     pontos: {
       'lancamentos.topo': function () { return '<div class="row" style="margin:0 0 8px"><button type="button" class="btn sm" data-acao="cn-abrir">🧾 ' + esc(tr('Conferir canhotos', 'Check receipts', 'Revisar tickets')) + '</button></div>'; }
     },
@@ -242,7 +273,8 @@
       'cn-aplicar': function (el) {
         var r = item(el), g = r.x.g, partes = null, box = r.c.querySelector('.cn-div:not([hidden]) [data-dvbloco]');
         if (box) { var l = Divisao.ler(box.dataset.dvbloco, n2(g.valor)); if (l.erro) return toast(l.erro, 'warn'); partes = l.partes; }
-        aplicar(g, { paraQuem: campo(r.c, 'quem'), grupo: campo(r.c, 'grupo') || g.grupo, sub: campo(r.c, 'sub') || g.sub }, partes, r.x.it);
+        var dc = { paraQuem: campo(r.c, 'quem'), grupo: campo(r.c, 'grupo') || g.grupo, sub: campo(r.c, 'sub') || g.sub }; if (campo(r.c, 'veiculo')) dc.veiculoId = campo(r.c, 'veiculo');
+        aplicar(g, dc, partes, r.x.it);
         depois(); r.c.querySelector('.cn-class').hidden = true; toast(tr('Classificado no lançamento do banco.', 'Classified on the bank entry.', 'Clasificado en el movimiento del banco.'));
       },
       'cn-confirmar': function (el) {
@@ -273,6 +305,11 @@
       },
       'cn-esperar': function (el) {
         var r = item(el), it = r.x.it, ct = campo(r.c, 'cartao');
+        if (it.parcelas > 1 && window.CompraParcelada) {   /* 1.2.0 (3.99): parcelado: a ficha espera a parcela 01/N do banco */
+          var f = ficha(it, null, { cartaoId: ct }); if (!f) return;
+          ultimo.grupos.novo.splice(ultimo.grupos.novo.indexOf(r.x), 1); depois(); mostrar();
+          return toast('⏳ ' + tr('Aguardando o banco: liga sozinho quando a parcela 01/', 'Waiting for the bank: links by itself when installment 01/', 'Esperando al banco: se vincula sola cuando aparezca la cuota 01/') + it.parcelas + tr(' aparecer.', ' shows up.', '.'));
+        }
         if (!ct) return toast(tr('Escolha o cartão para esperar o banco.', 'Pick the card to wait for the bank.', 'Elige la tarjeta para esperar al banco.'), 'warn');
         pend().push({ id: 'pp_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), doPrint: true, estado: 'pendente', pendente: true, vistoEm: hojeISO(), cartaoId: ct, final: it.final || '',
           valor: it.valor, data: iso(it.data) || hojeISO(), hora: it.hora || '', desc: it.loja || '', grupo: 'OUTROS', sub: '', fluxo: 'saida', obs: tr('do canhoto', 'from the receipt', 'del ticket') });

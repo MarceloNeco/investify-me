@@ -112,6 +112,10 @@ const NOTIF = 'Itaú • agora\nCompra aprovada de R$ 236,00 em LOJA FICTICIA BE
       await (await caches.open('partilha-moneytrio')).put('./partilha/1', new Response(blob, { headers: { 'content-type': 'image/png' } }));
     }, NOTIF);
     await p.goto(BASE + '/?print=1');
+    /* 3.99: a imagem compartilhada pergunta antes: print do app do banco ou nota/canhoto/orçamento */
+    await p.waitForSelector('#genBody [data-acao="pc-dest"][data-v="print"]', { timeout: 30000 });
+    ok(/É print do app do banco ou nota\/canhoto\/orçamento\?/.test(await p.textContent('#genBody')), '3.99: a imagem compartilhada pergunta "É print do app do banco ou nota/canhoto/orçamento?"');
+    await p.click('#genBody [data-acao="pc-dest"][data-v="print"]');
     await p.waitForFunction(() => document.querySelectorAll('#pcItens .pc-item').length === 2, null, { timeout: 120000 });
     ok(await p.evaluate(async () => !/print=1/.test(location.search) && (await (await caches.open('partilha-moneytrio')).keys()).length === 0), 'a imagem compartilhada (o sw.js guarda em ./?compartilhar=1 e abre ./?print=1) é lida, apagada na hora, e a prévia abre com os 2 itens');
     await p.click('#genBody [data-acao="pc-cancelar"]');
