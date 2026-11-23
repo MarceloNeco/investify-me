@@ -752,6 +752,21 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   contraparte, paraQuem, divisao, viagem, hora e ficha se perdiam ao recarregar; o pacote antigo abre igual. "Como foi" (`meio`: aviao/carro/
   onibus/outro/misto; vazio = misto) escolhe os sinais fortes (`RX_AERO`/`RX_CARRO`/rodoviária) e as palavras de antes (`ehAntes`: base +
   aérea se avião + ônibus se ônibus); `km` → `resumo().combEstimado` (Desloc.veiculo). Teste: `teste/teste-viagem.js`.
+  **3.99 — Quanto o carro custa.** `modulos/compra-parcelada.js` 1.0.0 (`window.CompraParcelada`, coleção nova `compras_parceladas`; visão
+  da casa: segue a 1ª parcela): a FICHA da compra parcelada {total, n, vp, data do pagamento, hora, loja, final, cartaoId, grupo, sub,
+  paraQuem, veiculoId, docId, desc, estado, gastoIds}. `ligar`: a parcela "01/N" (valor ÷ N, ±R$ 0,05; data da ficha até +3 dias; final,
+  cartão e loja desempatam; empate não liga) e as irmãs (mesma descrição sem k/N, mesmo N, valor e cartão, até (N+1)×31 dias) ganham
+  `compraId`, categoria, pessoa, carro, docId e a descrição + k/N (`editadoPessoa`); nunca cria gasto. `gasto.novo` → `ligarTudo`.
+  canhotos 1.2.0: `it.parcelas > 1` casa pela 01/N (candidatos e `perto`), `aplicar` cria/atualiza a ficha e guarda a foto no cofre
+  (`ArquivosFamilia.guardar`, tipo 'comprovante', ligado à ficha); "Esperar o banco" parcelado = ficha aguardando; seletor de carro na
+  classificação. print-colar 1.3.0: "em 5x de R$ X" (o valor da parcela não vira item) → no cartão do robô, a ficha; a imagem
+  compartilhada pergunta "print do banco ou nota/canhoto/orçamento?" (`pc-dest` → `processar` ou `Canhotos.processar`).
+  `modulos/veiculos.js` 1.0.0 (`window.Veiculos`, coleção nova `veiculos`, da casa por padrão; tela `b-carro`, menu 🚗 Carro): apelido (nunca
+  a placa), `g.veiculoId` (um carro só → grava em todos do Veículo; dois → 📥 "Qual carro?" + `config.veicRegras` por Origem); categorias
+  novas em `ST.categorias.VEICULO` (uma vez, `config.veic399`); a antiga "Mecânico / Eletrico / Funilaria" continua e o 📥 oferece
+  reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
+  contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
+  (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem

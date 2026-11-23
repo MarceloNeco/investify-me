@@ -47,6 +47,8 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     await ctx.route('**/*', (r) => r.request().url().startsWith(BASE) ? r.continue() : r.abort());
     await ctx.addInitScript((t) => { if (!sessionStorage.getItem('s')) { localStorage.setItem('investifyme.dados.v1', t); localStorage.setItem('moneytrio.soNesteAparelho', '1'); localStorage.setItem('moneytrio.tutorial.v1', 'visto'); sessionStorage.setItem('s', '1'); } }, JSON.stringify(LOCAL));
     const p = await ctx.newPage(); p.erros = []; p.on('pageerror', (e) => p.erros.push(String(e))); p.on('dialog', (x) => x.accept(x.type() === 'prompt' ? '50' : undefined));
+    /* 3.99: o relógio da página no dia que o teste simula (13/11): a conciliação automática e os estados usam a data de verdade */
+    await p.clock.setFixedTime(new Date('2026-11-13T10:00:00-03:00'));
     await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && typeof PJGestao !== 'undefined');
     await p.evaluate(() => { I18n.atual = 'pt'; Assist.marcarTutorial(); ST.config.assistOne = false; AssistOne.aplicar(); PJ._hoje = PJGestao._hoje = CofreEmpresa._hoje = '2026-11-13'; });
 
