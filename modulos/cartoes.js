@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/cartoes.js — cartões por conta, com vários finais (3.65)        1.0.0 · 11/Nov/2026
+   modulos/cartoes.js — cartões por conta, com vários finais (3.65)        1.1.0 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      CARTÃO = a conta do cartão (a fatura): apelido, titular, "Quem usa", bandeira, banco, fechamento, vencimento.
@@ -14,6 +14,17 @@
        lançamentos daqueles finais ganham o cartão (para trás também). Fatura e relatórios por CARTÃO (todos os finais).
      · "Quem pagou" das compras: o titular do final (adicional) → "Quem usa" do cartão → o titular do cartão.
      · Nunca o número inteiro, o CVV nem a senha: só os 4 últimos dígitos (a validade, opcional, vai cifrada com o resto).
+   1.1.0 (3.102), cartões virtuais sem bagunça (pedido do dono, 24/Nov/2026: 3 finais no Visa e 13 no Mastercard na mesma fatura):
+     · Um cartão por fatura na lista e nos filtros: com mais de um final, o rótulo (Banco.rotuloCartao) é só o nome do cartão; os
+       finais ficam no detalhe (o cadastro do cartão).
+     · Tipos novos do final: virtual de uso único ('unico') e virtual permanente ('permanente'); cada final pode ter "quem usa"
+       (f.usa/usaId; o virtual permanente pode ser de outra pessoa).
+     · Final novo da mesma conta continua entrando sozinho, com UMA pergunta discreta no 📥 por cartão ("Final •• novo no Visa:
+       virtual de uso único, virtual permanente ou adicional? Quem usa?"), que dá para responder depois. A resposta vale para as
+       compras daquele final que a pessoa não mexeu ("Quem pagou").
+     · "Quem pagou": o "quem usa" do final → o titular do adicional → o "quem usa" do cartão → o titular do cartão.
+     · Finais virtuais sem compra há mais de 6 meses vão para "antigos" no detalhe (escondidos, nunca apagados; o histórico continua
+       ligado) e não são perguntados.
    API (window.Cartoes)
      finais(c) · doFinal(fim) · daConta(id) · doRobo(l, g) · quemPagou(c, fim) · encontrados() · perguntas()
      ligarRetro(c) → n · semente(chave) → dados para o cadastro · responder(fim, cartaoId|'novo'|'nao')
@@ -27,7 +38,12 @@
    ===================================================================== */
 (function () {
   'use strict';
-  var TIPOS = { fisico: ['físico', 'physical'], virtual: ['virtual', 'virtual'], adicional: ['adicional', 'additional'], naosei: ['não sei', 'not sure'] };
+  var TIPOS = { fisico: ['físico', 'physical', 'físico'], virtual: ['virtual', 'virtual', 'virtual'], unico: ['virtual de uso único', 'single-use virtual', 'virtual de un solo uso'],
+    permanente: ['virtual permanente', 'permanent virtual', 'virtual permanente'], adicional: ['adicional', 'additional', 'adicional'], naosei: ['não sei', 'not sure', 'no sé'] };
+  var VIRTUAIS = { virtual: 1, unico: 1, permanente: 1 }, ANTIGO_DIAS = 183;
+  function rotTipo(k) { var t = TIPOS[k] || TIPOS.naosei; return pt() ? t[0] : (I18n.atual === 'es' ? t[2] : t[1]); }
+  function hojeX() { return API._hoje || hojeISO(); }
+  function maisDias(d, n) { var x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
   function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
   function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function so4(f) { return String(f || '').replace(/\D/g, '').slice(-4); }
@@ -43,7 +59,7 @@
   function rotuloPessoa(txt, id) { var p = id && window.Pessoas && Pessoas.porId(id); return p ? Pessoas.rotulo(p) : (txt || ''); }
 
   var API = {
-    TIPOS: TIPOS,
+    TIPOS: TIPOS, _hoje: null,
     finais: function (c) {
       var l = Array.isArray(c.finais) ? c.finais.slice() : [];
       if (c.fim && !l.some(function (f) { return f.fim === c.fim; })) l.unshift({ fim: c.fim, tipo: 'naosei' });
@@ -54,6 +70,7 @@
     quemPagou: function (c, fim) {
       if (!c) return '';
       var f = API.finais(c).find(function (x) { return x.fim === so4(fim); });
+      if (f && (f.usa || f.usaId)) return rotuloPessoa(f.usa, f.usaId);   /* 1.1.0: o "quem usa" do final */
       if (f && f.tipo === 'adicional' && (f.titular || f.titularId)) return rotuloPessoa(f.titular, f.titularId);
       return rotuloPessoa(c.usa, c.usaId) || rotuloPessoa(c.titular, c.titularId);
     },
@@ -122,6 +139,33 @@
       return { apelido: x.nome || '', fim: x.finais[0], bandeira: x.bandeira || 'outra', bancoId: banco ? banco.id : '', contaId: x.contaId, contaNome: x.nome,
         finais: x.finais.map(function (f, i) { return { fim: f, tipo: x.contaId ? (x.finais.length > 1 ? 'virtual' : 'naosei') : 'naosei' }; }) };
     },
+    /* 1.1.0: a última compra de cada final e os virtuais antigos (sem compra há mais de 6 meses; nunca apagados) */
+    ultimaCompra: function (c, fim) {
+      var u = '';
+      ((typeof ST !== 'undefined' && ST && ST.gastos) || []).forEach(function (g) { if (g.finalCartao === fim && (g.cartaoId === c.id || !g.cartaoId) && (g.data || '') > u) u = g.data || ''; });
+      return u;
+    },
+    antigo: function (c, f) { if (!VIRTUAIS[f.tipo]) return false; var u = API.ultimaCompra(c, f.fim); return !!u && u < maisDias(hojeX(), -ANTIGO_DIAS); },
+    /* os finais novos que ainda esperam a resposta (tipo e quem usa), por cartão */
+    novos: function () {
+      return cartoes().map(function (c) { return { c: c, fs: API.finais(c).filter(function (f) { return f.novo && !API.antigo(c, f); }) }; }).filter(function (x) { return x.fs.length; });
+    },
+    /* a resposta: o tipo e quem usa; "Quem pagou" das compras daquele final que a pessoa não mexeu */
+    responderFinal: function (cid, fim, tipo, usa) {
+      var c = cartoes().find(function (x) { return x.id === cid; }); if (!c) return 0;
+      c.finais = API.finais(c);
+      var f = c.finais.find(function (x) { return x.fim === so4(fim); }); if (!f) return 0;
+      if (TIPOS[tipo]) f.tipo = tipo;
+      delete f.usa; delete f.usaId;
+      if (String(usa || '').trim()) { f.usa = String(usa).trim().slice(0, 60); if (window.Pessoas) Pessoas.ligar(f, 'usa', 'usaId'); }
+      delete f.novo;
+      var q = API.quemPagou(c, f.fim), n = 0;
+      (ST.gastos || []).forEach(function (g) {
+        if (g.finalCartao !== f.fim || (g.cartaoId && g.cartaoId !== c.id) || g.editadoPessoa || !q || g.quem === q) return;
+        g.quem = q; delete g.quemId; if (window.Pessoas) Pessoas.ligar(g, 'quem', 'quemId'); n++;
+      });
+      return n;
+    },
     /* depois do formulário de cadastro (index.html salvarCartao) */
     lerForm: function (c) {
       var v = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
@@ -134,8 +178,9 @@
       document.querySelectorAll('.ct-final').forEach(function (li) {
         var fim = so4(li.querySelector('.ct-f-fim').value); if (!fim) return;
         var tipo = li.querySelector('.ct-f-tipo').value, tit = li.querySelector('.ct-f-tit') ? li.querySelector('.ct-f-tit').value.trim() : '';
-        var f = { fim: fim, tipo: TIPOS[tipo] ? tipo : 'naosei' };
+        var f = { fim: fim, tipo: TIPOS[tipo] ? tipo : 'naosei' }, usa = li.querySelector('.ct-f-usa') ? li.querySelector('.ct-f-usa').value.trim() : '';
         if (f.tipo === 'adicional' && tit) { f.titular = tit; if (window.Pessoas) Pessoas.ligar(f, 'titular', 'titularId'); }
+        if (usa) { f.usa = usa; if (window.Pessoas) Pessoas.ligar(f, 'usa', 'usaId'); }   /* 1.1.0 */
         fins.push(f);
       });
       if (c.fim && !fins.some(function (f) { return f.fim === c.fim; })) fins.unshift({ fim: c.fim, tipo: 'naosei' });
@@ -145,10 +190,11 @@
   };
 
   function linhaFinal(f, i) {
-    var op = Object.keys(TIPOS).map(function (k) { return '<option value="' + k + '"' + (f.tipo === k ? ' selected' : '') + '>' + esc(TIPOS[k][pt() ? 0 : 1]) + (f.novo && k === f.tipo ? ' ' + tr('(novo)', '(new)') : '') + '</option>'; }).join('');
+    var op = Object.keys(TIPOS).map(function (k) { return '<option value="' + k + '"' + (f.tipo === k ? ' selected' : '') + '>' + esc(rotTipo(k)) + (f.novo && k === f.tipo ? ' ' + tr('(novo)', '(new)', '(nuevo)') : '') + '</option>'; }).join('');
     return '<li class="ct-final"><input class="ct-f-fim" inputmode="numeric" maxlength="4" value="' + esc(f.fim || '') + '" placeholder="1234" aria-label="' + esc(tr('Final', 'Ending')) + '">' +
       '<select class="ct-f-tipo" aria-label="' + esc(tr('Tipo', 'Type')) + '">' + op + '</select>' +
       '<input class="ct-f-tit" data-pessoa list="ctPessoas" value="' + esc(rotuloPessoa(f.titular, f.titularId)) + '" placeholder="' + esc(tr('titular do adicional', 'additional holder')) + '"' + (f.tipo === 'adicional' ? '' : ' hidden') + '>' +
+      '<input class="ct-f-usa" data-pessoa list="ctPessoas" value="' + esc(rotuloPessoa(f.usa, f.usaId)) + '" placeholder="' + esc(tr('quem usa', 'who uses it', 'quién la usa')) + '" style="max-width:9em">' +
       '<button type="button" class="linkinho" data-acao="ct-final-tirar" aria-label="' + esc(tr('Tirar este final', 'Remove this ending')) + '">✕</button></li>';
   }
 
@@ -186,7 +232,7 @@
 
   MoneyModulos.registrar({
     id: 'cartoes',
-    versao: '1.0.0',
+    versao: '1.1.0',
     pontos: {
       'cartao.form': function (ctx) {
         var c = ctx.c || ctx.semente || {};
@@ -197,7 +243,9 @@
           '<span class="hint">' + esc(tr('As compras entram com "Quem pagou" = quem usa (ex.: o cartão fica com a esposa).', 'Purchases get "Who paid" = who uses it.')) + '</span></label></div>' +
           (window.Pessoas ? Pessoas.opcoes('ctPessoas') : '') +
           '<div class="f"><span class="lb">' + esc(tr('Finais deste cartão', 'Endings of this card')) + '</span>' +
-          '<ul class="ct-finais">' + fins.map(linhaFinal).join('') + '</ul>' +
+          '<ul class="ct-finais">' + fins.filter(function (f) { return !(c.id && API.antigo(c, f)); }).map(linhaFinal).join('') + '</ul>' +
+          (c.id && fins.some(function (f) { return API.antigo(c, f); }) ? '<details class="ct-antigos"><summary class="small">' + esc(tr('Antigos (virtuais sem compra há mais de 6 meses): ', 'Old (virtual, no purchase for over 6 months): ', 'Antiguos (virtuales sin compras hace más de 6 meses): ') + fins.filter(function (f) { return API.antigo(c, f); }).length) + '</summary>' +
+            '<ul class="ct-finais ct-finais-antigos">' + fins.filter(function (f) { return API.antigo(c, f); }).map(linhaFinal).join('') + '</ul></details>' : '') +
           '<button type="button" class="btn sm" data-acao="ct-final-mais">' + esc(tr('+ outro final', '+ another ending')) + '</button>' +
           '<span class="hint">' + esc(tr('Cartão virtual: cada compra pode ter um final diferente, mas é a mesma fatura. Adicional: o cartão de outra pessoa na mesma conta.',
             'Virtual card: each purchase may have a different ending, but it is the same bill. Additional: another person\'s card on the same account.')) + '</span></div>' +
@@ -205,6 +253,23 @@
           '<input type="hidden" id="ctContaId" value="' + esc(c.contaId || '') + '"><input type="hidden" id="ctContaNome" value="' + esc(c.contaNome || '') + '">';
       },
       'cartoes.config': blocoConfig,
+      /* 1.1.0: uma pergunta discreta por cartão com os finais novos (dá para responder depois) */
+      'inbox.grupos': function () {
+        if (window.Escopo && Escopo.soCasa && Escopo.soCasa()) return [];
+        var l = API.novos(); if (!l.length) return [];
+        var ops = function (sel) { return ['unico', 'permanente', 'adicional', 'fisico'].map(function (k) { return '<option value="' + k + '"' + (sel === k ? ' selected' : '') + '>' + esc(rotTipo(k)) + '</option>'; }).join(''); };
+        var h = (window.Pessoas ? Pessoas.opcoes('ctInbPessoas') : '') + l.map(function (x) {
+          var nome = typeof Banco !== 'undefined' ? Banco.rotuloCartao(x.c.id) : (x.c.apelido || '');
+          return '<li class="inb-item ct-inb" data-c="' + esc(x.c.id) + '"><div><b>💳 ' + esc(x.fs.length > 1 ? x.fs.length + tr(' finais novos no ', ' new endings on ', ' finales nuevos en la ') + nome : tr('Final ••', 'Ending ••', 'Final ••') + x.fs[0].fim + tr(' novo no ', ' new on ', ' nuevo en la ') + nome) + '</b>' +
+            '<span class="t-sub">' + esc(tr('Virtual de uso único, virtual permanente ou adicional? Quem usa? Pode responder depois.', 'Single-use virtual, permanent virtual or additional? Who uses it? You can answer later.', '¿Virtual de un solo uso, virtual permanente o adicional? ¿Quién la usa? Puedes responder después.')) + '</span>' +
+            x.fs.map(function (f) {
+              return '<div class="ct-inb-f row" data-fim="' + esc(f.fim) + '" style="gap:6px;flex-wrap:wrap;margin:4px 0"><span>••' + esc(f.fim) + '</span><select class="ct-inb-tipo">' + ops(f.tipo === 'virtual' ? 'unico' : f.tipo) + '</select>' +
+                '<input class="ct-inb-usa" data-pessoa list="ctInbPessoas" placeholder="' + esc(tr('quem usa', 'who uses it', 'quién la usa')) + '" value="' + esc(rotuloPessoa(f.usa, f.usaId)) + '" style="max-width:9em">' +
+                '<button type="button" class="btn sm primary" data-acao="ct-inb-ok" data-c="' + esc(x.c.id) + '" data-fim="' + esc(f.fim) + '">OK</button></div>';
+            }).join('') + '</div></li>';
+        }).join('');
+        return [{ id: 'confirmar', n: l.length, html: h }];
+      },
       'budget.painel': function () {
         var enc = API.encontrados().filter(function (x) { return x.contaId || !cartoes().length; });
         if (!enc.length) return '';
@@ -223,6 +288,11 @@
         var n = API.responder(el.dataset.fim, v); Store.salvar(); render(); toast(n + tr(' compra(s) ligada(s) ao cartão.', ' purchase(s) linked to the card.'));
       },
       'ct-final-nao': function (el) { API.responder(el.dataset.fim, 'nao'); Store.salvar(); render(); },
+      'ct-inb-ok': function (el) {
+        var row = el.closest('.ct-inb-f'); if (!row) return;
+        API.responderFinal(el.dataset.c, el.dataset.fim, row.querySelector('.ct-inb-tipo').value, row.querySelector('.ct-inb-usa').value);
+        Store.salvar(); if (typeof render === 'function') render(); if (typeof renderInboxN === 'function') renderInboxN();
+      },
       'ct-novo-ok': function (el) { var c = cartoes().find(function (x) { return x.id === el.dataset.id; }); if (c) { (c.finais || []).forEach(function (f) { if (f.fim === el.dataset.fim) delete f.novo; }); Store.salvar(); render(); } }
     }
   });

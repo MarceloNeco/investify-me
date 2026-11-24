@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.1.7 · 23/Nov/2026
+   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.1.8 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 11/Nov/2026; desenho em DESENHO-visao-da-casa.md)
      Um membro da família com a visão "Só a casa" vê a parte da casa; o resto fica RESERVADO e nem chega ao aparelho dele
@@ -86,7 +86,8 @@
         case 'rachai_mesas': case 'rachai_viagens': return manual(x) || 'reservado';   /* 3.93 (1.1.4): de quem criou, a não ser "da casa" */
         case 'comprovantes': return manual(x) || 'reservado';   /* 3.95 (1.1.5): o escopo da caixa do robô de onde veio */
         case 'viagens': return manual(x) || 'reservado';
-        case 'veiculos': return manual(x) || 'casa';   /* 3.99 (1.1.7): o carro é da casa, a não ser que o chefe reserve */
+        case 'veiculos': return manual(x) || 'casa';
+        case 'materiais': return manual(x) || 'casa';   /* 3.102 (1.1.8): o material escolar dos filhos é da casa (modulos/material-escolar.js) */   /* 3.99 (1.1.7): o carro é da casa, a não ser que o chefe reserve */
         case 'compras_parceladas': return manual(x) || ((x.gastoIds || []).length && C.gCasa && C.gCasa[x.gastoIds[0]] ? 'casa' : 'reservado');   /* 3.99: segue a 1ª parcela */   /* 3.98 (1.1.6): da casa quando quem foi é da casa (modulos/viagem.js marca) */
         case 'a_receber': {   /* 3.79 (1.1.2): o valor a receber segue o lançamento de origem; sem ele, o que o chefe marcou */
           if (manual(x)) return manual(x);
@@ -235,7 +236,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'visao-casa', versao: '1.1.7', colecoes: [COL],
+    id: 'visao-casa', versao: '1.1.8', colecoes: [COL],
     pontos: {
       'budget.painel': function () { return API.soCasa() ? gastosDaFamilia() : ''; },
       /* 1.1.0 (3.75): no 📥, o que se pede e por quê, numa linha; o botão abre o cartão sem trocar de app */

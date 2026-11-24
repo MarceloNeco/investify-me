@@ -1,11 +1,16 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.101 · 23/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.102 · 24/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.102', d:'2026-11-24', t:'Material escolar, cartões virtuais e conta paga com atraso', itens:[
+    '📚 Material escolar: crie o ano letivo (de novembro a fevereiro) e o app sugere as compras de papelaria, livraria e lojas on-line (Amazon, Mercado Livre, Shopee…) e os pedidos com caderno, lápis, mochila… Você confirma de qual filho é (ou só uma parte) e tudo cai numa linha só, em Dependentes › Material escolar. O resumo mostra o total, por filho, por loja e o ano anterior, e um compromisso anual lembra no ano que vem.',
+    'Cartões virtuais sem bagunça: na lista aparece um cartão por fatura; os finais ficam dentro do cartão. Um final novo entra sozinho com uma pergunta no 📥 (virtual de uso único, virtual permanente ou adicional? quem usa?), e o "Quem pagou" segue quem usa aquele final. Finais virtuais sem compra há mais de 6 meses vão para "antigos" (nunca são apagados).',
+    'Conta paga com atraso: a conta do débito automático que não caiu e foi paga depois aparece como "paga com atraso (Pix em 23/11)". Na conta seguinte, o app avisa que pode vir multa e juros e mostra a multa quando ela vem destacada no e-mail da conta. O 📥 lembra de ver com o banco por que o débito não caiu (com anotação e "Resolvido") e, 3 dias antes do próximo vencimento, de confirmar que o débito automático está ativo.'
+  ]},
   {v:'3.101', d:'2026-11-23', t:'Ordem de serviço da oficina', itens:[
     'Em "🧾 Conferir canhotos", a foto da ordem de serviço (OS) da oficina agora é lida no aparelho, sem IA: vale o "valor fechado" do rodapé ou o comprovante do cartão, com as parcelas. A OS e o canhoto do cartão são a mesma compra e contam uma vez só. A compra já vem no grupo Veículo, com a categoria da OS (por exemplo, Funilaria e pintura) e o carro, e liga às parcelas do banco pelo valor, pelas parcelas e pela loja ou CNPJ.',
     'A OS fotografada sem o comprovante espera a parcela do banco até 30 dias depois da data da OS, e só liga sozinha quando a loja ou o CNPJ batem. A OS que ainda é orçamento aparece como "orçamento (ainda não pago)". Os dados do cliente, a placa e o cartão da OS nunca viram campo.'
