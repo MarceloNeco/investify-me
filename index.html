@@ -9944,7 +9944,8 @@ function montarNav(){
   const lado = $('#navLista');
   if(lado) lado.innerHTML = Verter.html(abas.map(a =>
     '<button class="nav-item" data-view="' + a.v + '"><span>' + a.ico + '</span> ' + esc(nomeAba(a)) +
-    (a.sub ? ' <small class="nav-sub">' + esc(t(a.sub)) + '</small>' : '') + '</button>').join(''));   /* 3.74: "Contas fixas e gastos recorrentes" */
+    (a.sub ? ' <small class="nav-sub">' + esc(t(a.sub)) + '</small>' : '') + '</button>').join('') +   /* 3.74: "Contas fixas e gastos recorrentes" */
+    (window.AbrirChrome ? AbrirChrome.htmlBotao('menu') : ''));   /* 3.106.1: "📲 Instalar o app" fixo no ☰ enquanto não estiver instalado */
   const baixo = $('#tabLista');
   if(baixo){
     /* quais botões ficam fixos embaixo é escolha de quem usa */

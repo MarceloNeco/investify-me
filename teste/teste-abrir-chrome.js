@@ -5,6 +5,9 @@
    no iPhone e no computador. A tela de entrada mostra "Abrir no Chrome" (intent://… package=com.android.chrome) só onde se aplica; na
    dúvida, nada. Depois de entrar, no Chrome do Android, "Instalar na tela inicial" chama o beforeinstallprompt guardado; sem ele, a
    instrução curta com a figura. Dados fictícios. Uso: node teste/teste-abrir-chrome.js
+   3.106.1 (abrir-no-chrome 1.1.0): a janela sólida (fundo escurecido, Esc e Voltar fecham), "Instalar" de verdade com o prompt, os passos
+   com o nome exato do menu em cada contexto (Custom Tab, Chrome, Samsung, iPhone, computador), a figura apagada com legenda, o
+   convite 1 vez, o botão fixo no ☰ e em Configurações que some quando o app está instalado.
    ===================================================================== */
 'use strict';
 const http = require('http'), fs = require('fs'), path = require('path');
@@ -59,14 +62,55 @@ const UA = {
       await p.context().close();
     }
 
-    console.log('3) depois de entrar: Instalar na tela inicial');
+    console.log('3) a janela de instalar (o convite e o botão fixo)');
     const p = await abrir(UA.chromeAndroid, true);
-    const r1 = await p.evaluate(() => { let chamou = 0; PWA.prompt = { prompt: () => { chamou++; }, userChoice: Promise.resolve({ outcome: 'accepted' }) }; const ofereceu = AbrirChrome.oferecerInstalar(); document.querySelector('#acInstalarSim').click(); return { ofereceu, chamou }; });
-    ok(r1.ofereceu && r1.chamou === 1, 'com o beforeinstallprompt guardado: "Instalar na tela inicial" chama a instalação no toque');
-    const r2 = await p.evaluate(() => { PWA.prompt = null; const o = AbrirChrome.oferecerInstalar(); const e = document.getElementById('acInstalar'); const r = { o, txt: e && e.textContent, fig: !!(e && e.querySelector('svg')) }; document.querySelector('#acInstalarNao').click(); return r; });
-    ok(r2.o && /Instalar app/.test(r2.txt) && r2.fig, 'sem o prompt: a instrução curta com a figura do menu do Chrome');
-    ok(!(await p.evaluate(() => AbrirChrome.oferecerInstalar())) && (await p.evaluate(() => JSON.parse(localStorage.getItem('dgo:moneytrio:aviso:instalar:depois')) > Date.now() + 29 * 86400000)), '"Agora não" esconde por 30 dias');
+    const r1 = await p.evaluate(() => { let chamou = 0; PWA.prompt = { prompt: () => { chamou++; }, userChoice: Promise.resolve({ outcome: 'accepted' }) };
+      const ofereceu = AbrirChrome.oferecerInstalar(); const j = document.querySelector('#acInstalar .ac-janela'), cs = getComputedStyle(j), fundo = getComputedStyle(document.getElementById('acInstalar'));
+      const r = { ofereceu, tit: document.getElementById('acTit').textContent, bg: cs.backgroundColor, op: cs.opacity, escuro: fundo.backgroundColor, modal: j.getAttribute('aria-modal'), passos: !!document.getElementById('acPassos') };
+      document.querySelector('#acInstalarSim').click(); r.chamou = chamou; r.fechou = !document.getElementById('acInstalar'); return r; });
+    ok(r1.ofereceu && /Instalar o MoneyTRIO no celular/.test(r1.tit) && !r1.passos, 'com o beforeinstallprompt: "📲 Instalar o MoneyTRIO no celular", uma frase e um botão "Instalar" de verdade (sem passos)');
+    ok(/^rgb\(/.test(r1.bg) && r1.op === '1' && /rgba\(0, 0, 0, 0\.6/.test(r1.escuro) && r1.modal === 'true', 'a janela é sólida (' + r1.bg + ', opacidade 1), com o fundo escurecido e aria-modal');
+    ok(r1.chamou === 1 && r1.fechou, '"Instalar" chama a instalação do navegador (prompt) e fecha');
+    ok(!(await p.evaluate(() => AbrirChrome.oferecerInstalar())), 'o convite automático aparece uma vez só por aparelho');
+    const r2 = await p.evaluate(() => { PWA.prompt = null; AbrirChrome.abrir(); const e = document.getElementById('acInstalar'); return { passos: [...e.querySelectorAll('#acPassos li')].map((l) => l.textContent), fig: e.querySelector('.ac-fig') && getComputedStyle(e.querySelector('.ac-fig')).opacity, leg: (e.querySelector('.ac-fig figcaption') || {}).textContent, clic: e.querySelector('.ac-fig') && getComputedStyle(e.querySelector('.ac-fig')).pointerEvents }; });
+    ok(r2.passos.length === 1 && /No Chrome, toque em ⋮ \(no canto de cima\) e em "Instalar app" \(nas versões antigas, "Adicionar à tela inicial"\)/.test(r2.passos[0]), 'Chrome do Android, sem o prompt: o passo com o nome exato ("Instalar app"; antigo: "Adicionar à tela inicial")');
+    ok(r2.fig === '0.7' && r2.clic === 'none' && /É assim que aparece no seu Chrome/.test(r2.leg), 'a figura do menu: apagada, não clicável, com a legenda "É assim que aparece no seu Chrome (é só uma figura)"');
+    await p.keyboard.press('Escape'); await p.waitForTimeout(100);
+    ok(!(await p.$('#acInstalar')), 'Esc fecha');
+    await p.evaluate(() => AbrirChrome.abrir()); await p.goBack().catch(() => {}); await p.waitForTimeout(300);
+    ok(!(await p.$('#acInstalar')) && /127\.0\.0\.1/.test(p.url()), 'o Voltar do celular fecha a janela (e não sai do app)');
+    await p.evaluate(() => { localStorage.removeItem('dgo:moneytrio:aviso:instalar:visto'); });
+    const semP = await p.evaluate(() => AbrirChrome.contexto(navigator.userAgent, '', true));
+    ok(semP === 'android-incerto', 'no Android, 3 s sem o prompt: não assume o Chrome ("' + semP + '")');
+    const inc = await p.evaluate(() => AbrirChrome.passos('android-incerto').map((x) => x.html));
+    ok(/Abrir no Chrome/.test(inc[0]) && /Instalar app/.test(inc[1]), 'aí o 1º passo é "Abrir no Chrome" e o 2º "⋮ → Instalar app"');
+
+    console.log('4) os passos por contexto');
+    const ctxs = await p.evaluate((U) => ({ ct: AbrirChrome.contexto(U.webview, ''), sam: AbrirChrome.contexto(U.samsung, ''), ios: AbrirChrome.contexto(U.iphone, ''), pc: AbrirChrome.contexto(U.pc, ''), ff: AbrirChrome.contexto(U.firefox, ''),
+      P: { ct: AbrirChrome.passos('customtab').map((x) => x.html.replace(/<[^>]+>/g, '')), sam: AbrirChrome.passos('samsung').map((x) => x.html.replace(/<[^>]+>/g, '')), ios: AbrirChrome.passos('ios').map((x) => x.html.replace(/<[^>]+>/g, '')), pc: AbrirChrome.passos('computador').map((x) => x.html.replace(/<[^>]+>/g, '')) } }), UA);
+    ok(ctxs.ct === 'customtab' && /^Abra no Chrome: .*Abrir no Chrome.*"Abrir no navegador Chrome"/.test(ctxs.P.ct[0]) && /Instalar app/.test(ctxs.P.ct[1]), 'Custom Tab: 1. Abrir no Chrome (ou ⋮ → "Abrir no navegador Chrome"), 2. ⋮ → "Instalar app"');
+    ok(ctxs.sam === 'samsung' && /Abrir no Chrome/.test(ctxs.P.sam[0]) && /"Adicionar página a" → "Tela inicial"/.test(ctxs.P.sam[0]) && /App de risco bloqueado/.test(ctxs.P.sam[0]), 'navegador da Samsung: pelo Chrome (a diretriz), explicando o "Adicionar página a → Tela inicial" e o alerta do Play Protect');
+    ok(ctxs.ios === 'ios' && /Compartilhar/.test(ctxs.P.ios[0]) && /"Adicionar à Tela de Início"/.test(ctxs.P.ios[1]), 'iPhone: Compartilhar → "Adicionar à Tela de Início"');
+    ok(ctxs.pc === 'computador' && /ícone de instalar na barra de endereço/.test(ctxs.P.pc[0]) && /"Transmitir, salvar e compartilhar" → "Instalar página como app"/.test(ctxs.P.pc[1]), 'computador: o ícone na barra de endereço, ou ⋮ → "Transmitir, salvar e compartilhar" → "Instalar página como app"');
+    ok(ctxs.ff === 'android-outro', 'Firefox no Android: pelo Chrome');
+
+    console.log('5) o botão fixo "📲 Instalar o app" (☰ e Configurações)');
+    await p.evaluate(() => { abrirApp('budget'); montarNav(); });
+    ok(!!(await p.$('#navLista [data-acao="ac-instalar"]')), 'no menu ☰ enquanto não está instalado');
+    await p.evaluate(() => { irPara('config'); cfgSecao = 'todos'; render(); });
+    ok(!!(await p.$('#cfgInstalar [data-acao="ac-instalar"]')), 'em Configurações também');
+    await p.evaluate(() => document.querySelector('#cfgInstalar [data-acao="ac-instalar"]').click()); await p.waitForSelector('#acInstalar');
+    ok(true, 'o botão abre a janela de instalar'); await p.keyboard.press('Escape');
     ok(!p.erros.length, 'sem erro na página ' + p.erros.join(' | '));
+    await p.context().close();
+    const pi = await (async () => { const ctx = await b.newContext({ viewport: { width: 400, height: 860 }, userAgent: UA.chromeAndroid, serviceWorkers: 'block' });
+      await ctx.route('**/*', (r) => r.request().url().startsWith(BASE) ? r.continue() : r.abort());
+      await ctx.addInitScript(() => { const mm = window.matchMedia.bind(window); window.matchMedia = (q) => /display-mode: standalone/.test(q) ? { matches: true, media: q, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {} } : mm(q);
+        if (!sessionStorage.getItem('s')) { localStorage.setItem('moneytrio.soNesteAparelho', '1'); localStorage.setItem('moneytrio.tutorial.v1', 'visto'); sessionStorage.setItem('s', '1'); } });
+      const q = await ctx.newPage(); await q.goto(BASE + '/'); await q.waitForFunction(() => window.AbrirChrome && typeof montarNav === 'function');
+      await q.evaluate(() => { abrirApp('budget'); montarNav(); irPara('config'); cfgSecao = 'todos'; render(); });
+      const r = { menu: !!(await q.$('#navLista [data-acao="ac-instalar"]')), cfg: !!(await q.$('#cfgInstalar')), conv: await q.evaluate(() => AbrirChrome.oferecerInstalar()) }; await ctx.close(); return r; })();
+    ok(!pi.menu && !pi.cfg && !pi.conv, 'instalado (display-mode standalone): o botão some do ☰ e de Configurações, e o convite não aparece');
   } finally { await b.close(); srv.close(); }
   console.log((falhas ? '✗ ' : '✓ ') + oks + ' ok, ' + falhas + ' falha(s)');
   process.exit(falhas ? 1 : 0);
