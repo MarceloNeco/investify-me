@@ -818,6 +818,13 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   sem internet, `ST.config.driveFila` e o 📥 (Documentos); visão da casa não envia; tela do dono em Configurações → Compartilhadas com
   `#dono-google` no endereço, com o passo a passo de onde copiar cada valor. veiculos 1.0.1 chama `topo()/botaoPasta()/botao()`. O app não
   tem CSP hoje (nada a liberar). Teste: `teste/teste-google-drive.js` (o Google simulado).
+  **3.104 — O que o robô passou a mandar.** comprovantes 1.2.0: subtipo `fatura` (conta ou fatura genérica, do e-mail ou do PDF) tratado como o
+  `boleto` (📥 2 dias antes, "Já paguei", `ligarBoleto` pelo valor até 5 dias do vencimento, `DebitoAuto.conflito` → "⛔ não pague" antes do
+  vencimento e `DebitoNaoCaiu.paraTexto` → "pague"); `links` (só `https://drive.google.com/` ou `docs.google.com/`, até 10) vira 📎 na linha; trava
+  `ligando` no `ligarRecibo` (o `ReciboExterior.receber` redesenha o 📥, que religa tudo: em R$ não há a espera da PTAX e virava laço sem fim).
+  recibo-exterior 1.0.1: `moeda 'BRL'` casa pelo valor em reais (±1 centavo, ±5 dias; o nome desempata; com mais de um e sem o nome, não casa),
+  sem IOF e sem câmbio ("Recibo R$ X = cartão R$ X (em reais…)"); USD como antes. material-escolar 1.0.1: a caixa "✂️ Parte", o valor e o filho
+  escolhido sobrevivem ao redesenho da tela (a causa do teste que quebrava 1 vez em 3). Teste: `teste/teste-robo-3104.js`.
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem

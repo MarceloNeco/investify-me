@@ -60,6 +60,8 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     await p.selectOption('.me-sug[data-g="rb_m3"] .me-filho', 'p2');
     await p.click('.me-sug[data-g="rb_m3"] [data-acao="me-parte"]');
     await p.fill('.me-parte-box[data-g="rb_m3"] .me-parte-v', '40');
+    await p.evaluate(() => render());   /* 3.104: a tela se redesenha sozinha (conciliação, cotações) no meio da digitação */
+    ok(await p.evaluate(() => { const b = document.querySelector('.me-parte-box[data-g="rb_m3"]'); return !!b && !b.hidden && b.querySelector('.me-parte-v').value === '40' && document.querySelector('.me-sug[data-g="rb_m3"] .me-filho').value === 'p2'; }), 'a caixa "✂️ Parte", o valor digitado e o filho escolhido (Duda) continuam lá quando a tela se redesenha (a causa do teste que quebrava 1 vez em 3)');
     await p.click('.me-parte-box[data-g="rb_m3"] [data-acao="me-parte-ok"]'); await p.waitForTimeout(80);
     await p.selectOption('.me-sug[data-g="pa_pp"] .me-filho', 'p1');
     await p.click('.me-sug[data-g="pa_pp"] [data-acao="me-sim"]'); await p.waitForTimeout(80);

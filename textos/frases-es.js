@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.103 · 24/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.104 · 24/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,11 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.104 — rascunho, revisar */
+  'Recibo em reais, faturas e o arquivo no Drive':'Recibo en reales, facturas y el archivo en Drive',
+  'O recibo de serviço do exterior cobrado em reais (como o da Anthropic, desde outubro) agora liga direto ao lançamento do cartão pelo valor em reais, sem câmbio nem IOF.':'El recibo de un servicio del exterior cobrado en reales (como el de Anthropic, desde octubre) ahora se vincula directamente al movimiento de la tarjeta por el importe en reales, sin cambio ni IOF.',
+  'Faturas e contas que chegam por e-mail (telefone, cartão, condomínio, consórcio) viram conta a pagar: aparecem no 📥 perto do vencimento, com "Já paguei", e saem sozinhas quando o pagamento aparece. Se a conta está no débito automático e ainda não venceu, o app diz "não pague"; se o débito não caiu, diz "pague". O 📎 abre o arquivo da conta no Drive.':'Las facturas que llegan por correo (teléfono, tarjeta, comunidad, consorcio) pasan a ser facturas por pagar: aparecen en el 📥 cerca del vencimiento, con "Ya pagué", y salen solas cuando aparece el pago. Si la factura está en débito automático y aún no vence, la app dice "no pagues"; si el débito no se hizo, dice "paga". El 📎 abre el archivo de la factura en Drive.',
+  'Material escolar: a caixa "✂️ Parte" e o filho escolhido não se perdem mais quando a tela se atualiza sozinha no meio da digitação.':'Material escolar: la caja "✂️ Parte" y el hijo elegido ya no se pierden cuando la pantalla se actualiza sola mientras escribes.',
   /* 3.103 — rascunho, revisar */
   'Foto do serviço do carro no Google Drive':'Foto del servicio del coche en Google Drive',
   '📁 Conectar meu Google Drive: em 🚗 Carro, um toque abre a tela do próprio Google e você toca em "Permitir". O app só vê as pastas e os arquivos que ele mesmo criar ou que você escolher. Nada para configurar.':'📁 Conectar mi Google Drive: en 🚗 Coche, un toque abre la pantalla del propio Google y tocas "Permitir". La app solo ve las carpetas y los archivos que ella misma cree o que tú elijas. Nada que configurar.',

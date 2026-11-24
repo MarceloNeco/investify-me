@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.1.1 · 23/Nov/2026
+   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.2.0 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, "adiante tudo do e-mail"; sem IA)
      · A caixa do robô (nuvem.js, money_entrada) traz um tipo novo de item, tipo "comprovante", tirado dos e-mails lidos
@@ -24,20 +24,25 @@
      · 1.1.0 (3.96): compra com valor incerto (confianca 'baixa', ou valor null com opcoes) nunca casa sozinho: "⚠️ Valor incerto:
        confira olhando o comprovante" e, se o banco tem perto (mesmo cartão/final, data ±1, até R$ 1,00 ou os mesmos reais), "No banco
        tem R$ X nesse dia: é este?" [É este]; confirmado, o valor do banco vale.
+     · 1.2.0 (3.104), o robô novo: o subtipo "fatura" (conta ou fatura genérica: telefone, cartão, condomínio, consórcio, com valor a
+       pagar e vencimento, do e-mail ou do PDF) é conta a pagar como o boleto: "Já paguei", liga sozinha ao pagamento ou ao débito (o
+       mesmo valor, até 5 dias depois do vencimento), "⛔ não pague" se a conta está no débito automático e ainda não venceu (3.100), e
+       "pague" se o débito não caiu. "links" (o arquivo no Drive do robô): 📎 na linha do comprovante (só https do Google Drive/Docs).
+       recibo_exterior em BRL: o recibo × cartão casa pelo valor em reais, sem câmbio nem IOF (modulos/recibo-exterior.js 1.0.1).
    API (window.Comprovantes)
      receber(l, escopo?) → true (guardado) | false · lista() · abertos() · ligarTudo() · casarCompra(x) · palpiteCat(loja)
    DADOS
      ST.comprovantes = [{id, subtipo, data, valor, moeda, loja, cnpj, produto, pedido, numero, parcelas, valor_parcela, final,
        descritor_fatura, vencimento, linha, referencia, remetente, assunto, arquivo, arquivos, fotos_a_ler, descricao,
        escopo, recebidoEm, estado: 'novo'|'ok'|'dispensado', gastoId, pendId, cands, sugestao, arId, reciboId, compraId,
-       nfGastoId, pagoId, fotosLidas}]
+       nfGastoId, pagoId, fotosLidas, links}]
      gasto.ficha = {cid, produto, pedido, loja, nf}   (a ficha da compra no lançamento do banco)
    PONTOS QUE USA
      lancamentos.topo · lancamento.form · inbox.grupos ('comprovantes') · ações cp-*
    ===================================================================== */
 (function () {
   'use strict';
-  var COL = 'comprovantes', SUBS = ['compra', 'reembolso', 'nota_fiscal', 'recibo_exterior', 'boleto', 'outro'];
+  var COL = 'comprovantes', SUBS = ['compra', 'reembolso', 'nota_fiscal', 'recibo_exterior', 'boleto', 'fatura', 'outro'];
   function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
   function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function n2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
@@ -55,7 +60,7 @@
   function nomeG(g) { return ((g.contraparte && g.contraparte.nome) || g.descRobo || g.desc || '') + ' · ' + I18n.data(g.data); }
   function rotSub(s) {
     return ({ compra: tr('Compra', 'Purchase', 'Compra'), reembolso: tr('Reembolso', 'Refund', 'Reembolso'), nota_fiscal: tr('Nota fiscal', 'Invoice', 'Factura'),
-      recibo_exterior: tr('Recibo do exterior', 'Foreign receipt', 'Recibo del exterior'), boleto: tr('Boleto', 'Bank slip', 'Boleto'), outro: tr('Outro', 'Other', 'Otro') })[s] || s;
+      recibo_exterior: tr('Recibo do exterior', 'Foreign receipt', 'Recibo del exterior'), boleto: tr('Boleto', 'Bank slip', 'Boleto'), fatura: tr('Fatura ou conta', 'Bill', 'Factura o recibo'), outro: tr('Outro', 'Other', 'Otro') })[s] || s;
   }
   function quem(x) { return x.loja || x.remetente || x.descritor_fatura || ''; }
   function valorTxt(x) { return x.valor == null ? '' : (x.moeda === 'USD' ? 'US$ ' + I18n.num(x.valor, 2) : fmt(x.valor)); }
@@ -131,10 +136,12 @@
   }
 
   /* ---------- recibo do exterior → recibo × cartão (3.91) ---------- */
+  var ligando = {};   /* 1.2.0 (3.104): receber() redesenha o 📥, que religa tudo: sem a trava, laço sem fim (recibo em R$, sem a espera da PTAX) */
   function ligarRecibo(x) {
-    if (x.reciboId || !window.ReciboExterior || !(x.valor > 0)) return;
+    if (x.reciboId || ligando[x.id] || !window.ReciboExterior || !(x.valor > 0)) return;
     var r = { servico: quem(x), moeda: x.moeda || 'USD', valorMoeda: n2(x.valor), data: x.data, numero: x.numero || '' };
-    ReciboExterior.receber([r], false);
+    ligando[x.id] = 1;
+    try { ReciboExterior.receber([r], false); } finally { delete ligando[x.id]; }
     var y = ReciboExterior.lista().find(function (z) { return (r.numero && z.numero === r.numero) || (z.servico === r.servico && z.valorMoeda === r.valorMoeda && z.data === r.data); });
     if (y) { x.reciboId = y.id; x.estado = 'ok'; }
   }
@@ -157,7 +164,7 @@
     else if (x.subtipo === 'reembolso') ligarReembolso(x);
     else if (x.subtipo === 'nota_fiscal') ligarNota(x);
     else if (x.subtipo === 'recibo_exterior') ligarRecibo(x);
-    else if (x.subtipo === 'boleto') ligarBoleto(x);
+    else if (x.subtipo === 'boleto' || x.subtipo === 'fatura') ligarBoleto(x);
   }
 
   var CAMPOS = ['loja', 'cnpj', 'produto', 'pedido', 'numero', 'descritor_fatura', 'linha', 'referencia', 'remetente', 'assunto', 'arquivo', 'descricao'];
@@ -175,7 +182,9 @@
         confianca: /^(baixa|media|alta)$/.test(String(l.confianca || '')) ? String(l.confianca) : '',
         opcoes: Array.isArray(l.opcoes) ? l.opcoes.map(Number).filter(function (v) { return v > 0; }).slice(0, 5) : [],
         arquivos: Array.isArray(l.arquivos) ? l.arquivos.slice(0, 20).map(function (a) { return txt(a); }) : [],
-        fotos_a_ler: Array.isArray(l.fotos_a_ler) ? l.fotos_a_ler.slice(0, 20).map(function (a) { return txt(a); }) : []
+        fotos_a_ler: Array.isArray(l.fotos_a_ler) ? l.fotos_a_ler.slice(0, 20).map(function (a) { return txt(a); }) : [],
+        /* 1.2.0: o arquivo no Drive do robô (só https do Google Drive/Docs) */
+        links: (Array.isArray(l.links) ? l.links : l.links ? [l.links] : []).map(function (a) { return txt(a, 300); }).filter(function (u) { return /^https:\/\/(drive|docs)\.google\.com\//.test(u); }).slice(0, 10)
       };
       CAMPOS.forEach(function (k) { d[k] = txt(l[k], k === 'descricao' || k === 'linha' ? 300 : 120); });
       var x = lista().find(function (y) { return y.id === id; });
@@ -193,7 +202,7 @@
         if (x.fotos_a_ler && x.fotos_a_ler.length && !x.fotosLidas) return true;
         if (x.estado !== 'novo') return false;
         if (x.subtipo === 'compra') return !!(x.gastoId || (x.cands && x.cands.length) || (x.perto && x.perto.length));
-        if (x.subtipo === 'boleto') return !!(x.vencimento || x.data) && dias(x.vencimento || x.data, h) <= 2;
+        if (x.subtipo === 'boleto' || x.subtipo === 'fatura') return !!(x.vencimento || x.data) && dias(x.vencimento || x.data, h) <= 2;
         return x.subtipo === 'outro' || x.subtipo === 'nota_fiscal';
       });
     },
@@ -216,8 +225,8 @@
         case 'nota_fiscal':
           return [x.compraId ? tr('ligada à compra', 'linked to the purchase', 'vinculada a la compra') : '', x.nfGastoId ? tr('despesa médica: nota recebida', 'medical expense: invoice received', 'gasto médico: factura recibida') : '',
             !x.compraId && !x.nfGastoId ? tr('guardada para o IR (nº, CNPJ e prestador)', 'kept for taxes (number, tax ID and provider)', 'guardada para la renta (nº, CIF y proveedor)') : ''].filter(Boolean).join(' · ');
-        case 'recibo_exterior': return x.reciboId ? tr('Em Recibo × cartão (câmbio e IOF)', 'In Receipt × card (exchange rate and IOF)', 'En Recibo × tarjeta (cambio e IOF)') : '';
-        case 'boleto': {
+        case 'recibo_exterior': return x.reciboId ? (x.moeda === 'BRL' ? tr('Em Recibo × cartão (em reais: sem câmbio nem IOF)', 'In Receipt × card (in reais: no exchange rate or IOF)', 'En Recibo × tarjeta (en reales: sin cambio ni IOF)') : tr('Em Recibo × cartão (câmbio e IOF)', 'In Receipt × card (exchange rate and IOF)', 'En Recibo × tarjeta (cambio e IOF)')) : '';
+        case 'boleto': case 'fatura': {
           if (x.pagoId) return tr('Pago: ', 'Paid: ', 'Pagado: ') + nomeG(gasto(x.pagoId) || {});
           var v = x.vencimento || x.data, dd = v ? dias(v, h) : null, c = debito(x);
           var nc = !c && window.DebitoNaoCaiu ? DebitoNaoCaiu.paraTexto([quem(x), x.assunto, x.descricao].join(' ')) : null;   /* 1.1.1 (3.100) */
@@ -243,16 +252,17 @@
         h += x.perto.map(function (gid) { var g = gasto(gid); return g ? '<span class="small">' + esc(tr('No banco tem ', 'The bank has ', 'En el banco hay ') + fmt(g.valor) + tr(' nesse dia: é este?', ' on that day: is it this one?', ' ese día: ¿es este?')) + '</span>' + b('cp-esse', tr('É este', 'This one', 'Es este'), ' data-g="' + esc(gid) + '"') : ''; }).join('');
       if (x.subtipo === 'compra' && !x.gastoId && x.cands && x.cands.length)
         h += x.cands.map(function (gid) { var g = gasto(gid); return g ? b('cp-esse', '= ' + nomeG(g), ' data-g="' + esc(gid) + '"') : ''; }).join('');
-      if (x.subtipo === 'boleto') h += b('cp-ok', tr('Já paguei', 'Already paid', 'Ya pagué'));
+      if (x.subtipo === 'boleto' || x.subtipo === 'fatura') h += b('cp-ok', tr('Já paguei', 'Already paid', 'Ya pagué'));
       if (x.subtipo === 'nota_fiscal') h += b('cp-ok', tr('Guardar', 'Keep', 'Guardar'));
-      if (x.subtipo === 'outro') h += ['compra', 'reembolso', 'nota_fiscal', 'boleto'].map(function (s) { return b('cp-tipo', rotSub(s), ' data-v="' + s + '"'); }).join('') + b('cp-ok', tr('Guardar só', 'Just keep', 'Solo guardar'));
+      if (x.subtipo === 'outro') h += ['compra', 'reembolso', 'nota_fiscal', 'boleto', 'fatura'].map(function (s) { return b('cp-tipo', rotSub(s), ' data-v="' + s + '"'); }).join('') + b('cp-ok', tr('Guardar só', 'Just keep', 'Solo guardar'));
     }
     if (x.estado !== 'dispensado') h += b('cp-tirar', tr('Dispensar', 'Dismiss', 'Descartar'));
     return '<span class="inb-acoes" style="flex-wrap:wrap;gap:4px">' + h + '</span>';
   }
   function linha(x, tag) {
     return '<' + tag + ' class="inb-item cp-item" data-cp="' + esc(x.id) + '"><div><b>🧾 ' + esc(API.frase(x)) + '</b><span class="t-sub">' +
-      esc([API.situacao(x), x.pedido ? tr('pedido ', 'order ', 'pedido ') + x.pedido : '', x.numero ? 'nº ' + x.numero : '', x.cnpj ? 'CNPJ ' + x.cnpj : ''].filter(Boolean).join(' · ')) + '</span></div>' + botoes(x) + '</' + tag + '>';
+      esc([API.situacao(x), x.pedido ? tr('pedido ', 'order ', 'pedido ') + x.pedido : '', x.numero ? 'nº ' + x.numero : '', x.cnpj ? 'CNPJ ' + x.cnpj : ''].filter(Boolean).join(' · ')) + '</span>' +
+      (x.links || []).map(function (u, i) { return ' <a class="small cp-link" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">📎 ' + esc(tr('arquivo', 'file', 'archivo') + ((x.links.length > 1) ? ' ' + (i + 1) : '')) + ' ↗</a>'; }).join('') + '</div>' + botoes(x) + '</' + tag + '>';
   }
   function abrirLista() {
     API.ligarTudo();
@@ -267,7 +277,7 @@
   function achar(el) { return lista().find(function (y) { return y.id === el.dataset.id; }); }
 
   MoneyModulos.registrar({
-    id: 'comprovantes', versao: '1.1.1', colecoes: [COL],
+    id: 'comprovantes', versao: '1.2.0', colecoes: [COL],
     pontos: {
       'lancamentos.topo': function () {
         var n = API.abertos().length; if (!n) return '';
