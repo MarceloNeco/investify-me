@@ -9,7 +9,8 @@ const MUDANCAS = [
   {v:'3.106.1', d:'2026-11-24', t:'A versão na tela inicial e a lista de aparelhos mais clara', itens:[
     'Na tela inicial, embaixo dos três apps, a versão do MoneyTRIO e a data, discretas à direita. Um toque abre as Novidades.',
     '"Seus aparelhos" mais clara: separada em "No MoneyTRIO" e "Em outros apps SolverONE"; o aparelho aprovado que nunca terminou de entrar sai com "Tirar da lista"; e, ao entrar num celular de novo, o registro antigo dele (nunca usado ou sumido há mais de 7 dias) é substituído sozinho.',
-    '🔢 PIN da conta sem confusão: quando o PIN da conta é criado em outro aparelho, este pede uma vez "Digite-o aqui" (com o app aberto) e passa a usar o mesmo. Na tela "Falta só um passo", a digital vem primeiro ("Confirmar com a digital, uma vez só").'
+    '🔢 PIN da conta sem confusão: quando o PIN da conta é criado em outro aparelho, este pede uma vez "Digite-o aqui" (com o app aberto) e passa a usar o mesmo. Na tela "Falta só um passo", a digital vem primeiro ("Confirmar com a digital, uma vez só").',
+    '📲 Botão fixo "Instalar o app" no menu ☰ e em Configurações (some depois de instalado). A janela de instalar ficou sólida e mostra os passos com o nome exato do menu do seu navegador; dentro de outro app (WhatsApp, Gmail), o primeiro passo é "Abrir no Chrome".'
   ]},
   {v:'3.106', d:'2026-11-24', t:'Busca que acha o app, PIN sem beco sem saída e fotos no aparelho', itens:[
     '🔎 A busca do AssistONE agora acha o próprio app: telas, menu, Configurações, Tutorial, Novidades e a conta e os aparelhos (PIN, aparelho novo, digital, código de recuperação, tirar aparelho). "No app" vem primeiro, e cada resultado leva direto à tela ou à ação.',

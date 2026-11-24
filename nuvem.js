@@ -2646,11 +2646,16 @@
       var nomeAqui = nomeAparelho(), jaEntrou = !esqueci && (aps || []).some(function (a) { return a.app === AP_APP && a.nome === nomeAqui; })
         ? '<div class="nv-nota atencao" id="nvJaEntrou">ℹ️ ' + tt('Este ' + apN() + ' já entrou antes, mas o navegador apagou a chave guardada. Aprove de novo pelo outro aparelho.', 'This ' + apN() + ' signed in before, but the browser erased the saved key. Approve it again from your other device.', 'Este dispositivo ya entró antes, pero el navegador borró la clave guardada. Apruébalo de nuevo desde el otro dispositivo.') + '</div>' : '';
       /* 3.106 (item l): dizer logo de cara que, depois da aprovação, vem o PIN da conta (o dono achou que era opcional e o celular exigiu) */
+      /* 3.106.1 (item 4 do convite de instalar): instalado a partir de outro lugar (ex.: a aba dentro de outro app), o app instalado pode ter o
+         armazenamento separado: diz isso, em vez de parecer que perdeu tudo */
+      var instaladoAgora = false; try { instaladoAgora = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch (e) {}
+      var jaInstalou = !esqueci && instaladoAgora && (aps || []).some(function (a) { return a.app === AP_APP; })
+        ? '<div class="nv-nota" id="nvInstalou">📲 ' + tt('Você instalou o app: aprove uma última vez pelo outro aparelho (o computador, por exemplo). Daqui em diante ele abre direto.', 'You installed the app: approve one last time from your other device (the computer, for example). From now on it opens directly.', 'Instalaste la app: aprueba una última vez desde el otro dispositivo (el ordenador, por ejemplo). A partir de ahora abre directamente.') + '</div>' : '';
       var pinDepois = '<div class="nv-nota" id="nvPinDepois">🔢 ' + (info && info.tem
         ? tt('Depois da aprovação, digite o PIN da sua conta (o mesmo dos seus outros aparelhos).', 'After the approval, type your account PIN (the same as on your other devices).', 'Después de la aprobación, escribe el PIN de tu cuenta (el mismo de tus otros dispositivos).')
         : tt('Depois da aprovação, você escolhe o PIN da conta (6 números): ele passa a valer também nos seus outros aparelhos.', 'After the approval, you choose the account PIN (6 digits): it also becomes the PIN on your other devices.', 'Después de la aprobación, eliges el PIN de la cuenta (6 números): pasa a valer también en tus otros dispositivos.')) + '</div>';
       var el = Tela.mostrar(Tela.topo() + '<h2>🔐 ' + (esqueci ? tt('Abrir sem o PIN', 'Open without the PIN') : tt('Primeira vez neste ' + apN(), 'First time on this ' + apN())) + '</h2>' +
-        '<p>' + tt('Para abrir as finanças da família <b>' + esc(fam.nome || '') + '</b> aqui, escolha um jeito:', 'To open the finances of the family <b>' + esc(fam.nome || '') + '</b> here, choose one way:') + '</p>' + jaUsa + jaEntrou + pinDepois +
+        '<p>' + tt('Para abrir as finanças da família <b>' + esc(fam.nome || '') + '</b> aqui, escolha um jeito:', 'To open the finances of the family <b>' + esc(fam.nome || '') + '</b> here, choose one way:') + '</p>' + jaUsa + (jaInstalou || jaEntrou) + pinDepois +
         '<button class="nv-btn pri" id="nvApOutro">📱 ' + tt('Aprovar pelo outro aparelho', 'Approve from my other device') + '</button>' +
         ((fam.membros || 0) > 1 ? '<button class="nv-btn" id="nvApFam">👪 ' + tt('Pedir para alguém da família aprovar', 'Ask someone in the family to approve') + '</button>' : '') +
         '<span id="nvApPkLugar"></span>' +

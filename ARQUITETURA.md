@@ -858,7 +858,13 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   `L.prf`) e texto simples; `Portao.migrarPin(info)` — chamado por `conferirPin` quando a conta tem PIN, este aparelho não tem `L.srv` e a
   chave do aparelho está na memória — pede UMA vez o PIN da conta e já grava (`Pin.conferir` + `Pin.gravar`), em vez de o próximo
   desbloqueio exigir o PIN antigo; `novoPin` avisa ("nos seus outros aparelhos, confirme uma vez…"). Testes: `teste-tempo-real` (2b, 2c),
-  `teste-seguranca`.
+  `teste-seguranca`. E o convite de instalar (defeito no celular do dono: translúcido, a figura parecia botão, mandou usar "⋮ → Instalar app"
+  numa Custom Tab): abrir-no-chrome 1.1.0 — botão fixo "📲 Instalar o app" no ☰ (`montarNav` + `htmlBotao('menu')`) e em Configurações
+  (`config.todos`), que some em `display-mode: standalone`/`window-controls-overlay` e no `appinstalled`; janela sólida (`--bg2`, fundo
+  escurecido, foco preso, Esc e Voltar fecham, `pushState`); com `PWA.prompt`, "Instalar" de verdade; sem ele, `passos(contexto())` com o
+  nome exato do menu (Custom Tab, Chrome, `android-incerto` = Android sem o prompt depois de 3 s → primeiro "Abrir no Chrome", Samsung pelo
+  Chrome, iPhone, computador); a figura apagada e não clicável, com legenda; o convite automático 1 vez (`dgo:moneytrio:aviso:instalar:visto`).
+  "Primeira vez" no app instalado com aparelho já na lista: "Você instalou o app: aprove uma última vez pelo outro aparelho".
   **3.106 — Busca que acha o app, PIN sem beco sem saída, fotos no aparelho.** (1) `modulos/assistone-indice.js` 1.0.0 (`window.AssistIndice`;
   diretriz "O AssistONE conhece TUDO o que o app tem"): índice montado na hora (cache 20 s, por idioma) das telas (`ABAS` + `AJUDA_TELAS` +
   `MoneyModulos.telas()`, base 1.1.1), das seções de Configurações (`viewConfig()` passado pelo `Verter` e lido com DOMParser: o `h3` e a
