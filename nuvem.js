@@ -75,6 +75,8 @@
       registro antigo?" (avisoDuplicado); o aviso do PIN sai na busca quando sol_pin_info().tem e criarPinConta confere antes (jaTemPin);
       os textos citam só os apps que a pessoa usa (Portao._usaApps, de sol_aparelhos_meus); "Primeira vez" já diz que vem o PIN da conta.
       A tela de entrada mostra "Abrir no Chrome" (modulos/abrir-no-chrome.js) no Android dentro de outro app ou fora do Chrome.
+      Aparelhos.conferirPin no foco/visibilidade (não mais nas voltas). TempoReal (Supabase Realtime, broadcast privado sol:conta:<uid>):
+      pronto e DESLIGADO até o banco ficar pronto. O aviso() ganhou toque/arrasto/✕ (Toque.fechavel).
   20. 1.15.3 (3.87) — o robô mandar de novo um lançamento DIVIDIDO pela pessoa não desfaz a divisão (corrigir compara com o total).
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
@@ -760,8 +762,11 @@
         Portao.mensagem(titulo, txt, [[tt('Pedir de novo', 'Ask again'), function () { self.pedir(fam, ped.modo); }], [tt('Voltar', 'Back'), function () { Portao.primeiraVez(fam, false); }]]);
       };
       tela();
-      var volta = async function () {
-        if (fim) return;
+      var tVolta = null, rodando = false;
+      self._acordar[ped.id] = function () { if (fim || rodando) return; clearTimeout(tVolta); volta(); };
+      var volta = async function () { if (rodando) return; rodando = true; try { await volta0(); } finally { rodando = false; } };
+      var volta0 = async function () {
+        if (fim) { delete self._acordar[ped.id]; return; }
         var r = null;
         try { r = await self.rpc('sol_pedido_buscar', { p_id: ped.id }); r = r && r[0]; } catch (e) { if (!fim) setTimeout(volta, AP_POLL * 2); return; }
         if (fim) return;
@@ -779,9 +784,9 @@
           catch (e) { return acabou(tt('Não abriu', 'Did not open'), tt('A resposta não abriu neste aparelho. Peça de novo.', 'The answer did not open on this device. Ask again.')); }
           return self.receber(fam, o, r.aparelho);
         }
-        setTimeout(volta, AP_POLL);
+        clearTimeout(tVolta); tVolta = setTimeout(volta, AP_POLL);
       };
-      setTimeout(volta, 300);
+      tVolta = setTimeout(volta, 300);
     },
     /* 1.10.0: depois da aprovação, a conta já tem PIN → "Digite o PIN da sua conta" (não cria outro); sem PIN → escolher */
     receber: async function (fam, o, apId) {
@@ -809,6 +814,9 @@
     },
 
     /* ======== A: este aparelho está aberto e aprova ======== */
+    /* 3.106 (item m): o aviso em tempo real de que um pedido mudou acorda quem espera (esperar) ou aprova (aprovar), sem esperar o poll */
+    _acordar: {},
+    acordar: function (id) { var f = this._acordar[id]; if (f) f(); else Object.keys(this._acordar).forEach(function (k) { Aparelhos._acordar[k](); }); },
     olharPedidos: async function () {
       if (this.ligado === false || !Cadeado.aberto() || this._olhando || Tela.el) return;   /* com uma tela do portão aberta, espera */
       this._olhando = true;
@@ -856,10 +864,12 @@
         /* espera o aparelho novo revelar nB */
         var q = p;
         for (var i = 0; !q.n_b && !fim && i < 300; i++) {
-          await dorme(1500);
+          await new Promise(function (ok) { var t = setTimeout(ok, 1500); self._acordar[p.id] = function () { clearTimeout(t); ok(); }; });
           var l = (await this.rpc('sol_pedidos_para_mim')) || []; q = l.find(function (x) { return x.id === p.id; });
+          delete self._acordar[p.id];
           if (!q) return sair(tt('O pedido não está mais aberto (venceu ou foi cancelado). Se ainda quer entrar, peça de novo no aparelho novo.', 'The request is no longer open (it expired or was cancelled). If you still want in, ask again on the new device.', 'La solicitud ya no está abierta (venció o se canceló). Si aún quieres entrar, pídela de nuevo en el dispositivo nuevo.'));
         }
+        delete this._acordar[p.id];
         if (fim) return;
         if ((await this.compromisso(q.pub, q.n_b)) !== q.compromisso) {
           el = Tela.mostrar(cabeca + '<div class="nv-nota erro" id="nvApAdulterado">⚠️ ' + tt('Este pedido foi alterado no caminho. Não aprove: recuse e peça de novo no outro aparelho.', 'This request was altered on the way. Do not approve: decline and ask again on the other device.') + '</div>' + botoes()); ligar(el); return;
@@ -2459,6 +2469,55 @@
     }
   };
 
+  /* ---------------- 1.15.7 (3.106, item m): o aviso em TEMPO REAL da conta ----------------
+     Broadcast privado do Supabase Realtime no tópico sol:conta:<uid> (websocket Phoenix mínimo, sem supabase-js). Eventos: 'pin' {versao}
+     → conferirPin; 'pedido' {id} → olharPedidos na hora; 'pedido_estado' {id, estado} → acorda quem espera/aprova sem esperar o poll;
+     'aparelho' {id, removido} → este aparelho tirado. Tudo ADITIVO: o poll e a conferência no foco continuam; se o websocket falhar, o app
+     segue igual. DESLIGADO (ligado = false) até o chat principal confirmar que o banco está pronto e os nomes finais; o join com erro
+     desiste em silêncio. Heartbeat a cada 25 s; o access_token renovado vai pelo evento 'access_token'; volta com espera crescente. */
+  var TempoReal = {
+    ligado: false, ws: null, ref: 0, espera: 1000, hb: null, juntou: false, desistiu: false, token: '', _volta: null,
+    url: function () { return SB.replace(/^http/, 'ws') + '/realtime/v1/websocket?apikey=' + encodeURIComponent(KEY) + '&vsn=1.0.0'; },
+    topico: function () { return 'realtime:sol:conta:' + Conta.uid(); },
+    mandar: function (topic, event, payload) { if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify({ topic: topic, event: event, payload: payload || {}, ref: String(++this.ref), join_ref: topic === 'phoenix' ? null : '1' })); },
+    iniciar: async function () {
+      if (!this.ligado || this.desistiu || this.ws || !Conta.on() || typeof WebSocket === 'undefined') return;
+      var self = this, tk = await Conta.token(); if (!tk) return;
+      var ws; try { ws = new WebSocket(this.url()); } catch (e) { return; }
+      this.ws = ws; this.token = tk; this.juntou = false;
+      ws.onopen = function () {
+        self.mandar(self.topico(), 'phx_join', { config: { broadcast: { self: false, ack: false }, presence: { key: '' }, private: true }, access_token: tk });
+        clearInterval(self.hb); self.hb = setInterval(function () { self.mandar('phoenix', 'heartbeat', {}); self.renovar(); }, 25000);
+      };
+      ws.onmessage = function (m) { var o; try { o = JSON.parse(m.data); } catch (e) { return; } self.receber(o); };
+      ws.onclose = function () {
+        clearInterval(self.hb); self.ws = null;
+        if (self.desistiu || !self.ligado || !Conta.on()) return;
+        clearTimeout(self._volta); self._volta = setTimeout(function () { self.iniciar(); }, self.espera); self.espera = Math.min(self.espera * 2, 60000);
+      };
+      ws.onerror = function () { /* o onclose cuida */ };
+    },
+    receber: function (o) {
+      if (!o || o.topic !== this.topico()) return;
+      if (o.event === 'phx_reply' && o.payload && !this.juntou) {
+        if (o.payload.status === 'ok') { this.juntou = true; this.espera = 1000; }
+        else { this.desistiu = true; this.parar(); }   /* o banco ainda não tem o canal (ou não deixa): desiste em silêncio */
+        return;
+      }
+      if (o.event === 'phx_error' || o.event === 'system' && o.payload && o.payload.status === 'error') { if (!this.juntou) { this.desistiu = true; this.parar(); } return; }
+      if (o.event !== 'broadcast' || !o.payload) return;
+      var ev = o.payload.event, d = o.payload.payload || {};
+      try {
+        if (ev === 'pin') Aparelhos.conferirPin(true);
+        else if (ev === 'pedido') { Aparelhos._olhando = false; Aparelhos.olharPedidos(); }
+        else if (ev === 'pedido_estado') Aparelhos.acordar(d.id);
+        else if (ev === 'aparelho' && d.removido) Cadeado.local().then(function (L) { if (L && L.ap && L.ap === d.id) Aparelhos.tirado(); });
+      } catch (e) { /* aviso em tempo real nunca quebra o app */ }
+    },
+    renovar: async function () { var tk = await Conta.token(); if (tk && tk !== this.token && this.juntou) { this.token = tk; this.mandar(this.topico(), 'access_token', { access_token: tk }); } },
+    parar: function () { clearInterval(this.hb); clearTimeout(this._volta); var w = this.ws; this.ws = null; this.juntou = false; if (w) { w.onclose = null; try { w.close(); } catch (e) {} } }
+  };
+
   /* ---------------- portão: conta → família → cadeado → dados ---------------- */
   var Portao = {
     dadosLocais: function () {
@@ -3263,6 +3322,7 @@
       try { await this.iniciarApp(); } catch (e) { console.error('app:', e); }
       Painel.montar(); Trava.ligar();
       this.buscarNome();
+      TempoReal.iniciar();   /* 3.106 (item m): desligado até o banco ficar pronto */
       window.addEventListener('online', function () { Painel.atualizar(); Nuvem.buscarAgora(); });
       window.addEventListener('offline', function () { Painel.atualizar(); });
       if (levar) {
@@ -3395,7 +3455,7 @@
       if (!desconectar) { try { await Promise.race([Sinc.registrar().then(function () { return Sinc.enviar(); }), dorme(5000)]); } catch (e) {} }
       var uid = Conta.uid();
       if (desconectar) await this.apagarDoAparelho(uid);
-      await Cadeado.trancar(); await Conta.sair();
+      TempoReal.parar(); await Cadeado.trancar(); await Conta.sair();
       location.replace(location.pathname);   /* 1.10.2: replace — o "Voltar" do navegador não volta para a tela com dados */
     },
     /* "Desconectar este aparelho", conta encerrada ou banida: a cópia fechada e o cadeado saem deste aparelho */
@@ -3410,7 +3470,7 @@
     converterRobo: function (l) { return Caixa.converter(l); },
     corrigirRobo: function (ja, g) { return Caixa.corrigir(ja, g); },   /* 1.15.3 (3.87): o robô mandou de novo (teste da divisão) */
     /* para os testes automáticos (teste/nuvem.js): as peças, sem estado aberto */
-    _teste: { Pin: Pin, Painel: Painel, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao, Espelho: Espelho, Escopos: Escopos, Visao: Visao, Arquivos: Arquivos }
+    _teste: { Pin: Pin, Painel: Painel, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao, Espelho: Espelho, Escopos: Escopos, Visao: Visao, Arquivos: Arquivos, TempoReal: TempoReal }
   };
   function nomeConta() { var s = Conta.ler() || {}, d = Conta.dados(s.access_token).user_metadata || {}; return String(s.nome || d.full_name || d.name || '').trim() || String(Conta.email() || '').split('@')[0]; }
   function confirmar(t) { try { return window.confirm(t); } catch (e) { return false; } }

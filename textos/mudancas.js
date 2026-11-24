@@ -14,7 +14,8 @@ const MUDANCAS = [
     '📷 As fotos lidas (canhoto, print, OS da oficina) ficam só no aparelho em que foram lidas, por 90 dias; com o Google Drive conectado, o original vai também para a pasta MoneyTRIO/Fotos lidas e o 📎 abre lá.',
     '📲 No Android: se o app abrir dentro de outro app (WhatsApp, Gmail) ou fora do Chrome, a tela de entrada mostra "Abrir no Chrome"; depois de entrar, "Instalar na tela inicial" num toque.',
     '📱 Aparelho novo: os dois aparelhos mostram que estão conectando (girando, com o tempo passando) e o que fazer; cada erro diz o próximo passo; a primeira vez já avisa que, depois da aprovação, vem o PIN da conta. Depois de entrar, o registro antigo do mesmo celular sai num toque.',
-    '🔢 O aviso "Crie o PIN" some sozinho quando o PIN da conta já foi criado em outro aparelho, e os textos do PIN citam só os apps que você usa.'
+    '🔢 O aviso "Crie o PIN" some sozinho quando o PIN da conta já foi criado em outro aparelho, e os textos do PIN citam só os apps que você usa.',
+    '👆 Os avisos rápidos saem da frente: toque, arraste para o lado ou toque no ✕. No celular eles ficam no topo, sem tampar os botões. O aviso do token da B3 aparece no máximo 1 vez por dia e fica no 📥 com "Resolver".'
   ]},
   {v:'3.105', d:'2026-11-24', t:'Contas de outras pessoas e telas que não se perdem', itens:[
     '📋 Contas de outras pessoas que chegam no seu e-mail (ex.: uma assinatura que você fez para um parente): no comprovante, toque em "Não é meu". O app pega o titular e o código do cliente do próprio e-mail, você diz de quem é e escolhe: ignorar (não entra nas suas finanças) ou processar para a pessoa (entra com "para quem"). As próximas contas dela são reconhecidas sozinhas. A lista fica em Configurações e os nomes ficam só no seu aparelho.',

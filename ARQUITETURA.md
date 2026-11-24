@@ -875,7 +875,19 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   aparelho, > 7 dias, "Não" lembrado por id); o aviso do PIN sai a cada busca quando `sol_pin_info().tem`; `criarPinConta` confere antes
   (`Portao.jaTemPin`; o aparelho e a data de criação precisariam de um campo novo no `sol_pin_info`); `Portao._usaApps` (de
   `sol_aparelhos_meus`) decide se os textos citam o OmniLifeONE; "Primeira vez" com `#nvPinDepois`.
-  Testes: `teste-pin-sessao`, `teste-seguranca` (colunas, pedidos), `teste-aparelhos` (aprovação, registro antigo), `assistone-indice`,
+  (6) Item j revisto (dono: "tem que ter uma verificação"): `Aparelhos.conferirPin(forcar)` — `sol_pin_info` no `visibilitychange`
+  visível e no `focus` (no máximo 1 a cada 5 s), 30 s depois de aprovar aqui, quando a lista de aparelhos muda e no aviso em tempo real;
+  tem PIN → o aviso sai; versão mudou → `trancar('pinTrocado')`. Nada nas voltas da busca. (7) Item m: `TempoReal` no nuvem.js (websocket
+  Phoenix mínimo em `wss://<projeto>/realtime/v1/websocket?apikey=…&vsn=1.0.0`, `phx_join` privado em `realtime:sol:conta:<uid>` com o
+  access_token, heartbeat 25 s, token renovado pelo evento `access_token`, volta com espera crescente até 60 s, para ao sair). Eventos
+  `pin` → `conferirPin`; `pedido` → `olharPedidos`; `pedido_estado` → `Aparelhos.acordar(id)` (acorda o `esperar` e o laço do `aprovar`);
+  `aparelho` {id, removido} deste aparelho → `tirado()`. **Desligado** (`TempoReal.ligado = false`) até o chat principal confirmar o banco
+  e os nomes finais; join com erro → desiste em silêncio. (8) Item n: `modulos/toast-fechavel.js` 1.0.0 (`window.Toque`): `fechavel(el)` —
+  toque, arrasto ≥ 60 px (pointer events, botões de dentro continuam botões) e ✕ de 44 px — no `toast()` e no `aviso()` do nuvem.js;
+  `#toasts` com `pointer-events:none` (a caixa vazia tampava os botões do topo no celular) e no topo, abaixo da barra, no celular
+  (estilo.css 3.106); `pular(msg)`: "N ativos da B3 precisam do token gratuito" 1 vez por dia (`dgo:moneytrio:aviso:b3-token:dia`) e no 📥
+  (Avisos) com "Resolver" (`as-chaves`).
+  Testes: `teste-pin-sessao`, `teste-seguranca` (colunas, pedidos), `teste-aparelhos` (aprovação, registro antigo), `assistone-indice`, `teste-tempo-real`, `teste-toast`,
   `teste-cartoes-contraparte`, `teste-fotos-aparelho`, `teste-abrir-chrome`.
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
