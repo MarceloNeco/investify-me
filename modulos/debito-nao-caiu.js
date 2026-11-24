@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/debito-nao-caiu.js — O DÉBITO AUTOMÁTICO QUE NÃO CAIU (3.100)        1.0.0 · 23/Nov/2026
+   modulos/debito-nao-caiu.js — O DÉBITO AUTOMÁTICO QUE NÃO CAIU (3.100)        1.1.0 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (caso real do dono, 23/Nov/2026: a conta de luz no débito automático do cartão não foi debitada em novembro, o app
    mostrou "paga" e só um e-mail de cobrança avisou; o medo é a multa e o corte)
@@ -17,11 +17,21 @@
      · E-mail de aviso de atraso (comprovantes do robô: "contas em atraso", "débito pendente", "aviso de cobrança") vira alerta
        urgente, ligado à conta quando o nome bate.
      · Canais fora do app (Telegram, WhatsApp, e-mail, notificação no celular): no roadmap (PENDENCIAS N79), sem construir.
+   1.1.0 (3.102), a conta paga com atraso (caso real do dono: a luz de novembro paga por Pix em 23/11, pelo valor, sem multa; na
+     distribuidora a multa e os juros vêm na conta SEGUINTE):
+     · atraso(o) → {em, como} | null: o débito não caiu e o pagamento veio depois do 1º dia útil seguinte ao vencimento (Pix,
+       boleto ou "Já paguei"; o débito atrasado no próprio cartão/conta do débito não conta). Contas do mês: "Paga com atraso (Pix em
+       23/11)", não "paga".
+     · avisoMulta(o): na conta seguinte, "pode vir multa e juros da conta de <mês> (paga com atraso)"; se o comprovante ou o e-mail da
+       conta trouxer a multa/os juros destacados, "multa por atraso: R$ x".
+     · 📥 "Ver com o banco por que o débito automático não caiu" com anotação e "Resolvido" (ST.config.dncBanco); e, 3 dias antes do
+       próximo vencimento, "confirme que o débito automático está ativo".
    API (window.DebitoNaoCaiu)
      emDebito(r) · naoCaiu() → [{r, data, valor}] · temNaoCaiu(r) · status(o) → 'paga'|'debito'|'atrasada' · fechar() → n
      antes() → [{r, data, valor}] · avisosEmail() → [{x, r}] · jaPaguei(rid, data) · paraTexto(texto) → r | null
    DADOS
      usa Store.estado.pagamentos (Pagamento.marcar / conciliar); ST.config.dncEmailVisto = {comprovanteId: 1}
+     ST.config.dncBanco = {'rid|data': {nota, resolvido}} (1.1.0)
    PONTOS QUE USA
      inbox.grupos ('atrasadas') · evento gasto.novo (fecha com o pagamento que chegar) · ações dnc-*
    ===================================================================== */
@@ -58,6 +68,37 @@
       return g.data > o.data && (g.origem === 'robo' || g.idRobo) && ((o.r.cartaoId && g.cartaoId === o.r.cartaoId) || (o.r.bancoId && g.bancoId === o.r.bancoId));
     });
   }
+  /* 1.1.0: pago depois do 1º dia útil seguinte ao vencimento, por outro caminho que não o próprio débito */
+  function atraso(o) {
+    if (!o || !emDebito(o.r)) return null;
+    var p = Pagamento.achar(o.r.id, o.data), lim = utilDepois(o.data), g = null;
+    if (p && p.estado === 'pago') { var em = String(p.pagoEm || p.em || '').slice(0, 10); return p.nota === 'ja-paguei' && em > lim ? { em: em, como: '' } : null; }
+    if (p && p.estado === 'confirmado' && p.gastoId) g = Gasto.todos().find(function (x) { return x.id === p.gastoId; }) || null;
+    if (!g) g = Gasto.todos().find(function (x) { return x.recorrenteId === o.r.id && String(x.data).slice(0, 7) === o.data.slice(0, 7); }) || null;
+    if (!g || !g.data || g.data <= lim) return null;
+    var t = [g.forma, g.desc, g.descRobo].join(' ');
+    if ((o.r.cartaoId && g.cartaoId === o.r.cartaoId) || /d[eé]b(ito)?\.? ?aut|pcaut/i.test(t)) return null;
+    return { em: g.data, como: /\bpix\b/i.test(t) ? 'Pix' : /boleto/i.test(t) ? tr('boleto', 'payment slip', 'boleto') : '' };
+  }
+  function mesNome(d) { return (String(I18n.data(d, { semAno: true })).match(/[A-Za-zÀ-ÿ]{3,}/) || [])[0] || d.slice(5, 7); }
+  /* a multa/os juros destacados no comprovante ou e-mail da conta (o texto que o robô trouxe) */
+  var RX_MULTA = /(multa|juros|encargos|acr[eé]scimos?)[^\d\n]{0,40}?(?:r\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2})/gi;
+  function multaDe(r, de, ate) {
+    if (!window.Comprovantes) return 0;
+    var t = 0;
+    Comprovantes.lista().forEach(function (x) {
+      var d = String(x.data || x.recebidoEm || '').slice(0, 10), txt = [x.loja, x.remetente, x.assunto, x.descricao, x.produto].join(' ');
+      if (!d || d < de || d > ate || !nomeBate(txt, r)) return;
+      var m; RX_MULTA.lastIndex = 0;
+      while ((m = RX_MULTA.exec([x.assunto, x.descricao, x.produto].join(' \n ')))) t += Number(m[2].replace(/\./g, '').replace(',', '.')) || 0;
+    });
+    return n2(t);
+  }
+  /* a ocorrência anterior da mesma conta, se foi paga com atraso */
+  function anteriorAtrasada(o) {
+    var l = ocorr(mais(o.data, -45), mais(o.data, -1)).filter(function (x) { return x.r.id === o.r.id; }).sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+    var a = l[0]; return a && atraso(a) ? a : null;
+  }
   function naoCaiuOc(o, h) { h = h || hoje(); return o.data < h && utilDepois(o.data) <= h && o.data >= mais(h, -DIAS_ATRAS) && !pago(o) && visto(o); }
 
   /* o pagamento que chegou depois (Pix, boleto) — ou o débito atrasado no cartão — fecha a ocorrência */
@@ -88,7 +129,18 @@
     /* o que o app não consegue ver (débito nunca visto) continua como antes: passou a data, conta como paga */
     status: function (o, h) { h = h || hoje(); if (pago(o)) return 'paga'; if (o.data >= h) return 'debito'; if (!visto(o)) return 'paga'; return naoCaiuOc(o, h) ? 'atrasada' : 'debito'; },
     antes: function () { if (casa()) return []; var h = hoje(); return ocorr(h, mais(h, ANTES)).filter(function (o) { return !pago(o); }).map(function (o) { return { r: o.r, data: o.data, valor: n2(o.valor) }; }); },
-    jaPaguei: function (rid, data, nota) { return Pagamento.marcar(rid, data, 'pago', { nota: nota || 'debito-nao-caiu' }); },
+    jaPaguei: function (rid, data, nota) { return Pagamento.marcar(rid, data, 'pago', { nota: nota || 'debito-nao-caiu', pagoEm: hoje() }); },
+    atraso: atraso,
+    /* 1.1.0: na conta seguinte, o aviso da multa (ou a multa destacada, quando veio) */
+    avisoMulta: function (o) {
+      var a = o && anteriorAtrasada(o); if (!a) return null;
+      var v = multaDe(o.r, a.data, mais(o.data, 15));
+      return { mes: mesNome(a.data), de: a.data, valor: v, texto: v ? tr('multa por atraso: ', 'late fee: ', 'recargo por atraso: ') + fmt(v) + tr(' (da conta de ', ' (from the ', ' (de la factura de ') + mesNome(a.data) + tr(')', ' bill)', ')')
+        : tr('pode vir multa e juros da conta de ', 'late fees and interest from the ', 'pueden venir recargo e intereses de la factura de ') + mesNome(a.data) + tr(' (paga com atraso)', ' bill may come (paid late)', ' (pagada con atraso)') };
+    },
+    /* 1.1.0: as contas pagas com atraso nos últimos 60 dias ("ver com o banco") */
+    atrasos: function () { if (casa()) return []; var h = hoje(); return ocorr(mais(h, -DIAS_ATRAS), h).map(function (o) { var a = atraso(o); return a ? { r: o.r, data: o.data, valor: n2(o.valor), em: a.em, como: a.como } : null; }).filter(Boolean); },
+    bancoDe: function (rid, data) { return ((cfg().dncBanco || {})[rid + '|' + data]) || {}; },
     /* o boleto/e-mail de uma conta cujo débito não caiu */
     paraTexto: function (texto) { var l = API.naoCaiu(); var x = l.find(function (y) { return nomeBate(texto, y.r); }); return x ? x.r : null; },
     avisosEmail: function () {
@@ -106,7 +158,7 @@
       tr(') não apareceu no banco. Pague hoje para evitar multa e corte.', ') did not show up at the bank. Pay today to avoid late fees and a service cut.', ') no apareció en el banco. Paga hoy para evitar recargos y el corte.');
   }
   MoneyModulos.registrar({
-    id: 'debito-nao-caiu', versao: '1.0.0',
+    id: 'debito-nao-caiu', versao: '1.1.0',
     pontos: {
       'inbox.grupos': function () {
         if (casa() || typeof Recorrente === 'undefined') return [];
@@ -124,9 +176,18 @@
             '<span class="t-sub">' + esc(tr('Confira no app ou site oficial (não clique no e-mail) e pague para evitar o corte.', 'Check the official app or site (do not click the e-mail) and pay to avoid a cut.', 'Compruébalo en la app o web oficial (no hagas clic en el correo) y paga para evitar el corte.')) + '</span></div>' +
             '<span class="inb-acoes">' + botao('dnc-email-ok', tr('Entendi', 'Got it', 'Entendido'), ' data-id="' + esc(a.x.id) + '"') + '</span></li>';
         });
+        API.atrasos().forEach(function (x) {
+          var k = x.r.id + '|' + x.data, b = API.bancoDe(x.r.id, x.data); if (b.resolvido) return; n++;
+          var d = ' data-k="' + esc(k) + '"';
+          h += '<li class="inb-item dnc-banco"><div><b>🏦 ' + esc(tr('Ver com o banco por que o débito automático de ', 'Ask the bank why the auto-debit of ', 'Consulta con el banco por qué no se hizo el débito automático de ') + x.r.nome + tr(' não caiu', ' did not go through', '')) + '</b>' +
+            '<span class="t-sub">' + esc(tr('Venceu em ', 'Due on ', 'Venció el ') + I18n.data(x.data) + ' · ' + tr('paga com atraso', 'paid late', 'pagada con atraso') + (x.como ? ' (' + x.como + tr(' em ', ' on ', ' el ') + I18n.data(x.em) + ')' : ' (' + I18n.data(x.em) + ')')) + '</span>' +
+            '<div class="row" style="gap:6px;margin-top:4px"><input class="dnc-nota" data-k="' + esc(k) + '" maxlength="200" placeholder="' + esc(tr('anotação (o que o banco disse)', 'note (what the bank said)', 'nota (lo que dijo el banco)')) + '" value="' + esc(b.nota || '') + '" style="flex:1;min-width:10em">' +
+            botao('dnc-nota-ok', tr('Guardar', 'Save', 'Guardar'), d + ' data-inb-fica="1"') + botao('dnc-resolvido', tr('Resolvido', 'Resolved', 'Resuelto'), d, 'primary') + '</div></div></li>';
+        });
         API.antes().forEach(function (x) {
           n++;
-          h += '<li class="inb-item dnc-antes"><div><b>🔄 ' + esc(x.r.nome + tr(' vence ', ' is due ', ' vence ') + I18n.data(x.data, { semAno: true }) + tr(' no débito automático: confira o saldo ou o limite.', ' on auto-debit: check the balance or the limit.', ' en débito automático: revisa el saldo o el límite.')) + '</b><span class="t-sub">' + esc(fmt(x.valor)) + '</span></div></li>';
+          var am = API.avisoMulta(x), conf = am ? ' ' + tr('Confirme que o débito automático está ativo (o de ', 'Make sure the auto-debit is active (the ', 'Confirma que el débito automático está activo (el de ') + am.mes + tr(' não caiu).', ' one did not go through).', ' no se hizo).') : '';
+          h += '<li class="inb-item dnc-antes"><div><b>🔄 ' + esc(x.r.nome + tr(' vence ', ' is due ', ' vence ') + I18n.data(x.data, { semAno: true }) + tr(' no débito automático: confira o saldo ou o limite.', ' on auto-debit: check the balance or the limit.', ' en débito automático: revisa el saldo o el límite.') + conf) + '</b><span class="t-sub">' + esc(fmt(x.valor) + (am ? ' · ' + am.texto : '')) + '</span></div></li>';
         });
         return n ? [{ id: 'atrasadas', n: n, html: h }] : [];
       }
@@ -134,6 +195,8 @@
     acoes: {
       'dnc-paguei': function (el) { API.jaPaguei(el.dataset.r, el.dataset.d, 'ja-paguei'); depois(); },
       'dnc-debitado': function (el) { API.jaPaguei(el.dataset.r, el.dataset.d, 'foi-debitado'); depois(); },
+      'dnc-nota-ok': function (el) { var i = document.querySelector('.dnc-nota[data-k="' + el.dataset.k + '"]'); var m = cfg().dncBanco = Object.assign({}, cfg().dncBanco); m[el.dataset.k] = Object.assign({}, m[el.dataset.k], { nota: i ? String(i.value || '').trim().slice(0, 200) : '' }); Store.salvar(); toast(tr('Anotação guardada.', 'Note saved.', 'Nota guardada.')); },
+      'dnc-resolvido': function (el) { var i = document.querySelector('.dnc-nota[data-k="' + el.dataset.k + '"]'); var m = cfg().dncBanco = Object.assign({}, cfg().dncBanco); m[el.dataset.k] = Object.assign({}, m[el.dataset.k], { resolvido: hoje() }, i && i.value ? { nota: String(i.value).trim().slice(0, 200) } : {}); depois(); },
       'dnc-email-ok': function (el) { cfg().dncEmailVisto = Object.assign({}, cfg().dncEmailVisto); cfg().dncEmailVisto[el.dataset.id] = 1; depois(); }
     },
     ouvir: { 'gasto.novo': function () { if (typeof Recorrente !== 'undefined' && fechar() && typeof Store !== 'undefined') Store.salvar(); } }

@@ -785,6 +785,25 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   sem nome, o único ativo) no formulário, no "É este", no "Lançar à mão" e na ficha. compra-parcelada 1.1.0: `cnpj` (desempate) e `ate`
   (até 45 dias; acima de 3, só liga com loja, CNPJ, cartão ou final). `result.operacional` não é usado nem enviado (é do OmniLifeONE; envio
   seria integração nova). Teste: `teste/teste-os-oficina.js`.
+  **3.102 — Material escolar, cartões virtuais e conta paga com atraso** (pedidos do dono de 24/Nov/2026, sem IA, sem integração).
+  `modulos/material-escolar.js` 1.0.0 (`window.MaterialEscolar`, coleção `materiais`, da casa por padrão em visao-casa 1.1.8; tela `b-material` 📚 no
+  menu), no modelo da Viagem: campanha por ano letivo (padrão 1º/nov–fim de fev; a partir de julho, o ano letivo seguinte) com os filhos
+  (dependentes da casa). `sugestoes(c)`: na janela, lançamentos e pendentes de papelaria/livraria/Kalunga, de marketplace (Amazon, Mercado
+  Livre, Shopee, Magalu…) ou com palavras de material no pedido (`g.ficha` e `ST.comprovantes` ligados); fora: entradas, contas fixas, PJ,
+  faturas/boletos/transferências, outra campanha, "não é". `confirmar(c, id, sim, pid)` → `g.material` + DEPENDENTES › `sub()` (a que já existir,
+  qualquer maiúscula, ou "Material escolar") + paraQuem do filho; `parte` (Divisao); a pendente confirmada vai para o definitivo. `resumo`: total,
+  por filho, por loja, lista (📎 com comprovante), ano anterior (a campanha de antes ou os lançamentos da mesma janela um ano antes). Ao criar:
+  compromisso anual "Material escolar" (novembro, dia 15), se não houver; o valor acompanha o total. 📥 em "Confirmar classificação".
+  cartoes.js 1.1.0: `Banco.rotuloCartao` mostra "••final" só com um final (um cartão por fatura; viagem 1.0.1 usa o mesmo rótulo); tipos
+  `unico` e `permanente`; `f.usa/usaId` por final; `quemPagou`: quem usa do final → titular do adicional → quem usa do cartão → titular;
+  `novos()` → uma pergunta no 📥 por cartão ("Final •• novo no …: virtual de uso único, virtual permanente ou adicional? Quem usa?"),
+  `responderFinal` muda o "Quem pagou" das compras não mexidas; `antigo(c, f)`: virtual sem compra há mais de 183 dias → "Antigos" recolhido no
+  cadastro (nunca apagado; não perguntado). debito-nao-caiu 1.1.0: `atraso(o)` (pago depois do 1º dia útil seguinte, por Pix/boleto/"Já
+  paguei"; o débito no próprio cartão ou com "DEB AUT/PCAUT" não conta); contas-mes 1.2.0: status `pagaatraso` ("Paga com atraso (Pix em
+  23/Nov)", conta nas pagas); `avisoMulta(o)` na conta seguinte ("pode vir multa e juros da conta de Nov" ou a multa/juros destacados no
+  comprovante/e-mail da conta, `RX_MULTA`); 📥 "Ver com o banco por que o débito automático não caiu" (anotação e Resolvido, `ST.config.dncBanco`)
+  e, 3 dias antes, "confirme que o débito automático está ativo". Testes: `teste-material-escolar.js`, `teste-cartoes-virtuais.js`,
+  `teste-conta-atraso.js`.
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem

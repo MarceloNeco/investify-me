@@ -65,12 +65,12 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
     console.log('3) o pagamento depois do vencimento fecha a conta');
     await p.evaluate(() => { Gasto.add({ id: 'rb_pix', idRobo: 'pix', data: '2026-11-23', valor: 468.50, desc: 'PIX ENEL DISTRIBUICAO', descRobo: 'PIX ENEL DISTRIBUICAO', fluxo: 'saida', grupo: 'HABITACAO', sub: 'Luz', origem: 'robo', conta: 'Banco Ficticio' }); DebitoNaoCaiu.fechar(); });
     l = await nc();
-    ok(!l.some((x) => /^rLuz/.test(x)) && await st('rLuz') === 'paga' && await p.evaluate(() => Pagamento.achar('rLuz', '2026-11-09').gastoId === 'rb_pix'), 'o Pix de R$ 468,50 (com multa) em 23/11 fecha a ocorrência de 09/11: paga');
+    ok(!l.some((x) => /^rLuz/.test(x)) && await st('rLuz') === 'pagaatraso' && await p.evaluate(() => Pagamento.achar('rLuz', '2026-11-09').gastoId === 'rb_pix'), 'o Pix de R$ 468,50 (com multa) em 23/11 fecha a ocorrência de 09/11: paga com atraso (3.102)');
     ok(!/Energia Enel \(R\$/.test(await inbox()), 'o alerta da energia sai do 📥');
     await p.evaluate(() => abrirInbox());
     await p.click('#genBody .dnc-item [data-acao="dnc-paguei"][data-r="rAgua"]'); await p.waitForTimeout(250);
     await p.evaluate(() => fechar('genModal'));
-    ok(!(await nc()).length && await st('rAgua') === 'paga', '"Já paguei" (a da água): sai do 📥 e fica paga');
+    ok(!(await nc()).length && await st('rAgua') === 'pagaatraso', '"Já paguei" (a da água, depois do vencimento): sai do 📥 e fica paga com atraso (3.102)');
     await p.evaluate(() => abrirInbox());
     await p.click('#genBody .dnc-email [data-acao="dnc-email-ok"]'); await p.waitForTimeout(250);
     await p.evaluate(() => fechar('genModal'));

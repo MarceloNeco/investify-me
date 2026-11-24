@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/viagem.js — VIAGEM POR JANELA DE TEMPO (3.98)        1.0.0 · 22/Nov/2026
+   modulos/viagem.js — VIAGEM POR JANELA DE TEMPO (3.98)        1.0.1 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 22/Nov/2026; sem IA, sem integração)
      · Cadastro "✈️ Viagem" (BudgetONE → ✈️ Viagens): nome, destino(s), início e fim, margem antes/depois (1 dia, editável),
@@ -205,7 +205,7 @@
   /* ---------- resumo ---------- */
   function rotCartao(g) {
     var c = g.cartaoId && typeof Banco !== 'undefined' ? Banco.acharCartao(g.cartaoId) : null;
-    if (c) return (c.apelido || tr('Cartão', 'Card', 'Tarjeta')) + (c.fim ? ' ••' + c.fim : '');
+    if (c) return Banco.rotuloCartao(c.id) || tr('Cartão', 'Card', 'Tarjeta');   /* 1.0.1 (3.102): um cartão por fatura */
     return g.conta || g.forma || tr('outros', 'other', 'otros');
   }
   function pessoaDe(v, g) {
@@ -435,7 +435,7 @@
       '</div>' +
       (ps.length ? '<p class="small" style="margin:8px 0 2px"><b>' + esc(tr('Quem foi', 'Who went', 'Quién fue')) + '</b></p><div id="vgPess">' + opcoes(ps, v.pessoas || [], function (p) { return Pessoas.rotulo(p); }) + '</div>' : '') +
       (cs.length || bs.length ? '<p class="small" style="margin:8px 0 2px"><b>' + esc(tr('Cartões e contas que contam', 'Cards and accounts that count', 'Tarjetas y cuentas que cuentan')) + '</b> <span class="muted">' + esc(tr('(nenhum marcado = os de quem foi)', '(none ticked = those of who went)', '(ninguno marcado = los de quien fue)')) + '</span></p>' +
-        '<div id="vgCart">' + opcoes(cs, v.cartoes || [], function (c) { return (c.apelido || tr('Cartão', 'Card', 'Tarjeta')) + (c.fim ? ' ••' + c.fim : ''); }) + '</div><div id="vgContas">' + opcoes(bs, v.contas || [], function (b) { return b.nome || b.apelido || b.banco || b.id; }) + '</div>' : '') +
+        '<div id="vgCart">' + opcoes(cs, v.cartoes || [], function (c) { return Banco.rotuloCartao(c.id) || tr('Cartão', 'Card', 'Tarjeta'); }) + '</div><div id="vgContas">' + opcoes(bs, v.contas || [], function (b) { return b.nome || b.apelido || b.banco || b.id; }) + '</div>' : '') +
       '<label class="chk" style="display:block;margin-top:8px"><input type="checkbox" id="vgCasa"' + ((v.escopo || '') === 'casa' ? ' checked' : '') + '> ' + esc(tr('Viagem da casa (a família vê)', 'Household trip (the family sees it)', 'Viaje de la casa (la familia lo ve)')) + '</label>' +
       '<div class="f-actions">' + (v.id ? botao('vg-tirar', tr('Apagar a viagem', 'Delete the trip', 'Borrar el viaje'), ' data-v="' + esc(v.id) + '"') : '') + botao('vg-salvar', tr('Salvar', 'Save', 'Guardar'), '', 'primary') + '</div></div>');
     abrir('genModal');
@@ -446,7 +446,7 @@
   function depois() { Store.salvar(); if (typeof render === 'function') render(); if (typeof renderInboxN === 'function') renderInboxN(); }
 
   MoneyModulos.registrar({
-    id: 'viagem', versao: '1.0.0', colecoes: [COL],
+    id: 'viagem', versao: '1.0.1', colecoes: [COL],
     pontos: {
       'inbox.grupos': function () {
         if (casa()) return [];

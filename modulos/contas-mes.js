@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.1.1 · 23/Nov/2026
+   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.2.0 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · No topo da tela (id b-custos), dois seletores guardados: período "Este mês | Próximos 45 dias" e arrumação
@@ -56,6 +56,7 @@
 
   var STATUS = {
     paga: { ico: '✓', pt: 'Paga', en: 'Paid', cor: '--up' },
+    pagaatraso: { ico: '⚠', pt: 'Paga com atraso', en: 'Paid late', cor: '--warn' },   /* 1.2.0 (3.102): modulos/debito-nao-caiu.js */
     atrasada: { ico: '⚠', pt: 'Atrasada', en: 'Overdue', cor: '--down' },
     hoje: { ico: '⏰', pt: 'Vence hoje', en: 'Due today', cor: '--warn' },
     avencer: { ico: '○', pt: 'A vencer', en: 'Upcoming', cor: '--txt3' },
@@ -74,13 +75,17 @@
   }
   function item(o) {
     var h = hoje(), p = pago(o), st;
-    if (p) st = 'paga';
+    if (p) st = window.DebitoNaoCaiu && DebitoNaoCaiu.atraso && DebitoNaoCaiu.atraso(o) ? 'pagaatraso' : 'paga';
     /* 1.1.1 (3.100): o débito automático só é "paga" quando o débito ou o pagamento apareceu (modulos/debito-nao-caiu.js) */
     else if (o.estado === 'automatico' || o.r.estadoPadrao === 'automatico') st = window.DebitoNaoCaiu ? DebitoNaoCaiu.status(o, h) : (o.data < h ? 'paga' : 'debito');
     else if (o.data < h) st = 'atrasada';
     else if (o.data === h) st = 'hoje';
     else st = 'avencer';
-    return { r: o.r, data: o.data, valor: p ? p.valor : n2(o.valor), status: st, pagoEm: p ? p.em : (st === 'paga' ? o.data : ''), grupo: o.r.grupo };
+    var x = { r: o.r, data: o.data, valor: p ? p.valor : n2(o.valor), status: st, pagoEm: p ? p.em : (st === 'paga' ? o.data : ''), grupo: o.r.grupo };
+    /* 1.2.0 (3.102): paga com atraso (como e quando) e, na conta seguinte, o aviso da multa */
+    if (st === 'pagaatraso') x.atraso = DebitoNaoCaiu.atraso(o);
+    if (window.DebitoNaoCaiu && DebitoNaoCaiu.avisoMulta) { var am = DebitoNaoCaiu.avisoMulta(o); if (am) x.aviso = am.texto; }
+    return x;
   }
   function ocorr(de, ate) {
     if (typeof Recorrente === 'undefined') return [];
@@ -105,7 +110,7 @@
     },
     resumo: function (l) {
       var r = { total: 0, pagas: 0, faltam: 0, atrasadas: 0, n: l.length, nPagas: 0 };
-      l.forEach(function (x) { r.total += x.valor; if (x.status === 'paga') { r.pagas += x.valor; r.nPagas++; } else r.faltam += x.valor; if (x.status === 'atrasada') r.atrasadas += x.valor; });
+      l.forEach(function (x) { r.total += x.valor; if (x.status === 'paga' || x.status === 'pagaatraso') { r.pagas += x.valor; r.nPagas++; } else r.faltam += x.valor; if (x.status === 'atrasada') r.atrasadas += x.valor; });
       ['total', 'pagas', 'faltam', 'atrasadas'].forEach(function (k) { r[k] = n2(r[k]); });
       return r;
     },
@@ -175,7 +180,9 @@
   function linha(x) {
     var s = STATUS[x.status];
     var sub = [tr('dia ', 'day ') + Number(x.data.slice(8, 10)) + ' · ' + I18n.data(x.data), (GRUPOS[x.grupo] || {}).nome || x.grupo,
-      x.status === 'paga' && x.pagoEm ? tr('paga em ', 'paid on ') + I18n.data(x.pagoEm) : ''].filter(Boolean).join(' · ');
+      x.status === 'paga' && x.pagoEm ? tr('paga em ', 'paid on ') + I18n.data(x.pagoEm) : '',
+      x.atraso ? tr('paga com atraso (', 'paid late (', 'pagada con atraso (') + (x.atraso.como ? x.atraso.como + tr(' em ', ' on ', ' el ') : '') + I18n.data(x.atraso.em, { semAno: true }) + ')' : '',
+      x.aviso ? '⚠️ ' + x.aviso : ''].filter(Boolean).join(' · ');
     return '<div class="cm-linha cm-' + x.status + '" style="--cm-cor:var(' + s.cor + ')" data-acao="cm-abrir" data-id="' + esc(x.r.id) + '">' +
       '<div class="cm-txt"><span class="t-main">' + esc(x.r.nome) + '</span><div class="t-sub">' + esc(sub) + '</div></div>' +
       '<div class="cm-dir"><span class="num">' + fmt(x.valor) + '</span>' + selo(x.status) + '</div></div>';
@@ -319,7 +326,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'contas-mes', versao: '1.1.1',
+    id: 'contas-mes', versao: '1.2.0',
     pontos: {
       'custos.contas': cartao,
       'budget.atencao': cartaoSugestoes,
