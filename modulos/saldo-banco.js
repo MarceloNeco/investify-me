@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.1.2 · 14/Nov/2026
+   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.2.0 · 24/Nov/2026 (o número da conta inteiro e a agência)
    ---------------------------------------------------------------------
    O QUE FAZ
      O robô manda, na mesma caixa (money_entrada), itens que NUNCA viram lançamento (nuvem.js desvia para cá):
@@ -67,6 +67,9 @@
       r.tipo = tipoDe(it); r.banco = banco; r.conta = String(it.conta || '').trim().slice(0, 80);
       if (contaId) r.contaId = contaId;
       r.final = String(it.final_conta || '').replace(/\D/g, '').slice(-4) || r.final || '';
+      /* 2.2.0 (3.107): o número inteiro como o banco manda (o dono autorizou mostrar; fica no cofre do app) e a agência, se vier */
+      var nr = String(it.numero_conta || it.final_conta || '').replace(/[^\dXx-]/g, '').slice(0, 20); if (nr.replace(/\D/g, '').length > 4) r.numero = nr;
+      var ag = String(it.agencia || '').replace(/[^\d-]/g, '').slice(0, 10); if (ag) r.agencia = ag;
       r.dono = String(it.dono || '').trim().slice(0, 60); r.moeda = String(it.moeda || 'BRL').slice(0, 3);
       /* 2.1.2 (3.86): quando chegaram estes dados (o horário do robô, se ele mandar; senão, o da chegada no app) */
       var em = [it.atualizado_em, it.coletado_em, it.criado_em].filter(function (x) { return x && !isNaN(Date.parse(x)); })[0];
@@ -196,7 +199,7 @@
 
   MoneyModulos.registrar({
     id: 'saldo-banco',
-    versao: '2.1.1',
+    versao: '2.2.0',
     colecoes: [COL],
     pontos: { 'budget.painel': cartao },
     acoes: {
