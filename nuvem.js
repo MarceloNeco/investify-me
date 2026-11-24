@@ -85,6 +85,7 @@
   var K_FAM = 'moneytrio.nuvem.familia', K_PEDIDO = 'moneytrio.contaPedido', K_TRANCOU = 'moneytrio.nuvem.trancou';
   var K_LOCAL = 'investifyme.dados.v1';
   var K_SO_AQUI = 'moneytrio.soNesteAparelho';   /* escolheu usar sem conta: o app de sempre, só neste aparelho */
+  var K_PIN_DEPOIS = 'dgo:moneytrio:aviso:pin-conta:depois';   /* 3.106: "Depois" no aviso do PIN da conta → até quando (ms) fica escondido */
   var RX_ID = /^[A-Za-z0-9_.:@-]{1,80}$/;
   var PRF_INFO = 'moneytrio-cadeado-prf';
   var ESPERAS = [0, 0, 0, 0, 30, 60, 300, 900, 1800, 3600];   /* segundos depois do n-ésimo erro de PIN; no 10º bloqueia */
@@ -617,6 +618,13 @@
       await this.gravar(L); return { ok: true };
     },
     desligarDigital: async function () { var L = await this.local(); if (L) { L.prf = null; await this.gravar(L); } },
+    /* 1.15.7 (3.106): reaberto pela sessão guardada (usarChave), o cadeado está aberto mas a chave do aparelho (dukRaw) não veio.
+       O PIN deste aparelho (ou a digital, pin = null) a abre de novo aqui, sem trancar e destrancar. */
+    reabrirDuk: async function (pin) {
+      var r = await this.duk(pin); if (r.erro) return r;
+      if (this.dukRaw && this.dukRaw !== r.raw) this.dukRaw.fill(0);
+      this.dukRaw = r.raw; return { ok: true };
+    },
     trocarPin: async function (pin) {
       if (!this.dukRaw) return false;
       var L = await this.local(), sal = b64(Cifra.rnd(16));
@@ -882,15 +890,22 @@
       el.querySelector('#nvAvisoX').onclick = function () { el.remove(); };
       el.querySelector('#nvAvisoTirar').onclick = async function () { try { await self.rpc('sol_aparelho_tirar', { p_id: a.id }); aviso('✓ ' + tt('Aparelho tirado da sua conta.', 'Device removed from your account.')); } catch (e) {} el.remove(); };
     },
-    /* 1.11.1: "Crie o PIN da sua conta SolverONE" no topo do app (o ✕ esconde só até abrir de novo) */
+    /* 1.11.1: "Crie o PIN da sua conta SolverONE" no topo do app. 1.15.7 (3.106): é opcional (sem ele, o aparelho novo escolhe o PIN
+       lá e esse vira o PIN da conta — Pin.pedir → novoPin → Pin.definir); "Depois" esconde por 7 dias neste aparelho e ele volta
+       (aviso de segurança nunca some para sempre); "O que é isso?" abre a explicação (Portao.ajudaPin). */
     avisoCriarPin: function () {
       if (document.getElementById('nvAvisoPin')) return;
+      if (Date.now() < (+lsGet(K_PIN_DEPOIS, 0) || 0)) return;
       var el = document.createElement('div');
       el.id = 'nvAvisoPin'; el.className = 'nv-pedido'; el.setAttribute('role', 'status');
-      el.innerHTML = '<span>🔢 ' + esc(tt('Crie o PIN da sua conta SolverONE: vale em todos os seus aparelhos e apps', 'Create your SolverONE account PIN: it works on all your devices and apps')) + '</span>' +
-        '<button class="nv-btn pri" id="nvAvisoPinOk">' + tt('Criar agora', 'Create now') + '</button><button class="nv-x" id="nvAvisoPinX" aria-label="' + tt('Depois', 'Later') + '">✕</button>';
+      el.innerHTML = '<span>🔢 ' + esc(tt('Crie o PIN da sua conta SolverONE (opcional): um PIN só para todos os aparelhos. Se não criar agora, ao entrar num aparelho novo você escolhe o PIN lá.',
+          'Create your SolverONE account PIN (optional): one PIN for all your devices. If you skip it, you choose the PIN when you sign in on a new device.',
+          'Crea el PIN de tu cuenta SolverONE (opcional): un solo PIN para todos tus dispositivos. Si no lo creas ahora, al entrar en un dispositivo nuevo eliges el PIN allí.')) +
+        ' <button class="nv-lnk" id="nvAvisoPinQue">' + tt('O que é isso?', 'What is this?', '¿Qué es esto?') + '</button></span>' +
+        '<button class="nv-btn pri" id="nvAvisoPinOk">' + tt('Criar agora', 'Create now', 'Crear ahora') + '</button><button class="nv-btn" id="nvAvisoPinX">' + tt('Depois', 'Later', 'Después') + '</button>';
       document.body.appendChild(el);
-      el.querySelector('#nvAvisoPinX').onclick = function () { el.remove(); };
+      el.querySelector('#nvAvisoPinX').onclick = function () { lsSet(K_PIN_DEPOIS, Date.now() + 7 * 86400000); el.remove(); };
+      el.querySelector('#nvAvisoPinQue').onclick = function () { Portao.ajudaPin(); };
       el.querySelector('#nvAvisoPinOk').onclick = function () { el.remove(); Portao.criarPinConta(); };
     },
     /* este aparelho foi tirado da conta em outro aparelho: o cadeado local e a cópia daqui saem */
@@ -2200,22 +2215,29 @@
         if (info && !info.tem) { b2.classList.remove('nv-hidden'); if (d) d.textContent = tt('A sua conta ainda não tem PIN da conta. Crie um: ele vale em todos os seus aparelhos e apps.', 'Your account has no account PIN yet. Create one: it works on all your devices and apps.'); }
         else { b1.classList.remove('nv-hidden'); if (d) d.textContent = tt('O PIN da sua conta vale em todos os seus aparelhos e apps.', 'Your account PIN works on all your devices and apps.'); }
       }).catch(function () { var b1 = el.querySelector('#nvPin'); if (b1) b1.classList.remove('nv-hidden'); });
-      $('#nvPinCriar').onclick = function () { if (!Cadeado.dukRaw) return aviso(tt('Desbloqueie com o PIN ou a digital para criar o PIN da conta.', 'Unlock with the PIN or fingerprint to create the account PIN.')); Painel.fechar(); Portao.criarPinConta(); };
-      $('#nvPin').onclick = function () { if (!Cadeado.dukRaw) return aviso(tt('Para trocar o PIN, toque em 🔒 Bloquear agora e desbloqueie de novo com o PIN.', 'To change the PIN, lock (🔒 Lock now) and unlock again with the PIN.')); Painel.fechar(); Portao.trocarPinConta(); };
+      /* 3.106: sem a chave do aparelho na memória (reaberto pela sessão guardada), Portao.comChave pede o PIN deste aparelho ali mesmo */
+      $('#nvPinCriar').onclick = function () { Painel.fechar(); Portao.criarPinConta(); };
+      $('#nvPin').onclick = function () { Painel.fechar(); Portao.trocarPinConta(); };
       if ($('#nvDeNovo')) $('#nvDeNovo').onclick = function () { Sinc.tentarDeNovo(); };
-      if ($('#nvDigOn')) $('#nvDigOn').onclick = async function () { if (!Cadeado.dukRaw) return aviso(tt('Para ligar a digital, toque em 🔒 Bloquear agora e desbloqueie de novo com o PIN.', 'To turn on the fingerprint, lock (🔒 Lock now) and unlock again with the PIN.')); var r = await Cadeado.ligarDigital(); aviso(r.ok ? '✓ ' + tt('Pronto: abre com a digital neste ' + apN() + '.', 'Done: opens with your fingerprint on this ' + apN() + '.') : tt('A digital não foi ligada. Continue usando o PIN.', 'Fingerprint was not turned on. Keep using the PIN.')); Painel.desenhar(); };
+      var ligarDig = async function () { var r = await Cadeado.ligarDigital(); aviso(r.ok ? '✓ ' + tt('Pronto: abre com a digital neste ' + apN() + '.', 'Done: opens with your fingerprint on this ' + apN() + '.') : tt('A digital não foi ligada. Continue usando o PIN.', 'Fingerprint was not turned on. Keep using the PIN.')); };
+      if ($('#nvDigOn')) $('#nvDigOn').onclick = async function () {
+        if (!Cadeado.dukRaw) { Painel.fechar(); return Portao.comChave('👆 ' + tt('Desbloquear com a digital', 'Unlock with the fingerprint', 'Desbloquear con la huella'), async function () { Tela.fechar(); await ligarDig(); Painel.abrir(); }); }
+        await ligarDig(); Painel.desenhar(); };
       if ($('#nvDigOff')) $('#nvDigOff').onclick = async function () { await Cadeado.desligarDigital(); Painel.desenhar(); };
       if ($('#nvLevar')) $('#nvLevar').onclick = function () { Painel.fechar(); Nuvem.levarDeNovo(); };
       this.ligarRobo(el);
       if (!this._pediuRobos) { this._pediuRobos = true; this.robos(); }
       this.avisoPedidos();
       $('#nvApPedidos').onclick = async function () { Aparelhos._vistos = {}; await Aparelhos.olharPedidos(); if (!(Aparelhos.pendentes || []).length) aviso(tt('Nenhum pedido de acesso agora.', 'No access request right now.')); else Painel.fechar(); };
-      if ($('#nvApPk')) $('#nvApPk').onclick = async function () {
-        if (!Cadeado.dukRaw) return aviso(tt('Para isso, toque em 🔒 Bloquear agora e desbloqueie de novo com o PIN.', 'For this, lock (🔒 Lock now) and unlock again with the PIN.'));
+      var criarPk = async function () {
         var r = await Aparelhos.criarPasskey();
         aviso(r.ok ? '✓ ' + tt('Pronto: a digital (passkey) abre o MoneyTRIO nos seus outros aparelhos.', 'Done: the fingerprint (passkey) opens MoneyTRIO on your other devices.')
           : r.erro === 'semprf' ? tt('Este aparelho ou navegador ainda não oferece isso. Use a aprovação pelo outro aparelho.', 'This device or browser does not offer this yet. Use approval from another device.')
           : tt('A passkey não foi criada.', 'The passkey was not created.'));
+      };
+      if ($('#nvApPk')) $('#nvApPk').onclick = async function () {
+        if (!Cadeado.dukRaw) { Painel.fechar(); return Portao.comChave('👆 ' + tt('Entrar com a digital num aparelho novo', 'Sign in with the fingerprint on a new device', 'Entrar con la huella en un dispositivo nuevo'), async function () { Tela.fechar(); await criarPk(); Painel.abrir(); }); }
+        await criarPk();
       };
       this.aparelhos(el, L);
     },
@@ -2504,7 +2526,69 @@
     /* 1.10.2: a conta ainda não tem PIN da conta e o cadeado está aberto (pelo PIN ou pela DIGITAL): criar o PIN da conta sem pedir o
        PIN antigo deste aparelho — quem abriu já provou que é a pessoa. sol_pin_definir com o atual nulo (o banco só aceita isso quando
        a conta não tem PIN); monta L.pin (abre sem internet) e L.srv; daí vale em todos os aparelhos. */
+    /* 1.15.7 (3.106): "O que é isso?" do aviso do PIN e o tópico do AssistONE (MoneyNuvem.ajudaPin): o que é o PIN da conta, se é
+       obrigatório e o passo a passo do aparelho novo. Um texto só, aqui, para o aviso e a busca dizerem a mesma coisa. */
+    ajudaPin: function () {
+      var li = function (pt, en, es) { return '<li>' + tt(pt, en, es) + '</li>'; };
+      var el = Tela.mostrar(Tela.topo() + '<h2>🔢 ' + tt('PIN da conta e aparelho novo', 'Account PIN and a new device', 'PIN de la cuenta y dispositivo nuevo') + '</h2>' +
+        '<h3>' + tt('O que é', 'What it is', 'Qué es') + '</h3><p id="nvAjPinQue">' + tt('O PIN da conta é um número só (6 números ou mais) que abre o MoneyTRIO e o OmniLifeONE em todos os seus aparelhos, até sem internet. Não é a senha do e-mail.',
+          'The account PIN is a single number (6 digits or more) that opens MoneyTRIO and OmniLifeONE on all your devices, even offline. It is not your e-mail password.',
+          'El PIN de la cuenta es un solo número (6 cifras o más) que abre MoneyTRIO y OmniLifeONE en todos tus dispositivos, incluso sin internet. No es la contraseña del correo.') + '</p>' +
+        '<h3>' + tt('É obrigatório?', 'Is it required?', '¿Es obligatorio?') + '</h3><p id="nvAjPinObr">' + tt('Não. Sem ele, cada aparelho usa o PIN que você escolheu nele. Quando você entrar num aparelho novo, o PIN que escolher lá vira o PIN da conta.',
+          'No. Without it, each device uses the PIN you chose on it. When you sign in on a new device, the PIN you choose there becomes the account PIN.',
+          'No. Sin él, cada dispositivo usa el PIN que elegiste en él. Cuando entres en un dispositivo nuevo, el PIN que elijas allí pasa a ser el PIN de la cuenta.') + '</p>' +
+        '<h3>' + tt('Entrar num celular novo, passo a passo', 'Signing in on a new phone, step by step', 'Entrar en un móvil nuevo, paso a paso') + '</h3><ol id="nvAjPinPassos">' +
+          li('No celular: toque em <b>Entrar com Google</b>. Na tela "Primeira vez neste celular", toque em <b>📱 Aprovar pelo outro aparelho</b>. Aparecem 6 números.',
+            'On the phone: tap <b>Sign in with Google</b>. On the "First time on this phone" screen, tap <b>📱 Approve from my other device</b>. 6 numbers appear.',
+            'En el móvil: toca <b>Entrar con Google</b>. En la pantalla "Primera vez en este móvil", toca <b>📱 Aprobar desde el otro dispositivo</b>. Aparecen 6 números.') +
+          li('No computador (com o MoneyTRIO aberto): aparece <b>Pedido de acesso</b>. Toque em <b>Ver</b>, confira se os 6 números são os mesmos do celular, digite o seu PIN e aprove.',
+            'On the computer (with MoneyTRIO open): an <b>Access request</b> appears. Tap <b>See</b>, check the 6 numbers match the phone, type your PIN and approve.',
+            'En el ordenador (con MoneyTRIO abierto): aparece una <b>Solicitud de acceso</b>. Toca <b>Ver</b>, comprueba que los 6 números son los mismos del móvil, escribe tu PIN y aprueba.') +
+          li('No celular: digite o PIN da conta (ou escolha um, se a conta ainda não tem).',
+            'On the phone: type the account PIN (or choose one, if the account has none yet).',
+            'En el móvil: escribe el PIN de la cuenta (o elige uno, si la cuenta aún no tiene).') +
+          li('Para ter o ícone na tela do celular: no Chrome, toque em <b>⋮</b> e em <b>Instalar app</b>.',
+            'To get the icon on the phone screen: in Chrome, tap <b>⋮</b> and <b>Install app</b>.',
+            'Para tener el icono en la pantalla del móvil: en Chrome, toca <b>⋮</b> e <b>Instalar app</b>.') + '</ol>' +
+        '<p class="nv-tiny">' + tt('Se um aparelho que já estava na lista pede "Primeira vez" de novo, o navegador dele apagou a chave guardada (dados do site apagados, ou o app aberto dentro de outro app). Aprove de novo pelo outro aparelho.',
+          'If a device that was already on the list asks for "First time" again, its browser erased the saved key (site data cleared, or the app opened inside another app). Approve it again from your other device.',
+          'Si un dispositivo que ya estaba en la lista vuelve a pedir "Primera vez", su navegador borró la clave guardada (datos del sitio borrados, o la app abierta dentro de otra app). Apruébalo de nuevo desde el otro dispositivo.') + '</p>' +
+        '<button class="nv-btn" id="nvAjPinOk">' + tt('Entendi', 'Got it', 'Entendido') + '</button>');
+      el.querySelector('#nvAjPinOk').onclick = function () { Tela.fechar(); };
+    },
+    /* 1.15.7 (3.106): Criar/Trocar o PIN e Ligar a digital precisam da chave deste aparelho. Quando o app foi reaberto pela sessão
+       guardada ela não está na memória: em vez de "desbloqueie de novo", pede aqui mesmo o PIN deste aparelho (ou a digital) e segue. */
+    comChave: async function (titulo, seguir) {
+      if (Cadeado.dukRaw) return seguir();
+      var L = await Cadeado.local(), dig = L && L.prf;
+      var el = Tela.mostrar(Tela.topo() + '<h2>' + titulo + '</h2>' +
+        '<p>' + tt('Para continuar, confirme que é você: digite o PIN que abre o MoneyTRIO neste ' + apN() + '.', 'To continue, confirm it is you: type the PIN that opens MoneyTRIO on this ' + apN() + '.', 'Para continuar, confirma que eres tú: escribe el PIN que abre MoneyTRIO en este dispositivo.') + '</p>' +
+        (L && !L.bloqueado ? '<label class="nv-fld"><span>' + tt('PIN deste aparelho', 'PIN of this device', 'PIN de este dispositivo') + '</span><input type="text" class="nv-pinc" id="nvKPin" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label>' +
+          '<button class="nv-btn pri" id="nvKOk">' + tt('Continuar', 'Continue', 'Continuar') + '</button>' +
+          (dig ? '<button class="nv-btn" id="nvKDig">👆 ' + tt('Usar a digital', 'Use fingerprint', 'Usar la huella') + '</button>' : '') : '') +
+        '<div class="nv-nota erro' + (L && !L.bloqueado ? ' nv-hidden' : '') + '" id="nvErro" role="alert">' + (L && !L.bloqueado ? '' : esc(tt('O PIN deste aparelho está bloqueado. Toque em "Bloquear agora" e, na tela do cadeado, em "Esqueci o PIN".', 'This device\'s PIN is blocked. Tap "Lock now" and, on the lock screen, "I forgot the PIN".', 'El PIN de este dispositivo está bloqueado. Toca "Bloquear ahora" y, en la pantalla del candado, "Olvidé el PIN".'))) + '</div>' +
+        (L && !L.bloqueado ? '' : '<button class="nv-btn" id="nvKTrancar">🔒 ' + tt('Bloquear agora', 'Lock now', 'Bloquear ahora') + '</button>') +
+        '<button class="nv-btn" id="nvKVolta">' + tt('Cancelar', 'Cancel', 'Cancelar') + '</button>');
+      var $ = function (q) { return el.querySelector(q); };
+      $('#nvKVolta').onclick = function () { Tela.fechar(); };
+      if ($('#nvKTrancar')) $('#nvKTrancar').onclick = function () { Tela.fechar(); Nuvem.trancar('manual'); };
+      var ir = function (pin, botao) { Tela.ocupar(botao, async function () {
+        var r = await Cadeado.reabrirDuk(pin);
+        if (r.ok) return seguir();
+        if (r.erro === 'espera') return Tela.erro(tt('Espere ', 'Wait ', 'Espera ') + Math.max(1, Math.ceil((r.ate - Date.now()) / 1000)) + tt(' segundos para tentar de novo.', ' seconds to try again.', ' segundos para intentarlo de nuevo.'));
+        if (r.erro === 'pin') return Tela.erro(tt('PIN errado. ', 'Wrong PIN. ', 'PIN incorrecto. ') + (r.erros >= 4 ? tt('Tentativas erradas: ', 'Wrong attempts: ', 'Intentos fallidos: ') + r.erros + tt(' de 10.', ' of 10.', ' de 10.') : ''));
+        if (r.erro === 'bloqueado') return comChaveBloq();
+        Tela.erro(tt('A digital não abriu. Use o PIN.', 'Fingerprint did not open. Use the PIN.', 'La huella no abrió. Usa el PIN.'));
+      }); };
+      var comChaveBloq = function () { Portao.comChave(titulo, seguir); };
+      if ($('#nvKOk')) {
+        $('#nvKPin').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('#nvKOk').click(); });
+        $('#nvKOk').onclick = function () { var v = $('#nvKPin').value; if (v) ir(v, $('#nvKOk')); };
+      }
+      if ($('#nvKDig')) $('#nvKDig').onclick = function () { ir(null, $('#nvKDig')); };
+    },
     criarPinConta: function () {
+      if (!Cadeado.dukRaw) return Portao.comChave('🔢 ' + tt('Criar o PIN da conta', 'Create the account PIN', 'Crear el PIN de la cuenta'), function () { Portao.criarPinConta(); });
       var campo = function (id, rot) { return '<label class="nv-fld"><span>' + rot + '</span><input type="text" class="nv-pinc" id="' + id + '" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></label>'; };
       var el = Tela.mostrar(Tela.topo() + '<h2>🔢 ' + tt('Criar o PIN da conta', 'Create the account PIN') + '</h2>' +
         '<p class="nv-tiny">' + tt('Um PIN só, para todos os seus aparelhos. Não precisa do PIN antigo deste aparelho.', 'One PIN for all your devices. You do not need this device\'s old PIN.') + '</p>' +
@@ -2519,7 +2603,7 @@
         if (/^(\d)\1+$/.test(a) || '0123456789012'.indexOf(a) >= 0 || '9876543210987'.indexOf(a) >= 0) return Tela.erro(tt('Esse PIN é fácil de adivinhar (números repetidos ou em sequência). Escolha outro.', 'That PIN is easy to guess (repeated or sequential digits). Pick another.'));
         if (a !== b) return Tela.erro(tt('Os dois PINs ficaram diferentes.', "The two PINs don't match."));
         if (!navigator.onLine) return Tela.erro(tt('Para criar o PIN da conta, ligue a internet.', 'To create the account PIN, connect to the internet.'));
-        if (!Cadeado.dukRaw) return Tela.erro(tt('Desbloqueie de novo e tente outra vez.', 'Unlock again and retry.'));
+        if (!Cadeado.dukRaw) return Portao.criarPinConta();   /* 3.106: a chave do aparelho saiu da memória (trancou): pede o PIN deste aparelho */
         Tela.ocupar($('#nvCOk'), async function () {
           var L = await Cadeado.local();
           if (!L || !L.ap) return Tela.erro(tt('Este aparelho ainda não está na lista dos seus aparelhos. Abra pelo PIN deste aparelho uma vez.', 'This device is not in your device list yet. Open it with this device\'s PIN once.'));
@@ -2533,6 +2617,7 @@
     },
     /* 1.10.0: trocar o PIN da conta (pede o atual; vale em todos os aparelhos; precisa de internet) */
     trocarPinConta: function () {
+      if (!Cadeado.dukRaw) return Portao.comChave('🔢 ' + tt('Trocar o PIN da conta', 'Change the account PIN', 'Cambiar el PIN de la cuenta'), function () { Portao.trocarPinConta(); });
       var campo = function (id, rot) { return '<label class="nv-fld"><span>' + rot + '</span><input type="text" class="nv-pinc" id="' + id + '" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label>'; };
       var el = Tela.mostrar(Tela.topo() + '<h2>🔢 ' + tt('Trocar o PIN da conta', 'Change the account PIN') + '</h2>' +
         '<p class="nv-tiny">' + tt('O PIN novo vale em todos os seus aparelhos e apps.', 'The new PIN works on all your devices and apps.') + '</p>' +
@@ -2909,6 +2994,8 @@
       try { return (await Conta.rest('GET', 'sol_grupo_membros?grupo_id=eq.' + Sinc.gid + '&status=eq.ativo&select=id,user_id,perfil_id,apelido,papel')) || []; } catch (e) { return []; }
     },
     arquivos: Arquivos,
+    ajudaPin: function () { return Portao.ajudaPin(); },   /* 3.106: o tópico "PIN da conta e aparelho novo" (AssistONE) */
+    criarPinConta: function () { return Portao.criarPinConta(); },
     iniciado: false, familia: null, podeLevar: false,
     /* 3.32: o nome da pessoa no topo (no lugar de "Dono da carteira"): nome do perfil SolverONE (user_settings.display_name),
        senão o nome do Google (user_metadata), senão a parte do e-mail antes do @. Sem nuvem: o app fica como sempre. */

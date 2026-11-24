@@ -65,7 +65,7 @@ const PIN_VELHO = '736251', PIN_NOVO = '582914';
     await PC.waitForSelector('#nvSelo', { timeout: 60000 });
     await PC.waitForSelector('#nvAvisoPin', { timeout: 20000 }).catch(() => {});
     ok(!conta(), 'abrir com o PIN antigo do aparelho NÃO cria o PIN da conta (sol_pin_conta continua vazio)');
-    ok(/Crie o PIN da sua conta SolverONE: vale em todos os seus aparelhos e apps/.test(await PC.textContent('#nvAvisoPin').catch(() => '')), 'aviso no topo: "Crie o PIN da sua conta SolverONE … · Criar agora"');
+    ok(/Crie o PIN da sua conta SolverONE \(opcional\): um PIN só para todos os aparelhos/.test(await PC.textContent('#nvAvisoPin').catch(() => '')), 'aviso no topo: "Crie o PIN da sua conta SolverONE (opcional) … · Criar agora" (3.106: opcional)');
     await PC.screenshot({ path: '/tmp/aviso-pin.png' });
     /* tranca e abre pela DIGITAL (o PIN antigo não é digitado) */
     await PC.evaluate(() => MoneyNuvem._teste.Vale.apagar()); await PC.reload();
