@@ -1,11 +1,15 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.102 · 24/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.103 · 24/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.103', d:'2026-11-24', t:'Foto do serviço do carro no Google Drive', itens:[
+    '📁 Conectar meu Google Drive: em 🚗 Carro, um toque abre a tela do próprio Google e você toca em "Permitir". O app só vê as pastas e os arquivos que ele mesmo criar ou que você escolher. Nada para configurar.',
+    '"📁 Enviar ao Drive" no serviço do carro com foto ou documento (a OS, o canhoto): o app cria a pasta "MoneyTRIO / Carro / <apelido> / AAAA-MM-DD OFICINA" e guarda lá. Quem já tem as próprias pastas toca em "usar uma pasta que já tenho no Drive". O envio é sempre num toque, a cópia no app continua e, sem internet, fica na fila do 📥.'
+  ]},
   {v:'3.102', d:'2026-11-24', t:'Material escolar, cartões virtuais e conta paga com atraso', itens:[
     '📚 Material escolar: crie o ano letivo (de novembro a fevereiro) e o app sugere as compras de papelaria, livraria e lojas on-line (Amazon, Mercado Livre, Shopee…) e os pedidos com caderno, lápis, mochila… Você confirma de qual filho é (ou só uma parte) e tudo cai numa linha só, em Dependentes › Material escolar. O resumo mostra o total, por filho, por loja e o ano anterior, e um compromisso anual lembra no ano que vem.',
     'Cartões virtuais sem bagunça: na lista aparece um cartão por fatura; os finais ficam dentro do cartão. Um final novo entra sozinho com uma pergunta no 📥 (virtual de uso único, virtual permanente ou adicional? quem usa?), e o "Quem pagou" segue quem usa aquele final. Finais virtuais sem compra há mais de 6 meses vão para "antigos" (nunca são apagados).',
