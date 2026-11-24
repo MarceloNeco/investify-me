@@ -35,7 +35,9 @@
      · 2º passo do juntarOS: o item com OS se junta a outro do mesmo valor, das mesmas parcelas e do mesmo CNPJ ou loja, mesmo sem o
        "mesmaCompra" do motor (fotos separadas; um pedaço do canhoto no canto da foto da OS; os dois lidos como OS). Fica o que tem o
        pagamento (o final do cartão; sem ele, a data mais nova); da OS vêm o nº, o veículo e a categoria.
-     · O cartão vem escolhido pelo final lido em QUALQUER final do cartão (Cartoes.doFinal), não só no primeiro.
+     · O cartão vem escolhido pelo final lido em QUALQUER final do cartão (Cartoes.doFinal), não só no primeiro. Sem o cartão
+       cadastrado, o seletor mostra os "Encontrados nas suas compras" (o robô já trouxe: "Mastercard ••9458 (Banco)") com o do final já
+       escolhido; escolher um cadastra o cartão com 1 toque (Cartoes.semente + Banco.salvarCartao, e liga para trás as compras dos finais).
      · "🔗 Juntar os marcados (é a mesma compra)" quando a leitura tem 2 ou mais itens (o automático pode não perceber); a linha do
        "Esperar o banco" explica que ele não cria gasto: a compra vem pela fatura e a foto completa a descrição.
      · A linha mostra "Veículo › <categoria> · <carro>" antes de esperar o banco; o carro pelo apelido mesmo com letra grudada no texto lido
@@ -287,7 +289,12 @@
     var gr = ultimo.grupos, sec = function (ico, tit, l, corpo) { return l.length ? '<h4 style="margin:12px 0 4px">' + ico + ' ' + esc(tit) + ' (' + l.length + ')</h4>' + l.map(corpo).join('') : ''; };
     var opcCartao = function (it) {
       var cs = typeof Banco !== 'undefined' ? Banco.cartoes() : [];
-      return '<select data-cn="cartao"><option value="">' + esc(tr('cartão…', 'card…', 'tarjeta…')) + '</option>' + cs.map(function (c) { return '<option value="' + esc(c.id) + '"' + (it.final && (String(c.fim) === it.final || (window.Cartoes && Cartoes.doFinal(it.final) === c)) ? ' selected' : '') + '>' + esc(Banco.rotuloCartao(c.id)) + '</option>'; }).join('') + '</select>';
+      /* 1.3.2 (3.105): também os cartões que o robô já trouxe e ainda não foram cadastrados; escolher um cadastra com 1 toque */
+      var enc = window.Cartoes && Cartoes.encontrados ? Cartoes.encontrados() : [], achou = cs.some(function (c) { return it.final && (String(c.fim) === it.final || (window.Cartoes && Cartoes.doFinal(it.final) === c)); });
+      var rotEnc = function (x) { var b = (typeof BANDEIRA_POR_ID !== 'undefined' && BANDEIRA_POR_ID[x.bandeira] || {}).nome; var f = it.final && x.finais.indexOf(it.final) >= 0 ? it.final : x.finais[0]; return (x.nome || b || tr('Cartão', 'Card', 'Tarjeta')) + ' ••' + f + (x.banco ? ' (' + x.banco + ')' : ''); };
+      return '<select data-cn="cartao"><option value="">' + esc(tr('cartão…', 'card…', 'tarjeta…')) + '</option>' + cs.map(function (c) { return '<option value="' + esc(c.id) + '"' + (it.final && (String(c.fim) === it.final || (window.Cartoes && Cartoes.doFinal(it.final) === c)) ? ' selected' : '') + '>' + esc(Banco.rotuloCartao(c.id)) + '</option>'; }).join('') +
+        (enc.length ? '<optgroup label="' + esc(tr('Encontrados nas suas compras (cadastra com 1 toque)', 'Found in your purchases (adds it with 1 tap)', 'Encontradas en tus compras (se registra con 1 toque)')) + '">' +
+          enc.map(function (x) { return '<option value="enc:' + esc(x.chave) + '"' + (!achou && it.final && x.finais.indexOf(it.final) >= 0 ? ' selected' : '') + '>' + esc(rotEnc(x)) + '</option>'; }).join('') + '</optgroup>' : '') + '</select>';
     };
     /* 1.3.2 (3.105): com 2 ou mais itens, a pessoa junta os da mesma compra (quando o automático não percebeu) */
     var nIt = gr.casou.length + gr.parecido.length + gr.novo.length + gr.duvida.length;
@@ -368,6 +375,15 @@
     }).then(function (meta) { if (meta && meta.id) { f.docId = meta.id; CompraParcelada.ligar(f); Store.salvar(); } }).catch(function () { /* sem cofre: fica sem a foto */ });
   }
   function depois() { Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); }
+  /* 1.3.2 (3.105): "enc:<chave>" = um cartão que o robô já trouxe e ainda não está cadastrado: cadastra agora (a conta e os finais dele) */
+  function cartaoDe(v) {
+    if (!/^enc:/.test(v || '') || !window.Cartoes || typeof Banco === 'undefined') return v;
+    var sm = Cartoes.semente(v.slice(4)); if (!sm) return '';
+    var c = Banco.salvarCartao({ apelido: sm.apelido, bandeira: sm.bandeira, fim: sm.fim, bancoId: sm.bancoId });
+    if (sm.contaId) { c.contaId = sm.contaId; c.contaNome = sm.contaNome; }
+    c.finais = sm.finais; Cartoes.ligarRetro(c);
+    return c.id;
+  }
 
   MoneyModulos.registrar({
     id: 'canhotos', versao: '1.3.2',
@@ -427,11 +443,11 @@
       'cn-amao': function (el) {
         var r = item(el), it = r.x.it, d = iso(it.data) || hojeISO();
         var po = osPadrao(it);
-        Gasto.add({ data: d, valor: it.valor, desc: po.desc || it.loja || tr('Compra (canhoto)', 'Purchase (receipt)', 'Compra (ticket)'), grupo: po.grupo || 'OUTROS', sub: po.sub || '', veiculoId: po.veiculoId || undefined, fluxo: 'saida', cartaoId: campo(r.c, 'cartao') || undefined, hora: it.hora || '', origem: 'canhoto', forma: tr('manual (canhoto)', 'manual (receipt)', 'manual (ticket)'), editadoPessoa: true });
+        Gasto.add({ data: d, valor: it.valor, desc: po.desc || it.loja || tr('Compra (canhoto)', 'Purchase (receipt)', 'Compra (ticket)'), grupo: po.grupo || 'OUTROS', sub: po.sub || '', veiculoId: po.veiculoId || undefined, fluxo: 'saida', cartaoId: cartaoDe(campo(r.c, 'cartao')) || undefined, hora: it.hora || '', origem: 'canhoto', forma: tr('manual (canhoto)', 'manual (receipt)', 'manual (ticket)'), editadoPessoa: true });
         ultimo.grupos.novo.splice(ultimo.grupos.novo.indexOf(r.x), 1); depois(); mostrar();
       },
       'cn-esperar': function (el) {
-        var r = item(el), it = r.x.it, ct = campo(r.c, 'cartao');
+        var r = item(el), it = r.x.it, ct = cartaoDe(campo(r.c, 'cartao'));
         if (it.parcelas > 1 && window.CompraParcelada) {   /* 1.2.0 (3.99): parcelado: a ficha espera a parcela 01/N do banco */
           var f = ficha(it, null, { cartaoId: ct }); if (!f) return;
           ultimo.grupos.novo.splice(ultimo.grupos.novo.indexOf(r.x), 1); depois(); mostrar();

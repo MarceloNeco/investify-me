@@ -116,6 +116,18 @@ const OS = (papel, fin, extra) => IT(papel, fin.valor, Object.assign({ documento
     ok(fx === 'OFICINA EXEMPLO (OS 555) 01/02|VEICULO|Funilaria e pintura|vc2|true', 'a fatura chega com o texto curto ("DEPINTOR FICT 01/02") e a descrição da foto prevalece, com a categoria e o carro: ' + fx);
     await p.evaluate(() => fechar('genModal'));
 
+    console.log('4c) sem cartão cadastrado: os cartões que o robô já trouxe, escolhido pelo final; 1 toque cadastra');
+    const salvos = await p.evaluate(() => { const c = ST.cartoes; ST.cartoes = [];
+      Gasto.add({ data: '2026-11-02', valor: 33, desc: 'LOJA FICTICIA X', descRobo: 'LOJA FICTICIA X', fluxo: 'saida', grupo: 'OUTROS', sub: '', origem: 'robo', finalCartao: '4321', contaCartao: { id: 'contaX', nome: 'Mastercard Black' }, conta: 'Banco Ficticio', cartaoNome: 'MASTERCARD' });
+      return c; });
+    await ler([IT(21, 999, { data: '24/11/2026', loja: 'OUTRA OFICINA', parcelas: 3, final: '4321' })]);
+    const sc = await p.evaluate(() => { const sel = document.querySelector('#genBody .cn-item[data-grupo="novo"] [data-cn="cartao"]'); return { v: sel.value, t: sel.options[sel.selectedIndex].textContent, g: (sel.querySelector('optgroup') || {}).label }; });
+    ok(sc.v === 'enc:c:contaX' && sc.t === 'Mastercard Black ••4321 (Banco Ficticio)' && /Encontrados nas suas compras \(cadastra com 1 toque\)/.test(sc.g), 'sem cartão cadastrado, o seletor mostra "Mastercard Black ••4321 (Banco Ficticio)" (o robô já trouxe), já escolhido pelo final ' + JSON.stringify(sc));
+    await p.click('#genBody .cn-item[data-grupo="novo"] [data-acao="cn-esperar"]'); await p.waitForTimeout(80);
+    const cad = await p.evaluate(() => { const c = ST.cartoes.find((x) => x.contaId === 'contaX'), f = CompraParcelada.lista().find((x) => x.total === 999); const g = ST.gastos.find((x) => x.desc === 'LOJA FICTICIA X'); return c && f && [c.apelido, Cartoes.finais(c).map((x) => x.fim).join(','), f.cartaoId === c.id, g.cartaoId === c.id].join('|'); });
+    ok(cad === 'Mastercard Black|4321|true|true', 'o toque em "Esperar o banco" cadastrou o cartão (com a conta e o final), a ficha ficou com ele e a compra antiga daquele final também ' + cad);
+    await p.evaluate((c) => { fechar('genModal'); ST.cartoes = c.concat(ST.cartoes.filter((x) => x.contaId === 'contaX')); }, salvos);
+
     console.log('5) EN e ES');
     for (const [l, rx] of [['en', /🔧 Work order 4321/], ['es', /🔧 OT 4321/]]) {
       await p.evaluate((x) => { I18n.atual = x; }, l);
