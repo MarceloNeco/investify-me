@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.106">
+<link rel="stylesheet" href="estilo.css?v=3.106.1">
 </head>
 <body>
 
@@ -687,8 +687,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.106"></script>
-<script src="textos/frases-es.js?v=3.106"></script>
+<script src="textos/frases-en.js?v=3.106.1"></script>
+<script src="textos/frases-es.js?v=3.106.1"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7683,7 +7683,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.106"></script>
+<script src="textos/mudancas.js?v=3.106.1"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -9912,7 +9912,10 @@ function viewHub(){
       : (I18n.atual === 'pt'
         ? 'Dados guardados só neste aparelho, sem conta e sem nuvem.'
         : 'Data stored only on this device, with no account and no cloud.')) +
-    '</p></div>';
+    '</p>' +
+    /* 3.106.1 (dono): a versão, discreta e à direita; o toque abre as Novidades */
+    '<p class="hub-versao tiny muted"><button type="button" class="linkinho" data-acao="ver-mudancas" title="' +
+      esc(I18n.tr('Ver as novidades desta versão', 'See what is new in this version', 'Ver las novedades de esta versión')) + '">MoneyTRIO ' + esc(VERSAO) + ' · ' + esc(I18n.data(VERSAO_DATA)) + '</button></p></div>';
   return h;
 }
 

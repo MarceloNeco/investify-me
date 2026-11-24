@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.106 · 24/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.106.1 · 24/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.106.1', d:'2026-11-24', t:'A versão na tela inicial', itens:[
+    'Na tela inicial, embaixo dos três apps, a versão do MoneyTRIO e a data, discretas à direita. Um toque abre as Novidades.'
+  ]},
   {v:'3.106', d:'2026-11-24', t:'Busca que acha o app, PIN sem beco sem saída e fotos no aparelho', itens:[
     '🔎 A busca do AssistONE agora acha o próprio app: telas, menu, Configurações, Tutorial, Novidades e a conta e os aparelhos (PIN, aparelho novo, digital, código de recuperação, tirar aparelho). "No app" vem primeiro, e cada resultado leva direto à tela ou à ação.',
     '🔢 PIN da conta: com o app reaberto sozinho, "Criar o PIN", "Trocar o PIN" e "Ligar a digital" pedem ali mesmo o PIN deste aparelho (ou a digital) e seguem, sem mandar bloquear e desbloquear. O aviso do PIN diz que ele é opcional, tem "O que é isso?" (o passo a passo do aparelho novo) e "Depois" esconde por 7 dias.',

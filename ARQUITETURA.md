@@ -844,6 +844,10 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas ou uma sem, e do mesmo CNPJ ou loja, sem precisar do `mesmaCompra`; fica o do pagamento: o final, senão a data mais nova); o
   seletor de cartão por `Cartoes.doFinal` (qualquer final); `osRot` na linha ("OS n · Veículo › sub · 🚗 apelido"); `acharCarro` também com a
   palavra do apelido dentro da palavra lida ("LRENEGADE").
+  **3.106.1 — A versão na tela inicial.** `viewHub()` ganhou, embaixo da linha dos dados, `.hub-versao` (à direita, mais apagada):
+  "MoneyTRIO <VERSAO> · <I18n.data(VERSAO_DATA)>" (do topo de `textos/mudancas.js`), botão `ver-mudancas` (abre as Novidades).
+  `teste-fumaca-telas` passa a fotografar também a tela inicial (`hub`) e ignora o `style=""` vazio que a foto com animações
+  desligadas às vezes deixa num campo em transição. Teste: `teste/teste-versao-hub.js`.
   **3.106 — Busca que acha o app, PIN sem beco sem saída, fotos no aparelho.** (1) `modulos/assistone-indice.js` 1.0.0 (`window.AssistIndice`;
   diretriz "O AssistONE conhece TUDO o que o app tem"): índice montado na hora (cache 20 s, por idioma) das telas (`ABAS` + `AJUDA_TELAS` +
   `MoneyModulos.telas()`, base 1.1.1), das seções de Configurações (`viewConfig()` passado pelo `Verter` e lido com DOMParser: o `h3` e a

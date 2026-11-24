@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.106 · 24/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.106.1 · 24/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.106.1 */
+  'A versão na tela inicial':'The version on the home screen',
+  'Na tela inicial, embaixo dos três apps, a versão do MoneyTRIO e a data, discretas à direita. Um toque abre as Novidades.':'On the home screen, below the three apps, the MoneyTRIO version and date, discreet on the right. One tap opens What\'s new.',
   /* 3.106 */
   '👆 Os avisos rápidos saem da frente: toque, arraste para o lado ou toque no ✕. No celular eles ficam no topo, sem tampar os botões. O aviso do token da B3 aparece no máximo 1 vez por dia e fica no 📥 com "Resolver".':'👆 Quick notices get out of the way: tap, swipe sideways or tap the ✕. On the phone they sit at the top, without covering buttons. The B3 token notice shows at most once a day and stays in the 📥 with "Fix it".',
   '📲 No Android: se o app abrir dentro de outro app (WhatsApp, Gmail) ou fora do Chrome, a tela de entrada mostra "Abrir no Chrome"; depois de entrar, "Instalar na tela inicial" num toque.':'📲 On Android: if the app opens inside another app (WhatsApp, Gmail) or outside Chrome, the sign-in screen shows "Open in Chrome"; after signing in, "Install on home screen" in one tap.',

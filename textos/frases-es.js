@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.106 · 24/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.106.1 · 24/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,9 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.106.1 — rascunho, revisar */
+  'A versão na tela inicial':'La versión en la pantalla de inicio',
+  'Na tela inicial, embaixo dos três apps, a versão do MoneyTRIO e a data, discretas à direita. Um toque abre as Novidades.':'En la pantalla de inicio, debajo de las tres apps, la versión de MoneyTRIO y la fecha, discretas a la derecha. Un toque abre las Novedades.',
   /* 3.106 — rascunho, revisar */
   '👆 Os avisos rápidos saem da frente: toque, arraste para o lado ou toque no ✕. No celular eles ficam no topo, sem tampar os botões. O aviso do token da B3 aparece no máximo 1 vez por dia e fica no 📥 com "Resolver".':'👆 Los avisos rápidos se quitan de en medio: toca, desliza hacia un lado o toca la ✕. En el móvil se quedan arriba, sin tapar los botones. El aviso del token de la B3 sale como mucho 1 vez al día y queda en el 📥 con "Resolver".',
   '📲 No Android: se o app abrir dentro de outro app (WhatsApp, Gmail) ou fora do Chrome, a tela de entrada mostra "Abrir no Chrome"; depois de entrar, "Instalar na tela inicial" num toque.':'📲 En Android: si la app se abre dentro de otra app (WhatsApp, Gmail) o fuera de Chrome, la pantalla de entrada muestra "Abrir en Chrome"; después de entrar, "Instalar en la pantalla de inicio" con un toque.',
