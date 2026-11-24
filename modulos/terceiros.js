@@ -16,7 +16,7 @@
      · Comprovante já recebido (ou que chegar) que bate com um item "ignorar": some do 📥 sozinho (dispensado, com a marca).
        "processar": ganha o "para quem" (e o lançamento ligado a ele também, se a pessoa não mexeu).
      · Privacidade (diretrizes, 24/Nov/2026; LGPD): os nomes e os marcadores ficam SÓ no aparelho (dados da família, cifrados) e no
-       pacote cifrado para o robô. A plataforma (RootifyONE) só verá contagens, quando existir a tabela de resumo (pendência #146).
+       pacote cifrado para o robô. A plataforma (RootifyONE) só verá contagens, quando existir a tabela de resumo (pendência #152).
      · Interruptor do RootifyONE: data-recurso="terceiros" (recursos-do-app.json).
    API (window.Terceiros)
      lista() · salvar(d, id?) → item · tirar(id) · casa(x) → item | null · aplicar(x) → true se ignorou · marcadoresDe(x) · pacote()

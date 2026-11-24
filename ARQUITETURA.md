@@ -806,7 +806,7 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   `teste-conta-atraso.js`.
   **3.103 — Foto do serviço do carro no Google Drive** (integração nova aprovada pelo dono: o Google Drive da própria pessoa). Dois arquivos:
   `modulos/google-drive.js` 1.0.0 = o componente da PLATAFORMA `window.SolverGoogle`, com o contrato da conversa de diretrizes (24/Nov/2026;
-  vira `google.js` do módulo comum quando o 2º app precisar, pendência #145 do RootifyONE), sem nada do app: `configurar` (o bloco `google`
+  vira `google.js` do módulo comum quando o 2º app precisar, pendência #151 do RootifyONE), sem nada do app: `configurar` (o bloco `google`
   {clienteId, chavePicker, projeto} de `/solverone-dados/servicos/<app>.json`, o master do RootifyONE; sem ele, o que o dono colou na tela
   escondida, só no aparelho: localStorage `solver.google.<app>`), `estado`, `conectar` (Google Identity Services, token client, escopo
   drive.file, token SÓ na memória, ~1 h, sempre num toque; as bibliotecas carregam no 1º toque), `desconectar` (revoke), `escolherPasta`
@@ -833,7 +833,7 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   vai pelo espelho (`MoneyNuvem.espelho.enfileirar`, money_espelho_saida, cifrada para a chave do robô): `{v:1, acao:'terceiros',
   id:'terceiros', em, quem_editou, versao_app, lista:[{nome, marcadores, acao, para_quem}]}` (a fila guarda um por id: vale a última).
   Privacidade (diretrizes, 24/Nov/2026): nomes e marcadores só no aparelho e no pacote para o robô; a plataforma verá só contagens
-  (`money_terceiros_resumo`, que o robô grava; rascunho do SQL com a conversa de diretrizes; RootifyONE #146). Rodapé "Avisos legais e
+  (`money_terceiros_resumo`, que o robô grava; rascunho do SQL com a conversa de diretrizes; RootifyONE #152). Rodapé "Avisos legais e
   privacidade" com a linha. viagem 1.0.2: a caixa "✂️ Parte" sobrevive ao redesenho. teste-fumaca-telas: sem o `backdrop-filter` nas duas
   cópias (o desfoque não sai igual a cada foto: 8 fotos da mesma tela, 2 resultados com ele, 1 sem). Teste: `teste/teste-terceiros.js`.
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
