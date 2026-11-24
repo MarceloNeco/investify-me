@@ -1,11 +1,16 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.103 · 24/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.104 · 24/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.104', d:'2026-11-24', t:'Recibo em reais, faturas e o arquivo no Drive', itens:[
+    'O recibo de serviço do exterior cobrado em reais (como o da Anthropic, desde outubro) agora liga direto ao lançamento do cartão pelo valor em reais, sem câmbio nem IOF.',
+    'Faturas e contas que chegam por e-mail (telefone, cartão, condomínio, consórcio) viram conta a pagar: aparecem no 📥 perto do vencimento, com "Já paguei", e saem sozinhas quando o pagamento aparece. Se a conta está no débito automático e ainda não venceu, o app diz "não pague"; se o débito não caiu, diz "pague". O 📎 abre o arquivo da conta no Drive.',
+    'Material escolar: a caixa "✂️ Parte" e o filho escolhido não se perdem mais quando a tela se atualiza sozinha no meio da digitação.'
+  ]},
   {v:'3.103', d:'2026-11-24', t:'Foto do serviço do carro no Google Drive', itens:[
     '📁 Conectar meu Google Drive: em 🚗 Carro, um toque abre a tela do próprio Google e você toca em "Permitir". O app só vê as pastas e os arquivos que ele mesmo criar ou que você escolher. Nada para configurar.',
     '"📁 Enviar ao Drive" no serviço do carro com foto ou documento (a OS, o canhoto): o app cria a pasta "MoneyTRIO / Carro / <apelido> / AAAA-MM-DD OFICINA" e guarda lá. Quem já tem as próprias pastas toca em "usar uma pasta que já tenho no Drive". O envio é sempre num toque, a cópia no app continua e, sem internet, fica na fila do 📥.'

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/recibo-exterior.js — RECIBO DE SERVIÇO DO EXTERIOR × CARTÃO (3.91)        1.0.0 · 20/Nov/2026
+   modulos/recibo-exterior.js — RECIBO DE SERVIÇO DO EXTERIOR × CARTÃO (3.91)        1.0.1 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 18/Nov/2026; sem IA)
      · "📋 Colar print" e "Escolher arquivo" (modulos/print-colar.js) também leem o recibo de um serviço do exterior (imagem
@@ -10,6 +10,9 @@
      · Marca do negócio ou da casa: vale para a ORIGEM do lançamento em "Custos do negócio pagos no CPF" (ST.pj_cpf, 3.82).
      · Recibo sem o lançamento do cartão fica no 📥 até o cartão mostrar.
      · Visão da casa: nada (é do chefe; a coleção é reservada).
+     · 1.0.1 (3.104): recibo em REAIS (moeda 'BRL': desde out/2026 a Anthropic cobra o Claude Pro em R$): casa direto pelo valor em reais
+       (o mesmo valor, ±1 centavo, ±5 dias; o nome do serviço desempata), sem câmbio nem IOF: "Recibo R$ 110,00 = cartão R$ 110,00".
+       Com USD (ou outra moeda), como antes.
    API (window.ReciboExterior)
      ehRecibo(texto) · ler(texto) → {servico, moeda, valorMoeda, data, numero} | null · receber(recibos, abrir?)
      casar(rec) → {g, iof} | null · lista()
@@ -67,9 +70,12 @@
         var ws = N(rec.servico).split(' ').filter(function (w) { return w.length >= 4 && !/^(inc|ltd|llc|pbc|corp|ltda|gmbh|company)$/.test(w); });
         return ws.some(function (w) { return b.indexOf(w) >= 0; }) || !!(window.PrintColar && PrintColar.lojaParecida(rec.servico, g.descRobo || g.desc));
       };
-      var cs = Gasto.todos().filter(function (g) { return g.fluxo === 'saida' && g.cartaoId && !usados[g.id] && !/\biof\b/i.test(g.desc || '') && rec.data && Math.abs(dias(g.data, rec.data)) <= JANELA && parece(g); })
-        .sort(function (a, b) { return Math.abs(dias(a.data, rec.data)) - Math.abs(dias(b.data, rec.data)); });
+      var brl = rec.moeda === 'BRL';
+      var cs = Gasto.todos().filter(function (g) { return g.fluxo === 'saida' && g.cartaoId && !usados[g.id] && !/\biof\b/i.test(g.desc || '') && rec.data && Math.abs(dias(g.data, rec.data)) <= JANELA && (brl ? Math.abs(Number(g.valor) - rec.valorMoeda) <= 0.011 : parece(g)); })
+        .sort(function (a, b) { return (brl ? (parece(b) ? 1 : 0) - (parece(a) ? 1 : 0) : 0) || Math.abs(dias(a.data, rec.data)) - Math.abs(dias(b.data, rec.data)); });
       if (!cs.length) return null;
+      /* em reais: o mesmo valor basta quando é um só; com mais de um, só o que tem o nome do serviço */
+      if (brl) { var cn = cs.filter(parece); if (cs.length > 1 && cn.length !== 1) return null; return { g: cn[0] || cs[0], iof: null }; }
       var g = cs[0], iof = Gasto.todos().filter(function (x) { return x.cartaoId === g.cartaoId && /\biof\b/i.test([x.desc, x.descRobo, x.sub].join(' ')) && !usados[x.id] && Math.abs(dias(x.data, g.data)) <= JANELA && Number(x.valor) < g.valor * 0.1; })
         .sort(function (a, b) { return Math.abs(dias(a.data, g.data)) - Math.abs(dias(b.data, g.data)); })[0] || null;
       return { g: g, iof: iof };
@@ -97,9 +103,10 @@
   function ligar(x) { if (x.gastoId || x.semCasar) return; var c = API.casar(x); if (c) { x.gastoId = c.g.id; x.iofId = c.iof ? c.iof.id : ''; } }
   function gasto(id) { return id ? Gasto.todos().find(function (g) { return g.id === id; }) : null; }
   function frase(x) {
-    var g = gasto(x.gastoId), iof = gasto(x.iofId), ms = x.moeda === 'USD' ? 'US$ ' : x.moeda === 'EUR' ? '€ ' : x.moeda + ' ';
+    var g = gasto(x.gastoId), iof = gasto(x.iofId), ms = x.moeda === 'USD' ? 'US$ ' : x.moeda === 'EUR' ? '€ ' : x.moeda === 'BRL' ? 'R$ ' : x.moeda + ' ';
     var s = tr('Recibo ', 'Receipt ', 'Recibo ') + ms + I18n.num(x.valorMoeda, 2) + (x.cambio ? ' (≈ ' + fmt(n2(x.valorMoeda * x.cambio)) + ')' : '');
     if (!g) return s + tr(' · o cartão ainda não mostrou', ' · not on the card yet', ' · aún no aparece en la tarjeta');
+    if (x.moeda === 'BRL') return s + ' = ' + tr('cartão ', 'card ', 'tarjeta ') + fmt(g.valor) + tr(' (em reais: sem câmbio nem IOF)', ' (in reais: no exchange rate or IOF)', ' (en reales: sin cambio ni IOF)');
     return s + ' × ' + tr('cartão ', 'card ', 'tarjeta ') + fmt(g.valor) + (iof ? ' + IOF ' + fmt(iof.valor) : '');
   }
   function marcar(x, tipo) {
@@ -129,7 +136,7 @@
   function depois() { Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); }
 
   MoneyModulos.registrar({
-    id: 'recibo-exterior', versao: '1.0.0', colecoes: [COL],
+    id: 'recibo-exterior', versao: '1.0.1', colecoes: [COL],
     pontos: {
       'inbox.grupos': function () {
         if (casa()) return [];

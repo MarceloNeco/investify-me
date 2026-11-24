@@ -1,10 +1,15 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.103 · 24/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.104 · 24/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.104 */
+  'Recibo em reais, faturas e o arquivo no Drive':'Receipts in reais, bills and the file on Drive',
+  'O recibo de serviço do exterior cobrado em reais (como o da Anthropic, desde outubro) agora liga direto ao lançamento do cartão pelo valor em reais, sem câmbio nem IOF.':'A foreign service receipt charged in reais (like Anthropic’s, since October) now links straight to the card entry by the amount in reais, with no exchange rate or IOF.',
+  'Faturas e contas que chegam por e-mail (telefone, cartão, condomínio, consórcio) viram conta a pagar: aparecem no 📥 perto do vencimento, com "Já paguei", e saem sozinhas quando o pagamento aparece. Se a conta está no débito automático e ainda não venceu, o app diz "não pague"; se o débito não caiu, diz "pague". O 📎 abre o arquivo da conta no Drive.':'Bills that arrive by e-mail (phone, card, condo fee, consortium) become bills to pay: they show in the 📥 near the due date, with "Already paid", and go away on their own when the payment shows up. If the bill is on auto-debit and not yet due, the app says "do not pay"; if the debit did not go through, it says "pay". The 📎 opens the bill file on Drive.',
+  'Material escolar: a caixa "✂️ Parte" e o filho escolhido não se perdem mais quando a tela se atualiza sozinha no meio da digitação.':'School supplies: the "✂️ Part" box and the chosen child are no longer lost when the screen refreshes by itself while you type.',
   /* 3.103 */
   'Foto do serviço do carro no Google Drive':'Car service photo on Google Drive',
   '📁 Conectar meu Google Drive: em 🚗 Carro, um toque abre a tela do próprio Google e você toca em "Permitir". O app só vê as pastas e os arquivos que ele mesmo criar ou que você escolher. Nada para configurar.':'📁 Connect my Google Drive: in 🚗 Car, one tap opens Google’s own screen and you tap "Allow". The app only sees the folders and files it creates or that you choose. Nothing to set up.',

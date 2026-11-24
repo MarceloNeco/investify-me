@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/material-escolar.js — 📚 MATERIAL ESCOLAR (campanha por ano letivo) (3.102)        1.0.0 · 24/Nov/2026
+   modulos/material-escolar.js — 📚 MATERIAL ESCOLAR (campanha por ano letivo) (3.102)        1.0.1 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 24/Nov/2026; sem IA, sem integração; no modelo da ✈️ Viagem, modulos/viagem.js)
      · Uma "campanha" por ano letivo ("Material escolar 2027"), com a janela de datas (padrão: 1º/nov até o fim de fevereiro) e os
@@ -19,6 +19,8 @@
        campanha de antes ou os lançamentos de Material escolar na mesma janela do ano anterior), quando houver.
      · Ao criar a campanha: um compromisso anual "Material escolar" (novembro, dia 15) para lembrar no ano que vem, se ainda não
        houver um; o valor dele acompanha o total confirmado.
+   1.0.1 (3.104): a caixa "✂️ Parte" aberta, o valor digitado e o filho escolhido sobrevivem quando a tela se redesenha sozinha (a conciliação automática,
+     as cotações): antes ela fechava no meio da digitação (e o teste quebrava 1 vez em 3).
    API (window.MaterialEscolar)
      lista() · salvar(d, id?) · padrao(hoje?) → {ano, de, ate} · sugestoes(c) → [{g, motivo, pend}] · confirmar(c, id, sim, pid?)
      parte(c, id, valor, pid?) · itens(c) · resumo(c) · sub() · filhos()
@@ -179,13 +181,13 @@
   };
 
   /* ---------- telas ---------- */
-  var aberta = null;
+  var aberta = null, partes = {}, filhoDe = {};   /* filhoDe: {gid: pid} o filho escolhido na linha, entre um desenho e outro */   /* {gid: valor digitado}: a caixa da parte aberta, entre um desenho e outro */
   function lerC(id) { return lista().find(function (x) { return x.id === id; }) || null; }
   function botao(acao, rot, extra, cls) { return '<button type="button" class="btn sm' + (cls ? ' ' + cls : '') + '" data-acao="' + acao + '"' + (extra || '') + '>' + esc(rot) + '</button>'; }
   function selFilho(c, id) {
     var fs = (c.filhos || []).map(function (pid) { return { id: pid, n: nomeP(pid) }; }).filter(function (x) { return x.n; });
     if (fs.length < 2) return '';
-    return '<select class="me-filho" data-g="' + esc(id) + '">' + fs.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.n) + '</option>'; }).join('') + '</select> ';
+    return '<select class="me-filho" data-g="' + esc(id) + '">' + fs.map(function (x) { return '<option value="' + esc(x.id) + '"' + (filhoDe[id] === x.id ? ' selected' : '') + '>' + esc(x.n) + '</option>'; }).join('') + '</select> ';
   }
   function linhaSug(c, s) {
     var g = s.g, d = ' data-c="' + esc(c.id) + '" data-id="' + esc(g.id) + '"';
@@ -193,7 +195,7 @@
       '<span class="t-sub">' + esc(I18n.data(g.data) + ' · ' + s.motivo + (s.pend ? ' · ' + tr('pendente no banco: entra quando virar definitiva', 'pending at the bank: counts when final', 'pendiente en el banco: cuenta cuando sea definitiva') : '')) + '</span></div>' +
       '<span class="inb-acoes" style="flex-wrap:wrap;gap:4px">' + selFilho(c, g.id) + botao('me-sim', '✅ ' + tr('É material', 'School supplies', 'Es material'), d) + botao('me-nao', '❌ ' + tr('Não é', 'Not it', 'No es'), d) +
       (!s.pend ? botao('me-parte', '✂️ ' + tr('Parte', 'Part', 'Parte'), d) : '') + '</span>' +
-      '<div class="me-parte-box" data-g="' + esc(g.id) + '" hidden><input type="text" inputmode="decimal" class="me-parte-v" placeholder="' + esc(tr('quanto foi do material', 'how much was school supplies', 'cuánto fue del material')) + '" style="width:10em"> ' + botao('me-parte-ok', tr('Dividir', 'Split', 'Dividir'), d) + '</div></li>';
+      '<div class="me-parte-box" data-g="' + esc(g.id) + '"' + (partes[g.id] != null ? '' : ' hidden') + '><input type="text" inputmode="decimal" class="me-parte-v" data-g="' + esc(g.id) + '" value="' + esc(partes[g.id] || '') + '" placeholder="' + esc(tr('quanto foi do material', 'how much was school supplies', 'cuánto fue del material')) + '" style="width:10em"> ' + botao('me-parte-ok', tr('Dividir', 'Split', 'Dividir'), d) + '</div></li>';
   }
   function bloco(tit, obj) {
     var ks = Object.keys(obj).sort(function (a, b) { return obj[b] - obj[a]; }); if (!ks.length) return '';
@@ -251,7 +253,7 @@
   function depois() { Store.salvar(); if (typeof render === 'function') render(); if (typeof renderInboxN === 'function') renderInboxN(); }
 
   MoneyModulos.registrar({
-    id: 'material-escolar', versao: '1.0.0', colecoes: [COL],
+    id: 'material-escolar', versao: '1.0.1', colecoes: [COL],
     pontos: {
       'inbox.grupos': function () {
         if (casa()) return [];
@@ -287,15 +289,17 @@
       'me-voltar': function () { aberta = null; if (typeof render === 'function') render(); },
       'me-sim': function (el) { var c = lerC(el.dataset.c); if (c && API.confirmar(c, el.dataset.id, true, filhoEscolhido(el.dataset.id))) depois(); },
       'me-nao': function (el) { var c = lerC(el.dataset.c); if (c && API.confirmar(c, el.dataset.id, false)) depois(); },
-      'me-parte': function (el) { var b = document.querySelector('.me-parte-box[data-g="' + el.dataset.id + '"]'); if (b) b.hidden = !b.hidden; },
+      'me-parte': function (el) { var b = document.querySelector('.me-parte-box[data-g="' + el.dataset.id + '"]'); if (!b) return; b.hidden = !b.hidden; if (b.hidden) delete partes[el.dataset.id]; else if (partes[el.dataset.id] == null) partes[el.dataset.id] = ''; },
       'me-parte-ok': function (el) {
         var c = lerC(el.dataset.c), b = document.querySelector('.me-parte-box[data-g="' + el.dataset.id + '"] .me-parte-v');
         if (!c || !b) return;
         if (!API.parte(c, el.dataset.id, num(b.value), filhoEscolhido(el.dataset.id))) return toast(tr('Diga um valor menor que o total.', 'Enter an amount below the total.', 'Indica un importe menor que el total.'), 'warn');
-        depois();
+        delete partes[el.dataset.id]; depois();
       }
     },
     ouvir: { 'gasto.novo': function () { if (lista().length) API.ligarTudo(); } }
   });
+  document.addEventListener('input', function (ev) { var t = ev.target; if (t && t.classList && t.classList.contains('me-parte-v') && t.dataset.g) partes[t.dataset.g] = t.value; });
+  document.addEventListener('change', function (ev) { var t = ev.target; if (t && t.classList && t.classList.contains('me-filho') && t.dataset.g) filhoDe[t.dataset.g] = t.value; });
   window.MaterialEscolar = API;
 })();
