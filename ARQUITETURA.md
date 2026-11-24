@@ -836,6 +836,10 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   (`money_terceiros_resumo`, por `grupo_id`, aplicada em 24/Nov/2026; o robô grava pela `money_terceiros_resumo_gravar`; RootifyONE #152). Rodapé "Avisos legais e
   privacidade" com a linha. viagem 1.0.2: a caixa "✂️ Parte" sobrevive ao redesenho. teste-fumaca-telas: sem o `backdrop-filter` nas duas
   cópias (o desfoque não sai igual a cada foto: 8 fotos da mesma tela, 2 resultados com ele, 1 sem). Teste: `teste/teste-terceiros.js`.
+  Também na 3.105 (pedidos do dono): canhotos 1.3.1, o botão e a janela "📷 Foto de nota ou recibo" (antes "🧾 Conferir canhotos"; o id
+  `cn-abrir` e as ações iguais), com a linha "OS da oficina, nota, recibo ou canhoto: o app lê e liga ao banco"; carro-drive 1.0.1, "ou
+  escolher a pasta deste serviço" (Picker) ao lado de "Enviar ao Drive": envia direto na pasta escolhida, sem criar subpasta
+  (`obj.drivePasta`, que vale também na fila).
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem

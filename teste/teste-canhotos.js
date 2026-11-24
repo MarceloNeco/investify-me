@@ -50,8 +50,9 @@ const IT = (papel, valor, extra) => Object.assign({ arquivo: 'foto.jpg', papel, 
       await Canhotos.processar([new File([blob], 'canhotos.png', { type: 'image/png' })]);
       return { seg: Math.round((Date.now() - t0) / 1000), contrato: Leitura.lerVarios && Leitura.lerVarios.contrato, cnpj: Leitura.consultaCnpjLigada(), versao: Leitura.versao, titulo: document.getElementById('genTitle').textContent, txt: document.getElementById('genBody').textContent };
     });
+    ok(await p.evaluate(() => { const b = document.querySelector('#view-b-lanc [data-acao="cn-abrir"]'); return b && b.textContent === '📷 Foto de nota ou recibo' && /OS da oficina, nota, recibo ou canhoto: o app lê e liga ao banco/.test(b.parentNode.textContent); }), '3.105: o botão se chama "📷 Foto de nota ou recibo", com a linha "OS da oficina, nota, recibo ou canhoto: o app lê e liga ao banco"');
     ok(real.contrato === 1 && real.versao === '1.13.0' && real.cnpj === false, 'o motor 1.13.0 (Leitor OCR 0.9.7), contrato 1, com a consulta do CNPJ na internet desligada');
-    ok(real.titulo === 'Conferir canhotos' && /120,51|45,00|Valor em dúvida/.test(real.txt), 'o OCR no aparelho leu a foto com os dois canhotos (' + real.seg + ' s) e abriu o resultado: ' + real.txt.replace(/\s+/g, ' ').slice(0, 220));
+    ok(real.titulo === 'Foto de nota ou recibo' && /120,51|45,00|Valor em dúvida/.test(real.txt), 'o OCR no aparelho leu a foto com os dois canhotos (' + real.seg + ' s) e abriu o resultado: ' + real.txt.replace(/\s+/g, ' ').slice(0, 220));
     ok(!fora.some((u) => /receita|brasilapi|cnpj/i.test(u)), 'nenhuma consulta de CNPJ na internet');
     await p.evaluate(() => fechar('genModal'));
 

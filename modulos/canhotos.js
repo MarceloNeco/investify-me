@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/canhotos.js — "🧾 Conferir canhotos" com o banco (3.92)        1.3.0 · 23/Nov/2026
+   modulos/canhotos.js — "📷 Foto de nota ou recibo" com o banco (3.92; antes "🧾 Conferir canhotos")        1.3.1 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 18/Nov/2026; sem IA)
      · Em Lançamentos, "🧾 Conferir canhotos": uma foto (ou várias) com os canhotos da maquininha, cupons e recibos. O motor do
@@ -28,6 +28,9 @@
      categoria, CNPJ, parcelas, nº da OS). A OS sozinha (sem o canhoto) traz a data da emissão: procura a parcela até 30 dias depois,
      e só liga sozinha se a loja ou o CNPJ baterem. Grupo Veículo, a categoria da OS ("Funilaria e pintura") e o carro (pelo nome do
      veículo; ou o único carro ativo) já vêm prontos. O CNPJ desempata. result.operacional NÃO é usado nem enviado (é do OmniLifeONE).
+   1.3.1 (3.105), pedido do dono: o botão e a janela passam a se chamar "📷 Foto de nota ou recibo" (ele lê qualquer foto de gasto: a OS
+     da oficina, a nota, o recibo, o orçamento, o canhoto), com a linha "OS da oficina, nota, recibo ou canhoto: o app lê e liga ao
+     banco". Só o texto: o id (cn-abrir) e as ações são os mesmos.
    PONTOS QUE USA
      lancamentos.topo · ações cn-*
    ===================================================================== */
@@ -270,7 +273,7 @@
           '<input data-cn="valor" inputmode="decimal" placeholder="' + esc(tr('outro valor', 'other amount', 'otro importe')) + '" style="width:7em"><button type="button" class="btn sm" data-acao="cn-valor" data-i="' + i + '">' + esc(tr('Usar', 'Use', 'Usar')) + '</button></div>';
       }) +
       '<div class="f-actions"><button class="btn primary" data-acao="cn-fechar">' + esc(tr('Pronto', 'Done', 'Listo')) + '</button></div>';
-    $('#genTitle').textContent = tr('Conferir canhotos', 'Check receipts', 'Revisar tickets');
+    $('#genTitle').textContent = tr('Foto de nota ou recibo', 'Receipt or invoice photo', 'Foto de factura o recibo');
     $('#genBody').innerHTML = Verter.html(h);
     delete $('#genBody').dataset.inbox;
     abrir('genModal');
@@ -318,9 +321,9 @@
   function depois() { Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); }
 
   MoneyModulos.registrar({
-    id: 'canhotos', versao: '1.3.0',
+    id: 'canhotos', versao: '1.3.1',
     pontos: {
-      'lancamentos.topo': function () { return '<div class="row" style="margin:0 0 8px"><button type="button" class="btn sm" data-acao="cn-abrir">🧾 ' + esc(tr('Conferir canhotos', 'Check receipts', 'Revisar tickets')) + '</button></div>'; }
+      'lancamentos.topo': function () { return '<div class="row" style="margin:0 0 8px;gap:6px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sm" data-acao="cn-abrir">📷 ' + esc(tr('Foto de nota ou recibo', 'Receipt or invoice photo', 'Foto de factura o recibo')) + '</button><span class="small muted">' + esc(tr('OS da oficina, nota, recibo ou canhoto: o app lê e liga ao banco', 'Repair shop work order, invoice, receipt or card slip: the app reads it and links it to the bank', 'Orden del taller, factura, recibo o ticket: la app lo lee y lo vincula al banco')) + '</span></div>'; }
     },
     acoes: {
       'cn-abrir': function () { escolher(); },

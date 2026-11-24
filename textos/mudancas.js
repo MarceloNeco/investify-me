@@ -8,7 +8,9 @@
 const MUDANCAS = [
   {v:'3.105', d:'2026-11-24', t:'Contas de outras pessoas e telas que não se perdem', itens:[
     '📋 Contas de outras pessoas que chegam no seu e-mail (ex.: uma assinatura que você fez para um parente): no comprovante, toque em "Não é meu". O app pega o titular e o código do cliente do próprio e-mail, você diz de quem é e escolhe: ignorar (não entra nas suas finanças) ou processar para a pessoa (entra com "para quem"). As próximas contas dela são reconhecidas sozinhas. A lista fica em Configurações e os nomes ficam só no seu aparelho.',
-    'Viagens: a caixa "✂️ Parte" não fecha mais quando a tela se atualiza sozinha no meio da digitação.'
+    'Viagens: a caixa "✂️ Parte" não fecha mais quando a tela se atualiza sozinha no meio da digitação.',
+    'O botão "🧾 Conferir canhotos" agora se chama "📷 Foto de nota ou recibo": ele lê qualquer foto de gasto (a OS da oficina, a nota, o recibo, o orçamento, o canhoto) e liga ao banco.',
+    'Google Drive: ao lado de "Enviar ao Drive", "ou escolher a pasta deste serviço", para quem já tem uma pasta por serviço: os arquivos vão direto para ela, sem criar outra.'
   ]},
   {v:'3.104', d:'2026-11-24', t:'Recibo em reais, faturas e o arquivo no Drive', itens:[
     'O recibo de serviço do exterior cobrado em reais (como o da Anthropic, desde outubro) agora liga direto ao lançamento do cartão pelo valor em reais, sem câmbio nem IOF.',

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/carro-drive.js — a foto do serviço do carro no GOOGLE DRIVE da pessoa (3.103)        1.0.0 · 24/Nov/2026
+   modulos/carro-drive.js — a foto do serviço do carro no GOOGLE DRIVE da pessoa (3.103)        1.0.1 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (plano aprovado pelo dono, 24/Nov/2026, com o ajuste "o usuário final NUNCA mexe no Google Cloud")
      · A parte do MoneyTRIO; o "Conectar Google" é o componente da plataforma (modulos/google-drive.js, window.SolverGoogle).
@@ -12,6 +12,9 @@
        dentro dela. Na 1ª vez de cada carro, o aviso: a foto sai do cofre cifrado e vai para o Drive da pessoa (a cópia no app continua).
      · Sem internet: fica na fila ("📁 N envios ao Drive esperando a internet" no 📥) e sobe num toque.
      · Visão da casa (membro): não envia. Tela escondida do dono: Configurações com #dono-google no endereço.
+     · 1.0.1 (3.105), pedido do dono (ele já tem uma pasta por serviço, nomeada pela data em que deixou o carro): ao lado de "Enviar ao
+       Drive", "ou escolher a pasta deste serviço" (o seletor do Google): os arquivos vão direto para a pasta escolhida, sem criar a
+       "AAAA-MM-DD OFICINA" (não duplica a pasta que ele já criou). A escolha fica no serviço (obj.drivePasta) e vale também na fila.
    API (window.CarroDrive)
      pasta(nomeData, oficina) → "AAAA-MM-DD OFICINA" · enviar(tipo, id) → Promise<{n, link} | {fila}> · fila() · botao(tipo, id) · botaoPasta(v) · topo()
    DADOS
@@ -65,7 +68,7 @@
     if (temFundo) Fundo.comecar({ id: fid, titulo: tr('Enviando ao Drive…', 'Sending to Drive…', 'Enviando a Drive…') });
     try {
       await SG().conectar({ escopos: [SG().ESCOPO_DRIVE], motivo: tr('Guardar a foto do serviço do carro', 'Keep the car service photo', 'Guardar la foto del servicio del coche') });
-      var raiz = await raizDo(v), nome = pasta(it.data, it.oficina), sub = await SG().garantirSubpasta(raiz, nome), ids = [];
+      var dp = it.obj.drivePasta, nome = dp ? dp.nome : pasta(it.data, it.oficina), sub = dp ? { id: dp.id } : await SG().garantirSubpasta(await raizDo(v), nome), ids = [];
       for (var i = 0; i < it.docs.length; i++) {
         var meta = ArquivosFamilia.achar(it.docs[i]) || { nome: 'documento' }, bytes = await ArquivosFamilia.ler(it.docs[i]); if (!bytes) continue;
         if (temFundo) Fundo.passo(fid, (meta.nome || '') + ' (' + (i + 1) + '/' + it.docs.length + ')', i / it.docs.length);
@@ -97,15 +100,27 @@
     if (!pronto()) return '';
     var it = item(tipo, id); if (!it || !it.docs.length) return '';
     if (it.obj.drive && it.obj.drive.pastaId) return ' <a class="small cd-link" data-recurso="google-drive" href="' + esc(it.obj.drive.link) + '" target="_blank" rel="noopener noreferrer">📁 ' + esc(tr('no Drive', 'on Drive', 'en Drive')) + ' ↗</a>';
-    return ' ' + botao('cd-enviar', '📁 ' + tr('Enviar ao Drive', 'Send to Drive', 'Enviar a Drive'), ' data-t="' + tipo + '" data-id="' + esc(id) + '"');
+    return ' ' + botao('cd-enviar', '📁 ' + tr('Enviar ao Drive', 'Send to Drive', 'Enviar a Drive'), ' data-t="' + tipo + '" data-id="' + esc(id) + '"') +
+      ' <button type="button" class="linkinho cd-servico" data-recurso="google-drive" data-acao="cd-enviar-pasta" data-t="' + tipo + '" data-id="' + esc(id) + '">' + esc(tr('ou escolher a pasta deste serviço', 'or choose this service’s folder', 'o elegir la carpeta de este servicio')) + '</button>';
   }
   function depois() { if (typeof Store !== 'undefined') Store.salvar(); if (typeof render === 'function') render(); if (typeof renderInboxN === 'function') renderInboxN(); }
   function falhou(e) { var m = msg(e); if (m) toast(m, 'warn'); depois(); }
   function donoAqui() { return /dono-google/.test(location.hash || ''); }
 
+  /* na 1ª vez de cada carro, o aviso: a foto sai do cofre cifrado e vai para o Drive da pessoa */
+  function avisou(it) {
+    var v = it && veiculo(it.vid);
+    if (v && !(v.drive && v.drive.avisado)) {
+      if (!window.confirm(tr('A foto sai do cofre cifrado do app e vai para o seu Google Drive, com a proteção do Google (não a do app). A cópia no app continua. Enviar?', 'The photo leaves the app’s encrypted vault and goes to your Google Drive, protected by Google (not by the app). The copy in the app stays. Send?', 'La foto sale del cofre cifrado de la app y va a tu Google Drive, con la protección de Google (no la de la app). La copia en la app sigue. ¿Enviar?'))) return false;
+      v.drive = Object.assign({}, v.drive, { avisado: true });
+    }
+    return true;
+  }
+  function pronto1(r) { depois(); toast(r.fila ? msg({ codigo: 'sem_internet' }) : '📁 ' + tr('No Drive: ', 'On Drive: ', 'En Drive: ') + r.n + tr(' arquivo(s).', ' file(s).', ' archivo(s).')); }
+
   var API = { pasta: pasta, enviar: enviar, fila: function () { return (cfg().driveFila || []).slice(); }, botao: botaoEnviar, botaoPasta: botaoPasta, topo: topo };
   MoneyModulos.registrar({
-    id: 'carro-drive', versao: '1.0.0',
+    id: 'carro-drive', versao: '1.0.1',
     pontos: {
       'config.todos': function () { return donoAqui() && SG() ? '<div class="card cfg-sec cd-dono" data-sec="todos"><div class="card-head"><h3>📁 Google Drive · ' + esc(tr('plataforma', 'platform', 'plataforma')) + '</h3></div>' + SG().formularioDono() + '</div>' : ''; },
       'inbox.grupos': function () {
@@ -127,12 +142,14 @@
         SG().escolherPasta({ titulo: tr('A pasta do carro ', 'The folder of the car ', 'La carpeta del coche ') + v.apelido }).then(function (p) { v.drive = Object.assign({}, v.drive, { raizId: p.id, raizNome: p.nome, minha: true }); depois(); }, falhou);
       },
       'cd-enviar': function (el) {
-        var it = item(el.dataset.t, el.dataset.id), v = it && veiculo(it.vid);
-        if (v && !(v.drive && v.drive.avisado)) {
-          if (!window.confirm(tr('A foto sai do cofre cifrado do app e vai para o seu Google Drive, com a proteção do Google (não a do app). A cópia no app continua. Enviar?', 'The photo leaves the app’s encrypted vault and goes to your Google Drive, protected by Google (not by the app). The copy in the app stays. Send?', 'La foto sale del cofre cifrado de la app y va a tu Google Drive, con la protección de Google (no la de la app). La copia en la app sigue. ¿Enviar?'))) return;
-          v.drive = Object.assign({}, v.drive, { avisado: true });
-        }
-        enviar(el.dataset.t, el.dataset.id).then(function (r) { depois(); toast(r.fila ? msg({ codigo: 'sem_internet' }) : '📁 ' + tr('No Drive: ', 'On Drive: ', 'En Drive: ') + r.n + tr(' arquivo(s).', ' file(s).', ' archivo(s).')); }, falhou);
+        if (!avisou(item(el.dataset.t, el.dataset.id))) return;
+        enviar(el.dataset.t, el.dataset.id).then(pronto1, falhou);
+      },
+      /* 1.0.1 (3.105): a pasta deste serviço, que a pessoa já criou (o seletor do Google) */
+      'cd-enviar-pasta': function (el) {
+        var it = item(el.dataset.t, el.dataset.id); if (!avisou(it)) return;
+        SG().escolherPasta({ titulo: tr('A pasta deste serviço', 'This service’s folder', 'La carpeta de este servicio') })
+          .then(function (p) { it.obj.drivePasta = { id: p.id, nome: p.nome }; return enviar(el.dataset.t, el.dataset.id); }).then(pronto1, falhou);
       },
       'cd-fila': function () {
         var n = 0;

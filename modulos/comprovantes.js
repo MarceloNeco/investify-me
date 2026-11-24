@@ -17,7 +17,7 @@
      · boleto: conta a pagar com vencimento; 📥 a partir de 2 dias antes; "⛔ não pague" se a mesma conta está no débito
        automático (modulos/debito-auto.js); some quando o pagamento aparece (mesmo valor, até 5 dias depois do vencimento).
      · outro: a pessoa escolhe o que é (ou guarda só).
-     · fotos_a_ler: "📷 foto a ler" — o robô ainda não lê foto; o botão abre o 🧾 Conferir canhotos para a pessoa
+     · fotos_a_ler: "📷 foto a ler" — o robô ainda não lê foto; o botão abre o 📷 Foto de nota ou recibo (antes "Conferir canhotos") para a pessoa
        mandar a mesma foto.
      · Repetido (o mesmo id): atualiza, nunca duplica.
      · Visão da casa: segue o escopo da caixa do robô de onde veio (reservado por padrão; visao-casa 1.1.5).
@@ -245,7 +245,7 @@
   function botoes(x) {
     var b = function (acao, rot, extra) { return '<button type="button" class="btn sm" data-acao="' + acao + '" data-id="' + esc(x.id) + '"' + (extra || '') + '>' + esc(rot) + '</button>'; }, h = '';
     if (x.fotos_a_ler && x.fotos_a_ler.length && !x.fotosLidas)
-      h += '<button type="button" class="btn sm" data-acao="cn-abrir">📷 ' + esc(tr('Foto a ler: abrir o Conferir canhotos', 'Photo to read: open Check receipts', 'Foto por leer: abrir Revisar tickets')) + '</button>' + b('cp-foto-ok', tr('Já li a foto', 'Photo read', 'Foto leída'));
+      h += '<button type="button" class="btn sm" data-acao="cn-abrir">📷 ' + esc(tr('Foto a ler: abrir "Foto de nota ou recibo"', 'Photo to read: open "Receipt or invoice photo"', 'Foto por leer: abrir "Foto de factura o recibo"')) + '</button>' + b('cp-foto-ok', tr('Já li a foto', 'Photo read', 'Foto leída'));
     if (x.estado === 'novo') {
       if (x.subtipo === 'compra' && x.gastoId) {
         if (x.sugestao) h += b('cp-cat', tr('Usar ', 'Use ', 'Usar ') + ((GRUPOS[x.sugestao.grupo] || {}).nome || x.sugestao.grupo) + (x.sugestao.sub ? ' · ' + x.sugestao.sub : ''));

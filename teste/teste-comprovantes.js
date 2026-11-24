@@ -112,7 +112,7 @@ const C = (id, subtipo, extra) => Object.assign({ id: 'evid-' + id, tipo: 'compr
     await rec(C('out', 'outro', { data: '2026-11-15', valor: 12, descricao: 'Mensagem sem tipo claro' }));
     await rec(C('foto', 'compra', { data: '2026-11-15', valor: 77.7, loja: 'Loja Ficticia', fotos_a_ler: ['foto-canhoto-1.jpg'] }));
     let ib = await inbox();
-    ok(/Outro ·/.test(ib) && /data-acao="cp-tipo"/.test(ib) && /Foto a ler: abrir o Conferir canhotos/.test(ib) && /data-acao="cn-abrir"/.test(ib), '"outro" pede para dizer o que é; a foto a ler abre o 🧾 Conferir canhotos');
+    ok(/Outro ·/.test(ib) && /data-acao="cp-tipo"/.test(ib) && /Foto a ler: abrir (&quot;|")Foto de nota ou recibo(&quot;|")/.test(ib) && /data-acao="cn-abrir"/.test(ib), '"outro" pede para dizer o que é; a foto a ler abre o 🧾 Conferir canhotos');
     await p.evaluate(() => abrirInbox());
     await p.click('#genBody [data-cp="evid-out"] [data-acao="cp-tipo"][data-v="boleto"]'); await p.waitForTimeout(300);
     ok((await cp('out')).subtipo === 'boleto', 'a pessoa diz que é boleto e ele passa a ser tratado como boleto');
