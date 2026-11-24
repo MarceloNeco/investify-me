@@ -11,7 +11,7 @@ const MUDANCAS = [
     'Viagens: a caixa "✂️ Parte" não fecha mais quando a tela se atualiza sozinha no meio da digitação.',
     'O botão "🧾 Conferir canhotos" agora se chama "📷 Foto de nota ou recibo": ele lê qualquer foto de gasto (a OS da oficina, a nota, o recibo, o orçamento, o canhoto) e liga ao banco.',
     'Google Drive: ao lado de "Enviar ao Drive", "ou escolher a pasta deste serviço", para quem já tem uma pasta por serviço: os arquivos vão direto para ela, sem criar outra.',
-    'Foto da oficina: a OS e o canhoto da mesma compra viram um item só mesmo em fotos separadas (com a data, a hora e o cartão do canhoto, e o nº e o carro da OS); o cartão vem escolhido pelo final lido; a linha já mostra "Veículo › Funilaria e pintura" e o carro pelo apelido.'
+    'Foto da oficina: a OS e o canhoto da mesma compra viram um item só mesmo em fotos separadas (com a data, a hora e o cartão do canhoto, e o nº e o carro da OS); o cartão vem escolhido pelo final lido; a linha já mostra "Veículo › Funilaria e pintura" e o carro pelo apelido. Com 2 ou mais itens, "🔗 Juntar os marcados (é a mesma compra)" junta à mão o que o app não percebeu. "Esperar o banco" não cria gasto: a compra vem pela fatura e a foto completa a descrição.'
   ]},
   {v:'3.104', d:'2026-11-24', t:'Recibo em reais, faturas e o arquivo no Drive', itens:[
     'O recibo de serviço do exterior cobrado em reais (como o da Anthropic, desde outubro) agora liga direto ao lançamento do cartão pelo valor em reais, sem câmbio nem IOF.',

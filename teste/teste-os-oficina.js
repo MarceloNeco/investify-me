@@ -100,6 +100,21 @@ const OS = (papel, fin, extra) => IT(papel, fin.valor, Object.assign({ documento
     ok(/23\/11\/2026 · 12:13 · ••9876 · 5x de R\$\s?472,00/.test(real.txt) && /🔧 OS 4321 · Veículo › Funilaria e pintura · 🚗 Renegade 2019/.test(real.txt) && !/LRENEGADE/.test(real.txt), 'fica a data, a hora e o final do canhoto, com a OS, "Veículo › Funilaria e pintura" e o carro pelo apelido (não "LRENEGADE"): ' + real.txt.replace(/\s+/g, ' ').slice(0, 200));
     ok(real.cart === 'c2', 'o cartão vem escolhido pelo final ••9876 (o 2º final do Master Ficticio), não fica em "cartão…"');
     await p.evaluate(() => fechar('genModal'));
+    /* "🔗 Juntar (é a mesma compra)": dois itens que o automático não junta (a loja escrita diferente, sem CNPJ no canhoto) */
+    const FR2 = FIN({ valor: 1180, parcelas: 2, data: '12/11/2026', veiculo: 'JEEP RENEGADE', fonte: 'fechado', cnpj: '', os: '555' });
+    await ler([Object.assign(OS(7, FR2, { hora: '09:00' }), { arquivo: 'os2.jpg' }), IT(8, 1180, { arquivo: 'cupom.jpg', data: '24/11/2026', hora: '10:05', loja: 'STONE PAGAMENTOS', parcelas: 2, final: '9876' })]);
+    ok(await p.evaluate(() => document.querySelectorAll('#genBody .cn-item').length === 2 && !!document.querySelector('[data-acao="cn-juntar"]') && document.querySelectorAll('#genBody .cn-jt').length === 2), 'com 2 itens na leitura: uma caixinha em cada e "🔗 Juntar os marcados (é a mesma compra)"');
+    ok(/⏳ Esperar o banco: a compra vem pela fatura; a foto completa a descrição \(oficina, serviço, parcelas, carro\)/.test(await p.evaluate(() => document.querySelector('#genBody').textContent)), 'a linha explica o "Esperar o banco": não cria gasto, a foto completa a descrição');
+    await p.evaluate(() => document.querySelectorAll('#genBody .cn-jt').forEach((c) => { c.checked = true; }));
+    await p.click('[data-acao="cn-juntar"]'); await p.waitForTimeout(100);
+    const jt = await p.evaluate(() => { const its = [...document.querySelectorAll('#genBody .cn-item')]; return { n: its.length, txt: its.map((x) => x.textContent).join(' || ') }; });
+    ok(jt.n === 1 && /24\/11\/2026 · 10:05 · ••9876 · 2x de R\$\s?590,00/.test(jt.txt) && /🔧 OS 555 · Veículo › Funilaria e pintura · 🚗 Renegade 2019/.test(jt.txt), 'juntados à mão: um item só, com o pagamento do cupom e a OS com o carro ' + jt.txt.replace(/\s+/g, ' ').slice(0, 160));
+    /* o "Esperar o banco" e a fatura com o texto curto: vale a descrição da foto */
+    await p.click('#genBody .cn-item[data-grupo="novo"] [data-acao="cn-esperar"]'); await p.waitForTimeout(80);
+    await p.evaluate(() => { Gasto.add({ data: '2026-11-25', valor: 590, desc: 'DEPINTOR FICT 01/02', descRobo: 'DEPINTOR FICT 01/02', fluxo: 'saida', grupo: 'OUTROS', sub: '', cartaoId: 'c2', origem: 'robo' }); });
+    const fx = await p.evaluate(() => { const g = ST.gastos.find((y) => y.descRobo === 'DEPINTOR FICT 01/02'); return [g.desc, g.grupo, g.sub, g.veiculoId, !!g.compraId].join('|'); });
+    ok(fx === 'OFICINA EXEMPLO (OS 555) 01/02|VEICULO|Funilaria e pintura|vc2|true', 'a fatura chega com o texto curto ("DEPINTOR FICT 01/02") e a descrição da foto prevalece, com a categoria e o carro: ' + fx);
+    await p.evaluate(() => fechar('genModal'));
 
     console.log('5) EN e ES');
     for (const [l, rx] of [['en', /🔧 Work order 4321/], ['es', /🔧 OT 4321/]]) {
