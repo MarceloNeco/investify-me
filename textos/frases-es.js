@@ -9,6 +9,7 @@
    ===================================================================== */
 const FRASES_ES = {
   /* 3.106.1 — rascunho, revisar */
+  '🔢 PIN da conta sem confusão: quando o PIN da conta é criado em outro aparelho, este pede uma vez "Digite-o aqui" (com o app aberto) e passa a usar o mesmo. Na tela "Falta só um passo", a digital vem primeiro ("Confirmar com a digital, uma vez só").':'🔢 PIN de la cuenta sin líos: cuando el PIN de la cuenta se crea en otro dispositivo, este pide una vez "Escríbelo aquí" (con la app abierta) y pasa a usar el mismo. En la pantalla "Solo falta un paso", la huella va primero ("Confirmar con la huella, solo una vez").',
   'A versão na tela inicial e a lista de aparelhos mais clara':'La versión en la pantalla de inicio y la lista de dispositivos más clara',
   '"Seus aparelhos" mais clara: separada em "No MoneyTRIO" e "Em outros apps SolverONE"; o aparelho aprovado que nunca terminou de entrar sai com "Tirar da lista"; quando o mesmo celular aparece mais de uma vez, o app explica por quê (cada navegador, ou o app aberto dentro de outro app, conta como um aparelho).':'"Tus dispositivos" más clara: separada en "En MoneyTRIO" y "En otras apps SolverONE"; el dispositivo aprobado que nunca terminó de entrar se quita con "Quitar de la lista"; cuando el mismo móvil aparece más de una vez, la app explica por qué (cada navegador, o la app abierta dentro de otra app, cuenta como un dispositivo).',
   'A versão na tela inicial':'La versión en la pantalla de inicio',
