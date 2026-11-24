@@ -76,7 +76,7 @@
       os textos citam só os apps que a pessoa usa (Portao._usaApps, de sol_aparelhos_meus); "Primeira vez" já diz que vem o PIN da conta.
       A tela de entrada mostra "Abrir no Chrome" (modulos/abrir-no-chrome.js) no Android dentro de outro app ou fora do Chrome.
       Aparelhos.conferirPin no foco/visibilidade (não mais nas voltas). TempoReal (Supabase Realtime, broadcast privado sol:conta:<uid>):
-      pronto e DESLIGADO até o banco ficar pronto. O aviso() ganhou toque/arrasto/✕ (Toque.fechavel).
+      ligado (migração sol_conta_tempo_real aplicada). O aviso() ganhou toque/arrasto/✕ (Toque.fechavel).
   20. 1.15.3 (3.87) — o robô mandar de novo um lançamento DIVIDIDO pela pessoa não desfaz a divisão (corrigir compara com o total).
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
@@ -2473,21 +2473,23 @@
      Broadcast privado do Supabase Realtime no tópico sol:conta:<uid> (websocket Phoenix mínimo, sem supabase-js). Eventos: 'pin' {versao}
      → conferirPin; 'pedido' {id} → olharPedidos na hora; 'pedido_estado' {id, estado} → acorda quem espera/aprova sem esperar o poll;
      'aparelho' {id, removido} → este aparelho tirado. Tudo ADITIVO: o poll e a conferência no foco continuam; se o websocket falhar, o app
-     segue igual. DESLIGADO (ligado = false) até o chat principal confirmar que o banco está pronto e os nomes finais; o join com erro
-     desiste em silêncio. Heartbeat a cada 25 s; o access_token renovado vai pelo evento 'access_token'; volta com espera crescente. */
+     segue igual. LIGADO desde 24/Nov/2026 20h40 UTC (migração sol_conta_tempo_real aplicada; contrato do chat de diretrizes); join com
+     erro, phx_error ou "unauthorized" → desiste em silêncio e fica só o poll. Heartbeat a cada 30 s; o access_token renovado vai pelo
+     evento 'access_token'; volta com espera crescente. 'aparelho' {removido:false} → a lista do painel na hora. */
   var TempoReal = {
-    ligado: false, ws: null, ref: 0, espera: 1000, hb: null, juntou: false, desistiu: false, token: '', _volta: null,
+    ligado: true, ws: null, ref: 0, espera: 1000, hb: null, juntou: false, desistiu: false, token: '', _volta: null,
     url: function () { return SB.replace(/^http/, 'ws') + '/realtime/v1/websocket?apikey=' + encodeURIComponent(KEY) + '&vsn=1.0.0'; },
-    topico: function () { return 'realtime:sol:conta:' + Conta.uid(); },
+    topico: function () { return 'realtime:sol:conta:' + String(Conta.uid()).toLowerCase(); },
     mandar: function (topic, event, payload) { if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify({ topic: topic, event: event, payload: payload || {}, ref: String(++this.ref), join_ref: topic === 'phoenix' ? null : '1' })); },
     iniciar: async function () {
       if (!this.ligado || this.desistiu || this.ws || !Conta.on() || typeof WebSocket === 'undefined') return;
+      if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && !this.local) return;   /* nos testes (servidor local), só quando o teste pede */
       var self = this, tk = await Conta.token(); if (!tk) return;
       var ws; try { ws = new WebSocket(this.url()); } catch (e) { return; }
       this.ws = ws; this.token = tk; this.juntou = false;
       ws.onopen = function () {
-        self.mandar(self.topico(), 'phx_join', { config: { broadcast: { self: false, ack: false }, presence: { key: '' }, private: true }, access_token: tk });
-        clearInterval(self.hb); self.hb = setInterval(function () { self.mandar('phoenix', 'heartbeat', {}); self.renovar(); }, 25000);
+        self.mandar(self.topico(), 'phx_join', { config: { broadcast: { self: false, ack: false }, presence: { key: '' }, postgres_changes: [], private: true }, access_token: tk });
+        clearInterval(self.hb); self.hb = setInterval(function () { self.mandar('phoenix', 'heartbeat', {}); self.renovar(); }, 30000);
       };
       ws.onmessage = function (m) { var o; try { o = JSON.parse(m.data); } catch (e) { return; } self.receber(o); };
       ws.onclose = function () {
@@ -2504,14 +2506,15 @@
         else { this.desistiu = true; this.parar(); }   /* o banco ainda não tem o canal (ou não deixa): desiste em silêncio */
         return;
       }
-      if (o.event === 'phx_error' || o.event === 'system' && o.payload && o.payload.status === 'error') { if (!this.juntou) { this.desistiu = true; this.parar(); } return; }
+      if (o.event === 'phx_error' || o.event === 'phx_close' || (o.event === 'system' && o.payload && o.payload.status === 'error') || /unauthorized/i.test(JSON.stringify(o.payload || ''))) { this.desistiu = true; this.parar(); return; }   /* segue só com o poll */
       if (o.event !== 'broadcast' || !o.payload) return;
       var ev = o.payload.event, d = o.payload.payload || {};
       try {
         if (ev === 'pin') Aparelhos.conferirPin(true);
         else if (ev === 'pedido') { Aparelhos._olhando = false; Aparelhos.olharPedidos(); }
         else if (ev === 'pedido_estado') Aparelhos.acordar(d.id);
-        else if (ev === 'aparelho' && d.removido) Cadeado.local().then(function (L) { if (L && L.ap && L.ap === d.id) Aparelhos.tirado(); });
+        else if (ev === 'aparelho' && d.removido) Cadeado.local().then(function (L) { if (L && L.ap && L.ap === d.id) Aparelhos.tirado(); else if (Painel.aberto) Painel.aparelhos(Painel.aberto, L); });
+        else if (ev === 'aparelho') { if (Painel.aberto) Cadeado.local().then(function (L) { Painel.aparelhos(Painel.aberto, L); }); }
       } catch (e) { /* aviso em tempo real nunca quebra o app */ }
     },
     renovar: async function () { var tk = await Conta.token(); if (tk && tk !== this.token && this.juntou) { this.token = tk; this.mandar(this.topico(), 'access_token', { access_token: tk }); } },

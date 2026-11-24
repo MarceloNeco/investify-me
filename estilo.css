@@ -259,7 +259,8 @@ input[type=range]{padding:0; border:none; background:transparent; accent-color:v
 .lvl-tag{font-size:.7rem; color:var(--txt3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px}
 
 /* toasts */
-#toasts{position:fixed; bottom:20px; right:20px; z-index:200; display:flex; flex-direction:column; gap:8px; pointer-events:none}
+/* 3.106 (diretriz "Avisos passageiros"): no topo, abaixo da barra; nunca sobre a barra de baixo nem sobre o AssistONE (canto de baixo) */
+#toasts{position:fixed; top:calc(70px + env(safe-area-inset-top)); right:20px; z-index:200; display:flex; flex-direction:column; gap:8px; pointer-events:none}
 #toasts > *{pointer-events:auto}   /* 3.106: a caixa (vazia ou não) nunca tampa o toque nos botões; só o aviso em si */
 .toast{
   background:var(--card2); border:1px solid var(--line2); border-left:3px solid var(--accent);
@@ -272,6 +273,8 @@ input[type=range]{padding:0; border:none; background:transparent; accent-color:v
 /* 3.106: o ✕ de 44 px (toque fácil) */
 .toast-x{position:absolute; top:0; right:0; width:44px; height:44px; min-height:44px; border:0; background:transparent; color:inherit; font-size:16px; cursor:pointer; opacity:.75}
 .toast-x:hover,.toast-x:focus-visible{opacity:1}
+.toast-acao{margin:8px 0 0; display:block}
+@media (prefers-reduced-motion: reduce){ .toast{animation:none} }
 .nv-aviso{padding-right:48px !important; touch-action:pan-y}
 @keyframes toastPisca{0%,100%{transform:none}30%{transform:translateX(-4px)}60%{transform:translateX(4px)}}
 .toast.pisca{animation:toastPisca .35s ease}

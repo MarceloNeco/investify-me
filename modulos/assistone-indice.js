@@ -164,11 +164,17 @@
       'seguranca aparelhos nuvem sair conta', painel);
   }
 
+  /* 3.106 (diretriz "Avisos passageiros"): cada toast com id tem um tópico aqui (modulos/toast-fechavel.js) */
+  function avisos(out) {
+    if (!window.Toque || !Toque.topicos) return;
+    var t = Toque.topicos();
+    Object.keys(t).forEach(function (id) { var x = t[id]; out.push({ ico: '💬', t: x.t, x: x.x || '', k: id, onde: tr('Aviso', 'Notice', 'Aviso'), peso: 2, ir: function () { fecharAssist(); if (x.acao) acionar(x.acao); } }); });
+  }
   function itens() {
     var L = I18n.atual;
     if (cache && cacheL === L && Date.now() - cacheEm < 20000) return cache;
     var out = [];
-    [conta, telas, tutorial, config, novidades].forEach(function (f) { try { f(out); } catch (e) { console.warn('assistone-indice', f.name, e); } });
+    [conta, telas, tutorial, avisos, config, novidades].forEach(function (f) { try { f(out); } catch (e) { console.warn('assistone-indice', f.name, e); } });
     out.forEach(function (it, i) {
       it.i = i;
       it._t = sem(it.t); it._k = sem((it.k || '') + ' ' + it.t);

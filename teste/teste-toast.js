@@ -57,7 +57,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos: [], r
 
     console.log('3) o aviso da B3 não insiste');
     const msg = '4 ativos da B3 precisam do token gratuito. Veja em Configurações.';
-    await p.evaluate((m) => { document.getElementById('toasts').innerHTML = ''; localStorage.removeItem('dgo:moneytrio:aviso:b3-token:dia'); toast(m); }, msg);
+    await p.evaluate((m) => { document.getElementById('toasts').innerHTML = ''; localStorage.removeItem('dgo:moneytrio:toast:b3-token:dia'); toast(m); }, msg);
     ok((await n()) === 1, 'na primeira vez do dia, aparece');
     await p.evaluate((m) => { document.getElementById('toasts').innerHTML = ''; toast(m); }, msg);
     ok((await n()) === 0, 'de novo no mesmo dia: não aparece');
@@ -66,9 +66,33 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos: [], r
     ok((await n()) === 0, 'reabrindo o app no mesmo dia: não aparece');
     const inb = await p.evaluate(() => (inboxGrupos().find((g) => g.id === 'avisos') || {}).html || '');
     ok(/4 ativos da B3 precisam do token gratuito/.test(inb) && /data-acao="as-chaves"[^>]*>Resolver/.test(inb), 'fica no 📥 (Avisos) com "Resolver" (vai para Configurações → Chaves)');
-    await p.evaluate(() => localStorage.setItem('dgo:moneytrio:aviso:b3-token:dia', '2000-01-01'));
+    await p.evaluate(() => localStorage.setItem('dgo:moneytrio:toast:b3-token:dia', '2000-01-01'));
     await p.evaluate((m) => { toast(m); }, msg);
     ok((await n()) === 1, 'no outro dia, aparece uma vez de novo');
+
+    console.log('4) a diretriz "Avisos passageiros"');
+    const r4 = await p.evaluate(() => { document.getElementById('toasts').innerHTML = ''; let fez = 0;
+      toast('Aviso de teste urgente', 'err'); toast('Aviso de teste com ação', { tipo: 'warn', id: 'teste-acao', acao: { rotulo: 'Fazer', fn: () => { fez++; } } });
+      const ts = [...document.querySelectorAll('#toasts .toast')].filter((e) => /Aviso de teste/.test(e.textContent));
+      const r = { roles: ts.map((e) => e.getAttribute('role')).join(','), botao: !!ts[1].querySelector('.toast-acao') };
+      ts[1].querySelector('.toast-acao').click(); r.fez = fez; r.sumiu = !ts[1].isConnected; return r; });
+    ok(r4.roles === 'alert,status', 'role "alert" só no urgente; os outros "status"');
+    ok(r4.botao && r4.fez === 1 && r4.sumiu, 'toast(texto, {tipo, id, acao}): o botão da ação faz e fecha');
+    ok(await p.evaluate(() => { toast('Aviso de teste diário', { id: 'teste-dia', diario: true }); const a = [...document.querySelectorAll('#toasts .toast')].filter((e) => /diário/.test(e.textContent)).length; document.getElementById('toasts').innerHTML = ''; toast('Aviso de teste diário', { id: 'teste-dia', diario: true }); const b = [...document.querySelectorAll('#toasts .toast')].filter((e) => /diário/.test(e.textContent)).length; return a === 1 && b === 0 && localStorage.getItem('dgo:moneytrio:toast:teste-dia:dia') === hojeISO(); }), 'diario: 1 vez por dia, na chave dgo:moneytrio:toast:<id>:dia');
+    const idx = await p.evaluate(() => AssistIndice.buscar('token').map((x) => x.t + ' | ' + x.onde));
+    ok(idx.some((x) => /Token gratuito da B3/.test(x) && /Aviso/.test(x)), 'o aviso tem um tópico no AssistONE ("token" → ' + idx[0] + ')');
+    await p.emulateMedia({ reducedMotion: 'reduce' });
+    const t5 = await um('Aviso de teste calmo'); const b5 = await t5.boundingBox();
+    await p.mouse.move(b5.x + 30, b5.y + 10); await p.mouse.down(); await p.mouse.move(b5.x + 60, b5.y + 10, { steps: 3 });
+    const tf = await p.evaluate(() => [...document.querySelectorAll('#toasts .toast')].find((e) => /calmo/.test(e.textContent)).style.transform);
+    await p.mouse.move(b5.x + 130, b5.y + 10, { steps: 3 }); await p.mouse.up(); await p.waitForTimeout(100);
+    ok(!tf && (await n()) === 0, '"reduzir movimento": o arraste fecha sem animar');
+    await p.emulateMedia({ reducedMotion: 'no-preference' });
+    await p.setViewportSize({ width: 1366, height: 800 }); await p.evaluate(() => { ST.config.assistOne = true; AssistOne.aplicar(); });
+    await um('Aviso de teste no computador');
+    const r6 = await p.evaluate(() => { const t = document.querySelector('#toasts .toast').getBoundingClientRect(), f = document.querySelector('#assistFab, #assistOne'); const a = f && f.getBoundingClientRect();
+      return { topo: t.top < 200, cobre: !!a && a.width > 0 && !(t.bottom < a.top || t.top > a.bottom || t.right < a.left || t.left > a.right) }; });
+    ok(r6.topo && !r6.cobre, 'no computador também no topo: não cobre o AssistONE nem a barra de baixo');
     ok(!erros.length, 'sem erro na página ' + erros.join(' | '));
   } finally { await b.close(); srv.close(); }
   console.log((falhas ? '✗ ' : '✓ ') + oks + ' ok, ' + falhas + ' falha(s)');

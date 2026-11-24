@@ -5,7 +5,8 @@
      1. phx_join no tópico realtime:sol:conta:<uid>, privado, com o access_token; heartbeat;
      2. 'pin' → o aviso "Crie o PIN" some na hora; 'pedido' → abre o "Pedido de acesso"; 'aparelho' de outro id não tira este;
      3. a queda do websocket não quebra nada e ele volta sozinho; o join com erro desiste em silêncio (não insiste).
-   O canal fica DESLIGADO no app até o banco ficar pronto: o teste liga só aqui (TempoReal.ligado = true).
+   O canal está ligado (SQL sol_conta_tempo_real aplicado em 24/Nov/2026); no servidor local dos testes ele só conecta quando o teste
+   pede (TempoReal.local = true), para os outros testes não abrirem conexão com o banco de verdade.
    Com o "Supabase de mentira" (teste/mock-sol.js). Dados fictícios. Uso: node teste/teste-tempo-real.js
    ===================================================================== */
 'use strict';
@@ -56,12 +57,13 @@ const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
     await P.waitForSelector('#nvP1'); await P.fill('#nvP1', '736251'); await P.fill('#nvP2', '736251'); await P.click('#nvPOk');
     await P.waitForSelector('#nvSelo', { timeout: 90000 });
     M.semPin = false; await P.evaluate(() => { MoneyNuvem._teste.Pin.ligado = null; });   /* como numa recarga: o SQL do PIN "voltou" */
-    ok(RT.conexoes === 0 && !(await P.evaluate(() => MoneyNuvem._teste.TempoReal.ligado)), 'desligado por padrão: nenhuma conexão até o banco ficar pronto');
-    await P.evaluate(() => { const T = MoneyNuvem._teste.TempoReal; T.ligado = true; return T.iniciar(); });
+    ok(RT.conexoes === 0 && (await P.evaluate(() => MoneyNuvem._teste.TempoReal.ligado)), 'ligado (o banco está pronto); no servidor local dos testes só conecta quando o teste pede');
+    await P.evaluate(() => { const T = MoneyNuvem._teste.TempoReal; T.local = true; return T.iniciar(); });
     await P.waitForFunction(() => MoneyNuvem._teste.TempoReal.juntou, null, { timeout: 10000 });
     const j = RT.joins[0];
-    ok(j && j.topic === 'realtime:sol:conta:' + ANA && j.payload.config.private === true && j.payload.config.broadcast.self === false && typeof j.payload.access_token === 'string' && j.payload.access_token.length > 10,
-      'phx_join em realtime:sol:conta:<uid>, privado, sem eco, com o access_token');
+    ok(j && j.topic === 'realtime:sol:conta:' + ANA.toLowerCase() && j.payload.config.private === true && j.payload.config.broadcast.self === false && Array.isArray(j.payload.config.postgres_changes) && typeof j.payload.access_token === 'string' && j.payload.access_token.length > 10,
+      'phx_join em realtime:sol:conta:<uid em minúsculas>, privado, sem eco, postgres_changes [], com o access_token');
+    ok(/^wss:\/\/qvdvkqydhnadhewcidia\.supabase\.co\/realtime\/v1\/websocket\?apikey=sb_publishable_[^&]+&vsn=1\.0\.0$/.test(RT.url), 'o endereço do contrato (wss://qvdvkqydhnadhewcidia.supabase.co/realtime/v1/websocket?apikey=<publishable>&vsn=1.0.0)');
     ok(/^wss:\/\/.*\/realtime\/v1\/websocket\?apikey=.+&vsn=1\.0\.0$/.test(RT.url), 'o endereço do websocket: /realtime/v1/websocket?apikey=…&vsn=1.0.0');
 
     console.log('2) os eventos');
@@ -79,6 +81,13 @@ const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
     await P.waitForSelector('#nvPedido', { timeout: 5000 }).catch(() => {});
     ok(/Pedido de acesso: Android · Chrome/.test(await P.textContent('#nvPedido').catch(() => '')), "'pedido': o \"Pedido de acesso\" aparece na hora (sem esperar a busca)");
     await P.click('#nvPedidoX');
+    await P.click('#nvSelo'); await P.waitForSelector('.nv-painel #nvAps');
+    await P.waitForFunction(() => !/Carregando/.test(document.querySelector('#nvAps').textContent), null, { timeout: 10000 });
+    db.sol_aparelhos.push({ id: '00000000-0000-4000-8000-0000000000ff', user_id: ANA, nome: 'iPhone · Safari', app: 'moneytrio', como: 'aparelho', aprovado_por: ANA, criado_em: agora(), visto_em: agora(), removido_em: null });
+    mandar('aparelho', { id: '00000000-0000-4000-8000-0000000000ff', removido: false });
+    await P.waitForFunction(() => /Seu celular \(Safari\)/.test(document.querySelector('#nvAps').textContent), null, { timeout: 5000 }).catch(() => {});
+    ok(/Seu celular \(Safari\)/.test(await P.textContent('#nvAps')), "'aparelho' {removido:false}: a lista do painel mostra o aparelho novo na hora");
+    await P.click('#nvFechar');
     mandar('aparelho', { id: '00000000-0000-4000-8000-0000000000ff', removido: true }); await esperar(500);
     ok(!!(await P.$('#nvSelo')) && !(await P.$('#nvEm')), "'aparelho' de outro id: este continua entrando");
 
@@ -93,6 +102,10 @@ const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
     RT.responder = 'error'; const c0 = RT.conexoes;
     await P.evaluate(() => MoneyNuvem._teste.TempoReal.iniciar()); await esperar(3500);
     ok(await P.evaluate(() => MoneyNuvem._teste.TempoReal.desistiu && !MoneyNuvem._teste.TempoReal.ws) && RT.conexoes === c0 + 1, 'join com erro (o banco ainda não tem o canal): desiste em silêncio, sem tentar de novo');
+    await P.evaluate(() => { const T = MoneyNuvem._teste.TempoReal; T.desistiu = false; T.espera = 1000; }); RT.responder = 'ok';
+    await P.evaluate(() => MoneyNuvem._teste.TempoReal.iniciar()); await P.waitForFunction(() => MoneyNuvem._teste.TempoReal.juntou, null, { timeout: 8000 });
+    RT.atual.send(JSON.stringify({ topic: RT.topico, event: 'phx_error', payload: {}, ref: null })); await esperar(300);
+    ok(await P.evaluate(() => MoneyNuvem._teste.TempoReal.desistiu && !MoneyNuvem._teste.TempoReal.ws), 'phx_error depois de entrar: desiste e segue só com o poll');
     ok(!erros.length, 'sem erro na página ' + erros.join(' | '));
   } finally { await browser.close(); srv.close(); }
   console.log((falhas ? '✗ ' : '✓ ') + oks + ' ok, ' + falhas + ' falha(s)');

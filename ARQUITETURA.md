@@ -881,12 +881,16 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   Phoenix mínimo em `wss://<projeto>/realtime/v1/websocket?apikey=…&vsn=1.0.0`, `phx_join` privado em `realtime:sol:conta:<uid>` com o
   access_token, heartbeat 25 s, token renovado pelo evento `access_token`, volta com espera crescente até 60 s, para ao sair). Eventos
   `pin` → `conferirPin`; `pedido` → `olharPedidos`; `pedido_estado` → `Aparelhos.acordar(id)` (acorda o `esperar` e o laço do `aprovar`);
-  `aparelho` {id, removido} deste aparelho → `tirado()`. **Desligado** (`TempoReal.ligado = false`) até o chat principal confirmar o banco
-  e os nomes finais; join com erro → desiste em silêncio. (8) Item n: `modulos/toast-fechavel.js` 1.0.0 (`window.Toque`): `fechavel(el)` —
+  `aparelho` {id, removido:true} deste aparelho → `tirado()`; {removido:false} → a lista do painel na hora. **Ligado** desde a migração
+  `sol_conta_tempo_real` (24/Nov/2026 20h40 UTC); tópico `sol:conta:<uid em minúsculas>`, `postgres_changes: []`, heartbeat 30 s; join com
+  erro, `phx_error`/`phx_close` ou "unauthorized" → desiste em silêncio e fica o poll. Em `localhost`/`127.0.0.1` (os testes) só conecta
+  com `TempoReal.local = true`. (8) Item n: `modulos/toast-fechavel.js` 1.0.0 (`window.Toque`): `fechavel(el)` —
   toque, arrasto ≥ 60 px (pointer events, botões de dentro continuam botões) e ✕ de 44 px — no `toast()` e no `aviso()` do nuvem.js;
   `#toasts` com `pointer-events:none` (a caixa vazia tampava os botões do topo no celular) e no topo, abaixo da barra, no celular
   (estilo.css 3.106); `pular(msg)`: "N ativos da B3 precisam do token gratuito" 1 vez por dia (`dgo:moneytrio:aviso:b3-token:dia`) e no 📥
-  (Avisos) com "Resolver" (`as-chaves`).
+  (Avisos) com "Resolver" (`as-chaves`). Diretriz "Avisos passageiros": `toast(texto, {tipo, id, acao, diario})` (troca fácil pelo
+  `DGO.toast` do master, #155), `dgo:moneytrio:toast:<id>:dia`, "reduzir movimento" sem animação, `role` "alert" só no urgente, no topo
+  também no computador (nunca sobre a barra de baixo nem o AssistONE), e o toast com `id` tem tópico no AssistONE (`Toque.topicos`).
   Testes: `teste-pin-sessao`, `teste-seguranca` (colunas, pedidos), `teste-aparelhos` (aprovação, registro antigo), `assistone-indice`, `teste-tempo-real`, `teste-toast`,
   `teste-cartoes-contraparte`, `teste-fotos-aparelho`, `teste-abrir-chrome`.
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no

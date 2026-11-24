@@ -27630,20 +27630,34 @@ function abrir(id){ const el = $('#' + id); el.classList.remove('hidden'); el.cl
 function fechar(id){ $('#' + id).classList.add('hidden'); }
 const MAX_TOASTS = 3;
 
-function toast(msg, tipo){
+/* 3.106: toast(texto, {tipo, id, acao, diario}) — a assinatura do DGO.toast do master (pendência #155); toast(texto, 'warn') continua valendo.
+   id: o aviso tem um tópico no AssistONE (Toque.topico) e, com diario, sai no máximo 1 vez por dia (dgo:moneytrio:toast:<id>:dia).
+   acao: {rotulo, acao (data-acao) | fn}. Urgente (tipo 'err') = role "alert"; os outros, "status". */
+function toast(msg, op){
   const caixa = $('#toasts');
   if(!caixa) return;
-  if(window.Toque && Toque.pular(msg)) return;   /* 3.106: o que se repete a cada abertura não insiste (modulos/toast-fechavel.js) */
+  op = typeof op === 'string' || op == null ? {tipo: op} : op;
+  const tipo = op.tipo;
+  if(window.Toque && Toque.pular(msg, op)) return;   /* o que se repete a cada abertura não insiste (modulos/toast-fechavel.js) */
 
   /* a mesma mensagem duas vezes é ruído: reaproveita a que já está na tela */
-  const igual = Array.from(caixa.children).find(n => n.textContent === msg);
+  const igual = Array.from(caixa.children).find(n => n.dataset.msg === msg);
   if(igual){ igual.classList.remove('pisca'); void igual.offsetWidth; igual.classList.add('pisca'); return; }
 
   const d = document.createElement('div');
   d.className = 'toast ' + (tipo || '');
+  d.dataset.msg = msg;
+  d.setAttribute('role', tipo === 'err' ? 'alert' : 'status');
   d.textContent = Verter.txt(msg);
   d.title = I18n.atual === 'pt' ? 'toque para fechar' : 'tap to close';
-  if(window.Toque) Toque.fechavel(d, () => d.remove());   /* 3.106: tocar, arrastar para o lado ou o ✕ fecham */
+  if(op.acao && op.acao.rotulo){
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn sm toast-acao'; b.textContent = Verter.txt(op.acao.rotulo);
+    if(op.acao.acao) b.setAttribute('data-acao', op.acao.acao);
+    if(typeof op.acao.fn === 'function') b.addEventListener('click', () => { op.acao.fn(); d.remove(); });
+    d.appendChild(b);
+  }
+  if(window.Toque) Toque.fechavel(d, () => d.remove());   /* tocar, arrastar para o lado ou o ✕ fecham */
   else d.addEventListener('click', () => d.remove());
   caixa.appendChild(d);
 
