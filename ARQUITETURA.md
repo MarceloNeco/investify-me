@@ -833,7 +833,7 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   vai pelo espelho (`MoneyNuvem.espelho.enfileirar`, money_espelho_saida, cifrada para a chave do robô): `{v:1, acao:'terceiros',
   id:'terceiros', em, quem_editou, versao_app, lista:[{nome, marcadores, acao, para_quem}]}` (a fila guarda um por id: vale a última).
   Privacidade (diretrizes, 24/Nov/2026): nomes e marcadores só no aparelho e no pacote para o robô; a plataforma verá só contagens
-  (`money_terceiros_resumo`, que o robô grava; rascunho do SQL com a conversa de diretrizes; RootifyONE #152). Rodapé "Avisos legais e
+  (`money_terceiros_resumo`, por `grupo_id`, aplicada em 24/Nov/2026; o robô grava pela `money_terceiros_resumo_gravar`; RootifyONE #152). Rodapé "Avisos legais e
   privacidade" com a linha. viagem 1.0.2: a caixa "✂️ Parte" sobrevive ao redesenho. teste-fumaca-telas: sem o `backdrop-filter` nas duas
   cópias (o desfoque não sai igual a cada foto: 8 fotos da mesma tela, 2 resultados com ele, 1 sem). Teste: `teste/teste-terceiros.js`.
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
