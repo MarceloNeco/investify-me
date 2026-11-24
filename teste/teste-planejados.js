@@ -34,7 +34,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false, veiculo: { consumo: 10, preco
 
       if (vp.width > 800) {
         console.log('1) o menu');
-        const menu = await p.evaluate(() => [...document.querySelectorAll('#navLista .nav-item')].map((b) => b.dataset.view).join(','));
+        const menu = await p.evaluate(() => [...document.querySelectorAll('#navLista .nav-item[data-view]')].map((b) => b.dataset.view).join(','));   /* 3.106.1: o "📲 Instalar o app" fica no fim do menu e não é tela (sem data-view) */
         ok(menu === 'b-painel,b-lanc,b-custos,b-renda,b-fluxo,b-futuro,b-precos,b-viagens,b-carro,b-material,b-rachai,config', 'a ordem: Painel · Lançamentos · Contas fixas · Renda · Fluxo · Projeção · Preços · Viagens · Carro · Material escolar · RachAI · Configurações (sem Deslocamentos): ' + menu);
         ok(await p.evaluate(() => /Projeção/.test(document.querySelector('#navLista [data-view="b-futuro"]').textContent)), '"Futuro" agora se chama "Projeção" (o id b-futuro continua)');
       }

@@ -2330,6 +2330,8 @@ body:has(.sidenav.open) .assistone, body:has(.popup-an) .assistone{display:none}
 .inbox-item .inbox-val{margin-left:auto; font-variant-numeric:tabular-nums; white-space:nowrap}
 @media (max-width:760px){
   .sidenav{top:var(--topo-h, 0px); height:auto}
+  /* 3.106.1: o menu nunca passa do fim da tela (o "📲 Instalar o app" empurrava o calendário para fora); a lista encolhe e rola */
+  .sidenav{max-height:100vh; max-height:100dvh}
   .nav-backdrop{top:var(--topo-h, 0px)}
   .perfil-op{white-space:normal}
   .perfil-bt{padding:0 4px !important}
