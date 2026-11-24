@@ -804,6 +804,20 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   comprovante/e-mail da conta, `RX_MULTA`); 📥 "Ver com o banco por que o débito automático não caiu" (anotação e Resolvido, `ST.config.dncBanco`)
   e, 3 dias antes, "confirme que o débito automático está ativo". Testes: `teste-material-escolar.js`, `teste-cartoes-virtuais.js`,
   `teste-conta-atraso.js`.
+  **3.103 — Foto do serviço do carro no Google Drive** (integração nova aprovada pelo dono: o Google Drive da própria pessoa). Dois arquivos:
+  `modulos/google-drive.js` 1.0.0 = o componente da PLATAFORMA `window.SolverGoogle`, com o contrato da conversa de diretrizes (24/Nov/2026;
+  vira `google.js` do módulo comum quando o 2º app precisar, pendência #145 do RootifyONE), sem nada do app: `configurar` (o bloco `google`
+  {clienteId, chavePicker, projeto} de `/solverone-dados/servicos/<app>.json`, o master do RootifyONE; sem ele, o que o dono colou na tela
+  escondida, só no aparelho: localStorage `solver.google.<app>`), `estado`, `conectar` (Google Identity Services, token client, escopo
+  drive.file, token SÓ na memória, ~1 h, sempre num toque; as bibliotecas carregam no 1º toque), `desconectar` (revoke), `escolherPasta`
+  (Picker, só pastas), `garantirSubpasta`, `enviar` (multipart, fields=id,webViewLink), erros `{codigo}` e o evento `dgo:google`; o
+  interruptor `google-drive` do RootifyONE (recursos-do-app.json) desliga tudo. `modulos/carro-drive.js` 1.0.0 = a parte do MoneyTRIO
+  (`window.CarroDrive`): sem configuração da plataforma nada aparece; "📁 Conectar meu Google Drive" com a linha "o app só vê…"; "📁 Enviar ao
+  Drive" na ficha parcelada ou no lançamento do Veículo com documento (cofre `ArquivosFamilia`), no Fundo, com aviso na 1ª vez de cada carro;
+  pasta do app "MoneyTRIO / Carro / <apelido>" (ou "usar uma pasta que já tenho", Picker) + subpasta "AAAA-MM-DD OFICINA" reaproveitada;
+  sem internet, `ST.config.driveFila` e o 📥 (Documentos); visão da casa não envia; tela do dono em Configurações → Compartilhadas com
+  `#dono-google` no endereço, com o passo a passo de onde copiar cada valor. veiculos 1.0.1 chama `topo()/botaoPasta()/botao()`. O app não
+  tem CSP hoje (nada a liberar). Teste: `teste/teste-google-drive.js` (o Google simulado).
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem

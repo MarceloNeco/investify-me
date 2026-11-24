@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.102 · 24/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.103 · 24/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,10 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.103 — rascunho, revisar */
+  'Foto do serviço do carro no Google Drive':'Foto del servicio del coche en Google Drive',
+  '📁 Conectar meu Google Drive: em 🚗 Carro, um toque abre a tela do próprio Google e você toca em "Permitir". O app só vê as pastas e os arquivos que ele mesmo criar ou que você escolher. Nada para configurar.':'📁 Conectar mi Google Drive: en 🚗 Coche, un toque abre la pantalla del propio Google y tocas "Permitir". La app solo ve las carpetas y los archivos que ella misma cree o que tú elijas. Nada que configurar.',
+  '"📁 Enviar ao Drive" no serviço do carro com foto ou documento (a OS, o canhoto): o app cria a pasta "MoneyTRIO / Carro / <apelido> / AAAA-MM-DD OFICINA" e guarda lá. Quem já tem as próprias pastas toca em "usar uma pasta que já tenho no Drive". O envio é sempre num toque, a cópia no app continua e, sem internet, fica na fila do 📥.':'"📁 Enviar a Drive" en el servicio del coche con foto o documento (la orden, el ticket): la app crea la carpeta "MoneyTRIO / Coche / <apodo> / AAAA-MM-DD TALLER" y los guarda allí. Si ya tienes tus carpetas, toca "usar una carpeta que ya tengo en Drive". Siempre se envía con un toque, la copia en la app sigue y, sin internet, queda en la cola del 📥.',
   /* 3.102 — rascunho, revisar */
   'Material escolar, cartões virtuais e conta paga com atraso':'Material escolar, tarjetas virtuales y factura pagada con atraso',
   '📚 Material escolar: crie o ano letivo (de novembro a fevereiro) e o app sugere as compras de papelaria, livraria e lojas on-line (Amazon, Mercado Livre, Shopee…) e os pedidos com caderno, lápis, mochila… Você confirma de qual filho é (ou só uma parte) e tudo cai numa linha só, em Dependentes › Material escolar. O resumo mostra o total, por filho, por loja e o ano anterior, e um compromisso anual lembra no ano que vem.':'📚 Material escolar: crea el año lectivo (de noviembre a febrero) y la app sugiere las compras de papelerías, librerías y tiendas en línea (Amazon, Mercado Livre, Shopee…) y los pedidos con cuadernos, lápices, mochilas… Tú confirmas de qué hijo es (o solo una parte) y todo cae en una sola línea, en Dependientes › Material escolar. El resumen muestra el total, por hijo, por tienda y el año anterior, y un compromiso anual lo recuerda el año que viene.',

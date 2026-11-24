@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.102 · 24/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.103 · 24/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.103 */
+  'Foto do serviço do carro no Google Drive':'Car service photo on Google Drive',
+  '📁 Conectar meu Google Drive: em 🚗 Carro, um toque abre a tela do próprio Google e você toca em "Permitir". O app só vê as pastas e os arquivos que ele mesmo criar ou que você escolher. Nada para configurar.':'📁 Connect my Google Drive: in 🚗 Car, one tap opens Google’s own screen and you tap "Allow". The app only sees the folders and files it creates or that you choose. Nothing to set up.',
+  '"📁 Enviar ao Drive" no serviço do carro com foto ou documento (a OS, o canhoto): o app cria a pasta "MoneyTRIO / Carro / <apelido> / AAAA-MM-DD OFICINA" e guarda lá. Quem já tem as próprias pastas toca em "usar uma pasta que já tenho no Drive". O envio é sempre num toque, a cópia no app continua e, sem internet, fica na fila do 📥.':'"📁 Send to Drive" on a car service with a photo or document (the work order, the slip): the app creates the folder "MoneyTRIO / Car / <nickname> / YYYY-MM-DD SHOP" and keeps them there. If you already have your own folders, tap "use a folder I already have on Drive". It is always sent with a tap, the copy in the app stays and, offline, it waits in the 📥 queue.',
   /* 3.102 */
   'Material escolar, cartões virtuais e conta paga com atraso':'School supplies, virtual cards and a bill paid late',
   '📚 Material escolar: crie o ano letivo (de novembro a fevereiro) e o app sugere as compras de papelaria, livraria e lojas on-line (Amazon, Mercado Livre, Shopee…) e os pedidos com caderno, lápis, mochila… Você confirma de qual filho é (ou só uma parte) e tudo cai numa linha só, em Dependentes › Material escolar. O resumo mostra o total, por filho, por loja e o ano anterior, e um compromisso anual lembra no ano que vem.':'📚 School supplies: create the school year (November to February) and the app suggests the purchases from stationery shops, bookstores and online stores (Amazon, Mercado Livre, Shopee…) and orders with notebooks, pencils, backpacks… You confirm which child it is for (or just a part) and everything lands in one line, under Dependants › School supplies. The summary shows the total, per child, per store and last year, and a yearly commitment reminds you next year.',
