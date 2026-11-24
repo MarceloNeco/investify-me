@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.83">
+<link rel="stylesheet" href="estilo.css?v=3.106">
 </head>
 <body>
 
@@ -157,6 +157,7 @@
         indevido, vazamento, corrupção ou perda de dados. Recomenda-se fazer backups pelo botão de exportar.</p>
         <p class="muted"><b>Contas de outras pessoas.</b> Os nomes de terceiros que você marca como "conta de outra pessoa" (e o titular ou o
         código do cliente que servem para reconhecê-las) ficam só no seu aparelho e no pacote cifrado para o robô. A plataforma só vê quantas são.</p>
+        <p class="muted"><b>Fotos lidas.</b> A foto do canhoto, do print ou da OS da oficina fica só no aparelho em que foi lida, por 90 dias. Com o Google Drive conectado, o original vai também para a pasta MoneyTRIO/Fotos lidas do seu Drive.</p>
         </details>
       </footer>
     </main>
@@ -258,7 +259,7 @@
   </button>
 </div>
 
-<div id="toasts"></div>
+<div id="toasts" role="status" aria-live="polite"></div>
 <!-- trabalho em segundo plano (leitura de foto, importação): a pílula que fica enquanto a pessoa navega -->
 <button type="button" id="fundoPill" class="fundo-pill hidden" role="status" aria-live="polite"></button>
 
@@ -686,8 +687,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.105"></script>
-<script src="textos/frases-es.js?v=3.105"></script>
+<script src="textos/frases-en.js?v=3.106"></script>
+<script src="textos/frases-es.js?v=3.106"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7682,7 +7683,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.105"></script>
+<script src="textos/mudancas.js?v=3.106"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -18761,7 +18762,7 @@ const Assist = {
 
     const cx = $('#asBusca');
     if(cx) cx.addEventListener('input', () => { assistBusca = cx.value; const r = $('#asResultados');
-      if(r) r.innerHTML = assistBusca.trim().length >= 2 ? resultadosBusca(assistBusca.trim()) : ''; });
+      if(r) r.innerHTML = assistBusca.trim().length >= 2 ? resultadosBusca(assistBusca.trim(), true) : ''; });
   },
 
   htmlTela(L){
@@ -18816,11 +18817,10 @@ const Assist = {
 
   htmlBuscar(L){
     return '<div class="as-buscar">' +
-      '<input id="asBusca" type="search" placeholder="' + (L === 'pt'
-        ? 'Buscar um termo: dividendo, CDI, come-cotas…' : 'Search a term: dividend, CDI, come-cotas…') +
+      '<input id="asBusca" type="search" placeholder="' + I18n.tr('Buscar no app: PIN, cartão, aparelho novo, dividendo…', 'Search the app: PIN, card, new device, dividend…', 'Buscar en la app: PIN, tarjeta, dispositivo nuevo, dividendo…') +
         '" value="' + esc(assistBusca) + '" autocomplete="off">' +
       '<div id="asResultados" style="margin-top:12px">' +
-        (assistBusca.trim().length >= 2 ? resultadosBusca(assistBusca.trim()) : '') + '</div></div>';
+        (assistBusca.trim().length >= 2 ? resultadosBusca(assistBusca.trim(), true) : '') + '</div></div>';
   }
 };
 
@@ -26523,15 +26523,18 @@ function viewCoach(){
     '<p class="small muted">As explicações mudam conforme o nível escolhido no menu. Comece no iniciante e suba quando o assunto ficar fácil.</p>' +
     '<div class="coach-grid">' + lista + '<div>' + art + '</div></div>';
 }
-function resultadosBusca(q){
+function resultadosBusca(q, comApp){
   const r = buscarConteudo(q);
-  const total = r.coach.length + r.glossario.length;
+  /* 3.106: no AssistONE, o que o app tem vem primeiro ("No app": telas, Configurações, conta e aparelhos…) — modulos/assistone-indice.js */
+  const noApp = comApp && window.AssistIndice ? AssistIndice.buscar(q).length : 0;
+  const total = noApp + r.coach.length + r.glossario.length;
   if(!total){
     return '<div class="card"><div class="empty"><span class="ic">🔍</span>' +
       '<p>Nada encontrado para <b>' + esc(q) + '</b>.</p>' +
       '<p class="small">Tente uma palavra mais curta — por exemplo “divid” em vez de “dividendos isentos”.</p></div></div>';
   }
   let h = '<p class="small muted">' + total + (total === 1 ? ' resultado' : ' resultados') + ' para <b>' + esc(q) + '</b>.</p>';
+  if(noApp) h += AssistIndice.html(q);
 
   if(r.coach.length){
     h += '<div class="card"><div class="card-head"><h3>Nas aulas do Coach</h3></div>';
@@ -27627,19 +27630,35 @@ function abrir(id){ const el = $('#' + id); el.classList.remove('hidden'); el.cl
 function fechar(id){ $('#' + id).classList.add('hidden'); }
 const MAX_TOASTS = 3;
 
-function toast(msg, tipo){
+/* 3.106: toast(texto, {tipo, id, acao, diario}) — a assinatura do DGO.toast do master (pendência #155); toast(texto, 'warn') continua valendo.
+   id: o aviso tem um tópico no AssistONE (Toque.topico) e, com diario, sai no máximo 1 vez por dia (dgo:moneytrio:toast:<id>:dia).
+   acao: {rotulo, acao (data-acao) | fn}. Urgente (tipo 'err') = role "alert"; os outros, "status". */
+function toast(msg, op){
   const caixa = $('#toasts');
   if(!caixa) return;
+  op = typeof op === 'string' || op == null ? {tipo: op} : op;
+  const tipo = op.tipo;
+  if(window.Toque && Toque.pular(msg, op)) return;   /* o que se repete a cada abertura não insiste (modulos/toast-fechavel.js) */
 
   /* a mesma mensagem duas vezes é ruído: reaproveita a que já está na tela */
-  const igual = Array.from(caixa.children).find(n => n.textContent === msg);
+  const igual = Array.from(caixa.children).find(n => n.dataset.msg === msg);
   if(igual){ igual.classList.remove('pisca'); void igual.offsetWidth; igual.classList.add('pisca'); return; }
 
   const d = document.createElement('div');
   d.className = 'toast ' + (tipo || '');
+  d.dataset.msg = msg;
+  d.setAttribute('role', tipo === 'err' ? 'alert' : 'status');
   d.textContent = Verter.txt(msg);
   d.title = I18n.atual === 'pt' ? 'toque para fechar' : 'tap to close';
-  d.addEventListener('click', () => d.remove());
+  if(op.acao && op.acao.rotulo){
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn sm toast-acao'; b.textContent = Verter.txt(op.acao.rotulo);
+    if(op.acao.acao) b.setAttribute('data-acao', op.acao.acao);
+    if(typeof op.acao.fn === 'function') b.addEventListener('click', () => { op.acao.fn(); d.remove(); });
+    d.appendChild(b);
+  }
+  if(window.Toque) Toque.fechavel(d, () => d.remove());   /* tocar, arrastar para o lado ou o ✕ fecham */
+  else d.addEventListener('click', () => d.remove());
   caixa.appendChild(d);
 
   /* no celular três avisos já tomam a tela: some com os mais antigos */
@@ -30110,8 +30129,8 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 </script>
 <!-- 3.41: módulos (um arquivo por função nova; guia em ARQUITETURA.md). A ordem importa: base, módulos, nuvem.
      O ?v= de cada arquivo é a versão dele e tem de ser igual no sw.js (teste/teste-modulos.js confere). -->
-<script src="modulos/base.js?v=1.1.0"></script>
-<script src="modulos/arquivos.js?v=1.0.0"></script>
+<script src="modulos/base.js?v=1.1.1"></script>
+<script src="modulos/arquivos.js?v=1.1.0"></script>
 <script src="modulos/agendamentos.js?v=1.0.0"></script>
 <script src="modulos/nf-ir.js?v=1.1.0"></script>
 <script src="modulos/profissionais.js?v=1.2.1"></script>
@@ -30130,7 +30149,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/saldo-banco.js?v=2.1.2"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
 <script src="modulos/tour.js?v=1.0.2"></script>
-<script src="modulos/cartoes.js?v=1.1.0"></script>
+<script src="modulos/cartoes.js?v=1.2.0"></script>
 <script src="modulos/cartao-foto.js?v=1.0.0"></script>
 <script src="modulos/contraparte.js?v=1.0.0"></script>
 <script src="modulos/declaracao-escolhas.js?v=1.1.0"></script>
@@ -30156,27 +30175,30 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/a-receber.js?v=1.0.0"></script>
 <script src="modulos/pre-autorizacao.js?v=1.0.2"></script>
 <script src="modulos/dividir.js?v=1.0.0"></script>
-<script src="modulos/print-colar.js?v=1.3.0"></script>
+<script src="modulos/print-colar.js?v=1.3.1"></script>
 <script src="modulos/loja-nova.js?v=1.0.0"></script>
 <script src="modulos/transf-agendada.js?v=1.0.1"></script>
 <script src="modulos/salto-preco.js?v=1.0.0"></script>
 <script src="modulos/recibo-exterior.js?v=1.0.1"></script>
 <script src="modulos/recebi-dinheiro.js?v=1.0.0"></script>
-<script src="modulos/canhotos.js?v=1.3.2"></script>
+<script src="modulos/canhotos.js?v=1.3.3"></script>
 <script src="modulos/rachai.js?v=1.1.1"></script>
 <script src="modulos/comprovantes.js?v=1.2.1"></script>
 <script src="modulos/terceiros.js?v=1.0.0"></script>
+<script src="modulos/assistone-indice.js?v=1.0.0"></script>
+<script src="modulos/abrir-no-chrome.js?v=1.0.0"></script>
+<script src="modulos/toast-fechavel.js?v=1.0.0"></script>
 <script src="modulos/viagem.js?v=1.0.2"></script>
 <script src="modulos/compra-parcelada.js?v=1.1.0"></script>
-<script src="modulos/veiculos.js?v=1.0.1"></script>
+<script src="modulos/veiculos.js?v=1.0.2"></script>
 <script src="modulos/google-drive.js?v=1.0.0"></script>
-<script src="modulos/carro-drive.js?v=1.0.1"></script>
+<script src="modulos/carro-drive.js?v=1.0.2"></script>
 <script src="modulos/debito-nao-caiu.js?v=1.1.0"></script>
 <script src="modulos/material-escolar.js?v=1.0.1"></script>
 <script src="modulos/pj.js?v=1.2.0"></script>
 <script src="modulos/bs2-extrato.js?v=1.0.1"></script>
 <script src="modulos/pj-gestao.js?v=1.0.1"></script>
 <script src="modulos/pj-oportunidades.js?v=1.0.1"></script>
-<script src="nuvem.js?v=1.15.6"></script>
+<script src="nuvem.js?v=1.15.7"></script>
 </body>
 </html>

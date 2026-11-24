@@ -90,10 +90,20 @@ const sasDe = (pg) => pg.waitForSelector('#nvSas', { timeout: 30000 }).then(() =
     const B = await aparelho(browser, { width: 390, height: 800 }, 'B');
     await entrar(B, ANA);
     ok(!(await B.$('#nvCod')) && await B.isVisible('#nvApOutro') && await B.isVisible('#nvApFam') && !(await B.$('#nvApPasskey')), 'B: "Primeira vez" sem código: Aprovar pelo outro aparelho / Pedir para alguém da família; sem passkey (não tem leitor)');
+    /* 3.106 (itens k, l): só os apps que a pessoa usa; o PIN da conta dito logo de cara */
+    ok(/Depois da aprovação, digite o PIN da sua conta/.test(await B.textContent('#nvPinDepois')), '3.106: "Primeira vez" já diz que depois da aprovação vem o PIN da conta');
+    ok(!/OmniLifeONE/.test(await B.textContent('.nv-card')), '3.106: a Ana só usa o MoneyTRIO: a tela não fala do OmniLifeONE');
     await B.click('#nvApOutro'); await B.waitForSelector('#nvEsperando');
+    ok(!/OmniLifeONE/.test(await B.textContent('.nv-card')) && /Não feche esta página nem deixe a tela apagar/.test(await B.textContent('#nvNaoFeche')) && !!(await B.$('#nvEsperando .nv-spin')), '3.106 (item i): B espera girando, com "Não feche esta página nem deixe a tela apagar"');
+    await B.waitForFunction(() => /há \d+ s/.test(document.querySelector('#nvEsperando .nv-tempo').textContent), null, { timeout: 5000 }).catch(() => {});
+    ok(/há \d+ s/.test(await B.textContent('#nvEsperando .nv-tempo')), '3.106: com o tempo passando ("' + (await B.textContent('#nvEsperando .nv-tempo')) + '")');
     const p1 = ultimoPedido(ANA);
     ok(p1 && p1.estado === 'aberto' && /^[A-Za-z0-9_-]{43}$/.test(p1.compromisso) && !p1.n_b, 'B criou o pedido com pubB e o compromisso (nB ainda guardado)');
     await verPedido(A);
+    const con = await A.evaluate(() => { const c = document.querySelector('#nvApConectando'), r = document.querySelector('#nvApRecusar'), d = document.querySelector('#nvApDepois');
+      return { txt: c ? c.textContent : '', spin: !!(c && c.querySelector('.nv-spin')), rec: r && r.textContent, recLnk: r && r.classList.contains('nv-lnk'), dLnk: d && d.classList.contains('nv-lnk') }; });
+    ok(/Os 6 números para conferir aparecem aqui em instantes\. Deixe o outro aparelho com a tela acesa\./.test(con.txt) && con.spin, '3.106 (item i): A, conectando, gira e explica: "Os 6 números para conferir aparecem aqui em instantes…"');
+    ok(con.rec === 'Não fui eu: recusar' && con.recLnk && con.dLnk, '3.106: os dois "não" viraram links discretos ("Não fui eu: recusar", "Agora não")');
     const [sasA, sasB] = await Promise.all([sasDe(A), sasDe(B)]);
     ok(/^\d{6}$/.test(sasA) && sasA === sasB, 'os dois mostram os MESMOS 6 números (' + sasA + ' = ' + sasB + ')');
     ok(/Só aprove se este pedido é do aparelho que você está segurando/.test(await A.textContent('.nv-card')), 'A avisa: só aprove se é o aparelho que você está segurando');
@@ -111,6 +121,14 @@ const sasDe = (pg) => pg.waitForSelector('#nvSas', { timeout: 30000 }).then(() =
     ok(apB && apB.aprovado_por === ANA && apB.aprovado_por_ap === apA.id, 'a lista registra quem aprovou e de qual aparelho');
     ok(p1.estado === 'usado' && p1.resposta === null, 'a resposta saiu do banco depois de lida (pedido "usado")');
     ok(!(await B.evaluate(() => MoneyNuvem._teste.IDB.get('kv', 'pedido|11111111-1111-1111-1111-111111111111'))), 'o par efêmero do pedido saiu do aparelho novo ao terminar');
+    /* 3.106 (item h): o registro antigo deste mesmo celular (mesmo nome, sumido há mais de 7 dias): a sugestão de tirar */
+    const nomeB = apB.nome, velho = { id: '9b9b9b9b-0000-4000-8000-000000000099', user_id: ANA, nome: nomeB, app: 'moneytrio', como: 'aparelho', aprovado_por: ANA, criado_em: '2026-10-01T12:00:00Z', visto_em: '2026-10-20T12:00:00Z', removido_em: null };
+    db.sol_aparelhos.push(velho);
+    await B.evaluate(() => MoneyNuvem._teste.Aparelhos.aoAbrir());
+    await B.waitForSelector('#nvAvisoDup', { timeout: 10000 }).catch(() => {});
+    ok(/Este parece ser o mesmo .* de antes .*Tirar o registro antigo\?/.test(await B.textContent('#nvAvisoDup').catch(() => '')), '3.106 (item h): "Este parece ser o mesmo celular de antes… Tirar o registro antigo?"');
+    await B.click('#nvAvisoDupSim'); await esperar(500);
+    ok(!!velho.removido_em && !apB.removido_em, '1 toque (com confirmação) tira só o registro antigo');
     const Lb = await B.evaluate(() => MoneyNuvem._teste.Cadeado.local());
     ok(Lb && Lb.sk && Lb.ap === apB.id && Lb.como === 'aparelho', 'B guarda a chave pessoal fechada pelo cadeado do aparelho e sabe quem é na lista');
 
@@ -130,7 +148,7 @@ const sasDe = (pg) => pg.waitForSelector('#nvSas', { timeout: 30000 }).then(() =
     await verPedido(A); await A.waitForSelector('#nvApRecusar'); await A.click('#nvApRecusar');
     await C.waitForFunction(() => /Pedido recusado/.test(document.body.innerText), null, { timeout: 15000 });
     ok(ultimoPedido(ANA).estado === 'recusado', 'A recusa e C mostra "Pedido recusado"');
-    await C.click('text=Pedir de novo'); await C.waitForSelector('#nvEsperando');
+    await C.click('button:has-text("Pedir de novo")'); await C.waitForSelector('#nvEsperando');
     const p3 = ultimoPedido(ANA); M.relogio = Date.parse(p3.expira_em) + 1000;
     await C.waitForFunction(() => /O pedido venceu/.test(document.body.innerText), null, { timeout: 15000 });
     const vistoA = await A.evaluate(() => MoneyNuvem._teste.Aparelhos.rpc('sol_pedidos_para_mim'));
@@ -138,13 +156,13 @@ const sasDe = (pg) => pg.waitForSelector('#nvSas', { timeout: 30000 }).then(() =
 
     console.log('4) banco trocando a pub do pedido');
     M.ataque = 'troca';
-    await C.click('text=Pedir de novo'); await C.waitForSelector('#nvEsperando');
+    await C.click('button:has-text("Pedir de novo")'); await C.waitForSelector('#nvEsperando');
     await verPedido(A);
     const [sA2, sC2] = await Promise.all([sasDe(A), sasDe(C)]);
     ok(sA2 !== sC2, 'com a pub trocada (e o compromisso forjado antes de ver nA), os 6 números ficam DIFERENTES (' + sA2 + ' × ' + sC2 + '): ninguém aprova');
     await A.click('#nvApRecusar'); await C.waitForFunction(() => /Pedido recusado/.test(document.body.innerText), null, { timeout: 15000 });
     M.ataque = 'troca-sem-compromisso';
-    await C.click('text=Pedir de novo'); await C.waitForSelector('#nvEsperando');
+    await C.click('button:has-text("Pedir de novo")'); await C.waitForSelector('#nvEsperando');
     await verPedido(A);
     await A.waitForSelector('#nvApAdulterado', { timeout: 30000 });
     ok(!(await A.$('#nvApOk')), 'trocando a pub sem acertar o compromisso: A acusa "pedido alterado" e não deixa aprovar');

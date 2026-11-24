@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/cartoes.js — cartões por conta, com vários finais (3.65)        1.1.0 · 24/Nov/2026
+   modulos/cartoes.js — cartões por conta, com vários finais (3.65)        1.2.0 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      CARTÃO = a conta do cartão (a fatura): apelido, titular, "Quem usa", bandeira, banco, fechamento, vencimento.
@@ -25,6 +25,9 @@
      · "Quem pagou": o "quem usa" do final → o titular do adicional → o "quem usa" do cartão → o titular do cartão.
      · Finais virtuais sem compra há mais de 6 meses vão para "antigos" no detalhe (escondidos, nunca apagados; o histórico continua
        ligado) e não são perguntados.
+   1.2.0 (3.106): o "+ Novo cartão" mostra no topo "Detectados nas suas compras" ("Mastercard (Itaú) · finais ••9458, ••6514 e mais 11
+     virtuais · última compra 23/Nov"); um toque preenche bandeira, banco, conta e finais com os tipos. Painel: "Achamos 3 cartões nas suas
+     faturas: cadastrar".
    API (window.Cartoes)
      finais(c) · doFinal(fim) · daConta(id) · doRobo(l, g) · quemPagou(c, fim) · encontrados() · perguntas()
      ligarRetro(c) → n · semente(chave) → dados para o cadastro · responder(fim, cartaoId|'novo'|'nao')
@@ -198,6 +201,14 @@
       '<button type="button" class="linkinho" data-acao="ct-final-tirar" aria-label="' + esc(tr('Tirar este final', 'Remove this ending')) + '">✕</button></li>';
   }
 
+  /* 1.2.0 (3.106): "Mastercard (Itaú) · finais ••9458, ••6514 e mais 11 virtuais · última compra 23/Nov" */
+  function rotuloEnc(x) {
+    var nome = (BANDEIRA_POR_ID[x.bandeira] || {}).nome || x.nome || tr('Cartão', 'Card', 'Tarjeta');
+    var f = x.finais.slice(0, 2).map(function (y) { return '••' + y; }).join(', '), mais = x.finais.length - 2;
+    return nome + (x.banco ? ' (' + x.banco + ')' : '') + ' · ' + tr(x.finais.length > 1 ? 'finais ' : 'final ', x.finais.length > 1 ? 'endings ' : 'ending ', x.finais.length > 1 ? 'finales ' : 'final ') + f +
+      (mais > 0 ? tr(' e mais ' + mais + (mais > 1 ? ' virtuais' : ' virtual'), ' and ' + mais + ' more virtual', ' y ' + mais + (mais > 1 ? ' virtuales' : ' virtual') + ' más') : '') +
+      (x.ultima ? ' · ' + tr('última compra ', 'last purchase ', 'última compra ') + String(I18n.data(x.ultima)).replace(/\/\d{4}$/, '') : '');
+  }
   function blocoConfig() {
     var enc = API.encontrados(), q = API.perguntas(), novos = [];
     cartoes().forEach(function (c) { API.finais(c).forEach(function (f) { if (f.novo) novos.push({ c: c, f: f }); }); });
@@ -232,7 +243,7 @@
 
   MoneyModulos.registrar({
     id: 'cartoes',
-    versao: '1.1.0',
+    versao: '1.2.0',
     pontos: {
       'cartao.form': function (ctx) {
         var c = ctx.c || ctx.semente || {};
@@ -253,6 +264,16 @@
           '<input type="hidden" id="ctContaId" value="' + esc(c.contaId || '') + '"><input type="hidden" id="ctContaNome" value="' + esc(c.contaNome || '') + '">';
       },
       'cartoes.config': blocoConfig,
+      /* 1.2.0 (3.106): no "+ Novo cartão", os cartões que o robô já trouxe; um toque preenche (bandeira, banco, conta, finais e tipos) */
+      'cartao.topo': function (ctx) {
+        if (ctx.semente) return '';
+        var enc = API.encontrados(); if (!enc.length) return '';
+        return '<div class="callout ct-detectados"><b>💳 ' + esc(tr('Detectados nas suas compras', 'Found in your purchases', 'Detectadas en tus compras')) + '</b>' +
+          '<span class="hint" style="display:block">' + esc(tr('Um toque preenche o cadastro.', 'One tap fills in the form.', 'Un toque rellena el registro.')) + '</span>' +
+          enc.slice(0, 6).map(function (x) {
+            return '<button type="button" class="btn sm ct-det" data-acao="ct-encontrado" data-chave="' + esc(x.chave) + '" style="display:block;width:100%;text-align:left;margin-top:6px">' + esc(rotuloEnc(x)) + '</button>';
+          }).join('') + '</div>';
+      },
       /* 1.1.0: uma pergunta discreta por cartão com os finais novos (dá para responder depois) */
       'inbox.grupos': function () {
         if (window.Escopo && Escopo.soCasa && Escopo.soCasa()) return [];
@@ -274,11 +295,14 @@
         var enc = API.encontrados().filter(function (x) { return x.contaId || !cartoes().length; });
         if (!enc.length) return '';
         var nomes = enc.slice(0, 4).map(function (x) { return (x.nome || (BANDEIRA_POR_ID[x.bandeira] || {}).nome || tr('Cartão', 'Card')) + ' (' + tr(x.finais.length > 1 ? 'finais ' : 'final ', x.finais.length > 1 ? 'endings ' : 'ending ') + x.finais.join(', ') + ')'; });
-        return '<div class="callout ct-dica">💳 ' + esc(tr('Encontrei ' + enc.length + ' cartão(ões) nas suas compras: ', 'I found ' + enc.length + ' card(s) in your purchases: ') + nomes.join(tr(' e ', ' and '))) +
-          '. <button type="button" class="linkinho" data-acao="ct-encontrado" data-chave="' + esc(enc[0].chave) + '">' + esc(tr('Dar nome?', 'Name them?')) + '</button></div>';
+        /* 1.2.0 (3.106): "Achamos 3 cartões nas suas faturas: cadastrar" → um só abre preenchido; vários, o "+ Novo cartão" com a lista */
+        return '<div class="callout ct-dica">💳 ' + esc(enc.length === 1 ? tr('Achamos 1 cartão nas suas faturas', 'We found 1 card in your bills', 'Encontramos 1 tarjeta en tus facturas') : tr('Achamos ' + enc.length + ' cartões nas suas faturas', 'We found ' + enc.length + ' cards in your bills', 'Encontramos ' + enc.length + ' tarjetas en tus facturas')) +
+          ' <span class="muted small">(' + esc(nomes.join(tr(' e ', ' and ', ' y '))) + ')</span>: ' +
+          (enc.length === 1 ? '<button type="button" class="linkinho" data-acao="ct-encontrado" data-chave="' + esc(enc[0].chave) + '">' : '<button type="button" class="linkinho" data-acao="ct-cadastrar">') + esc(tr('cadastrar', 'add them', 'registrar')) + '</button></div>';
       }
     },
     acoes: {
+      'ct-cadastrar': function () { if (typeof abrirCartao === 'function') abrirCartao(null); },
       'ct-encontrado': function (el) { var s = API.semente(el.dataset.chave); if (s && typeof abrirCartao === 'function') abrirCartao(null, s); },
       'ct-final-mais': function () { var ul = document.querySelector('.ct-finais'); if (ul) { ul.insertAdjacentHTML('beforeend', linhaFinal({ fim: '', tipo: 'virtual' })); ul.lastElementChild.querySelector('input').focus(); } },
       'ct-final-tirar': function (el) { var li = el.closest('.ct-final'); if (li) li.parentNode.removeChild(li); },

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/carro-drive.js — a foto do serviço do carro no GOOGLE DRIVE da pessoa (3.103)        1.0.1 · 24/Nov/2026
+   modulos/carro-drive.js — a foto do serviço do carro no GOOGLE DRIVE da pessoa (3.103)        1.0.2 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (plano aprovado pelo dono, 24/Nov/2026, com o ajuste "o usuário final NUNCA mexe no Google Cloud")
      · A parte do MoneyTRIO; o "Conectar Google" é o componente da plataforma (modulos/google-drive.js, window.SolverGoogle).
@@ -41,6 +41,8 @@
     var vid = x.veiculoId || (tipo === 'f' ? (CompraParcelada.parcelas(x)[0] || {}).veiculoId : '') || '', docs = [];
     if (x.docId) docs.push(x.docId);
     if (window.ArquivosFamilia) ArquivosFamilia.lista({ ligado: x.id }).forEach(function (m) { if (docs.indexOf(m.id) < 0) docs.push(m.id); });
+    /* 3.106 (1.0.2): a foto de leitura fica só no aparelho em que foi lida (90 dias): sem ela aqui, não há o que enviar (o botão some) */
+    if (window.ArquivosFamilia && ArquivosFamilia.aqui) docs = docs.filter(function (d) { var m = ArquivosFamilia.achar(d); return !m || !m.soAqui || ArquivosFamilia.aqui(d); });
     return { obj: x, data: x.data, oficina: tipo === 'f' ? (x.desc || x.loja) : ((x.contraparte && x.contraparte.nome) || x.descRobo || x.desc), vid: vid, docs: docs };
   }
   function naFila(k, sim) { var f = (cfg().driveFila || []).filter(function (x) { return x !== k; }); if (sim) f.push(k); cfg().driveFila = f; }
@@ -120,7 +122,7 @@
 
   var API = { pasta: pasta, enviar: enviar, fila: function () { return (cfg().driveFila || []).slice(); }, botao: botaoEnviar, botaoPasta: botaoPasta, topo: topo };
   MoneyModulos.registrar({
-    id: 'carro-drive', versao: '1.0.1',
+    id: 'carro-drive', versao: '1.0.2',
     pontos: {
       'config.todos': function () { return donoAqui() && SG() ? '<div class="card cfg-sec cd-dono" data-sec="todos"><div class="card-head"><h3>📁 Google Drive · ' + esc(tr('plataforma', 'platform', 'plataforma')) + '</h3></div>' + SG().formularioDono() + '</div>' : ''; },
       'inbox.grupos': function () {

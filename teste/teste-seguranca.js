@@ -58,7 +58,7 @@ const id = (n) => '99999999-0000-0000-0000-00000000000' + n;
     await P.click('#nvCodigoAntigo', { timeout: 20000 }); await P.waitForSelector('#nvCod');
     await P.fill('#nvCod', PESSOAS[ANA].codigo); await P.click('#nvCodOk');
     await P.waitForSelector('#nvP1');
-    ok(/Crie o PIN da sua conta SolverONE/.test(await P.textContent('.nv-card h2')) && /vale no MoneyTRIO, no OmniLifeONE e nos próximos apps/.test(await P.textContent('#nvPinUm')), 'tela do PIN: "Crie o PIN da sua conta SolverONE. Ele vale no MoneyTRIO, no OmniLifeONE e nos próximos apps"');
+    ok(/Crie o PIN da sua conta SolverONE/.test(await P.textContent('.nv-card h2')) && /Ele vale no MoneyTRIO e no OmniLifeONE: o mesmo em todos os seus aparelhos/.test(await P.textContent('#nvPinUm')), 'tela do PIN: "Crie o PIN da sua conta SolverONE. Ele vale no MoneyTRIO e no OmniLifeONE" (3.106: só os apps que a pessoa usa)');
     ok(/também passa a valer no OmniLifeONE/.test(await P.textContent('#nvPinOutros').catch(() => '')), 'a tela do PIN repete o aviso do OmniLifeONE');
     await P.fill('#nvP1', PIN); await P.fill('#nvP2', PIN); await P.click('#nvPOk');
     await P.waitForSelector('#nvSelo', { timeout: 90000 });
@@ -93,7 +93,9 @@ const id = (n) => '99999999-0000-0000-0000-00000000000' + n;
     await P.waitForSelector('#nvApVer', { timeout: 15000 });
     const aps = await P.textContent('#nvAps');
     ok(/este aparelho/.test(aps) && /MoneyTRIO e OmniLifeONE/.test(aps), 'a lista mostra "este aparelho" e os apps de cada aparelho ("… · MoneyTRIO e OmniLifeONE")');
-    ok(/Android · Chrome · OmniLifeONE/.test(aps) && /visto por último/.test(aps), 'o celular só do OmniLifeONE aparece com "visto por último"');
+    ok(/Seu celular \(Chrome\) · OmniLifeONE/.test(aps) && /visto por último|não aparece desde/.test(aps), '3.106: o celular só do OmniLifeONE aparece com nome humano ("Seu celular (Chrome) · OmniLifeONE") e quando foi visto');
+    ok(/Este computador \(Chrome\) · MoneyTRIO e OmniLifeONE/.test(aps), '3.106: este aparelho: "Este computador (Chrome)"');
+    ok(await P.evaluate(() => [...document.querySelectorAll('#nvAps [data-tirar]')].every((b) => b.classList.contains('nv-lnk') && /remover…/.test(b.textContent))), '3.106: o "Remover" virou um link discreto ("remover…", com confirmação)');
     ok(/1 aparelho pedindo para entrar · Ver e aprovar/.test(await P.textContent('#nvApAviso')), 'pedido simulado de app=omnilife: "1 aparelho pedindo para entrar · Ver e aprovar"');
     ok(!(await P.$('#nvPedido')), 'com a tela aberta, o balão do pedido não fica por cima dela');
     const robo = await P.textContent('#nvSecRobo');
@@ -101,11 +103,13 @@ const id = (n) => '99999999-0000-0000-0000-00000000000' + n;
     ok(await P.evaluate(() => !document.querySelector('#nvRoboAv').open && !!document.querySelector('#nvRoboAv #nvRoboEmail') && !!document.querySelector('#nvCaixaJa')), 'e-mail e "autorizar" ficam no Avançado (fechado); "Buscar agora" à vista');
     ok(await P.evaluate(() => !document.querySelector('#nvSairAv').open && !!document.querySelector('#nvSairAv #nvDesc') && !!document.querySelector('#nvSairAv #nvIrLocal') && !!document.querySelector('#nvSecSair > #nvSair')), 'Sair: "Sair da conta" à vista; "apagar a cópia" e "só neste aparelho" no Avançado');
     ok(await P.evaluate(() => !document.querySelector('#nvPin').classList.contains('nv-hidden') && /Bloquear agora/.test(document.querySelector('#nvTrancar').textContent)), 'PIN e digital: "Trocar o PIN" (a conta tem PIN) e "🔒 Bloquear agora"');
-    ok(await P.evaluate(() => /Entrar com a digital num aparelho novo/.test(document.querySelector('#nvApAv').textContent) || !document.querySelector('#nvApPk')), 'a passkey (quando há leitor) fica no Avançado com o nome novo');
+    ok(await P.evaluate(() => !document.querySelector('#nvApPk') || (/Entrar com a digital num aparelho novo/.test(document.querySelector('#nvApAv').textContent) && /Só para um aparelho que você ainda não usou/.test(document.querySelector('#nvApAv').textContent))), 'a passkey (quando há leitor) fica no Avançado, com "só para um aparelho que você ainda não usou"');
+    ok(await P.evaluate(() => !document.querySelector('#nvApPedidos').closest('details') && /Para aprovar um aparelho novo seu|🔔 1 pedido agora/.test(document.querySelector('#nvApPedEst').textContent)), '3.106: "Ver pedidos de acesso" fica à vista, com a linha "para que serve" (ou o contador, quando há pedido)');
+    ok(/Estar na lista não quer dizer que o aparelho ainda guarda a chave/.test(await P.textContent('#nvSecAps')), '3.106: o cartão explica que estar na lista não quer dizer que o aparelho ainda guarda a chave');
 
     console.log('4) larguras e prints');
     const medir = () => P.evaluate(() => { const g = document.querySelector('.nv-grade'), c = document.querySelector('.nv-largo');
-      return { cols: getComputedStyle(g).gridTemplateColumns.split(' ').length, secs: g.children.length, lado: c.scrollWidth > c.clientWidth + 1 || document.documentElement.scrollWidth > innerWidth + 1, w: Math.round(c.getBoundingClientRect().width) }; });
+      return { cols: g.querySelectorAll(':scope > .nv-col').length, secs: g.querySelectorAll('.nv-sec').length, lado: c.scrollWidth > c.clientWidth + 1 || document.documentElement.scrollWidth > innerWidth + 1, w: Math.round(c.getBoundingClientRect().width) }; });
     for (const [vp, cols, nome] of [[{ width: 1366, height: 768 }, 2, '1366'], [{ width: 1920, height: 1080 }, 3, '1920'], [{ width: 2560, height: 1440 }, 3, '2560'], [{ width: 390, height: 844 }, 1, 'celular']]) {
       await P.setViewportSize(vp); await P.waitForTimeout(300);
       const m = await medir();
@@ -113,7 +117,31 @@ const id = (n) => '99999999-0000-0000-0000-00000000000' + n;
       if (nome === 'celular') { await P.setViewportSize({ width: 390, height: 2300 }); await P.waitForTimeout(200); }
       await P.screenshot({ path: '/tmp/seg-' + nome + '.png' });
     }
+    console.log('4b) 3.106: colunas independentes — abrir os "Avançado" não mexe no Sair nem no Robô do banco');
+    for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }]) {
+      await P.setViewportSize(vp); await P.waitForTimeout(300);
+      const pos = () => P.evaluate(() => ['#nvSecSair', '#nvSecRobo'].map((q) => { const r = document.querySelector(q).getBoundingClientRect(); return Math.round(r.left) + ',' + Math.round(r.top); }).join(' '));
+      await P.evaluate(() => document.querySelectorAll('details').forEach((d) => { d.open = false; })); await P.waitForTimeout(100);
+      const antes = await pos();
+      await P.evaluate(() => ['#nvApAv', '#nvDadosDet'].forEach((q) => { const d = document.querySelector(q); if (d) d.open = true; })); await P.waitForTimeout(100);
+      const depois = await pos();
+      ok(antes === depois, vp.width + ': abrir "Avançado" de Seus aparelhos e "Ver detalhes" não move o Sair nem o Robô (' + antes + ' → ' + depois + ')');
+    }
+    await P.evaluate(() => document.querySelectorAll('details').forEach((d) => { d.open = false; }));
     await P.setViewportSize({ width: 1366, height: 768 });
+
+    console.log('4c) 3.106: "Ver pedidos de acesso" responde no próprio cartão');
+    await P.click('#nvApPedidos');
+    await P.waitForFunction(() => /1 pedido agora/.test(document.querySelector('#nvApPedEst').textContent), null, { timeout: 10000 }).catch(() => {});
+    ok(/🔔 1 pedido agora/.test(await P.textContent('#nvApPedEst')) && !!(await P.$('.nv-painel')), 'com um pedido: "🔔 1 pedido agora", e o painel continua aberto');
+    const ped = db.sol_acesso_pedidos.find((x) => x.nome === 'iPhone · Safari'); ped.estado = 'fechado';
+    await P.click('#nvApPedidos');
+    await P.waitForFunction(() => /Nenhum pedido agora/.test(document.querySelector('#nvApPedEst').textContent), null, { timeout: 10000 }).catch(() => {});
+    ok(/Nenhum pedido agora\. No aparelho novo, toque em 📱 Aprovar pelo outro aparelho e o pedido aparece aqui em segundos\./.test(await P.textContent('#nvApPedEst')), 'sem pedido: a resposta aparece no cartão (antes ficava atrás do painel)');
+    ped.estado = 'aberto';
+    await P.waitForFunction(() => /1 pedido agora/.test(document.querySelector('#nvApPedEst').textContent), null, { timeout: 12000 }).catch(() => {});
+    ok(/🔔 1 pedido agora/.test(await P.textContent('#nvApPedEst')), 'com o painel aberto, o cartão escuta: o pedido novo aparece sozinho em segundos');
+    await P.waitForSelector('#nvApVer', { timeout: 10000 });
     await P.click('#nvApVer'); await P.waitForSelector('#nvPedido');
     ok(/iPhone · Safari · OmniLifeONE/.test(await P.textContent('#nvPedido')), '"Ver e aprovar" leva ao pedido, que diz de qual app ele vem (OmniLifeONE)');
     await P.click('#nvPedidoX');

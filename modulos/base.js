@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/base.js — o registro de módulos do MoneyTRIO            1.1.0 · 06/Nov/2026
+   modulos/base.js — o registro de módulos do MoneyTRIO            1.1.1 · 24/Nov/2026 (telas(): a lista das telas, para o índice do AssistONE)
    ---------------------------------------------------------------------
    POR QUE EXISTE
    O index.html passou de 2 MB. Daqui para frente, cada função nova mora num arquivo próprio em
@@ -88,6 +88,11 @@
         if (t && typeof t.render === 'function') { var mid = mods[i].id; return function () { var r = seguro(mid, t.render); return typeof r === 'string' ? r : ''; }; }
       }
       return null;
+    },
+    /* 3.106: todas as telas dos módulos ({id, info}), para o índice do AssistONE */
+    telas: function () {
+      var out = []; mods.forEach(function (m) { Object.keys(m.telas).forEach(function (id) { out.push({ id: id, info: m.telas[id] }); }); });
+      return out;
     },
     infoTela: function (id) {
       for (var i = 0; i < mods.length; i++) if (mods[i].telas[id]) return mods[i].telas[id];
