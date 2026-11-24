@@ -844,6 +844,28 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas ou uma sem, e do mesmo CNPJ ou loja, sem precisar do `mesmaCompra`; fica o do pagamento: o final, senão a data mais nova); o
   seletor de cartão por `Cartoes.doFinal` (qualquer final); `osRot` na linha ("OS n · Veículo › sub · 🚗 apelido"); `acharCarro` também com a
   palavra do apelido dentro da palavra lida ("LRENEGADE").
+  **3.106 — Busca que acha o app, PIN sem beco sem saída, fotos no aparelho.** (1) `modulos/assistone-indice.js` 1.0.0 (`window.AssistIndice`;
+  diretriz "O AssistONE conhece TUDO o que o app tem"): índice montado na hora (cache 20 s, por idioma) das telas (`ABAS` + `AJUDA_TELAS` +
+  `MoneyModulos.telas()`, base 1.1.1), das seções de Configurações (`viewConfig()` passado pelo `Verter` e lido com DOMParser: o `h3` e a
+  primeira linha), do Tutorial e do Começar, das Novidades (15 versões; um item por versão nos resultados) e da conta/aparelhos (nuvem.js:
+  criar/trocar/esqueci o PIN, aparelho novo, Pedido de acesso, 6 números, digital, passkey, código de recuperação, tirar aparelho,
+  bloquear, instalar). Sem acento, PT/EN/ES (ES pelo FRASES_ES; sem ele, o EN); "cartão" também acha "cartões"; 1-2 letras ("OS") só com
+  palavra inteira do título ou das palavras-chave. `resultadosBusca(q, true)` (só no AssistONE) põe "No app" antes do Coach e do
+  glossário; a ação `ai-ir` leva à tela ou faz a ação. Quando sair o master `assistone.js` 1.3 (RootifyONE #153), vira só a lista do
+  MoneyTRIO e o teste `teste/assistone-indice.js` (nome combinado; fora do padrão `teste-*.js`: a suíte o chama à parte) é trocado
+  pela cópia do master. (2) nuvem.js 1.15.7: `Portao.comChave` + `Cadeado.reabrirDuk(pin|null)`: reaberto pela sessão guardada
+  (`Vale.usar` → `usarChave`, sem `dukRaw`), Criar/Trocar o PIN, Ligar a digital e a passkey pedem o PIN deste aparelho ou a digital ali
+  mesmo; o aviso do PIN da conta é opcional ("Depois" = `dgo:moneytrio:aviso:pin-conta:depois`, 7 dias, volta sempre; "O que é isso?" →
+  `Portao.ajudaPin`, também `MoneyNuvem.ajudaPin`); painel em colunas fixas (`Painel.colunas`: 1/2/3 pela largura, Seus aparelhos no fim
+  da coluna; redesenha ao mudar o número de colunas), pedidos no cartão (`#nvApPedEst`, escuta a cada 5 s com o painel aberto),
+  `nomeHumano`, "remover…" discreto, "não aparece desde" (> 7 dias); "Primeira vez" de um aparelho já listado (mesmo nome e app)
+  explica que o navegador apagou a chave (o id `L.ap` morava no armazenamento apagado: reaproveitar a linha precisaria do banco).
+  (3) cartoes 1.2.0: `cartao.topo` "Detectados nas suas compras" (`rotuloEnc`), Painel "Achamos N cartões nas suas faturas: cadastrar"
+  (`ct-cadastrar`). (4) arquivos 1.1.0 (decisão do dono): `guardar({… soAqui: true})` nas fotos de leitura (canhotos 1.3.3, print-colar
+  1.3.1): não sobem ao `money-arquivos` (o que já está lá fica), ficam no IndexedDB 90 dias (`expira`, `limpar()` no início) e, com o
+  Drive conectado, vão para MoneyTRIO/Fotos lidas (`aoDrive`, `m.drive = {id, link}`; o 📎 abre lá). `aqui(id)`/`disponivel(id)`:
+  carro-drive 1.0.2 não oferece "Enviar ao Drive" sem a foto aqui; veiculos 1.0.2 esconde o 📄. Rodapé de privacidade com a linha.
+  Testes: `teste-pin-sessao`, `teste-seguranca` (colunas, pedidos), `assistone-indice`, `teste-cartoes-contraparte`, `teste-fotos-aparelho`.
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem

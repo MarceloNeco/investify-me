@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.6 · 22/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.7 · 24/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -63,6 +63,13 @@
   21. 1.15.4 (3.89) — o idioma segue o I18n do app (3 idiomas: tt(pt, en, es); sem ES, o inglês).
   22. 1.15.5 (3.95) — caixa do robô: tipo "comprovante" (dos e-mails) vai para modulos/comprovantes.js; nunca vira lançamento.
   23. 1.15.6 (3.98) — o campo opcional "hora" (HH:MM, hora de SP) do robô vai para o lançamento (g.hora).
+  24. 1.15.7 (3.106) — reaberto pela sessão guardada (sem a chave do aparelho na memória), Criar/Trocar o PIN, Ligar a digital e a passkey
+      pedem ali mesmo o PIN deste aparelho ou a digital (Portao.comChave → Cadeado.reabrirDuk), sem erro sem saída. Aviso do PIN da conta:
+      opcional, "Depois" esconde 7 dias (dgo:moneytrio:aviso:pin-conta:depois) e volta; "O que é isso?" → Portao.ajudaPin (também
+      MoneyNuvem.ajudaPin, para o AssistONE). Painel "Segurança e aparelhos": colunas independentes (abrir um "Avançado" não move o Robô
+      nem o Sair), linha "para que serve" em cada botão, "Ver pedidos de acesso" responde no cartão e escuta a cada 5 s, nomes humanos
+      ("Seu celular (Chrome)"), "remover…" discreto, "não aparece desde DD/Mmm" (> 7 dias). "Primeira vez" num aparelho que já está na
+      lista explica que o navegador apagou a chave.
   20. 1.15.3 (3.87) — o robô mandar de novo um lançamento DIVIDIDO pela pessoa não desfaz a divisão (corrigir compara com o total).
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da

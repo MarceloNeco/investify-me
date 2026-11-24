@@ -1,11 +1,18 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.105 · 24/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.106 · 24/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.106', d:'2026-11-24', t:'Busca que acha o app, PIN sem beco sem saída e fotos no aparelho', itens:[
+    '🔎 A busca do AssistONE agora acha o próprio app: telas, menu, Configurações, Tutorial, Novidades e a conta e os aparelhos (PIN, aparelho novo, digital, código de recuperação, tirar aparelho). "No app" vem primeiro, e cada resultado leva direto à tela ou à ação.',
+    '🔢 PIN da conta: com o app reaberto sozinho, "Criar o PIN", "Trocar o PIN" e "Ligar a digital" pedem ali mesmo o PIN deste aparelho (ou a digital) e seguem, sem mandar bloquear e desbloquear. O aviso do PIN diz que ele é opcional, tem "O que é isso?" (o passo a passo do aparelho novo) e "Depois" esconde por 7 dias.',
+    '🔐 Segurança e aparelhos mais clara: cada cartão cresce sem empurrar os outros; cada botão diz para que serve; "Ver pedidos de acesso" responde no próprio cartão e o pedido novo aparece sozinho; os aparelhos aparecem como "Seu celular (Chrome)", o "remover…" ficou discreto, e quem não aparece há mais de 7 dias diz desde quando. Um aparelho da lista que pede "Primeira vez" de novo explica que o navegador apagou a chave.',
+    '💳 "+ Novo cartão" mostra no topo os cartões detectados nas suas compras ("Mastercard (Itaú) · finais ••9458, ••6514 e mais 11 virtuais · última compra 23/Nov"); um toque preenche o cadastro. No Painel: "Achamos 3 cartões nas suas faturas: cadastrar".',
+    '📷 As fotos lidas (canhoto, print, OS da oficina) ficam só no aparelho em que foram lidas, por 90 dias; com o Google Drive conectado, o original vai também para a pasta MoneyTRIO/Fotos lidas e o 📎 abre lá.'
+  ]},
   {v:'3.105', d:'2026-11-24', t:'Contas de outras pessoas e telas que não se perdem', itens:[
     '📋 Contas de outras pessoas que chegam no seu e-mail (ex.: uma assinatura que você fez para um parente): no comprovante, toque em "Não é meu". O app pega o titular e o código do cliente do próprio e-mail, você diz de quem é e escolhe: ignorar (não entra nas suas finanças) ou processar para a pessoa (entra com "para quem"). As próximas contas dela são reconhecidas sozinhas. A lista fica em Configurações e os nomes ficam só no seu aparelho.',
     'Viagens: a caixa "✂️ Parte" não fecha mais quando a tela se atualiza sozinha no meio da digitação.',
