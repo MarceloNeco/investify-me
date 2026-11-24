@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/veiculos.js — MEUS VEÍCULOS e "QUANTO O CARRO CUSTA" (3.99)        1.0.1 · 24/Nov/2026
+   modulos/veiculos.js — MEUS VEÍCULOS e "QUANTO O CARRO CUSTA" (3.99)        1.0.2 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 23/Nov/2026: "quanto o carro me custa e para onde vai o dinheiro"; sem IA)
      · Meus veículos: cada carro com um APELIDO ("Renegade 2019"), nunca a placa. Cada lançamento do grupo Veículo ganha o carro
@@ -152,6 +152,8 @@
 
   /* ---------- tela ---------- */
   var sel = { vid: '', mes: '' };
+  /* 1.0.2 (3.106): o 📄 só aparece se der para abrir daqui (a foto de leitura fica no aparelho em que foi lida, ou no Drive) */
+  function docOk(id) { return !window.ArquivosFamilia || !ArquivosFamilia.disponivel || ArquivosFamilia.disponivel(id); }
   function botao(acao, rot, extra, cls) { return '<button type="button" class="btn sm' + (cls ? ' ' + cls : '') + '" data-acao="' + acao + '"' + (extra || '') + '>' + esc(rot) + '</button>'; }
   function rotBloco(b) { return { ter: tr('Ter o carro', 'Owning the car', 'Tener el coche'), usar: tr('Usar', 'Using it', 'Usarlo'), manut: tr('Manutenção', 'Maintenance', 'Mantenimiento'), outros: tr('Outros', 'Other', 'Otros') }[b]; }
   function tela() {
@@ -175,10 +177,10 @@
       }).join('') +
       (r.contratado.length ? '<h4 style="margin:10px 0 4px">' + esc(tr('Serviços parcelados', 'Installment services', 'Servicios a plazos')) + '</h4>' + r.contratado.map(function (c) {
         return '<div class="small vc-contrato">' + esc((c.f.desc || c.f.loja || '') + (c.f.sub ? ' · ' + c.f.sub : '') + ' · ' + tr('contratado ', 'contracted ', 'contratado ') + fmt(c.f.total) + ' ' + tr('em ', 'in ', 'en ') + c.f.n + 'x · ' + tr('caiu no mês ', 'fell this month ', 'cayó en el mes ') + fmt(c.caiu) + ' (' + c.pagas + '/' + c.f.n + ')') +
-          (c.f.docId ? ' ' + botao('vc-doc', '📄 ' + tr('documento', 'document', 'documento'), ' data-id="' + esc(c.f.docId) + '"') : '') + (window.CarroDrive ? CarroDrive.botao('f', c.f.id) : '') + '</div>';
+          (c.f.docId && docOk(c.f.docId) ? ' ' + botao('vc-doc', '📄 ' + tr('documento', 'document', 'documento'), ' data-id="' + esc(c.f.docId) + '"') : '') + (window.CarroDrive ? CarroDrive.botao('f', c.f.id) : '') + '</div>';
       }).join('') : '') +
       '<h4 style="margin:10px 0 4px">' + esc(tr('O que foi pago no mês', 'Paid this month', 'Lo pagado en el mes')) + '</h4>' +
-      (r.itens.length ? r.itens.map(function (g) { return '<div class="small row vc-item" style="justify-content:space-between"><span>' + esc(I18n.data(g.data, { semAno: true }) + ' · ' + (g.desc || '') + ' · ' + (g.sub || '')) + (g.docId ? ' ' + botao('vc-doc', '📄', ' data-id="' + esc(g.docId) + '"') : '') + (window.CarroDrive && !g.compraId ? CarroDrive.botao('g', g.id) : '') + '</span><span>' + esc(fmt(g.valor)) + '</span></div>'; }).join('') : '<p class="small muted">' + esc(tr('Nada neste mês.', 'Nothing this month.', 'Nada este mes.')) + '</p>') +
+      (r.itens.length ? r.itens.map(function (g) { return '<div class="small row vc-item" style="justify-content:space-between"><span>' + esc(I18n.data(g.data, { semAno: true }) + ' · ' + (g.desc || '') + ' · ' + (g.sub || '')) + (g.docId && docOk(g.docId) ? ' ' + botao('vc-doc', '📄', ' data-id="' + esc(g.docId) + '"') : '') + (window.CarroDrive && !g.compraId ? CarroDrive.botao('g', g.id) : '') + '</span><span>' + esc(fmt(g.valor)) + '</span></div>'; }).join('') : '<p class="small muted">' + esc(tr('Nada neste mês.', 'Nothing this month.', 'Nada este mes.')) + '</p>') +
       '<p class="small vc-ano" style="margin-top:10px">' + esc(tr('Últimos 12 meses: ', 'Last 12 months: ', 'Últimos 12 meses: ') + fmt(r.ano) + ' · ' + tr('média por mês ', 'monthly average ', 'media por mes ') + fmt(r.media)) + '</p></div>';
     return h;
   }
@@ -190,7 +192,7 @@
   });
 
   MoneyModulos.registrar({
-    id: 'veiculos', versao: '1.0.1', colecoes: [COL],
+    id: 'veiculos', versao: '1.0.2', colecoes: [COL],
     pontos: {
       'inbox.grupos': function () {
         if (window.Escopo && Escopo.soCasa && Escopo.soCasa()) return [];

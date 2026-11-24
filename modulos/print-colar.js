@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/print-colar.js — "📋 Colar print": notificação do banco vira lançamento (3.87)        1.3.0 · 23/Nov/2026
+   modulos/print-colar.js — "📋 Colar print": notificação do banco vira lançamento (3.87)        1.3.1 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 14/Nov/2026; sem IA)
      · Entradas: colar da área de transferência (Ctrl+V no computador; no celular o botão "Colar", com
@@ -393,7 +393,7 @@
   };
 
   MoneyModulos.registrar({
-    id: 'print-colar', versao: '1.3.0',
+    id: 'print-colar', versao: '1.3.1',
     pontos: {
       'lancamentos.topo': function () {
         if (conciliar()) Store.salvar();
@@ -444,7 +444,7 @@
         var guardar = document.getElementById('pcGuardar') && document.getElementById('pcGuardar').checked;
         if (guardar && lido && lido.arquivos && window.ArquivosFamilia) {
           var lig = feitos[0].gasto ? feitos[0].gasto.id : feitos[0].pendente.id, fch = feitos[0].ficha;
-          for (var i = 0; i < lido.arquivos.length; i++) { try { await ArquivosFamilia.guardar({ nome: 'print ' + its[0].data + (i ? ' (' + (i + 1) + ')' : ''), tipo: 'comprovante', ano: +its[0].data.slice(0, 4), ligado: lig, mime: lido.arquivos[i].type }, new Uint8Array(await lido.arquivos[i].arrayBuffer())).then(function (m) { if (fch && m && m.id && !fch.docId) { fch.docId = m.id; CompraParcelada.ligar(fch); } }); } catch (e) { toast(tr('Não deu para guardar o comprovante.', 'Could not keep the receipt.'), 'warn'); } }
+          for (var i = 0; i < lido.arquivos.length; i++) { try { await ArquivosFamilia.guardar({ nome: 'print ' + its[0].data + (i ? ' (' + (i + 1) + ')' : ''), tipo: 'comprovante', ano: +its[0].data.slice(0, 4), ligado: lig, mime: lido.arquivos[i].type, soAqui: true }, new Uint8Array(await lido.arquivos[i].arrayBuffer())).then(function (m) { if (fch && m && m.id && !fch.docId) { fch.docId = m.id; CompraParcelada.ligar(fch); } }); } catch (e) { toast(tr('Não deu para guardar o comprovante.', 'Could not keep the receipt.'), 'warn'); } }
         }
         lido = null; conciliar(); fechar('genModal'); depois();
         toast(its.length + tr(' item(ns) do print: ', ' screenshot item(s): ') + (np ? np + tr(' aguardando o banco', ' waiting for the bank') : '') + (np && np < its.length ? ' · ' : '') + (its.length - np ? (its.length - np) + tr(' lançado(s)', ' added') : ''));
