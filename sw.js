@@ -23,7 +23,7 @@ var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './aju
   './modulos/compromisso-de.js?v=1.7.2',
   './modulos/previsto.js?v=1.0.2',
   './modulos/conciliacao.js?v=1.0.0', './modulos/calendario-menu.js?v=1.2.1',
-  './modulos/pessoas.js?v=1.3.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=2.1.2', './modulos/espelho.js?v=1.1.2', './modulos/tour.js?v=1.0.2', './modulos/cartoes.js?v=1.1.0', './modulos/cartao-foto.js?v=1.0.0',
+  './modulos/pessoas.js?v=1.3.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=2.1.2', './modulos/espelho.js?v=1.1.2', './modulos/tour.js?v=1.0.2', './modulos/cartoes.js?v=1.2.0', './modulos/cartao-foto.js?v=1.0.0',
   /* 3.65: o motor do Leitor OCR para o cartão por foto (cópia do leitor-ocr; leitor/tesseract/ é guardado no 1º uso) */
   './leitor/leitura.js', './leitor/leitura/catalogo.js', './leitor/leitura/texto.js', './leitor/leitura/foto.js', './leitor/leitores/cartao-plastico.js',
   /* 3.92: o motor 1.12.0 do Leitor OCR para "Conferir canhotos" (Leitura.lerVarios), copiado sem alterar */

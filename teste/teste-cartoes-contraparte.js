@@ -38,7 +38,12 @@ const LOCAL = { v: 1, config: {}, posicoes: [], gastos: [], recorrentes: [], pes
     return { enc: enc.map((x) => (x.nome || '?') + ':' + x.finais.join(',')), dica: (document.querySelector('.ct-dica') || {}).textContent || '' };
   });
   ok(c1.enc.indexOf('BLACK TESTE MULT:1101,2202,3303') >= 0 && c1.enc.some((x) => /4404/.test(x)), '3 finais da mesma conta viram 1 cartão em "Cartões encontrados" (' + c1.enc.join(' | ') + ')');
-  ok(/Encontrei/.test(c1.dica) && /finais 1101, 2202, 3303/.test(c1.dica), 'dica no Painel: "' + c1.dica.slice(0, 110) + '…"');
+  ok(/Achamos 3 cartões nas suas faturas/.test(c1.dica) && /finais 1101, 2202, 3303/.test(c1.dica) && /cadastrar/.test(c1.dica), 'dica no Painel (3.106): "' + c1.dica.slice(0, 130) + '…"');
+  /* 3.106: o "+ Novo cartão" mostra no topo os detectados; um toque preenche */
+  const det = await p.evaluate(() => { abrirCartao(null); return [...document.querySelectorAll('.ct-detectados .ct-det')].map((b) => b.textContent); });
+  ok(det.length === 3 && det.some((t) => /^Mastercard \(Banco Teste\) · finais ••1101, ••2202 e mais 1 virtual · última compra 03\/Out$/.test(t)), '"+ Novo cartão": "Detectados nas suas compras" (' + det.join(' | ') + ')');
+  await p.evaluate(() => document.querySelector('.ct-detectados .ct-det').click()); await p.waitForTimeout(200);
+  ok(await p.evaluate(() => document.getElementById('ctApelido').value === 'BLACK TESTE MULT' && [...document.querySelectorAll('.ct-f-fim')].map((x) => x.value).join(',') === '1101,2202,3303' && !document.querySelector('.ct-detectados')), 'um toque preenche o cadastro (apelido, conta, os 3 finais) e a lista sai');
   /* cadastrar pelo "Dar nome": o formulário vem preenchido; Quem usa = Rita no Visa */
   await p.evaluate(() => { const s = Cartoes.semente(Cartoes.encontrados().find((x) => x.contaId === 'acc-black-1').chave); abrirCartao(null, s); });
   await p.waitForTimeout(200);
