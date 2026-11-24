@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/canhotos.js — "📷 Foto de nota ou recibo" com o banco (3.92; antes "🧾 Conferir canhotos")        1.3.1 · 24/Nov/2026
+   modulos/canhotos.js — "📷 Foto de nota ou recibo" com o banco (3.92; antes "🧾 Conferir canhotos")        1.3.2 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 18/Nov/2026; sem IA)
      · Em Lançamentos, "🧾 Conferir canhotos": uma foto (ou várias) com os canhotos da maquininha, cupons e recibos. O motor do
@@ -31,6 +31,13 @@
    1.3.1 (3.105), pedido do dono: o botão e a janela passam a se chamar "📷 Foto de nota ou recibo" (ele lê qualquer foto de gasto: a OS
      da oficina, a nota, o recibo, o orçamento, o canhoto), com a linha "OS da oficina, nota, recibo ou canhoto: o app lê e liga ao
      banco". Só o texto: o id (cn-abrir) e as ações são os mesmos.
+   1.3.2 (3.105), o teste real do dono (as 2 fotos da oficina, a OS e o canhoto da maquininha, escolhidas juntas, vieram como 2 itens):
+     · 2º passo do juntarOS: o item com OS se junta a outro do mesmo valor, das mesmas parcelas e do mesmo CNPJ ou loja, mesmo sem o
+       "mesmaCompra" do motor (fotos separadas; um pedaço do canhoto no canto da foto da OS; os dois lidos como OS). Fica o que tem o
+       pagamento (o final do cartão; sem ele, a data mais nova); da OS vêm o nº, o veículo e a categoria.
+     · O cartão vem escolhido pelo final lido em QUALQUER final do cartão (Cartoes.doFinal), não só no primeiro.
+     · A linha mostra "Veículo › <categoria> · <carro>" antes de esperar o banco; o carro pelo apelido mesmo com letra grudada no texto lido
+       ("LRENEGADE" acha o "Renegade"); com o carro achado, a linha mostra o apelido, não o texto do OCR.
    PONTOS QUE USA
      lancamentos.topo · ações cn-*
    ===================================================================== */
@@ -80,6 +87,27 @@
         fora[it.papel] = 1;
       } else if (f.fonte !== 'comprovante') it.osLonge = true;   /* sem o pagamento: a data é a da emissão */
     });
+    /* 1.3.2 (3.105): o mesmo serviço sem o "mesmaCompra" do motor (fotos separadas; pedaço do canhoto na foto da OS): o mesmo valor, as
+       mesmas parcelas (ou uma sem) e o mesmo CNPJ ou loja. Fica o do pagamento (final do cartão; sem ele, a data mais nova) */
+    var resto = itens.filter(function (it) { return !fora[it.papel]; });
+    resto.forEach(function (a) {
+      if (!a.os || fora[a.papel]) return;
+      resto.forEach(function (b) {
+        if (b === a || fora[b.papel] || fora[a.papel] || !(a.valor > 0) || Math.abs((Number(b.valor) || 0) - a.valor) > 0.011) return;
+        var pa = a.parcelas || 1, pb = b.parcelas || 1; if (pa > 1 && pb > 1 && pa !== pb) return;
+        var ca = so(a.cnpj), cb = so(b.cnpj), la = a.lojaOS || a.loja || '', lb = b.lojaOS || b.loja || '';
+        if (!((ca.length === 14 && ca === cb) || (norm(la) && norm(la) === norm(lb)) || (window.PrintColar && la && lb && PrintColar.lojaParecida(la, lb)))) return;
+        var fica = (b.final && !a.final) || (!a.final && !b.final && iso(b.data) > iso(a.data)) ? b : a, sai = fica === a ? b : a;
+        var comCarro = a.os && a.os.veiculo ? a : b.os && b.os.veiculo ? b : null;
+        fica.os = Object.assign({}, sai.os || {}, fica.os || {}, comCarro ? comCarro.os : {});
+        if (!fica.os.numero && sai.os && sai.os.numero) fica.os.numero = sai.os.numero;
+        fica.parcelas = Math.max(pa, pb); if (!fica.cnpj && sai.cnpj) fica.cnpj = sai.cnpj;
+        if (sai.loja && !fica.lojaOS) fica.lojaOS = sai.lojaOS || sai.loja; if (!fica.loja) fica.loja = sai.loja;
+        if (!fica.final && sai.final) fica.final = sai.final; if (!fica.hora && sai.hora && fica.data === sai.data) fica.hora = sai.hora;
+        fica.osLonge = !!(fica.osLonge && sai.osLonge && !fica.final);
+        fora[sai.papel] = 1;
+      });
+    });
     return itens.filter(function (it) { return !fora[it.papel]; });
   }
   /* o carro pelo nome do veículo da OS (uma palavra do apelido, sem número); sem o nome, o único carro ativo */
@@ -87,7 +115,8 @@
     if (!window.Veiculos) return '';
     var at = Veiculos.ativos(), n = ' ' + norm(nome) + ' ';
     if (!n.trim()) return at.length === 1 ? at[0].id : '';
-    var hit = at.filter(function (v) { return norm(v.apelido).split(' ').some(function (w) { return w.length >= 3 && !/^\d+$/.test(w) && n.indexOf(' ' + w + ' ') >= 0; }); });
+    /* 1.3.2: a palavra do apelido também dentro de uma palavra lida ("LRENEGADE" acha "Renegade"), com 4 letras ou mais */
+    var hit = at.filter(function (v) { return norm(v.apelido).split(' ').some(function (w) { return w.length >= 3 && !/^\d+$/.test(w) && (n.indexOf(' ' + w + ' ') >= 0 || (w.length >= 4 && n.indexOf(w) >= 0)); }); });
     return hit.length === 1 ? hit[0].id : '';
   }
   function osPadrao(it) {
@@ -225,7 +254,13 @@
 
   /* ---------- o resultado ---------- */
   function rot(it) { return [it.loja || tr('(loja não lida)', '(store not read)', '(tienda no leída)'), it.data, it.hora, it.final ? '••' + it.final : '', it.parcelas > 1 && it.valor ? it.parcelas + 'x ' + tr('de ', 'of ', 'de ') + fmt(n2(it.valor / it.parcelas)) : '',
-    it.os ? '🔧 ' + [tr('OS', 'Work order', 'OT') + (it.os.numero ? ' ' + it.os.numero : ''), it.os.veiculo, it.os.situacao === 'orcamento' ? tr('orçamento (ainda não pago)', 'estimate (not paid yet)', 'presupuesto (aún no pagado)') : ''].filter(Boolean).join(' · ') : ''].filter(Boolean).join(' · '); }
+    it.os ? '🔧 ' + osRot(it) : ''].filter(Boolean).join(' · '); }
+  /* 1.3.2: "OS 4321 · Veículo › Funilaria e pintura · <apelido do carro>" (sem carro achado, o veículo lido) */
+  function osRot(it) {
+    var po = osPadrao(it), v = po.veiculoId && window.Veiculos ? Veiculos.ativos().find(function (x) { return x.id === po.veiculoId; }) : null;
+    return [tr('OS', 'Work order', 'OT') + (it.os.numero ? ' ' + it.os.numero : ''), (GRUPOS.VEICULO || {}).nome + ' › ' + it.os.sub, v ? '🚗 ' + v.apelido : it.os.veiculo,
+      it.os.situacao === 'orcamento' ? tr('orçamento (ainda não pago)', 'estimate (not paid yet)', 'presupuesto (aún no pagado)') : ''].filter(Boolean).join(' · ');
+  }
   function nomeG(g) { return ((g.contraparte && g.contraparte.nome) || g.descRobo || g.desc || '') + ' · ' + I18n.data(g.data) + (g.pendente ? ' · ⏳ ' + tr('pendente no banco', 'pending at the bank', 'pendiente en el banco') : ''); }
   function classificacao(k, g0, it) {
     var gs = Object.keys(GRUPOS), g = Object.assign({}, g0, osPadrao(it));
@@ -243,7 +278,7 @@
     var gr = ultimo.grupos, sec = function (ico, tit, l, corpo) { return l.length ? '<h4 style="margin:12px 0 4px">' + ico + ' ' + esc(tit) + ' (' + l.length + ')</h4>' + l.map(corpo).join('') : ''; };
     var opcCartao = function (it) {
       var cs = typeof Banco !== 'undefined' ? Banco.cartoes() : [];
-      return '<select data-cn="cartao"><option value="">' + esc(tr('cartão…', 'card…', 'tarjeta…')) + '</option>' + cs.map(function (c) { return '<option value="' + esc(c.id) + '"' + (it.final && String(c.fim) === it.final ? ' selected' : '') + '>' + esc(Banco.rotuloCartao(c.id)) + '</option>'; }).join('') + '</select>';
+      return '<select data-cn="cartao"><option value="">' + esc(tr('cartão…', 'card…', 'tarjeta…')) + '</option>' + cs.map(function (c) { return '<option value="' + esc(c.id) + '"' + (it.final && (String(c.fim) === it.final || (window.Cartoes && Cartoes.doFinal(it.final) === c)) ? ' selected' : '') + '>' + esc(Banco.rotuloCartao(c.id)) + '</option>'; }).join('') + '</select>';
     };
     var h = '<p class="small muted" style="margin:0 0 6px">' + esc(tr('Lido no aparelho, sem internet e sem IA. Só "Lançar à mão" cria lançamento; o resto liga ao que o banco mandou.', 'Read on the device, with no internet and no AI. Only "Enter manually" creates an entry; the rest links to what the bank sent.', 'Leído en el dispositivo, sin internet y sin IA. Solo "Registrar a mano" crea un movimiento; lo demás se vincula a lo que mandó el banco.')) + '</p>' +
       sec('✅', tr('Já está no banco', 'Already at the bank', 'Ya está en el banco'), gr.casou, function (x, i) {
@@ -321,7 +356,7 @@
   function depois() { Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); }
 
   MoneyModulos.registrar({
-    id: 'canhotos', versao: '1.3.1',
+    id: 'canhotos', versao: '1.3.2',
     pontos: {
       'lancamentos.topo': function () { return '<div class="row" style="margin:0 0 8px;gap:6px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sm" data-acao="cn-abrir">📷 ' + esc(tr('Foto de nota ou recibo', 'Receipt or invoice photo', 'Foto de factura o recibo')) + '</button><span class="small muted">' + esc(tr('OS da oficina, nota, recibo ou canhoto: o app lê e liga ao banco', 'Repair shop work order, invoice, receipt or card slip: the app reads it and links it to the bank', 'Orden del taller, factura, recibo o ticket: la app lo lee y lo vincula al banco')) + '</span></div>'; }
     },

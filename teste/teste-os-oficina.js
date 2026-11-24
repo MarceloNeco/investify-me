@@ -58,7 +58,7 @@ const OS = (papel, fin, extra) => IT(papel, fin.valor, Object.assign({ documento
     await ler([OS(1, FIN(), { mesmaCompra: 2 }), IT(2, 2360, { parcelas: 5, hora: '15:02', final: '1234', loja: 'OFIC EXEMPLO', mesmaCompra: 1 })]);
     const g1 = await p.evaluate(() => ({ txt: document.querySelector('#genBody').textContent, n: document.querySelectorAll('#genBody .cn-item').length, casou: [...document.querySelectorAll('#genBody .cn-item[data-grupo="casou"]')].length }));
     ok(g1.n === 1 && g1.casou === 1, 'a OS e o canhoto contam uma vez e casam com a 01/05 do banco (2.360 ÷ 5 = 472, data do canhoto)');
-    ok(/🔧 OS 4321 · FIAT ARGO 2020 1\.0 FLEX/.test(g1.txt) && /12\/11\/2026 · 15:02 · ••1234 · 5x de R\$ 472,00/.test(g1.txt), 'mostra a data e a hora do pagamento (do canhoto), o final, as parcelas e o nº da OS com o veículo');
+    ok(/🔧 OS 4321 · Veículo › Funilaria e pintura · 🚗 Argo Ficticio/.test(g1.txt) && /12\/11\/2026 · 15:02 · ••1234 · 5x de R\$ 472,00/.test(g1.txt), 'mostra a data e a hora do pagamento (do canhoto), o final, as parcelas e o nº da OS com a categoria e o carro (3.105: o apelido, não o texto lido)');
     await p.click('#genBody .cn-item[data-grupo="casou"] [data-acao="cn-classe"]');
     const fm = await p.evaluate(() => { const c = document.querySelector('#genBody .cn-item[data-grupo="casou"]'); return { gr: c.querySelector('[data-cn="grupo"]').value, sub: c.querySelector('[data-cn="sub"]').value, v: c.querySelector('[data-cn="veiculo"]').value }; });
     ok(fm.gr === 'VEICULO' && fm.sub === 'Funilaria e pintura' && fm.v === 'vc1', 'o formulário já vem com Veículo › Funilaria e pintura e o carro certo ("Argo Ficticio", pelo nome do veículo da OS) ' + JSON.stringify(fm));
@@ -87,6 +87,18 @@ const OS = (papel, fin, extra) => IT(papel, fin.valor, Object.assign({ documento
     await p.evaluate(() => { Gasto.add({ data: '2026-11-21', valor: 450, desc: 'OFICINA EXEMPLO 01/04', descRobo: 'OFICINA EXEMPLO 01/04', fluxo: 'saida', grupo: 'OUTROS', sub: '', cartaoId: 'c1', origem: 'robo', contraparte: { nome: 'OFICINA EXEMPLO', cnpj: '11222333000181' } }); });
     const f1 = await p.evaluate(() => { const f = CompraParcelada.lista().find((x) => x.n === 4), g = ST.gastos.find((y) => y.compraId === f.id); return [f.estado, g && g.desc, g && g.grupo, g && g.veiculoId].join('|'); });
     ok(f1 === 'ligada|OFICINA EXEMPLO (OS 4321) 01/04|VEICULO|vc1', 'a 01/04 da oficina (20 dias depois da OS) liga e ganha a classificação ' + f1);
+    await p.evaluate(() => fechar('genModal'));
+
+    console.log('4b) o teste real do dono (3.105): a OS e o canhoto em fotos separadas, um pedaço do canhoto no canto da OS');
+    await p.evaluate(() => { ST.cartoes.push({ id: 'c2', apelido: 'Master Ficticio', bandeira: 'master', fim: '5555', vence: 10, fecha: 3, finais: [{ fim: '5555', tipo: 'fisico' }, { fim: '9876', tipo: 'virtual' }] }); });
+    const FR = FIN({ valor: 2360, parcelas: 5, data: '10/11/2026', veiculo: 'JEEP LRENEGADE 1.8 FLEX PRETA', fonte: 'fechado' });
+    await ler([Object.assign(OS(1, FR, { mesmaCompra: 2, hora: '12:30' }), { arquivo: 'os.jpg' }),
+      IT(2, 2360, { arquivo: 'os.jpg', data: null, loja: null, parcelas: 1, mesmaCompra: 1 }),
+      Object.assign(OS(3, FIN({ valor: 2360, parcelas: 5, data: '23/11/2026', veiculo: null, fonte: 'comprovante', os: '' }), { final: '9876', hora: '12:13' }), { arquivo: 'canhoto.jpg' })]);
+    const real = await p.evaluate(() => { const its = [...document.querySelectorAll('#genBody .cn-item')]; return { n: its.length, txt: its.map((x) => x.textContent).join(' || '), cart: (document.querySelector('#genBody .cn-item[data-grupo="novo"] [data-cn="cartao"]') || {}).value }; });
+    ok(real.n === 1, 'as 3 leituras (a OS, o pedaço do canhoto no canto dela e o canhoto) viram UM item só: ' + real.n);
+    ok(/23\/11\/2026 · 12:13 · ••9876 · 5x de R\$\s?472,00/.test(real.txt) && /🔧 OS 4321 · Veículo › Funilaria e pintura · 🚗 Renegade 2019/.test(real.txt) && !/LRENEGADE/.test(real.txt), 'fica a data, a hora e o final do canhoto, com a OS, "Veículo › Funilaria e pintura" e o carro pelo apelido (não "LRENEGADE"): ' + real.txt.replace(/\s+/g, ' ').slice(0, 200));
+    ok(real.cart === 'c2', 'o cartão vem escolhido pelo final ••9876 (o 2º final do Master Ficticio), não fica em "cartão…"');
     await p.evaluate(() => fechar('genModal'));
 
     console.log('5) EN e ES');

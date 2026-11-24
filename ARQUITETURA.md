@@ -840,6 +840,10 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   `cn-abrir` e as ações iguais), com a linha "OS da oficina, nota, recibo ou canhoto: o app lê e liga ao banco"; carro-drive 1.0.1, "ou
   escolher a pasta deste serviço" (Picker) ao lado de "Enviar ao Drive": envia direto na pasta escolhida, sem criar subpasta
   (`obj.drivePasta`, que vale também na fila).
+  canhotos 1.3.2 (o teste real do dono: OS e canhoto em 2 itens): 2º passo do `juntarOS` (o item com OS + outro do mesmo valor, das mesmas
+  parcelas ou uma sem, e do mesmo CNPJ ou loja, sem precisar do `mesmaCompra`; fica o do pagamento: o final, senão a data mais nova); o
+  seletor de cartão por `Cartoes.doFinal` (qualquer final); `osRot` na linha ("OS n · Veículo › sub · 🚗 apelido"); `acharCarro` também com a
+  palavra do apelido dentro da palavra lida ("LRENEGADE").
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem
