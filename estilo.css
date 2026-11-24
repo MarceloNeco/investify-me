@@ -2742,3 +2742,7 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .pjo-atencao b{color:var(--warn)}
 .pjo-dre .pjo-res td, .pjo-dre .pjo-rec td{font-weight:700}
 .pjo-pre{white-space:pre-wrap; font-size:.85em; max-height:45vh; overflow:auto; background:var(--card2); padding:10px; border-radius:8px}
+/* 3.106.1: a versão na tela inicial, discreta e à direita (o toque abre as Novidades) */
+.hub-versao{text-align:right; margin:4px 0 0; opacity:.75}
+.hub-versao .linkinho{color:inherit; text-decoration:none}
+.hub-versao .linkinho:hover,.hub-versao .linkinho:focus-visible{text-decoration:underline}
