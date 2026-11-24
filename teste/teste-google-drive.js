@@ -80,6 +80,7 @@ const GAPI = `window.gapi = { load: function (n, o) { o.callback(); } }; window.
     console.log('2) a tela escondida do dono (só neste aparelho)');
     await p.evaluate(() => { location.hash = 'dono-google'; irPara('config'); cfgSecao = 'todos'; render(); const c = document.querySelector('.cd-dono').closest('.cfg-acc'); if (c) c.classList.add('aberta'); });
     ok(await p.evaluate(() => /Ainda não configurado: o botão do Google não aparece para ninguém/.test(document.querySelector('.cd-dono').textContent)), 'com #dono-google: a seção "Google Drive · plataforma" para o dono');
+    ok(await p.evaluate(() => { const t = document.querySelector('.cd-dono').textContent; return /SolverONE web/.test(t) && /SolverONE Picker key/.test(t) && /Mostrar chave/.test(t) && /Número do projeto/.test(t); }), 'o passo a passo curto de onde copiar cada um (Credenciais → SolverONE web / SolverONE Picker key → Mostrar chave; Configurações do projeto)');
     ok(/client secret/.test(await p.evaluate(() => SolverGoogle.salvarDono({ clienteId: '123456-teste.apps.googleusercontent.com', chavePicker: 'GOCSPX-segredo', projeto: '123456789012' }))), 'o "client secret" colado no lugar da chave é recusado');
     await p.fill('#sgCliente', CFG.clienteId); await p.fill('#sgChave', CFG.chavePicker); await p.fill('#sgProjeto', CFG.projeto);
     await p.click('[data-acao="sg-dono-salvar"]'); await p.waitForTimeout(150);
