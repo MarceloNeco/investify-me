@@ -5,7 +5,8 @@
    (dukRaw) não vem; "Criar agora" dava "Desbloqueie de novo e tente outra vez." (sem saída). Agora:
      1. o aviso do topo diz que é opcional, tem "O que é isso?" (abre o passo a passo) e "Depois" (esconde 7 dias e volta);
      2. "Criar agora" pede ali mesmo o PIN deste aparelho (PIN errado avisa) e segue para criar o PIN da conta;
-     3. "Trocar o PIN" do painel, também reaberto pela sessão, pede o PIN deste aparelho e segue.
+     3. "Trocar o PIN" do painel, também reaberto pela sessão, pede o PIN deste aparelho e segue;
+     4. o aparelho que está na lista, mas cujo navegador apagou a chave, ouve isso na tela "Primeira vez" (defeito f).
    Com o "Supabase de mentira" (teste/mock-sol.js). Dados fictícios. Uso: node teste/teste-pin-sessao.js
    ===================================================================== */
 'use strict';
@@ -98,7 +99,12 @@ const K = 'dgo:moneytrio:aviso:pin-conta:depois';
     ok(true, 'com o PIN, segue para a tela "Trocar o PIN da conta"');
     await P.click('#nvTVolta');
 
-    console.log('5) EN e ES');
+    console.log('5) aparelho que está na lista, mas o navegador apagou a chave (defeito f)');
+    await P.evaluate(async () => { const T = MoneyNuvem._teste; await T.Vale.apagar(); await T.IDB.del('kv', T.Cadeado.K()); });
+    await P.reload(); await P.waitForSelector('#nvApOutro', { timeout: 60000 });
+    ok(/Este computador já entrou antes, mas o navegador apagou a chave guardada\. Aprove de novo pelo outro aparelho\./.test(await P.textContent('#nvJaEntrou').catch(() => '')), '"Primeira vez" de um aparelho que já está na lista explica: "já entrou antes, mas o navegador apagou a chave guardada"');
+
+    console.log('6) EN e ES');
     for (const [l, rx] of [['en', /Create your SolverONE account PIN \(optional\)/], ['es', /Crea el PIN de tu cuenta SolverONE \(opcional\)/]]) {
       const t = await P.evaluate((x) => { I18n.atual = x; const a = document.getElementById('nvAvisoPin'); if (a) a.remove(); localStorage.removeItem('dgo:moneytrio:aviso:pin-conta:depois'); MoneyNuvem._teste.Aparelhos.avisoCriarPin(); const t = document.getElementById('nvAvisoPin').innerText; document.getElementById('nvAvisoPin').remove(); return t; }, l);
       ok(rx.test(t), l.toUpperCase() + ': o aviso traduzido');
