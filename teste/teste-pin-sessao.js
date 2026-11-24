@@ -76,9 +76,9 @@ const K = 'dgo:moneytrio:aviso:pin-conta:depois';
 
     console.log('2b) o PIN da conta criado em OUTRO aparelho (item j): o aviso sai sozinho e "Criar" não deixa criar outro');
     db.sol_pin_conta = db.sol_pin_conta || []; const deOutro = { user_id: ANA, sal: 'c2FsLWZpY3RpY2lv', versao: 1, v: 'x', tentativas: 0 }; db.sol_pin_conta.push(deOutro);
-    await P.evaluate(() => MoneyNuvem.buscarAgora && MoneyNuvem.buscarAgora());
-    await P.waitForFunction(() => !document.getElementById('nvAvisoPin'), null, { timeout: 30000 }).catch(() => {});
-    ok(!(await P.$('#nvAvisoPin')), 'na próxima busca, o aviso "Crie o PIN" sai sozinho');
+    await P.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => false }); document.dispatchEvent(new Event('visibilitychange')); });
+    await P.waitForFunction(() => !document.getElementById('nvAvisoPin'), null, { timeout: 5000 }).catch(() => {});
+    ok(!(await P.$('#nvAvisoPin')), 'a aba volta a ficar visível (visibilitychange): o aviso "Crie o PIN" sai na hora, sem recarregar');
     await P.evaluate(() => MoneyNuvem.criarPinConta()); await P.waitForSelector('#nvJaTem', { timeout: 10000 }).catch(() => {});
     ok(/já foi criado em outro aparelho seu\. Use esse mesmo PIN aqui/.test(await P.textContent('#nvJaTem').catch(() => '')) && !(await P.$('#nvC1')), '"Criar o PIN" com a conta já com PIN: "Sua conta já tem PIN… Use esse mesmo PIN aqui" (sem formulário)');
     await P.click('#nvJaTemOk');

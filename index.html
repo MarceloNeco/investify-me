@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.83">
+<link rel="stylesheet" href="estilo.css?v=3.106">
 </head>
 <body>
 
@@ -259,7 +259,7 @@
   </button>
 </div>
 
-<div id="toasts"></div>
+<div id="toasts" role="status" aria-live="polite"></div>
 <!-- trabalho em segundo plano (leitura de foto, importação): a pílula que fica enquanto a pessoa navega -->
 <button type="button" id="fundoPill" class="fundo-pill hidden" role="status" aria-live="polite"></button>
 
@@ -27633,6 +27633,7 @@ const MAX_TOASTS = 3;
 function toast(msg, tipo){
   const caixa = $('#toasts');
   if(!caixa) return;
+  if(window.Toque && Toque.pular(msg)) return;   /* 3.106: o que se repete a cada abertura não insiste (modulos/toast-fechavel.js) */
 
   /* a mesma mensagem duas vezes é ruído: reaproveita a que já está na tela */
   const igual = Array.from(caixa.children).find(n => n.textContent === msg);
@@ -27642,7 +27643,8 @@ function toast(msg, tipo){
   d.className = 'toast ' + (tipo || '');
   d.textContent = Verter.txt(msg);
   d.title = I18n.atual === 'pt' ? 'toque para fechar' : 'tap to close';
-  d.addEventListener('click', () => d.remove());
+  if(window.Toque) Toque.fechavel(d, () => d.remove());   /* 3.106: tocar, arrastar para o lado ou o ✕ fecham */
+  else d.addEventListener('click', () => d.remove());
   caixa.appendChild(d);
 
   /* no celular três avisos já tomam a tela: some com os mais antigos */
@@ -30171,6 +30173,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/terceiros.js?v=1.0.0"></script>
 <script src="modulos/assistone-indice.js?v=1.0.0"></script>
 <script src="modulos/abrir-no-chrome.js?v=1.0.0"></script>
+<script src="modulos/toast-fechavel.js?v=1.0.0"></script>
 <script src="modulos/viagem.js?v=1.0.2"></script>
 <script src="modulos/compra-parcelada.js?v=1.1.0"></script>
 <script src="modulos/veiculos.js?v=1.0.2"></script>

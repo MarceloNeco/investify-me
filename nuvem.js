@@ -142,12 +142,14 @@
   function avisoAlto(msg) {
     var el = document.getElementById('nvAviso'); if (!el) { el = document.createElement('div'); el.id = 'nvAviso'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
     el.textContent = msg; el.className = 'nv-aviso on alto';
+    if (window.Toque) Toque.fechavel(el, function () { el.className = 'nv-aviso'; });   /* 3.106: tocar, arrastar ou ✕ fecham */
     clearTimeout(aviso._t); aviso._t = setTimeout(function () { el.className = 'nv-aviso'; }, 6000);
   }
   function aviso(msg, tipo) {
     if (Nuvem.iniciado && typeof toast === 'function') { try { return toast(msg, tipo); } catch (e) {} }
     var el = document.getElementById('nvAviso'); if (!el) return;
     el.textContent = msg; el.className = 'nv-aviso on ' + (tipo || '');
+    if (window.Toque) Toque.fechavel(el, function () { el.className = 'nv-aviso'; });
     clearTimeout(aviso._t); aviso._t = setTimeout(function () { el.className = 'nv-aviso'; }, Math.min(9000, 4000 + msg.length * 25));
   }
 
@@ -891,6 +893,7 @@
           var resp = await self.fechar(await self.chave(eu.priv, q.pub, p.id, p.quem, eu.nA, q.n_b), p.id, carga); carga = null;
           var ok = await self.rpc('sol_pedido_aprovar', { p_id: p.id, p_resposta: resp, p_meu_ap: d.L.ap || null });
           delete self._apr[p.id];
+          if (ok) setTimeout(function () { Aparelhos.conferirPin(true); }, 30000);   /* 3.106 (item j): o aparelho novo costuma criar o PIN da conta logo */
           sair(ok ? '✓ ' + tt('Aprovado. Agora é no outro aparelho: lá ele pede o PIN da conta.', 'Approved. Now it is on the other device: it asks for the account PIN there.', 'Aprobado. Ahora es en el otro dispositivo: allí pide el PIN de la cuenta.') : tt('Não deu para aprovar: o pedido venceu ou já foi respondido. Peça de novo no aparelho novo.', 'Could not approve: the request expired or was already answered. Ask again on the new device.', 'No se pudo aprobar: la solicitud venció o ya fue respondida. Pídela de nuevo en el dispositivo nuevo.'));
         }); };
         el.querySelector('#nvApPin').addEventListener('keydown', function (e) { if (e.key === 'Enter') el.querySelector('#nvApOk').click(); });
@@ -936,6 +939,18 @@
       var self = this;
       el.querySelector('#nvAvisoX').onclick = function () { el.remove(); };
       el.querySelector('#nvAvisoTirar').onclick = async function () { try { await self.rpc('sol_aparelho_tirar', { p_id: a.id }); aviso('✓ ' + tt('Aparelho tirado da sua conta.', 'Device removed from your account.')); } catch (e) {} el.remove(); };
+    },
+    /* 3.106 (item j, decisão do dono: "tem que ter uma verificação", não de tempos em tempos): o PIN da conta conferido nos momentos
+       certos — a aba volta a ficar visível ou ganha foco (no máximo 1 a cada 5 s), 30 s depois de aprovar um aparelho aqui, quando a lista
+       mostra um aparelho novo e quando chega o aviso em tempo real. Já tem PIN → o aviso "Crie o PIN" sai; a versão mudou → pede o PIN novo. */
+    conferirPin: async function (forcar) {
+      if (!Cadeado.aberto() || !Conta.on() || !navigator.onLine) return;
+      if (!forcar && Date.now() - (this._pinConf || 0) < 5000) return;
+      this._pinConf = Date.now();
+      var i = await Pin.info(); if (!i) return;
+      var av = document.getElementById('nvAvisoPin'); if (av && i.tem) av.remove();
+      var L = await Cadeado.local().catch(function () { return null; });
+      if (i.tem && L && L.srv && L.pinVersao && i.versao !== L.pinVersao && Cadeado.aberto()) Nuvem.trancar('pinTrocado');
     },
     avisoDuplicado: function (a) {
       if (document.getElementById('nvAvisoDup')) return;
@@ -2349,6 +2364,8 @@
         var g = grupos.find(function (x) { return x.nome === a.nome && !x.itens.some(function (i) { return i.app === a.app; }); });
         if (g) g.itens.push(a); else grupos.push({ nome: a.nome, itens: [a] });
       });
+      var ids = lista.map(function (a) { return a.id; }).sort().join(), velhos = Painel._apsVistos;
+      Painel._apsVistos = ids; if (velhos && velhos !== ids) Aparelhos.conferirPin(true);   /* 3.106 (item j): apareceu aparelho novo na lista */
       grupos.forEach(function (g) { g.este = g.itens.some(function (a) { return L && a.id === L.ap; }); g.visto = g.itens.map(function (a) { return a.visto_em || a.criado_em; }).sort().pop(); });
       grupos.sort(function (x, y) { return (y.este - x.este) || String(y.visto).localeCompare(String(x.visto)); });
       caixa.innerHTML = grupos.map(function (g) {
@@ -2953,9 +2970,10 @@
           var fora = self.foraDesde && Date.now() - self.foraDesde >= FORA_MS;
           self.foraDesde = 0;
           if (fora && Cadeado.aberto()) return self.pedir('fora');
-          self.usou(); Nuvem.buscarAgora();
+          self.usou(); Nuvem.buscarAgora(); Aparelhos.conferirPin();   /* 3.106 (item j): a pessoa voltou (talvez do celular) */
         }
       });
+      window.addEventListener('focus', function () { Aparelhos.conferirPin(); });
       setInterval(function () { self.conferir(); }, 1000);
       window.addEventListener('pagehide', function () { Sinc.registrar(); Vale.limitar(Date.now() + FORA_MS); });
       window.addEventListener('beforeunload', function (e) { if (Sinc._sujo || Nuvem.levando) { Sinc.registrar(); e.preventDefault(); e.returnValue = ''; } });
@@ -3290,8 +3308,6 @@
         this._voltas = (this._voltas || 0) + 1;
         if (this._voltas % 3 === 1) { await this.conferirPapel(); await Ponte.buscar(); if (this._voltas > 1) await Aparelhos.aoAbrir(); }
         Aparelhos.olharPedidos();   /* 1.9.0: pedido de acesso de um aparelho novo (meu ou da família) */
-        /* 3.106 (item j): o PIN da conta foi criado em outro aparelho: o aviso "Crie o PIN" sai na hora */
-        if (document.getElementById('nvAvisoPin')) Pin.info().then(function (i) { var a = document.getElementById('nvAvisoPin'); if (a && i && i.tem) a.remove(); });
         Caixa.esvaziar();
         Espelho.enviar();   /* 1.11.0: o que ficou na fila do espelho (sem internet, chave do robô ainda não publicada) */
       } catch (e) { console.warn('nuvem: busca', e); }
