@@ -852,6 +852,11 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   nuvem.js 1.15.8 — `Painel.aparelhos` em "No MoneyTRIO" / "Em outros apps SolverONE"; "aprovado em …, mas nunca terminou de entrar"
   (visto = criado, > 1 h) com "Tirar da lista"; dica do mesmo `nomeHumano` repetido; `nomeAparelho()` com `AbrirChrome.detectar(…).dentroDeApp`
   → "Android · dentro de outro app"; abrir-no-chrome 1.0.1 explica que lá dentro o app não fica guardado. Teste: `teste/teste-lista-aparelhos.js`.
+  E o defeito "Falta só um passo" (dono: "que confusão esse negócio de PIN"): `Portao.pinAntigo` com a digital primeiro (quando há
+  `L.prf`) e texto simples; `Portao.migrarPin(info)` — chamado por `conferirPin` quando a conta tem PIN, este aparelho não tem `L.srv` e a
+  chave do aparelho está na memória — pede UMA vez o PIN da conta e já grava (`Pin.conferir` + `Pin.gravar`), em vez de o próximo
+  desbloqueio exigir o PIN antigo; `novoPin` avisa ("nos seus outros aparelhos, confirme uma vez…"). Testes: `teste-tempo-real` (2b, 2c),
+  `teste-seguranca`.
   **3.106 — Busca que acha o app, PIN sem beco sem saída, fotos no aparelho.** (1) `modulos/assistone-indice.js` 1.0.0 (`window.AssistIndice`;
   diretriz "O AssistONE conhece TUDO o que o app tem"): índice montado na hora (cache 20 s, por idioma) das telas (`ABAS` + `AJUDA_TELAS` +
   `MoneyModulos.telas()`, base 1.1.1), das seções de Configurações (`viewConfig()` passado pelo `Verter` e lido com DOMParser: o `h3` e a

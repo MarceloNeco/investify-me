@@ -80,6 +80,9 @@
   25. 1.15.8 (3.106.1) — "Seus aparelhos" separada em "No MoneyTRIO" e "Em outros apps SolverONE" ("a mesma conta e o mesmo PIN valem
       nos dois"); aprovado que nunca terminou de entrar (visto = criado, > 1 h) → "Tirar da lista"; o mesmo celular mais de uma vez → a
       dica (cada navegador, ou o app dentro de outro app, é um aparelho); nomeAparelho() dentro de outro app = "Android · dentro de outro app".
+      "Falta só um passo" (pinAntigo): com L.prf, a digital é o botão principal ("uma vez só") e o PIN antigo vem depois; Portao.migrarPin:
+      o PIN da conta nasceu em outro aparelho e este, aberto com a chave do aparelho, ainda está no PIN antigo (sem L.srv) → pede uma vez
+      o PIN da conta (conferirPin, no foco ou no evento 'pin') e grava (Pin.gravar); novoPin avisa que os outros aparelhos confirmam uma vez.
   20. 1.15.3 (3.87) — o robô mandar de novo um lançamento DIVIDIDO pela pessoa não desfaz a divisão (corrigir compara com o total).
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
@@ -966,6 +969,7 @@
       var av = document.getElementById('nvAvisoPin'); if (av && i.tem) av.remove();
       var L = await Cadeado.local().catch(function () { return null; });
       if (i.tem && L && L.srv && L.pinVersao && i.versao !== L.pinVersao && Cadeado.aberto()) Nuvem.trancar('pinTrocado');
+      else if (i.tem && L && L.ap && !L.srv && Cadeado.aberto() && Cadeado.dukRaw) Portao.migrarPin(i);   /* 3.106.1: ainda no PIN antigo */
     },
     avisoDuplicado: function (a) {
       if (document.getElementById('nvAvisoDup')) return;
@@ -2626,6 +2630,7 @@
       try { aps = await Promise.race([Aparelhos.lista(), dorme(4000)]); info = await Promise.race([Pin.info(), dorme(4000)]); } catch (e) {}
       var outros = appsAqui(aps);
       Portao._outrosApps = info && info.tem ? [] : outros; if (aps) Portao._usaApps = outros;
+      Portao._temOutrosAps = (aps || []).length > 0;   /* 3.106.1: há outros aparelhos que vão precisar confirmar uma vez */
       var jaUsa = outros.length ? '<div class="nv-nota" id="nvJaUsa">👋 ' + tt('Você já usa o ', 'You already use ') + esc(juntarE(outros)) + tt('. Aprove por um aparelho seu (pode ser o ', '. Approve from one of your devices (it can be ') + esc(outros[0]) +
         tt(' neste mesmo celular) e use o mesmo PIN da sua conta.', ' on this same phone) and use the same PIN of your account.') +
         (info && !info.tem ? '<br><span class="nv-tiny">' + tt('A sua conta ainda não tem PIN da conta: o PIN que você escolher aqui também passa a valer no ', 'Your account has no account PIN yet: the PIN you choose here also becomes the PIN in ') + esc(juntarE(outros)) + '.</span>' : '') + '</div>' : '';
@@ -2710,6 +2715,7 @@
           : outrosApps().length ? tt('Ele vale no MoneyTRIO e no ' + juntarE(outrosApps()) + ': o mesmo em todos os seus aparelhos (como a senha do banco).', 'It works in MoneyTRIO and ' + juntarE(outrosApps()) + ': the same on all your devices (like a bank password).', 'Vale en MoneyTRIO y en ' + juntarE(outrosApps()) + ': el mismo en todos tus dispositivos (como la clave del banco).')
             : tt('Um PIN só para abrir o MoneyTRIO em todos os seus aparelhos (como a senha do banco).', 'One PIN to open MoneyTRIO on all your devices (like a bank password).', 'Un solo PIN para abrir MoneyTRIO en todos tus dispositivos (como la clave del banco).')) + '</p>' +
         (!troca && outros.length ? '<div class="nv-nota atencao" id="nvPinOutros">⚠️ ' + tt('O PIN que você escolher aqui também passa a valer no ', 'The PIN you choose here also becomes the PIN in ') + esc(juntarE(outros)) + '.</div>' : '') +
+        (!troca && Portao._temOutrosAps ? '<p class="nv-tiny" id="nvPinOutrosAps">' + tt('Nos seus outros aparelhos, na próxima vez, confirme uma vez com a digital ou com o PIN antigo deles.', 'On your other devices, next time, confirm once with the fingerprint or their old PIN.', 'En tus otros dispositivos, la próxima vez, confirma una vez con la huella o con su PIN antiguo.') + '</p>' : '') +
         '<p>' + tt('O PIN abre o MoneyTRIO, até sem internet. Escolha <b>6 números</b> fáceis para você lembrar e difíceis para os outros — não use data de aniversário nem 123456. Não é a senha do e-mail.', 'The PIN opens MoneyTRIO, even offline. Choose <b>6 digits</b> easy for you and hard for others — not a birthday or 123456. It is not your e-mail password.') + '</p>' +
         '<label class="nv-fld"><span>' + tt('PIN (6 números ou mais)', 'PIN (6 digits or more)') + '</span><input type="text" class="nv-pinc" id="nvP1" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label>' +
         '<label class="nv-fld"><span>' + tt('Digite o mesmo PIN de novo', 'Type the same PIN again') + '</span><input type="text" class="nv-pinc" id="nvP2" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label>' +
@@ -2903,19 +2909,24 @@
     },
     /* 1.10.0 (migração): o PIN da conta está certo, mas este aparelho ainda está no PIN antigo dele: uma vez o antigo
        (ou a digital); não lembra → aprovar pelo outro aparelho */
+    /* 3.106.1 (dono: "que confusão esse negócio de PIN"): com a digital neste aparelho, ela vem primeiro ("uma vez só"); o PIN antigo
+       fica como segunda opção; texto mais simples */
     pinAntigo: async function (fam, r, seguir) {
-      var L = await Cadeado.local();
-      var el = Tela.mostrar(Tela.topo() + '<h2>🔢 ' + tt('Falta só um passo', 'Just one more step') + '</h2>' +
-        '<p>' + tt('O PIN da conta está certo. Este ' + apN() + ' ainda está no PIN antigo dele: digite o <b>PIN antigo deste ' + apN() + '</b> uma vez só, para ele passar a usar o PIN da conta.', 'The account PIN is right. This ' + apN() + ' still uses its old PIN: type the <b>old PIN of this ' + apN() + '</b> once, so it switches to the account PIN.') + '</p>' +
-        '<label class="nv-fld"><span>' + tt('PIN antigo deste aparelho', 'Old PIN of this device') + '</span><input type="text" class="nv-pinc" id="nvPA" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label>' +
+      var L = await Cadeado.local(), dig = !!(L && L.prf);
+      var campo = '<label class="nv-fld"><span>' + (dig ? tt('Ou o PIN que você usava aqui antes', 'Or the PIN you used here before', 'O el PIN que usabas aquí antes') : tt('O PIN que você usava aqui antes', 'The PIN you used here before', 'El PIN que usabas aquí antes')) + '</span><input type="text" class="nv-pinc" id="nvPA" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label>';
+      var el = Tela.mostrar(Tela.topo() + '<h2>🔢 ' + tt('Falta só um passo', 'Just one more step', 'Solo falta un paso') + '</h2>' +
+        '<p id="nvPAtxt">' + tt('Seu PIN novo está certo. Este ' + apN() + ' só precisa de uma confirmação para passar a usar o PIN novo: use a digital (ou o PIN que você usava aqui antes).',
+          'Your new PIN is right. This ' + apN() + ' only needs one confirmation to start using the new PIN: use your fingerprint (or the PIN you used here before).',
+          'Tu PIN nuevo es correcto. Este dispositivo solo necesita una confirmación para pasar a usar el PIN nuevo: usa la huella (o el PIN que usabas aquí antes).') + '</p>' +
+        (dig ? '<button class="nv-btn pri" id="nvPADig">👆 ' + tt('Confirmar com a digital (uma vez só)', 'Confirm with the fingerprint (just once)', 'Confirmar con la huella (solo una vez)') + '</button>' + campo +
+            '<button class="nv-btn" id="nvPAOk">' + tt('Continuar com o PIN antigo', 'Continue with the old PIN', 'Continuar con el PIN antiguo') + '</button>'
+          : campo + '<button class="nv-btn pri" id="nvPAOk">' + tt('Continuar', 'Continue', 'Continuar') + '</button>') +
         '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div>' +
-        '<button class="nv-btn pri" id="nvPAOk">' + tt('Continuar', 'Continue') + '</button>' +
-        (L && L.prf ? '<button class="nv-btn" id="nvPADig">👆 ' + tt('Usar a digital', 'Use the fingerprint') + '</button>' : '') +
-        '<button class="nv-lnk" id="nvPAEsq">' + tt('Não lembro: aprovar pelo outro aparelho', "I don't remember: approve from my other device") + '</button>');
+        '<button class="nv-lnk" id="nvPAEsq">' + tt('Não lembro: aprovar pelo outro aparelho', "I don't remember: approve from my other device", 'No lo recuerdo: aprobar desde el otro dispositivo') + '</button>');
       var $ = function (q) { return el.querySelector(q); };
       var ir = function (pin) { return Tela.ocupar($(pin === null ? '#nvPADig' : '#nvPAOk'), async function () {
         var d = await Cadeado.duk(pin);
-        if (d.erro) return Tela.erro(d.erro === 'pin' ? tt('Esse não é o PIN antigo deste aparelho.', 'That is not the old PIN of this device.') : d.erro === 'espera' ? tt('Espere um pouco para tentar de novo.', 'Wait a bit to try again.') : tt('Não abriu.', 'Did not open.'));
+        if (d.erro) return Tela.erro(d.erro === 'pin' ? tt('Esse não é o PIN que você usava aqui. Tente de novo ou use a digital.', 'That is not the PIN you used here. Try again or use the fingerprint.', 'Ese no es el PIN que usabas aquí. Inténtalo de nuevo o usa la huella.') : d.erro === 'espera' ? tt('Espere um pouco e tente de novo.', 'Wait a bit and try again.', 'Espera un poco e inténtalo de nuevo.') : tt('A digital não abriu. Tente de novo ou use o PIN que você usava aqui.', 'The fingerprint did not open. Try again or use the PIN you used here.', 'La huella no abrió. Inténtalo de nuevo o usa el PIN que usabas aquí.'));
         await Pin.gravar(d.L, r.pinConta, d.raw, r.segredo, r.versao);
         seguir(await Cadeado.comChaveDoAparelho(await Cadeado.local(), d.raw, fam.grupo_id));
       }); };
@@ -2924,7 +2935,30 @@
       if ($('#nvPADig')) $('#nvPADig').onclick = function () { ir(null); };
       $('#nvPAEsq').onclick = function () { Portao.primeiraVez(fam, true); };
     },
-    /* logo depois do PIN: abrir com a digital (mais fácil que digitar o PIN) */
+    /* 3.106.1 (item 1 do defeito): o PIN da conta nasceu em outro aparelho e ESTE, aberto (com a chave do aparelho na mão), ainda está no
+       PIN antigo: pede uma vez o PIN da conta, com contexto, e já passa a usar o mesmo — em vez de o próximo desbloqueio exigir o antigo */
+    migrarPin: function (info) {
+      if (Portao._migrou || Tela.el || !Cadeado.dukRaw) return;
+      Portao._migrou = true;
+      var el = Tela.mostrar(Tela.topo() + '<h2>🔢 ' + tt('Use o mesmo PIN aqui', 'Use the same PIN here', 'Usa el mismo PIN aquí') + '</h2>' +
+        '<p id="nvMigTxt">' + tt('Você criou o PIN da conta em outro aparelho. Digite-o aqui uma vez para este ' + apN() + ' passar a usar o mesmo.', 'You created the account PIN on another device. Type it here once so this ' + apN() + ' starts using the same one.', 'Creaste el PIN de la cuenta en otro dispositivo. Escríbelo aquí una vez para que este dispositivo pase a usar el mismo.') + '</p>' +
+        '<label class="nv-fld"><span>' + tt('PIN da conta', 'Account PIN', 'PIN de la cuenta') + '</span><input type="text" class="nv-pinc" id="nvMig" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"></label>' +
+        '<div class="nv-nota erro nv-hidden" id="nvErro" role="alert"></div>' +
+        '<button class="nv-btn pri" id="nvMigOk">' + tt('Usar este PIN aqui', 'Use this PIN here', 'Usar este PIN aquí') + '</button>' +
+        '<button class="nv-lnk" id="nvMigDepois">' + tt('Depois (na próxima vez o app pede uma confirmação)', 'Later (next time the app asks for one confirmation)', 'Después (la próxima vez la app pide una confirmación)') + '</button>');
+      var $ = function (q) { return el.querySelector(q); };
+      $('#nvMigDepois').onclick = function () { Tela.fechar(); };
+      $('#nvMig').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('#nvMigOk').click(); });
+      $('#nvMigOk').onclick = function () { var pin = $('#nvMig').value; if (!pin) return; Tela.ocupar($('#nvMigOk'), async function () {
+        var L = await Cadeado.local(); if (!L || !Cadeado.dukRaw) { Tela.fechar(); return; }
+        var c = await Pin.conferir(pin, info, L.ap);
+        if (!c) return Tela.erro(tt('Sem conexão com a nuvem. Tente de novo.', 'No connection to the cloud. Try again.', 'Sin conexión con la nube. Inténtalo de nuevo.'));
+        if (!c.ok) return Tela.erro(Pin.explicar(c.erro === 'espera' ? { erro: 'espera', ate: Date.parse(c.espera_ate), muitas: c.tentativas >= 10 } : { erro: 'pin', conta: true, restam: c.restam }) || tt('PIN errado. Tente de novo.', 'Wrong PIN. Try again.', 'PIN incorrecto. Inténtalo de nuevo.'));
+        await Pin.gravar(L, pin, Cadeado.dukRaw, c.segredo, c.versao);
+        Tela.fechar(); aviso('✓ ' + tt('Pronto: este ' + apN() + ' agora abre com o PIN da conta.', 'Done: this ' + apN() + ' now opens with the account PIN.', 'Listo: este dispositivo ahora abre con el PIN de la cuenta.'));
+      }); };
+    },
+    /* logo depois do PIN: abrir com a digital (mais fácil que digitar o PIN) */    /* logo depois do PIN: abrir com a digital (mais fácil que digitar o PIN) */
     oferecerDigital: async function (seguir) {
       if (!(await Cadeado.temDigital())) return seguir();
       var el = Tela.mostrar(Tela.topo() + '<h2>👆 ' + tt('Usar a digital neste ' + apN() + '?', 'Use your fingerprint on this ' + apN() + '?') + '</h2>' +
@@ -3503,7 +3537,7 @@
     converterRobo: function (l) { return Caixa.converter(l); },
     corrigirRobo: function (ja, g) { return Caixa.corrigir(ja, g); },   /* 1.15.3 (3.87): o robô mandou de novo (teste da divisão) */
     /* para os testes automáticos (teste/nuvem.js): as peças, sem estado aberto */
-    _teste: { Pin: Pin, Painel: Painel, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao, Espelho: Espelho, Escopos: Escopos, Visao: Visao, Arquivos: Arquivos, TempoReal: TempoReal, nomeAparelho: function () { return nomeAparelho(); } }
+    _teste: { Pin: Pin, Painel: Painel, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao, Espelho: Espelho, Escopos: Escopos, Visao: Visao, Arquivos: Arquivos, TempoReal: TempoReal, Tela: Tela, nomeAparelho: function () { return nomeAparelho(); } }
   };
   function nomeConta() { var s = Conta.ler() || {}, d = Conta.dados(s.access_token).user_metadata || {}; return String(s.nome || d.full_name || d.name || '').trim() || String(Conta.email() || '').split('@')[0]; }
   function confirmar(t) { try { return window.confirm(t); } catch (e) { return false; } }
