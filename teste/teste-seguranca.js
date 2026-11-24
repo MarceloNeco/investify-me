@@ -58,7 +58,7 @@ const id = (n) => '99999999-0000-0000-0000-00000000000' + n;
     await P.click('#nvCodigoAntigo', { timeout: 20000 }); await P.waitForSelector('#nvCod');
     await P.fill('#nvCod', PESSOAS[ANA].codigo); await P.click('#nvCodOk');
     await P.waitForSelector('#nvP1');
-    ok(/Crie o PIN da sua conta SolverONE/.test(await P.textContent('.nv-card h2')) && /vale no MoneyTRIO, no OmniLifeONE e nos próximos apps/.test(await P.textContent('#nvPinUm')), 'tela do PIN: "Crie o PIN da sua conta SolverONE. Ele vale no MoneyTRIO, no OmniLifeONE e nos próximos apps"');
+    ok(/Crie o PIN da sua conta SolverONE/.test(await P.textContent('.nv-card h2')) && /Ele vale no MoneyTRIO e no OmniLifeONE: o mesmo em todos os seus aparelhos/.test(await P.textContent('#nvPinUm')), 'tela do PIN: "Crie o PIN da sua conta SolverONE. Ele vale no MoneyTRIO e no OmniLifeONE" (3.106: só os apps que a pessoa usa)');
     ok(/também passa a valer no OmniLifeONE/.test(await P.textContent('#nvPinOutros').catch(() => '')), 'a tela do PIN repete o aviso do OmniLifeONE');
     await P.fill('#nvP1', PIN); await P.fill('#nvP2', PIN); await P.click('#nvPOk');
     await P.waitForSelector('#nvSelo', { timeout: 90000 });

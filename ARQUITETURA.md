@@ -865,7 +865,18 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   1.3.1): não sobem ao `money-arquivos` (o que já está lá fica), ficam no IndexedDB 90 dias (`expira`, `limpar()` no início) e, com o
   Drive conectado, vão para MoneyTRIO/Fotos lidas (`aoDrive`, `m.drive = {id, link}`; o 📎 abre lá). `aqui(id)`/`disponivel(id)`:
   carro-drive 1.0.2 não oferece "Enviar ao Drive" sem a foto aqui; veiculos 1.0.2 esconde o 📄. Rodapé de privacidade com a linha.
-  Testes: `teste-pin-sessao`, `teste-seguranca` (colunas, pedidos), `assistone-indice`, `teste-cartoes-contraparte`, `teste-fotos-aparelho`.
+  (5) Itens g-l do dono (24/Nov/2026): `modulos/abrir-no-chrome.js` 1.0.0 (`window.AbrirChrome`: `detectar(ua, referrer, instalado)` —
+  Android dentro de outro app ("; wv)", referrer `android-app://`, FBAN/Instagram/GSA) ou fora do Chrome (Samsung, Firefox, Edge, Opera…);
+  na dúvida, nada —, `link()` = `intent://…#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=…;end`, `htmlEntrada()` na
+  tela de entrada da nuvem (no Samsung, o porquê do Play Protect e o lembrete da cópia), `oferecerInstalar()` depois de entrar no Chrome do
+  Android: o `PWA.prompt` guardado no toque, ou a instrução com a figura (SVG) do menu; "Agora não" = 30 dias em
+  `dgo:moneytrio:aviso:instalar:depois`). nuvem.js: aprovação girando com o tempo nos dois lados, Wake Lock, 20 s → "parou de responder",
+  "Não fui eu: recusar" e "Agora não" como links, erros com o próximo passo; `Aparelhos.avisoDuplicado` (registro antigo do mesmo
+  aparelho, > 7 dias, "Não" lembrado por id); o aviso do PIN sai a cada busca quando `sol_pin_info().tem`; `criarPinConta` confere antes
+  (`Portao.jaTemPin`; o aparelho e a data de criação precisariam de um campo novo no `sol_pin_info`); `Portao._usaApps` (de
+  `sol_aparelhos_meus`) decide se os textos citam o OmniLifeONE; "Primeira vez" com `#nvPinDepois`.
+  Testes: `teste-pin-sessao`, `teste-seguranca` (colunas, pedidos), `teste-aparelhos` (aprovação, registro antigo), `assistone-indice`,
+  `teste-cartoes-contraparte`, `teste-fotos-aparelho`, `teste-abrir-chrome`.
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem

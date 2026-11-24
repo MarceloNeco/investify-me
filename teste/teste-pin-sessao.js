@@ -74,6 +74,17 @@ const K = 'dgo:moneytrio:aviso:pin-conta:depois';
     await reabrirPelaSessao(); await P.waitForSelector('#nvAvisoPin', { timeout: 20000 }).catch(() => {});
     ok(!!(await P.$('#nvAvisoPin')), 'passados os 7 dias, o aviso volta (aviso de segurança nunca some para sempre)');
 
+    console.log('2b) o PIN da conta criado em OUTRO aparelho (item j): o aviso sai sozinho e "Criar" não deixa criar outro');
+    db.sol_pin_conta = db.sol_pin_conta || []; const deOutro = { user_id: ANA, sal: 'c2FsLWZpY3RpY2lv', versao: 1, v: 'x', tentativas: 0 }; db.sol_pin_conta.push(deOutro);
+    await P.evaluate(() => MoneyNuvem.buscarAgora && MoneyNuvem.buscarAgora());
+    await P.waitForFunction(() => !document.getElementById('nvAvisoPin'), null, { timeout: 30000 }).catch(() => {});
+    ok(!(await P.$('#nvAvisoPin')), 'na próxima busca, o aviso "Crie o PIN" sai sozinho');
+    await P.evaluate(() => MoneyNuvem.criarPinConta()); await P.waitForSelector('#nvJaTem', { timeout: 10000 }).catch(() => {});
+    ok(/já foi criado em outro aparelho seu\. Use esse mesmo PIN aqui/.test(await P.textContent('#nvJaTem').catch(() => '')) && !(await P.$('#nvC1')), '"Criar o PIN" com a conta já com PIN: "Sua conta já tem PIN… Use esse mesmo PIN aqui" (sem formulário)');
+    await P.click('#nvJaTemOk');
+    db.sol_pin_conta.splice(db.sol_pin_conta.indexOf(deOutro), 1);
+    await P.evaluate(() => MoneyNuvem._teste.Aparelhos.avisoCriarPin());
+
     console.log('3) "Criar agora" sem a chave na memória: pede o PIN deste aparelho e cria');
     await P.click('#nvAvisoPinOk'); await P.waitForSelector('#nvKPin');
     ok(/Criar o PIN da conta/.test(await P.textContent('#nvPortao h2')) && !/Desbloqueie de novo/.test(await P.textContent('#nvPortao')), 'em vez do erro sem saída, a tela pede o "PIN deste aparelho"');
