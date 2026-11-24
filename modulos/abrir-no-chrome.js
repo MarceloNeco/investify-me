@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/abrir-no-chrome.js — "Abrir no Chrome" e "Instalar na tela inicial" no Android   1.0.0 · 24/Nov/2026 (3.106)
+   modulos/abrir-no-chrome.js — "Abrir no Chrome" e "Instalar na tela inicial" no Android   1.0.1 · 24/Nov/2026 (3.106.1: o aviso de dentro de outro app explica que lá o app não fica guardado)
    ---------------------------------------------------------------------
    O QUE FAZ (dono, 24/Nov/2026: "mandar tocar nos ⋮ é amador")
      · Tela de entrada, só no Android: quando o app abriu DENTRO de outro app (a aba do WhatsApp/Gmail, a Custom Tab com o X no topo:
@@ -41,7 +41,7 @@
     var d = agora(); if (!d.mostrar) return '';
     var soAqui = false; try { soAqui = !!localStorage.getItem('investifyme.dados.v1'); } catch (e) {}
     return '<div class="nv-nota atencao" id="acChrome">' +
-      (d.dentroDeApp ? tt3('O MoneyTRIO abriu dentro de outro app. Para entrar e instalar, abra no Chrome:', 'MoneyTRIO opened inside another app. To sign in and install, open it in Chrome:', 'MoneyTRIO se abrió dentro de otra app. Para entrar e instalar, ábrelo en Chrome:')
+      (d.dentroDeApp ? tt3('Aqui dentro o app não fica guardado igual ao Chrome. Abra no Chrome e instale na tela inicial:', 'In here the app is not kept the same way as in Chrome. Open it in Chrome and install it on your home screen:', 'Aquí dentro la app no se guarda igual que en Chrome. Ábrela en Chrome e instálala en la pantalla de inicio:')
         : d.samsung ? tt3('No navegador da Samsung, instalar o app dispara o alerta "App de risco bloqueado" do Google Play Protect (o app não tem risco: o alerta vem do pacote que esse navegador monta). Use o Chrome:', 'In the Samsung browser, installing the app triggers Google Play Protect\'s "Risky app blocked" alert (the app is safe: the alert comes from the package that browser builds). Use Chrome:', 'En el navegador de Samsung, instalar la app activa la alerta "App de riesgo bloqueada" de Google Play Protect (la app no tiene riesgo: la alerta viene del paquete que arma ese navegador). Usa Chrome:')
         : tt3('Para entrar e instalar o app, use o Chrome:', 'To sign in and install the app, use Chrome:', 'Para entrar e instalar la app, usa Chrome:')) +
       ' <a class="nv-btn pri" id="acChromeBtn" href="' + esc(link(location.href)) + '" style="display:inline-block;width:auto;margin:6px 0 0;text-decoration:none">🌐 ' + tt3('Abrir no Chrome', 'Open in Chrome', 'Abrir en Chrome') + '</a>' +
@@ -76,7 +76,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'abrir-no-chrome', versao: '1.0.0', colecoes: [], pontos: {}, acoes: {}, telas: {}, ouvir: {},
+    id: 'abrir-no-chrome', versao: '1.0.1', colecoes: [], pontos: {}, acoes: {}, telas: {}, ouvir: {},
     /* depois de entrar: a oferta aparece uns segundos depois (dá tempo do beforeinstallprompt chegar) */
     iniciar: function () {
       var tentar = function () { var dentro = (window.MoneyNuvem && MoneyNuvem.iniciado) || (function () { try { return !!localStorage.getItem('moneytrio.soNesteAparelho'); } catch (e) { return false; } })(); if (dentro) oferecerInstalar(); };

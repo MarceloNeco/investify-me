@@ -77,6 +77,9 @@
       A tela de entrada mostra "Abrir no Chrome" (modulos/abrir-no-chrome.js) no Android dentro de outro app ou fora do Chrome.
       Aparelhos.conferirPin no foco/visibilidade (não mais nas voltas). TempoReal (Supabase Realtime, broadcast privado sol:conta:<uid>):
       ligado (migração sol_conta_tempo_real aplicada). O aviso() ganhou toque/arrasto/✕ (Toque.fechavel).
+  25. 1.15.8 (3.106.1) — "Seus aparelhos" separada em "No MoneyTRIO" e "Em outros apps SolverONE" ("a mesma conta e o mesmo PIN valem
+      nos dois"); aprovado que nunca terminou de entrar (visto = criado, > 1 h) → "Tirar da lista"; o mesmo celular mais de uma vez → a
+      dica (cada navegador, ou o app dentro de outro app, é um aparelho); nomeAparelho() dentro de outro app = "Android · dentro de outro app".
   20. 1.15.3 (3.87) — o robô mandar de novo um lançamento DIVIDIDO pela pessoa não desfaz a divisão (corrigir compara com o total).
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
@@ -663,6 +666,8 @@
   function nomeAparelho() {
     var u = navigator.userAgent || '';
     var so = /Android/i.test(u) ? 'Android' : /iPhone/i.test(u) ? 'iPhone' : /iPad/i.test(u) ? 'iPad' : /Windows/i.test(u) ? 'Windows' : /Mac OS/i.test(u) ? 'Mac' : /Linux/i.test(u) ? 'Linux' : tt('Aparelho', 'Device');
+    /* 3.106.1 (item 4): aberto dentro de outro app (Custom Tab do WhatsApp/Gmail): o armazenamento é outro, então é outro "aparelho" */
+    if (window.AbrirChrome && AbrirChrome.detectar(u, document.referrer, false).dentroDeApp) return (so + ' · ' + tt('dentro de outro app', 'inside another app', 'dentro de otra app')).slice(0, 60);
     var nav = /SamsungBrowser/i.test(u) ? 'Samsung' : /Edg\//i.test(u) ? 'Edge' : /Firefox/i.test(u) ? 'Firefox' : /Chrome|CriOS/i.test(u) ? 'Chrome' : /Safari/i.test(u) ? 'Safari' : '';
     return (so + (nav ? ' · ' + nav : '')).slice(0, 60);
   }
@@ -2378,23 +2383,36 @@
       Painel._apsVistos = ids; if (velhos && velhos !== ids) Aparelhos.conferirPin(true);   /* 3.106 (item j): apareceu aparelho novo na lista */
       grupos.forEach(function (g) { g.este = g.itens.some(function (a) { return L && a.id === L.ap; }); g.visto = g.itens.map(function (a) { return a.visto_em || a.criado_em; }).sort().pop(); });
       grupos.sort(function (x, y) { return (y.este - x.este) || String(y.visto).localeCompare(String(x.visto)); });
-      caixa.innerHTML = grupos.map(function (g) {
+      /* 3.106.1: separada em "No MoneyTRIO" e "Em outros apps SolverONE"; "aprovado, mas nunca terminou de entrar" (visto = criado, há
+         mais de 1 h) com "Tirar da lista"; a dica quando o mesmo celular aparece mais de uma vez (cada navegador conta como um aparelho) */
+      var linha = function (g) {
         var apps = juntarE(g.itens.map(function (a) { return nomeApp(a.app); }));
-        /* 3.106 (defeito 4): nome que a pessoa entende ("Seu celular (Chrome)"); o "Remover" discreto (com confirmação);
-           quem não aparece há mais de 7 dias diz desde quando */
         var sumido = !g.este && Date.now() - Date.parse(g.visto) > 7 * 86400000;
-        return '<div class="nv-nota nv-ap' + (g.este ? ' este' : '') + '" data-ap="' + esc(g.itens[0].id) + '" title="' + esc(g.nome) + '"><b>' + esc(nomeHumano(g.nome, g.este)) + '</b> · ' + esc(apps) +
+        var nunca = !g.este && g.itens.every(function (a) { return (!a.visto_em || a.visto_em === a.criado_em) && Date.now() - Date.parse(a.criado_em) > 3600000; });
+        return '<div class="nv-nota nv-ap' + (g.este ? ' este' : '') + (nunca ? ' nunca' : '') + '" data-ap="' + esc(g.itens[0].id) + '" title="' + esc(g.nome) + '"><b>' + esc(nomeHumano(g.nome, g.este)) + '</b> · ' + esc(apps) +
           (g.este ? ' <span class="nv-tag">' + tt('este aparelho', 'this device', 'este dispositivo') + '</span>' : '') +
           '<br><span class="nv-tiny">' + (g.este ? tt('em uso agora', 'in use now', 'en uso ahora')
+            : nunca ? '⚠️ ' + tt('aprovado em ', 'approved on ', 'aprobado el ') + esc(dataHora(g.itens[0].criado_em)) + tt(', mas nunca terminou de entrar', ', but never finished signing in', ', pero nunca terminó de entrar')
             : sumido ? '⚠️ ' + tt('não aparece desde ', 'not seen since ', 'no aparece desde ') + esc(dataHora(g.visto, true).replace(/\/\d{4}$/, '')) + tt(': se é seu, abra o app nele.', ': if it is yours, open the app on it.', ': si es tuyo, abre la app en él.')
             : tt('visto por último ', 'last seen ', 'visto por última vez ') + esc(horaCurta(g.visto))) + '</span>' +
-          '<div class="nv-row">' + g.itens.map(function (a) {
+          '<div class="nv-row">' + (nunca ? g.itens.map(function (a) { return '<button class="nv-btn nv-mini" data-tirar="' + esc(a.id) + '" data-simples="1">' + tt('Tirar da lista', 'Remove from the list', 'Quitar de la lista') + '</button>'; }).join('')
+            : g.itens.map(function (a) {
             return '<button class="nv-lnk nv-tirar" data-tirar="' + esc(a.id) + '">' + tt('remover…', 'remove…', 'quitar…') + (g.itens.length > 1 ? ' ' + tt('do ', 'from ', 'de ') + esc(nomeApp(a.app)) : '') + '</button>';
-          }).join('') + '</div></div>';
-      }).join('') || '<p class="nv-tiny">' + tt('Nenhum aparelho registrado ainda.', 'No device registered yet.') + '</p>';
+          }).join('')) + '</div></div>';
+      };
+      var noMt = grupos.filter(function (g) { return g.itens.some(function (a) { return a.app === AP_APP; }); }), outros = grupos.filter(function (g) { return noMt.indexOf(g) < 0; });
+      var repetidos = {}; noMt.forEach(function (g) { var k = nomeHumano(g.nome, false); repetidos[k] = (repetidos[k] || 0) + 1; });
+      var rep = Object.keys(repetidos).filter(function (k) { return repetidos[k] > 1; })[0];
+      caixa.innerHTML = (grupos.length ? '<h3 class="nv-sub" id="nvApsMt">' + tt('No MoneyTRIO', 'In MoneyTRIO', 'En MoneyTRIO') + '</h3>' + (noMt.map(linha).join('') || '<p class="nv-tiny">—</p>') +
+          (rep ? '<div class="nv-nota atencao" id="nvApsRep">💡 ' + esc(tt(rep.replace(/^Seu /, 'Seu ') + ' aparece mais de uma vez: cada navegador (ou o app aberto dentro de outro app) conta como um aparelho. Fique com o que você usa (o mais recente) e tire os outros.',
+            rep.replace(/^Your /, 'Your ') + ' shows up more than once: each browser (or the app opened inside another app) counts as a device. Keep the one you use (the most recent) and remove the others.',
+            rep.replace(/^Tu /, 'Tu ') + ' aparece más de una vez: cada navegador (o la app abierta dentro de otra app) cuenta como un dispositivo. Quédate con el que usas (el más reciente) y quita los otros.')) + '</div>' : '') +
+          (outros.length ? '<h3 class="nv-sub" id="nvApsOutros">' + tt('Em outros apps SolverONE', 'In other SolverONE apps', 'En otras apps SolverONE') + '</h3>' +
+            '<p class="nv-tiny">' + tt('A mesma conta e o mesmo PIN valem nos dois.', 'The same account and the same PIN work in both.', 'La misma cuenta y el mismo PIN valen en los dos.') + '</p>' + outros.map(linha).join('') : '')
+        : '') || '<p class="nv-tiny">' + tt('Nenhum aparelho registrado ainda.', 'No device registered yet.') + '</p>';
       caixa.querySelectorAll('[data-tirar]').forEach(function (b) { b.onclick = async function () {
         var id = b.getAttribute('data-tirar'), este = L && id === L.ap;
-        if (!window.confirm(este ? tt('Remover ESTE aparelho? A chave e a cópia daqui saem (na nuvem continua tudo).', 'Remove THIS device? The key and the copy here are erased (everything stays in the cloud).') : tt('Remover este aparelho da sua conta? Para usar lá de novo, vai ser preciso aprovar outra vez.', 'Remove this device from your account? To use it there again, it will need approval again.'))) return;
+        if (b.getAttribute('data-simples') ? !window.confirm(tt('Tirar este aparelho da lista? Ele nunca chegou a entrar.', 'Remove this device from the list? It never finished signing in.', '¿Quitar este dispositivo de la lista? Nunca llegó a entrar.')) : !window.confirm(este ? tt('Remover ESTE aparelho? A chave e a cópia daqui saem (na nuvem continua tudo).', 'Remove THIS device? The key and the copy here are erased (everything stays in the cloud).') : tt('Remover este aparelho da sua conta? Para usar lá de novo, vai ser preciso aprovar outra vez.', 'Remove this device from your account? To use it there again, it will need approval again.'))) return;
         try { await Aparelhos.rpc('sol_aparelho_tirar', { p_id: id }); } catch (e) { return aviso(Conta.explicar(e), 'erro'); }
         if (este) return Aparelhos.tirado();
         aviso('✓ ' + tt('Aparelho removido.', 'Device removed.')); Painel.aparelhos(el, L);
@@ -3485,7 +3503,7 @@
     converterRobo: function (l) { return Caixa.converter(l); },
     corrigirRobo: function (ja, g) { return Caixa.corrigir(ja, g); },   /* 1.15.3 (3.87): o robô mandou de novo (teste da divisão) */
     /* para os testes automáticos (teste/nuvem.js): as peças, sem estado aberto */
-    _teste: { Pin: Pin, Painel: Painel, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao, Espelho: Espelho, Escopos: Escopos, Visao: Visao, Arquivos: Arquivos, TempoReal: TempoReal }
+    _teste: { Pin: Pin, Painel: Painel, Aparelhos: Aparelhos, Ponte: Ponte, IDB: IDB, Vale: Vale, Trava: Trava, Cifra: Cifra, mapear: mapear, reconstruir: reconstruir, juntar: juntar, idsDaLista: idsDaLista, Caixa: Caixa, Sinc: Sinc, Cadeado: Cadeado, Portao: Portao, Espelho: Espelho, Escopos: Escopos, Visao: Visao, Arquivos: Arquivos, TempoReal: TempoReal, nomeAparelho: function () { return nomeAparelho(); } }
   };
   function nomeConta() { var s = Conta.ler() || {}, d = Conta.dados(s.access_token).user_metadata || {}; return String(s.nome || d.full_name || d.name || '').trim() || String(Conta.email() || '').split('@')[0]; }
   function confirmar(t) { try { return window.confirm(t); } catch (e) { return false; } }

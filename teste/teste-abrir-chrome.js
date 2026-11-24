@@ -50,7 +50,7 @@ const UA = {
     await p0.context().close();
 
     console.log('2) a tela de entrada');
-    for (const [k, quer] of [['webview', /abriu dentro de outro app/], ['samsung', /App de risco bloqueado/], ['chromeAndroid', null]]) {
+    for (const [k, quer] of [['webview', /Aqui dentro o app não fica guardado igual ao Chrome/], ['samsung', /App de risco bloqueado/], ['chromeAndroid', null]]) {
       const p = await abrir(UA[k], false);
       await p.waitForSelector('#nvEm', { timeout: 20000 }).catch(() => {});
       const box = await p.evaluate(() => { const e = document.getElementById('acChrome'); return e ? { t: e.textContent, href: e.querySelector('#acChromeBtn').getAttribute('href') } : null; });
