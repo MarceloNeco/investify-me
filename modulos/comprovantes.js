@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.2.0 · 24/Nov/2026
+   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.2.1 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, "adiante tudo do e-mail"; sem IA)
      · A caixa do robô (nuvem.js, money_entrada) traz um tipo novo de item, tipo "comprovante", tirado dos e-mails lidos
@@ -29,6 +29,8 @@
        mesmo valor, até 5 dias depois do vencimento), "⛔ não pague" se a conta está no débito automático e ainda não venceu (3.100), e
        "pague" se o débito não caiu. "links" (o arquivo no Drive do robô): 📎 na linha do comprovante (só https do Google Drive/Docs).
        recibo_exterior em BRL: o recibo × cartão casa pelo valor em reais, sem câmbio nem IOF (modulos/recibo-exterior.js 1.0.1).
+     · 1.2.1 (3.105): "Não é meu (conta de outra pessoa)" e a lista de terceiros (modulos/terceiros.js): o que bate com "ignorar" é
+       dispensado sozinho (sai do 📥); "processar" ganha o "para quem".
    API (window.Comprovantes)
      receber(l, escopo?) → true (guardado) | false · lista() · abertos() · ligarTudo() · casarCompra(x) · palpiteCat(loja)
    DADOS
@@ -160,6 +162,7 @@
 
   function processar(x) {
     if (x.estado === 'dispensado') return;
+    if (window.Terceiros && Terceiros.aplicar(x)) return;   /* 1.2.1 (3.105): conta de outra pessoa a ignorar */
     if (x.subtipo === 'compra') casarCompra(x);
     else if (x.subtipo === 'reembolso') ligarReembolso(x);
     else if (x.subtipo === 'nota_fiscal') ligarNota(x);
@@ -256,12 +259,12 @@
       if (x.subtipo === 'nota_fiscal') h += b('cp-ok', tr('Guardar', 'Keep', 'Guardar'));
       if (x.subtipo === 'outro') h += ['compra', 'reembolso', 'nota_fiscal', 'boleto', 'fatura'].map(function (s) { return b('cp-tipo', rotSub(s), ' data-v="' + s + '"'); }).join('') + b('cp-ok', tr('Guardar só', 'Just keep', 'Solo guardar'));
     }
-    if (x.estado !== 'dispensado') h += b('cp-tirar', tr('Dispensar', 'Dismiss', 'Descartar'));
+    if (x.estado !== 'dispensado') h += (window.Terceiros ? Terceiros.botao(x) : '') + b('cp-tirar', tr('Dispensar', 'Dismiss', 'Descartar'));
     return '<span class="inb-acoes" style="flex-wrap:wrap;gap:4px">' + h + '</span>';
   }
   function linha(x, tag) {
     return '<' + tag + ' class="inb-item cp-item" data-cp="' + esc(x.id) + '"><div><b>🧾 ' + esc(API.frase(x)) + '</b><span class="t-sub">' +
-      esc([API.situacao(x), x.pedido ? tr('pedido ', 'order ', 'pedido ') + x.pedido : '', x.numero ? 'nº ' + x.numero : '', x.cnpj ? 'CNPJ ' + x.cnpj : ''].filter(Boolean).join(' · ')) + '</span>' +
+      esc([API.situacao(x), x.pedido ? tr('pedido ', 'order ', 'pedido ') + x.pedido : '', x.numero ? 'nº ' + x.numero : '', x.cnpj ? 'CNPJ ' + x.cnpj : '', x.paraQuem ? '👤 ' + tr('para ', 'for ', 'para ') + x.paraQuem : ''].filter(Boolean).join(' · ')) + '</span>' +
       (x.links || []).map(function (u, i) { return ' <a class="small cp-link" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">📎 ' + esc(tr('arquivo', 'file', 'archivo') + ((x.links.length > 1) ? ' ' + (i + 1) : '')) + ' ↗</a>'; }).join('') + '</div>' + botoes(x) + '</' + tag + '>';
   }
   function abrirLista() {
@@ -277,7 +280,7 @@
   function achar(el) { return lista().find(function (y) { return y.id === el.dataset.id; }); }
 
   MoneyModulos.registrar({
-    id: 'comprovantes', versao: '1.2.0', colecoes: [COL],
+    id: 'comprovantes', versao: '1.2.1', colecoes: [COL],
     pontos: {
       'lancamentos.topo': function () {
         var n = API.abertos().length; if (!n) return '';

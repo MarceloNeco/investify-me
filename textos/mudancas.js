@@ -1,11 +1,15 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.104 · 24/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.105 · 24/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.105', d:'2026-11-24', t:'Contas de outras pessoas e telas que não se perdem', itens:[
+    '📋 Contas de outras pessoas que chegam no seu e-mail (ex.: uma assinatura que você fez para um parente): no comprovante, toque em "Não é meu". O app pega o titular e o código do cliente do próprio e-mail, você diz de quem é e escolhe: ignorar (não entra nas suas finanças) ou processar para a pessoa (entra com "para quem"). As próximas contas dela são reconhecidas sozinhas. A lista fica em Configurações e os nomes ficam só no seu aparelho.',
+    'Viagens: a caixa "✂️ Parte" não fecha mais quando a tela se atualiza sozinha no meio da digitação.'
+  ]},
   {v:'3.104', d:'2026-11-24', t:'Recibo em reais, faturas e o arquivo no Drive', itens:[
     'O recibo de serviço do exterior cobrado em reais (como o da Anthropic, desde outubro) agora liga direto ao lançamento do cartão pelo valor em reais, sem câmbio nem IOF.',
     'Faturas e contas que chegam por e-mail (telefone, cartão, condomínio, consórcio) viram conta a pagar: aparecem no 📥 perto do vencimento, com "Já paguei", e saem sozinhas quando o pagamento aparece. Se a conta está no débito automático e ainda não venceu, o app diz "não pague"; se o débito não caiu, diz "pague". O 📎 abre o arquivo da conta no Drive.',

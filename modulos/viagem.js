@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/viagem.js — VIAGEM POR JANELA DE TEMPO (3.98)        1.0.1 · 24/Nov/2026
+   modulos/viagem.js — VIAGEM POR JANELA DE TEMPO (3.98)        1.0.2 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 22/Nov/2026; sem IA, sem integração)
      · Cadastro "✈️ Viagem" (BudgetONE → ✈️ Viagens): nome, destino(s), início e fim, margem antes/depois (1 dia, editável),
@@ -33,6 +33,8 @@
      · 📥 ("viagem"): muitos gastos seguidos numa cidade que não é a de casa → "Parece que você está viajando (Gramado,
        18–22/11). Criar a viagem?"; o combustível fora do normal ("Foi viagem?", previsao.js) também oferece criar.
      · Visão da casa: a viagem é da casa quando quem foi é da casa (marcável: escopo).
+   1.0.2 (3.105): a caixa "✂️ Parte" aberta e o valor digitado sobrevivem quando a tela se redesenha sozinha (a conciliação
+     automática, as cotações); antes ela fechava no meio da digitação (o mesmo do material-escolar 1.0.1).
    API (window.Viagem)
      lista() · salvar(d, id?) · janela(v) → {de, ate} · sugestoes(v) → [{g, fase, motivo, pend, estorno}] · confirmar(v, id, sim)
      parte(v, id, valor) · confirmarTodos(v) · itens(v) · resumo(v) · noMes('AAAA-MM') · detectar() · cidadeDe(g)
@@ -351,7 +353,7 @@
   };
 
   /* ---------- telas ---------- */
-  var aberta = null, combPendente = '';
+  var aberta = null, combPendente = '', partes = {};   /* partes: {gid: valor digitado} a caixa da parte aberta, entre um desenho e outro */
   function lerVia(id) { return lista().find(function (x) { return x.id === id; }) || null; }
   function fmtDias(v) { return I18n.data(v.inicio, { semAno: true }) + ' – ' + I18n.data(v.fim || v.inicio); }
   function botao(acao, rot, extra, cls) { return '<button type="button" class="btn sm' + (cls ? ' ' + cls : '') + '" data-acao="' + acao + '"' + (extra || '') + '>' + esc(rot) + '</button>'; }
@@ -362,7 +364,7 @@
       '<span class="t-sub">' + esc(I18n.data(g.data) + ' · ' + rotFase(s.fase) + ' · ' + s.motivo + (s.pend ? ' · ' + tr('pendente no banco: entra quando virar definitiva', 'pending at the bank: counts when final', 'pendiente en el banco: cuenta cuando sea definitiva') : '')) + '</span></div>' +
       '<span class="inb-acoes" style="flex-wrap:wrap;gap:4px">' + botao('vg-sim', '✅ ' + tr('É da viagem', 'Trip', 'Es del viaje'), d) + botao('vg-nao', '❌ ' + tr('Não é', 'Not trip', 'No es'), d) +
       (!s.pend && !s.estorno ? botao('vg-parte', '✂️ ' + tr('Parte', 'Part', 'Parte'), d) : '') + '</span>' +
-      '<div class="vg-parte-box" data-g="' + esc(g.id) + '" hidden><input type="text" inputmode="decimal" class="vg-parte-v" placeholder="' + esc(tr('quanto foi da viagem', 'how much was the trip', 'cuánto fue del viaje')) + '" style="width:9em"> ' + botao('vg-parte-ok', tr('Dividir', 'Split', 'Dividir'), d) + '</div></li>';
+      '<div class="vg-parte-box" data-g="' + esc(g.id) + '"' + (partes[g.id] != null ? '' : ' hidden') + '><input type="text" inputmode="decimal" class="vg-parte-v" data-g="' + esc(g.id) + '" value="' + esc(partes[g.id] || '') + '" placeholder="' + esc(tr('quanto foi da viagem', 'how much was the trip', 'cuánto fue del viaje')) + '" style="width:9em"> ' + botao('vg-parte-ok', tr('Dividir', 'Split', 'Dividir'), d) + '</div></li>';
   }
   function bloco(tit, obj, total) {
     var ks = Object.keys(obj).sort(function (a, b) { return obj[b] - obj[a]; }); if (!ks.length) return '';
@@ -446,7 +448,7 @@
   function depois() { Store.salvar(); if (typeof render === 'function') render(); if (typeof renderInboxN === 'function') renderInboxN(); }
 
   MoneyModulos.registrar({
-    id: 'viagem', versao: '1.0.1', colecoes: [COL],
+    id: 'viagem', versao: '1.0.2', colecoes: [COL],
     pontos: {
       'inbox.grupos': function () {
         if (casa()) return [];
@@ -524,15 +526,17 @@
       'vg-sim': function (el) { var v = lerVia(el.dataset.v); if (v && API.confirmar(v, el.dataset.id, true)) depois(); },
       'vg-nao': function (el) { var v = lerVia(el.dataset.v); if (v && API.confirmar(v, el.dataset.id, false)) depois(); },
       'vg-todos': function (el) { var v = lerVia(el.dataset.v); if (!v) return; var n = API.confirmarTodos(v); depois(); toast('✈️ ' + n + tr(' gastos na viagem.', ' spendings in the trip.', ' gastos en el viaje.')); },
-      'vg-parte': function (el) { var b = document.querySelector('.vg-parte-box[data-g="' + el.dataset.id + '"]'); if (b) b.hidden = !b.hidden; },
+      'vg-parte': function (el) { var b = document.querySelector('.vg-parte-box[data-g="' + el.dataset.id + '"]'); if (!b) return; b.hidden = !b.hidden; if (b.hidden) delete partes[el.dataset.id]; else if (partes[el.dataset.id] == null) partes[el.dataset.id] = ''; },
       'vg-parte-ok': function (el) {
         var v = lerVia(el.dataset.v), b = document.querySelector('.vg-parte-box[data-g="' + el.dataset.id + '"] .vg-parte-v');
         if (!v || !b) return;
         if (!API.parte(v, el.dataset.id, num(b.value))) return toast(tr('Diga um valor menor que o total.', 'Enter an amount below the total.', 'Indica un importe menor que el total.'), 'warn');
+        delete partes[el.dataset.id];
         depois();
       }
     },
     ouvir: { 'gasto.novo': function () { if (lista().length) API.ligarTudo(); } }
   });
+  document.addEventListener('input', function (ev) { var t = ev.target; if (t && t.classList && t.classList.contains('vg-parte-v') && t.dataset.g) partes[t.dataset.g] = t.value; });
   window.Viagem = API;
 })();

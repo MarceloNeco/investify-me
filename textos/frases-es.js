@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.104 · 24/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.105 · 24/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,10 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.105 — rascunho, revisar */
+  'Contas de outras pessoas e telas que não se perdem':'Facturas de otras personas y pantallas que no pierden lo escrito',
+  '📋 Contas de outras pessoas que chegam no seu e-mail (ex.: uma assinatura que você fez para um parente): no comprovante, toque em "Não é meu". O app pega o titular e o código do cliente do próprio e-mail, você diz de quem é e escolhe: ignorar (não entra nas suas finanças) ou processar para a pessoa (entra com "para quem"). As próximas contas dela são reconhecidas sozinhas. A lista fica em Configurações e os nomes ficam só no seu aparelho.':'📋 Facturas de otras personas que llegan a tu correo (ej.: una suscripción que hiciste para un familiar): en el comprobante, toca "No es mío". La app toma el titular y el código de cliente del propio correo, tú dices de quién es y eliges: ignorar (no entra en tus finanzas) o procesar para la persona (entra con "para quién"). Sus próximas facturas se reconocen solas. La lista está en Ajustes y los nombres quedan solo en tu dispositivo.',
+  'Viagens: a caixa "✂️ Parte" não fecha mais quando a tela se atualiza sozinha no meio da digitação.':'Viajes: la caja "✂️ Parte" ya no se cierra cuando la pantalla se actualiza sola mientras escribes.',
   /* 3.104 — rascunho, revisar */
   'Recibo em reais, faturas e o arquivo no Drive':'Recibo en reales, facturas y el archivo en Drive',
   'O recibo de serviço do exterior cobrado em reais (como o da Anthropic, desde outubro) agora liga direto ao lançamento do cartão pelo valor em reais, sem câmbio nem IOF.':'El recibo de un servicio del exterior cobrado en reales (como el de Anthropic, desde octubre) ahora se vincula directamente al movimiento de la tarjeta por el importe en reales, sin cambio ni IOF.',

@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.104 · 24/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.105 · 24/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.105 */
+  'Contas de outras pessoas e telas que não se perdem':'Other people’s bills and screens that keep what you type',
+  '📋 Contas de outras pessoas que chegam no seu e-mail (ex.: uma assinatura que você fez para um parente): no comprovante, toque em "Não é meu". O app pega o titular e o código do cliente do próprio e-mail, você diz de quem é e escolhe: ignorar (não entra nas suas finanças) ou processar para a pessoa (entra com "para quem"). As próximas contas dela são reconhecidas sozinhas. A lista fica em Configurações e os nomes ficam só no seu aparelho.':'📋 Other people’s bills that arrive in your e-mail (e.g. a subscription you set up for a relative): on the receipt, tap "Not mine". The app takes the holder and the customer code from the e-mail itself, you say whose it is and choose: ignore (it stays out of your finances) or process it for that person (it comes in with "for whom"). Their next bills are recognized on their own. The list is in Settings and the names stay only on your device.',
+  'Viagens: a caixa "✂️ Parte" não fecha mais quando a tela se atualiza sozinha no meio da digitação.':'Trips: the "✂️ Part" box no longer closes when the screen refreshes by itself while you type.',
   /* 3.104 */
   'Recibo em reais, faturas e o arquivo no Drive':'Receipts in reais, bills and the file on Drive',
   'O recibo de serviço do exterior cobrado em reais (como o da Anthropic, desde outubro) agora liga direto ao lançamento do cartão pelo valor em reais, sem câmbio nem IOF.':'A foreign service receipt charged in reais (like Anthropic’s, since October) now links straight to the card entry by the amount in reais, with no exchange rate or IOF.',

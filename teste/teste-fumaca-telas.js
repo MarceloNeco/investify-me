@@ -69,6 +69,10 @@ const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify',
     await p.waitForFunction(() => Array.from(document.images).every((i) => i.complete) && document.fonts.status === 'loaded');
     await p.waitForTimeout(150);
     await p.addStyleTag({ content: '#toasts{visibility:hidden}' });   /* aviso que chega a qualquer momento (tempo) não é mudança de tela */
+    /* 3.105: o desfoque do fundo (backdrop-filter dos cartões, só em tela larga) não sai igual a cada foto: medido na mesma tela,
+       8 fotos deram 2 resultados diferentes com ele (1 unidade de cor na borda do "‹" do mini-calendário) e 1 só sem ele. Sai nas
+       duas cópias; o HTML e o estilo continuam comparados */
+    await p.addStyleTag({ content: '*{backdrop-filter:none !important; -webkit-backdrop-filter:none !important}' });
     const png = await p.screenshot({ fullPage: true, animations: 'disabled', caret: 'hide' });
     const html = await p.evaluate(() => { const v = document.querySelector('.view:not(.hidden)') || document.body; return v.innerHTML.replace(/\?v=[\w.]+/g, ''); });
     const css = await p.evaluate(() => { const v = document.querySelector('.view:not(.hidden) .card') || document.body; const c = getComputedStyle(v); return [c.backgroundColor, c.color, c.borderRadius, c.padding, c.fontFamily].join('|'); });

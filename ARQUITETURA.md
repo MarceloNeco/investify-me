@@ -825,6 +825,17 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   recibo-exterior 1.0.1: `moeda 'BRL'` casa pelo valor em reais (±1 centavo, ±5 dias; o nome desempata; com mais de um e sem o nome, não casa),
   sem IOF e sem câmbio ("Recibo R$ X = cartão R$ X (em reais…)"); USD como antes. material-escolar 1.0.1: a caixa "✂️ Parte", o valor e o filho
   escolhido sobrevivem ao redesenho da tela (a causa do teste que quebrava 1 vez em 3). Teste: `teste/teste-robo-3104.js`.
+  **3.105 — Contas de outras pessoas.** `modulos/terceiros.js` 1.0.0 (`window.Terceiros`, coleção `terceiros`, reservada; interruptor
+  `terceiros` do RootifyONE): "Não é meu (conta de outra pessoa)" no comprovante (comprovantes 1.2.1 chama `Terceiros.botao` e, em
+  `processar`, `Terceiros.aplicar`: o que bate com "ignorar" é dispensado; "processar" ganha `x.paraQuem` e o lançamento ligado, se a pessoa
+  não mexeu); `marcadoresDe(x)` tira do texto do comprovante o titular ("Titular:", "Cliente:") e o código ("Código do cliente", "conta
+  contrato", "instalação", "matrícula"); `casa(x)`: um marcador (sem acento, ≥ 4 letras) inteiro no texto. A cada mudança, a LISTA INTEIRA
+  vai pelo espelho (`MoneyNuvem.espelho.enfileirar`, money_espelho_saida, cifrada para a chave do robô): `{v:1, acao:'terceiros',
+  id:'terceiros', em, quem_editou, versao_app, lista:[{nome, marcadores, acao, para_quem}]}` (a fila guarda um por id: vale a última).
+  Privacidade (diretrizes, 24/Nov/2026): nomes e marcadores só no aparelho e no pacote para o robô; a plataforma verá só contagens
+  (`money_terceiros_resumo`, que o robô grava; rascunho do SQL com a conversa de diretrizes; RootifyONE #146). Rodapé "Avisos legais e
+  privacidade" com a linha. viagem 1.0.2: a caixa "✂️ Parte" sobrevive ao redesenho. teste-fumaca-telas: sem o `backdrop-filter` nas duas
+  cópias (o desfoque não sai igual a cada foto: 8 fotos da mesma tela, 2 resultados com ele, 1 sem). Teste: `teste/teste-terceiros.js`.
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem

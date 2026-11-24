@@ -113,6 +113,8 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
     ok(await p.evaluate(() => !Viagem.sugestoes(Viagem.lista()[0]).some((s) => s.g.id === 'rb_d10')), 'a mesma loja de novo: não é sugerida (a regra vale)');
     await p.click('#view-b-viagens .vg-sug[data-g="rb_d1"] [data-acao="vg-parte"]');
     await p.fill('#view-b-viagens .vg-parte-box[data-g="rb_d1"] .vg-parte-v', '100');
+    await p.evaluate(() => render());   /* 3.105: a tela se redesenha sozinha no meio da digitação */
+    ok(await p.evaluate(() => { const b = document.querySelector('#view-b-viagens .vg-parte-box[data-g="rb_d1"]'); return !!b && !b.hidden && b.querySelector('.vg-parte-v').value === '100'; }), 'a caixa "✂️ Parte" e o valor digitado continuam lá quando a tela se redesenha');
     await p.click('#view-b-viagens .vg-parte-box[data-g="rb_d1"] [data-acao="vg-parte-ok"]'); await p.waitForTimeout(200);
     const pt1 = await p.evaluate(() => Gasto.todos().filter((x) => x.id === 'rb_d1' || x.id.indexOf('rb_d1~') === 0).map((x) => x.id + '=' + x.valor + ':' + (x.viagem ? 'v' : '-')).sort());
     ok(pt1.join() === 'rb_d1=100:v,rb_d1~2=80:-', '✂️ "Parte": divide em 100 (da viagem) + 80 (fora): ' + pt1.join());
