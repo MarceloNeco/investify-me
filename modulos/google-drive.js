@@ -1,7 +1,7 @@
 /* =====================================================================
    modulos/google-drive.js — "Conectar Google": o componente SolverGoogle (3.103)        1.0.0 · 24/Nov/2026
    ---------------------------------------------------------------------
-   Peça da PLATAFORMA, escrita no MoneyTRIO com o contrato da conversa de diretrizes (24/Nov/2026; pendência #145 do RootifyONE):
+   Peça da PLATAFORMA, escrita no MoneyTRIO com o contrato da conversa de diretrizes (24/Nov/2026; pendência #151 do RootifyONE):
    sem nada do app dentro (o nome da subpasta, as telas e os textos do carro ficam em modulos/carro-drive.js). Para levar ao módulo
    comum como google.js é copiar este arquivo.
    O QUE FAZ

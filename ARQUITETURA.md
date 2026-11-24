@@ -806,7 +806,7 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   `teste-conta-atraso.js`.
   **3.103 — Foto do serviço do carro no Google Drive** (integração nova aprovada pelo dono: o Google Drive da própria pessoa). Dois arquivos:
   `modulos/google-drive.js` 1.0.0 = o componente da PLATAFORMA `window.SolverGoogle`, com o contrato da conversa de diretrizes (24/Nov/2026;
-  vira `google.js` do módulo comum quando o 2º app precisar, pendência #145 do RootifyONE), sem nada do app: `configurar` (o bloco `google`
+  vira `google.js` do módulo comum quando o 2º app precisar, pendência #151 do RootifyONE), sem nada do app: `configurar` (o bloco `google`
   {clienteId, chavePicker, projeto} de `/solverone-dados/servicos/<app>.json`, o master do RootifyONE; sem ele, o que o dono colou na tela
   escondida, só no aparelho: localStorage `solver.google.<app>`), `estado`, `conectar` (Google Identity Services, token client, escopo
   drive.file, token SÓ na memória, ~1 h, sempre num toque; as bibliotecas carregam no 1º toque), `desconectar` (revoke), `escolherPasta`
@@ -825,6 +825,25 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   recibo-exterior 1.0.1: `moeda 'BRL'` casa pelo valor em reais (±1 centavo, ±5 dias; o nome desempata; com mais de um e sem o nome, não casa),
   sem IOF e sem câmbio ("Recibo R$ X = cartão R$ X (em reais…)"); USD como antes. material-escolar 1.0.1: a caixa "✂️ Parte", o valor e o filho
   escolhido sobrevivem ao redesenho da tela (a causa do teste que quebrava 1 vez em 3). Teste: `teste/teste-robo-3104.js`.
+  **3.105 — Contas de outras pessoas.** `modulos/terceiros.js` 1.0.0 (`window.Terceiros`, coleção `terceiros`, reservada; interruptor
+  `terceiros` do RootifyONE): "Não é meu (conta de outra pessoa)" no comprovante (comprovantes 1.2.1 chama `Terceiros.botao` e, em
+  `processar`, `Terceiros.aplicar`: o que bate com "ignorar" é dispensado; "processar" ganha `x.paraQuem` e o lançamento ligado, se a pessoa
+  não mexeu); `marcadoresDe(x)` tira do texto do comprovante o titular ("Titular:", "Cliente:") e o código ("Código do cliente", "conta
+  contrato", "instalação", "matrícula"); `casa(x)`: um marcador (sem acento, ≥ 4 letras) inteiro no texto. A cada mudança, a LISTA INTEIRA
+  vai pelo espelho (`MoneyNuvem.espelho.enfileirar`, money_espelho_saida, cifrada para a chave do robô): `{v:1, acao:'terceiros',
+  id:'terceiros', em, quem_editou, versao_app, lista:[{nome, marcadores, acao, para_quem}]}` (a fila guarda um por id: vale a última).
+  Privacidade (diretrizes, 24/Nov/2026): nomes e marcadores só no aparelho e no pacote para o robô; a plataforma verá só contagens
+  (`money_terceiros_resumo`, por `grupo_id`, aplicada em 24/Nov/2026; o robô grava pela `money_terceiros_resumo_gravar`; RootifyONE #152). Rodapé "Avisos legais e
+  privacidade" com a linha. viagem 1.0.2: a caixa "✂️ Parte" sobrevive ao redesenho. teste-fumaca-telas: sem o `backdrop-filter` nas duas
+  cópias (o desfoque não sai igual a cada foto: 8 fotos da mesma tela, 2 resultados com ele, 1 sem). Teste: `teste/teste-terceiros.js`.
+  Também na 3.105 (pedidos do dono): canhotos 1.3.1, o botão e a janela "📷 Foto de nota ou recibo" (antes "🧾 Conferir canhotos"; o id
+  `cn-abrir` e as ações iguais), com a linha "OS da oficina, nota, recibo ou canhoto: o app lê e liga ao banco"; carro-drive 1.0.1, "ou
+  escolher a pasta deste serviço" (Picker) ao lado de "Enviar ao Drive": envia direto na pasta escolhida, sem criar subpasta
+  (`obj.drivePasta`, que vale também na fila).
+  canhotos 1.3.2 (o teste real do dono: OS e canhoto em 2 itens): 2º passo do `juntarOS` (o item com OS + outro do mesmo valor, das mesmas
+  parcelas ou uma sem, e do mesmo CNPJ ou loja, sem precisar do `mesmaCompra`; fica o do pagamento: o final, senão a data mais nova); o
+  seletor de cartão por `Cartoes.doFinal` (qualquer final); `osRot` na linha ("OS n · Veículo › sub · 🚗 apelido"); `acharCarro` também com a
+  palavra do apelido dentro da palavra lida ("LRENEGADE").
   **3.93 — RachAI (nome provisório): rachar a conta da mesa.** Dentro do BudgetONE (tela `b-rachai`, item no menu `nav.rachai`, cartão no
   `budget.painel`); sem internet, sem IA, sem convite nem servidor. `modulos/rachai.js` 1.0.0 (`window.RachAI`, coleção `rachai_mesas`, reservada;
   visao-casa 1.1.4 respeita `escopo: 'casa'`): `calcMesa` em centavos (item por pessoa com `por {pid: qtd}`, ou `divide [pids]` entre um grupo, sem quem

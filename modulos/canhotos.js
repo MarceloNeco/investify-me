@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/canhotos.js — "🧾 Conferir canhotos" com o banco (3.92)        1.3.0 · 23/Nov/2026
+   modulos/canhotos.js — "📷 Foto de nota ou recibo" com o banco (3.92; antes "🧾 Conferir canhotos")        1.3.2 · 24/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 18/Nov/2026; sem IA)
      · Em Lançamentos, "🧾 Conferir canhotos": uma foto (ou várias) com os canhotos da maquininha, cupons e recibos. O motor do
@@ -28,6 +28,20 @@
      categoria, CNPJ, parcelas, nº da OS). A OS sozinha (sem o canhoto) traz a data da emissão: procura a parcela até 30 dias depois,
      e só liga sozinha se a loja ou o CNPJ baterem. Grupo Veículo, a categoria da OS ("Funilaria e pintura") e o carro (pelo nome do
      veículo; ou o único carro ativo) já vêm prontos. O CNPJ desempata. result.operacional NÃO é usado nem enviado (é do OmniLifeONE).
+   1.3.1 (3.105), pedido do dono: o botão e a janela passam a se chamar "📷 Foto de nota ou recibo" (ele lê qualquer foto de gasto: a OS
+     da oficina, a nota, o recibo, o orçamento, o canhoto), com a linha "OS da oficina, nota, recibo ou canhoto: o app lê e liga ao
+     banco". Só o texto: o id (cn-abrir) e as ações são os mesmos.
+   1.3.2 (3.105), o teste real do dono (as 2 fotos da oficina, a OS e o canhoto da maquininha, escolhidas juntas, vieram como 2 itens):
+     · 2º passo do juntarOS: o item com OS se junta a outro do mesmo valor, das mesmas parcelas e do mesmo CNPJ ou loja, mesmo sem o
+       "mesmaCompra" do motor (fotos separadas; um pedaço do canhoto no canto da foto da OS; os dois lidos como OS). Fica o que tem o
+       pagamento (o final do cartão; sem ele, a data mais nova); da OS vêm o nº, o veículo e a categoria.
+     · O cartão vem escolhido pelo final lido em QUALQUER final do cartão (Cartoes.doFinal), não só no primeiro. Sem o cartão
+       cadastrado, o seletor mostra os "Encontrados nas suas compras" (o robô já trouxe: "Mastercard ••9458 (Banco)") com o do final já
+       escolhido; escolher um cadastra o cartão com 1 toque (Cartoes.semente + Banco.salvarCartao, e liga para trás as compras dos finais).
+     · "🔗 Juntar os marcados (é a mesma compra)" quando a leitura tem 2 ou mais itens (o automático pode não perceber); a linha do
+       "Esperar o banco" explica que ele não cria gasto: a compra vem pela fatura e a foto completa a descrição.
+     · A linha mostra "Veículo › <categoria> · <carro>" antes de esperar o banco; o carro pelo apelido mesmo com letra grudada no texto lido
+       ("LRENEGADE" acha o "Renegade"); com o carro achado, a linha mostra o apelido, não o texto do OCR.
    PONTOS QUE USA
      lancamentos.topo · ações cn-*
    ===================================================================== */
@@ -77,14 +91,43 @@
         fora[it.papel] = 1;
       } else if (f.fonte !== 'comprovante') it.osLonge = true;   /* sem o pagamento: a data é a da emissão */
     });
+    /* 1.3.2 (3.105): o mesmo serviço sem o "mesmaCompra" do motor (fotos separadas; pedaço do canhoto na foto da OS): o mesmo valor, as
+       mesmas parcelas (ou uma sem) e o mesmo CNPJ ou loja. Fica o do pagamento (final do cartão; sem ele, a data mais nova) */
+    var resto = itens.filter(function (it) { return !fora[it.papel]; });
+    resto.forEach(function (a) {
+      if (!a.os || fora[a.papel]) return;
+      resto.forEach(function (b) {
+        if (b === a || fora[b.papel] || fora[a.papel] || !(a.valor > 0) || Math.abs((Number(b.valor) || 0) - a.valor) > 0.011) return;
+        var pa = a.parcelas || 1, pb = b.parcelas || 1; if (pa > 1 && pb > 1 && pa !== pb) return;
+        var ca = so(a.cnpj), cb = so(b.cnpj), la = a.lojaOS || a.loja || '', lb = b.lojaOS || b.loja || '';
+        if (!((ca.length === 14 && ca === cb) || (norm(la) && norm(la) === norm(lb)) || (window.PrintColar && la && lb && PrintColar.lojaParecida(la, lb)))) return;
+        var fica = juntar2(a, b); fora[(fica === a ? b : a).papel] = 1;
+      });
+    });
     return itens.filter(function (it) { return !fora[it.papel]; });
+  }
+  /* junta dois papéis da mesma compra; devolve o que fica (o do pagamento: o final do cartão; sem ele, a data mais nova), com a OS */
+  function juntar2(a, b) {
+    var fica = (b.final && !a.final) || (!a.final && !b.final && iso(b.data) > iso(a.data)) ? b : a, sai = fica === a ? b : a;
+    var comCarro = a.os && a.os.veiculo ? a : b.os && b.os.veiculo ? b : null;
+    if (a.os || b.os) {
+      fica.os = Object.assign({}, sai.os || {}, fica.os || {}, comCarro ? comCarro.os : {});
+      if (!fica.os.numero && sai.os && sai.os.numero) fica.os.numero = sai.os.numero;
+    }
+    fica.parcelas = Math.max(a.parcelas || 1, b.parcelas || 1); if (!fica.cnpj && sai.cnpj) fica.cnpj = sai.cnpj;
+    if (sai.loja && !fica.lojaOS && (sai.os || sai.documento === 'os_oficina')) fica.lojaOS = sai.lojaOS || sai.loja; if (!fica.loja) fica.loja = sai.loja;
+    if (!fica.final && sai.final) fica.final = sai.final; if (!fica.hora && sai.hora && fica.data === sai.data) fica.hora = sai.hora;
+    if (!(fica.valor > 0) && sai.valor > 0) { fica.valor = sai.valor; fica.confianca = sai.confianca; }
+    fica.osLonge = !!(fica.osLonge && sai.osLonge && !fica.final);
+    return fica;
   }
   /* o carro pelo nome do veículo da OS (uma palavra do apelido, sem número); sem o nome, o único carro ativo */
   function acharCarro(nome) {
     if (!window.Veiculos) return '';
     var at = Veiculos.ativos(), n = ' ' + norm(nome) + ' ';
     if (!n.trim()) return at.length === 1 ? at[0].id : '';
-    var hit = at.filter(function (v) { return norm(v.apelido).split(' ').some(function (w) { return w.length >= 3 && !/^\d+$/.test(w) && n.indexOf(' ' + w + ' ') >= 0; }); });
+    /* 1.3.2: a palavra do apelido também dentro de uma palavra lida ("LRENEGADE" acha "Renegade"), com 4 letras ou mais */
+    var hit = at.filter(function (v) { return norm(v.apelido).split(' ').some(function (w) { return w.length >= 3 && !/^\d+$/.test(w) && (n.indexOf(' ' + w + ' ') >= 0 || (w.length >= 4 && n.indexOf(w) >= 0)); }); });
     return hit.length === 1 ? hit[0].id : '';
   }
   function osPadrao(it) {
@@ -222,7 +265,13 @@
 
   /* ---------- o resultado ---------- */
   function rot(it) { return [it.loja || tr('(loja não lida)', '(store not read)', '(tienda no leída)'), it.data, it.hora, it.final ? '••' + it.final : '', it.parcelas > 1 && it.valor ? it.parcelas + 'x ' + tr('de ', 'of ', 'de ') + fmt(n2(it.valor / it.parcelas)) : '',
-    it.os ? '🔧 ' + [tr('OS', 'Work order', 'OT') + (it.os.numero ? ' ' + it.os.numero : ''), it.os.veiculo, it.os.situacao === 'orcamento' ? tr('orçamento (ainda não pago)', 'estimate (not paid yet)', 'presupuesto (aún no pagado)') : ''].filter(Boolean).join(' · ') : ''].filter(Boolean).join(' · '); }
+    it.os ? '🔧 ' + osRot(it) : ''].filter(Boolean).join(' · '); }
+  /* 1.3.2: "OS 4321 · Veículo › Funilaria e pintura · <apelido do carro>" (sem carro achado, o veículo lido) */
+  function osRot(it) {
+    var po = osPadrao(it), v = po.veiculoId && window.Veiculos ? Veiculos.ativos().find(function (x) { return x.id === po.veiculoId; }) : null;
+    return [tr('OS', 'Work order', 'OT') + (it.os.numero ? ' ' + it.os.numero : ''), (GRUPOS.VEICULO || {}).nome + ' › ' + it.os.sub, v ? '🚗 ' + v.apelido : it.os.veiculo,
+      it.os.situacao === 'orcamento' ? tr('orçamento (ainda não pago)', 'estimate (not paid yet)', 'presupuesto (aún no pagado)') : ''].filter(Boolean).join(' · ');
+  }
   function nomeG(g) { return ((g.contraparte && g.contraparte.nome) || g.descRobo || g.desc || '') + ' · ' + I18n.data(g.data) + (g.pendente ? ' · ⏳ ' + tr('pendente no banco', 'pending at the bank', 'pendiente en el banco') : ''); }
   function classificacao(k, g0, it) {
     var gs = Object.keys(GRUPOS), g = Object.assign({}, g0, osPadrao(it));
@@ -240,26 +289,36 @@
     var gr = ultimo.grupos, sec = function (ico, tit, l, corpo) { return l.length ? '<h4 style="margin:12px 0 4px">' + ico + ' ' + esc(tit) + ' (' + l.length + ')</h4>' + l.map(corpo).join('') : ''; };
     var opcCartao = function (it) {
       var cs = typeof Banco !== 'undefined' ? Banco.cartoes() : [];
-      return '<select data-cn="cartao"><option value="">' + esc(tr('cartão…', 'card…', 'tarjeta…')) + '</option>' + cs.map(function (c) { return '<option value="' + esc(c.id) + '"' + (it.final && String(c.fim) === it.final ? ' selected' : '') + '>' + esc(Banco.rotuloCartao(c.id)) + '</option>'; }).join('') + '</select>';
+      /* 1.3.2 (3.105): também os cartões que o robô já trouxe e ainda não foram cadastrados; escolher um cadastra com 1 toque */
+      var enc = window.Cartoes && Cartoes.encontrados ? Cartoes.encontrados() : [], achou = cs.some(function (c) { return it.final && (String(c.fim) === it.final || (window.Cartoes && Cartoes.doFinal(it.final) === c)); });
+      var rotEnc = function (x) { var b = (typeof BANDEIRA_POR_ID !== 'undefined' && BANDEIRA_POR_ID[x.bandeira] || {}).nome; var f = it.final && x.finais.indexOf(it.final) >= 0 ? it.final : x.finais[0]; return (x.nome || b || tr('Cartão', 'Card', 'Tarjeta')) + ' ••' + f + (x.banco ? ' (' + x.banco + ')' : ''); };
+      return '<select data-cn="cartao"><option value="">' + esc(tr('cartão…', 'card…', 'tarjeta…')) + '</option>' + cs.map(function (c) { return '<option value="' + esc(c.id) + '"' + (it.final && (String(c.fim) === it.final || (window.Cartoes && Cartoes.doFinal(it.final) === c)) ? ' selected' : '') + '>' + esc(Banco.rotuloCartao(c.id)) + '</option>'; }).join('') +
+        (enc.length ? '<optgroup label="' + esc(tr('Encontrados nas suas compras (cadastra com 1 toque)', 'Found in your purchases (adds it with 1 tap)', 'Encontradas en tus compras (se registra con 1 toque)')) + '">' +
+          enc.map(function (x) { return '<option value="enc:' + esc(x.chave) + '"' + (!achou && it.final && x.finais.indexOf(it.final) >= 0 ? ' selected' : '') + '>' + esc(rotEnc(x)) + '</option>'; }).join('') + '</optgroup>' : '') + '</select>';
     };
-    var h = '<p class="small muted" style="margin:0 0 6px">' + esc(tr('Lido no aparelho, sem internet e sem IA. Só "Lançar à mão" cria lançamento; o resto liga ao que o banco mandou.', 'Read on the device, with no internet and no AI. Only "Enter manually" creates an entry; the rest links to what the bank sent.', 'Leído en el dispositivo, sin internet y sin IA. Solo "Registrar a mano" crea un movimiento; lo demás se vincula a lo que mandó el banco.')) + '</p>' +
+    /* 1.3.2 (3.105): com 2 ou mais itens, a pessoa junta os da mesma compra (quando o automático não percebeu) */
+    var nIt = gr.casou.length + gr.parecido.length + gr.novo.length + gr.duvida.length;
+    var jt = function () { return nIt >= 2 ? '<input type="checkbox" class="cn-jt" aria-label="' + esc(tr('marcar para juntar', 'tick to merge', 'marcar para juntar')) + '" style="margin-right:6px"> ' : ''; };
+    var h = (nIt >= 2 ? '<p class="cn-juntar-bar" style="margin:0 0 6px"><button type="button" class="btn sm" data-acao="cn-juntar">🔗 ' + esc(tr('Juntar os marcados (é a mesma compra)', 'Merge the ticked ones (same purchase)', 'Juntar los marcados (es la misma compra)')) + '</button></p>' : '') +
+      '<p class="small muted" style="margin:0 0 6px">' + esc(tr('Lido no aparelho, sem internet e sem IA. Só "Lançar à mão" cria lançamento; o resto liga ao que o banco mandou.', 'Read on the device, with no internet and no AI. Only "Enter manually" creates an entry; the rest links to what the bank sent.', 'Leído en el dispositivo, sin internet y sin IA. Solo "Registrar a mano" crea un movimiento; lo demás se vincula a lo que mandó el banco.')) + '</p>' +
       sec('✅', tr('Já está no banco', 'Already at the bank', 'Ya está en el banco'), gr.casou, function (x, i) {
-        return '<div class="cn-item" data-grupo="casou" data-i="' + i + '" style="padding:6px 0;border-top:1px solid var(--line)"><b>' + fmt(x.it.valor) + '</b> · ' + esc(rot(x.it)) + '<span class="t-sub">' + esc('= ' + nomeG(x.g)) + '</span>' +
+        return '<div class="cn-item" data-grupo="casou" data-i="' + i + '" style="padding:6px 0;border-top:1px solid var(--line)">' + jt() + '<b>' + fmt(x.it.valor) + '</b> · ' + esc(rot(x.it)) + '<span class="t-sub">' + esc('= ' + nomeG(x.g)) + '</span>' +
           '<button type="button" class="linkinho" data-acao="cn-classe" data-k="c' + i + '">' + esc(tr('classificar', 'classify', 'clasificar')) + '</button>' + classificacao('c' + i, x.g, x.it) + '</div>';
       }) +
       sec('🟡', tr('Parecido, confirme', 'Similar, please confirm', 'Parecido, confirma'), gr.parecido, function (x, i) {
-        return '<div class="cn-item" data-grupo="parecido" data-i="' + i + '" style="padding:6px 0;border-top:1px solid var(--line)"><b>' + fmt(x.it.valor) + '</b> · ' + esc(rot(x.it)) +
+        return '<div class="cn-item" data-grupo="parecido" data-i="' + i + '" style="padding:6px 0;border-top:1px solid var(--line)">' + jt() + '<b>' + fmt(x.it.valor) + '</b> · ' + esc(rot(x.it)) +
           '<select data-cn="par">' + x.cs.map(function (g) { return '<option value="' + esc(g.id) + '">' + esc(fmt(g.valor) + ' · ' + nomeG(g)) + '</option>'; }).join('') + '<option value="">' + esc(tr('nenhum destes', 'none of these', 'ninguno de estos')) + '</option></select>' +
           '<button type="button" class="btn sm" data-acao="cn-confirmar" data-i="' + i + '">' + esc(tr('É este', 'This one', 'Es este')) + '</button></div>';
       }) +
       sec('➕', tr('Não veio do banco', 'Not from the bank', 'No vino del banco'), gr.novo, function (x, i) {
-        return '<div class="cn-item" data-grupo="novo" data-i="' + i + '" style="padding:6px 0;border-top:1px solid var(--line)"><b>' + fmt(x.it.valor) + '</b> · ' + esc(rot(x.it)) + ' ' + opcCartao(x.it) +
+        return '<div class="cn-item" data-grupo="novo" data-i="' + i + '" style="padding:6px 0;border-top:1px solid var(--line)">' + jt() + '<b>' + fmt(x.it.valor) + '</b> · ' + esc(rot(x.it)) + ' ' + opcCartao(x.it) +
           '<button type="button" class="btn sm" data-acao="cn-amao" data-i="' + i + '">' + esc(tr('Lançar à mão', 'Enter manually', 'Registrar a mano')) + '</button>' +
-          '<button type="button" class="btn sm" data-acao="cn-esperar" data-i="' + i + '">⏳ ' + esc(tr('Esperar o banco', 'Wait for the bank', 'Esperar al banco')) + '</button></div>';
+          '<button type="button" class="btn sm" data-acao="cn-esperar" data-i="' + i + '">⏳ ' + esc(tr('Esperar o banco', 'Wait for the bank', 'Esperar al banco')) + '</button>' +
+          '<span class="t-sub cn-esperar-dica">' + esc(tr('⏳ Esperar o banco: a compra vem pela fatura; a foto completa a descrição (oficina, serviço, parcelas, carro).', '⏳ Wait for the bank: the purchase comes through the card bill; the photo completes the description (shop, service, installments, car).', '⏳ Esperar al banco: la compra llega por la factura; la foto completa la descripción (taller, servicio, plazos, coche).')) + '</span></div>';
       }) +
       sec('❓', tr('Valor em dúvida', 'Amount unsure', 'Importe dudoso'), gr.duvida, function (x, i) {
         var tomados = {}; gr.casou.forEach(function (y) { tomados[y.g.id] = 1; });
-        return '<div class="cn-item" data-grupo="duvida" data-i="' + i + '" style="padding:6px 0;border-top:1px solid var(--line)">' + esc(rot(x.it)) +
+        return '<div class="cn-item" data-grupo="duvida" data-i="' + i + '" style="padding:6px 0;border-top:1px solid var(--line)">' + jt() + esc(rot(x.it)) +
           '<span class="t-sub">⚠️ ' + esc(tr('Leitura incerta: confira olhando o papel.', 'Unsure reading: check against the paper.', 'Lectura dudosa: compruébalo mirando el papel.')) + '</span>' +
           (x.perto || []).filter(function (g) { return !tomados[g.id]; }).map(function (g) {
             return '<div class="cn-perto" style="margin:4px 0">' + esc(tr('No banco tem ', 'The bank has ', 'En el banco hay ') + fmt(g.valor) + tr(' nesse dia: é este?', ' on that day: is it this one?', ' ese día: ¿es este?')) +
@@ -270,7 +329,7 @@
           '<input data-cn="valor" inputmode="decimal" placeholder="' + esc(tr('outro valor', 'other amount', 'otro importe')) + '" style="width:7em"><button type="button" class="btn sm" data-acao="cn-valor" data-i="' + i + '">' + esc(tr('Usar', 'Use', 'Usar')) + '</button></div>';
       }) +
       '<div class="f-actions"><button class="btn primary" data-acao="cn-fechar">' + esc(tr('Pronto', 'Done', 'Listo')) + '</button></div>';
-    $('#genTitle').textContent = tr('Conferir canhotos', 'Check receipts', 'Revisar tickets');
+    $('#genTitle').textContent = tr('Foto de nota ou recibo', 'Receipt or invoice photo', 'Foto de factura o recibo');
     $('#genBody').innerHTML = Verter.html(h);
     delete $('#genBody').dataset.inbox;
     abrir('genModal');
@@ -316,15 +375,35 @@
     }).then(function (meta) { if (meta && meta.id) { f.docId = meta.id; CompraParcelada.ligar(f); Store.salvar(); } }).catch(function () { /* sem cofre: fica sem a foto */ });
   }
   function depois() { Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); }
+  /* 1.3.2 (3.105): "enc:<chave>" = um cartão que o robô já trouxe e ainda não está cadastrado: cadastra agora (a conta e os finais dele) */
+  function cartaoDe(v) {
+    if (!/^enc:/.test(v || '') || !window.Cartoes || typeof Banco === 'undefined') return v;
+    var sm = Cartoes.semente(v.slice(4)); if (!sm) return '';
+    var c = Banco.salvarCartao({ apelido: sm.apelido, bandeira: sm.bandeira, fim: sm.fim, bancoId: sm.bancoId });
+    if (sm.contaId) { c.contaId = sm.contaId; c.contaNome = sm.contaNome; }
+    c.finais = sm.finais; Cartoes.ligarRetro(c);
+    return c.id;
+  }
 
   MoneyModulos.registrar({
-    id: 'canhotos', versao: '1.3.0',
+    id: 'canhotos', versao: '1.3.2',
     pontos: {
-      'lancamentos.topo': function () { return '<div class="row" style="margin:0 0 8px"><button type="button" class="btn sm" data-acao="cn-abrir">🧾 ' + esc(tr('Conferir canhotos', 'Check receipts', 'Revisar tickets')) + '</button></div>'; }
+      'lancamentos.topo': function () { return '<div class="row" style="margin:0 0 8px;gap:6px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sm" data-acao="cn-abrir">📷 ' + esc(tr('Foto de nota ou recibo', 'Receipt or invoice photo', 'Foto de factura o recibo')) + '</button><span class="small muted">' + esc(tr('OS da oficina, nota, recibo ou canhoto: o app lê e liga ao banco', 'Repair shop work order, invoice, receipt or card slip: the app reads it and links it to the bank', 'Orden del taller, factura, recibo o ticket: la app lo lee y lo vincula al banco')) + '</span></div>'; }
     },
     acoes: {
       'cn-abrir': function () { escolher(); },
       'cn-fechar': function () { ultimo = null; fechar('genModal'); },
+      /* 1.3.2 (3.105): "🔗 Juntar (é a mesma compra)": os marcados viram um item só (a regra do automático escolhe o que fica) */
+      'cn-juntar': function () {
+        var its = [].slice.call(document.querySelectorAll('#genBody .cn-jt:checked')).map(function (e) { return item(e).x.it; });
+        if (its.length < 2) return toast(tr('Marque 2 ou mais itens da mesma compra.', 'Tick 2 or more items of the same purchase.', 'Marca 2 o más elementos de la misma compra.'), 'warn');
+        var chave = function (it) { return it.arquivo + '#' + it.papel; }, fora = {}, fica = its[0];
+        for (var k = 1; k < its.length; k++) { var antes = fica; fica = juntar2(fica, its[k]); fora[chave(fica === antes ? its[k] : antes)] = 1; }
+        var novos = ultimo.itens.filter(function (it) { return !fora[chave(it)]; }).map(function (it) { return chave(it) === chave(fica) ? fica : it; });
+        if (!novos.some(function (it) { return it === fica; })) novos.push(fica);
+        ultimo.itens = novos; ultimo.grupos = API.classificar(novos); mostrar();
+        toast('🔗 ' + tr('Juntado: virou um item só.', 'Merged into one item.', 'Juntado: ahora es un solo elemento.'));
+      },
       'cn-classe': function (el) { var b = document.querySelector('.cn-class[data-k="' + el.dataset.k + '"]'); if (b) b.hidden = !b.hidden; },
       'cn-dividir': function (el) {
         var r = item(el), box = r.c.querySelector('.cn-div'); if (!box) return;
@@ -364,11 +443,11 @@
       'cn-amao': function (el) {
         var r = item(el), it = r.x.it, d = iso(it.data) || hojeISO();
         var po = osPadrao(it);
-        Gasto.add({ data: d, valor: it.valor, desc: po.desc || it.loja || tr('Compra (canhoto)', 'Purchase (receipt)', 'Compra (ticket)'), grupo: po.grupo || 'OUTROS', sub: po.sub || '', veiculoId: po.veiculoId || undefined, fluxo: 'saida', cartaoId: campo(r.c, 'cartao') || undefined, hora: it.hora || '', origem: 'canhoto', forma: tr('manual (canhoto)', 'manual (receipt)', 'manual (ticket)'), editadoPessoa: true });
+        Gasto.add({ data: d, valor: it.valor, desc: po.desc || it.loja || tr('Compra (canhoto)', 'Purchase (receipt)', 'Compra (ticket)'), grupo: po.grupo || 'OUTROS', sub: po.sub || '', veiculoId: po.veiculoId || undefined, fluxo: 'saida', cartaoId: cartaoDe(campo(r.c, 'cartao')) || undefined, hora: it.hora || '', origem: 'canhoto', forma: tr('manual (canhoto)', 'manual (receipt)', 'manual (ticket)'), editadoPessoa: true });
         ultimo.grupos.novo.splice(ultimo.grupos.novo.indexOf(r.x), 1); depois(); mostrar();
       },
       'cn-esperar': function (el) {
-        var r = item(el), it = r.x.it, ct = campo(r.c, 'cartao');
+        var r = item(el), it = r.x.it, ct = cartaoDe(campo(r.c, 'cartao'));
         if (it.parcelas > 1 && window.CompraParcelada) {   /* 1.2.0 (3.99): parcelado: a ficha espera a parcela 01/N do banco */
           var f = ficha(it, null, { cartaoId: ct }); if (!f) return;
           ultimo.grupos.novo.splice(ultimo.grupos.novo.indexOf(r.x), 1); depois(); mostrar();

@@ -58,7 +58,7 @@ const OS = (papel, fin, extra) => IT(papel, fin.valor, Object.assign({ documento
     await ler([OS(1, FIN(), { mesmaCompra: 2 }), IT(2, 2360, { parcelas: 5, hora: '15:02', final: '1234', loja: 'OFIC EXEMPLO', mesmaCompra: 1 })]);
     const g1 = await p.evaluate(() => ({ txt: document.querySelector('#genBody').textContent, n: document.querySelectorAll('#genBody .cn-item').length, casou: [...document.querySelectorAll('#genBody .cn-item[data-grupo="casou"]')].length }));
     ok(g1.n === 1 && g1.casou === 1, 'a OS e o canhoto contam uma vez e casam com a 01/05 do banco (2.360 ÷ 5 = 472, data do canhoto)');
-    ok(/🔧 OS 4321 · FIAT ARGO 2020 1\.0 FLEX/.test(g1.txt) && /12\/11\/2026 · 15:02 · ••1234 · 5x de R\$ 472,00/.test(g1.txt), 'mostra a data e a hora do pagamento (do canhoto), o final, as parcelas e o nº da OS com o veículo');
+    ok(/🔧 OS 4321 · Veículo › Funilaria e pintura · 🚗 Argo Ficticio/.test(g1.txt) && /12\/11\/2026 · 15:02 · ••1234 · 5x de R\$ 472,00/.test(g1.txt), 'mostra a data e a hora do pagamento (do canhoto), o final, as parcelas e o nº da OS com a categoria e o carro (3.105: o apelido, não o texto lido)');
     await p.click('#genBody .cn-item[data-grupo="casou"] [data-acao="cn-classe"]');
     const fm = await p.evaluate(() => { const c = document.querySelector('#genBody .cn-item[data-grupo="casou"]'); return { gr: c.querySelector('[data-cn="grupo"]').value, sub: c.querySelector('[data-cn="sub"]').value, v: c.querySelector('[data-cn="veiculo"]').value }; });
     ok(fm.gr === 'VEICULO' && fm.sub === 'Funilaria e pintura' && fm.v === 'vc1', 'o formulário já vem com Veículo › Funilaria e pintura e o carro certo ("Argo Ficticio", pelo nome do veículo da OS) ' + JSON.stringify(fm));
@@ -88,6 +88,45 @@ const OS = (papel, fin, extra) => IT(papel, fin.valor, Object.assign({ documento
     const f1 = await p.evaluate(() => { const f = CompraParcelada.lista().find((x) => x.n === 4), g = ST.gastos.find((y) => y.compraId === f.id); return [f.estado, g && g.desc, g && g.grupo, g && g.veiculoId].join('|'); });
     ok(f1 === 'ligada|OFICINA EXEMPLO (OS 4321) 01/04|VEICULO|vc1', 'a 01/04 da oficina (20 dias depois da OS) liga e ganha a classificação ' + f1);
     await p.evaluate(() => fechar('genModal'));
+
+    console.log('4b) o teste real do dono (3.105): a OS e o canhoto em fotos separadas, um pedaço do canhoto no canto da OS');
+    await p.evaluate(() => { ST.cartoes.push({ id: 'c2', apelido: 'Master Ficticio', bandeira: 'master', fim: '5555', vence: 10, fecha: 3, finais: [{ fim: '5555', tipo: 'fisico' }, { fim: '9876', tipo: 'virtual' }] }); });
+    const FR = FIN({ valor: 2360, parcelas: 5, data: '10/11/2026', veiculo: 'JEEP LRENEGADE 1.8 FLEX PRETA', fonte: 'fechado' });
+    await ler([Object.assign(OS(1, FR, { mesmaCompra: 2, hora: '12:30' }), { arquivo: 'os.jpg' }),
+      IT(2, 2360, { arquivo: 'os.jpg', data: null, loja: null, parcelas: 1, mesmaCompra: 1 }),
+      Object.assign(OS(3, FIN({ valor: 2360, parcelas: 5, data: '23/11/2026', veiculo: null, fonte: 'comprovante', os: '' }), { final: '9876', hora: '12:13' }), { arquivo: 'canhoto.jpg' })]);
+    const real = await p.evaluate(() => { const its = [...document.querySelectorAll('#genBody .cn-item')]; return { n: its.length, txt: its.map((x) => x.textContent).join(' || '), cart: (document.querySelector('#genBody .cn-item[data-grupo="novo"] [data-cn="cartao"]') || {}).value }; });
+    ok(real.n === 1, 'as 3 leituras (a OS, o pedaço do canhoto no canto dela e o canhoto) viram UM item só: ' + real.n);
+    ok(/23\/11\/2026 · 12:13 · ••9876 · 5x de R\$\s?472,00/.test(real.txt) && /🔧 OS 4321 · Veículo › Funilaria e pintura · 🚗 Renegade 2019/.test(real.txt) && !/LRENEGADE/.test(real.txt), 'fica a data, a hora e o final do canhoto, com a OS, "Veículo › Funilaria e pintura" e o carro pelo apelido (não "LRENEGADE"): ' + real.txt.replace(/\s+/g, ' ').slice(0, 200));
+    ok(real.cart === 'c2', 'o cartão vem escolhido pelo final ••9876 (o 2º final do Master Ficticio), não fica em "cartão…"');
+    await p.evaluate(() => fechar('genModal'));
+    /* "🔗 Juntar (é a mesma compra)": dois itens que o automático não junta (a loja escrita diferente, sem CNPJ no canhoto) */
+    const FR2 = FIN({ valor: 1180, parcelas: 2, data: '12/11/2026', veiculo: 'JEEP RENEGADE', fonte: 'fechado', cnpj: '', os: '555' });
+    await ler([Object.assign(OS(7, FR2, { hora: '09:00' }), { arquivo: 'os2.jpg' }), IT(8, 1180, { arquivo: 'cupom.jpg', data: '24/11/2026', hora: '10:05', loja: 'STONE PAGAMENTOS', parcelas: 2, final: '9876' })]);
+    ok(await p.evaluate(() => document.querySelectorAll('#genBody .cn-item').length === 2 && !!document.querySelector('[data-acao="cn-juntar"]') && document.querySelectorAll('#genBody .cn-jt').length === 2), 'com 2 itens na leitura: uma caixinha em cada e "🔗 Juntar os marcados (é a mesma compra)"');
+    ok(/⏳ Esperar o banco: a compra vem pela fatura; a foto completa a descrição \(oficina, serviço, parcelas, carro\)/.test(await p.evaluate(() => document.querySelector('#genBody').textContent)), 'a linha explica o "Esperar o banco": não cria gasto, a foto completa a descrição');
+    await p.evaluate(() => document.querySelectorAll('#genBody .cn-jt').forEach((c) => { c.checked = true; }));
+    await p.click('[data-acao="cn-juntar"]'); await p.waitForTimeout(100);
+    const jt = await p.evaluate(() => { const its = [...document.querySelectorAll('#genBody .cn-item')]; return { n: its.length, txt: its.map((x) => x.textContent).join(' || ') }; });
+    ok(jt.n === 1 && /24\/11\/2026 · 10:05 · ••9876 · 2x de R\$\s?590,00/.test(jt.txt) && /🔧 OS 555 · Veículo › Funilaria e pintura · 🚗 Renegade 2019/.test(jt.txt), 'juntados à mão: um item só, com o pagamento do cupom e a OS com o carro ' + jt.txt.replace(/\s+/g, ' ').slice(0, 160));
+    /* o "Esperar o banco" e a fatura com o texto curto: vale a descrição da foto */
+    await p.click('#genBody .cn-item[data-grupo="novo"] [data-acao="cn-esperar"]'); await p.waitForTimeout(80);
+    await p.evaluate(() => { Gasto.add({ data: '2026-11-25', valor: 590, desc: 'DEPINTOR FICT 01/02', descRobo: 'DEPINTOR FICT 01/02', fluxo: 'saida', grupo: 'OUTROS', sub: '', cartaoId: 'c2', origem: 'robo' }); });
+    const fx = await p.evaluate(() => { const g = ST.gastos.find((y) => y.descRobo === 'DEPINTOR FICT 01/02'); return [g.desc, g.grupo, g.sub, g.veiculoId, !!g.compraId].join('|'); });
+    ok(fx === 'OFICINA EXEMPLO (OS 555) 01/02|VEICULO|Funilaria e pintura|vc2|true', 'a fatura chega com o texto curto ("DEPINTOR FICT 01/02") e a descrição da foto prevalece, com a categoria e o carro: ' + fx);
+    await p.evaluate(() => fechar('genModal'));
+
+    console.log('4c) sem cartão cadastrado: os cartões que o robô já trouxe, escolhido pelo final; 1 toque cadastra');
+    const salvos = await p.evaluate(() => { const c = ST.cartoes; ST.cartoes = [];
+      Gasto.add({ data: '2026-11-02', valor: 33, desc: 'LOJA FICTICIA X', descRobo: 'LOJA FICTICIA X', fluxo: 'saida', grupo: 'OUTROS', sub: '', origem: 'robo', finalCartao: '4321', contaCartao: { id: 'contaX', nome: 'Mastercard Black' }, conta: 'Banco Ficticio', cartaoNome: 'MASTERCARD' });
+      return c; });
+    await ler([IT(21, 999, { data: '24/11/2026', loja: 'OUTRA OFICINA', parcelas: 3, final: '4321' })]);
+    const sc = await p.evaluate(() => { const sel = document.querySelector('#genBody .cn-item[data-grupo="novo"] [data-cn="cartao"]'); return { v: sel.value, t: sel.options[sel.selectedIndex].textContent, g: (sel.querySelector('optgroup') || {}).label }; });
+    ok(sc.v === 'enc:c:contaX' && sc.t === 'Mastercard Black ••4321 (Banco Ficticio)' && /Encontrados nas suas compras \(cadastra com 1 toque\)/.test(sc.g), 'sem cartão cadastrado, o seletor mostra "Mastercard Black ••4321 (Banco Ficticio)" (o robô já trouxe), já escolhido pelo final ' + JSON.stringify(sc));
+    await p.click('#genBody .cn-item[data-grupo="novo"] [data-acao="cn-esperar"]'); await p.waitForTimeout(80);
+    const cad = await p.evaluate(() => { const c = ST.cartoes.find((x) => x.contaId === 'contaX'), f = CompraParcelada.lista().find((x) => x.total === 999); const g = ST.gastos.find((x) => x.desc === 'LOJA FICTICIA X'); return c && f && [c.apelido, Cartoes.finais(c).map((x) => x.fim).join(','), f.cartaoId === c.id, g.cartaoId === c.id].join('|'); });
+    ok(cad === 'Mastercard Black|4321|true|true', 'o toque em "Esperar o banco" cadastrou o cartão (com a conta e o final), a ficha ficou com ele e a compra antiga daquele final também ' + cad);
+    await p.evaluate((c) => { fechar('genModal'); ST.cartoes = c.concat(ST.cartoes.filter((x) => x.contaId === 'contaX')); }, salvos);
 
     console.log('5) EN e ES');
     for (const [l, rx] of [['en', /🔧 Work order 4321/], ['es', /🔧 OT 4321/]]) {

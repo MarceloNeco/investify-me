@@ -1,11 +1,18 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.104 · 24/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.105 · 24/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.105', d:'2026-11-24', t:'Contas de outras pessoas e telas que não se perdem', itens:[
+    '📋 Contas de outras pessoas que chegam no seu e-mail (ex.: uma assinatura que você fez para um parente): no comprovante, toque em "Não é meu". O app pega o titular e o código do cliente do próprio e-mail, você diz de quem é e escolhe: ignorar (não entra nas suas finanças) ou processar para a pessoa (entra com "para quem"). As próximas contas dela são reconhecidas sozinhas. A lista fica em Configurações e os nomes ficam só no seu aparelho.',
+    'Viagens: a caixa "✂️ Parte" não fecha mais quando a tela se atualiza sozinha no meio da digitação.',
+    'O botão "🧾 Conferir canhotos" agora se chama "📷 Foto de nota ou recibo": ele lê qualquer foto de gasto (a OS da oficina, a nota, o recibo, o orçamento, o canhoto) e liga ao banco.',
+    'Google Drive: ao lado de "Enviar ao Drive", "ou escolher a pasta deste serviço", para quem já tem uma pasta por serviço: os arquivos vão direto para ela, sem criar outra.',
+    'Foto da oficina: a OS e o canhoto da mesma compra viram um item só mesmo em fotos separadas (com a data, a hora e o cartão do canhoto, e o nº e o carro da OS); o cartão vem escolhido pelo final lido; a linha já mostra "Veículo › Funilaria e pintura" e o carro pelo apelido. Com 2 ou mais itens, "🔗 Juntar os marcados (é a mesma compra)" junta à mão o que o app não percebeu. "Esperar o banco" não cria gasto: a compra vem pela fatura e a foto completa a descrição. Sem cartão cadastrado, o seletor mostra os cartões que o robô já trouxe (com o do final do canhoto já escolhido) e cadastra com 1 toque.'
+  ]},
   {v:'3.104', d:'2026-11-24', t:'Recibo em reais, faturas e o arquivo no Drive', itens:[
     'O recibo de serviço do exterior cobrado em reais (como o da Anthropic, desde outubro) agora liga direto ao lançamento do cartão pelo valor em reais, sem câmbio nem IOF.',
     'Faturas e contas que chegam por e-mail (telefone, cartão, condomínio, consórcio) viram conta a pagar: aparecem no 📥 perto do vencimento, com "Já paguei", e saem sozinhas quando o pagamento aparece. Se a conta está no débito automático e ainda não venceu, o app diz "não pague"; se o débito não caiu, diz "pague". O 📎 abre o arquivo da conta no Drive.',

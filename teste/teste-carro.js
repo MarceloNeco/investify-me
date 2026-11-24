@@ -122,8 +122,8 @@ const IT = (papel, valor, extra) => Object.assign({ arquivo: 'canhoto.jpg', pape
     await p.evaluate((x) => { Canhotos._ler = async () => x; PrintColar._destino([new File([new Uint8Array([1])], 'f.jpg', { type: 'image/jpeg' })]); }, [IT(9, 99, { parcelas: 1, loja: 'LOJA X', data: '22/11/2026' })]);
     ok(/É print do app do banco ou nota\/canhoto\/orçamento\?/.test(await p.textContent('#genBody')), 'a imagem compartilhada pergunta "É print do app do banco ou nota/canhoto/orçamento?"');
     await p.click('#genBody [data-acao="pc-dest"][data-v="canhoto"]');
-    await p.waitForFunction(() => document.getElementById('genTitle').textContent === 'Conferir canhotos', null, { timeout: 10000 });
-    ok(true, '"Nota, canhoto ou orçamento" vai para o Conferir canhotos');
+    await p.waitForFunction(() => document.getElementById('genTitle').textContent === 'Foto de nota ou recibo', null, { timeout: 10000 });
+    ok(true, '"Nota, canhoto ou orçamento" vai para o "📷 Foto de nota ou recibo" (antes "Conferir canhotos")');
     await p.evaluate(() => fechar('genModal'));
     ok(await p.evaluate(() => Escopo.de('veiculos', Veiculos.ativos()[0]) === 'casa'), 'visão da casa: o carro é da casa');
     ok(await p.evaluate(() => { I18n.atual = 'en'; render(); const a = document.getElementById('view-b-carro').textContent; I18n.atual = 'es'; render(); const b = document.getElementById('view-b-carro').textContent; I18n.atual = 'pt'; render(); return /What the car costs/.test(a) && /Cuánto cuesta el coche/.test(b); }), 'EN e ES (rascunho)');

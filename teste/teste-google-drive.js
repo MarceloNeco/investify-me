@@ -115,6 +115,13 @@ const GAPI = `window.gapi = { load: function (n, o) { o.callback(); } }; window.
     await carro(); await p.click('[data-acao="cd-enviar"][data-t="g"][data-id="rb_l1"]'); await p.waitForTimeout(300);
     ok(dialogos === 1 && pastas.length === 5 && drive.filter((x) => /upload/.test(x.u)).pop().corpo.indexOf('"parents":["velha"]') >= 0, 'sem o aviso de novo; a subpasta do dia que já existia na pasta dele é reaproveitada (não cria outra)');
     ok(await p.evaluate(() => window.__pedidos === 1), 'a permissão foi pedida uma vez só (vale ~1 hora)');
+    /* 3.105: "ou escolher a pasta deste serviço" (o dono já tem uma pasta por serviço): vai direto para ela, sem criar subpasta */
+    await p.evaluate(() => { delete ST.gastos.find((x) => x.id === 'rb_l1').drive; render(); }); drive.length = 0; const np = pastas.length;
+    ok(await p.evaluate(() => /ou escolher a pasta deste serviço/.test(document.querySelector('.vc-rel').textContent)), 'ao lado de "Enviar ao Drive": "ou escolher a pasta deste serviço"');
+    await p.click('[data-acao="cd-enviar-pasta"][data-t="g"][data-id="rb_l1"]'); await p.waitForTimeout(300);
+    const sv = await p.evaluate(() => ST.gastos.find((x) => x.id === 'rb_l1'));
+    ok(pastas.length === np && !drive.some((x) => x.m === 'POST' && !/upload/.test(x.u)) && drive.some((x) => /upload/.test(x.u) && /"parents":\["raiz123"\]/.test(x.corpo)) && sv.drivePasta.id === 'raiz123' && sv.drive.pastaId === 'raiz123' && dialogos === 1,
+      'a pasta escolhida no seletor recebe os arquivos direto (nenhuma pasta criada, sem o aviso de novo); a escolha fica no serviço');
 
     console.log('6) sem internet, o interruptor e o master do RootifyONE');
     await p.evaluate(() => { delete ST.gastos.find((x) => x.id === 'rb_l1').drive; render(); });
