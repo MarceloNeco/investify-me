@@ -850,7 +850,9 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   desligadas às vezes deixa num campo em transição. Teste: `teste/teste-versao-hub.js`. Também (dono, a lista "Seus aparelhos"
   confusa: no Android, a aba aberta dentro de outro app e o Chrome têm armazenamento separado, então cada um vira um aparelho):
   nuvem.js 1.15.8 — `Painel.aparelhos` em "No MoneyTRIO" / "Em outros apps SolverONE"; "aprovado em …, mas nunca terminou de entrar"
-  (visto = criado, > 1 h) com "Tirar da lista"; dica do mesmo `nomeHumano` repetido; `nomeAparelho()` com `AbrirChrome.detectar(…).dentroDeApp`
+  (visto = criado, > 1 h) com "Tirar da lista"; `Aparelhos.substituirAntigos` (item 5: no primeiro `aoAbrir` do aparelho novo, os registros
+  antigos do mesmo nome e app que nunca terminaram de entrar ou sumiram há > 7 dias saem sozinhos, com o aviso "Substituímos o registro
+  antigo do seu celular (de 11/Nov)." nos dois aparelhos; substitui a sugestão da 3.106 e a dica); `nomeAparelho()` com `AbrirChrome.detectar(…).dentroDeApp`
   → "Android · dentro de outro app"; abrir-no-chrome 1.0.1 explica que lá dentro o app não fica guardado. Teste: `teste/teste-lista-aparelhos.js`.
   E o defeito "Falta só um passo" (dono: "que confusão esse negócio de PIN"): `Portao.pinAntigo` com a digital primeiro (quando há
   `L.prf`) e texto simples; `Portao.migrarPin(info)` — chamado por `conferirPin` quando a conta tem PIN, este aparelho não tem `L.srv` e a
