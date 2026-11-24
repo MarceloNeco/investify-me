@@ -3,8 +3,8 @@
    ---------------------------------------------------------------------
    Com aparelhos FICTÍCIOS parecidos com o caso real (3 linhas "Seu celular (Chrome) · MoneyTRIO" e 1 "navegador da Samsung ·
    OmniLifeONE"): a lista se divide em "No MoneyTRIO" e "Em outros apps SolverONE" (com "a mesma conta e o mesmo PIN valem nos dois");
-   o aprovado que nunca terminou de entrar (visto = criado, há mais de 1 h) diz isso e tem "Tirar da lista"; o mesmo celular mais de
-   uma vez ganha a dica; aberto dentro de outro app, o nome do aparelho é "Android · dentro de outro app" e a tela de entrada explica.
+   o aprovado que nunca terminou de entrar (visto = criado, há mais de 1 h) diz isso e tem "Tirar da lista"; o aparelho novo
+   substitui sozinho os antigos (teste-aparelhos); aberto dentro de outro app, o nome do aparelho é "Android · dentro de outro app" e a tela de entrada explica.
    Uso: node teste/teste-lista-aparelhos.js
    ===================================================================== */
 'use strict';
@@ -47,7 +47,7 @@ const LISTA = [
     ok(r.hs.join('|') === 'No MoneyTRIO|Em outros apps SolverONE', 'a lista se divide em "No MoneyTRIO" e "Em outros apps SolverONE"');
     ok(r.mt.length === 4 && r.outros.length === 1 && /Seu celular \(navegador da Samsung\) · OmniLifeONE/.test(r.outros[0]), 'os 4 do MoneyTRIO de um lado; o do navegador da Samsung no OmniLifeONE do outro');
     ok(/A mesma conta e o mesmo PIN valem nos dois\./.test(r.txt), '"A mesma conta e o mesmo PIN valem nos dois."');
-    ok(/Seu celular \(Chrome\) aparece mais de uma vez: cada navegador \(ou o app aberto dentro de outro app\) conta como um aparelho\. Fique com o que você usa \(o mais recente\) e tire os outros\./.test(r.txt), 'a dica do mesmo celular mais de uma vez');
+    ok(!/aparece mais de uma vez/.test(r.txt), 'sem a dica do celular repetido (o item 5 substitui: o aparelho novo tira sozinho os antigos)');
     const nunca = await p.evaluate(() => [...document.querySelectorAll('#tPainel .nv-ap.nunca')].map((e) => ({ id: e.getAttribute('data-ap'), t: e.textContent })));
     ok(nunca.length === 1 && nunca[0].id === 'ap-cel2' && /aprovado em .*, mas nunca terminou de entrar/.test(nunca[0].t) && /Tirar da lista/.test(nunca[0].t), 'só o aprovado há 4 h e nunca visto depois: "aprovado em …, mas nunca terminou de entrar" + "Tirar da lista"');
     ok(await p.evaluate(() => !document.querySelector('#tPainel [data-ap="ap-cel3"]').classList.contains('nunca') && /não aparece desde/.test(document.querySelector('#tPainel [data-ap="ap-cel3"]').textContent)), 'o antigo (visto depois de criado) continua "não aparece desde"');

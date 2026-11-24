@@ -107,7 +107,10 @@ const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
     await P.waitForFunction(() => /Seu celular \(Safari\)/.test(document.querySelector('#nvAps').textContent), null, { timeout: 5000 }).catch(() => {});
     ok(/Seu celular \(Safari\)/.test(await P.textContent('#nvAps')), "'aparelho' {removido:false}: a lista do painel mostra o aparelho novo na hora");
     await P.click('#nvFechar');
+    /* 3.106.1 (item 5): o aparelho que aprovou também fica sabendo quando o novo substitui o antigo */
+    await P.evaluate((a) => { MoneyNuvem._teste.Aparelhos._subst = [{ id: '00000000-0000-4000-8000-0000000000ff', nome: 'iPhone · Safari', criado_em: a }]; }, '2026-11-11T12:00:00Z');
     mandar('aparelho', { id: '00000000-0000-4000-8000-0000000000ff', removido: true }); await esperar(500);
+    ok(/Substituímos o registro antigo do seu computador \(de 11\/Nov\)\./.test(await P.evaluate(() => document.getElementById('toasts').textContent)), "'aparelho' removido que o aparelho novo substituiu: aqui também \"Substituímos o registro antigo… (de 11/Nov).\"");
     ok(!!(await P.$('#nvSelo')) && !(await P.$('#nvEm')), "'aparelho' de outro id: este continua entrando");
 
     console.log('3) a queda e o erro');

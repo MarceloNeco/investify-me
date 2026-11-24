@@ -78,8 +78,11 @@
       Aparelhos.conferirPin no foco/visibilidade (não mais nas voltas). TempoReal (Supabase Realtime, broadcast privado sol:conta:<uid>):
       ligado (migração sol_conta_tempo_real aplicada). O aviso() ganhou toque/arrasto/✕ (Toque.fechavel).
   25. 1.15.8 (3.106.1) — "Seus aparelhos" separada em "No MoneyTRIO" e "Em outros apps SolverONE" ("a mesma conta e o mesmo PIN valem
-      nos dois"); aprovado que nunca terminou de entrar (visto = criado, > 1 h) → "Tirar da lista"; o mesmo celular mais de uma vez → a
-      dica (cada navegador, ou o app dentro de outro app, é um aparelho); nomeAparelho() dentro de outro app = "Android · dentro de outro app".
+      nos dois"); aprovado que nunca terminou de entrar (visto = criado, > 1 h) → "Tirar da lista"; nomeAparelho() dentro de outro app =
+      "Android · dentro de outro app". Item 5 (no lugar da sugestão "Tirar o registro antigo?" da 3.106 e da dica do celular repetido):
+      Aparelhos.substituirAntigos — o aparelho NOVO, no primeiro aoAbrir (L.substituiu), tira os registros antigos da mesma conta com o
+      mesmo nome e app que nunca terminaram de entrar ou sumiram há mais de 7 dias (sol_aparelho_tirar, que aceita qualquer aparelho da
+      mesma conta) e avisa "Substituímos o registro antigo do seu celular (de 11/Nov)."; quem aprovou também (Aparelhos._subst + 'aparelho').
       "Falta só um passo" (pinAntigo): com L.prf, a digital é o botão principal ("uma vez só") e o PIN antigo vem depois; Portao.migrarPin:
       o PIN da conta nasceu em outro aparelho e este, aberto com a chave do aparelho, ainda está no PIN antigo (sem L.srv) → pede uma vez
       o PIN da conta (conferirPin, no foco ou no evento 'pin') e grava (Pin.gravar); novoPin avisa que os outros aparelhos confirmam uma vez.
@@ -911,7 +914,8 @@
           var resp = await self.fechar(await self.chave(eu.priv, q.pub, p.id, p.quem, eu.nA, q.n_b), p.id, carga); carga = null;
           var ok = await self.rpc('sol_pedido_aprovar', { p_id: p.id, p_resposta: resp, p_meu_ap: d.L.ap || null });
           delete self._apr[p.id];
-          if (ok) setTimeout(function () { Aparelhos.conferirPin(true); }, 30000);   /* 3.106 (item j): o aparelho novo costuma criar o PIN da conta logo */
+          if (ok) setTimeout(function () { Aparelhos.conferirPin(true); }, 30000);
+          if (ok) Aparelhos.lista().then(function (l) { Aparelhos._subst = (l || []).filter(function (a) { return a.nome === p.nome && a.app === (p.app || AP_APP); }); });   /* 3.106.1: para avisar aqui também */   /* 3.106 (item j): o aparelho novo costuma criar o PIN da conta logo */
           sair(ok ? '✓ ' + tt('Aprovado. Agora é no outro aparelho: lá ele pede o PIN da conta.', 'Approved. Now it is on the other device: it asks for the account PIN there.', 'Aprobado. Ahora es en el otro dispositivo: allí pide el PIN de la cuenta.') : tt('Não deu para aprovar: o pedido venceu ou já foi respondido. Peça de novo no aparelho novo.', 'Could not approve: the request expired or was already answered. Ask again on the new device.', 'No se pudo aprobar: la solicitud venció o ya fue respondida. Pídela de nuevo en el dispositivo nuevo.'));
         }); };
         el.querySelector('#nvApPin').addEventListener('keydown', function (e) { if (e.key === 'Enter') el.querySelector('#nvApOk').click(); });
@@ -938,9 +942,10 @@
         if (pi && !pi.tem && Cadeado.aberto()) this.avisoCriarPin();   /* 1.11.1: conta sem PIN da conta → aviso no topo, não escondido no painel */
         var lista = (await this.rpc('sol_aparelhos_meus')) || [], ate = L.avisosAte || '', eu = Conta.uid();
         Portao._usaApps = appsAqui(lista);
-        /* 3.106 (item h): o registro antigo DESTE aparelho (mesmo nome e app, sumido há mais de 7 dias): sugere tirar, para não ficar duplicado */
-        var nomeAqui = nomeAparelho(), velhos = lista.filter(function (a) { return a.id !== L.ap && a.app === AP_APP && a.nome === nomeAqui && Date.now() - Date.parse(a.visto_em || a.criado_em) > 7 * 86400000 && !lsGet('nvDupNao|' + a.id, 0); });
-        if (velhos.length) this.avisoDuplicado(velhos[0]);
+        /* 3.106.1 (item 5, substitui a sugestão da 3.106): o aparelho NOVO, no primeiro aoAbrir, tira sozinho os registros antigos da mesma
+           conta com o mesmo nome e app que nunca terminaram de entrar (visto = criado, > 1 h) ou não aparecem há mais de 7 dias. Nunca
+           tira o próprio aparelho nem um que terminou de entrar e foi visto nos últimos 7 dias. */
+        if (!L.substituiu) await this.substituirAntigos(L, lista);
         var novos = lista.filter(function (a) { return a.id !== L.ap && a.como === 'familia' && a.aprovado_por !== eu && String(a.criado_em) > ate; });
         if (novos.length) {
           L.avisosAte = novos.map(function (a) { return String(a.criado_em); }).sort().pop(); await Cadeado.gravar(L);
@@ -971,19 +976,23 @@
       if (i.tem && L && L.srv && L.pinVersao && i.versao !== L.pinVersao && Cadeado.aberto()) Nuvem.trancar('pinTrocado');
       else if (i.tem && L && L.ap && !L.srv && Cadeado.aberto() && Cadeado.dukRaw) Portao.migrarPin(i);   /* 3.106.1: ainda no PIN antigo */
     },
-    avisoDuplicado: function (a) {
-      if (document.getElementById('nvAvisoDup')) return;
-      var el = document.createElement('div'), self = this;
-      el.id = 'nvAvisoDup'; el.className = 'nv-pedido'; el.setAttribute('role', 'status');
-      el.innerHTML = '<span>📱 ' + esc(tt('Este parece ser o mesmo ' + apN() + ' de antes (o registro antigo não aparece desde ', 'This looks like the same ' + apN() + ' as before (the old entry has not been seen since ', 'Parece el mismo dispositivo de antes (el registro antiguo no aparece desde ') + dataHora(a.visto_em || a.criado_em, true) + tt('). Tirar o registro antigo?', '). Remove the old entry?', '). ¿Quitar el registro antiguo?')) + '</span>' +
-        '<button class="nv-btn" id="nvAvisoDupSim">' + tt('Tirar o antigo', 'Remove the old one', 'Quitar el antiguo') + '</button><button class="nv-lnk" id="nvAvisoDupNao">' + tt('Não', 'No', 'No') + '</button>';
-      document.body.appendChild(el);
-      el.querySelector('#nvAvisoDupNao').onclick = function () { lsSet('nvDupNao|' + a.id, 1); el.remove(); };
-      el.querySelector('#nvAvisoDupSim').onclick = async function () {
-        if (!window.confirm(tt('Tirar da sua conta o registro antigo "' + a.nome + '"? Este aparelho continua entrando normalmente.', 'Remove the old entry "' + a.nome + '" from your account? This device keeps working normally.', '¿Quitar de tu cuenta el registro antiguo "' + a.nome + '"? Este dispositivo sigue entrando normalmente.'))) return;
-        try { await self.rpc('sol_aparelho_tirar', { p_id: a.id }); aviso('✓ ' + tt('Registro antigo tirado.', 'Old entry removed.', 'Registro antiguo quitado.')); } catch (e) { aviso(Conta.explicar(e) + ' ' + tt('Tente de novo em Segurança e aparelhos → Seus aparelhos.', 'Try again in Security and devices → Your devices.', 'Inténtalo de nuevo en Seguridad y dispositivos → Tus dispositivos.'), 'erro'); }
-        el.remove();
-      };
+    substituirAntigos: async function (L, lista) {
+      var nomeAqui = nomeAparelho(), meu = lista.find(function (a) { return a.id === L.ap; }), agora = Date.now();
+      if (!meu) return;
+      var velhos = lista.filter(function (a) {
+        if (a.id === L.ap || a.app !== AP_APP || a.nome !== nomeAqui || String(a.criado_em) >= String(meu.criado_em)) return false;
+        var nunca = (!a.visto_em || a.visto_em === a.criado_em) && agora - Date.parse(a.criado_em) > 3600000;
+        var sumido = agora - Date.parse(a.visto_em || a.criado_em) > 7 * 86400000;
+        return nunca || sumido;
+      });
+      var tirados = [];
+      for (var i = 0; i < velhos.length; i++) { try { if (await this.rpc('sol_aparelho_tirar', { p_id: velhos[i].id })) tirados.push(velhos[i]); } catch (e) { /* tenta no próximo aoAbrir */ return; } }
+      L.substituiu = true; await Cadeado.gravar(L);
+      if (tirados.length) aviso('✓ ' + Aparelhos.textoSubst(tirados));
+    },
+    textoSubst: function (tirados) {
+      var datas = tirados.map(function (a) { return dataHora(a.criado_em, true).replace(/\/\d{4}$/, ''); });
+      return tt('Substituímos o registro antigo do seu ' + apN() + ' (de ' + juntarE(datas) + ').', 'We replaced the old entry of your ' + apN() + ' (from ' + juntarE(datas) + ').', 'Sustituimos el registro antiguo de tu dispositivo (del ' + juntarE(datas) + ').');
     },
     /* 1.11.1: "Crie o PIN da sua conta SolverONE" no topo do app. 1.15.7 (3.106): é opcional (sem ele, o aparelho novo escolhe o PIN
        lá e esse vira o PIN da conta — Pin.pedir → novoPin → Pin.definir); "Depois" esconde por 7 dias neste aparelho e ele volta
@@ -2388,7 +2397,7 @@
       grupos.forEach(function (g) { g.este = g.itens.some(function (a) { return L && a.id === L.ap; }); g.visto = g.itens.map(function (a) { return a.visto_em || a.criado_em; }).sort().pop(); });
       grupos.sort(function (x, y) { return (y.este - x.este) || String(y.visto).localeCompare(String(x.visto)); });
       /* 3.106.1: separada em "No MoneyTRIO" e "Em outros apps SolverONE"; "aprovado, mas nunca terminou de entrar" (visto = criado, há
-         mais de 1 h) com "Tirar da lista"; a dica quando o mesmo celular aparece mais de uma vez (cada navegador conta como um aparelho) */
+         mais de 1 h) com "Tirar da lista". (A dica do mesmo celular repetido saiu: o aparelho novo substitui sozinho os antigos.) */
       var linha = function (g) {
         var apps = juntarE(g.itens.map(function (a) { return nomeApp(a.app); }));
         var sumido = !g.este && Date.now() - Date.parse(g.visto) > 7 * 86400000;
@@ -2405,12 +2414,7 @@
           }).join('')) + '</div></div>';
       };
       var noMt = grupos.filter(function (g) { return g.itens.some(function (a) { return a.app === AP_APP; }); }), outros = grupos.filter(function (g) { return noMt.indexOf(g) < 0; });
-      var repetidos = {}; noMt.forEach(function (g) { var k = nomeHumano(g.nome, false); repetidos[k] = (repetidos[k] || 0) + 1; });
-      var rep = Object.keys(repetidos).filter(function (k) { return repetidos[k] > 1; })[0];
       caixa.innerHTML = (grupos.length ? '<h3 class="nv-sub" id="nvApsMt">' + tt('No MoneyTRIO', 'In MoneyTRIO', 'En MoneyTRIO') + '</h3>' + (noMt.map(linha).join('') || '<p class="nv-tiny">—</p>') +
-          (rep ? '<div class="nv-nota atencao" id="nvApsRep">💡 ' + esc(tt(rep.replace(/^Seu /, 'Seu ') + ' aparece mais de uma vez: cada navegador (ou o app aberto dentro de outro app) conta como um aparelho. Fique com o que você usa (o mais recente) e tire os outros.',
-            rep.replace(/^Your /, 'Your ') + ' shows up more than once: each browser (or the app opened inside another app) counts as a device. Keep the one you use (the most recent) and remove the others.',
-            rep.replace(/^Tu /, 'Tu ') + ' aparece más de una vez: cada navegador (o la app abierta dentro de otra app) cuenta como un dispositivo. Quédate con el que usas (el más reciente) y quita los otros.')) + '</div>' : '') +
           (outros.length ? '<h3 class="nv-sub" id="nvApsOutros">' + tt('Em outros apps SolverONE', 'In other SolverONE apps', 'En otras apps SolverONE') + '</h3>' +
             '<p class="nv-tiny">' + tt('A mesma conta e o mesmo PIN valem nos dois.', 'The same account and the same PIN work in both.', 'La misma cuenta y el mismo PIN valen en los dos.') + '</p>' + outros.map(linha).join('') : '')
         : '') || '<p class="nv-tiny">' + tt('Nenhum aparelho registrado ainda.', 'No device registered yet.') + '</p>';
@@ -2535,7 +2539,10 @@
         if (ev === 'pin') Aparelhos.conferirPin(true);
         else if (ev === 'pedido') { Aparelhos._olhando = false; Aparelhos.olharPedidos(); }
         else if (ev === 'pedido_estado') Aparelhos.acordar(d.id);
-        else if (ev === 'aparelho' && d.removido) Cadeado.local().then(function (L) { if (L && L.ap && L.ap === d.id) Aparelhos.tirado(); else if (Painel.aberto) Painel.aparelhos(Painel.aberto, L); });
+        else if (ev === 'aparelho' && d.removido) Cadeado.local().then(function (L) {
+          if (L && L.ap && L.ap === d.id) return Aparelhos.tirado();
+          var s = (Aparelhos._subst || []).filter(function (a) { return a.id === d.id; }); if (s.length) aviso('✓ ' + Aparelhos.textoSubst(s));   /* 3.106.1: o aparelho que aprovou também fica sabendo */
+          if (Painel.aberto) Painel.aparelhos(Painel.aberto, L); });
         else if (ev === 'aparelho') { if (Painel.aberto) Cadeado.local().then(function (L) { Painel.aparelhos(Painel.aberto, L); }); }
       } catch (e) { /* aviso em tempo real nunca quebra o app */ }
     },

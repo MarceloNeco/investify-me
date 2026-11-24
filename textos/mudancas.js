@@ -8,7 +8,7 @@
 const MUDANCAS = [
   {v:'3.106.1', d:'2026-11-24', t:'A versão na tela inicial e a lista de aparelhos mais clara', itens:[
     'Na tela inicial, embaixo dos três apps, a versão do MoneyTRIO e a data, discretas à direita. Um toque abre as Novidades.',
-    '"Seus aparelhos" mais clara: separada em "No MoneyTRIO" e "Em outros apps SolverONE"; o aparelho aprovado que nunca terminou de entrar sai com "Tirar da lista"; quando o mesmo celular aparece mais de uma vez, o app explica por quê (cada navegador, ou o app aberto dentro de outro app, conta como um aparelho).',
+    '"Seus aparelhos" mais clara: separada em "No MoneyTRIO" e "Em outros apps SolverONE"; o aparelho aprovado que nunca terminou de entrar sai com "Tirar da lista"; e, ao entrar num celular de novo, o registro antigo dele (nunca usado ou sumido há mais de 7 dias) é substituído sozinho.',
     '🔢 PIN da conta sem confusão: quando o PIN da conta é criado em outro aparelho, este pede uma vez "Digite-o aqui" (com o app aberto) e passa a usar o mesmo. Na tela "Falta só um passo", a digital vem primeiro ("Confirmar com a digital, uma vez só").'
   ]},
   {v:'3.106', d:'2026-11-24', t:'Busca que acha o app, PIN sem beco sem saída e fotos no aparelho', itens:[
