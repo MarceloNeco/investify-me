@@ -18761,7 +18761,7 @@ const Assist = {
 
     const cx = $('#asBusca');
     if(cx) cx.addEventListener('input', () => { assistBusca = cx.value; const r = $('#asResultados');
-      if(r) r.innerHTML = assistBusca.trim().length >= 2 ? resultadosBusca(assistBusca.trim()) : ''; });
+      if(r) r.innerHTML = assistBusca.trim().length >= 2 ? resultadosBusca(assistBusca.trim(), true) : ''; });
   },
 
   htmlTela(L){
@@ -18816,11 +18816,10 @@ const Assist = {
 
   htmlBuscar(L){
     return '<div class="as-buscar">' +
-      '<input id="asBusca" type="search" placeholder="' + (L === 'pt'
-        ? 'Buscar um termo: dividendo, CDI, come-cotas…' : 'Search a term: dividend, CDI, come-cotas…') +
+      '<input id="asBusca" type="search" placeholder="' + I18n.tr('Buscar no app: PIN, cartão, aparelho novo, dividendo…', 'Search the app: PIN, card, new device, dividend…', 'Buscar en la app: PIN, tarjeta, dispositivo nuevo, dividendo…') +
         '" value="' + esc(assistBusca) + '" autocomplete="off">' +
       '<div id="asResultados" style="margin-top:12px">' +
-        (assistBusca.trim().length >= 2 ? resultadosBusca(assistBusca.trim()) : '') + '</div></div>';
+        (assistBusca.trim().length >= 2 ? resultadosBusca(assistBusca.trim(), true) : '') + '</div></div>';
   }
 };
 
@@ -26523,15 +26522,18 @@ function viewCoach(){
     '<p class="small muted">As explicações mudam conforme o nível escolhido no menu. Comece no iniciante e suba quando o assunto ficar fácil.</p>' +
     '<div class="coach-grid">' + lista + '<div>' + art + '</div></div>';
 }
-function resultadosBusca(q){
+function resultadosBusca(q, comApp){
   const r = buscarConteudo(q);
-  const total = r.coach.length + r.glossario.length;
+  /* 3.106: no AssistONE, o que o app tem vem primeiro ("No app": telas, Configurações, conta e aparelhos…) — modulos/assistone-indice.js */
+  const noApp = comApp && window.AssistIndice ? AssistIndice.buscar(q).length : 0;
+  const total = noApp + r.coach.length + r.glossario.length;
   if(!total){
     return '<div class="card"><div class="empty"><span class="ic">🔍</span>' +
       '<p>Nada encontrado para <b>' + esc(q) + '</b>.</p>' +
       '<p class="small">Tente uma palavra mais curta — por exemplo “divid” em vez de “dividendos isentos”.</p></div></div>';
   }
   let h = '<p class="small muted">' + total + (total === 1 ? ' resultado' : ' resultados') + ' para <b>' + esc(q) + '</b>.</p>';
+  if(noApp) h += AssistIndice.html(q);
 
   if(r.coach.length){
     h += '<div class="card"><div class="card-head"><h3>Nas aulas do Coach</h3></div>';
@@ -30110,7 +30112,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 </script>
 <!-- 3.41: módulos (um arquivo por função nova; guia em ARQUITETURA.md). A ordem importa: base, módulos, nuvem.
      O ?v= de cada arquivo é a versão dele e tem de ser igual no sw.js (teste/teste-modulos.js confere). -->
-<script src="modulos/base.js?v=1.1.0"></script>
+<script src="modulos/base.js?v=1.1.1"></script>
 <script src="modulos/arquivos.js?v=1.0.0"></script>
 <script src="modulos/agendamentos.js?v=1.0.0"></script>
 <script src="modulos/nf-ir.js?v=1.1.0"></script>
@@ -30166,6 +30168,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/rachai.js?v=1.1.1"></script>
 <script src="modulos/comprovantes.js?v=1.2.1"></script>
 <script src="modulos/terceiros.js?v=1.0.0"></script>
+<script src="modulos/assistone-indice.js?v=1.0.0"></script>
 <script src="modulos/viagem.js?v=1.0.2"></script>
 <script src="modulos/compra-parcelada.js?v=1.1.0"></script>
 <script src="modulos/veiculos.js?v=1.0.1"></script>
