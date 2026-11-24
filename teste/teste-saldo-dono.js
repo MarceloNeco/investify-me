@@ -47,7 +47,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     await p.evaluate(() => { SaldoPrevisto._agora = new Date(2026, 10, 14, 16, 0).getTime(); render(); });
     const v2 = await p.evaluate(() => { const el = document.querySelector('#view-b-painel .sp-atencao .sp-dados'); return el ? el.textContent + '|' + el.classList.contains('sp-velho') + '|' + getComputedStyle(el).color : ''; });
     ok(/dados de 13\/11 14:44 · pode estar desatualizado\|true\|rgb/.test(v2), 'passou de 24 h: "pode estar desatualizado" em amarelo: ' + v2);
-    const inb = await p.evaluate(() => (inboxGrupos().find((g) => g.id === 'saldo') || {}).html || '');
+    const inb = await p.evaluate(() => (inboxGrupos().find((g) => g.id === 'saldo') || {}).html || '').then((h) => h.replace(/<[^>]+>/g, ''));   /* 3.107: o nome da pessoa virou botão */
     ok(/Banco Ficticio do Fulano/.test(inb) && /dados de 13\/11 14:44 · pode estar desatualizado/.test(inb) && /Já agendei/.test(inb), 'no 📥 também: o dono, a data dos dados e "Já agendei"');
 
     console.log('2) "Já agendei"');
@@ -69,6 +69,28 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     console.log('3) os outros avisos que dependem do banco');
     const d = await p.evaluate(() => inboxDadosConta(ST.recorrentes.find((r) => r.id === 'luz')));
     ok(d === ' · conta Caixa Imaginaria da Beltrana ···5419 · dados de 12/11 08:05 · pode estar desatualizado', 'a conta atrasada diz a conta (com o dono) e a data dos dados: ' + d);
+
+    console.log('3b) 3.107: o pior dia, "ver por quê", a conta inteira e o nome que abre a pessoa');
+    const q = await p.evaluate(() => {
+      SaldoPrevisto._hoje = '2026-11-14';
+      /* conta de banco conhecido, com agência e número inteiros (FICTÍCIOS): o dígito vai depois do hífen */
+      SaldoBanco.receber({ tipo: 'saldo', id: 'saldo-it', conta_id: 'it1', banco: 'Itau Ficticio', conta: 'itau ficticio', categoria_conta: 'conta', final_conta: '0123', numero_conta: '000123', agencia: '0001', dono: 'Fulano', saldo: 100, data: '2026-11-14', atualizado_em: new Date(2026, 10, 14, 9, 0).toISOString() });
+      const um = (id, nome, valor, data) => ({ id, nome, valor, dia: Number(data.slice(8)), regra: 'dia', desde: data, ate: data, grupo: 'HABITACAO', sub: 'Outros', fluxo: 'saida', estadoPadrao: 'pendente', conta: 'Itau Ficticio', criadoEm: '2026-11-01' });
+      ST.recorrentes.push(um('it-a', 'Conta Ficticia A', 300, '2026-11-20'), um('it-b', 'Conta Ficticia B', 700, '2026-11-22'), um('it-c', 'Conta Ficticia C', 50, '2026-11-21'), um('it-d', 'Conta Ficticia D', 900, '2026-12-05'));
+      const c = SaldoPrevisto.contas().find((x) => /Itau/.test(x.banco || x.nome || '') || x.numero === '000123'), a = SaldoPrevisto.alerta(c);
+      const outra = Object.assign({}, c, { banco: 'Banco Ficticio', numero: '98765', agencia: '' });
+      return { conta: SaldoPrevisto.conta(c), outra: SaldoPrevisto.conta(outra), semNumero: SaldoPrevisto.conta({ final: '4321' }), a, porque: SaldoPrevisto.porque(c, a).map((e) => e.nome + '=' + e.valor).join() };
+    });
+    ok(q.conta === 'ag. 0001 · conta 00012-3', 'banco conhecido: agência e conta inteiras, com o dígito depois do hífen: ' + q.conta);
+    ok(q.outra === 'conta 98765' && q.semNumero === '···4321', 'outro banco: o número como veio; sem o número inteiro, o final: ' + q.outra + ' / ' + q.semNumero);
+    ok(q.a && q.a.dia === '2026-11-20' && q.a.piorDia === '2026-12-05' && q.a.pior === -1850, 'o primeiro dia negativo (20/11) e o pior dia (05/12, −1.850): ' + (q.a && q.a.dia + ' ' + q.a.piorDia + ' ' + q.a.pior));
+    ok(q.porque === 'Conta Ficticia D=-900,Conta Ficticia B=-700,Conta Ficticia A=-300,Conta Ficticia C=-50', '"ver por quê": as maiores saídas até o pior dia: ' + q.porque);
+    const inb2 = await p.evaluate(() => { abrirInbox(); return (document.querySelector('#genModal') || {}).textContent || ''; });
+    ok(/fica negativa em 20\/11 \(−R\$ 200,00\) e chega a −R\$ 1\.850,00 em 05\/12/.test(inb2) && /cobre o pior dia \+ 5% de folga/.test(inb2) && /ver por quê/.test(inb2) && /ag\. 0001 · conta 00012-3/.test(inb2), 'no 📥: primeiro dia negativo, o pior dia, a folga, "ver por quê" e a conta inteira');
+    await p.click('#genModal .sp-pessoa[data-id="p1"] >> nth=0'); await p.waitForTimeout(250);
+    const ps = await p.evaluate(() => ({ fechou: document.getElementById('genModal').classList.contains('hidden'), tela: !!document.querySelector('#view-cfg-pessoas:not(.hidden)'), foco: document.activeElement && document.activeElement.id, dica: /aparece no lugar do nome em todo o app \(deixe vazio para usar o nome\)/.test(document.body.textContent) }));
+    ok(ps.fechou && ps.tela && ps.foco === 'psApelido' && ps.dica, 'tocar no nome abre a pessoa em Configurações › Pessoas (apelido em foco, com a explicação): ' + JSON.stringify(ps));
+    await p.evaluate(() => { ST.recorrentes = ST.recorrentes.filter((r) => !/^it-/.test(r.id)); abrirApp('budget'); irPara('b-painel'); render(); });
 
     console.log('4) visão da casa');
     await p.evaluate(() => { Escopo.soCasa = () => true; render(); });
