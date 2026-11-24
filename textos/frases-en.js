@@ -6,6 +6,8 @@
    ===================================================================== */
 const FRASES_EN = {
   /* 3.106.1 */
+  'A versão na tela inicial e a lista de aparelhos mais clara':'The version on the home screen and a clearer device list',
+  '"Seus aparelhos" mais clara: separada em "No MoneyTRIO" e "Em outros apps SolverONE"; o aparelho aprovado que nunca terminou de entrar sai com "Tirar da lista"; quando o mesmo celular aparece mais de uma vez, o app explica por quê (cada navegador, ou o app aberto dentro de outro app, conta como um aparelho).':'Clearer "Your devices": split into "In MoneyTRIO" and "In other SolverONE apps"; a device approved but never finished signing in goes away with "Remove from the list"; when the same phone shows up more than once, the app explains why (each browser, or the app opened inside another app, counts as a device).',
   'A versão na tela inicial':'The version on the home screen',
   'Na tela inicial, embaixo dos três apps, a versão do MoneyTRIO e a data, discretas à direita. Um toque abre as Novidades.':'On the home screen, below the three apps, the MoneyTRIO version and date, discreet on the right. One tap opens What\'s new.',
   /* 3.106 */

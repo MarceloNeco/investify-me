@@ -6,8 +6,9 @@
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
-  {v:'3.106.1', d:'2026-11-24', t:'A versão na tela inicial', itens:[
-    'Na tela inicial, embaixo dos três apps, a versão do MoneyTRIO e a data, discretas à direita. Um toque abre as Novidades.'
+  {v:'3.106.1', d:'2026-11-24', t:'A versão na tela inicial e a lista de aparelhos mais clara', itens:[
+    'Na tela inicial, embaixo dos três apps, a versão do MoneyTRIO e a data, discretas à direita. Um toque abre as Novidades.',
+    '"Seus aparelhos" mais clara: separada em "No MoneyTRIO" e "Em outros apps SolverONE"; o aparelho aprovado que nunca terminou de entrar sai com "Tirar da lista"; quando o mesmo celular aparece mais de uma vez, o app explica por quê (cada navegador, ou o app aberto dentro de outro app, conta como um aparelho).'
   ]},
   {v:'3.106', d:'2026-11-24', t:'Busca que acha o app, PIN sem beco sem saída e fotos no aparelho', itens:[
     '🔎 A busca do AssistONE agora acha o próprio app: telas, menu, Configurações, Tutorial, Novidades e a conta e os aparelhos (PIN, aparelho novo, digital, código de recuperação, tirar aparelho). "No app" vem primeiro, e cada resultado leva direto à tela ou à ação.',
