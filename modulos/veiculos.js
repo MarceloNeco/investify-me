@@ -23,7 +23,7 @@
    DADOS
      ST.veiculos = [{id, apelido, ativo, criadoEm}] · ST.config.veicRegras = {origem: vid} · ST.config.veicReclassNao = {gid: 1}
      lançamento: g.veiculoId
-   1.0.1 (3.103): os botões do Google Drive (modulos/google-drive.js): "📁 Pasta no Drive" em cada carro e "📁 Enviar ao Drive" no
+   1.0.1 (3.103): os botões do Google Drive (modulos/carro-drive.js): "📁 Conectar meu Google Drive", "usar uma pasta que já tenho" em cada carro e "📁 Enviar ao Drive" no
      serviço com documento (a ficha parcelada ou o lançamento).
    PONTOS QUE USA
      tela b-carro · inbox.grupos ('confirmar') · lancamento.form · ações vc-*
@@ -159,7 +159,8 @@
     var h = '<div class="card-head"><h1>🚗 ' + esc(tr('Quanto o carro custa', 'What the car costs', 'Cuánto cuesta el coche')) + '</h1></div>';
     h += '<div class="card vc-meus"><div class="card-head"><h3>' + esc(tr('Meus veículos', 'My vehicles', 'Mis vehículos')) + '</h3></div>' +
       '<p class="small muted">' + esc(tr('Um apelido para cada carro (ex.: "Renegade 2019"), nunca a placa.', 'A nickname for each car (e.g. "Renegade 2019"), never the plate.', 'Un apodo para cada coche (ej.: "Renegade 2019"), nunca la matrícula.')) + '</p>' +
-      at.map(function (v) { return '<div class="row" style="gap:6px;margin:2px 0"><b>🚗 ' + esc(v.apelido) + '</b>' + botao('vc-arquivar', tr('Não tenho mais', 'Sold it', 'Ya no lo tengo'), ' data-id="' + esc(v.id) + '"') + (window.GoogleDrive ? GoogleDrive.botaoPasta(v) : '') + '</div>'; }).join('') +
+      (window.CarroDrive ? CarroDrive.topo() : '') +
+      at.map(function (v) { return '<div class="row" style="gap:6px;margin:2px 0"><b>🚗 ' + esc(v.apelido) + '</b>' + botao('vc-arquivar', tr('Não tenho mais', 'Sold it', 'Ya no lo tengo'), ' data-id="' + esc(v.id) + '"') + (window.CarroDrive ? CarroDrive.botaoPasta(v) : '') + '</div>'; }).join('') +
       '<div class="row" style="gap:6px;margin-top:6px"><input id="vcApelido" maxlength="40" placeholder="' + esc(tr('Apelido do carro', 'Car nickname', 'Apodo del coche')) + '">' + botao('vc-novo', '+ ' + tr('Adicionar', 'Add', 'Añadir'), '', 'primary') + '</div></div>';
     if (!at.length) return h;
     var r = relatorio(vid, mes);
@@ -174,10 +175,10 @@
       }).join('') +
       (r.contratado.length ? '<h4 style="margin:10px 0 4px">' + esc(tr('Serviços parcelados', 'Installment services', 'Servicios a plazos')) + '</h4>' + r.contratado.map(function (c) {
         return '<div class="small vc-contrato">' + esc((c.f.desc || c.f.loja || '') + (c.f.sub ? ' · ' + c.f.sub : '') + ' · ' + tr('contratado ', 'contracted ', 'contratado ') + fmt(c.f.total) + ' ' + tr('em ', 'in ', 'en ') + c.f.n + 'x · ' + tr('caiu no mês ', 'fell this month ', 'cayó en el mes ') + fmt(c.caiu) + ' (' + c.pagas + '/' + c.f.n + ')') +
-          (c.f.docId ? ' ' + botao('vc-doc', '📄 ' + tr('documento', 'document', 'documento'), ' data-id="' + esc(c.f.docId) + '"') : '') + (window.GoogleDrive ? GoogleDrive.botao('f', c.f.id) : '') + '</div>';
+          (c.f.docId ? ' ' + botao('vc-doc', '📄 ' + tr('documento', 'document', 'documento'), ' data-id="' + esc(c.f.docId) + '"') : '') + (window.CarroDrive ? CarroDrive.botao('f', c.f.id) : '') + '</div>';
       }).join('') : '') +
       '<h4 style="margin:10px 0 4px">' + esc(tr('O que foi pago no mês', 'Paid this month', 'Lo pagado en el mes')) + '</h4>' +
-      (r.itens.length ? r.itens.map(function (g) { return '<div class="small row vc-item" style="justify-content:space-between"><span>' + esc(I18n.data(g.data, { semAno: true }) + ' · ' + (g.desc || '') + ' · ' + (g.sub || '')) + (g.docId ? ' ' + botao('vc-doc', '📄', ' data-id="' + esc(g.docId) + '"') : '') + (window.GoogleDrive && !g.compraId ? GoogleDrive.botao('g', g.id) : '') + '</span><span>' + esc(fmt(g.valor)) + '</span></div>'; }).join('') : '<p class="small muted">' + esc(tr('Nada neste mês.', 'Nothing this month.', 'Nada este mes.')) + '</p>') +
+      (r.itens.length ? r.itens.map(function (g) { return '<div class="small row vc-item" style="justify-content:space-between"><span>' + esc(I18n.data(g.data, { semAno: true }) + ' · ' + (g.desc || '') + ' · ' + (g.sub || '')) + (g.docId ? ' ' + botao('vc-doc', '📄', ' data-id="' + esc(g.docId) + '"') : '') + (window.CarroDrive && !g.compraId ? CarroDrive.botao('g', g.id) : '') + '</span><span>' + esc(fmt(g.valor)) + '</span></div>'; }).join('') : '<p class="small muted">' + esc(tr('Nada neste mês.', 'Nothing this month.', 'Nada este mes.')) + '</p>') +
       '<p class="small vc-ano" style="margin-top:10px">' + esc(tr('Últimos 12 meses: ', 'Last 12 months: ', 'Últimos 12 meses: ') + fmt(r.ano) + ' · ' + tr('média por mês ', 'monthly average ', 'media por mes ') + fmt(r.media)) + '</p></div>';
     return h;
   }
