@@ -31,6 +31,9 @@
        recibo_exterior em BRL: o recibo × cartão casa pelo valor em reais, sem câmbio nem IOF (modulos/recibo-exterior.js 1.0.1).
      · 1.2.1 (3.105): "Não é meu (conta de outra pessoa)" e a lista de terceiros (modulos/terceiros.js): o que bate com "ignorar" é
        dispensado sozinho (sai do 📥); "processar" ganha o "para quem".
+     · 1.3.0 (3.122): NFS-e com a ficha — educação além de saúde (irpf_candidata), o beneficiário vira "para quem", o serviço e a data,
+       a categoria sugerida (só se a pessoa ainda não classificou), "desconto já aplicado" e a despesa escolar extra (ampliado/alimentação)
+       que liga mas NÃO deduz (o gasto sai do IR e a nota fica "não precisa").
      · 1.3.0 (3.119): guarda a `ficha` do robô (fichaLimpa: só dados simples e limitados) — consumo de luz/gás (modulos/consumo.js) e as
        próximas (consórcio, fatura, NFS-e); debito_automatico=false (ou ficha.sem_debito_automatico) nunca mostra "⛔ não pague".
    API (window.Comprovantes)
@@ -135,20 +138,52 @@
       });
       if (c) { x.compraId = c.id; var gc = gasto(c.gastoId); if (gc && gc.ficha) gc.ficha.nf = x.numero || '✓'; }
     }
+    var nf = notaDe(x);
     if (!x.nfGastoId && window.NfIr) {
       var cn = String(x.cnpj || '').replace(/\D/g, '');
       var gs = Gasto.todos().filter(function (g) {
-        if (!g.data || g.fluxo === 'entrada' || !NfIr.medica(g) || Math.abs(dias(g.data, x.data)) > 30 || lista().some(function (y) { return y !== x && y.nfGastoId === g.id; })) return false;
+        /* 1.3.0 (3.122): a nota de EDUCAÇÃO (irpf_candidata 'educacao' ou a escola) liga ao gasto da escola; a de saúde, à despesa médica */
+        var tipoOk = nf.educacao ? educacao(g) : NfIr.medica(g);
+        if (!g.data || g.fluxo === 'entrada' || !tipoOk || Math.abs(dias(g.data, nf.data || x.data)) > 30 || lista().some(function (y) { return y !== x && y.nfGastoId === g.id; })) return false;
         var gc2 = String((g.contraparte && g.contraparte.cnpj) || '').replace(/\D/g, '');
         return (cn && gc2 === cn) || parecida(x.loja, (g.contraparte && g.contraparte.nome) || g.descRobo || g.desc) || (x.valor > 0 && Math.abs(Number(g.valor) - x.valor) < 0.005);
-      }).sort(function (a, b) { return Math.abs(dias(a.data, x.data)) - Math.abs(dias(b.data, x.data)); });
+      }).sort(function (a, b) {   /* 1.3.0 (3.122): o mesmo valor primeiro (a mensalidade e o ampliado da mesma escola), depois a data mais perto */
+        var va = x.valor > 0 && Math.abs(Number(a.valor) - x.valor) < 0.005 ? 0 : 1, vb = x.valor > 0 && Math.abs(Number(b.valor) - x.valor) < 0.005 ? 0 : 1;
+        return va - vb || Math.abs(dias(a.data, x.data)) - Math.abs(dias(b.data, x.data));
+      });
       if (gs[0]) {
         x.nfGastoId = gs[0].id;
-        NfIr.marcar(gs[0].id, 'recebida');
-        NfIr.guardarDados(gs[0].id, { prof: NfIr.dados(gs[0]).prof || x.loja || '', doc: NfIr.dados(gs[0]).doc || x.cnpj || '', nf: x.numero || '' });
+        NfIr.marcar(gs[0].id, nf.extra ? 'dispensada' : 'recebida');
+        NfIr.guardarDados(gs[0].id, { prof: NfIr.dados(gs[0]).prof || x.loja || '', doc: NfIr.dados(gs[0]).doc || x.cnpj || '', nf: x.numero || '',
+          pessoa: nf.beneficiario || NfIr.dados(gs[0]).pessoa || '', tipo: nf.servico || NfIr.dados(gs[0]).tipo || '' });
+        aplicarNota(gs[0], nf);
       }
     }
     if (x.compraId || x.nfGastoId) x.estado = 'ok';
+  }
+
+  /* 1.3.0 (3.122): o que a NFS-e traz na ficha: para quem (beneficiario: o aluno ou o paciente), o serviço e a data dele, a categoria
+     sugerida ("Saúde > Terapias (TO/Fono/Psicopedagogia)"), se a nota é de educação ou de saúde (irpf_candidata), se o desconto já
+     veio aplicado (o valor da nota é o que foi pago) e se é despesa escolar extra (ampliado, alimentação: NÃO deduz no IR) */
+  function notaDe(x) {
+    var f = x.ficha || {}, cand = N(f.irpf_candidata || '');
+    var cat = f.categoria_sugerida, gr = '', sb = '';
+    if (cat && typeof cat === 'object') { gr = String(cat.grupo || ''); sb = String(cat.categoria || cat.sub || ''); }
+    else if (cat) { var pp = String(cat).split(/\s*[>›]\s*/); gr = pp[0] || ''; sb = pp.slice(1).join(' › '); }
+    var gk = '';
+    if (gr && typeof GRUPOS !== 'undefined') { var ng = N(gr); gk = Object.keys(GRUPOS).find(function (k) { return N(k) === ng || N(GRUPOS[k].nome) === ng; }) || ''; }
+    var extra = f.despesa_escolar_extra === true || /ampliado|alimenta/.test(N(f.despesa_escolar_extra || ''));
+    return { educacao: cand === 'educacao' || extra, saude: cand === 'saude', beneficiario: String(f.beneficiario || '').slice(0, 80), servico: String(f.servico || '').slice(0, 120),
+      data: dataOk(f.data_servico) || '', grupo: gk, sub: sb.slice(0, 80), desconto: f.desconto_ja_aplicado === true, extra: extra };
+  }
+  function educacao(g) { return !!g && g.fluxo !== 'entrada' && (g.grupo === 'DEPENDENTES' || /escola|col[eé]gio|educa|faculdade|ensino|creche/i.test([g.sub, g.desc, g.descRobo].join(' '))); }
+  /* a nota completa o lançamento do banco: para quem, a categoria sugerida (só se a pessoa ainda não classificou), o IR */
+  function aplicarNota(g, nf) {
+    var muda = {};
+    if (nf.beneficiario && !g.paraQuem) { muda.paraQuem = nf.beneficiario; if (window.Pessoas && Pessoas.ligar) Pessoas.ligar(muda, 'paraQuem', 'paraQuemId'); }
+    if (nf.grupo && nf.sub && !g.editadoPessoa && !g.confirmadoEm && (g.grupo === 'OUTROS' || !g.sub || g.confianca)) { muda.grupo = nf.grupo; muda.sub = nf.sub; }
+    if (nf.extra) muda.irpf = false; else if (nf.educacao || nf.saude) muda.irpf = true;
+    if (Object.keys(muda).length) Gasto.atualizar(g.id, muda);
   }
 
   /* ---------- recibo do exterior → recibo × cartão (3.91) ---------- */
@@ -245,9 +280,16 @@
           if (incertoDe(x)) return '⚠️ ' + tr('Valor incerto: confira olhando o comprovante', 'Unsure amount: check against the receipt', 'Importe dudoso: compruébalo mirando el comprobante') + ((x.opcoes || []).length ? ' (' + tr('pode ser ', 'could be ', 'puede ser ') + x.opcoes.map(fmt).join(' / ') + ')' : '');
           return tr('O cartão ainda não mostrou esta compra', 'Not on the card yet', 'Aún no aparece en la tarjeta');
         case 'reembolso': return x.arId ? tr('Em Valores a receber; sai quando o crédito cair', 'In Money to receive; goes away when the credit lands', 'En Valores a cobrar; sale cuando llegue el crédito') : '';
-        case 'nota_fiscal':
-          return [x.compraId ? tr('ligada à compra', 'linked to the purchase', 'vinculada a la compra') : '', x.nfGastoId ? tr('despesa médica: nota recebida', 'medical expense: invoice received', 'gasto médico: factura recibida') : '',
+        case 'nota_fiscal': {
+          var nf = notaDe(x);   /* 1.3.0 (3.122) */
+          return [nf.servico ? nf.servico + (nf.data ? ' (' + I18n.data(nf.data) + ')' : '') : '', nf.beneficiario ? '👤 ' + tr('para ', 'for ', 'para ') + nf.beneficiario : '',
+            nf.grupo && nf.sub ? tr('categoria: ', 'category: ', 'categoría: ') + ((GRUPOS[nf.grupo] || {}).nome || nf.grupo) + ' › ' + nf.sub : '',
+            nf.desconto ? tr('desconto já aplicado (o valor da nota é o que foi pago)', 'discount already applied (the invoice amount is what was paid)', 'descuento ya aplicado (el importe de la factura es lo pagado)') : '',
+            nf.extra ? tr('despesa escolar extra (ampliado/alimentação): não deduz no IR', 'extra school expense (extended day/meals): not tax-deductible', 'gasto escolar extra (horario ampliado/comida): no deduce en la renta') : '',
+            x.compraId ? tr('ligada à compra', 'linked to the purchase', 'vinculada a la compra') : '',
+            x.nfGastoId && !nf.extra ? (nf.educacao ? tr('educação: nota recebida (entra no IR)', 'education: invoice received (tax-deductible)', 'educación: factura recibida (deduce en la renta)') : tr('despesa médica: nota recebida', 'medical expense: invoice received', 'gasto médico: factura recibida')) : '',
             !x.compraId && !x.nfGastoId ? tr('guardada para o IR (nº, CNPJ e prestador)', 'kept for taxes (number, tax ID and provider)', 'guardada para la renta (nº, CIF y proveedor)') : ''].filter(Boolean).join(' · ');
+        }
         case 'recibo_exterior': return x.reciboId ? (x.moeda === 'BRL' ? tr('Em Recibo × cartão (em reais: sem câmbio nem IOF)', 'In Receipt × card (in reais: no exchange rate or IOF)', 'En Recibo × tarjeta (en reales: sin cambio ni IOF)') : tr('Em Recibo × cartão (câmbio e IOF)', 'In Receipt × card (exchange rate and IOF)', 'En Recibo × tarjeta (cambio e IOF)')) : '';
         case 'boleto': case 'fatura': {
           if (x.pagoId) return tr('Pago: ', 'Paid: ', 'Pagado: ') + nomeG(gasto(x.pagoId) || {});
