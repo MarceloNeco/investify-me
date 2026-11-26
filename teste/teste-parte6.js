@@ -122,7 +122,7 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [
       ok(await p.evaluate(async () => { const b2 = await ArquivosFamilia.ler(Store.estado.arquivos[0].id); return b2 && b2.length > 100; }), 'depois de recarregar, o arquivo continua no aparelho');
       ok(await p.evaluate(() => NfIr.propor(NfIr.lerPdf('Total 1.234,56 em 05/11/2026 Dra Fulana Pediatria'), 'x.pdf', [{ id: 'a', valor: 1234.56, data: '2026-11-04', sub: 'Pediatra', desc: 'FULANA' }, { id: 'b', valor: 99, data: '2026-01-01', sub: 'Outro' }])[0].g.id) === 'a', 'proposta sem IA: valor igual + data perto + nome');
       ok(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'sem rolagem para o lado');
-      ok(await p.evaluate(() => { abrirApp('tax'); irPara('t-pasta-ir'); return AssistOne.html('').includes('📍 Pasta do IR'); }), 'o AssistONE chama a tela pelo nome (Pasta do IR), não pelo código');
+      ok(await p.evaluate(() => { abrirApp('tax'); irPara('t-pasta-ir'); return AssistOne.infoTela().titulo === 'Pasta do IR'; }), 'o AssistONE chama a tela pelo nome (Pasta do IR), não pelo código');
       ok(erros.length === 0, 'sem erro de página' + (erros.length ? ': ' + erros.join(' | ') : ''));
       await ctx.close();
     }

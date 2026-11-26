@@ -1526,3 +1526,26 @@ logo depois de "Ajuda desta tela"; só aparece com a conta SolverONE logada e `a
   abertura (5 min com o item liberado, 30 s sem; sem login não chama o banco) e redesenhar o menu aberto quando a resposta chega.
 - **Teste:** `node teste/teste-assist-hermes.js` (nuvem simulada).
 
+## AssistONE de visual novo (3.110, 26/Nov/2026)
+
+Desenho aprovado pelo dono no Claude Design (pacote em MarceloNeco/assist-one, `docs/desenho-pacote/`). O personagem e o menu
+deixaram de ser do MoneyTRIO: vêm do **master** do AssistONE, `balao/visual/` do repositório privado `assist-one`, copiado
+**igual** para a pasta `assistone/` daqui (nunca editar a cópia; `node teste/copias.js` no assist-one confere).
+
+- **Arquivos:** `assistone/assistone-visual.js` (personagem `AssistOneCharacter` + painel `AssistOneVisual`), `assistone/assistone-visual.css`
+  (cores Joia/Pérola, personagem, painel), `assistone/img/` (quadros WebP: 8 no celular, 40 só no computador com mouse) e
+  `assistone/fontes/` (Manrope e Newsreader, licença OFL, nada do Google Fonts). Sem rede: funciona sem internet.
+- **No index.html:** o `#assistOne` ficou vazio (o master monta tudo); o objeto `AssistOne` só diz o que é cada tela (`infoTela`), o
+  que cada item faz (`opcao`) e monta a "Ajuda desta tela" dentro do painel (`ajudaTela`). Começar, Tour rápido e Procurar algo abrem o
+  que já existia (`Assist.abrir`); "Ajuda e tutorial" do menu da conta abre o mesmo menu e religa o AssistONE desligado pela pessoa.
+- **Menu (ordem fixa):** Perguntar ao assistente (selo IA, só com o Hermes liberado) · Começar · Tour rápido · Procurar algo · Ajuda
+  desta tela; rodapé discreto: Agora não · Desligar o AssistONE. Celular: folha de baixo sem rolar, com película; computador: painel
+  lateral de 420 px. O personagem sai da frente do painel (sobe com a folha ou vai para a esquerda).
+- **Tema:** segue o `data-theme` do app (escuro = Joia, claro = Pérola). Para com "reduzir movimento" do aparelho, com o "menos
+  movimento" do app (`html.sem-animacao`) e com a aba escondida.
+- **Onde mora:** `estilo.css` só posiciona o `#assistOne` (26 px de folga; aberto, z-index acima do selo da nuvem e abaixo do passeio).
+- **Perguntar ao assistente:** `modulos/assist-hermes.js` 1.0.2 escreve a caixinha no miolo do painel (`AssistOne.vis.conteudo`), com o
+  "Voltar ao menu" e o "Fechar" no cabeçalho. O visual novo da conversa é a próxima fase.
+- **Teste:** `node teste/teste-assistone-visual.js` (encaixe no app, celular e computador); o resto (44 px, Esc, movimento, aba
+  escondida, tema e idioma com ele aberto) é testado no master (`node teste/rodar.js` no assist-one).
+

@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.109 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.110 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.110 */
+  'O AssistONE de visual novo':'AssistONE with a new look',
+  '✨ O AssistONE ganhou visual novo: tocando nele, o personagem vira de frente e abre um menu mais limpo, que diz em que tela você está. No celular o menu sobe de baixo; no computador, abre ao lado. Ele segue o tema claro ou escuro do app e fica parado quando o aparelho pede menos movimento.':'✨ AssistONE has a new look: tap it and the character turns to face you and opens a cleaner menu that shows which screen you are on. On a phone the menu slides up from the bottom; on a computer it opens at the side. It follows the app\'s light or dark theme and stays still when your device asks for less motion.',
+  '💡 "Ajuda desta tela" agora abre dentro do próprio AssistONE, com a explicação da tela e os atalhos dela.':'💡 "Help with this screen" now opens inside AssistONE itself, with the explanation of the screen and its shortcuts.',
   /* 3.109 */
   'Perguntar ao assistente desde a primeira abertura':'Ask the assistant from the first opening',
   '💬 "Perguntar ao assistente" aparece já na primeira vez que você abre o AssistONE. Antes, logo depois de entrar no app, o item às vezes só aparecia na segunda abertura.':'💬 "Ask the assistant" now shows the very first time you open AssistONE. Before, right after opening the app, the item sometimes only appeared the second time.',

@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.106 · 24/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.110 · 26/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2196,34 +2196,14 @@ html[data-theme="light"] .topbar{background:color-mix(in srgb, #fff 88%, transpa
   #toasts{bottom:150px}
 }
 
-/* ---- AssistONE: o personagem no canto e o balão ---- */
-.assistone{position:fixed; right:16px; bottom:calc(20px + env(safe-area-inset-bottom)); z-index:95}
+/* ---- AssistONE: o personagem no canto (3.110: personagem e menu vêm de assistone/assistone-visual.css, o master) ----
+   Aqui fica só onde ele mora no MoneyTRIO. 26 px de folga em volta: ao abrir ele cresce 1,4× (ESPECIFICACAO.md 5.1). */
+.assistone{position:fixed; right:26px; bottom:calc(26px + env(safe-area-inset-bottom)); z-index:95}
 .assistone.desligado{display:none}
+/* aberto, o menu fica acima do selo da nuvem (9990) e da pílula do Fundo; abaixo do passeio (9995) e das telas da nuvem */
+.assistone.aov-aberto{z-index:9991}
 body:has(.modal-wrap:not(.hidden)) .assistone, body:has(#lockScreen:not(.hidden)) .assistone,
 body:has(.sidenav.open) .assistone, body:has(.popup-an) .assistone{display:none}
-/* o personagem: fundo SEMPRE escuro (também no tema claro), anel dourado,
-   balanço leve — igual em todos os apps (diretriz AssistONE, 02/Out/2026) */
-.assistone-bt{width:58px; height:58px; border-radius:50%; padding:0; cursor:pointer; display:block; position:relative; margin-left:auto;
-  border:1px solid rgba(201,162,74,.55);
-  background:radial-gradient(circle at 50% 38%, #232838, #11141c 72%);
-  box-shadow:0 6px 18px rgba(0,0,0,.28), 0 0 0 3px rgba(201,162,74,.16);
-  animation:aoneFlutua 3.2s ease-in-out infinite; transition:width .25s, height .25s}
-.assistone-bt img{width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; pointer-events:none}
-.assistone-bt:hover{box-shadow:0 8px 22px rgba(0,0,0,.34), 0 0 0 3px rgba(201,162,74,.28)}
-.assistone-bt:focus-visible{outline:3px solid var(--cor-app, #22c55e); outline-offset:3px}
-.assistone-bt[aria-expanded="true"]{animation:none}
-.assistone.aberto .assistone-bt{width:116px; height:116px; animation:none}
-.assistone-retomar{position:absolute; right:64px; bottom:12px; white-space:nowrap; background:var(--card); border:1px solid var(--linha-suave); color:var(--txt2);
-  border-radius:999px; padding:6px 12px; font:inherit; font-size:.78rem; cursor:pointer; box-shadow:var(--sombra-leve)}
-@keyframes aoneFlutua{0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}}
-@media (prefers-reduced-motion:reduce){ .assistone-bt{animation:none; transition:none} }
-html.sem-animacao .assistone-bt{animation:none; transition:none}
-.assistone-balao{position:absolute; right:0; bottom:calc(100% + 14px); width:min(calc(100vw - 32px), 340px);
-  max-height:min(72vh, calc(100vh - 200px)); overflow:auto; background:var(--card); border:1px solid var(--linha-suave);
-  border-radius:20px; box-shadow:var(--shadow); padding:14px 12px 8px; animation:balaoSobe .2s cubic-bezier(.2,.8,.3,1)}
-.assistone.aberto .assistone-balao{bottom:calc(100% + 14px)}
-@keyframes balaoSobe{from{opacity:0; transform:translateY(10px) scale(.97)} to{opacity:1; transform:none}}
-@media (prefers-reduced-motion:reduce){ .assistone-balao{animation:none} }
 .aone-ola{display:flex; align-items:center; gap:10px; margin:0 2px 10px}
 .aone-ola b{font-size:1rem}
 .aone-ola span{display:block; font-size:.8rem; color:var(--txt2)}
@@ -2240,8 +2220,8 @@ html.sem-animacao .assistone-bt{animation:none; transition:none}
 .aone-pe button{background:none; border:0; color:var(--txt3); font:inherit; font-size:.76rem; cursor:pointer; padding:8px 0; min-height:32px}
 .aone-pe button:hover{color:var(--txt)}
 @media (max-width:760px){
-  .assistone{right:12px; bottom:calc(76px + env(safe-area-inset-bottom))}
-  .content{padding-bottom:150px}
+  .assistone{right:26px; bottom:calc(76px + env(safe-area-inset-bottom))}
+  .content{padding-bottom:250px}   /* 3.110: o personagem novo é maior; dá para rolar o fim da tela para cima dele */
 }
 @media (min-width:761px){ #toasts{bottom:96px} }
 

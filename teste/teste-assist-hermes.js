@@ -31,19 +31,19 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos: [], r
     const primeira = await p.evaluate(() => { I18n.atual = 'pt'; Assist.marcarTutorial();
       MoneyNuvem.assist = { logado: () => true, disponivel: () => new Promise((r) => setTimeout(() => r(true), 400)) };
       ST.config.assistOne = true; AssistOne.aplicar(); AssistOne.abrir('tela');
-      return [...document.querySelectorAll('#assistBalao [data-aone]')].map((b) => b.dataset.aone); });
+      return [...document.querySelectorAll('#assistBalao [data-aov]')].map((b) => b.dataset.aov); });
     await p.waitForTimeout(900);
-    const depois = await p.evaluate(() => ({ aberto: AssistOne.aberto, ops: [...document.querySelectorAll('#assistBalao [data-aone]')].map((b) => b.dataset.aone) }));
+    const depois = await p.evaluate(() => ({ aberto: AssistOne.aberto, ops: [...document.querySelectorAll('#assistBalao [data-aov]')].map((b) => b.dataset.aov) }));
     ok(!primeira.includes('perguntar') && depois.aberto && depois.ops.includes('perguntar'), 'sem tocar em nada, "Perguntar ao assistente" entra no menu aberto quando a conferência chega');
     await p.evaluate(() => AssistOne.fechar());
     await p.evaluate(() => { I18n.atual = 'pt'; Assist.marcarTutorial(); ST.config.assistOne = false; AssistOne.aplicar(); abrirApp('budget'); irPara('b-painel'); render(); });
     const abrirMenu = () => p.evaluate(() => { ST.config.assistOne = true; AssistOne.aplicar(); AssistOne.abrir('tela');
-      return [...document.querySelectorAll('#assistBalao [data-aone]')].map((b) => b.dataset.aone); });
+      return [...document.querySelectorAll('#assistBalao [data-aov]')].map((b) => b.dataset.aov); });
 
     console.log('1) sem conta logada, o item não aparece');
     await p.evaluate(() => { MoneyNuvem.assist = { logado: () => false, disponivel: async () => true }; return AssistHermes.conferir(); });
     ok(!(await abrirMenu()).includes('perguntar'), 'sem login: o menu NÃO tem "Perguntar ao assistente"');
-    ok((await abrirMenu()).includes('ajuda'), 'o resto do menu continua igual (Ajuda desta tela)');
+    ok((await abrirMenu()).includes('ajuda_tela'), 'o resto do menu continua igual (Ajuda desta tela)');
 
     console.log('2) com conta, mas desligado no assist_config, o item não aparece');
     await p.evaluate(() => { MoneyNuvem.assist = { logado: () => true, disponivel: async () => false }; return AssistHermes.conferir(); });
@@ -56,10 +56,11 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos: [], r
         resposta: async () => (++n < 2 ? { estado: 'processando' } : { estado: 'respondida', resposta: 'Abra Configurações ⚙️ e toque em Conta.\nDepois em "Usar a digital".' }) };
       return AssistHermes.conferir(); });
     const menu = await abrirMenu();
-    ok(menu.indexOf('perguntar') === menu.indexOf('ajuda') + 1, 'o item "Perguntar ao assistente" vem logo depois de "Ajuda desta tela"');
-    await p.click('#assistBalao [data-aone="perguntar"]');
+    ok(menu.join(',') === 'perguntar,comecar,tour,procurar,ajuda_tela', '3.110: "Perguntar ao assistente" vem em primeiro, na ordem do desenho aprovado');
+    await p.click('#assistBalao [data-aov="perguntar"]');
     await p.waitForSelector('#ahPergunta', { state: 'visible', timeout: 5000 }).catch(() => {});
-    ok(await p.isVisible('#ahPergunta'), 'a caixinha da pergunta abre dentro do balão');
+    ok(await p.isVisible('#ahPergunta'), 'a caixinha da pergunta abre dentro do painel');
+    ok(await p.evaluate(() => document.querySelector('.aov-tit').textContent === 'Perguntar ao assistente' && !document.querySelector('.aov-voltar').hidden && !document.getElementById('ahVoltar')), '3.110: título e "Voltar ao menu" no cabeçalho do painel (sem botões repetidos embaixo)');
     ok(/Não escreva valores, contas, senhas nem dados pessoais/.test(await p.textContent('#assistBalao')), 'o aviso de dados pessoais aparece');
     await p.fill('#ahPergunta', 'Como entro com a digital?');
     await p.click('#ahEnviar');
@@ -67,13 +68,13 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos: [], r
     const env = await p.evaluate(() => window.__enviado);
     ok(env && env.txt === 'Como entro com a digital?' && env.idioma === 'pt' && env.tela === 'Painel do BudgetONE', 'foi a pergunta, o idioma e o nome da tela (' + (env && env.tela) + ')');
     ok(/<br>/.test(await p.innerHTML('#ahResposta')), 'a resposta aparece com as quebras de linha');
-    await p.click('#ahVoltar'); await p.waitForTimeout(100);
-    ok(await p.evaluate(() => AssistOne.aberto), 'depois de "Voltar" o balão continua aberto');
-    ok((await p.evaluate(() => [...document.querySelectorAll('#assistBalao [data-aone]')].map((b) => b.dataset.aone))).includes('perguntar'), '"Voltar" leva ao menu do AssistONE');
+    await p.click('.aov-voltar'); await p.waitForTimeout(100);
+    ok(await p.evaluate(() => AssistOne.aberto), 'depois de "Voltar ao menu" o painel continua aberto');
+    ok((await p.evaluate(() => [...document.querySelectorAll('#assistBalao [data-aov]')].map((b) => b.dataset.aov))).includes('perguntar'), '"Voltar" leva ao menu do AssistONE');
 
     console.log('4) limite do dia e erro de rede viram mensagem clara');
     await p.evaluate(() => { MoneyNuvem.assist.perguntar = async () => ({ ok: false, motivo: 'limite', limite: 20 }); });
-    await p.click('#assistBalao [data-aone="perguntar"]'); await p.waitForSelector('#ahPergunta', { state: 'visible' }); await p.fill('#ahPergunta', 'oi de novo'); await p.click('#ahEnviar');
+    await p.click('#assistBalao [data-aov="perguntar"]'); await p.waitForSelector('#ahPergunta', { state: 'visible' }); await p.fill('#ahPergunta', 'oi de novo'); await p.click('#ahEnviar');
     await p.waitForFunction(() => /limite de 20 perguntas/.test((document.querySelector('#ahResposta') || {}).textContent || ''));
     ok(true, 'limite: "Você chegou ao limite de 20 perguntas de hoje"');
     await p.evaluate(() => { MoneyNuvem.assist.perguntar = async () => { throw new Error('rede'); }; });
@@ -83,7 +84,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos: [], r
 
     console.log('5) inglês');
     await p.evaluate(() => { I18n.atual = 'en'; AssistOne.fechar(); });
-    ok((await p.evaluate(() => { AssistOne.abrir('tela'); return document.querySelector('#assistBalao [data-aone="perguntar"]').textContent; })).includes('Ask the assistant'), 'EN: "Ask the assistant"');
+    ok((await p.evaluate(() => { AssistOne.abrir('tela'); return document.querySelector('#assistBalao [data-aov="perguntar"]').textContent; })).includes('Ask the assistant'), 'EN: "Ask the assistant"');
 
     ok(!erros.length, 'nenhum erro de JavaScript na página' + (erros.length ? ': ' + erros.join(' | ') : ''));
   } finally { await b.close(); srv.close(); }
