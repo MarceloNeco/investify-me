@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.4.0 · 26/Nov/2026 (3.116: o nome no aviso do saldo abre a pessoa; o apelido explicado)
+   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.5.0 · 26/Nov/2026 (3.124: e-mail opcional, a ficha do dono ligada à conta sem ficha repetida; 3.116: o nome no aviso do saldo abre a pessoa)
    ---------------------------------------------------------------------
    O QUE FAZ
      Um cadastro só de "quem": Da casa (responsáveis e dependentes), Outras pessoas (pai, amigo, sócio) e
@@ -175,6 +175,10 @@
       if (d.aliases != null) limpo.aliases = (Array.isArray(d.aliases) ? d.aliases : String(d.aliases).split(/[,;\n]/)).map(function (x) { return String(x).trim().slice(0, 40); }).filter(Boolean);
       if (!limpo.nome) throw new Error(tr('Escreva o nome.', 'Type the name.'));
       if (d.uid) limpo.uid = String(d.uid); if (d.perfil) limpo.perfil = String(d.perfil);
+      /* 1.5.0 (3.124): o e-mail (opcional) de quem entra no app; só da família (tipo casa) */
+      var em = String(d.email || '').trim().toLowerCase().slice(0, 120);
+      if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) throw new Error(tr('Esse e-mail não parece certo.', 'That e-mail does not look right.', 'Ese correo no parece correcto.'));
+      limpo.email = d.tipo === 'casa' ? em : '';
       if (p) {
         var velho = API.rotulo(p);
         Object.assign(p, limpo); delete p.revisar;
@@ -262,12 +266,23 @@
       if (criadas) cfg().pessoasRevisar = true;
       return criadas;
     },
-    /* membros da plataforma: [{id, user_id, perfil_id, apelido, papel}] · OmniLife: [{perfil_id, apelido}] */
+    /* 1.5.0 (3.124): a ficha da conta logada, sem perguntar: a que tem o uid; senão a do e-mail da conta; senão a ÚNICA da casa com o
+       nome da conta. Mais de uma candidata sem uid/e-mail: null (a tela "Família no MoneyTRIO" oferece "Juntar") */
+    minhaFicha: function () {
+      var eu = euUid(), email = N(contaEmail()), nome = N(contaNome()), casa = lista().filter(function (p) { return p.tipo === 'casa' && !p.arquivada; });
+      var porUid = eu && casa.find(function (p) { return p.uid === eu; }); if (porUid) return porUid;
+      var porEmail = email && casa.filter(function (p) { return p.email && N(p.email) === email; }); if (porEmail && porEmail.length === 1) return porEmail[0];
+      var porNome = nome ? casa.filter(function (p) { return N(API.nomeCompleto ? API.nomeCompleto(p) : p.nome) === nome || N(p.nome) === nome || chaves(p).indexOf(nome) >= 0; }) : [];
+      return porNome.length === 1 ? porNome[0] : null;
+    },
+    /* membros da plataforma: [{id, user_id, perfil_id, apelido, papel, email?}] · OmniLife: [{perfil_id, apelido}] */
     prepreencher: function (membros, omni) {
       var n = 0;
       (membros || []).forEach(function (m) {
         var ap = String(m.apelido || '').trim(); if (!ap) return;
-        var p = lista().find(function (x) { return (m.user_id && x.uid === m.user_id) || (m.perfil_id && x.perfil === m.perfil_id); }) || API.achar(ap);
+        /* 1.5.0 (3.124): também pelo e-mail do convite; e a conta logada acha a ficha do dono (API.minhaFicha) — nunca uma ficha repetida */
+        var p = lista().find(function (x) { return (m.user_id && x.uid === m.user_id) || (m.perfil_id && x.perfil === m.perfil_id) || (m.email && x.email && N(x.email) === N(m.email)); }) ||
+          (m.user_id && m.user_id === euUid() ? API.minhaFicha() : null) || API.achar(ap);
         var papel = m.papel === 'crianca' ? 'dependente' : (m.papel === 'chefe' || m.papel === 'responsavel' ? 'responsavel' : '');
         if (p) { if (m.user_id && !p.uid) p.uid = m.user_id; if (m.perfil_id && !p.perfil) p.perfil = m.perfil_id; if (!p.papel && p.tipo === 'casa') p.papel = papel; return; }
         lista().push({ id: novoId(), tipo: 'casa', papel: papel, nome: titulo(ap), meio: '', sobrenome: '', apelido: '', banco: [], cnpj: '',
@@ -337,6 +352,9 @@
   };
 
   /* ---------------- tela: Configurações → Pessoas da família ---------------- */
+  function euUid() { try { return (window.MoneyNuvem && MoneyNuvem.escopos && MoneyNuvem.escopos.eu && MoneyNuvem.escopos.eu()) || ''; } catch (e) { return ''; } }
+  function contaEmail() { try { return (window.MoneyNuvem && MoneyNuvem.email && MoneyNuvem.email()) || ''; } catch (e) { return ''; } }
+  function contaNome() { try { return (window.MoneyNuvem && MoneyNuvem.nomePessoa && MoneyNuvem.nomePessoa()) || ''; } catch (e) { return ''; } }
   var editando = null;   /* id ou 'novo' */
   function formPessoa(p) {
     p = p || { tipo: 'casa', papel: 'responsavel' };
@@ -355,6 +373,8 @@
         cp(tr('Nomes no banco (como aparece no extrato)', 'Names at the bank (as on the statement)'), inp('psBanco', (p.banco || []).join(', '), tr('ex.: MARIA S LIMA — separe por vírgula', 'e.g. MARIA S LIMA — comma separated')),
           p.tipo === 'casa' && API.nomesDoBanco(p).length ? tr('Já reconhecidos pelo nome completo: ', 'Already recognised from the full name: ') + API.nomesDoBanco(p).join(' · ') : '') +
         cp(tr('Também chamado no app', 'Also called in the app'), inp('psAliases', (p.aliases || []).join(', '), tr('nomes antigos, apelidos do robô', 'old names, robot nicknames'))) +
+        '<div class="ps-so-casa">' + cp(tr('E-mail (opcional)', 'E-mail (optional)', 'Correo (opcional)'), '<input id="psEmail" type="email" inputmode="email" value="' + esc(p.email || '') + '" placeholder="' + esc(tr('só de quem entra no app', 'only for who signs in', 'solo de quien entra en la app')) + '" autocomplete="off">',
+          tr('Só para quem vai entrar no MoneyTRIO: liga esta ficha ao convite da família (e à conta da pessoa). Fica no cofre da família.', 'Only for who will sign in to MoneyTRIO: links this card to the family invite (and to the person\'s account). Kept in the family vault.', 'Solo para quien va a entrar en MoneyTRIO: vincula esta ficha a la invitación de la familia (y a su cuenta). Queda en la caja fuerte de la familia.')) + '</div>' +   /* 1.5.0 (3.124) */
         '<div class="ps-so-empresa">' + cp(tr('CNPJ (opcional)', 'Company tax ID (optional)'), inp('psCnpj', p.cnpj, '00.000.000/0000-00'), tr('Dado público. CPF o app não pede.', 'Public data. The app never asks for personal tax IDs.')) + '</div>' +
       '</div>' +
       '<div class="f-actions"><button class="btn" data-acao="ps-cancelar">' + esc(tr('Cancelar', 'Cancel')) + '</button>' +
@@ -421,7 +441,7 @@
     var v = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
     var f = document.querySelector('.ps-form');
     return { id: f ? f.dataset.id : '', tipo: v('psTipo'), papel: v('psPapel'), nome: v('psNome'), meio: v('psMeio'), sobrenome: v('psSobrenome'),
-      apelido: v('psApelido'), banco: v('psBanco'), aliases: v('psAliases'), cnpj: v('psCnpj') };
+      apelido: v('psApelido'), banco: v('psBanco'), aliases: v('psAliases'), cnpj: v('psCnpj'), email: v('psEmail') };
   }
   function salvarERender(msg) { Store.salvar(); render(); if (msg) toast(msg); }
 
@@ -443,7 +463,7 @@
 
   MoneyModulos.registrar({
     id: 'pessoas',
-    versao: '1.4.0',
+    versao: '1.5.0',
     colecoes: [COL],
     iniciar: function () {
       try { if (ST && !cfg().pessoasV && (ST.gastos || []).length + (ST.recorrentes || []).length) { API.migrar(); Store.salvar(); } } catch (e) { console.warn('pessoas', e); }
@@ -473,6 +493,7 @@
       'ps-editar': function (el) { editando = el.dataset.id; render(); },
       /* 3.116: de um aviso (ex.: o saldo previsto), tocar no nome da pessoa abre a ficha dela aqui */
       'ps-abrir': function (el) { editando = el.dataset.id; if (el.closest('#genModal') && typeof fechar === 'function') fechar('genModal'); if (typeof irPara === 'function') irPara('cfg-pessoas'); else render(); setTimeout(function () { var f = document.querySelector('.ps-form'); if (f) f.scrollIntoView({ block: 'start' }); var a = document.getElementById('psApelido'); if (a) a.focus(); }, 80); },
+      'ps-lista': function (el) { if (el.closest('#genModal') && typeof fechar === 'function') fechar('genModal'); if (typeof irPara === 'function') irPara('cfg-pessoas'); else render(); },   /* 1.5.0 (3.124): os atalhos abrem Pessoas da família */
       'ps-cancelar': function () { editando = null; render(); },
       'ps-salvar': function () {
         try { var p = API.salvar(lerForm()); editando = null; salvarERender(tr('Salvo: ', 'Saved: ') + API.rotulo(p)); }
