@@ -767,6 +767,9 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.129 — Aviso de atraso mais certeiro.** debito-nao-caiu 1.2.0: `avisosEmail` usa `ficha.aviso_atraso` e `fornecedor_aviso` (alerta
+  urgente ligado à conta fixa do fornecedor) e `encaminhado_pela_pessoa` (só informa, estilo `dnc-info`). Testes: `teste-aviso-atraso.js`
+  (novo), `teste-debito-nao-caiu`.
   **3.128 — Categoria pelo item da compra.** comprovantes: `catDoRobo` — a `ficha.categoria_sugerida` vira "É isso?" no 📥 com o item e o
   motivo; `cp-cat` grava `confirmadoEm`, chama `Espelho.registrar` e `Origem.depoisDe` (a resposta vira regra). Teste: `teste-categoria-
   sugerida.js` (novo).

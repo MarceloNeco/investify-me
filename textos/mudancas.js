@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.128 · 26/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.129 · 26/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.129', d:'2026-11-26', t:'Aviso de atraso mais certeiro', itens:[
+    '📧 O aviso de atraso que o robô identifica vira alerta urgente ligado à conta fixa do fornecedor. Se foi você mesmo quem encaminhou o e-mail, o app só lembra, sem alarme.'
+  ]},
   {v:'3.128', d:'2026-11-26', t:'Categoria pelo item da compra', itens:[
     '🏷️ Quando o robô reconhece o item da compra, o 📥 pergunta "É isso?" com a categoria e o item. A resposta classifica o lançamento e vira regra.'
   ]},
