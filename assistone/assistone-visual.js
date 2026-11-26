@@ -1,5 +1,5 @@
 /* =====================================================================
-   assistone-visual.js — o visual novo do AssistONE (personagem + painel)       1.1.1 · 26/Nov/2026
+   assistone-visual.js — o visual novo do AssistONE (personagem + painel)       1.1.2 · 26/Nov/2026
    MASTER no repositório privado MarceloNeco/assist-one (balao/visual/). Nos apps, a pasta
    assistone/ é uma CÓPIA IDÊNTICA: nunca editar a cópia; mudar aqui, testar e copiar.
    Desenho aprovado pelo dono (Claude Design, 26/Nov/2026, decisões D-A15 e de 26/11):
@@ -432,11 +432,15 @@
         var topo = H - painel.offsetHeight; if (r.bottom > topo - 4) ny = -(r.bottom - (topo - 4));
         if (r.right > W - 26) nx = -(r.right - (W - 26));   // 1.1.1: no canto (fechado) ele fica colado; aberto, precisa de 26 px para crescer 1,4×
       }
-      /* folha alta (a conversa): não cabe em cima dela; o personagem sai de cena e fica só o pequeno, no cabeçalho */
-      var semLugar = !computador() && r.top + ny < 8;
+      /* 1.1.2: em cima da folha, ele cresce até onde couber (inteiro, com o 1,4× e o balanço: ≈ 192 px de altura); faltando
+         espaço (menu com o "Perguntar", celular baixo), ele DIMINUI para caber, em vez de sumir. Só a folha alta da conversa,
+         onde nem a metade cabe, tira o grande de cena (fica o pequeno, no cabeçalho). */
+      var esc = 1;
+      if (!computador()) { var cabe = (r.bottom + ny) - 8; esc = Math.min(1, cabe / 192); }
+      var semLugar = esc < 0.45;
       raizAo.classList.toggle('aov-sem-lugar', semLugar);
-      if (semLugar) ny = 0;
-      raizAo.style.transform = (nx || ny) ? 'translate(' + Math.round(nx) + 'px, ' + Math.round(ny) + 'px)' : '';
+      if (semLugar) { ny = 0; esc = 1; }
+      raizAo.style.transform = (nx || ny || esc < 1) ? 'translate(' + Math.round(nx) + 'px, ' + Math.round(ny) + 'px)' + (esc < 1 ? ' scale(' + esc.toFixed(3) + ')' : '') : '';
     }
 
     function mostrar() {
@@ -502,5 +506,5 @@
     };
   }
 
-  global.AssistOneVisual = { VERSAO: '1.1.1', montar: montar, TEXTOS: TX, icone: icone };
+  global.AssistOneVisual = { VERSAO: '1.1.2', montar: montar, TEXTOS: TX, icone: icone };
 })(window);

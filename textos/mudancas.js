@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.113 · 26/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.114 · 26/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.114', d:'2026-11-26', t:'O AssistONE não some mais ao abrir', itens:[
+    '✨ Ao tocar no AssistONE, o personagem não some mais em celulares de tela mais baixa: ele fica um pouco menor para caber em cima do menu.'
+  ]},
   {v:'3.113', d:'2026-11-26', t:'Perguntar ao assistente de volta no menu', itens:[
     '💬 "Perguntar ao assistente" voltou a aparecer no menu do AssistONE quando você abre tocando no personagem. Desde a 3.110 ele só aparecia se o AssistONE fosse aberto pelo menu da conta.'
   ]},
