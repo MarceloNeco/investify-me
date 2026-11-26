@@ -1,10 +1,17 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.114 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.115 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.115 */
+  '📲 Botão fixo "Instalar o app" no menu ☰ e em Configurações (some depois de instalado). A janela de instalar ficou sólida e mostra os passos com o nome exato do menu do seu navegador; dentro de outro app (WhatsApp, Gmail), o primeiro passo é "Abrir no Chrome".':'📲 A fixed "Install the app" button in the ☰ menu and in Settings (it disappears once installed). The install window is now solid and shows the steps with the exact menu names of your browser; inside another app (WhatsApp, Gmail), the first step is "Open in Chrome".',
+  '🔢 PIN da conta sem confusão: quando o PIN da conta é criado em outro aparelho, este pede uma vez "Digite-o aqui" (com o app aberto) e passa a usar o mesmo. Na tela "Falta só um passo", a digital vem primeiro ("Confirmar com a digital, uma vez só").':'🔢 Account PIN without confusion: when the account PIN is created on another device, this one asks once "Type it here" (with the app open) and starts using the same one. On the "Just one more step" screen, the fingerprint comes first ("Confirm with the fingerprint, just once").',
+  'A versão na tela inicial e a lista de aparelhos mais clara':'The version on the home screen and a clearer device list',
+  '"Seus aparelhos" mais clara: separada em "No MoneyTRIO" e "Em outros apps SolverONE"; o aparelho aprovado que nunca terminou de entrar sai com "Tirar da lista"; e, ao entrar num celular de novo, o registro antigo dele (nunca usado ou sumido há mais de 7 dias) é substituído sozinho.':'Clearer "Your devices": split into "In MoneyTRIO" and "In other SolverONE apps"; a device approved but never finished signing in goes away with "Remove from the list"; and when you sign in on a phone again, its old entry (never used or gone for over 7 days) is replaced automatically.',
+  'A versão na tela inicial':'The version on the home screen',
+  'Na tela inicial, embaixo dos três apps, a versão do MoneyTRIO e a data, discretas à direita. Um toque abre as Novidades.':'On the home screen, below the three apps, the MoneyTRIO version and date, discreet on the right. One tap opens What\'s new.',
   /* 3.114 */
   'O AssistONE não some mais ao abrir':'AssistONE no longer disappears when opened',
   '✨ Ao tocar no AssistONE, o personagem não some mais em celulares de tela mais baixa: ele fica um pouco menor para caber em cima do menu.':'✨ When you tap AssistONE, the character no longer disappears on phones with shorter screens: it gets a little smaller to fit above the menu.',

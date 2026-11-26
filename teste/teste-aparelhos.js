@@ -121,14 +121,21 @@ const sasDe = (pg) => pg.waitForSelector('#nvSas', { timeout: 30000 }).then(() =
     ok(apB && apB.aprovado_por === ANA && apB.aprovado_por_ap === apA.id, 'a lista registra quem aprovou e de qual aparelho');
     ok(p1.estado === 'usado' && p1.resposta === null, 'a resposta saiu do banco depois de lida (pedido "usado")');
     ok(!(await B.evaluate(() => MoneyNuvem._teste.IDB.get('kv', 'pedido|11111111-1111-1111-1111-111111111111'))), 'o par efêmero do pedido saiu do aparelho novo ao terminar');
-    /* 3.106 (item h): o registro antigo deste mesmo celular (mesmo nome, sumido há mais de 7 dias): a sugestão de tirar */
-    const nomeB = apB.nome, velho = { id: '9b9b9b9b-0000-4000-8000-000000000099', user_id: ANA, nome: nomeB, app: 'moneytrio', como: 'aparelho', aprovado_por: ANA, criado_em: '2026-10-01T12:00:00Z', visto_em: '2026-10-20T12:00:00Z', removido_em: null };
-    db.sol_aparelhos.push(velho);
-    await B.evaluate(() => MoneyNuvem._teste.Aparelhos.aoAbrir());
-    await B.waitForSelector('#nvAvisoDup', { timeout: 10000 }).catch(() => {});
-    ok(/Este parece ser o mesmo .* de antes .*Tirar o registro antigo\?/.test(await B.textContent('#nvAvisoDup').catch(() => '')), '3.106 (item h): "Este parece ser o mesmo celular de antes… Tirar o registro antigo?"');
-    await B.click('#nvAvisoDupSim'); await esperar(500);
-    ok(!!velho.removido_em && !apB.removido_em, '1 toque (com confirmação) tira só o registro antigo');
+    /* 3.115 (item 5): o aparelho NOVO, no primeiro aoAbrir, substitui sozinho os registros antigos do mesmo celular (mesmo nome e app)
+       que nunca terminaram de entrar ou não aparecem há mais de 7 dias; o que está ativo fica */
+    const nomeB = apB.nome, iso = (h) => new Date(Date.now() - h * 3600000).toISOString();
+    const ativa = { id: '9b9b9b9b-0000-4000-8000-000000000091', user_id: ANA, nome: nomeB, app: 'moneytrio', como: 'aparelho', aprovado_por: ANA, criado_em: iso(200), visto_em: iso(1), removido_em: null };
+    const nunca = { id: '9b9b9b9b-0000-4000-8000-000000000092', user_id: ANA, nome: nomeB, app: 'moneytrio', como: 'aparelho', aprovado_por: ANA, criado_em: iso(4), visto_em: iso(4), removido_em: null };
+    const velha = { id: '9b9b9b9b-0000-4000-8000-000000000093', user_id: ANA, nome: nomeB, app: 'moneytrio', como: 'aparelho', aprovado_por: ANA, criado_em: iso(400), visto_em: iso(13 * 24), removido_em: null };
+    db.sol_aparelhos.push(ativa, nunca, velha);
+    /* direto (o aoAbrir também roda sozinho de tempos em tempos e poderia marcar "já substituiu" no meio do teste) */
+    await B.evaluate(async () => { const T = MoneyNuvem._teste, L = await T.Cadeado.local(); delete L.substituiu; await T.Aparelhos.substituirAntigos(L, await T.Aparelhos.lista()); });
+    await B.waitForFunction(() => /Substituímos o registro antigo do seu (celular|computador)/.test(document.body.innerText), null, { timeout: 10000 }).catch(() => {});
+    ok(!!nunca.removido_em && !!velha.removido_em && !ativa.removido_em && !apB.removido_em, '3.115 (item 5): das 3 linhas iguais, saem a nunca usada e a de 13 dias; ficam a ativa e a nova');
+    const avB = await B.evaluate(() => [...document.querySelectorAll('#toasts .toast, #nvAviso')].map((e) => e.textContent).join(' | '));
+    ok(/Substituímos o registro antigo do seu (celular|computador) \(de [^)]+\)\./.test(avB), 'aviso: "Substituímos o registro antigo do seu celular (de …)." (' + avB.slice(0, 120) + ')');
+    ok(await B.evaluate(async () => !!(await MoneyNuvem._teste.Cadeado.local()).substituiu) && !ativa.removido_em, 'marca que já substituiu: nas próximas aberturas não mexe mais (uma vez só, depois de entrar)');
+    ativa.removido_em = new Date().toISOString();   /* o cenário volta ao que era (a contagem de aparelhos mais adiante) */
     const Lb = await B.evaluate(() => MoneyNuvem._teste.Cadeado.local());
     ok(Lb && Lb.sk && Lb.ap === apB.id && Lb.como === 'aparelho', 'B guarda a chave pessoal fechada pelo cadeado do aparelho e sabe quem é na lista');
 

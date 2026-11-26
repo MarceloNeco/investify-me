@@ -844,6 +844,27 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas ou uma sem, e do mesmo CNPJ ou loja, sem precisar do `mesmaCompra`; fica o do pagamento: o final, senão a data mais nova); o
   seletor de cartão por `Cartoes.doFinal` (qualquer final); `osRot` na linha ("OS n · Veículo › sub · 🚗 apelido"); `acharCarro` também com a
   palavra do apelido dentro da palavra lida ("LRENEGADE").
+  **3.115 — A versão na tela inicial.** `viewHub()` ganhou, embaixo da linha dos dados, `.hub-versao` (à direita, mais apagada):
+  "MoneyTRIO <VERSAO> · <I18n.data(VERSAO_DATA)>" (do topo de `textos/mudancas.js`), botão `ver-mudancas` (abre as Novidades).
+  `teste-fumaca-telas` passa a fotografar também a tela inicial (`hub`) e ignora o `style=""` vazio que a foto com animações
+  desligadas às vezes deixa num campo em transição. Teste: `teste/teste-versao-hub.js`. Também (dono, a lista "Seus aparelhos"
+  confusa: no Android, a aba aberta dentro de outro app e o Chrome têm armazenamento separado, então cada um vira um aparelho):
+  nuvem.js 1.15.8 — `Painel.aparelhos` em "No MoneyTRIO" / "Em outros apps SolverONE"; "aprovado em …, mas nunca terminou de entrar"
+  (visto = criado, > 1 h) com "Tirar da lista"; `Aparelhos.substituirAntigos` (item 5: no primeiro `aoAbrir` do aparelho novo, os registros
+  antigos do mesmo nome e app que nunca terminaram de entrar ou sumiram há > 7 dias saem sozinhos, com o aviso "Substituímos o registro
+  antigo do seu celular (de 11/Nov)." nos dois aparelhos; substitui a sugestão da 3.106 e a dica); `nomeAparelho()` com `AbrirChrome.detectar(…).dentroDeApp`
+  → "Android · dentro de outro app"; abrir-no-chrome 1.0.1 explica que lá dentro o app não fica guardado. Teste: `teste/teste-lista-aparelhos.js`.
+  E o defeito "Falta só um passo" (dono: "que confusão esse negócio de PIN"): `Portao.pinAntigo` com a digital primeiro (quando há
+  `L.prf`) e texto simples; `Portao.migrarPin(info)` — chamado por `conferirPin` quando a conta tem PIN, este aparelho não tem `L.srv` e a
+  chave do aparelho está na memória — pede UMA vez o PIN da conta e já grava (`Pin.conferir` + `Pin.gravar`), em vez de o próximo
+  desbloqueio exigir o PIN antigo; `novoPin` avisa ("nos seus outros aparelhos, confirme uma vez…"). Testes: `teste-tempo-real` (2b, 2c),
+  `teste-seguranca`. E o convite de instalar (defeito no celular do dono: translúcido, a figura parecia botão, mandou usar "⋮ → Instalar app"
+  numa Custom Tab): abrir-no-chrome 1.1.0 — botão fixo "📲 Instalar o app" no ☰ (`montarNav` + `htmlBotao('menu')`) e em Configurações
+  (`config.todos`), que some em `display-mode: standalone`/`window-controls-overlay` e no `appinstalled`; janela sólida (`--bg2`, fundo
+  escurecido, foco preso, Esc e Voltar fecham, `pushState`); com `PWA.prompt`, "Instalar" de verdade; sem ele, `passos(contexto())` com o
+  nome exato do menu (Custom Tab, Chrome, `android-incerto` = Android sem o prompt depois de 3 s → primeiro "Abrir no Chrome", Samsung pelo
+  Chrome, iPhone, computador); a figura apagada e não clicável, com legenda; o convite automático 1 vez (`dgo:moneytrio:aviso:instalar:visto`).
+  "Primeira vez" no app instalado com aparelho já na lista: "Você instalou o app: aprove uma última vez pelo outro aparelho".
   **3.106 — Busca que acha o app, PIN sem beco sem saída, fotos no aparelho.** (1) `modulos/assistone-indice.js` 1.0.0 (`window.AssistIndice`;
   diretriz "O AssistONE conhece TUDO o que o app tem"): índice montado na hora (cache 20 s, por idioma) das telas (`ABAS` + `AJUDA_TELAS` +
   `MoneyModulos.telas()`, base 1.1.1), das seções de Configurações (`viewConfig()` passado pelo `Verter` e lido com DOMParser: o `h3` e a

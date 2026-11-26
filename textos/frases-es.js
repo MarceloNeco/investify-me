@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.114 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.115 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,13 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.115 — rascunho, revisar */
+  '📲 Botão fixo "Instalar o app" no menu ☰ e em Configurações (some depois de instalado). A janela de instalar ficou sólida e mostra os passos com o nome exato do menu do seu navegador; dentro de outro app (WhatsApp, Gmail), o primeiro passo é "Abrir no Chrome".':'📲 Botón fijo "Instalar la app" en el menú ☰ y en Ajustes (desaparece tras instalar). La ventana de instalar ahora es sólida y muestra los pasos con el nombre exacto del menú de tu navegador; dentro de otra app (WhatsApp, Gmail), el primer paso es "Abrir en Chrome".',
+  '🔢 PIN da conta sem confusão: quando o PIN da conta é criado em outro aparelho, este pede uma vez "Digite-o aqui" (com o app aberto) e passa a usar o mesmo. Na tela "Falta só um passo", a digital vem primeiro ("Confirmar com a digital, uma vez só").':'🔢 PIN de la cuenta sin líos: cuando el PIN de la cuenta se crea en otro dispositivo, este pide una vez "Escríbelo aquí" (con la app abierta) y pasa a usar el mismo. En la pantalla "Solo falta un paso", la huella va primero ("Confirmar con la huella, solo una vez").',
+  'A versão na tela inicial e a lista de aparelhos mais clara':'La versión en la pantalla de inicio y la lista de dispositivos más clara',
+  '"Seus aparelhos" mais clara: separada em "No MoneyTRIO" e "Em outros apps SolverONE"; o aparelho aprovado que nunca terminou de entrar sai com "Tirar da lista"; e, ao entrar num celular de novo, o registro antigo dele (nunca usado ou sumido há mais de 7 dias) é substituído sozinho.':'"Tus dispositivos" más clara: separada en "En MoneyTRIO" y "En otras apps SolverONE"; el dispositivo aprobado que nunca terminó de entrar se quita con "Quitar de la lista"; y, al volver a entrar en un móvil, su registro antiguo (nunca usado o desaparecido hace más de 7 días) se sustituye solo.',
+  'A versão na tela inicial':'La versión en la pantalla de inicio',
+  'Na tela inicial, embaixo dos três apps, a versão do MoneyTRIO e a data, discretas à direita. Um toque abre as Novidades.':'En la pantalla de inicio, debajo de las tres apps, la versión de MoneyTRIO y la fecha, discretas a la derecha. Un toque abre las Novedades.',
   /* 3.114 — rascunho, revisar */
   'O AssistONE não some mais ao abrir':'AssistONE ya no desaparece al abrirlo',
   '✨ Ao tocar no AssistONE, o personagem não some mais em celulares de tela mais baixa: ele fica um pouco menor para caber em cima do menu.':'✨ Al tocar AssistONE, el personaje ya no desaparece en móviles de pantalla más baja: se hace un poco más pequeño para caber encima del menú.',

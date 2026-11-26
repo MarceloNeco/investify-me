@@ -60,6 +60,7 @@ const id = (n) => '99999999-0000-0000-0000-00000000000' + n;
     await P.waitForSelector('#nvP1');
     ok(/Crie o PIN da sua conta SolverONE/.test(await P.textContent('.nv-card h2')) && /Ele vale no MoneyTRIO e no OmniLifeONE: o mesmo em todos os seus aparelhos/.test(await P.textContent('#nvPinUm')), 'tela do PIN: "Crie o PIN da sua conta SolverONE. Ele vale no MoneyTRIO e no OmniLifeONE" (3.106: só os apps que a pessoa usa)');
     ok(/também passa a valer no OmniLifeONE/.test(await P.textContent('#nvPinOutros').catch(() => '')), 'a tela do PIN repete o aviso do OmniLifeONE');
+    ok(/Nos seus outros aparelhos, na próxima vez, confirme uma vez com a digital ou com o PIN antigo deles\./.test(await P.textContent('#nvPinOutrosAps').catch(() => '')), '3.115: avisa que os outros aparelhos vão pedir uma confirmação (digital ou PIN antigo)');
     await P.fill('#nvP1', PIN); await P.fill('#nvP2', PIN); await P.click('#nvPOk');
     await P.waitForSelector('#nvSelo', { timeout: 90000 });
     ok(!!(db.sol_pin_conta || []).find((p) => p.user_id === ANA), 'o PIN escolhido virou o PIN da conta (vale nos dois apps)');

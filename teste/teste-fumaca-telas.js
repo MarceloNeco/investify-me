@@ -32,7 +32,8 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [
   recorrentes: [{ id: 'r1', nome: 'Aluguel', valor: 2500, grupo: 'HABITACAO', sub: 'Aluguel', regra: 'dia', dia: 5 }],
   patrimonio_iliquido: [{ id: 'il1', nome: 'FGTS — Exemplo', tipo: 'fgts', inst: 'Exemplo', valor: 1000, data: '2026-10-30', obs: '' }] };
 const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify', 'coach'], ['budget', 'b-painel'], ['budget', 'b-custos'],
-  ['budget', 'b-lanc'], ['tax', 't-painel'], ['tax', 't-deducoes'], ['investify', 'glossario'], ['investify', 'config']];
+  ['budget', 'b-lanc'], ['tax', 't-painel'], ['tax', 't-deducoes'], ['investify', 'glossario'], ['investify', 'config'],
+  ['budget', 'hub']];   /* 3.115: a tela inicial (dos três cartões), com a linha da versão */
 
 (async () => {
   const sA = await servidor(ANTES), sB = await servidor(AGORA);
@@ -46,7 +47,7 @@ const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify',
     const p = await ctx.newPage(); const erros = []; p.on('pageerror', (e) => erros.push(String(e)));
     await p.clock.setFixedTime(new Date('2026-11-06T10:00:00-03:00'));
     await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.posicoes || []).length === 2);
-    await p.evaluate((a) => { I18n.atual = a.lang; abrirApp(a.tela[0]); irPara(a.tela[1]); }, { lang, tela });
+    await p.evaluate((a) => { I18n.atual = a.lang; abrirApp(a.tela[0]); if (a.tela[1] === 'hub') mostrarHub(); else irPara(a.tela[1]); }, { lang, tela });
     await p.evaluate(() => {
       document.querySelectorAll('#toasts .toast').forEach((e) => e.parentNode.removeChild(e)); window.scrollTo(0, 0);
       /* a lista "O que há de novo" ganha a versão nova de propósito: sai das duas cópias */
@@ -74,7 +75,7 @@ const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify',
        duas cópias; o HTML e o estilo continuam comparados */
     await p.addStyleTag({ content: '*{backdrop-filter:none !important; -webkit-backdrop-filter:none !important}' });
     const png = await p.screenshot({ fullPage: true, animations: 'disabled', caret: 'hide' });
-    const html = await p.evaluate(() => { const v = document.querySelector('.view:not(.hidden)') || document.body; return v.innerHTML.replace(/\?v=[\w.]+/g, ''); });
+    const html = await p.evaluate(() => { const h = document.getElementById('hubTela'), v = (h && !h.classList.contains('hidden') ? h : null) || document.querySelector('.view:not(.hidden)') || document.body; return v.innerHTML.replace(/\?v=[\w.]+/g, '').replace(/ style=""/g, ''); });   /* 3.115: style vazio que a foto com animações desligadas deixa (às vezes) num campo que estava em transição: não é mudança de tela */
     const css = await p.evaluate(() => { const v = document.querySelector('.view:not(.hidden) .card') || document.body; const c = getComputedStyle(v); return [c.backgroundColor, c.color, c.borderRadius, c.padding, c.fontFamily].join('|'); });
     await ctx.close();
     return { png, html, css, erros };
