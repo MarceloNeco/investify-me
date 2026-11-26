@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/abrir-no-chrome.js — "Abrir no Chrome" e "Instalar o app"   1.1.0 · 24/Nov/2026 (3.106.1)
+   modulos/abrir-no-chrome.js — "Abrir no Chrome" e "Instalar o app"   1.1.0 · 26/Nov/2026 (3.115)
    ---------------------------------------------------------------------
    O QUE FAZ (dono, 24/Nov/2026: "mandar tocar nos ⋮ é amador"; o convite translúcido e a figura que parecia botão)
      · Tela de entrada, só no Android: quando o app abriu DENTRO de outro app (a aba do WhatsApp/Gmail, a Custom Tab com o X no topo:

@@ -1,5 +1,5 @@
 /* =====================================================================
-   teste/teste-versao-hub.js — 3.106.1: a versão na tela inicial (a dos três cartões BudgetONE/InvestifyONE/FiscalONE)
+   teste/teste-versao-hub.js — 3.115: a versão na tela inicial (a dos três cartões BudgetONE/InvestifyONE/FiscalONE)
    ---------------------------------------------------------------------
    Embaixo da linha dos dados, uma linha mais apagada e alinhada à direita: "MoneyTRIO <versão> · <data>" (VERSAO e VERSAO_DATA,
    que saem do topo de textos/mudancas.js; a data no formato da plataforma). Tocar abre as Novidades. PT/EN/ES.
@@ -26,20 +26,20 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos: [], r
     const p = await ctx.newPage(); const erros = []; p.on('pageerror', (e) => erros.push(String(e)));
     await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && typeof viewHub === 'function');
     const ver = await p.evaluate(() => ({ v: VERSAO, d: VERSAO_DATA, topo: MUDANCAS[0].v }));
-    ok(ver.v === '3.106.1' && ver.d === '2026-11-24' && ver.topo === ver.v, 'a versão vem do topo das Novidades: ' + ver.v + ' · ' + ver.d);
+    ok(ver.v === '3.115' && ver.d === '2026-11-26' && ver.topo === ver.v, 'a versão vem do topo das Novidades: ' + ver.v + ' · ' + ver.d);
     const linha = async (l) => p.evaluate((x) => { I18n.atual = x; const d = document.createElement('div'); d.id = 'tHub'; d.innerHTML = viewHub(); document.body.appendChild(d);
       const pe = d.querySelector('.hub-pe'), v = d.querySelector('.hub-versao'); const r = { txt: v && v.textContent, depois: !!(pe && pe.nextElementSibling === v), alinha: v && getComputedStyle(v).textAlign, op: v && +getComputedStyle(v).opacity, acao: v && v.querySelector('[data-acao="ver-mudancas"]') ? 1 : 0 };
       d.remove(); return r; }, l);
     const pt = await linha('pt');
-    ok(pt.txt === 'MoneyTRIO 3.106.1 · 24/Nov/2026', 'PT: "' + pt.txt + '"');
+    ok(pt.txt === 'MoneyTRIO 3.115 · 26/Nov/2026', 'PT: "' + pt.txt + '"');
     ok(pt.depois && pt.alinha === 'right' && pt.op < 1, 'logo embaixo da linha dos dados, alinhada à direita e mais apagada');
-    ok((await linha('en')).txt === 'MoneyTRIO 3.106.1 · Nov/24/2026', 'EN: a data no formato da plataforma (Nov/24/2026)');
-    ok(/^MoneyTRIO 3\.106\.1 · 24\/nov\/2026$/i.test((await linha('es')).txt), 'ES: "' + (await linha('es')).txt + '"');
+    ok((await linha('en')).txt === 'MoneyTRIO 3.115 · Nov/26/2026', 'EN: a data no formato da plataforma (Nov/24/2026)');
+    ok(/^MoneyTRIO 3\.115 · 24\/nov\/2026$/i.test((await linha('es')).txt), 'ES: "' + (await linha('es')).txt + '"');
     await p.evaluate(() => { I18n.atual = 'pt'; });
     ok(pt.acao === 1, 'é um botão de "ver as novidades"');
     await p.evaluate(() => { const d = document.createElement('div'); d.id = 'tHub2'; d.innerHTML = viewHub(); document.body.appendChild(d); d.querySelector('.hub-versao button').click(); });
     await p.waitForTimeout(300);
-    ok(await p.evaluate(() => !document.getElementById('genModal').classList.contains('hidden') && /3\.106\.1/.test(document.getElementById('genModal').textContent)), 'tocar abre as Novidades, com a 3.106.1');
+    ok(await p.evaluate(() => !document.getElementById('genModal').classList.contains('hidden') && /3\.115/.test(document.getElementById('genModal').textContent)), 'tocar abre as Novidades, com a 3.115');
     ok(!erros.length, 'sem erro na página ' + erros.join(' | '));
   } finally { await b.close(); srv.close(); }
   console.log((falhas ? '✗ ' : '✓ ') + oks + ' ok, ' + falhas + ' falha(s)');

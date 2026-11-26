@@ -5,7 +5,7 @@
    no iPhone e no computador. A tela de entrada mostra "Abrir no Chrome" (intent://… package=com.android.chrome) só onde se aplica; na
    dúvida, nada. Depois de entrar, no Chrome do Android, "Instalar na tela inicial" chama o beforeinstallprompt guardado; sem ele, a
    instrução curta com a figura. Dados fictícios. Uso: node teste/teste-abrir-chrome.js
-   3.106.1 (abrir-no-chrome 1.1.0): a janela sólida (fundo escurecido, Esc e Voltar fecham), "Instalar" de verdade com o prompt, os passos
+   3.115 (abrir-no-chrome 1.1.0): a janela sólida (fundo escurecido, Esc e Voltar fecham), "Instalar" de verdade com o prompt, os passos
    com o nome exato do menu em cada contexto (Custom Tab, Chrome, Samsung, iPhone, computador), a figura apagada com legenda, o
    convite 1 vez, o botão fixo no ☰ e em Configurações que some quando o app está instalado.
    ===================================================================== */

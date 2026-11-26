@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.9 · 26/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.16.0 · 26/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -77,7 +77,7 @@
       A tela de entrada mostra "Abrir no Chrome" (modulos/abrir-no-chrome.js) no Android dentro de outro app ou fora do Chrome.
       Aparelhos.conferirPin no foco/visibilidade (não mais nas voltas). TempoReal (Supabase Realtime, broadcast privado sol:conta:<uid>):
       ligado (migração sol_conta_tempo_real aplicada). O aviso() ganhou toque/arrasto/✕ (Toque.fechavel).
-  25. 1.15.8 (3.106.1) — "Seus aparelhos" separada em "No MoneyTRIO" e "Em outros apps SolverONE" ("a mesma conta e o mesmo PIN valem
+  25. 1.16.0 (3.115) — "Seus aparelhos" separada em "No MoneyTRIO" e "Em outros apps SolverONE" ("a mesma conta e o mesmo PIN valem
       nos dois"); aprovado que nunca terminou de entrar (visto = criado, > 1 h) → "Tirar da lista"; nomeAparelho() dentro de outro app =
       "Android · dentro de outro app". Item 5 (no lugar da sugestão "Tirar o registro antigo?" da 3.106 e da dica do celular repetido):
       Aparelhos.substituirAntigos — o aparelho NOVO, no primeiro aoAbrir (L.substituiu), tira os registros antigos da mesma conta com o
@@ -672,7 +672,7 @@
   function nomeAparelho() {
     var u = navigator.userAgent || '';
     var so = /Android/i.test(u) ? 'Android' : /iPhone/i.test(u) ? 'iPhone' : /iPad/i.test(u) ? 'iPad' : /Windows/i.test(u) ? 'Windows' : /Mac OS/i.test(u) ? 'Mac' : /Linux/i.test(u) ? 'Linux' : tt('Aparelho', 'Device');
-    /* 3.106.1 (item 4): aberto dentro de outro app (Custom Tab do WhatsApp/Gmail): o armazenamento é outro, então é outro "aparelho" */
+    /* 3.115 (item 4): aberto dentro de outro app (Custom Tab do WhatsApp/Gmail): o armazenamento é outro, então é outro "aparelho" */
     if (window.AbrirChrome && AbrirChrome.detectar(u, document.referrer, false).dentroDeApp) return (so + ' · ' + tt('dentro de outro app', 'inside another app', 'dentro de otra app')).slice(0, 60);
     var nav = /SamsungBrowser/i.test(u) ? 'Samsung' : /Edg\//i.test(u) ? 'Edge' : /Firefox/i.test(u) ? 'Firefox' : /Chrome|CriOS/i.test(u) ? 'Chrome' : /Safari/i.test(u) ? 'Safari' : '';
     return (so + (nav ? ' · ' + nav : '')).slice(0, 60);
@@ -915,7 +915,7 @@
           var ok = await self.rpc('sol_pedido_aprovar', { p_id: p.id, p_resposta: resp, p_meu_ap: d.L.ap || null });
           delete self._apr[p.id];
           if (ok) setTimeout(function () { Aparelhos.conferirPin(true); }, 30000);
-          if (ok) Aparelhos.lista().then(function (l) { Aparelhos._subst = (l || []).filter(function (a) { return a.nome === p.nome && a.app === (p.app || AP_APP); }); });   /* 3.106.1: para avisar aqui também */   /* 3.106 (item j): o aparelho novo costuma criar o PIN da conta logo */
+          if (ok) Aparelhos.lista().then(function (l) { Aparelhos._subst = (l || []).filter(function (a) { return a.nome === p.nome && a.app === (p.app || AP_APP); }); });   /* 3.115: para avisar aqui também */   /* 3.106 (item j): o aparelho novo costuma criar o PIN da conta logo */
           sair(ok ? '✓ ' + tt('Aprovado. Agora é no outro aparelho: lá ele pede o PIN da conta.', 'Approved. Now it is on the other device: it asks for the account PIN there.', 'Aprobado. Ahora es en el otro dispositivo: allí pide el PIN de la cuenta.') : tt('Não deu para aprovar: o pedido venceu ou já foi respondido. Peça de novo no aparelho novo.', 'Could not approve: the request expired or was already answered. Ask again on the new device.', 'No se pudo aprobar: la solicitud venció o ya fue respondida. Pídela de nuevo en el dispositivo nuevo.'));
         }); };
         el.querySelector('#nvApPin').addEventListener('keydown', function (e) { if (e.key === 'Enter') el.querySelector('#nvApOk').click(); });
@@ -942,7 +942,7 @@
         if (pi && !pi.tem && Cadeado.aberto()) this.avisoCriarPin();   /* 1.11.1: conta sem PIN da conta → aviso no topo, não escondido no painel */
         var lista = (await this.rpc('sol_aparelhos_meus')) || [], ate = L.avisosAte || '', eu = Conta.uid();
         Portao._usaApps = appsAqui(lista);
-        /* 3.106.1 (item 5, substitui a sugestão da 3.106): o aparelho NOVO, no primeiro aoAbrir, tira sozinho os registros antigos da mesma
+        /* 3.115 (item 5, substitui a sugestão da 3.106): o aparelho NOVO, no primeiro aoAbrir, tira sozinho os registros antigos da mesma
            conta com o mesmo nome e app que nunca terminaram de entrar (visto = criado, > 1 h) ou não aparecem há mais de 7 dias. Nunca
            tira o próprio aparelho nem um que terminou de entrar e foi visto nos últimos 7 dias. */
         if (!L.substituiu) await this.substituirAntigos(L, lista);
@@ -974,7 +974,7 @@
       var av = document.getElementById('nvAvisoPin'); if (av && i.tem) av.remove();
       var L = await Cadeado.local().catch(function () { return null; });
       if (i.tem && L && L.srv && L.pinVersao && i.versao !== L.pinVersao && Cadeado.aberto()) Nuvem.trancar('pinTrocado');
-      else if (i.tem && L && L.ap && !L.srv && Cadeado.aberto() && Cadeado.dukRaw) Portao.migrarPin(i);   /* 3.106.1: ainda no PIN antigo */
+      else if (i.tem && L && L.ap && !L.srv && Cadeado.aberto() && Cadeado.dukRaw) Portao.migrarPin(i);   /* 3.115: ainda no PIN antigo */
     },
     substituirAntigos: async function (L, lista) {
       var nomeAqui = nomeAparelho(), meu = lista.find(function (a) { return a.id === L.ap; }), agora = Date.now();
@@ -2396,7 +2396,7 @@
       Painel._apsVistos = ids; if (velhos && velhos !== ids) Aparelhos.conferirPin(true);   /* 3.106 (item j): apareceu aparelho novo na lista */
       grupos.forEach(function (g) { g.este = g.itens.some(function (a) { return L && a.id === L.ap; }); g.visto = g.itens.map(function (a) { return a.visto_em || a.criado_em; }).sort().pop(); });
       grupos.sort(function (x, y) { return (y.este - x.este) || String(y.visto).localeCompare(String(x.visto)); });
-      /* 3.106.1: separada em "No MoneyTRIO" e "Em outros apps SolverONE"; "aprovado, mas nunca terminou de entrar" (visto = criado, há
+      /* 3.115: separada em "No MoneyTRIO" e "Em outros apps SolverONE"; "aprovado, mas nunca terminou de entrar" (visto = criado, há
          mais de 1 h) com "Tirar da lista". (A dica do mesmo celular repetido saiu: o aparelho novo substitui sozinho os antigos.) */
       var linha = function (g) {
         var apps = juntarE(g.itens.map(function (a) { return nomeApp(a.app); }));
@@ -2541,7 +2541,7 @@
         else if (ev === 'pedido_estado') Aparelhos.acordar(d.id);
         else if (ev === 'aparelho' && d.removido) Cadeado.local().then(function (L) {
           if (L && L.ap && L.ap === d.id) return Aparelhos.tirado();
-          var s = (Aparelhos._subst || []).filter(function (a) { return a.id === d.id; }); if (s.length) aviso('✓ ' + Aparelhos.textoSubst(s));   /* 3.106.1: o aparelho que aprovou também fica sabendo */
+          var s = (Aparelhos._subst || []).filter(function (a) { return a.id === d.id; }); if (s.length) aviso('✓ ' + Aparelhos.textoSubst(s));   /* 3.115: o aparelho que aprovou também fica sabendo */
           if (Painel.aberto) Painel.aparelhos(Painel.aberto, L); });
         else if (ev === 'aparelho') { if (Painel.aberto) Cadeado.local().then(function (L) { Painel.aparelhos(Painel.aberto, L); }); }
       } catch (e) { /* aviso em tempo real nunca quebra o app */ }
@@ -2637,7 +2637,7 @@
       try { aps = await Promise.race([Aparelhos.lista(), dorme(4000)]); info = await Promise.race([Pin.info(), dorme(4000)]); } catch (e) {}
       var outros = appsAqui(aps);
       Portao._outrosApps = info && info.tem ? [] : outros; if (aps) Portao._usaApps = outros;
-      Portao._temOutrosAps = (aps || []).length > 0;   /* 3.106.1: há outros aparelhos que vão precisar confirmar uma vez */
+      Portao._temOutrosAps = (aps || []).length > 0;   /* 3.115: há outros aparelhos que vão precisar confirmar uma vez */
       var jaUsa = outros.length ? '<div class="nv-nota" id="nvJaUsa">👋 ' + tt('Você já usa o ', 'You already use ') + esc(juntarE(outros)) + tt('. Aprove por um aparelho seu (pode ser o ', '. Approve from one of your devices (it can be ') + esc(outros[0]) +
         tt(' neste mesmo celular) e use o mesmo PIN da sua conta.', ' on this same phone) and use the same PIN of your account.') +
         (info && !info.tem ? '<br><span class="nv-tiny">' + tt('A sua conta ainda não tem PIN da conta: o PIN que você escolher aqui também passa a valer no ', 'Your account has no account PIN yet: the PIN you choose here also becomes the PIN in ') + esc(juntarE(outros)) + '.</span>' : '') + '</div>' : '';
@@ -2646,7 +2646,7 @@
       var nomeAqui = nomeAparelho(), jaEntrou = !esqueci && (aps || []).some(function (a) { return a.app === AP_APP && a.nome === nomeAqui; })
         ? '<div class="nv-nota atencao" id="nvJaEntrou">ℹ️ ' + tt('Este ' + apN() + ' já entrou antes, mas o navegador apagou a chave guardada. Aprove de novo pelo outro aparelho.', 'This ' + apN() + ' signed in before, but the browser erased the saved key. Approve it again from your other device.', 'Este dispositivo ya entró antes, pero el navegador borró la clave guardada. Apruébalo de nuevo desde el otro dispositivo.') + '</div>' : '';
       /* 3.106 (item l): dizer logo de cara que, depois da aprovação, vem o PIN da conta (o dono achou que era opcional e o celular exigiu) */
-      /* 3.106.1 (item 4 do convite de instalar): instalado a partir de outro lugar (ex.: a aba dentro de outro app), o app instalado pode ter o
+      /* 3.115 (item 4 do convite de instalar): instalado a partir de outro lugar (ex.: a aba dentro de outro app), o app instalado pode ter o
          armazenamento separado: diz isso, em vez de parecer que perdeu tudo */
       var instaladoAgora = false; try { instaladoAgora = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch (e) {}
       var jaInstalou = !esqueci && instaladoAgora && (aps || []).some(function (a) { return a.app === AP_APP; })
@@ -2921,7 +2921,7 @@
     },
     /* 1.10.0 (migração): o PIN da conta está certo, mas este aparelho ainda está no PIN antigo dele: uma vez o antigo
        (ou a digital); não lembra → aprovar pelo outro aparelho */
-    /* 3.106.1 (dono: "que confusão esse negócio de PIN"): com a digital neste aparelho, ela vem primeiro ("uma vez só"); o PIN antigo
+    /* 3.115 (dono: "que confusão esse negócio de PIN"): com a digital neste aparelho, ela vem primeiro ("uma vez só"); o PIN antigo
        fica como segunda opção; texto mais simples */
     pinAntigo: async function (fam, r, seguir) {
       var L = await Cadeado.local(), dig = !!(L && L.prf);
@@ -2947,7 +2947,7 @@
       if ($('#nvPADig')) $('#nvPADig').onclick = function () { ir(null); };
       $('#nvPAEsq').onclick = function () { Portao.primeiraVez(fam, true); };
     },
-    /* 3.106.1 (item 1 do defeito): o PIN da conta nasceu em outro aparelho e ESTE, aberto (com a chave do aparelho na mão), ainda está no
+    /* 3.115 (item 1 do defeito): o PIN da conta nasceu em outro aparelho e ESTE, aberto (com a chave do aparelho na mão), ainda está no
        PIN antigo: pede uma vez o PIN da conta, com contexto, e já passa a usar o mesmo — em vez de o próximo desbloqueio exigir o antigo */
     migrarPin: function (info) {
       if (Portao._migrou || Tela.el || !Cadeado.dukRaw) return;

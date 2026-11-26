@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.112">
+<link rel="stylesheet" href="estilo.css?v=3.115">
 <link rel="stylesheet" href="assistone/assistone-visual.css?v=1.1.2">
 </head>
 <body>
@@ -683,8 +683,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.114"></script>
-<script src="textos/frases-es.js?v=3.114"></script>
+<script src="textos/frases-en.js?v=3.115"></script>
+<script src="textos/frases-es.js?v=3.115"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7679,7 +7679,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.114"></script>
+<script src="textos/mudancas.js?v=3.115"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -9909,7 +9909,7 @@ function viewHub(){
         ? 'Dados guardados só neste aparelho, sem conta e sem nuvem.'
         : 'Data stored only on this device, with no account and no cloud.')) +
     '</p>' +
-    /* 3.106.1 (dono): a versão, discreta e à direita; o toque abre as Novidades */
+    /* 3.115 (dono): a versão, discreta e à direita; o toque abre as Novidades */
     '<p class="hub-versao tiny muted"><button type="button" class="linkinho" data-acao="ver-mudancas" title="' +
       esc(I18n.tr('Ver as novidades desta versão', 'See what is new in this version', 'Ver las novedades de esta versión')) + '">MoneyTRIO ' + esc(VERSAO) + ' · ' + esc(I18n.data(VERSAO_DATA)) + '</button></p></div>';
   return h;
@@ -9945,7 +9945,7 @@ function montarNav(){
   if(lado) lado.innerHTML = Verter.html(abas.map(a =>
     '<button class="nav-item" data-view="' + a.v + '"><span>' + a.ico + '</span> ' + esc(nomeAba(a)) +
     (a.sub ? ' <small class="nav-sub">' + esc(t(a.sub)) + '</small>' : '') + '</button>').join('') +   /* 3.74: "Contas fixas e gastos recorrentes" */
-    (window.AbrirChrome ? AbrirChrome.htmlBotao('menu') : ''));   /* 3.106.1: "📲 Instalar o app" fixo no ☰ enquanto não estiver instalado */
+    (window.AbrirChrome ? AbrirChrome.htmlBotao('menu') : ''));   /* 3.115: "📲 Instalar o app" fixo no ☰ enquanto não estiver instalado */
   const baixo = $('#tabLista');
   if(baixo){
     /* quais botões ficam fixos embaixo é escolha de quem usa */
@@ -30195,7 +30195,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/terceiros.js?v=1.0.0"></script>
 <script src="modulos/assistone-indice.js?v=1.0.0"></script>
 <script src="modulos/assist-hermes.js?v=1.1.1"></script>
-<script src="modulos/abrir-no-chrome.js?v=1.0.0"></script>
+<script src="modulos/abrir-no-chrome.js?v=1.1.0"></script>
 <script src="modulos/toast-fechavel.js?v=1.0.0"></script>
 <script src="modulos/viagem.js?v=1.0.2"></script>
 <script src="modulos/compra-parcelada.js?v=1.1.0"></script>
@@ -30208,6 +30208,6 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/bs2-extrato.js?v=1.0.1"></script>
 <script src="modulos/pj-gestao.js?v=1.0.1"></script>
 <script src="modulos/pj-oportunidades.js?v=1.0.1"></script>
-<script src="nuvem.js?v=1.15.9"></script>
+<script src="nuvem.js?v=1.16.0"></script>
 </body>
 </html>

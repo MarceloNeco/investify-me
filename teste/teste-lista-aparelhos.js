@@ -1,5 +1,5 @@
 /* =====================================================================
-   teste/teste-lista-aparelhos.js — 3.106.1: a lista "Seus aparelhos" que o dono achou confusa (nuvem.js 1.15.8)
+   teste/teste-lista-aparelhos.js — 3.115: a lista "Seus aparelhos" que o dono achou confusa (nuvem.js 1.15.8)
    ---------------------------------------------------------------------
    Com aparelhos FICTÍCIOS parecidos com o caso real (3 linhas "Seu celular (Chrome) · MoneyTRIO" e 1 "navegador da Samsung ·
    OmniLifeONE"): a lista se divide em "No MoneyTRIO" e "Em outros apps SolverONE" (com "a mesma conta e o mesmo PIN valem nos dois");
