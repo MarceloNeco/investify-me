@@ -109,13 +109,19 @@
       if (gasto(g.id)) ligarCompra(x, g); else x.pendId = g.id;   /* a pendente do robô: liga quando o definitivo chegar */
     } else if (r.parecido.length) x.cands = r.parecido[0].cs.filter(function (c) { return !tomado(c) && gasto(c.id); }).map(function (c) { return c.id; });
   }
+  /* 1.3.0 (3.128): ficha.categoria_sugerida = {grupo, categoria, confianca: 'palpite', motivo: 'pelo item: friso'} */
+  function catDoRobo(x) {
+    var c = x.ficha && x.ficha.categoria_sugerida; if (!c || typeof c !== 'object' || typeof GRUPOS === 'undefined') return null;
+    var ng = N(c.grupo), gk = Object.keys(GRUPOS).find(function (k) { return N(k) === ng || N(GRUPOS[k].nome) === ng; }); if (!gk) return null;
+    return { grupo: gk, sub: String(c.categoria || c.sub || '').slice(0, 80), motivo: String(c.motivo || '').slice(0, 80), robo: true };
+  }
   function incertoDe(x) { return x.confianca === 'baixa' || (x.valor == null && (x.opcoes || []).length > 0); }
   function ligarCompra(x, g) {
     x.gastoId = g.id; x.pendId = ''; x.cands = []; x.perto = [];
     /* 1.1.0 (3.96): a pessoa confirmou um valor incerto: o valor do banco vale */
     if (incertoDe(x)) { if (x.parcelas > 1) x.valor_parcela = n2(g.valor); else x.valor = n2(g.valor); x.confianca = 'conferido'; }
     g.ficha = { cid: x.id, produto: x.produto || '', pedido: x.pedido || '', loja: x.loja || '', nf: (g.ficha && g.ficha.nf) || '' };
-    var s = palpiteCat(x.descritor_fatura) || palpiteCat(x.loja);
+    var s = catDoRobo(x) || palpiteCat(x.descritor_fatura) || palpiteCat(x.loja);   /* 1.3.0 (3.128): a categoria que o robô sugere pelo item vem primeiro */
     x.sugestao = s && (s.grupo !== g.grupo || (s.sub || '') !== (g.sub || '')) ? s : null;
   }
 
@@ -312,7 +318,9 @@
       h += '<button type="button" class="btn sm" data-acao="cn-abrir">📷 ' + esc(tr('Foto a ler: abrir "Foto de nota ou recibo"', 'Photo to read: open "Receipt or invoice photo"', 'Foto por leer: abrir "Foto de factura o recibo"')) + '</button>' + b('cp-foto-ok', tr('Já li a foto', 'Photo read', 'Foto leída'));
     if (x.estado === 'novo') {
       if (x.subtipo === 'compra' && x.gastoId) {
-        if (x.sugestao) h += b('cp-cat', tr('Usar ', 'Use ', 'Usar ') + ((GRUPOS[x.sugestao.grupo] || {}).nome || x.sugestao.grupo) + (x.sugestao.sub ? ' · ' + x.sugestao.sub : ''));
+        if (x.sugestao && x.sugestao.robo) h += '<span class="small cp-eisso">' + esc(tr('É isso? ', 'Is it this? ', '¿Es esto? ') + ((GRUPOS[x.sugestao.grupo] || {}).nome || x.sugestao.grupo) + (x.sugestao.sub ? ' › ' + x.sugestao.sub : '') +
+          (x.sugestao.motivo ? ' (' + x.sugestao.motivo + ')' : '') + (x.produto ? ' — ' + tr('item: ', 'item: ', 'artículo: ') + x.produto : '')) + '</span> ' + b('cp-cat', '✓ ' + tr('É isso', 'Yes, that', 'Es eso'));   /* 1.3.0 (3.128) */
+        else if (x.sugestao) h += b('cp-cat', tr('Usar ', 'Use ', 'Usar ') + ((GRUPOS[x.sugestao.grupo] || {}).nome || x.sugestao.grupo) + (x.sugestao.sub ? ' · ' + x.sugestao.sub : ''));
         h += b('cp-ok', tr('Está certo', 'Correct', 'Es correcto')) + b('cp-naoe', tr('Não é este lançamento', 'Not this entry', 'No es este movimiento'));
       }
       if (x.subtipo === 'compra' && !x.gastoId && x.perto && x.perto.length)
@@ -368,7 +376,10 @@
       'cp-ok': function (el) { var x = achar(el); if (!x) return; x.estado = 'ok'; x.sugestao = null; depois(); },
       'cp-cat': function (el) {
         var x = achar(el), g = x && gasto(x.gastoId); if (!g || !x.sugestao) return;
-        Gasto.atualizar(g.id, { grupo: x.sugestao.grupo, sub: x.sugestao.sub });
+        var antes = Object.assign({}, g);
+        Gasto.atualizar(g.id, { grupo: x.sugestao.grupo, sub: x.sugestao.sub, revisar: false, confirmadoEm: new Date().toISOString() });
+        /* 1.3.0 (3.128): a resposta vira regra — a planilha e o robô aprendem (Espelho) e os da mesma origem acompanham (Origem) */
+        var novo = gasto(g.id); if (novo) { delete novo.confianca; if (window.Espelho) Espelho.registrar(novo, antes); if (window.Origem && Origem.depoisDe) Origem.depoisDe(novo, antes); }
         x.estado = 'ok'; x.sugestao = null; depois();
       },
       'cp-naoe': function (el) {
