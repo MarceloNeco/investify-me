@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.111 · 26/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.112 · 26/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.112', d:'2026-11-26', t:'AssistONE pequeno no canto', itens:[
+    '🔎 Parado, o AssistONE voltou a ficar pequeno, no canto da tela, sem tampar o que está atrás. Ao tocar nele, ele cresce e vira de frente.'
+  ]},
   {v:'3.111', d:'2026-11-26', t:'Conversa nova com o AssistONE', itens:[
     '💬 "Perguntar ao assistente" ganhou a conversa do visual novo: sua pergunta e a resposta aparecem como numa conversa, com as perguntas dos últimos 7 dias. Enquanto ele responde, aparecem três pontinhos.',
     '👍 Depois de cada resposta, "Isso responde?" com Sim e Não. A sua escolha ajuda a melhorar as respostas.'
