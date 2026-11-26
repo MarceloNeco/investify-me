@@ -16,7 +16,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.106">
+<link rel="stylesheet" href="estilo.css?v=3.110">
+<link rel="stylesheet" href="assistone/assistone-visual.css?v=1.0.1">
 </head>
 <body>
 
@@ -251,13 +252,8 @@
 </div>
 
 <!-- ======= ASSIST ONE: o personagem no canto ======= -->
-<div class="assistone" id="assistOne" data-recurso="assistone">
-  <div class="assistone-balao hidden" id="assistBalao" role="dialog" aria-label="AssistONE"></div>
-  <button type="button" class="assistone-bt" id="assistFab" aria-label="AssistONE — ajuda e assistente"
-          aria-haspopup="dialog" aria-expanded="false" aria-controls="assistBalao">
-    <img src="ajuda-botao.png" alt="">
-  </button>
-</div>
+<!-- 3.110: o personagem e o menu são montados pelo master do AssistONE (assistone/assistone-visual.js) -->
+<div class="assistone" id="assistOne" data-recurso="assistone"></div>
 
 <div id="toasts" role="status" aria-live="polite"></div>
 <!-- trabalho em segundo plano (leitura de foto, importação): a pílula que fica enquanto a pessoa navega -->
@@ -687,8 +683,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.109"></script>
-<script src="textos/frases-es.js?v=3.109"></script>
+<script src="textos/frases-en.js?v=3.110"></script>
+<script src="textos/frases-es.js?v=3.110"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7683,7 +7679,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.109"></script>
+<script src="textos/mudancas.js?v=3.110"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -18857,8 +18853,12 @@ const ATALHOS_TELA = {
   't-processos': [{i:'📁', pt:'Novo processo', en:'New case', a:'tx-proc-novo'}]
 };
 
+/* 3.110 (26/Nov/2026, desenho novo aprovado pelo dono): o personagem e o menu agora vêm do master do AssistONE
+   (assistone/assistone-visual.js e .css, cópia idêntica de MarceloNeco/assist-one balao/visual/). Aqui fica só o que é do
+   MoneyTRIO: o que é cada tela, o que cada item faz e o liga/desliga. O tema (Joia/Pérola) segue o "Tema claro" do app. */
 const AssistOne = {
   aberto: false,
+  vis: null,
 
   ligado(){ return !desligadoPelaAdm('assistone') && !(typeof ST !== 'undefined' && ST.config && ST.config.assistOne === false); },
 
@@ -18871,92 +18871,87 @@ const AssistOne = {
   },
 
   ligar(){
-    const fab = $('#assistFab'), balao = $('#assistBalao');
-    if(!fab || fab.dataset.ligado) return;
-    fab.dataset.ligado = '1';
-    fab.addEventListener('click', () => this.aberto ? this.fechar() : this.abrir('tela'));
-    /* dentro do balão: as opções gerais são minhas; os atalhos usam o
-       data-acao de sempre e o clique geral cuida deles — aqui só fecho */
-    balao.addEventListener('click', ev => {
-      const op = ev.target.closest('[data-aone]');
-      if(op){ this.opcao(op.dataset.aone); return; }
-      if(ev.target.closest('[data-acao]')){ Assist.marcarTutorial(); this.fechar(); }
+    const casa = $('#assistOne');
+    if(!casa || this.vis || !window.AssistOneVisual) return;
+    this.vis = AssistOneVisual.montar(casa, {
+      idioma: () => I18n.atual,
+      corpoId: 'assistBalao',
+      tela: () => this.infoTela(),
+      itens: () => ({ perguntar: !!(window.AssistHermes && AssistHermes.disponivel()) }),
+      acao: id => this.opcao(id),
+      aoAbrir: () => { this.aberto = true; },
+      aoFechar: () => { this.aberto = false; }
     });
-    document.addEventListener('click', ev => {
-      if(this.aberto && !ev.target.closest('#assistOne')) this.fechar();
+    /* um atalho da tela (data-acao) é tratado pelo clique geral do app; aqui só fecho o painel */
+    this.vis.painel.addEventListener('click', ev => {
+      if(ev.target.closest('[data-acao]')){ Assist.marcarTutorial(); setTimeout(() => this.fechar(), 0); }
     });
-    document.addEventListener('keydown', ev => { if(ev.key === 'Escape' && this.aberto) this.fechar(); });
     this.aplicar();
   },
 
   abrir(modo){
-    if(!this.ligado()) return;
-    const balao = $('#assistBalao'), caixa = $('#assistOne'), fab = $('#assistFab');
-    if(!balao) return;
-    balao.innerHTML = this.html(modo || 'tela');
-    balao.classList.remove('hidden');
-    caixa.classList.add('aberto');
-    fab.setAttribute('aria-expanded', 'true');
-    this.aberto = true;
+    if(!this.ligado() || !this.vis) return;
+    const pt = I18n.atual === 'pt';
+    const aviso = modo === 'ola'
+      ? '<b>' + (pt ? 'Olá! Eu sou o AssistONE 👋' : 'Hi! I am AssistONE 👋') + '</b>' +
+        esc(pt ? 'Eu explico cada tela e abro os atalhos. Fico aqui no canto, sem atrapalhar.' : 'I explain each screen and open the shortcuts. I stay here in the corner, out of the way.')
+      : null;
+    this.vis.abrir({ aviso, leve: modo === 'ola' });   /* o "Olá" da 1ª visita não segura o toque: tocar fora fecha e vale */
+    this.aberto = this.vis.aberto();
   },
 
   fechar(){
-    const balao = $('#assistBalao'), caixa = $('#assistOne'), fab = $('#assistFab');
-    if(!balao || !this.aberto) return;
-    balao.classList.add('hidden');
-    caixa.classList.remove('aberto');
-    fab.setAttribute('aria-expanded', 'false');
+    if(this.vis) this.vis.fechar();
     this.aberto = false;
+  },
+
+  /* o nome e a frase da tela em que a pessoa está ("Você está em"); a frase some quando o RootifyONE desliga "assistone.dicas" */
+  infoTela(){
+    const L = I18n.atual !== 'pt' ? 'en' : 'pt';
+    const v = Assist.telaAtual();
+    const a = (AJUDA_TELAS[v] || (window.MoneyModulos && (MoneyModulos.infoTela(v) || {}).ajuda) || {})[L];   /* 3.42: ajuda das telas dos módulos */
+    const dicas = !(window.SolverRecursos && SolverRecursos.valor('assistone.dicas', true) === false);
+    return { titulo: a ? a.t : (v === 'hub' ? 'MoneyTRIO' : v), frase: a && dicas ? a.o : '', ajuda: a, tela: v };
   },
 
   opcao(qual){
     Assist.marcarTutorial();
-    this.fechar();
     switch(qual){
-      case 'comecar':  Assist.abrir('comecar'); break;
-      case 'tour':     tutorialPasso = 0; Assist.abrir('tutorial'); break;
-      case 'buscar':   Assist.abrir('buscar'); break;
-      case 'ajuda':    Assist.abrir('tela'); break;
+      case 'comecar':  this.fechar(); Assist.abrir('comecar'); break;
+      case 'tour':     this.fechar(); tutorialPasso = 0; Assist.abrir('tutorial'); break;
+      case 'procurar': this.fechar(); Assist.abrir('buscar'); break;
+      case 'ajuda_tela': this.ajudaTela(); break;
       case 'perguntar': if(window.AssistHermes) AssistHermes.abrir(); break;   /* 3.107 */
       case 'desligar':
+        this.fechar();
         ST.config.assistOne = false; Store.salvar(); this.aplicar();
-        toast(I18n.atual === 'pt' ? 'AssistONE desligado. Para religar: ⚙ Configurações → Compartilhadas → Preferências.'
-                                  : 'AssistONE off. To turn it back on: ⚙ Settings → Shared → Preferences.');
+        toast(I18n.atual === 'pt' ? 'AssistONE desligado. Para religar: menu da sua conta → Ajuda e tutorial.'
+                                  : 'AssistONE off. To turn it back on: your account menu → Help and tutorial.');
         break;
-      default: break;
+      default: break;   /* 'agora_nao': o próprio painel fecha */
     }
   },
 
-  html(modo){
+  /* "Ajuda desta tela": a explicação da tela e os atalhos dela, dentro do painel (com "Voltar ao menu") */
+  ajudaTela(){
     const L = I18n.atual !== 'pt' ? 'en' : 'pt';
     const de = (a, b) => L === 'pt' ? a : b;
-    const v = Assist.telaAtual();
-    const a = (AJUDA_TELAS[v] || (window.MoneyModulos && (MoneyModulos.infoTela(v) || {}).ajuda) || {})[L];   /* 3.42: ajuda das telas dos módulos */
-    const titulo = a ? a.t : (v === 'hub' ? 'MoneyTRIO' : v);
-    let h = '';
-    if(modo === 'ola'){
-      h += '<div class="aone-ola"><b>' + de('Olá! Eu sou o AssistONE 👋', 'Hi! I am AssistONE 👋') + '</b></div>' +
-           '<p class="small muted" style="margin:0 2px 10px">' + de('Eu explico cada tela e abro os atalhos. Fico aqui no canto, sem atrapalhar.',
-                                                                     'I explain each screen and open the shortcuts. I stay here in the corner, out of the way.') + '</p>';
+    const i = this.infoTela(), a = i.ajuda;
+    let h = '<div class="aov-bloco">';
+    if(a){
+      h += '<p>' + esc(a.o) + '</p>';
+      if(a.f && a.f.length) h += '<ul>' + a.f.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+    }else{
+      h += '<p>' + esc(de('Esta tela ainda não tem uma explicação própria. Use "Procurar algo" para achar o que precisa.',
+                          'This screen does not have its own explanation yet. Use "Find something" to get what you need.')) + '</p>';
     }
-    /* a dica desta tela some quando o RootifyONE desliga "assistone.dicas" */
-    const dicas = !(window.SolverRecursos && SolverRecursos.valor('assistone.dicas', true) === false);
-    h += '<div class="aone-tela"><b>📍 ' + esc(titulo) + '</b>' +
-         (a && dicas ? '<p>' + esc(a.o) + '</p>' : '');
-    const atalhos = ATALHOS_TELA[v] || [];
-    if(atalhos.length) h += '<div class="aone-atalhos">' + atalhos.map(x =>
-      '<button class="btn sm" data-acao="' + x.a + '">' + x.i + ' ' + esc(x[L]) + '</button>').join('') + '</div>';
     h += '</div>';
-    const op = (id, ico, txt) => '<button class="aone-op" data-aone="' + id + '"><i>' + ico + '</i>' + esc(txt) + '</button>';
-    h += op('comecar', '✨', de('Começar', 'Get started')) +
-         op('tour', '🧭', de('Tour rápido', 'Quick tour')) +
-         op('buscar', '🔎', de('Procurar algo', 'Find something')) +
-         op('ajuda', '💡', de('Ajuda desta tela', 'Help for this screen')) +
-         /* 3.107: piloto da IA da plataforma (Hermes) — só com a conta logada e o assist_config ligado; modulos/assist-hermes.js */
-         (window.AssistHermes && AssistHermes.disponivel() ? op('perguntar', '💬', de('Perguntar ao assistente', 'Ask the assistant')) : '');
-    h += '<div class="aone-pe"><button data-aone="fechar">' + de('Agora não', 'Not now') + '</button>' +
-         '<button data-aone="desligar">' + de('Desligar o AssistONE', 'Turn AssistONE off') + '</button></div>';
-    return h;
+    const atalhos = ATALHOS_TELA[i.tela] || [];
+    if(atalhos.length) h += '<div class="aov-atalhos">' + atalhos.map(x =>
+      '<button type="button" class="aov-chip" data-acao="' + x.a + '">' + x.i + ' ' + esc(x[L]) + '</button>').join('') + '</div>';
+    h += '<p class="aov-aviso">' + esc(de('Os ⓘ da tela abrem a explicação de cada termo, no nível escolhido no menu.',
+                                          'The ⓘ on the screen open each term’s explanation, at the level chosen in the menu.')) + '</p>';
+    this.vis.conteudo({ titulo: this.vis.textos().menu.ajuda_tela, sub: i.titulo, html: h });
   }
 };
 
@@ -28023,7 +28018,12 @@ function acaoPerfil(qual){
       ST.tema = ST.tema === 'light' ? 'dark' : 'light'; aplicarTema(); Store.salvar(); break;
     case 'atualizar':
       atualizarCotacoes(true); renderPerfilMenu(); break;
-    case 'ajuda':     fecharPerfilMenu(); Assist.abrir('tela'); break;
+    case 'ajuda':     /* 3.110 (decisão do dono, 26/Nov/2026): "Ajuda e tutorial" é a segunda porta do mesmo menu do AssistONE,
+                         e é por ela que se religa o AssistONE desligado pela pessoa (desligado pelo RootifyONE: a ajuda de antes) */
+      fecharPerfilMenu();
+      if(desligadoPelaAdm('assistone') || !AssistOne.vis){ Assist.abrir('tela'); break; }
+      if(ST.config.assistOne === false){ ST.config.assistOne = true; Store.salvar(); AssistOne.aplicar(); }
+      AssistOne.abrir('tela'); break;
     case 'nuvem':     fecharPerfilMenu(); if(window.MoneyNuvem && MoneyNuvem.abrirPainel) MoneyNuvem.abrirPainel(); break;   /* 3.65 */
     case 'espelho': {   /* 3.64: abre a planilha numa aba nova; sem link, vai para onde se cola o link */
       fecharPerfilMenu();
@@ -30151,6 +30151,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=2.1.2"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
+<script src="assistone/assistone-visual.js?v=1.0.1"></script>
 <script src="modulos/tour.js?v=1.1.0"></script>
 <script src="modulos/cartoes.js?v=1.2.0"></script>
 <script src="modulos/cartao-foto.js?v=1.0.0"></script>
@@ -30189,7 +30190,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/comprovantes.js?v=1.2.1"></script>
 <script src="modulos/terceiros.js?v=1.0.0"></script>
 <script src="modulos/assistone-indice.js?v=1.0.0"></script>
-<script src="modulos/assist-hermes.js?v=1.0.1"></script>
+<script src="modulos/assist-hermes.js?v=1.0.2"></script>
 <script src="modulos/abrir-no-chrome.js?v=1.0.0"></script>
 <script src="modulos/toast-fechavel.js?v=1.0.0"></script>
 <script src="modulos/viagem.js?v=1.0.2"></script>

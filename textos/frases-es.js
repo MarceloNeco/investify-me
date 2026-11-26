@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.109 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.110 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,10 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.110 — rascunho, revisar */
+  'O AssistONE de visual novo':'AssistONE con un aspecto nuevo',
+  '✨ O AssistONE ganhou visual novo: tocando nele, o personagem vira de frente e abre um menu mais limpo, que diz em que tela você está. No celular o menu sobe de baixo; no computador, abre ao lado. Ele segue o tema claro ou escuro do app e fica parado quando o aparelho pede menos movimento.':'✨ AssistONE tiene un aspecto nuevo: al tocarlo, el personaje se gira hacia ti y abre un menú más limpio que dice en qué pantalla estás. En el móvil el menú sube desde abajo; en el ordenador, se abre a un lado. Sigue el tema claro u oscuro de la app y se queda quieto cuando el dispositivo pide menos movimiento.',
+  '💡 "Ajuda desta tela" agora abre dentro do próprio AssistONE, com a explicação da tela e os atalhos dela.':'💡 "Ayuda de esta pantalla" ahora se abre dentro del propio AssistONE, con la explicación de la pantalla y sus atajos.',
   /* 3.109 — rascunho, revisar */
   'Perguntar ao assistente desde a primeira abertura':'Preguntar al asistente desde la primera apertura',
   '💬 "Perguntar ao assistente" aparece já na primeira vez que você abre o AssistONE. Antes, logo depois de entrar no app, o item às vezes só aparecia na segunda abertura.':'💬 «Preguntar al asistente» aparece ya la primera vez que abres AssistONE. Antes, justo después de entrar en la app, la opción a veces solo salía la segunda vez.',

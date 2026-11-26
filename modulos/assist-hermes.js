@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/assist-hermes.js — "💬 Perguntar ao assistente" no AssistONE            1.0.1 · 26/Nov/2026 (3.109)
+   modulos/assist-hermes.js — "💬 Perguntar ao assistente" no AssistONE            1.0.2 · 26/Nov/2026 (3.110)
    ---------------------------------------------------------------------
    PILOTO da IA da plataforma no AssistONE (só o MoneyTRIO, só quem está logado na nuvem).
    Como funciona: a pergunta (com o nome da tela onde a pessoa está) vai para a fila assist_perguntas no Supabase
@@ -43,7 +43,8 @@
     } catch (e) { return ''; }
   }
 
-  function html() {
+  /* 1.0.2 (3.110): no painel novo do AssistONE o "Voltar ao menu" e o "Fechar" ficam no cabeçalho do próprio painel */
+  function html(novo) {
     return '<div class="aone-tela"><b>💬 ' + escH(t('Perguntar ao assistente', 'Ask the assistant')) + '</b>' +
       '<p>' + escH(t('Eu respondo pelas dicas e pelos manuais do MoneyTRIO. Não escreva valores, contas, senhas nem dados pessoais.',
                      'I answer from the MoneyTRIO tips and manuals. Do not type amounts, accounts, passwords or personal data.')) + '</p></div>' +
@@ -54,8 +55,8 @@
       '<div style="display:flex; justify-content:flex-end; margin:8px 0"><button type="button" class="btn sm" id="ahEnviar">' +
       escH(t('Perguntar', 'Ask')) + '</button></div>' +
       '<div class="aone-tela" id="ahResposta" hidden aria-live="polite" style="white-space:normal"></div>' +
-      '<div class="aone-pe"><button type="button" id="ahVoltar">← ' + escH(t('Voltar', 'Back')) + '</button>' +
-      '<button type="button" id="ahFechar">' + escH(t('Fechar', 'Close')) + '</button></div>';
+      (novo ? '' : '<div class="aone-pe"><button type="button" id="ahVoltar">← ' + escH(t('Voltar', 'Back')) + '</button>' +
+      '<button type="button" id="ahFechar">' + escH(t('Fechar', 'Close')) + '</button></div>');
   }
 
   function mostrar(texto, eResposta) {
@@ -112,10 +113,12 @@
     if (!balao || typeof AssistOne === 'undefined') return;
     AssistOne.abrir('tela');
     if (!AssistOne.aberto) return;
-    balao.innerHTML = html();
+    if (AssistOne.vis) AssistOne.vis.conteudo({ titulo: AssistOne.vis.textos().menu.perguntar, sub: nomeTela(), html: html(true) });
+    else balao.innerHTML = html();
     document.getElementById('ahEnviar').addEventListener('click', enviar);
-    document.getElementById('ahVoltar').addEventListener('click', function () { setTimeout(function () { AssistOne.abrir('tela'); }, 0); });
-    document.getElementById('ahFechar').addEventListener('click', function () { AssistOne.fechar(); });
+    var volta = document.getElementById('ahVoltar'), fecha = document.getElementById('ahFechar');
+    if (volta) volta.addEventListener('click', function () { setTimeout(function () { AssistOne.abrir('tela'); }, 0); });
+    if (fecha) fecha.addEventListener('click', function () { AssistOne.fechar(); });
     var campo = document.getElementById('ahPergunta');
     campo.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); enviar(); } });
     setTimeout(function () { campo.focus(); }, 50);
