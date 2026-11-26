@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.108 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.109 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.109 */
+  'Perguntar ao assistente desde a primeira abertura':'Ask the assistant from the first opening',
+  '💬 "Perguntar ao assistente" aparece já na primeira vez que você abre o AssistONE. Antes, logo depois de entrar no app, o item às vezes só aparecia na segunda abertura.':'💬 "Ask the assistant" now shows the very first time you open AssistONE. Before, right after opening the app, the item sometimes only appeared the second time.',
   /* 3.108 */
   'Tour rápido de acordo com a tela':'Quick tour that fits the screen',
   '🧭 O "Tour rápido" agora mostra só o que está na tela em que você está. No Início: o BudgetONE, o InvestifyONE e o FiscalONE, como ir e voltar entre eles, a sua conta e o AssistONE. Dentro de cada um: o menu, a troca de módulo pelo nome no topo e as telas daquele módulo. Todo passo escurece o fundo e destaca a peça de que está falando.':'🧭 The "Quick tour" now shows only what is on the screen you are on. On Home: BudgetONE, InvestifyONE and FiscalONE, how to go back and forth between them, your account and AssistONE. Inside each one: the menu, switching modules from the name at the top and that module\'s screens. Every step dims the background and highlights the part it is talking about.',

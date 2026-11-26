@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/assist-hermes.js — "💬 Perguntar ao assistente" no AssistONE            1.0.0 · 26/Nov/2026 (3.107)
+   modulos/assist-hermes.js — "💬 Perguntar ao assistente" no AssistONE            1.0.1 · 26/Nov/2026 (3.109)
    ---------------------------------------------------------------------
    PILOTO da IA da plataforma no AssistONE (só o MoneyTRIO, só quem está logado na nuvem).
    Como funciona: a pergunta (com o nome da tela onde a pessoa está) vai para a fila assist_perguntas no Supabase
@@ -121,7 +121,31 @@
     setTimeout(function () { campo.focus(); }, 50);
   }
 
+  /* 1.0.1 (3.109): na 1ª abertura do balão o item não aparecia. A conferência é assíncrona (pergunta ao banco) e só rodava
+     3, 15 e 45 s depois de carregar; se a conta ainda estava entrando, ou o balão abria antes da resposta, o menu saía sem
+     o item e só ganhava o item na próxima abertura. Agora: toda abertura do balão confere (sem repetir à toa: com o item
+     já liberado, a cada 5 min; sem ele, a cada 30 s) e, quando a resposta chega com o balão ainda aberto no menu, o menu
+     se redesenha sozinho com o item. */
+  var ultimoModo = 'tela';
+  function ganchar() {
+    if (typeof AssistOne === 'undefined' || AssistOne.__ah) return;
+    var original = AssistOne.abrir.bind(AssistOne);
+    AssistOne.abrir = function (modo) {
+      ultimoModo = modo || 'tela';
+      original(modo);
+      var velho = Date.now() - conferidoEm > (disponivel ? 5 * 60000 : 30000);
+      if (!AssistOne.aberto || (disponivel && !velho) || (!disponivel && conferidoEm && !velho)) return;
+      var antes = disponivel;
+      conferir().then(function (v) {
+        /* redesenha só se o item passou a valer e o balão continua aberto no menu (não na caixinha da pergunta) */
+        if (v && !antes && AssistOne.aberto && !document.getElementById('ahPergunta')) original(ultimoModo);
+      });
+    };
+    AssistOne.__ah = 1;
+  }
+
   window.AssistHermes = { disponivel: estaDisponivel, conferir: conferir, abrir: abrir };
+  ganchar();
   /* a nuvem entra depois do carregamento: confere algumas vezes no começo */
   [3000, 15000, 45000].forEach(function (ms) { setTimeout(conferir, ms); });
 })();

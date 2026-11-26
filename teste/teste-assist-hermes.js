@@ -1,5 +1,5 @@
 /* =====================================================================
-   teste/teste-assist-hermes.js — 3.107: "Perguntar ao assistente" no AssistONE (modulos/assist-hermes.js 1.0.0)
+   teste/teste-assist-hermes.js — 3.107: "Perguntar ao assistente" no AssistONE (modulos/assist-hermes.js 1.0.1)
    ---------------------------------------------------------------------
    Confere, com a nuvem simulada (nenhuma chamada de verdade ao Supabase): sem login ou desligado, o item não aparece;
    ligado, aparece logo depois de "Ajuda desta tela", a pergunta vai com o nome da tela e o idioma, a resposta volta;
@@ -27,6 +27,15 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos: [], r
     const p = await ctx.newPage(); const erros = []; p.on('pageerror', (e) => erros.push(String(e)));
     await p.clock.setFixedTime(new Date('2026-11-24T12:00:00-03:00'));
     await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && window.AssistIndice && window.AssistHermes);
+    console.log('0) 3.109: na 1ª abertura do balão, com a conferência ainda a caminho, o item aparece sozinho');
+    const primeira = await p.evaluate(() => { I18n.atual = 'pt'; Assist.marcarTutorial();
+      MoneyNuvem.assist = { logado: () => true, disponivel: () => new Promise((r) => setTimeout(() => r(true), 400)) };
+      ST.config.assistOne = true; AssistOne.aplicar(); AssistOne.abrir('tela');
+      return [...document.querySelectorAll('#assistBalao [data-aone]')].map((b) => b.dataset.aone); });
+    await p.waitForTimeout(900);
+    const depois = await p.evaluate(() => ({ aberto: AssistOne.aberto, ops: [...document.querySelectorAll('#assistBalao [data-aone]')].map((b) => b.dataset.aone) }));
+    ok(!primeira.includes('perguntar') && depois.aberto && depois.ops.includes('perguntar'), 'sem tocar em nada, "Perguntar ao assistente" entra no menu aberto quando a conferência chega');
+    await p.evaluate(() => AssistOne.fechar());
     await p.evaluate(() => { I18n.atual = 'pt'; Assist.marcarTutorial(); ST.config.assistOne = false; AssistOne.aplicar(); abrirApp('budget'); irPara('b-painel'); render(); });
     const abrirMenu = () => p.evaluate(() => { ST.config.assistOne = true; AssistOne.aplicar(); AssistOne.abrir('tela');
       return [...document.querySelectorAll('#assistBalao [data-aone]')].map((b) => b.dataset.aone); });

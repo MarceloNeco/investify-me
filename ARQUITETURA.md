@@ -1522,5 +1522,7 @@ logo depois de "Ajuda desta tela"; só aparece com a conta SolverONE logada e `a
 - **Desligar sem publicar:** `update assist_config set ligado = false where app = 'moneytrio'` (o item some em até 5 min).
   **Desfazer o código:** reverter o commit da 3.107.
 - **Desenho do lado da plataforma:** solverone-app, `ARQUITETURA.md` ("Fila do AssistONE para o Hermes") e `supabase/2026-11-26b*` e `26c*`.
+- **Quando o item aparece (1.0.1, 3.109):** `assist_disponivel` é assíncrono; o módulo embrulha `AssistOne.abrir` para conferir a cada
+  abertura (5 min com o item liberado, 30 s sem; sem login não chama o banco) e redesenhar o menu aberto quando a resposta chega.
 - **Teste:** `node teste/teste-assist-hermes.js` (nuvem simulada).
 
