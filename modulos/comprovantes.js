@@ -214,7 +214,9 @@
 
   function processar(x) {
     if (x.estado === 'dispensado') return;
-    if (x.ficha && (x.ficha.consorcio || x.ficha.investimento_exterior)) { x.estado = 'ok'; return; }   /* 3.125: o evento da corretora no exterior também (modulos/invest-exterior.js) */   /* 1.3.0 (3.120): o extrato do consórcio é informação (modulos/consorcio.js), não pede nada */
+    if (x.ficha && (x.ficha.consorcio || x.ficha.investimento_exterior || (x.ficha.aluguel != null && x.ficha.valor != null))) {   /* 3.126: o demonstrativo do aluguel também */
+      x.estado = 'ok'; if (x.ficha.aluguel != null && window.Aluguel) Aluguel.garantirRenda(); return;
+    }   /* 3.125: o evento da corretora no exterior também (modulos/invest-exterior.js) */   /* 1.3.0 (3.120): o extrato do consórcio é informação (modulos/consorcio.js), não pede nada */
     if (window.Terceiros && Terceiros.aplicar(x)) return;   /* 1.2.1 (3.105): conta de outra pessoa a ignorar */
     if (x.subtipo === 'compra') casarCompra(x);
     else if (x.subtipo === 'reembolso') ligarReembolso(x);
