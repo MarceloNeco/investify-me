@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.118">
+<link rel="stylesheet" href="estilo.css?v=3.119">
 <link rel="stylesheet" href="assistone/assistone-visual.css?v=1.1.2">
 </head>
 <body>
@@ -683,8 +683,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.118"></script>
-<script src="textos/frases-es.js?v=3.118"></script>
+<script src="textos/frases-en.js?v=3.119"></script>
+<script src="textos/frases-es.js?v=3.119"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7679,7 +7679,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.118"></script>
+<script src="textos/mudancas.js?v=3.119"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -24677,7 +24677,11 @@ function calc(p){
   const pm  = Number(p.pm) || 0;
   let precoAtual = null, valorAtivo = 0, origem = 'sem', varDia = null, hora = null, fonte = '';
 
-  if(tp.fonte === 'manual'){
+  if(p.doBanco && p.valorManual != null && tp.fonte !== 'moeda'){   /* 3.119: o saldo que o banco mandou (modulos/invest-banco.js) manda */
+    valorAtivo = Number(p.valorManual) || 0;
+    precoAtual = qtd ? valorAtivo/qtd : null;
+    origem = 'banco'; hora = p.valorManualData || null; fonte = 'banco';
+  }else if(tp.fonte === 'manual'){
     valorAtivo = Number(p.valorManual) || (qtd * pm);
     precoAtual = qtd ? valorAtivo/qtd : null;
     origem = p.valorManual ? 'manual' : 'sem';
@@ -24938,6 +24942,7 @@ function cardMercadoResumo(){
    ========================================================= */
 let filtrosTipo = [], filtrosInst = [];   /* vazio = tudo */
 function viewCarteira(){
+  if(window.InvestBanco) InvestBanco.sincronizar();   /* 3.119: os investimentos do banco entram antes de somar */
   const t = totais();
   let h = '<div class="card-head"><h1>Carteira</h1><div class="spacer"></div>' +
     '<button class="btn sm" data-acao="csv">⬇ CSV</button>' +
@@ -25003,6 +25008,7 @@ function viewCarteira(){
       const badge = c.origem === 'auto' ? '<span class="badge live">auto</span>'
                  : c.origem === 'estimado' ? '<span class="badge est">estimado</span>'
                  : c.origem === 'manual' ? '<span class="badge man">manual</span>'
+                 : c.origem === 'banco' && window.InvestBanco ? InvestBanco.selo()
                  : '<span class="badge">sem preço</span>';
       h += '<tr class="linha-click" data-acoes-ativo="' + p.id + '" title="Clique para ver as opções deste ativo">' +
         '<td><button class="lnk-ativo" data-grafico="' + p.id + '" title="Ver gráfico">' +
@@ -25024,7 +25030,8 @@ function viewCarteira(){
   h += '<p class="tiny muted">Clique em qualquer lugar da linha para abrir as opções do ativo (editar, aportar, atualizar valor, excluir) ' +
        'ou no código do papel para ir direto ao gráfico. Etiquetas: <span class="badge live">auto</span> preço buscado na fonte pública · ' +
        '<span class="badge est">estimado</span> calculado pela taxa contratada ' + info('estimado') + ' · ' +
-       '<span class="badge man">manual</span> valor informado por você.</p>';
+       '<span class="badge man">manual</span> valor informado por você' +
+       (ST.posicoes.some(p => p.doBanco) && window.InvestBanco ? ' · ' + InvestBanco.selo() + ' saldo que o banco mandou' : '') + '.</p>';
   return h;
 }
 function precoCelula(c, qual){
@@ -25049,6 +25056,7 @@ function carteiraCartoes(chaves, grupos){
       const badge = c.origem === 'auto' ? '<span class="badge live">auto</span>'
                  : c.origem === 'estimado' ? '<span class="badge est">estimado</span>'
                  : c.origem === 'manual' ? '<span class="badge man">manual</span>'
+                 : c.origem === 'banco' && window.InvestBanco ? InvestBanco.selo()
                  : '<span class="badge">sem preço</span>';
       h += '<div class="ativo-card linha-click" data-acoes-ativo="' + p.id + '">' +
         '<div class="ac-l1"><button class="lnk-ativo" data-grafico="' + p.id + '"><span class="ac-tk">' +
@@ -30154,7 +30162,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/calendario-menu.js?v=1.2.1"></script>
 <script src="modulos/pessoas.js?v=1.4.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
-<script src="modulos/saldo-banco.js?v=2.3.0"></script>
+<script src="modulos/saldo-banco.js?v=2.3.1"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
 <script src="assistone/assistone-visual.js?v=1.1.2"></script>
 <script src="modulos/tour.js?v=1.1.0"></script>
@@ -30170,7 +30178,8 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/previsao.js?v=1.2.1"></script>
 <script src="modulos/orcamento.js?v=1.2.0"></script>
 <script src="modulos/fluxo-categorias.js?v=1.0.0"></script>
-<script src="modulos/patrimonio-mes.js?v=1.1.0"></script>
+<script src="modulos/invest-banco.js?v=1.0.0"></script>
+<script src="modulos/patrimonio-mes.js?v=1.1.1"></script>
 <script src="modulos/dividas.js?v=1.0.0"></script>
 <script src="modulos/seguros.js?v=1.0.2"></script>
 <script src="modulos/mes-a-mes.js?v=1.0.2"></script>
