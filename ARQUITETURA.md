@@ -767,6 +767,12 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.118 — Fluxo por categoria e de onde vem o previsto.** Novo `modulos/fluxo-categorias.js` 1.0.0 (`FluxoCat`), no ponto novo
+  `fluxo.fim` (as duas saídas do `viewBFluxo`): "Este mês" (barra de cada categoria contra o previsto) e "Últimos 6 meses" (grade:
+  verde < 80 %, âmbar 80–100 %, vermelho > 100 %); grupo em destaque e categorias em ordem alfabética; filtro por pessoa em
+  `ST.config.fluxoCat[uid]`; tocar no valor abre Lançamentos do mês (`bFiltro`). `FluxoCat.info` = o ⓘ do previsto (contas certas,
+  média de 6 meses, meta) — também no Orçamento do Painel (orcamento 1.2.0); salto acima de 3× a média e R$ 200 oferece conta fixa
+  ou limite. Projeção: categorias em ordem alfabética e o grupo em destaque. Teste: `teste-fluxo-categorias.js` (novo).
   **3.100 — Débito automático que não caiu.** `modulos/debito-nao-caiu.js` 1.0.0 (`window.DebitoNaoCaiu`, sem coleção: usa `ST.pagamentos`).
   Ocorrências de compromissos em débito automático (`estadoPadrao 'automatico'`/`forma 'debaut'`) dos últimos 60 dias (desde o cadastro):
   `naoCaiu()` = passou o vencimento e o 1º dia útil seguinte, não está paga (Pagamento confirmado/pago ou lançamento com `recorrenteId`
