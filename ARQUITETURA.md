@@ -1502,3 +1502,21 @@ o OmniLifeONE não lê `money_docs`, o MoneyTRIO não lê `omni_docs`.
   Os exemplos das telas (placeholders) usam nomes genéricos; o catálogo de compromissos sugere "Salário" (não mais com um nome de pessoa).
 - Nenhum nome real nos testes, nos módulos e na documentação (3.49): crianças, pais, escola, empregadores e saldos foram trocados
   por fictícios. O que já está no histórico do git só sai reescrevendo a main (decisão do dono).
+
+## AssistONE com Hermes — piloto (3.107, 26/Nov/2026)
+
+Primeira IA da **plataforma** no MoneyTRIO (sem chave nenhuma no app). Item "💬 Perguntar ao assistente" no menu do AssistONE,
+logo depois de "Ajuda desta tela"; só aparece com a conta SolverONE logada e `assist_config` ligado para `moneytrio`.
+
+- **Caminho:** `modulos/assist-hermes.js` → `MoneyNuvem.assist` (`nuvem.js` 1.15.8) → `assist_perguntar` (fila `assist_perguntas` no
+  Supabase da plataforma, 20 perguntas por pessoa por dia) → o leitor na VPS da SolverONE entrega ao Hermes, que responde pelos
+  artigos do `ajuda.json` (solverone-dados) e grava a resposta → o app consulta `assist_minha_resposta` a cada 2 s (até 75 s).
+- **Vai junto:** a pergunta, o nome da tela e o idioma. O aviso na caixinha pede para não escrever valores, contas, senhas nem dados
+  pessoais. Modelos grátis que não treinam com os dados; pergunta e resposta apagadas do banco depois de 30 dias.
+- **No index.html:** só a opção `perguntar` em `AssistOne.html()` e o caso dela em `AssistOne.opcao()`. A caixinha abre depois do
+  clique (`setTimeout`), porque o AssistONE fecha o balão quando o alvo do clique sai da tela.
+- **Desligar sem publicar:** `update assist_config set ligado = false where app = 'moneytrio'` (o item some em até 5 min).
+  **Desfazer o código:** reverter o commit da 3.107.
+- **Desenho do lado da plataforma:** solverone-app, `ARQUITETURA.md` ("Fila do AssistONE para o Hermes") e `supabase/2026-11-26b*` e `26c*`.
+- **Teste:** `node teste/teste-assist-hermes.js` (nuvem simulada).
+

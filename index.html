@@ -687,8 +687,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.106"></script>
-<script src="textos/frases-es.js?v=3.106"></script>
+<script src="textos/frases-en.js?v=3.107"></script>
+<script src="textos/frases-es.js?v=3.107"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7683,7 +7683,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.106"></script>
+<script src="textos/mudancas.js?v=3.107"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -18917,6 +18917,7 @@ const AssistOne = {
       case 'tour':     tutorialPasso = 0; Assist.abrir('tutorial'); break;
       case 'buscar':   Assist.abrir('buscar'); break;
       case 'ajuda':    Assist.abrir('tela'); break;
+      case 'perguntar': if(window.AssistHermes) AssistHermes.abrir(); break;   /* 3.107 */
       case 'desligar':
         ST.config.assistOne = false; Store.salvar(); this.aplicar();
         toast(I18n.atual === 'pt' ? 'AssistONE desligado. Para religar: ⚙ Configurações → Compartilhadas → Preferências.'
@@ -18950,7 +18951,9 @@ const AssistOne = {
     h += op('comecar', '✨', de('Começar', 'Get started')) +
          op('tour', '🧭', de('Tour rápido', 'Quick tour')) +
          op('buscar', '🔎', de('Procurar algo', 'Find something')) +
-         op('ajuda', '💡', de('Ajuda desta tela', 'Help for this screen'));
+         op('ajuda', '💡', de('Ajuda desta tela', 'Help for this screen')) +
+         /* 3.107: piloto da IA da plataforma (Hermes) — só com a conta logada e o assist_config ligado; modulos/assist-hermes.js */
+         (window.AssistHermes && AssistHermes.disponivel() ? op('perguntar', '💬', de('Perguntar ao assistente', 'Ask the assistant')) : '');
     h += '<div class="aone-pe"><button data-aone="fechar">' + de('Agora não', 'Not now') + '</button>' +
          '<button data-aone="desligar">' + de('Desligar o AssistONE', 'Turn AssistONE off') + '</button></div>';
     return h;
@@ -30186,6 +30189,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/comprovantes.js?v=1.2.1"></script>
 <script src="modulos/terceiros.js?v=1.0.0"></script>
 <script src="modulos/assistone-indice.js?v=1.0.0"></script>
+<script src="modulos/assist-hermes.js?v=1.0.0"></script>
 <script src="modulos/abrir-no-chrome.js?v=1.0.0"></script>
 <script src="modulos/toast-fechavel.js?v=1.0.0"></script>
 <script src="modulos/viagem.js?v=1.0.2"></script>
@@ -30199,6 +30203,6 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/bs2-extrato.js?v=1.0.1"></script>
 <script src="modulos/pj-gestao.js?v=1.0.1"></script>
 <script src="modulos/pj-oportunidades.js?v=1.0.1"></script>
-<script src="nuvem.js?v=1.15.7"></script>
+<script src="nuvem.js?v=1.15.8"></script>
 </body>
 </html>
