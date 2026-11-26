@@ -285,6 +285,7 @@
   function linha(x, tag) {
     return '<' + tag + ' class="inb-item cp-item" data-cp="' + esc(x.id) + '"><div><b>🧾 ' + esc(API.frase(x)) + '</b><span class="t-sub">' +
       esc([API.situacao(x), x.pedido ? tr('pedido ', 'order ', 'pedido ') + x.pedido : '', x.numero ? 'nº ' + x.numero : '', x.cnpj ? 'CNPJ ' + x.cnpj : '', x.paraQuem ? '👤 ' + tr('para ', 'for ', 'para ') + x.paraQuem : ''].filter(Boolean).join(' · ')) + '</span>' +
+      (window.FaturaConf ? FaturaConf.bloco(x) : '') +   /* 1.3.0 (3.121): a conferência da fatura do cartão */
       (x.links || []).map(function (u, i) { return ' <a class="small cp-link" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">📎 ' + esc(tr('arquivo', 'file', 'archivo') + ((x.links.length > 1) ? ' ' + (i + 1) : '')) + ' ↗</a>'; }).join('') + '</div>' + botoes(x) + '</' + tag + '>';
   }
   function abrirLista() {
