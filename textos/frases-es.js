@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.125 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.126 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,10 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.126 — rascunho, revisar */
+  'Investimento no exterior e contas de terceiros':'Inversiones en el exterior y facturas de terceros',
+  '🌎 Os avisos da corretora no exterior que chegam no e-mail aparecem na Carteira como eventos (data, ativo, CUSIP, conta), sem valor: a posição continua vindo do extrato.':'🌎 Los avisos del bróker en el exterior que llegan por correo aparecen en la Cartera como eventos (fecha, activo, CUSIP, cuenta), sin importe: la posición sigue viniendo del extracto.',
+  '📋 Na lista de contas de outras pessoas, dá para juntar duas palavras com "+" (ex.: "FORNECEDOR + ENDEREÇO"), e a tela explica como.':'📋 En la lista de facturas de otras personas puedes unir dos palabras con "+" (ej.: "PROVEEDOR + DIRECCIÓN"), y la pantalla explica cómo.',
   /* 3.125 — rascunho, revisar */
   'Pessoas da família sem pergunta repetida':'Personas de la familia sin preguntas repetidas',
   '👪 O app liga sozinho a sua ficha à sua conta (pelo e-mail, pelo nome ou pela conta) e não pergunta mais "Qual destas fichas é você?", nem cria uma ficha repetida. Quando há duas fichas que parecem ser você, ele oferece "Juntar".':'👪 La app vincula sola tu ficha a tu cuenta (por el correo, el nombre o la cuenta) y ya no pregunta "¿Cuál de estas fichas eres tú?", ni crea una ficha repetida. Cuando hay dos fichas que parecen ser tú, ofrece "Juntar".',

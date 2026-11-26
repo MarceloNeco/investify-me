@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/terceiros.js — 📋 CONTAS DE OUTRAS PESSOAS que chegam no e-mail da família (3.105)        1.0.0 · 24/Nov/2026
+   modulos/terceiros.js — 📋 CONTAS DE OUTRAS PESSOAS que chegam no e-mail da família (3.105)        1.1.0 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 24/Nov/2026, aprovado; sem IA)
      · Caso: a conta de outra pessoa chega no e-mail da família (ex.: a conta de telefone que alguém da família assinou para um
@@ -53,7 +53,11 @@
   function casa(x) {
     if (!x) return null;
     var t = ' ' + texto(x) + ' ';
-    return lista().find(function (it) { return (it.marcadores || []).some(function (m) { var k = N(m); return k.length >= 4 && t.indexOf(' ' + k + ' ') >= 0; }); }) || null;
+    /* 1.1.0 (3.126): "A + B" = as duas partes precisam aparecer (o robô entende igual) */
+    var tem = function (m) { var ps = String(m).split('+').map(N).filter(function (k) { return k.length >= 3; }); if (!ps.length) return false;
+      if (ps.length === 1) return ps[0].length >= 4 && t.indexOf(' ' + ps[0] + ' ') >= 0;
+      return ps.every(function (k) { return t.indexOf(' ' + k + ' ') >= 0; }); };
+    return lista().find(function (it) { return (it.marcadores || []).some(tem); }) || null;
   }
   function aplicar(x) {
     if (!ligado()) return false;
@@ -111,6 +115,10 @@
       '<p class="small" style="margin:8px 0 2px"><b>' + esc(tr('Como reconhecer (o titular ou o código do cliente que aparecem no e-mail)', 'How to recognize it (the holder or the customer code shown in the e-mail)', 'Cómo reconocerla (el titular o el código de cliente que aparecen en el correo)')) + '</b></p>' +
       '<div id="tcMarc">' + ms.map(function (m) { return '<label class="chk" style="display:inline-flex;gap:4px;margin:2px 8px 2px 0"><input type="checkbox" value="' + esc(m) + '" checked> ' + esc(m) + '</label>'; }).join('') + '</div>' +
       f(tr('Outro (opcional)', 'Another one (optional)', 'Otro (opcional)'), '<input id="tcOutro" maxlength="60" placeholder="' + esc(tr('outro nome ou código', 'another name or code', 'otro nombre o código')) + '">') +
+      /* 1.1.0 (3.126): o marcador composto, que o robô já entende */
+      '<p class="small muted tc-composto" style="margin:2px 0 6px">' + esc(tr('Dica: junte duas palavras com "+" quando uma só não basta. Ex.: "FORNECEDOR + ENDEREÇO" só reconhece quando o e-mail tem as duas (o mesmo fornecedor de luz da sua casa e da casa da sua tia, separados pela rua).',
+        'Tip: join two words with "+" when one is not enough. E.g. "SUPPLIER + ADDRESS" only matches when the e-mail has both (the same power company for your home and your aunt\'s, told apart by the street).',
+        'Consejo: une dos palabras con "+" cuando una sola no basta. Ej.: "PROVEEDOR + DIRECCIÓN" solo reconoce cuando el correo tiene las dos (la misma compañía de luz de tu casa y la de tu tía, separadas por la calle).')) + '</p>' +
       '<p class="small" style="margin:8px 0 2px"><b>' + esc(tr('O que fazer', 'What to do', 'Qué hacer')) + '</b></p>' +
       '<label class="chk" style="display:block"><input type="radio" name="tcAcao" value="ignorar"' + (!it || it.acao === 'ignorar' ? ' checked' : '') + '> ❌ ' + esc(tr('Ignorar: não entra nas minhas finanças', 'Ignore: it stays out of my finances', 'Ignorar: no entra en mis finanzas')) + '</label>' +
       '<label class="chk" style="display:block"><input type="radio" name="tcAcao" value="processar"' + (it && it.acao === 'processar' ? ' checked' : '') + '> 👤 ' + esc(tr('Processar para a pessoa (eu pago para ela e acompanho)', 'Process for that person (I pay it for them and keep track)', 'Procesar para la persona (la pago por ella y la sigo)')) + '</label>' +
@@ -133,7 +141,7 @@
 
   var API = { lista: lista, salvar: salvar, tirar: tirar, casa: casa, aplicar: aplicar, marcadoresDe: marcadoresDe, pacote: pacote, botao: botaoComprovante };
   MoneyModulos.registrar({
-    id: 'terceiros', versao: '1.0.0', colecoes: [COL],
+    id: 'terceiros', versao: '1.1.0', colecoes: [COL],
     pontos: { 'config.todos': cartao },
     acoes: {
       'tc-nao-meu': function (el) { var x = (ST.comprovantes || []).find(function (y) { return y.id === el.dataset.id; }); if (x) form(null, x); },
