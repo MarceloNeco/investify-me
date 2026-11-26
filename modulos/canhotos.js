@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/canhotos.js — "📷 Foto de nota ou recibo" com o banco (3.92; antes "🧾 Conferir canhotos")        1.3.3 · 24/Nov/2026
+   modulos/canhotos.js — "📷 Foto de nota ou recibo" com o banco (3.92; antes "🧾 Conferir canhotos")        1.4.0 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 18/Nov/2026; sem IA)
      · Em Lançamentos, "🧾 Conferir canhotos": uma foto (ou várias) com os canhotos da maquininha, cupons e recibos. O motor do
@@ -42,6 +42,15 @@
        "Esperar o banco" explica que ele não cria gasto: a compra vem pela fatura e a foto completa a descrição.
      · A linha mostra "Veículo › <categoria> · <carro>" antes de esperar o banco; o carro pelo apelido mesmo com letra grudada no texto lido
        ("LRENEGADE" acha o "Renegade"); com o carro achado, a linha mostra o apelido, não o texto do OCR.
+   1.4.0 (3.117), pedidos do dono sobre a janela: sai a frase "Lido no aparelho…"; uma frase por seção ("A foto completou o lançamento
+     que veio do banco… Nada foi duplicado." / "Quando o banco mandar, a foto se junta sozinha."); o item em linhas (`linhas`): loja + valor
+     ("… em 5× de …"), data e hora · tipo (OS da oficina / canhoto / nota), categoria · 🚗 apelido (sem o carro no cadastro: o texto lido e
+     "Cadastrar este carro", cn-carro → Veiculos.salvar), "No banco: … · parcela k de n · data"; "Classificar" como botão. "Pronto" é o
+     caminho padrão (`terminar`): o que casou fica completado no lançamento do banco (aplicar) e o que não veio fica ⏳ aguardando (`esperarUm`:
+     a ficha do parcelado; ou a pendente do print com o cartão escolhido, o do final lido, ou só o final — print-colar 1.3.2 casa pelo final);
+     "Lançar à mão" só para dinheiro ou fora do banco. No "Classificar", a categoria é um seletor (`opcoesSub`: Gasto.arvore do grupo) com
+     "+ Nova categoria…" (pergunta, confirma e grava em ST.categorias); o botão é "Fechar" sem mudança e "Salvar" com mudança; "Pronto" com
+     mudança não salva pergunta "Salvar as mudanças?" (Salvar / Descartar). Explicação de "Para quem (opcional)" e de "✂️ Dividir".
    PONTOS QUE USA
      lancamentos.topo · ações cn-*
    ===================================================================== */
@@ -132,7 +141,7 @@
   }
   function osPadrao(it) {
     if (!it || !it.os) return {};
-    var d = { grupo: 'VEICULO', sub: it.os.sub, desc: (it.lojaOS || it.loja || tr('Oficina', 'Repair shop', 'Taller')) + (it.os.numero ? ' (OS ' + it.os.numero + ')' : '') }, v = acharCarro(it.os.veiculo);
+    var d = { grupo: 'VEICULO', sub: it.os.sub, desc: (it.lojaOS || it.loja || tr('Oficina', 'Repair shop', 'Taller')) + (it.os.numero ? ' (OS ' + it.os.numero + ')' : '') }, v = it.veiculoId || acharCarro(it.os.veiculo);   /* 1.4.0: o carro cadastrado na janela */
     if (v) d.veiculoId = v;
     return d;
   }
@@ -273,16 +282,57 @@
       it.os.situacao === 'orcamento' ? tr('orçamento (ainda não pago)', 'estimate (not paid yet)', 'presupuesto (aún no pagado)') : ''].filter(Boolean).join(' · ');
   }
   function nomeG(g) { return ((g.contraparte && g.contraparte.nome) || g.descRobo || g.desc || '') + ' · ' + I18n.data(g.data) + (g.pendente ? ' · ⏳ ' + tr('pendente no banco', 'pending at the bank', 'pendiente en el banco') : ''); }
+  /* 1.4.0 (3.117, dono: "Funilaria e pinturaaaaa" foi aceito): a categoria é escolhida na lista do grupo (as mesmas do formulário do
+     lançamento, Gasto.arvore) ou criada por "+ Nova categoria…" (com confirmação; vai para Categorias) — nunca texto solto */
+  function opcoesSub(grupo, atual) {
+    var l = ((typeof Gasto !== 'undefined' && Gasto.arvore ? Gasto.arvore() : {})[grupo] || []).filter(Boolean).slice();
+    if (atual && l.indexOf(atual) < 0) l.push(atual);
+    l.sort(function (a, b) { return a.localeCompare(b, 'pt', { sensitivity: 'base' }); });
+    return '<option value="">—</option>' + l.map(function (x) { return '<option value="' + esc(x) + '"' + (x === atual ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') +
+      '<option value="__nova">' + esc(tr('+ Nova categoria…', '+ New category…', '+ Nueva categoría…')) + '</option>';
+  }
   function classificacao(k, g0, it) {
     var gs = Object.keys(GRUPOS), g = Object.assign({}, g0, osPadrao(it));
-    return '<div class="cn-class" data-k="' + k + '" hidden>' + (typeof recOpcoesPessoa === 'function' ? recOpcoesPessoa('cnPess' + k) : '') +
-      '<div class="grid g2"><label class="field"><span>' + esc(tr('Para quem', 'For whom', 'Para quién')) + '</span><input data-cn="quem" list="cnPess' + k + '" value="' + esc(quemVer(g.paraQuem || '')) + '"></label>' +
+    var dica = function (t) { return '<span class="small muted" style="display:block;margin-top:2px">' + esc(t) + '</span>'; };
+    return '<div class="cn-class" data-k="' + k + '" hidden style="margin:6px 0;padding:8px;border:1px solid var(--line);border-radius:10px">' + (typeof recOpcoesPessoa === 'function' ? recOpcoesPessoa('cnPess' + k) : '') +
+      '<div class="grid g2"><label class="field"><span>' + esc(tr('Para quem (opcional)', 'For whom (optional)', 'Para quién (opcional)')) + '</span><input data-cn="quem" list="cnPess' + k + '" value="' + esc(quemVer(g.paraQuem || '')) + '">' +
+        dica(tr('De quem é o gasto; vazio = da casa.', 'Whose expense it is; empty = the household\'s.', 'De quién es el gasto; vacío = de la casa.')) + '</label>' +
       '<label class="field"><span>' + esc(tr('Grupo', 'Group', 'Grupo')) + '</span><select data-cn="grupo">' + gs.map(function (x) { return '<option value="' + x + '"' + (x === g.grupo ? ' selected' : '') + '>' + esc((GRUPOS[x].ico || '') + ' ' + GRUPOS[x].nome) + '</option>'; }).join('') + '</select></label>' +
-      '<label class="field"><span>' + esc(tr('Categoria', 'Category', 'Categoría')) + '</span><input data-cn="sub" maxlength="60" value="' + esc(g.sub || '') + '"></label>' +
+      '<label class="field"><span>' + esc(tr('Categoria', 'Category', 'Categoría')) + '</span><select data-cn="sub">' + opcoesSub(g.grupo, g.sub || '') + '</select></label>' +
       (window.Veiculos && Veiculos.ativos().length ? '<label class="field"><span>' + esc(tr('Carro (se for do Veículo)', 'Car (if Vehicle)', 'Coche (si es Vehículo)')) + '</span><select data-cn="veiculo"><option value="">—</option>' +
         Veiculos.ativos().map(function (v) { return '<option value="' + esc(v.id) + '"' + (g.veiculoId === v.id ? ' selected' : '') + '>' + esc(v.apelido) + '</option>'; }).join('') + '</select></label>' : '') + '</div>' +
-      '<p style="margin:4px 0"><button type="button" class="btn sm" data-acao="cn-dividir" data-k="' + k + '">✂️ ' + esc(tr('Dividir', 'Split', 'Dividir')) + '</button></p><div class="cn-div" hidden></div>' +
-      '<button type="button" class="btn sm primary" data-acao="cn-aplicar" data-k="' + k + '">' + esc(tr('Aplicar no lançamento do banco', 'Apply to the bank entry', 'Aplicar al movimiento del banco')) + '</button></div>';
+      '<p style="margin:4px 0"><button type="button" class="btn sm" data-acao="cn-dividir" data-k="' + k + '">✂️ ' + esc(tr('Dividir', 'Split', 'Dividir')) + '</button>' +
+        dica(tr('✂️ Dividir: separar o valor entre pessoas ou categorias.', '✂️ Split: share the amount among people or categories.', '✂️ Dividir: repartir el importe entre personas o categorías.')) + '</p><div class="cn-div" hidden></div>' +
+      '<button type="button" class="btn sm cn-salvar" data-acao="cn-aplicar" data-k="' + k + '">' + esc(tr('Fechar', 'Close', 'Cerrar')) + '</button></div>';
+  }
+  /* 1.4.0 (3.117): a linha do item em linhas legíveis (antes tudo emendado) */
+  function bonito(t) {
+    return String(t || '').replace(/\s+(S\.?A\.?|LTDA|ME|EIRELI|EPP)\.?$/i, '').toLowerCase().replace(/(^|\s)\S/g, function (c) { return c.toUpperCase(); }).trim();
+  }
+  function tipoPapel(it) {
+    if (it.os) return it.os.situacao === 'orcamento' ? tr('orçamento da oficina', 'repair shop estimate', 'presupuesto del taller') : tr('OS da oficina', 'repair shop work order', 'orden de trabajo del taller');
+    return it.final ? tr('canhoto da maquininha', 'card machine slip', 'ticket del datáfono') : tr('nota ou recibo', 'invoice or receipt', 'factura o recibo');
+  }
+  function carroDe(it, g) {
+    var po = osPadrao(it), vid = (g && g.veiculoId) || po.veiculoId;
+    return vid && window.Veiculos ? Veiculos.lista().find(function (x) { return x.id === vid; }) || null : null;
+  }
+  function linhas(x, k) {
+    var it = x.it, g = x.g, po = osPadrao(it), gr = (g && g.grupo && g.grupo !== 'OUTROS' ? g.grupo : '') || po.grupo || '', sub = (g && g.sub && g.grupo !== 'OUTROS' ? g.sub : '') || po.sub || '';
+    var tit = bonito(it.lojaOS || it.loja) || tr('(loja não lida)', '(store not read)', '(tienda no leída)');
+    var val = fmt(it.valor) + (it.parcelas > 1 && it.valor ? tr(' em ', ' in ', ' en ') + it.parcelas + '× ' + tr('de ', 'of ', 'de ') + fmt(n2(it.valor / it.parcelas)) : '');
+    var quando = [iso(it.data) ? I18n.data(iso(it.data)) : it.data, it.hora].filter(Boolean).join(' ');
+    var v = carroDe(it, g), carro = v ? '🚗 ' + esc(v.apelido) : (it.os && it.os.veiculo && window.Veiculos ? '🚗 ' + esc(it.os.veiculo) + ' <button type="button" class="btn sm" data-acao="cn-carro" data-k="' + k + '">' + esc(tr('Cadastrar este carro', 'Add this car', 'Registrar este coche')) + '</button>' : '');
+    var h = '<div class="cn-l1"><b>' + esc(tit) + ' · ' + esc(val) + '</b></div>' +
+      '<div class="t-sub cn-l2">' + esc([quando, tipoPapel(it) + (it.os && it.os.numero ? ' ' + it.os.numero : ''), it.final ? '••' + it.final : ''].filter(Boolean).join(' · ')) + '</div>' +
+      (gr || carro ? '<div class="t-sub cn-l3">' + [gr ? esc(((GRUPOS[gr] || {}).nome || gr) + (sub ? ' › ' + sub : '')) : '', carro].filter(Boolean).join(' · ') + '</div>' : '');
+    if (g) {
+      var dd = String(g.descRobo || g.desc || ''), d = String((g.contraparte && g.contraparte.nome) || dd), m = /\(?(\d{1,2})\/(\d{1,2})\)?\s*$/.exec(dd);
+      var nome = d.replace(/\s*\(?\d{1,2}\/\d{1,2}\)?\s*(\(\d{1,2}\/\d{1,2}\))?\s*$/, '').replace(/([A-Z]{3,})(SA|LTDA)$/, '$1 $2').trim();
+      h += '<div class="t-sub cn-l4">' + esc(tr('No banco: ', 'At the bank: ', 'En el banco: ') + [nome, m ? tr('parcela ', 'installment ', 'cuota ') + Number(m[1]) + tr(' de ', ' of ', ' de ') + Number(m[2]) : '', I18n.data(g.data, { semAno: true })].filter(Boolean).join(' · ') +
+        (g.pendente ? ' · ⏳ ' + tr('pendente no banco', 'pending at the bank', 'pendiente en el banco') : '')) + '</div>';
+    }
+    return h;
   }
   function mostrar() {
     if (!ultimo) return;
@@ -300,21 +350,22 @@
     var nIt = gr.casou.length + gr.parecido.length + gr.novo.length + gr.duvida.length;
     var jt = function () { return nIt >= 2 ? '<input type="checkbox" class="cn-jt" aria-label="' + esc(tr('marcar para juntar', 'tick to merge', 'marcar para juntar')) + '" style="margin-right:6px"> ' : ''; };
     var h = (nIt >= 2 ? '<p class="cn-juntar-bar" style="margin:0 0 6px"><button type="button" class="btn sm" data-acao="cn-juntar">🔗 ' + esc(tr('Juntar os marcados (é a mesma compra)', 'Merge the ticked ones (same purchase)', 'Juntar los marcados (es la misma compra)')) + '</button></p>' : '') +
-      '<p class="small muted" style="margin:0 0 6px">' + esc(tr('Lido no aparelho, sem internet e sem IA. Só "Lançar à mão" cria lançamento; o resto liga ao que o banco mandou.', 'Read on the device, with no internet and no AI. Only "Enter manually" creates an entry; the rest links to what the bank sent.', 'Leído en el dispositivo, sin internet y sin IA. Solo "Registrar a mano" crea un movimiento; lo demás se vincula a lo que mandó el banco.')) + '</p>' +
+      (gr.casou.length ? '<p class="small muted cn-frase-casou" style="margin:8px 0 0">' + esc(tr('A foto completou o lançamento que veio do banco (oficina, serviço, parcelas, carro). Nada foi duplicado.', 'The photo completed the entry that came from the bank (shop, service, installments, car). Nothing was duplicated.', 'La foto completó el movimiento que vino del banco (taller, servicio, cuotas, coche). No se duplicó nada.')) + '</p>' : '') +
       sec('✅', tr('Já está no banco', 'Already at the bank', 'Ya está en el banco'), gr.casou, function (x, i) {
-        return '<div class="cn-item" data-grupo="casou" data-i="' + i + '" style="padding:6px 0;border-top:1px solid var(--line)">' + jt() + '<b>' + fmt(x.it.valor) + '</b> · ' + esc(rot(x.it)) + '<span class="t-sub">' + esc('= ' + nomeG(x.g)) + '</span>' +
-          '<button type="button" class="linkinho" data-acao="cn-classe" data-k="c' + i + '">' + esc(tr('classificar', 'classify', 'clasificar')) + '</button>' + classificacao('c' + i, x.g, x.it) + '</div>';
+        return '<div class="cn-item" data-grupo="casou" data-i="' + i + '" style="padding:8px 0;border-top:1px solid var(--line)">' + jt() + linhas(x, 'c' + i) +
+          '<p style="margin:6px 0 0"><button type="button" class="btn sm" data-acao="cn-classe" data-k="c' + i + '">' + esc(tr('Classificar', 'Classify', 'Clasificar')) + '</button></p>' + classificacao('c' + i, x.g, x.it) + '</div>';
       }) +
       sec('🟡', tr('Parecido, confirme', 'Similar, please confirm', 'Parecido, confirma'), gr.parecido, function (x, i) {
         return '<div class="cn-item" data-grupo="parecido" data-i="' + i + '" style="padding:6px 0;border-top:1px solid var(--line)">' + jt() + '<b>' + fmt(x.it.valor) + '</b> · ' + esc(rot(x.it)) +
           '<select data-cn="par">' + x.cs.map(function (g) { return '<option value="' + esc(g.id) + '">' + esc(fmt(g.valor) + ' · ' + nomeG(g)) + '</option>'; }).join('') + '<option value="">' + esc(tr('nenhum destes', 'none of these', 'ninguno de estos')) + '</option></select>' +
           '<button type="button" class="btn sm" data-acao="cn-confirmar" data-i="' + i + '">' + esc(tr('É este', 'This one', 'Es este')) + '</button></div>';
       }) +
-      sec('➕', tr('Não veio do banco', 'Not from the bank', 'No vino del banco'), gr.novo, function (x, i) {
-        return '<div class="cn-item" data-grupo="novo" data-i="' + i + '" style="padding:6px 0;border-top:1px solid var(--line)">' + jt() + '<b>' + fmt(x.it.valor) + '</b> · ' + esc(rot(x.it)) + ' ' + opcCartao(x.it) +
-          '<button type="button" class="btn sm" data-acao="cn-amao" data-i="' + i + '">' + esc(tr('Lançar à mão', 'Enter manually', 'Registrar a mano')) + '</button>' +
-          '<button type="button" class="btn sm" data-acao="cn-esperar" data-i="' + i + '">⏳ ' + esc(tr('Esperar o banco', 'Wait for the bank', 'Esperar al banco')) + '</button>' +
-          '<span class="t-sub cn-esperar-dica">' + esc(tr('⏳ Esperar o banco: a compra vem pela fatura; a foto completa a descrição (oficina, serviço, parcelas, carro).', '⏳ Wait for the bank: the purchase comes through the card bill; the photo completes the description (shop, service, installments, car).', '⏳ Esperar al banco: la compra llega por la factura; la foto completa la descripción (taller, servicio, plazos, coche).')) + '</span></div>';
+      (gr.novo.length ? '<p class="small muted cn-frase-novo" style="margin:8px 0 0">' + esc(tr('Quando o banco mandar, a foto se junta sozinha.', 'When the bank sends it, the photo joins by itself.', 'Cuando el banco lo envíe, la foto se une sola.')) + '</p>' : '') +
+      sec('⏳', tr('Não veio do banco ainda', 'Not from the bank yet', 'Aún no vino del banco'), gr.novo, function (x, i) {
+        return '<div class="cn-item" data-grupo="novo" data-i="' + i + '" style="padding:8px 0;border-top:1px solid var(--line)">' + jt() + linhas(x, 'n' + i) +
+          '<div class="t-sub cn-esperar-dica">' + esc(tr('Ao tocar em Pronto, fica ⏳ aguardando o banco.', 'When you tap Done, it waits ⏳ for the bank.', 'Al tocar Listo, queda ⏳ esperando al banco.')) + ' ' + opcCartao(x.it) + '</div>' +
+          '<div class="t-sub" style="margin-top:4px">' + esc(tr('Pagou em dinheiro ou fora do banco?', 'Paid in cash or outside the bank?', '¿Pagaste en efectivo o fuera del banco?')) +
+          ' <button type="button" class="linkinho" data-acao="cn-amao" data-i="' + i + '">' + esc(tr('Lançar à mão', 'Enter manually', 'Registrar a mano')) + '</button></div></div>';
       }) +
       sec('❓', tr('Valor em dúvida', 'Amount unsure', 'Importe dudoso'), gr.duvida, function (x, i) {
         var tomados = {}; gr.casou.forEach(function (y) { tomados[y.g.id] = 1; });
@@ -328,7 +379,7 @@
           (x.it.opcoes || []).map(function (v) { return '<button type="button" class="btn sm" data-acao="cn-valor" data-i="' + i + '" data-v="' + v + '">' + fmt(v) + '</button>'; }).join('') +
           '<input data-cn="valor" inputmode="decimal" placeholder="' + esc(tr('outro valor', 'other amount', 'otro importe')) + '" style="width:7em"><button type="button" class="btn sm" data-acao="cn-valor" data-i="' + i + '">' + esc(tr('Usar', 'Use', 'Usar')) + '</button></div>';
       }) +
-      '<div class="f-actions"><button class="btn primary" data-acao="cn-fechar">' + esc(tr('Pronto', 'Done', 'Listo')) + '</button></div>';
+      '<div class="f-actions cn-rodape"><button class="btn primary" data-acao="cn-fechar">' + esc(tr('Pronto', 'Done', 'Listo')) + '</button></div>';
     $('#genTitle').textContent = tr('Foto de nota ou recibo', 'Receipt or invoice photo', 'Foto de factura o recibo');
     $('#genBody').innerHTML = Verter.html(h);
     delete $('#genBody').dataset.inbox;
@@ -375,6 +426,63 @@
     }).then(function (meta) { if (meta && meta.id) { f.docId = meta.id; CompraParcelada.ligar(f); Store.salvar(); } }).catch(function () { /* sem cofre: fica sem a foto */ });
   }
   function depois() { Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); }
+  /* 1.4.0 (3.117): "⏳ aguardando o banco" de um item que não veio do banco. Parcelado: a ficha espera a parcela 01/N (1.2.0). Senão, uma
+     pendente do print: o cartão escolhido, o do final lido, ou só o final (casa pelo final quando o banco mandar). Sem nada: 'sem'. */
+  function esperarUm(x, sel) {
+    var it = x.it, ct = cartaoDe(sel || '');
+    if (!ct && it.final && window.Cartoes && Cartoes.doFinal) { var c = Cartoes.doFinal(it.final); if (c) ct = c.id; }
+    if (it.parcelas > 1 && window.CompraParcelada) return ficha(it, null, { cartaoId: ct }) ? 'ficha' : 'sem';
+    if (!ct && !it.final) return 'sem';
+    var po = osPadrao(it);
+    pend().push({ id: 'pp_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), doPrint: true, estado: 'pendente', pendente: true, vistoEm: hojeISO(), cartaoId: ct || '', final: it.final || '',
+      valor: it.valor, data: iso(it.data) || hojeISO(), hora: it.hora || '', desc: it.loja || '', grupo: po.grupo || 'OUTROS', sub: po.sub || '', veiculoId: po.veiculoId || undefined, fluxo: 'saida', obs: tr('do canhoto', 'from the receipt', 'del ticket') });
+    return 'pend';
+  }
+  /* 1.4.0: o "Salvar" de um "Classificar" (a classificação vai para o lançamento do banco) */
+  function salvarClasse(c) {
+    var it0 = c.closest('.cn-item'), x = it0 && ultimo && ultimo.grupos[it0.dataset.grupo][Number(it0.dataset.i)]; if (!x || !x.g) return false;
+    var g = x.g, partes = null, box = it0.querySelector('.cn-div:not([hidden]) [data-dvbloco]');
+    if (box) { var l = Divisao.ler(box.dataset.dvbloco, n2(g.valor)); if (l.erro) { toast(l.erro, 'warn'); return false; } partes = l.partes; }
+    var dc = { paraQuem: campo(it0, 'quem'), grupo: campo(it0, 'grupo') || g.grupo, sub: campo(it0, 'sub') || g.sub }; if (dc.sub === '__nova') dc.sub = g.sub;
+    if (campo(it0, 'veiculo')) dc.veiculoId = campo(it0, 'veiculo');
+    aplicar(g, dc, partes, x.it); x.aplicado = true;
+    c.dataset.sujo = ''; c.hidden = true; var bt = c.querySelector('.cn-salvar'); if (bt) bt.textContent = tr('Fechar', 'Close', 'Cerrar');
+    depois(); return true;
+  }
+  /* 1.4.0: o fim do "Pronto" */
+  function terminar() {
+    if (!ultimo) { fechar('genModal'); return; }
+    var gr = ultimo.grupos, nc = 0, ne = 0, sem = 0;
+    gr.casou.forEach(function (x) { if (!x.aplicado) { aplicar(x.g, {}, null, x.it); x.aplicado = true; } nc++; });
+    gr.novo.slice().forEach(function (x, i) {
+      var el = document.querySelector('#genBody .cn-item[data-grupo="novo"][data-i="' + i + '"]');
+      var r = esperarUm(x, el ? campo(el, 'cartao') : ''); if (r === 'sem') sem++; else ne++;
+    });
+    depois(); ultimo = null; fechar('genModal');
+    var t = [];
+    if (nc) t.push('✓ ' + tr('Pronto: já está no lançamento do banco', 'Done: it is on the bank entry', 'Listo: ya está en el movimiento del banco') + (nc > 1 ? ' (' + nc + ')' : ''));
+    if (ne) t.push('⏳ ' + ne + tr(' aguardando o banco (se junta sozinho)', ' waiting for the bank (joins by itself)', ' esperando al banco (se une solo)'));
+    if (sem) t.push(sem + tr(' sem cartão nem final: lance à mão se foi em dinheiro', ' with no card or last digits: enter manually if paid in cash', ' sin tarjeta ni final: regístralo a mano si fue en efectivo'));
+    if (t.length) toast(t.join(' · '));
+  }
+  /* 1.4.0: mudou algo no "Classificar" → o botão vira "Salvar"; grupo novo → as categorias dele; "+ Nova categoria…" → pergunta e cria */
+  document.addEventListener('change', function (ev) {
+    var c = ev.target && ev.target.closest && ev.target.closest('#genBody .cn-class'); if (!c) return;
+    var t = ev.target;
+    if (t.dataset.cn === 'grupo') { var s2 = c.querySelector('[data-cn="sub"]'); if (s2) s2.innerHTML = opcoesSub(t.value, ''); }
+    if (t.dataset.cn === 'sub' && t.value === '__nova') {
+      var grp = (c.querySelector('[data-cn="grupo"]') || {}).value || 'OUTROS', nome = window.prompt(tr('Nome da nova categoria em ', 'Name of the new category in ', 'Nombre de la nueva categoría en ') + ((GRUPOS[grp] || {}).nome || grp) + ':', '');
+      nome = String(nome || '').trim().slice(0, 60);
+      if (!nome || !window.confirm(tr('Criar a categoria "', 'Create the category "', '¿Crear la categoría "') + nome + tr('" em ', '" in ', '" en ') + ((GRUPOS[grp] || {}).nome || grp) + '?')) { t.value = ''; return; }
+      ST.categorias = ST.categorias || {}; ST.categorias[grp] = ST.categorias[grp] || []; if (ST.categorias[grp].indexOf(nome) < 0) ST.categorias[grp].push(nome);
+      t.innerHTML = opcoesSub(grp, nome); Store.salvar();
+    }
+    c.dataset.sujo = '1'; var bt = c.querySelector('.cn-salvar'); if (bt) bt.textContent = tr('Salvar', 'Save', 'Guardar');
+  });
+  document.addEventListener('input', function (ev) {
+    var c = ev.target && ev.target.closest && ev.target.closest('#genBody .cn-class'); if (!c) return;   /* também o ✂️ Dividir */
+    c.dataset.sujo = '1'; var bt = c.querySelector('.cn-salvar'); if (bt) bt.textContent = tr('Salvar', 'Save', 'Guardar');
+  });
   /* 1.3.2 (3.105): "enc:<chave>" = um cartão que o robô já trouxe e ainda não está cadastrado: cadastra agora (a conta e os finais dele) */
   function cartaoDe(v) {
     if (!/^enc:/.test(v || '') || !window.Cartoes || typeof Banco === 'undefined') return v;
@@ -386,13 +494,33 @@
   }
 
   MoneyModulos.registrar({
-    id: 'canhotos', versao: '1.3.3',
+    id: 'canhotos', versao: '1.4.0',
     pontos: {
       'lancamentos.topo': function () { return '<div class="row" style="margin:0 0 8px;gap:6px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sm" data-acao="cn-abrir">📷 ' + esc(tr('Foto de nota ou recibo', 'Receipt or invoice photo', 'Foto de factura o recibo')) + '</button><span class="small muted">' + esc(tr('OS da oficina, nota, recibo ou canhoto: o app lê e liga ao banco', 'Repair shop work order, invoice, receipt or card slip: the app reads it and links it to the bank', 'Orden del taller, factura, recibo o ticket: la app lo lee y lo vincula al banco')) + '</span></div>'; }
     },
     acoes: {
       'cn-abrir': function () { escolher(); },
-      'cn-fechar': function () { ultimo = null; fechar('genModal'); },
+      /* 1.4.0 (3.117): "Pronto" é o caminho padrão. O que casou fica completado no lançamento do banco; o que não veio fica ⏳ aguardando o
+         banco (se junta sozinho quando ele mandar). Com mudança não salva num "Classificar": pergunta "Salvar as mudanças?" */
+      'cn-fechar': function () {
+        if (document.querySelector('#genBody .cn-class[data-sujo="1"]')) {
+          var rod = document.querySelector('#genBody .cn-rodape'); if (!rod) return;
+          rod.innerHTML = '<span class="small" style="margin-right:auto">' + esc(tr('Salvar as mudanças?', 'Save the changes?', '¿Guardar los cambios?')) + '</span>' +
+            '<button class="btn" data-acao="cn-descartar">' + esc(tr('Descartar', 'Discard', 'Descartar')) + '</button><button class="btn primary" data-acao="cn-salvar-tudo">' + esc(tr('Salvar', 'Save', 'Guardar')) + '</button>';
+          return;
+        }
+        terminar();
+      },
+      'cn-salvar-tudo': function () { [].slice.call(document.querySelectorAll('#genBody .cn-class[data-sujo="1"]')).forEach(function (c) { salvarClasse(c); }); terminar(); },
+      'cn-descartar': function () { terminar(); },
+      /* 1.4.0: o carro da OS que não está no cadastro: cadastra com 1 toque (o nome pode ser mudado) */
+      'cn-carro': function (el) {
+        var r = item(el); if (!window.Veiculos || !r.x || !r.x.it.os) return;
+        var sug = bonito(r.x.it.os.veiculo).split(' ').slice(0, 2).join(' ');
+        var nome = window.prompt(tr('Nome do carro (como você chama):', 'Car name (what you call it):', 'Nombre del coche (como lo llamas):'), sug); if (!nome || !nome.trim()) return;
+        var v = Veiculos.salvar(nome.trim()); if (!v) return;
+        r.x.it.veiculoId = v.id || v; depois(); mostrar(); toast('🚗 ' + tr('Carro cadastrado: ', 'Car added: ', 'Coche registrado: ') + nome.trim());
+      },
       /* 1.3.2 (3.105): "🔗 Juntar (é a mesma compra)": os marcados viram um item só (a regra do automático escolhe o que fica) */
       'cn-juntar': function () {
         var its = [].slice.call(document.querySelectorAll('#genBody .cn-jt:checked')).map(function (e) { return item(e).x.it; });
@@ -413,16 +541,14 @@
         box.hidden = false; Divisao.somarTodos();
       },
       'cn-aplicar': function (el) {
-        var r = item(el), g = r.x.g, partes = null, box = r.c.querySelector('.cn-div:not([hidden]) [data-dvbloco]');
-        if (box) { var l = Divisao.ler(box.dataset.dvbloco, n2(g.valor)); if (l.erro) return toast(l.erro, 'warn'); partes = l.partes; }
-        var dc = { paraQuem: campo(r.c, 'quem'), grupo: campo(r.c, 'grupo') || g.grupo, sub: campo(r.c, 'sub') || g.sub }; if (campo(r.c, 'veiculo')) dc.veiculoId = campo(r.c, 'veiculo');
-        aplicar(g, dc, partes, r.x.it);
-        depois(); r.c.querySelector('.cn-class').hidden = true; toast(tr('Classificado no lançamento do banco.', 'Classified on the bank entry.', 'Clasificado en el movimiento del banco.'));
+        var c = el.closest('.cn-class');
+        if (!c || c.dataset.sujo !== '1') { if (c) c.hidden = true; return; }   /* 1.4.0: sem mudança, o botão é "Fechar" */
+        if (salvarClasse(c)) toast(tr('Salvo no lançamento do banco.', 'Saved on the bank entry.', 'Guardado en el movimiento del banco.'));
       },
       'cn-confirmar': function (el) {
         var r = item(el), id = campo(r.c, 'par'), g = id && alvo(id);
         var gr = ultimo.grupos; gr.parecido.splice(gr.parecido.indexOf(r.x), 1);
-        if (g) { aplicar(g, {}, null, r.x.it); gr.casou.push({ it: r.x.it, g: g }); depois(); } else gr.novo.push({ it: r.x.it });
+        if (g) { aplicar(g, {}, null, r.x.it); gr.casou.push({ it: r.x.it, g: g, aplicado: true }); depois(); } else gr.novo.push({ it: r.x.it });
         mostrar();
       },
       'cn-valor': function (el) {
@@ -438,7 +564,7 @@
         var r = item(el), g = alvo(el.dataset.g); if (!g) return;
         var gr = ultimo.grupos, it = Object.assign({}, r.x.it, { valor: n2(g.valor), confianca: Object.assign({}, r.x.it.confianca, { valor: 'conferido' }) });
         gr.duvida.splice(gr.duvida.indexOf(r.x), 1);
-        aplicar(g, {}, null, it); gr.casou.push({ it: it, g: g }); depois(); mostrar();
+        aplicar(g, {}, null, it); gr.casou.push({ it: it, g: g, aplicado: true }); depois(); mostrar();
       },
       'cn-amao': function (el) {
         var r = item(el), it = r.x.it, d = iso(it.data) || hojeISO();
@@ -446,18 +572,7 @@
         Gasto.add({ data: d, valor: it.valor, desc: po.desc || it.loja || tr('Compra (canhoto)', 'Purchase (receipt)', 'Compra (ticket)'), grupo: po.grupo || 'OUTROS', sub: po.sub || '', veiculoId: po.veiculoId || undefined, fluxo: 'saida', cartaoId: cartaoDe(campo(r.c, 'cartao')) || undefined, hora: it.hora || '', origem: 'canhoto', forma: tr('manual (canhoto)', 'manual (receipt)', 'manual (ticket)'), editadoPessoa: true });
         ultimo.grupos.novo.splice(ultimo.grupos.novo.indexOf(r.x), 1); depois(); mostrar();
       },
-      'cn-esperar': function (el) {
-        var r = item(el), it = r.x.it, ct = cartaoDe(campo(r.c, 'cartao'));
-        if (it.parcelas > 1 && window.CompraParcelada) {   /* 1.2.0 (3.99): parcelado: a ficha espera a parcela 01/N do banco */
-          var f = ficha(it, null, { cartaoId: ct }); if (!f) return;
-          ultimo.grupos.novo.splice(ultimo.grupos.novo.indexOf(r.x), 1); depois(); mostrar();
-          return toast('⏳ ' + tr('Aguardando o banco: liga sozinho quando a parcela 01/', 'Waiting for the bank: links by itself when installment 01/', 'Esperando al banco: se vincula sola cuando aparezca la cuota 01/') + it.parcelas + tr(' aparecer.', ' shows up.', '.'));
-        }
-        if (!ct) return toast(tr('Escolha o cartão para esperar o banco.', 'Pick the card to wait for the bank.', 'Elige la tarjeta para esperar al banco.'), 'warn');
-        pend().push({ id: 'pp_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), doPrint: true, estado: 'pendente', pendente: true, vistoEm: hojeISO(), cartaoId: ct, final: it.final || '',
-          valor: it.valor, data: iso(it.data) || hojeISO(), hora: it.hora || '', desc: it.loja || '', grupo: 'OUTROS', sub: '', fluxo: 'saida', obs: tr('do canhoto', 'from the receipt', 'del ticket') });
-        ultimo.grupos.novo.splice(ultimo.grupos.novo.indexOf(r.x), 1); depois(); mostrar();
-      }
+      'cn-esperar': function (el) { var r = item(el); if (esperarUm(r.x, campo(r.c, 'cartao')) === 'sem') return toast(tr('Escolha o cartão para esperar o banco.', 'Pick the card to wait for the bank.', 'Elige la tarjeta para esperar al banco.'), 'warn'); ultimo.grupos.novo.splice(ultimo.grupos.novo.indexOf(r.x), 1); depois(); mostrar(); }
     }
   });
   API.processar = processar; API.daPapel = daPapel; API.juntarOS = juntarOS;

@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.116 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.117 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,11 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.117 — rascunho, revisar */
+  'Foto de nota ou recibo mais simples':'Foto de factura o recibo más sencilla',
+  '📷 Na "Foto de nota ou recibo", cada item aparece em linhas fáceis de ler: a loja e o valor (com as parcelas), a data e a hora, a categoria com o apelido do carro e o que está no banco ("parcela 1 de 5"). Se o carro da nota não está cadastrado, "Cadastrar este carro" resolve com um toque.':'📷 En "Foto de factura o recibo", cada elemento aparece en líneas fáciles de leer: la tienda y el importe (con las cuotas), la fecha y la hora, la categoría con el apodo del coche y lo que está en el banco ("cuota 1 de 5"). Si el coche de la factura no está registrado, "Registrar este coche" lo resuelve con un toque.',
+  '✅ "Pronto" resolve o caso comum sozinho: o que já está no banco fica completado e o que ainda não veio fica ⏳ aguardando o banco e se junta sozinho quando ele mandar. "Lançar à mão" ficou só para pagamento em dinheiro ou fora do banco.':'✅ "Listo" resuelve solo el caso común: lo que ya está en el banco queda completado y lo que aún no llegó queda ⏳ esperando al banco y se une solo cuando llegue. "Registrar a mano" queda solo para pagos en efectivo o fuera del banco.',
+  '🏷️ Em "Classificar", a categoria é escolhida na lista do grupo, com "+ Nova categoria…" (pede confirmação). Sem mudança o botão é "Fechar"; com mudança, "Salvar", e o "Pronto" pergunta se quer salvar.':'🏷️ En "Clasificar", la categoría se elige de la lista del grupo, con "+ Nueva categoría…" (pide confirmación). Sin cambios el botón es "Cerrar"; con cambios, "Guardar", y "Listo" pregunta si quieres guardar.',
   /* 3.116 — rascunho, revisar */
   'Aviso de saldo mais claro e o 📥 com valor e data em tudo':'Aviso de saldo más claro y el 📥 con importe y fecha en todo',
   '📉 O aviso de conta negativa diz o primeiro dia negativo e o pior dia, quanto resgatar (cobre o pior dia + 5% de folga) e, em "ver por quê", as maiores saídas até lá. A conta aparece com agência e número inteiros para quem é dono dela; na visão da casa, só o final. Tocar no nome da pessoa abre Configurações › Pessoas.':'📉 El aviso de cuenta en negativo indica el primer día en negativo y el peor día, cuánto rescatar (cubre el peor día + 5 % de margen) y, en "ver por qué", las mayores salidas hasta entonces. La cuenta aparece con sucursal y número completos para su titular; en la vista de la casa, solo los últimos dígitos. Tocar el nombre de la persona abre Ajustes › Personas.',

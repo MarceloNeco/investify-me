@@ -71,7 +71,13 @@ const IT = (papel, valor, extra) => Object.assign({ arquivo: 'foto.jpg', papel, 
     await p.evaluate((x) => { Canhotos._ler = async () => x; return Canhotos.processar([new File([new Uint8Array([1])], 'f.png', { type: 'image/png' })]); },
       [IT(1, 120.51, { loja: 'AUTO POSTO EXEMPLO', final: '1234', hora: '14:41' }), IT(8, 236, { data: '16/11/2026', loja: 'LOJABRILHO' }), IT(5, 33.3, { data: '13/11/2026', final: '1234' }), IT(9, 12, { data: '13/11/2026', final: '9876' }), IT(6, null, { opcoes: [80] , data: '12/11/2026'})]);
     await p.click('#genBody .cn-item[data-grupo="casou"][data-i="0"] [data-acao="cn-classe"]');
-    await p.evaluate(() => { const c = document.querySelector('#genBody .cn-item[data-grupo="casou"][data-i="0"]'); c.querySelector('[data-cn="grupo"]').value = 'VEICULO'; c.querySelector('[data-cn="sub"]').value = 'Combustível'; c.querySelector('[data-cn="quem"]').value = 'Bia'; });
+    /* 3.117: a categoria é escolhida na lista do grupo (as do formulário do lançamento); mudar = o botão vira "Salvar" */
+    await p.evaluate(() => { ST.categorias = ST.categorias || {}; ST.categorias.VEICULO = (ST.categorias.VEICULO || []).concat(['Combustível']);
+      const c = document.querySelector('#genBody .cn-item[data-grupo="casou"][data-i="0"]'), ev = (e, t) => e.dispatchEvent(new Event(t || 'change', { bubbles: true }));
+      const gsel = c.querySelector('[data-cn="grupo"]'); gsel.value = 'VEICULO'; ev(gsel);
+      const ssel = c.querySelector('[data-cn="sub"]'); ssel.value = 'Combustível'; ev(ssel);
+      const q = c.querySelector('[data-cn="quem"]'); q.value = 'Bia'; ev(q, 'input'); });
+    ok(await p.evaluate(() => { const c = document.querySelector('#genBody .cn-item[data-grupo="casou"][data-i="0"]'); return c.querySelector('[data-cn="sub"]').tagName === 'SELECT' && /Salvar/.test(c.querySelector('.cn-salvar').textContent); }), '3.117: a categoria é um seletor (não texto solto) e, com mudança, o botão do formulário vira "Salvar"');
     await p.click('#genBody .cn-item[data-grupo="casou"][data-i="0"] [data-acao="cn-aplicar"]'); await p.waitForTimeout(100);
     ok(await p.evaluate(() => { const x = ST.gastos.find((y) => y.id === 'rb_g1'); return x.grupo === 'VEICULO' && x.sub === 'Combustível' && x.paraQuem === 'Bia' && /conferido com o canhoto/.test(x.obs); }), 'a classificação foi para o lançamento do banco (o mesmo id), com "conferido com o canhoto"');
     ok(await p.evaluate(() => ST.gastos.find((y) => y.id === 'rb_g1').hora === '14:41'), '3.98: a hora do canhoto (14:41) vai para o lançamento do banco que não tinha hora');
@@ -87,13 +93,16 @@ const IT = (papel, valor, extra) => Object.assign({ arquivo: 'foto.jpg', papel, 
     await p.evaluate(() => { const c = document.querySelector('#genBody .cn-item[data-grupo="novo"][data-i="0"]'); c.querySelector('[data-cn="cartao"]').value = 'c1'; });
     await p.click('#genBody .cn-item[data-grupo="novo"][data-i="0"] [data-acao="cn-amao"]'); await p.waitForTimeout(100);
     await p.evaluate(() => { const c = document.querySelector('#genBody .cn-item[data-grupo="novo"][data-i="0"]'); c.querySelector('[data-cn="cartao"]').value = 'c2'; });
-    await p.click('#genBody .cn-item[data-grupo="novo"][data-i="0"] [data-acao="cn-esperar"]'); await p.waitForTimeout(100);
     const r3 = await p.evaluate(() => ({ novos: ST.gastos.filter((x) => x.origem === 'canhoto').map((x) => x.valor + '|' + x.cartaoId), esperar: PrintColar.pendentes().map((x) => x.valor + '|' + x.cartaoId) }));
-    ok(r3.novos.join() === '33.3|c1' && r3.esperar.join() === '12|c2', '"Lançar à mão" cria um lançamento (33,30, cartão final 1234); "Esperar o banco" vira "⏳ aguardando o banco" (12,00)');
+    ok(r3.novos.join() === '33.3|c1' && r3.esperar.join() === '', '"Lançar à mão" (só para dinheiro ou fora do banco) cria um lançamento (33,30, cartão final 1234); o outro ainda não espera nada antes do "Pronto"');
     await p.click('#genBody .cn-item[data-grupo="duvida"][data-i="0"] [data-acao="cn-valor"][data-v="80"]'); await p.waitForTimeout(100);
     ok(await p.evaluate(() => /Parecido, confirme/.test(document.getElementById('genBody').textContent) && /FARMACIA FICTICIA/.test(document.getElementById('genBody').textContent)), '❓ escolhendo 80,00 entre as opções: vai para 🟡 com a farmácia de R$ 80 para confirmar');
     await p.click('#genBody .cn-item[data-grupo="parecido"] [data-acao="cn-confirmar"]'); await p.waitForTimeout(100);
     ok(await p.evaluate((n) => /conferido com o canhoto/.test(ST.gastos.find((x) => x.id === 'rb_g4').obs || '') && ST.gastos.length === n + 3, n0), '"É este": liga ao lançamento do banco; só o "Lançar à mão", o postado do robô e a 2ª parte da divisão entraram — nada duplicado');
+    /* 3.117: "Pronto" = o que não veio do banco fica ⏳ aguardando o banco (com o cartão escolhido), sem ninguém escolher nada */
+    await p.click('#genBody [data-acao="cn-fechar"]'); await p.waitForTimeout(150);
+    const r4 = await p.evaluate(() => ({ esperar: PrintColar.pendentes().map((x) => x.valor + '|' + x.cartaoId).join(), aberto: !document.getElementById('genModal').classList.contains('hidden') }));
+    ok(r4.esperar === '12|c2' && !r4.aberto, '"Pronto": o que não veio do banco vira "⏳ aguardando o banco" (12,00, cartão c2) e a janela fecha: ' + r4.esperar);
     console.log('4) 3.96: valor incerto (papel amassado: lido 512,87, o certo era 512,78)');
     await p.evaluate(() => fechar('genModal'));
     const inc = await p.evaluate((x) => { const r = Canhotos.classificar(x); return { casou: r.casou.length, parecido: r.parecido.length, duvida: r.duvida.map((y) => y.it.papel + ':' + y.it.opcoes.join('/') + '>' + y.perto.map((g) => g.id).join('+')) }; },

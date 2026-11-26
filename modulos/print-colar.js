@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/print-colar.js — "📋 Colar print": notificação do banco vira lançamento (3.87)        1.3.1 · 24/Nov/2026
+   modulos/print-colar.js — "📋 Colar print": notificação do banco vira lançamento (3.87)        1.3.2 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 14/Nov/2026; sem IA)
      · Entradas: colar da área de transferência (Ctrl+V no computador; no celular o botão "Colar", com
@@ -315,6 +315,8 @@
       if (g.cartaoId) return bancoCartao(g.cartaoId) === b;
       return N([g.conta, g.contaCartao, g.cartaoNome].join(' ')).split(' ').indexOf(b) >= 0;
     }
+    /* 1.3.2 (3.117): a foto do canhoto sem cartão escolhido, só com o final lido: o mesmo final no lançamento do banco */
+    if (!p.conta && p.final) return (!!g.finalCartao && g.finalCartao === p.final) || (!!g.cartaoId && !!window.Cartoes && !!Cartoes.doFinal && (Cartoes.doFinal(p.final) || {}).id === g.cartaoId);
     var a = N(p.conta).split(' ')[0]; return !!a && !g.cartaoId && N(g.conta).split(' ')[0] === a;
   }
   /* 1.1.0 (3.90): o robô manda a compra primeiro como PENDENTE (ST.cartao_pendentes) e dias depois como postada: o print casa
@@ -393,7 +395,7 @@
   };
 
   MoneyModulos.registrar({
-    id: 'print-colar', versao: '1.3.1',
+    id: 'print-colar', versao: '1.3.2',
     pontos: {
       'lancamentos.topo': function () {
         if (conciliar()) Store.salvar();
