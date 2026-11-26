@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/debito-nao-caiu.js — O DÉBITO AUTOMÁTICO QUE NÃO CAIU (3.100)        1.1.0 · 24/Nov/2026
+   modulos/debito-nao-caiu.js — O DÉBITO AUTOMÁTICO QUE NÃO CAIU (3.100)        1.1.1 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (caso real do dono, 23/Nov/2026: a conta de luz no débito automático do cartão não foi debitada em novembro, o app
    mostrou "paga" e só um e-mail de cobrança avisou; o medo é a multa e o corte)
@@ -157,14 +157,14 @@
     return tr('O débito automático de ', 'The auto-debit of ', 'El débito automático de ') + x.r.nome + ' (' + fmt(x.valor) + tr(', venceu em ', ', due on ', ', venció el ') + I18n.data(x.data) +
       tr(') não apareceu no banco. Pague hoje para evitar multa e corte.', ') did not show up at the bank. Pay today to avoid late fees and a service cut.', ') no apareció en el banco. Paga hoy para evitar recargos y el corte.');
   }
-  /* 3.107: todo item do 📥 com valor e data: o do comprovante do e-mail (ou o da conta fixa) */
+  /* 3.116: todo item do 📥 com valor e data: o do comprovante do e-mail (ou o da conta fixa) */
   function valorData(a) {
     var v = Number(a.x.valor) || (a.r ? Number(a.r.valor) || 0 : 0), d = a.x.vencimento || a.x.data || '';
     var t = [v ? fmt(v) : '', d ? tr('vence ', 'due ', 'vence ') + I18n.data(d) : ''].filter(Boolean).join(' · ');
     return t ? t + ' · ' : '';
   }
   MoneyModulos.registrar({
-    id: 'debito-nao-caiu', versao: '1.1.0',
+    id: 'debito-nao-caiu', versao: '1.1.1',
     pontos: {
       'inbox.grupos': function () {
         if (casa() || typeof Recorrente === 'undefined') return [];

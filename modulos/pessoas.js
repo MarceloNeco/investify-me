@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.4.0 · 24/Nov/2026 (3.107: o nome no aviso do saldo abre a pessoa; o apelido explicado)
+   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.4.0 · 26/Nov/2026 (3.116: o nome no aviso do saldo abre a pessoa; o apelido explicado)
    ---------------------------------------------------------------------
    O QUE FAZ
      Um cadastro só de "quem": Da casa (responsáveis e dependentes), Outras pessoas (pai, amigo, sócio) e
@@ -471,7 +471,7 @@
       'ps-novo': function () { editando = 'novo'; render(); },
       'ps-familia': function () { API.trazerDaFamilia().then(function (n) { salvarERender(n ? n + tr(' pessoa(s) trazida(s) da família.', ' person(s) brought from the family.') : tr('Ninguém novo na família.', 'Nobody new in the family.')); }); },
       'ps-editar': function (el) { editando = el.dataset.id; render(); },
-      /* 3.107: de um aviso (ex.: o saldo previsto), tocar no nome da pessoa abre a ficha dela aqui */
+      /* 3.116: de um aviso (ex.: o saldo previsto), tocar no nome da pessoa abre a ficha dela aqui */
       'ps-abrir': function (el) { editando = el.dataset.id; if (el.closest('#genModal') && typeof fechar === 'function') fechar('genModal'); if (typeof irPara === 'function') irPara('cfg-pessoas'); else render(); setTimeout(function () { var f = document.querySelector('.ps-form'); if (f) f.scrollIntoView({ block: 'start' }); var a = document.getElementById('psApelido'); if (a) a.focus(); }, 80); },
       'ps-cancelar': function () { editando = null; render(); },
       'ps-salvar': function () {

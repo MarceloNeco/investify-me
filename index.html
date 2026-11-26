@@ -683,8 +683,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.115"></script>
-<script src="textos/frases-es.js?v=3.115"></script>
+<script src="textos/frases-en.js?v=3.116"></script>
+<script src="textos/frases-es.js?v=3.116"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7679,7 +7679,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.115"></script>
+<script src="textos/mudancas.js?v=3.116"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -28116,7 +28116,7 @@ function inboxGrupos(){
   if(window.Origem){
     /* 3.87: a loja nova (modulos/loja-nova.js) pergunta "O que é?" no lugar do "A identificar" dela */
     Origem.grupos().filter(x => !(window.LojaNova && LojaNova.trata(x))).forEach(x => add('confirmar', 1, '<li class="inb-item"><div><b>' + esc(x.rotulo) + '</b>' +
-      Origem.detalhe(x) + '</div><span class="inb-acoes">' +   /* 3.107: total, período, último valor, a sugestão e o porquê, a viagem, a lista */
+      Origem.detalhe(x) + '</div><span class="inb-acoes">' +   /* 3.116: total, período, último valor, a sugestão e o porquê, a viagem, a lista */
       (x.status === 'confirmar' ? '<button class="btn sm primary" data-acao="or-confirmar-grupo" data-chave="' + esc(x.chave) + '">✓ ' + esc(pt ? 'Confirmar' : 'Confirm') + '</button>' : '') +
       '<button class="btn sm" data-acao="or-mudar" data-id="' + esc(x.itens[0].id) + '">' + esc(pt ? 'Corrigir' : 'Fix') + '</button></span></li>'));
   }
@@ -28132,7 +28132,7 @@ function inboxGrupos(){
   const vistos = inboxVistos();
   inboxItens().filter(x => x.tipo === 'vencer' || x.tipo === 'entrada').forEach(x => {
     const k = x.tipo + '|' + x.nome + '|' + x.data; if(vistos[k]) return;
-    add('avisos', 1, '<li class="inb-item"><div><b>' + x.ico + ' ' + esc(x.nome) + ' · ' + fmt(x.valor) + '</b><span class="t-sub">' + esc(x.sub) + '</span></div>' +
+    add('avisos', 1, '<li class="inb-item"><div><b>' + x.ico + ' ' + esc(x.nome) + ' · ' + fmt(x.valor) + '</b><span class="t-sub">' + esc((x.data ? I18n.data(x.data) + ' · ' : '') + x.sub) + '</span></div>' +   /* 3.116: sempre com a data */
       '<span class="inb-acoes"><button class="btn sm" data-acao="inb-visto" data-k="' + esc(k) + '">' + esc(pt ? 'ok, entendi' : 'ok, got it') + '</button></span></li>');
   });
   if(window.MoneyModulos) MoneyModulos.itens('inbox.grupos', {}).forEach(g => g && add(g.id, g.n || 0, g.html || ''));
@@ -30140,7 +30140,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/arquivos.js?v=1.1.0"></script>
 <script src="modulos/agendamentos.js?v=1.0.0"></script>
 <script src="modulos/nf-ir.js?v=1.1.0"></script>
-<script src="modulos/profissionais.js?v=1.2.1"></script>
+<script src="modulos/profissionais.js?v=1.2.2"></script>
 <script src="modulos/saude.js?v=1.1.0"></script>
 <script src="modulos/ponte-omnilife.js?v=1.0.0"></script>
 <script src="modulos/patrimonio-iliquido.js?v=1.1.1"></script>
@@ -30153,7 +30153,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/calendario-menu.js?v=1.2.1"></script>
 <script src="modulos/pessoas.js?v=1.4.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
-<script src="modulos/saldo-banco.js?v=2.2.0"></script>
+<script src="modulos/saldo-banco.js?v=2.3.0"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
 <script src="assistone/assistone-visual.js?v=1.1.2"></script>
 <script src="modulos/tour.js?v=1.1.0"></script>
@@ -30170,21 +30170,21 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/orcamento.js?v=1.1.1"></script>
 <script src="modulos/patrimonio-mes.js?v=1.1.0"></script>
 <script src="modulos/dividas.js?v=1.0.0"></script>
-<script src="modulos/seguros.js?v=1.0.1"></script>
+<script src="modulos/seguros.js?v=1.0.2"></script>
 <script src="modulos/mes-a-mes.js?v=1.0.2"></script>
 <script src="modulos/parcelados.js?v=1.0.1"></script>
 <script src="modulos/contas-fixas.js?v=1.0.0"></script>
 <script src="modulos/documentos.js?v=1.1.0"></script>
-<script src="modulos/contas-mes.js?v=1.2.0"></script>
+<script src="modulos/contas-mes.js?v=1.2.1"></script>
 <script src="modulos/planejados.js?v=1.0.0"></script>
 <script src="modulos/saldo-previsto.js?v=1.3.0"></script>
 <script src="modulos/debito-auto.js?v=1.0.1"></script>
 <script src="modulos/cofre-empresa.js?v=1.2.0"></script>
-<script src="modulos/a-receber.js?v=1.0.0"></script>
+<script src="modulos/a-receber.js?v=1.0.1"></script>
 <script src="modulos/pre-autorizacao.js?v=1.0.2"></script>
 <script src="modulos/dividir.js?v=1.0.0"></script>
 <script src="modulos/print-colar.js?v=1.3.1"></script>
-<script src="modulos/loja-nova.js?v=1.0.0"></script>
+<script src="modulos/loja-nova.js?v=1.0.1"></script>
 <script src="modulos/transf-agendada.js?v=1.0.1"></script>
 <script src="modulos/salto-preco.js?v=1.0.0"></script>
 <script src="modulos/recibo-exterior.js?v=1.0.1"></script>
@@ -30197,17 +30197,17 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/assist-hermes.js?v=1.1.1"></script>
 <script src="modulos/abrir-no-chrome.js?v=1.1.0"></script>
 <script src="modulos/toast-fechavel.js?v=1.0.0"></script>
-<script src="modulos/viagem.js?v=1.0.2"></script>
+<script src="modulos/viagem.js?v=1.0.3"></script>
 <script src="modulos/compra-parcelada.js?v=1.1.0"></script>
 <script src="modulos/veiculos.js?v=1.0.2"></script>
 <script src="modulos/google-drive.js?v=1.0.0"></script>
 <script src="modulos/carro-drive.js?v=1.0.2"></script>
-<script src="modulos/debito-nao-caiu.js?v=1.1.0"></script>
-<script src="modulos/material-escolar.js?v=1.0.1"></script>
-<script src="modulos/pj.js?v=1.2.0"></script>
+<script src="modulos/debito-nao-caiu.js?v=1.1.1"></script>
+<script src="modulos/material-escolar.js?v=1.0.2"></script>
+<script src="modulos/pj.js?v=1.2.1"></script>
 <script src="modulos/bs2-extrato.js?v=1.0.1"></script>
 <script src="modulos/pj-gestao.js?v=1.0.1"></script>
 <script src="modulos/pj-oportunidades.js?v=1.0.1"></script>
-<script src="nuvem.js?v=1.16.0"></script>
+<script src="nuvem.js?v=1.16.1"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.2.0 · 24/Nov/2026
+   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.2.1 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · No topo da tela (id b-custos), dois seletores guardados: período "Este mês | Próximos 45 dias" e arrumação
@@ -166,7 +166,7 @@
           if (ja) return;
           out.push({ chave: chave, tipo: tipo, nome: window.Apelido ? Apelido.texto(g0) : (g0.desc || ''), valor: media, dia: c.dia, mes: c.mes || 0,
             grupo: g0.grupo, sub: g0.sub, n: c.itens.length, origem: k, ultimo: n2(ult.valor), quem: ult.quem || '',
-            total: n2(c.itens.reduce(function (s, g) { return s + (Number(g.valor) || 0); }, 0)), de: c.itens.map(function (g) { return g.data; }).sort()[0], ate: ult.data,   /* 3.107 */
+            total: n2(c.itens.reduce(function (s, g) { return s + (Number(g.valor) || 0); }, 0)), de: c.itens.map(function (g) { return g.data; }).sort()[0], ate: ult.data,   /* 3.116 */
             diaMin: Math.min.apply(null, c.itens.map(function (g) { return +g.data.slice(8, 10); })), diaMax: Math.max.apply(null, c.itens.map(function (g) { return +g.data.slice(8, 10); })),
             pj: !casa() && (IMPOSTO.test(textoG(ult)) || !!empresaDe(ult)), empresaId: (empresaDe(ult) || {}).id || '',
             pjTipo: /\bdas\b/i.test(ult.desc || ult.descRobo || '') ? 'das' : /\bdarf\b|receita fed/i.test(ult.desc || ult.descRobo || '') ? 'darf' : '' });
@@ -225,7 +225,7 @@
     return s.map(function (x) {
       var quando = x.tipo === 'anual' ? tr('todo ano em ', 'every year in ') + new Date(2026, x.mes - 1, 15).toLocaleDateString(I18n.locale(), { month: 'long' }) : tr('todo dia ~', 'every month on day ~') + x.dia;
       return '<div class="cfs-item"><p class="small" style="margin:0 0 6px">📌 ' + esc((x.pj ? tr('Parece imposto ou custo da empresa: ', 'Looks like a company tax or cost: ') : tr('Parece conta fixa: ', 'Looks like a fixed bill: ')) + x.nome + ' · ~' + fmt(x.valor) + ' · ' + quando + '.') + '</p>' +
-        (x.de ? '<p class="small muted" style="margin:-4px 0 6px">' + esc(x.n + tr(' pagamentos · ', ' payments · ', ' pagos · ') + fmt(x.total) + tr(' · de ', ' · from ', ' · del ') + dm(x.de) + tr(' a ', ' to ', ' al ') + dm(x.ate) + tr(' · último ', ' · last ', ' · último ') + fmt(x.ultimo)) + '</p>' : '') +   /* 3.107 */
+        (x.de ? '<p class="small muted" style="margin:-4px 0 6px">' + esc(x.n + tr(' pagamentos · ', ' payments · ', ' pagos · ') + fmt(x.total) + tr(' · de ', ' · from ', ' · del ') + dm(x.de) + tr(' a ', ' to ', ' al ') + dm(x.ate) + tr(' · último ', ' · last ', ' · último ') + fmt(x.ultimo)) + '</p>' : '') +   /* 3.116 */
         '<button type="button" class="btn sm primary" data-acao="cfs-revisar" data-chave="' + esc(x.chave) + '">' + esc(tr('Revisar', 'Review')) + '</button> ' +
         '<button type="button" class="btn sm" data-acao="cfs-nao" data-chave="' + esc(x.chave) + '">' + esc(tr('Não acompanhar', 'Do not track')) + '</button></div>';
     }).map(function (h) { return li ? '<li class="inb-item">' + h + '</li>' : h; }).join('');
@@ -329,7 +329,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'contas-mes', versao: '1.2.0',
+    id: 'contas-mes', versao: '1.2.1',
     pontos: {
       'custos.contas': cartao,
       'budget.atencao': cartaoSugestoes,

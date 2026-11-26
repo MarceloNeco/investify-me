@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/viagem.js — VIAGEM POR JANELA DE TEMPO (3.98)        1.0.2 · 24/Nov/2026
+   modulos/viagem.js — VIAGEM POR JANELA DE TEMPO (3.98)        1.0.3 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 22/Nov/2026; sem IA, sem integração)
      · Cadastro "✈️ Viagem" (BudgetONE → ✈️ Viagens): nome, destino(s), início e fim, margem antes/depois (1 dia, editável),
@@ -287,12 +287,12 @@
       var ds = l.map(function (g) { return g.data; }).sort(), d0 = ds[0], d1 = ds[ds.length - 1], chave = cid + '|' + d0.slice(0, 7);
       if ((cfg().viagemSugNao || {})[chave] || lista().some(function (v) { return v.inicio <= d1 && (v.fim || v.inicio) >= d0; })) return;
       if (out.some(function (o) { return o.cidade.indexOf(cid) >= 0 || cid.indexOf(o.cidade) >= 0; })) return;
-      out.push({ chave: chave, cidade: cid, nome: cid.charAt(0) + cid.slice(1).toLowerCase(), de: d0, ate: d1, n: l.length });
+      out.push({ chave: chave, cidade: cid, nome: cid.charAt(0) + cid.slice(1).toLowerCase(), de: d0, ate: d1, n: l.length, total: n2(l.reduce(function (a, g) { return a + Math.abs(Number(g.valor) || 0); }, 0)) });
     });
     /* o combustível fora do normal (previsao.js, "Foi viagem?") também oferece criar a viagem */
     if (window.Previsao && Previsao.suspeitas) Previsao.suspeitas().forEach(function (s) {
       if ((cfg().viagemSugNao || {})['c|' + s.chave] || out.some(function (o) { return o.de <= s.ate && o.ate >= s.de; }) || lista().some(function (v) { return v.inicio <= s.ate && (v.fim || v.inicio) >= s.de; })) return;
-      out.push({ chave: 'c|' + s.chave, cidade: '', nome: '', de: s.de, ate: s.ate, n: (s.ids || []).length, comb: s.chave });
+      out.push({ chave: 'c|' + s.chave, cidade: '', nome: '', de: s.de, ate: s.ate, n: (s.ids || []).length, comb: s.chave, total: n2(s.valor) });
     });
     return out;
   }
@@ -448,7 +448,7 @@
   function depois() { Store.salvar(); if (typeof render === 'function') render(); if (typeof renderInboxN === 'function') renderInboxN(); }
 
   MoneyModulos.registrar({
-    id: 'viagem', versao: '1.0.2', colecoes: [COL],
+    id: 'viagem', versao: '1.0.3', colecoes: [COL],
     pontos: {
       'inbox.grupos': function () {
         if (casa()) return [];
@@ -458,7 +458,7 @@
           n++;
           var q = s.cidade ? tr('Parece que você está viajando (', 'Looks like you are traveling (', 'Parece que estás de viaje (') + s.nome + ', ' + I18n.data(s.de, { semAno: true }).replace(/\/\w+$/, '') + '–' + I18n.data(s.ate, { semAno: true }) + '). ' + tr('Criar a viagem?', 'Create the trip?', '¿Crear el viaje?')
             : tr('Combustível fora do normal (', 'Fuel above normal (', 'Combustible por encima de lo normal (') + I18n.data(s.de, { semAno: true }) + '–' + I18n.data(s.ate, { semAno: true }) + '). ' + tr('Foi viagem? Criar a viagem?', 'Was it a trip? Create the trip?', '¿Fue un viaje? ¿Crear el viaje?');
-          h += '<li class="inb-item vg-detec"><div><b>✈️ ' + esc(q) + '</b><span class="t-sub">' + esc(s.n + tr(' gastos seguidos', ' spendings in a row', ' gastos seguidos')) + '</span></div><span class="inb-acoes">' +
+          h += '<li class="inb-item vg-detec"><div><b>✈️ ' + esc(q) + '</b><span class="t-sub">' + esc(s.n + tr(' gastos seguidos', ' spendings in a row', ' gastos seguidos') + (s.total ? ' · ' + fmt(s.total) : '')) + '</span></div><span class="inb-acoes">' +
             botao('vg-criar', tr('Criar a viagem', 'Create the trip', 'Crear el viaje'), ' data-ch="' + esc(s.chave) + '" data-n="' + esc(s.nome) + '" data-de="' + esc(s.de) + '" data-ate="' + esc(s.ate) + '"', 'primary') +
             botao('vg-sug-nao', tr('Não foi viagem', 'Not a trip', 'No fue un viaje'), ' data-ch="' + esc(s.chave) + '"') + '</span></li>';
         });
@@ -474,8 +474,11 @@
                     : ' <span class="muted">(' + esc(tr('confirme um a um', 'confirm one by one', 'confirma uno a uno')) + ')</span>') + '</li>';
               }).join('') + '</ul></div></li>';
           });
-          var k = sugestoes(v).length; if (!k) return; n++;
-          h += '<li class="inb-item"><div><b>✈️ ' + esc(v.nome + ': ' + k + tr(' gastos para confirmar', ' spendings to confirm', ' gastos por confirmar')) + '</b><span class="t-sub">' + esc(fmtDias(v)) + '</span></div><span class="inb-acoes">' +
+          var sg = sugestoes(v), k = sg.length; if (!k) return; n++;
+          /* 3.116: o total e o período dos gastos sugeridos (não só as datas da viagem) */
+          var ds = sg.map(function (x) { return x.g.data; }).filter(Boolean).sort(), tot = n2(sg.reduce(function (a, x) { return a + Math.abs(Number(x.g.valor) || 0); }, 0));
+          var dd = function (iso) { return iso.slice(8, 10) + '/' + iso.slice(5, 7); };
+          h += '<li class="inb-item"><div><b>✈️ ' + esc(v.nome + ': ' + k + tr(' gastos para confirmar', ' spendings to confirm', ' gastos por confirmar')) + '</b><span class="t-sub">' + esc(fmt(tot) + (ds.length ? tr(' · de ', ' · from ', ' · del ') + dd(ds[0]) + tr(' a ', ' to ', ' al ') + dd(ds[ds.length - 1]) : '') + ' · ' + tr('viagem: ', 'trip: ', 'viaje: ') + fmtDias(v)) + '</span></div><span class="inb-acoes">' +
             botao('vg-abrir', tr('Confirmar', 'Confirm', 'Confirmar'), ' data-v="' + esc(v.id) + '" data-close="genModal"', 'primary') + '</span></li>';
         });
         return n ? [{ id: 'viagem', n: n, html: h }] : [];

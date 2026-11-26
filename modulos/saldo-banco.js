@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.2.0 · 24/Nov/2026 (o número da conta inteiro e a agência)
+   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.3.0 · 26/Nov/2026 (a conta inteira para o dono; o final na visão da casa)
    ---------------------------------------------------------------------
    O QUE FAZ
      O robô manda, na mesma caixa (money_entrada), itens que NUNCA viram lançamento (nuvem.js desvia para cá):
@@ -67,7 +67,7 @@
       r.tipo = tipoDe(it); r.banco = banco; r.conta = String(it.conta || '').trim().slice(0, 80);
       if (contaId) r.contaId = contaId;
       r.final = String(it.final_conta || '').replace(/\D/g, '').slice(-4) || r.final || '';
-      /* 2.2.0 (3.107): o número inteiro como o banco manda (o dono autorizou mostrar; fica no cofre do app) e a agência, se vier */
+      /* 2.2.0 (3.116): o número inteiro como o banco manda (o dono autorizou mostrar; fica no cofre do app) e a agência, se vier */
       var nr = String(it.numero_conta || it.final_conta || '').replace(/[^\dXx-]/g, '').slice(0, 20); if (nr.replace(/\D/g, '').length > 4) r.numero = nr;
       var ag = String(it.agencia || '').replace(/[^\d-]/g, '').slice(0, 10); if (ag) r.agencia = ag;
       r.dono = String(it.dono || '').trim().slice(0, 60); r.moeda = String(it.moeda || 'BRL').slice(0, 3);
@@ -92,10 +92,28 @@
       return true;
     },
     contas: lista,
-    rotulo: function (r) {
+    /* 2.3.0 (3.116): a agência e a conta INTEIRAS, como o banco manda, para o PRÓPRIO dono da conta ("ag. 0001 · conta 00012-3"; no
+       Itaú, BB, Caixa, Bradesco e Santander o dígito vai depois do hífen). Na visão da casa e para outro membro da família, só o final. */
+    inteira: function (r) {
+      if (window.Escopo && Escopo.soCasa && Escopo.soCasa()) return false;
+      var eu = window.MoneyNuvem && MoneyNuvem.escopos && MoneyNuvem.escopos.eu ? MoneyNuvem.escopos.eu() : '';
+      var p = r && r.dono && window.Pessoas && Pessoas.achar ? Pessoas.achar(r.dono) : null;
+      return !(eu && p && p.uid && p.uid !== eu);
+    },
+    numero: function (r, curto) {
+      if (r && r.numero && !curto && API.inteira(r)) {
+        var nr = String(r.numero), so = nr.replace(/\D/g, '');
+        if (nr.indexOf('-') < 0 && so.length > 1 && /ita[uú]|banco do brasil|\bbb\b|caixa|bradesco|santander/i.test(N(r.banco))) nr = so.slice(0, -1) + '-' + so.slice(-1);
+        return (r.agencia ? tr('ag. ', 'branch ', 'suc. ') + r.agencia + ' · ' : '') + tr('conta ', 'account ', 'cuenta ') + nr;
+      }
+      var f = (r && (r.final || String(r.numero || '').replace(/\D/g, '').slice(-4))) || '';
+      return f ? '···' + f : '';
+    },
+    rotulo: function (r, op) {
       var nome = r.tipo === 'poupanca' ? tr('Poupança', 'Savings') : r.tipo === 'conta' ? (/invest/i.test(r.conta) ? r.conta : tr('Conta corrente', 'Checking account')) : r.conta;
       if (r.tipo === 'conta' && r.conta && !/^(conta|conta corrente|corrente|checking|itau|itaú)$/i.test(r.conta) && N(r.conta) !== N(r.banco)) nome = r.conta;
-      return [r.banco, nome].filter(Boolean).join(' · ') + (r.final ? ' ···' + r.final : '');
+      var nr = API.numero(r, op && op.curto);   /* 2.3.0: a conta inteira para o dono; op.curto (a lista compacta) = o final */
+      return [r.banco, nome].filter(Boolean).join(' · ') + (nr ? ' ' + nr : '');
     },
     zerada: function (r) { return Math.abs(r.saldo || 0) < 0.005 && r.hist.every(function (h) { return Math.abs(h.saldo) < 0.005; }) && !API.lancamentos(r).some(function (g) { return g.data >= menos(r.data, 90); }); },
     /* as três seções; nome e final iguais = um item só (o mais novo) */
@@ -199,7 +217,7 @@
 
   MoneyModulos.registrar({
     id: 'saldo-banco',
-    versao: '2.2.0',
+    versao: '2.3.0',
     colecoes: [COL],
     pontos: { 'budget.painel': cartao },
     acoes: {

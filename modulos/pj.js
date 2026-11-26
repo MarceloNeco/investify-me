@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pj.js — FiscalONE: a PJ, por empresa (3.81)        1.2.0 · 14/Nov/2026
+   modulos/pj.js — FiscalONE: a PJ, por empresa (3.81)        1.2.1 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · A base é o Cofre da empresa (modulos/cofre-empresa.js, ST.empresas). Sugestão, sem IA: a fonte pagadora PJ da
@@ -250,7 +250,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'pj', versao: '1.2.0',
+    id: 'pj', versao: '1.2.1',
     pontos: {
       'recorrente.pula': function (c) { return [API.pula(c.r, c.iso)]; },   /* 1.2.0 (3.86) */
       'recorrente.previsto': function (c) { var p = API.previsto(c.r, c.iso); return p ? [p] : []; },
@@ -270,7 +270,7 @@
           var u = API.lancamentos(e).filter(function (g) { return API.categoria(g) === 'contador'; }).sort(function (a, b) { return a.data < b.data ? 1 : -1; })[0];
           var prev = Recorrente.valorEm ? Recorrente.valorEm(r, hoje()) : r.valor, k = 'pjc|' + r.id + '|' + (u && u.id);
           if (!u || vistos[k] || Math.abs(u.valor - prev) <= prev * 0.15) return;
-          n++; html += '<li class="inb-item"><div><b>🧾 ' + esc(tr('O contador mudou: último ', 'The accountant changed: last ') + fmt(u.valor) + tr(' (previsto ', ' (expected ') + fmt(prev) + ').') + '</b><span class="t-sub">' + esc(r.nome) + '</span></div><span class="inb-acoes">' +
+          n++; html += '<li class="inb-item"><div><b>🧾 ' + esc(tr('O contador mudou: último ', 'The accountant changed: last ') + fmt(u.valor) + tr(' (previsto ', ' (expected ') + fmt(prev) + ').') + '</b><span class="t-sub">' + esc(r.nome + (u.data ? tr(' · em ', ' · on ') + I18n.data(u.data) : '')) + '</span></div><span class="inb-acoes">' +   /* 3.116: com a data */
             '<button class="btn sm primary" data-acao="pj-ultimo" data-id="' + esc(r.id) + '" data-v="' + u.valor + '">' + esc(tr('Usar o último valor', 'Use the last amount')) + '</button><button class="btn sm" data-acao="inb-visto" data-k="' + esc(k) + '">' + esc(tr('Manter', 'Keep')) + '</button></span></li>';
         });
         API.avisosAnuais().forEach(function (a) { if (vistos[a.k]) return; n++; html += '<li class="inb-item"><div><b>📅 ' + esc(a.txt) + '</b></div><span class="inb-acoes"><button class="btn sm" data-acao="inb-visto" data-k="' + esc(a.k) + '">' + esc(tr('ok, entendi', 'ok, got it')) + '</button></span></li>'; });

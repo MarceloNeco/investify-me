@@ -1,6 +1,6 @@
 /* =====================================================================
-   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.3.0 · 24/Nov/2026
-   1.3.0 (3.107, dono: "que conta é essa?"): o aviso diz o primeiro dia negativo E o pior dia ("fica negativa em 30/11 (−R$ 968,83) e chega a
+   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.3.0 · 26/Nov/2026
+   1.3.0 (3.116, dono: "que conta é essa?"): o aviso diz o primeiro dia negativo E o pior dia ("fica negativa em 30/11 (−R$ 968,83) e chega a
    −R$ 1.9xx em 05/12. Resgate R$ 2.100 até 29/11 (cobre o pior dia + 5% de folga)") e "ver por quê" lista as maiores saídas até o pior dia;
    a conta aparece inteira como o banco manda (agência e conta, dígito com hífen nos bancos conhecidos); o nome da pessoa abre a ficha dela.
    ---------------------------------------------------------------------
@@ -124,15 +124,8 @@
       if (!p && /^[a-z]/.test(n)) n = n.charAt(0).toUpperCase() + n.slice(1);
       return { nome: n, id: p ? p.id : '', fem: p && p.genero ? p.genero === 'f' : /a$/i.test(N(n).split(' ')[0] || '') };
     },
-    /* 1.3.0 (3.107): a agência e a conta INTEIRAS como o banco manda ("ag. 1234 · conta 63129-2"); sem o número inteiro, o final */
-    conta: function (c) {
-      if (c.numero) {
-        var nr = String(c.numero), so = nr.replace(/\D/g, '');
-        if (nr.indexOf('-') < 0 && so.length > 1 && /ita[uú]|banco do brasil|\bbb\b|caixa|bradesco|santander/i.test(N(c.banco))) nr = so.slice(0, -1) + '-' + so.slice(-1);
-        return (c.agencia ? tr('ag. ', 'branch ', 'suc. ') + c.agencia + ' · ' : '') + tr('conta ', 'account ', 'cuenta ') + nr;
-      }
-      return c.final ? '···' + c.final : '';
-    },
+    /* 1.3.0 (3.116): a agência e a conta INTEIRAS como o banco manda ("ag. 1234 · conta 63129-2"); sem o número inteiro, o final */
+    conta: function (c) { return window.SaldoBanco && SaldoBanco.numero ? SaldoBanco.numero(c) : (c.final ? '···' + c.final : ''); },   /* 3.116: SaldoBanco.numero (inteira só para o dono) */
     nome: function (c) {
       var d = API.dono(c), b = String(c.banco || '').trim(), ct = String(c.conta || '').trim(), num = API.conta(c);
       var extra = d.nome ? (d.fem ? tr(' da ', ' — ') : tr(' do ', ' — ')) + d.nome : (ct && N(ct).indexOf(N(b)) < 0 && N(b).indexOf(N(ct)) < 0 ? ' ' + ct : '');
@@ -169,7 +162,7 @@
       var piorX = l.reduce(function (m, x) { return x.saldo < m.saldo ? x : m; }, { saldo: 0 }), pior = piorX.saldo, y = API.resgate(pior), de = API.deOnde(y);
       return { dia: neg.data, valor: neg.saldo, pior: pior, piorDia: piorX.data, resgate: y, ate: mais(neg.data, -1), pedirAte: mais(neg.data, -1 - (de ? de.dias : 0)), de: de };
     },
-    /* 1.3.0 (3.107): "ver por quê" — as maiores saídas até o pior dia (o resgate se explica sozinho) */
+    /* 1.3.0 (3.116): "ver por quê" — as maiores saídas até o pior dia (o resgate se explica sozinho) */
     porque: function (c, a) {
       return API.eventos(c).filter(function (e) { return e.valor < 0 && e.data <= a.piorDia; }).sort(function (x, y) { return x.valor - y.valor || (x.data < y.data ? -1 : 1); }).slice(0, 5);
     }
@@ -187,7 +180,7 @@
       (typeof Cal !== 'undefined' ? Cal.campo('spData' + c.id, mais(hoje(), 1), {}) : '<input id="spData' + esc(c.id) + '" type="date">') +
       '<button class="btn sm primary" data-acao="sp-salvar" data-id="' + esc(c.id) + '">' + esc(tr('Guardar', 'Save')) + '</button></div>';
   }
-  /* 1.3.0 (3.107): HTML. O primeiro dia negativo E o pior dia (o resgate cobre o pior + 5%); o nome da pessoa abre a ficha dela */
+  /* 1.3.0 (3.116): HTML. O primeiro dia negativo E o pior dia (o resgate cobre o pior + 5%); o nome da pessoa abre a ficha dela */
   function frase(c, a) {
     var d = API.dono(c), b = String(c.banco || '').trim() || String(c.conta || '').trim(), num = API.conta(c);
     var quem = d.nome ? (d.fem ? tr(' da ', ' — ') : tr(' do ', ' — ')) + (d.id ? '<button type="button" class="linkinho sp-pessoa" data-acao="ps-abrir" data-id="' + esc(d.id) + '" title="' + esc(tr('Mudar o nome que aparece', 'Change the name shown', 'Cambiar el nombre que aparece')) + '">' + esc(d.nome) + '</button>' : esc(d.nome)) : '';

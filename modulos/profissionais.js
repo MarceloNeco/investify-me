@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/profissionais.js — profissionais conhecidos (N39)        1.2.1 · 13/Nov/2026
+   modulos/profissionais.js — profissionais conhecidos (N39)        1.2.2 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      Reconhece o mesmo médico, dentista, pediatra, escola… no extrato pelo nome, SEM IA:
@@ -115,7 +115,7 @@
         var a = por[c] ? por[c].achado : API.achar(c);
         if (a && a.nota >= SURE) return;                                   /* já conhecido (ou ignorado) */
         var x = por[c] || (por[c] = { chave: c, exemplo: g, n: 0, total: 0, achado: a, vale: false, sugestao: a && a.nota >= TALVEZ && !a.p.ignorar ? a.p : null });
-        x.n++; x.total += g.valor;
+        x.n++; x.total += g.valor; if (!x.de || g.data < x.de) x.de = g.data;   /* 3.116: o período no 📥 */
         /* o nome inteiro conta: basta UM lançamento dele parecer de profissional (ex.: um tem "DRA", outro não) */
         if ((a && a.nota >= TALVEZ) || API.pareceProfissional(g)) x.vale = true;
         if ((g.data || '') > (x.exemplo.data || '')) x.exemplo = g;
@@ -167,7 +167,7 @@
     q.slice(0, 12).forEach(function (x, i) {
       var g = x.exemplo, s = x.sugestao;
       h += '<div class="prof-q" data-i="' + i + '"><div class="t-main">' + esc(g.desc.slice(0, 60)) + '</div>' +
-        '<div class="t-sub">' + x.n + (pt() ? ' lançamento(s) · ' : ' entr(ies) · ') + fmt(x.total) + (s ? ' · ' + (pt() ? 'parece ' : 'looks like ') + '<b>' + esc(s.nome) + '</b>' : '') + '</div>' +
+        '<div class="t-sub">' + x.n + (pt() ? ' lançamento(s) · ' : ' entr(ies) · ') + fmt(x.total) + (x.de ? (pt() ? ' · de ' : ' · from ') + x.de.slice(8, 10) + '/' + x.de.slice(5, 7) + (pt() ? ' a ' : ' to ') + String(x.exemplo.data || '').slice(8, 10) + '/' + String(x.exemplo.data || '').slice(5, 7) : '') + (s ? ' · ' + (pt() ? 'parece ' : 'looks like ') + '<b>' + esc(s.nome) + '</b>' : '') + '</div>' +
         '<div class="grid g2 prof-campos">' +
           '<label class="f"><span class="lb">' + (pt() ? 'É' : 'Is') + '</span><select class="prof-sel">' + opcoes(s) + '</select></label>' +
           '<label class="f"><span class="lb">' + (pt() ? 'Nome' : 'Name') + '</span><input class="prof-nome" value="' + esc(s ? s.nome : API.norm(g.desc).map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ')) + '"></label>' +
@@ -195,7 +195,7 @@
 
   MoneyModulos.registrar({
     id: 'profissionais',
-    versao: '1.2.1',
+    versao: '1.2.2',
     colecoes: [COL],
     /* 1.1.0: uma vez, o nome que o profissional tinha posto no "quem" passa para "Para quem" */
     iniciar: function () {

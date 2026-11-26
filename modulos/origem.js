@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/origem.js — "A confirmar" / "A identificar" e confirmar por ORIGEM (3.65)        1.1.0 · 24/Nov/2026
+   modulos/origem.js — "A confirmar" / "A identificar" e confirmar por ORIGEM (3.65)        1.1.0 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · Selo na coluna Categoria (no lugar do "palpite do robô"): amarelo "A confirmar" (o robô tem sugestão,
@@ -17,7 +17,7 @@
    API (window.Origem)
      chaveDesc(t) · mesma(a, b) · status(g) → 'confirmar' | 'identificar' | ''
      replicar(g, antes) → n · desfazer() → n · grupos() → [{chave, rotulo, itens, grupo, sub}] · confirmarGrupo(chave) → n
-     1.1.0 (3.107): resumo(x) {n, total, de, ate, ultimo, itens} · sugestao(x) "Bancários > Tarifa" · motivo(x) {k: mcc|banco|parecido|robo, txt}
+     1.1.0 (3.116): resumo(x) {n, total, de, ate, ultimo, itens} · sugestao(x) "Bancários > Tarifa" · motivo(x) {k: mcc|banco|parecido|robo, txt}
        · viagem(x) {v, n} | {cidade, nome, de, ate} | null · detalhe(x) → o html do grupo (📥 e tela b-confirmar)
    PONTOS QUE USA
      lancamento.categoria (selo) · lancamentos.topo (aviso) · tela b-confirmar · ações or-*
@@ -120,7 +120,7 @@
         return x;
       }).sort(function (a, b) { return b.itens.length - a.itens.length; });
     },
-    /* 1.1.0 (3.107): o que a pessoa precisa para decidir sem abrir nada: total, quantos, de quando a quando, o último valor;
+    /* 1.1.0 (3.116): o que a pessoa precisa para decidir sem abrir nada: total, quantos, de quando a quando, o último valor;
        a sugestão legível e por que o app sugeriu; se parece de uma viagem; a lista (data, valor, conta/cartão, descrição original) */
     resumo: function (x) {
       var l = x.itens.slice().sort(function (a, b) { return String(a.data || '') < String(b.data || '') ? -1 : 1; }), ult = l[l.length - 1] || {};
@@ -151,9 +151,14 @@
       if (achou) return achou;
       var c = ''; x.itens.some(function (g) { c = Viagem.cidadeDe(g); return !!c; });
       if (!c) return null;
-      var r = API.resumo(x), antes = new Date(Date.parse(r.de + 'T12:00:00Z') - 7 * 864e5).toISOString().slice(0, 10);
-      /* a cidade de casa (3 ou mais gastos de antes com a mesma cidade) não é viagem */
-      if (Gasto.todos().filter(function (g) { return !ids[g.id] && g.data && g.data < antes && Viagem.cidadeDe(g) === c; }).length >= 3) return null;
+      /* o 📥 "Parece que você está viajando" já pergunta por esta cidade, ou a pessoa disse "Não foi viagem": não repete */
+      var mesma = function (o) { return o && (o.indexOf(c) >= 0 || c.indexOf(o) >= 0); };
+      var r = API.resumo(x), perto = function (o) { return o.de && r.ate >= somaD(o.de, -2) && r.de <= somaD(o.ate || o.de, 2); };
+      if ((Viagem.detectar() || []).some(function (o) { return mesma(o.cidade) || perto(o); })) return null;
+      if (Object.keys((ST.config || {}).viagemSugNao || {}).some(function (k) { return mesma(k.split('|')[0]); })) return null;
+      /* a cidade de casa (a mesma regra do viagem.js: 3 ou mais gastos com o mesmo fim de 6 letras ou mais) não é viagem */
+      var fim = function (a, b) { var i = 0; while (i < a.length && i < b.length && a[a.length - 1 - i] === b[b.length - 1 - i]) i++; return i; };
+      if (Gasto.todos().filter(function (g) { if (ids[g.id] || !g.data) return false; var o = Viagem.cidadeDe(g); return o && fim(o, c) >= Math.min(6, c.length); }).length >= 3) return null;
       return { cidade: c, nome: c.charAt(0) + c.slice(1).toLowerCase(), de: r.de, ate: r.ate };
     },
     detalhe: function (x, op) {
@@ -188,6 +193,7 @@
     }
   };
 
+  function somaD(iso, n) { var x = new Date(iso + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
   function avisar(n) {
     var caixa = document.getElementById('toasts'); if (!caixa) return;
     var d = document.createElement('div'); d.className = 'toast or-toast';

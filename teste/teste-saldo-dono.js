@@ -47,7 +47,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     await p.evaluate(() => { SaldoPrevisto._agora = new Date(2026, 10, 14, 16, 0).getTime(); render(); });
     const v2 = await p.evaluate(() => { const el = document.querySelector('#view-b-painel .sp-atencao .sp-dados'); return el ? el.textContent + '|' + el.classList.contains('sp-velho') + '|' + getComputedStyle(el).color : ''; });
     ok(/dados de 13\/11 14:44 · pode estar desatualizado\|true\|rgb/.test(v2), 'passou de 24 h: "pode estar desatualizado" em amarelo: ' + v2);
-    const inb = await p.evaluate(() => (inboxGrupos().find((g) => g.id === 'saldo') || {}).html || '').then((h) => h.replace(/<[^>]+>/g, ''));   /* 3.107: o nome da pessoa virou botão */
+    const inb = await p.evaluate(() => (inboxGrupos().find((g) => g.id === 'saldo') || {}).html || '').then((h) => h.replace(/<[^>]+>/g, ''));   /* 3.116: o nome da pessoa virou botão */
     ok(/Banco Ficticio do Fulano/.test(inb) && /dados de 13\/11 14:44 · pode estar desatualizado/.test(inb) && /Já agendei/.test(inb), 'no 📥 também: o dono, a data dos dados e "Já agendei"');
 
     console.log('2) "Já agendei"');
@@ -70,7 +70,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     const d = await p.evaluate(() => inboxDadosConta(ST.recorrentes.find((r) => r.id === 'luz')));
     ok(d === ' · conta Caixa Imaginaria da Beltrana ···5419 · dados de 12/11 08:05 · pode estar desatualizado', 'a conta atrasada diz a conta (com o dono) e a data dos dados: ' + d);
 
-    console.log('3b) 3.107: o pior dia, "ver por quê", a conta inteira e o nome que abre a pessoa');
+    console.log('3b) 3.116: o pior dia, "ver por quê", a conta inteira e o nome que abre a pessoa');
     const q = await p.evaluate(() => {
       SaldoPrevisto._hoje = '2026-11-14';
       /* conta de banco conhecido, com agência e número inteiros (FICTÍCIOS): o dígito vai depois do hífen */
@@ -90,6 +90,15 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     await p.click('#genModal .sp-pessoa[data-id="p1"] >> nth=0'); await p.waitForTimeout(250);
     const ps = await p.evaluate(() => ({ fechou: document.getElementById('genModal').classList.contains('hidden'), tela: !!document.querySelector('#view-cfg-pessoas:not(.hidden)'), foco: document.activeElement && document.activeElement.id, dica: /aparece no lugar do nome em todo o app \(deixe vazio para usar o nome\)/.test(document.body.textContent) }));
     ok(ps.fechou && ps.tela && ps.foco === 'psApelido' && ps.dica, 'tocar no nome abre a pessoa em Configurações › Pessoas (apelido em foco, com a explicação): ' + JSON.stringify(ps));
+    /* 3.116: a conta inteira só para o PRÓPRIO dono; outro membro (uid diferente) e a visão da casa veem o final */
+    const vis = await p.evaluate(() => {
+      const c = SaldoPrevisto.contas().find((x) => x.numero === '000123'), ps = Pessoas.todas(), f = ps.find((x) => x.id === 'p1');
+      const eu0 = MoneyNuvem.escopos.eu; const r = {};
+      f.uid = 'uid-ficticio-fulano'; MoneyNuvem.escopos.eu = () => 'uid-ficticio-fulano'; r.dono = SaldoBanco.rotulo(c);
+      MoneyNuvem.escopos.eu = () => 'uid-ficticio-outro'; r.outro = SaldoBanco.rotulo(c); r.curto = SaldoBanco.rotulo(c, { curto: true });
+      MoneyNuvem.escopos.eu = eu0; delete f.uid; return r;
+    });
+    ok(/ag\. 0001 · conta 00012-3$/.test(vis.dono) && /···0123$/.test(vis.outro), 'o dono vê "ag. 0001 · conta 00012-3"; outro membro da família vê só "···0123": ' + vis.dono + ' / ' + vis.outro);
     await p.evaluate(() => { ST.recorrentes = ST.recorrentes.filter((r) => !/^it-/.test(r.id)); abrirApp('budget'); irPara('b-painel'); render(); });
 
     console.log('4) visão da casa');

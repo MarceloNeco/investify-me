@@ -1,11 +1,18 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.115 · 26/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.116 · 26/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.116', d:'2026-11-26', t:'Aviso de saldo mais claro e o 📥 com valor e data em tudo', itens:[
+    '📉 O aviso de conta negativa diz o primeiro dia negativo e o pior dia, quanto resgatar (cobre o pior dia + 5% de folga) e, em "ver por quê", as maiores saídas até lá. A conta aparece com agência e número inteiros para quem é dono dela; na visão da casa, só o final. Tocar no nome da pessoa abre Configurações › Pessoas.',
+    '✅ "Confirmar classificação" mostra, em cada grupo, o total, quantos lançamentos, de quando a quando e o último valor, com a lista (data, valor, conta ou cartão e a descrição do banco). A sugestão aparece legível ("Bancários > Tarifa de cartão") com o motivo: o tipo de loja, a categoria do banco, um parecido que você já confirmou ou a descrição.',
+    '✈️ Compra nas datas e na cidade de uma viagem cadastrada: "Parece da viagem X". Sem viagem, a cidade no texto do cartão pergunta "foi viagem?" e cria a viagem com um toque.',
+    '💳 O débito da fatura do cartão que o robô identifica vira "Pagamento de fatura" e não pede mais confirmação; as partes que ele separa da fatura (consórcio, anuidade, seguro) ficam como vieram.',
+    '📥 Todo item do 📥 que fala de dinheiro mostra o valor e a data (ou o total e o período).'
+  ]},
   {v:'3.115', d:'2026-11-26', t:'A versão na tela inicial e a lista de aparelhos mais clara', itens:[
     'Na tela inicial, embaixo dos três apps, a versão do MoneyTRIO e a data, discretas à direita. Um toque abre as Novidades.',
     '"Seus aparelhos" mais clara: separada em "No MoneyTRIO" e "Em outros apps SolverONE"; o aparelho aprovado que nunca terminou de entrar sai com "Tirar da lista"; e, ao entrar num celular de novo, o registro antigo dele (nunca usado ou sumido há mais de 7 dias) é substituído sozinho.',

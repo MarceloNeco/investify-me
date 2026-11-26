@@ -1,5 +1,5 @@
 /* =====================================================================
-   teste/teste-confirmar-detalhe.js — 3.107: "Confirmar classificação" no 📥 mostra o que falta para decidir.
+   teste/teste-confirmar-detalhe.js — 3.116: "Confirmar classificação" no 📥 mostra o que falta para decidir.
    Cada grupo: total, quantos, de DD/MM a DD/MM, o último valor e a lista (data, valor, conta/cartão, descrição original);
    a sugestão legível ("Sugestão: Bancários > Tarifa de cartão") e por quê (tipo de loja, categoria do banco, parecido
    já confirmado, robô pela descrição); a compra nas datas e na cidade de uma viagem cadastrada → "Parece da viagem X";
@@ -73,6 +73,26 @@ const LOCAL = { v: 1, config: { pessoasV: 2 }, posicoes: [], recorrentes: [], ga
     await p.click('#genModal [data-acao="vg-criar"][data-n="Gramado"]'); await p.waitForTimeout(250);
     const f = await p.evaluate(() => ({ fechou: !document.getElementById('genModal').classList.contains('hidden') && /Nova viagem/.test(document.getElementById('genTitle').textContent) && /Gramado/.test([...document.querySelectorAll('#genModal input')].map((i) => i.value).join(' ')) }));
     ok(f.fechou, '"Criar a viagem" abre o cadastro da viagem');
+    console.log('5) 3.116: o débito da fatura do cartão (grupo CARTAO do robô) e as partes que o robô separa');
+    const pc = await p.evaluate(() => {
+      const C = MoneyNuvem._teste.Caixa;
+      const fat = C.converter({ id: 'pf1', tipo: 'despesa', data: '2026-11-08', valor: 900, banco: 'Banco Ficticio', descricao: 'DEB AUTOR SEGURADORA FICTICIA CR', grupo: 'CARTAO', categoria: 'Pagamento da fatura', confianca: 'palpite' });
+      const anu = C.converter({ id: 'pf2', tipo: 'despesa', data: '2026-11-08', valor: 9, banco: 'Banco Ficticio', descricao: 'DEB AUTOR SEGURADORA FICTICIA CR (anuidade cartão)', grupo: 'BANCARIOS', categoria: 'Tarifa Cartao Credito', confianca: 'confirmada' });
+      Gasto.add(fat); Gasto.add(anu);
+      const st = (id) => Origem.status(Gasto.todos().find((g) => g.idRobo === id));
+      return { fat: fat.grupo + '|' + fat.sub + '|' + (fat.confianca || '') + '|' + !!fat.revisar, anu: anu.grupo + '|' + anu.sub + '|' + (anu.confianca || ''), st1: st('pf1'), st2: st('pf2') };
+    });
+    ok(pc.fat === 'OUTROS|Pagamento de fatura||false' && pc.st1 === '', 'grupo CARTAO = "Pagamento de fatura", sem palpite e fora do "Confirmar classificação": ' + pc.fat);
+    ok(pc.anu === 'BANCARIOS|Tarifa Cartao Credito|' && pc.st2 === '', 'a anuidade que o robô separou fica como veio (confirmada, fora do "confirmar"): ' + pc.anu);
+    console.log('6) 3.116: os avisos do 📥 ("vence em 2 dias") também dizem a data');
+    const av = await p.evaluate(() => {
+      const h = hojeISO(), d = new Date(h + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + 2); const dia = d.toISOString().slice(0, 10);
+      ST.recorrentes.push({ id: 'av1', nome: 'Conta Ficticia de Aviso', valor: 77, dia: +dia.slice(8), regra: 'dia', desde: dia, ate: dia, grupo: 'HABITACAO', sub: 'Outros', fluxo: 'saida', estadoPadrao: 'pendente', criadoEm: h });
+      const g = inboxGrupos().find((x) => x.id === 'avisos'); const div = document.createElement('div'); div.innerHTML = (g && g.html) || '';
+      const li = [...div.querySelectorAll('li')].find((x) => /Conta Ficticia de Aviso/.test(x.textContent));
+      return { txt: li ? li.textContent.replace(/\s+/g, ' ') : '', data: I18n.data(dia) };
+    });
+    ok(av.txt.indexOf('R$ 77,00') >= 0 && av.txt.indexOf(av.data) >= 0, 'o aviso tem o valor e a data: ' + av.txt.slice(0, 90));
     ok(p.erros.length === 0, 'sem erro de página' + (p.erros.length ? ': ' + p.erros[0] : ''));
   } catch (e) { falhas++; console.log('  ✗ ERRO: ' + (e && e.stack || e)); }
   await b.close(); srv.close();
