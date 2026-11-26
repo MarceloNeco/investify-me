@@ -33,8 +33,8 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos: [], r
     const pt = await linha('pt');
     ok(pt.txt === 'MoneyTRIO 3.115 · 26/Nov/2026', 'PT: "' + pt.txt + '"');
     ok(pt.depois && pt.alinha === 'right' && pt.op < 1, 'logo embaixo da linha dos dados, alinhada à direita e mais apagada');
-    ok((await linha('en')).txt === 'MoneyTRIO 3.115 · Nov/26/2026', 'EN: a data no formato da plataforma (Nov/24/2026)');
-    ok(/^MoneyTRIO 3\.115 · 24\/nov\/2026$/i.test((await linha('es')).txt), 'ES: "' + (await linha('es')).txt + '"');
+    ok((await linha('en')).txt === 'MoneyTRIO 3.115 · Nov/26/2026', 'EN: a data no formato da plataforma (Nov/26/2026)');
+    ok(/^MoneyTRIO 3\.115 · 26\/nov\/2026$/i.test((await linha('es')).txt), 'ES: "' + (await linha('es')).txt + '"');
     await p.evaluate(() => { I18n.atual = 'pt'; });
     ok(pt.acao === 1, 'é um botão de "ver as novidades"');
     await p.evaluate(() => { const d = document.createElement('div'); d.id = 'tHub2'; d.innerHTML = viewHub(); document.body.appendChild(d); d.querySelector('.hub-versao button').click(); });
