@@ -112,6 +112,7 @@ Lista viva (diretriz "Lista de pendências do app"). Mais nova em cima. Situaç�
 | N104 | **3.119 — Os investimentos do banco na Carteira do InvestifyONE** (dono, pelo chat principal, 26/Nov/2026: "O InvestifyONE está vazio, mas o robô já manda investimentos"). Feito: uma posição por conta_id, atualizada todo dia, sem duplicar; casa com o papel cadastrado à mão; selo "veio do banco"; quadro por banco e produto com liquidez e vencimento. | dono · chat principal | ✅ 3.119 |
 | N105 | **3.120 — Consumo de luz e gás dentro da categoria** (dono, pelo chat principal, item F, 26/Nov/2026). Feito: o consumo no lançamento e na linha da categoria; conta fora do débito automático nunca mostra "não pague". | dono · chat principal | ✅ 3.120 |
 | N106 | **3.121 — Consórcio por dentro** (dono, pelo chat principal, item G). Feito: a cota na parcela e na conta fixa, todos os consórcios com filtro e as parcelas. | dono · chat principal | ✅ 3.121 |
+| N107 | **3.122 — Conferência da fatura do cartão** (dono, pelo chat principal, item H). Feito: a conferência que o robô manda no 📥 e no pagamento da fatura. | dono · chat principal | ✅ 3.122 |
 
 ## Segurança do repositório (06/Nov/2026)
 - Dados pessoais que tinham ido para testes e documentos (nome da filha, escola, saldos e empregadores do FGTS,

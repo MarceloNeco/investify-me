@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.121 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.122 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.122 */
+  'Conferência da fatura do cartão':'Card bill check',
+  '💳 A fatura do cartão que o robô lê mostra a conferência: quantos lançamentos casaram com o banco, o que está só na fatura e só no banco, os encargos (juros, multa, IOF), o limite usado, as próximas faturas e os avisos do robô.':'💳 The card bill the robot reads shows the check: how many entries matched the bank, what is only on the bill or only at the bank, the charges (interest, late fee, IOF), credit used, the next bills and the robot\'s notes.',
   /* 3.121 */
   'Seus consórcios':'Your consortiums',
   '🏠 Tocando na parcela do consórcio (ou na conta fixa dele), você vê a cota: grupo, cota, quantas parcelas pagas, quanto falta, o crédito e a barra do quanto já foi pago. "Ver todos os consórcios" junta todos, com o filtro Auto, Imóvel ou Ambos, e cada cota abre as parcelas.':'🏠 Tapping the consortium installment (or its fixed bill) shows the share: group, share, installments paid, what is left, the credit and a bar of how much is paid. "See all consortiums" puts them together, filtered by Car, Property or Both, and each share opens its installments.',

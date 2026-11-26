@@ -767,6 +767,9 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.122 — Conferência da fatura do cartão.** Novo `modulos/fatura-conferencia.js` 1.0.0 (`FaturaConf`: de/resumo/bloco): a `ficha` da
+  fatura (lançamentos casados, só na fatura, só no banco, encargos, limite, próximas, avisos) na linha do 📥 dos comprovantes e no
+  pagamento (`lancamento.form`). Teste: `teste-fatura-conferencia.js` (novo).
   **3.121 — Seus consórcios.** Novo `modulos/consorcio.js` 1.0.0: cotas pela `ficha.consorcio` (id `consorcio-<grupo>-<cota>`), a cota no
   detalhe da parcela (só com "cara de consórcio") e na conta fixa (`recorrente.linha`), "Ver todos os consórcios" com filtro
   Auto/Imóvel/Ambos (localStorage `moneytrio.consorcio.filtro`) e as parcelas. Teste: `teste-consorcio.js` (novo).

@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.121 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.122 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,9 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.122 — rascunho, revisar */
+  'Conferência da fatura do cartão':'Conciliación de la factura de la tarjeta',
+  '💳 A fatura do cartão que o robô lê mostra a conferência: quantos lançamentos casaram com o banco, o que está só na fatura e só no banco, os encargos (juros, multa, IOF), o limite usado, as próximas faturas e os avisos do robô.':'💳 La factura de la tarjeta que lee el robot muestra la conciliación: cuántos movimientos coincidieron con el banco, lo que está solo en la factura y solo en el banco, los cargos (intereses, multa, IOF), el límite usado, las próximas facturas y los avisos del robot.',
   /* 3.121 — rascunho, revisar */
   'Seus consórcios':'Tus consorcios',
   '🏠 Tocando na parcela do consórcio (ou na conta fixa dele), você vê a cota: grupo, cota, quantas parcelas pagas, quanto falta, o crédito e a barra do quanto já foi pago. "Ver todos os consórcios" junta todos, com o filtro Auto, Imóvel ou Ambos, e cada cota abre as parcelas.':'🏠 Al tocar la cuota del consorcio (o su cuenta fija) ves la participación: grupo, cuota, cuotas pagadas, lo que falta, el crédito y la barra de lo pagado. "Ver todos los consorcios" los junta, con el filtro Auto, Inmueble o Ambos, y cada cuota abre sus pagos.',
