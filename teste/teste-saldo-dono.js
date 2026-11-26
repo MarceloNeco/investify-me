@@ -99,6 +99,11 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
       MoneyNuvem.escopos.eu = eu0; delete f.uid; return r;
     });
     ok(/ag\. 0001 · conta 00012-3$/.test(vis.dono) && /···0123$/.test(vis.outro), 'o dono vê "ag. 0001 · conta 00012-3"; outro membro da família vê só "···0123": ' + vis.dono + ' / ' + vis.outro);
+    const det = await p.evaluate(() => { const g = { id: 'gi1', data: '2026-11-14', valor: 10, grupo: 'PESSOAL', sub: 'Outros', desc: 'LOJA FICTICIA', fluxo: 'saida', conta: 'Itau Ficticio' };
+      return MoneyModulos.html('lancamento.form', { g }).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '); });
+    ok(/🏦 Conta: Itau Ficticio .*ag\. 0001 · conta 00012-3/.test(det), 'o detalhe do lançamento mostra a conta inteira para o dono: ' + (det.match(/🏦 Conta:[^<]{0,70}/) || [''])[0]);
+    const sel = await p.evaluate(() => { const b = Banco.adicionar('341', ''); const h = selectBancoHTML('zzSel', b && b.id); const d = document.createElement('div'); d.innerHTML = h; const o = d.querySelector('option[selected]'); return o ? o.textContent : ''; });
+    ok(/ag\. 0001 · conta 00012-3/.test(sel), 'o seletor "Por qual banco" mostra a conta inteira do dono ao lado do banco: ' + sel);
     await p.evaluate(() => { ST.recorrentes = ST.recorrentes.filter((r) => !/^it-/.test(r.id)); abrirApp('budget'); irPara('b-painel'); render(); });
 
     console.log('4) visão da casa');

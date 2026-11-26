@@ -850,7 +850,8 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   5 maiores saídas até o pior dia. saldo-banco 2.3.0: `receber` guarda `numero_conta`/`agencia`; `SaldoBanco.numero(r, curto)` e
   `inteira(r)` — a conta inteira ("ag. 0001 · conta 00012-3", hífen do dígito no Itaú/BB/Caixa/Bradesco/Santander) só para o PRÓPRIO dono
   (`Pessoas.achar(r.dono).uid` = `MoneyNuvem.escopos.eu()`, ou sem como saber); visão da casa (`Escopo.soCasa`) e outro membro = "···final";
-  `rotulo(r, {curto})` usa isso (Conferência com o banco, aviso do saldo). (2) origem 1.1.0: `resumo/sugestao/motivo/viagem/detalhe(x)` —
+  `rotulo(r, {curto})` usa isso (Conferência com o banco, aviso do saldo); `contaDe(g)` + ponto `lancamento.form` ("🏦 Conta: …" no detalhe
+  do lançamento); `numeroDoBanco(nome)` no seletor "Por qual banco" (`selectBancoHTML`, quando há uma conta só naquele banco). (2) origem 1.1.0: `resumo/sugestao/motivo/viagem/detalhe(x)` —
   cada grupo de "Confirmar classificação" (📥 e tela b-confirmar) mostra total, quantos, "de DD/MM a DD/MM", o último valor, a lista
   (`<details>`: data, valor, conta/cartão, descrição original), "Sugestão: Grupo > Categoria (motivo)" (motivo: `palpiteMcc` → tipo de loja;
   `catPluggy` → categoria do banco; um confirmado com a mesma 1ª palavra → parecido; senão o robô pela descrição), "Parece da viagem X"

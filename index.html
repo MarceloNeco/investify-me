@@ -20908,7 +20908,7 @@ function selectBancoHTML(id, sel){
   const lista = BANCOS_BR.slice().sort((a, b) => (a.cod === '000') - (b.cod === '000') || a.nome.localeCompare(b.nome, 'pt', {sensitivity:'base'}));
   return '<select id="' + id + '"><option value="">—</option>' +
     (meus.length ? '<optgroup label="' + (pt ? 'Meus bancos' : 'My banks') + '">' + meus.map(b =>
-      '<option value="' + b.id + '"' + (sel === b.id ? ' selected' : '') + '>' + esc(Banco.rotulo(b.id)) + '</option>').join('') + '</optgroup>' : '') +
+      '<option value="' + b.id + '"' + (sel === b.id ? ' selected' : '') + '>' + esc(Banco.rotulo(b.id) + (window.SaldoBanco && SaldoBanco.numeroDoBanco ? (n => n ? ' · ' + n : '')(SaldoBanco.numeroDoBanco(b.nome)) : '')) + '</option>').join('')   /* 3.116: a conta inteira para o dono */ + '</optgroup>' : '') +
     '<optgroup label="' + (pt ? 'Todos os bancos (escolher já cadastra)' : 'All banks (picking one registers it)') + '">' + lista.map(b =>
       '<option value="cod:' + b.cod + '"' + (sel === 'cod:' + b.cod ? ' selected' : '') + '>' + esc(b.nome) + (b.cod !== '000' ? ' · ' + b.cod : '') + '</option>').join('') + '</optgroup></select>';
 }

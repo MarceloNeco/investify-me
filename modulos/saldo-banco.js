@@ -144,6 +144,19 @@
       var semInv = []; contas.forEach(function (r) { if (!bancosComInv[N(r.banco)] && semInv.indexOf(r.banco) < 0) semInv.push(r.banco); });
       return { contas: contas, cartoes: cartoes, invs: invs, semInv: semInv };
     },
+    /* 2.3.0 (3.116): no seletor "Por qual banco", a conta inteira ao lado do banco, quando a pessoa tem uma conta só nele */
+    numeroDoBanco: function (nome) {
+      var w = function (t) { return N(t).split(' ')[0] || ''; }, b = w(nome); if (b.length < 2) return '';   /* "Itaú Unibanco" e "Itau": a 1ª palavra */
+      var cs = lista().filter(function (x) { return x.tipo === 'conta' && x.numero && w(x.banco) === b; });
+      return cs.length === 1 && API.inteira(cs[0]) ? API.numero(cs[0]) : '';
+    },
+    /* 2.3.0 (3.116): de qual conta é o lançamento (o detalhe mostra a conta inteira para o dono) */
+    contaDe: function (g) {
+      if (!g || g.cartaoId || g.cartaoNome || g.finalCartao || !g.conta) return null;
+      var b = N(g.conta), cs = lista().filter(function (x) { return N(x.banco) === b && (x.tipo === 'conta' || x.tipo === 'poupanca'); });
+      if (g.contaRobo) return cs.find(function (r) { return N(g.contaRobo) === N(r.conta) || (r.contaId && g.contaRobo === r.contaId); }) || null;
+      return cs.length === 1 ? cs[0] : (cs.find(function (r) { return r.tipo === 'conta'; }) || null);
+    },
     lancamentos: function (r) {
       var b = N(r.banco), contasDoBanco = lista().filter(function (x) { return N(x.banco) === b && (x.tipo === 'conta' || x.tipo === 'poupanca'); }).length;
       return Gasto.todos().filter(function (g) {
@@ -219,7 +232,12 @@
     id: 'saldo-banco',
     versao: '2.3.0',
     colecoes: [COL],
-    pontos: { 'budget.painel': cartao },
+    pontos: { 'budget.painel': cartao,
+      /* 2.3.0 (3.116): no detalhe do lançamento, a conta (inteira para o dono; o final para os outros) */
+      'lancamento.form': function (ctx) {
+        var r = API.contaDe(ctx && ctx.g); if (!r) return '';
+        return '<p class="small muted sb-conta-lanc" style="margin:0 0 8px">🏦 ' + esc(tr('Conta: ', 'Account: ', 'Cuenta: ') + API.rotulo(r)) + '</p>';
+      } },
     acoes: {
       'sb-ver': function (el) {
         var r = lista().find(function (x) { return x.id === el.dataset.id; }); if (!r) return;
