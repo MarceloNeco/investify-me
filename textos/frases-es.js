@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.120 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.121 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,9 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.121 — rascunho, revisar */
+  'Seus consórcios':'Tus consorcios',
+  '🏠 Tocando na parcela do consórcio (ou na conta fixa dele), você vê a cota: grupo, cota, quantas parcelas pagas, quanto falta, o crédito e a barra do quanto já foi pago. "Ver todos os consórcios" junta todos, com o filtro Auto, Imóvel ou Ambos, e cada cota abre as parcelas.':'🏠 Al tocar la cuota del consorcio (o su cuenta fija) ves la participación: grupo, cuota, cuotas pagadas, lo que falta, el crédito y la barra de lo pagado. "Ver todos los consorcios" los junta, con el filtro Auto, Inmueble o Ambos, y cada cuota abre sus pagos.',
   /* 3.120 — rascunho, revisar */
   'Consumo de luz e gás':'Consumo de luz y gas',
   '⚡ A conta de luz que o robô lê mostra o consumo no lançamento que a pagou: kWh, dias, kWh por dia, comparação com a média, bandeira, tarifa, multa, juros e COSIP, com as barrinhas dos meses. No gás: m³, kg e o período. Em Fluxo › Por categoria, a linha da categoria mostra o consumo do mês.':'⚡ La factura de luz que lee el robot muestra el consumo en el movimiento que la pagó: kWh, días, kWh por día, comparación con la media, bandera, tarifa, multa, intereses y COSIP, con barras de los meses. En el gas: m³, kg y el periodo. En Flujo › Por categoría, la línea de la categoría muestra el consumo del mes.',
