@@ -767,6 +767,10 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.120 — Consumo de luz e gás.** Novo `modulos/consumo.js` 1.0.0 (`Consumo`: de/doGasto/daCategoria/linha/bloco): a `ficha` da conta
+  de luz (kWh, dias, média, bandeira, tarifa, multa, juros, COSIP, histórico) e de gás (m³, kg, período) no detalhe do lançamento
+  (`lancamento.form`) e na linha da categoria do "Por categoria". comprovantes 1.3.0: guarda `x.ficha` (`fichaLimpa`: 5 níveis, 60 itens,
+  texto ≤ 200) e `x.semDebito` (debito_automatico=false nunca mostra "não pague"). Teste: `teste-consumo.js` (novo).
   **3.119 — Os investimentos do banco na Carteira.** Novo `modulos/invest-banco.js` 1.0.0 (`InvestBanco`): cada investimento que o robô
   manda (saldos_banco, tipo 'investimento') vira posição da Carteira com id fixo `bk_<conta_id>` (o mesmo em todo aparelho; nunca duplica),
   `doBanco` {chave, data, banco, classe, subtipo, vencimento, taxa, indexador, dono}, `valorManual` = o saldo do banco e o

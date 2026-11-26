@@ -1,11 +1,15 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.119 · 26/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.120 · 26/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.120', d:'2026-11-26', t:'Consumo de luz e gás', itens:[
+    '⚡ A conta de luz que o robô lê mostra o consumo no lançamento que a pagou: kWh, dias, kWh por dia, comparação com a média, bandeira, tarifa, multa, juros e COSIP, com as barrinhas dos meses. No gás: m³, kg e o período. Em Fluxo › Por categoria, a linha da categoria mostra o consumo do mês.',
+    '⛔ Uma conta que o robô diz que não está no débito automático nunca mais aparece com "não pague".'
+  ]},
   {v:'3.119', d:'2026-11-26', t:'Seus investimentos do banco na Carteira', itens:[
     '🏦 Os investimentos que o banco manda pelo Open Finance agora entram na Carteira do InvestifyONE: uma linha por aplicação, com o saldo atualizado todo dia e o selo "veio do banco". Se você já tinha cadastrado o mesmo papel à mão, o app junta os dois em vez de criar outro.',
     '📋 No topo da Carteira, o quadro "Veio do banco" mostra tudo por banco e por produto, com a liquidez e o vencimento de cada aplicação.'

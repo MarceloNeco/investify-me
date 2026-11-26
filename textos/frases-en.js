@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.119 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.120 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.120 */
+  'Consumo de luz e gás':'Electricity and gas use',
+  '⚡ A conta de luz que o robô lê mostra o consumo no lançamento que a pagou: kWh, dias, kWh por dia, comparação com a média, bandeira, tarifa, multa, juros e COSIP, com as barrinhas dos meses. No gás: m³, kg e o período. Em Fluxo › Por categoria, a linha da categoria mostra o consumo do mês.':'⚡ The electricity bill the robot reads shows usage on the entry that paid it: kWh, days, kWh per day, comparison with the average, tariff flag, rate, late fee, interest and COSIP, with small monthly bars. For gas: m³, kg and the period. In Flow › By category, the category line shows the month\'s usage.',
+  '⛔ Uma conta que o robô diz que não está no débito automático nunca mais aparece com "não pague".':'⛔ A bill the robot says is not on auto-debit never shows "do not pay" anymore.',
   /* 3.119 */
   'Seus investimentos do banco na Carteira':'Your bank investments in the Portfolio',
   '🏦 Os investimentos que o banco manda pelo Open Finance agora entram na Carteira do InvestifyONE: uma linha por aplicação, com o saldo atualizado todo dia e o selo "veio do banco". Se você já tinha cadastrado o mesmo papel à mão, o app junta os dois em vez de criar outro.':'🏦 The investments your bank sends via Open Finance now go into the InvestifyONE Portfolio: one line per investment, with the balance updated daily and the "from the bank" tag. If you had already added the same investment by hand, the app merges them instead of creating another.',

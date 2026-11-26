@@ -114,7 +114,7 @@
       var h = '<div class="fc-bloco">' + grupoHead(G.grupo, '<span class="fc-tot small">' + esc(fmt(tg) + tr(' de ', ' of ', ' de ') + fmt(tp)) + '</span>');
       if (abertosG[G.grupo] !== false) h += G.itens.map(function (x) {
         var p = x.por[mes] || Previsao.previstoMes(x.grupo, x.sub, mes), lim = limiteDe(x.grupo, x.sub);
-        return '<div class="fc-cat fc-' + API.cor(p.gasto, p.previsto) + '"><div class="fc-cat-l"><span>' + esc(x.sub) + '</span><span class="small">' + esc(fmt(p.gasto) + tr(' de ', ' of ', ' de ') + fmt(p.previsto)) + ' ' + API.info(p, lim) + '</span></div>' + barra(p) + '</div>';
+        return '<div class="fc-cat fc-' + API.cor(p.gasto, p.previsto) + '"><div class="fc-cat-l"><span>' + esc(x.sub) + '</span><span class="small">' + esc(fmt(p.gasto) + tr(' de ', ' of ', ' de ') + fmt(p.previsto)) + ' ' + API.info(p, lim) + '</span></div>' + barra(p) + (window.Consumo ? Consumo.linha(x.grupo, x.sub, mes) : '') + '</div>';   /* 3.120: ⚡ kWh / 🔥 m³ */
       }).join('');
       return h + '</div>';
     }).join('');
