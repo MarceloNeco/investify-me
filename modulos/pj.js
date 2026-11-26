@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pj.js — FiscalONE: a PJ, por empresa (3.81)        1.2.1 · 26/Nov/2026
+   modulos/pj.js — FiscalONE: a PJ, por empresa (3.81)        1.3.0 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · A base é o Cofre da empresa (modulos/cofre-empresa.js, ST.empresas). Sugestão, sem IA: a fonte pagadora PJ da
@@ -22,6 +22,7 @@
        receber; o valor = receita do mês anterior × alíquota efetiva dos últimos meses), o DAS no próximo dia útil
        (r.diaUtilSeguinte), o DARF do pró-labore no dia útil ANTERIOR (r.diaUtilAnterior), a empresa "a encerrar" com data para de prever depois dela (pontos recorrente.pula e
        recorrente.previsto), e "o contador mudou: usar o último valor" no 📥.
+     · 1.3.0 (3.130): a base do DAS pela competência (as notas; padrão) ou pelo caixa — baseDas(e, mes); e.baseDas no Cofre.
    API (window.PJ)
      sugestoes() → [{nome, cnpj, de}] · contasSemEmpresa() → [conta] · empresaDe(g) · lancamentos(e, de, ate) · categoria(g)
      resumo(e, mes) → {faturamento, conversao, impostos, das, darf, contador, tfe, tarifas, prolabore, lucros, n}
@@ -176,6 +177,15 @@
       return n2((Array.isArray(ST.pj_contas) ? ST.pj_contas : []).filter(function (x) { return x.empresaId === e.id && x.tipo === 'receber' && String(x.data).slice(0, 7) === mes; })
         .reduce(function (s, x) { return s + (window.PJGestao ? PJGestao.emReais(x).v : (x.moeda && x.moeda !== 'BRL' ? 0 : Number(x.valor) || 0)); }, 0));
     },
+    /* 1.3.0 (3.130): a base do DAS — pela competência (as notas do mês: as do robô em modulos/pj-notas.js ou as a receber do
+       pj-gestao; padrão) ou pelo caixa (e.baseDas 'caixa': o que entrou). Competência sem nota conhecida: usa o que entrou. */
+    baseDas: function (e, mes) {
+      if (e.baseDas !== 'caixa') {
+        var n = (window.PJNotas ? PJNotas.totalMes(e, mes) : 0) || API.notasMes(e, mes);
+        if (n > 0) return { v: n, fonte: 'competencia' };
+      }
+      return { v: API.receitaMes(e, mes), fonte: 'caixa' };
+    },
     /* DAS pago no mês seguinte ÷ receita do mês, nos últimos 6 meses com receita */
     aliquota: function (e, ateMes) {
       var rec = 0, das = 0;
@@ -191,14 +201,14 @@
       if (!r || !r.empresaId) return false;
       var e = empresas().find(function (x) { return x.id === r.empresaId; }); if (!e) return false;
       if (e.situacao === 'a-encerrar' && e.situacaoData && iso > e.situacaoData) return true;
-      if (r.condicional === 'receita') { var ant = somaMes(iso.slice(0, 7), -1); return !(API.receitaMes(e, ant) > 0 || API.notasMes(e, ant) > 0); }
+      if (r.condicional === 'receita') { var ant = somaMes(iso.slice(0, 7), -1); return !(API.baseDas(e, ant).v > 0 || API.notasMes(e, ant) > 0); }
       return false;
     },
     previsto: function (r, iso) {
       if (!r || !r.empresaId || r.condicional !== 'receita') return null;
       var e = empresas().find(function (x) { return x.id === r.empresaId; }); if (!e) return null;
-      var ant = somaMes(iso.slice(0, 7), -1), base = API.receitaMes(e, ant) || API.notasMes(e, ant), a = API.aliquota(e, ant);
-      return base > 0 && a ? { valor: n2(base * a), fonte: 'receita', aliquota: a, base: base } : null;
+      var ant = somaMes(iso.slice(0, 7), -1), b = API.baseDas(e, ant), base = b.v || API.notasMes(e, ant), a = API.aliquota(e, ant);
+      return base > 0 && a ? { valor: n2(base * a), fonte: 'receita', aliquota: a, base: base, baseDe: b.fonte } : null;
     },
     ehContaPJ: function (r) { return empresas().some(function (e) { return API.saldos(e).indexOf(r) >= 0; }); },
     saldos: function (e) {
@@ -250,7 +260,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'pj', versao: '1.2.1',
+    id: 'pj', versao: '1.3.0',
     pontos: {
       'recorrente.pula': function (c) { return [API.pula(c.r, c.iso)]; },   /* 1.2.0 (3.86) */
       'recorrente.previsto': function (c) { var p = API.previsto(c.r, c.iso); return p ? [p] : []; },

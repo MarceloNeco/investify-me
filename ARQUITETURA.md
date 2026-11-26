@@ -767,6 +767,14 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.130 — As notas da PJ e o DAS do mês (item M).** Novo `modulos/pj-notas.js` 1.0.0 (`PJNotas`), tudo informativo: a NFS-e do robô
+  com o CNPJ de uma empresa cadastrada (`daEmpresa`; comprovantes 1.3.1 a marca 'ok', não é compra) liga ao crédito da conta da PJ pela
+  moeda e `valorMoeda` (BS2) ou ao crédito mais perto (45 dias, ±5 %); receita em reais = o crédito; exportação (sem PIS/COFINS; ISS a
+  confirmar) e a linha do IBS/CBS; cartão "Notas e DAS do mês" no ponto `pj.empresa`. pj 1.3.0 `baseDas(e, mes)`: competência (as notas;
+  padrão) ou caixa (`e.baseDas`, "Base do DAS" no Cofre da empresa 1.3.0), usada na previsão do DAS e no "Transfira para a PJ".
+  Lembrete de 2027 no 📥 (grupo 'pj', a partir de 01/12/2026; "Anotei" em `ST.config.pj2027`) com a pergunta aberta do período do DAS.
+  Os campos novos da NFS-e (tomador_exterior, moeda, valor_moeda, competencia, codigo_servico, iss_retido) são opcionais. Teste:
+  `teste-pj-notas.js` (novo).
   **3.129 — Aviso de atraso mais certeiro.** debito-nao-caiu 1.2.0: `avisosEmail` usa `ficha.aviso_atraso` e `fornecedor_aviso` (alerta
   urgente ligado à conta fixa do fornecedor) e `encaminhado_pela_pessoa` (só informa, estilo `dnc-info`). Testes: `teste-aviso-atraso.js`
   (novo), `teste-debito-nao-caiu`.

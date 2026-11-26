@@ -1,10 +1,15 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.129 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.130 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.130 */
+  'As notas da PJ e o DAS do mês':'Company invoices and the monthly DAS',
+  '🧾 No FiscalONE › PJ, o novo "Notas e DAS do mês": as notas que a empresa emitiu, ligadas ao crédito que caiu na conta (a receita em reais pelo câmbio do dia), com a marca de exportação (sem PIS/COFINS; ISS: confirme com o contador) e o que vale do IBS/CBS.':'🧾 In FiscalONE › Company, the new "Invoices and DAS for the month": the invoices the company issued, linked to the credit that reached the account (revenue in reais at that day\'s rate), with the export tag (no PIS/COFINS; ISS: confirm with your accountant) and what applies for IBS/CBS.',
+  '📅 O DAS do mês é estimado pela competência (as notas do mês) ou pelo caixa (o que entrou): você escolhe em Configurações da PJ, no Cofre da empresa. Vence no dia 20 do mês seguinte e aparece "pago" quando chega do banco. Tudo é informativo: confirme com o contador.':'📅 The monthly DAS is estimated on an accrual basis (the month\'s invoices) or a cash basis (what came in): you choose in the company settings, in the company vault. It is due on the 20th of the following month and shows "paid" when it arrives from the bank. Everything is informative: confirm with your accountant.',
+  '🗓️ A partir de dezembro, o 📥 lembra o que decidir com o contador para 2027 na PJ, com a pergunta aberta sobre o novo período de cálculo do DAS.':'🗓️ From December, the 📥 reminds you what to decide with your accountant for 2027 at the company, with the open question about the new DAS calculation period.',
   /* 3.129 */
   'Aviso de atraso mais certeiro':'Sharper overdue notices',
   '📧 O aviso de atraso que o robô identifica vira alerta urgente ligado à conta fixa do fornecedor. Se foi você mesmo quem encaminhou o e-mail, o app só lembra, sem alarme.':'📧 The overdue notice the robot identifies becomes an urgent alert linked to the supplier\'s fixed bill. If you forwarded the e-mail yourself, the app just reminds you, without the alarm.',

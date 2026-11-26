@@ -1,11 +1,16 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.129 · 26/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.130 · 26/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.130', d:'2026-11-26', t:'As notas da PJ e o DAS do mês', itens:[
+    '🧾 No FiscalONE › PJ, o novo "Notas e DAS do mês": as notas que a empresa emitiu, ligadas ao crédito que caiu na conta (a receita em reais pelo câmbio do dia), com a marca de exportação (sem PIS/COFINS; ISS: confirme com o contador) e o que vale do IBS/CBS.',
+    '📅 O DAS do mês é estimado pela competência (as notas do mês) ou pelo caixa (o que entrou): você escolhe em Configurações da PJ, no Cofre da empresa. Vence no dia 20 do mês seguinte e aparece "pago" quando chega do banco. Tudo é informativo: confirme com o contador.',
+    '🗓️ A partir de dezembro, o 📥 lembra o que decidir com o contador para 2027 na PJ, com a pergunta aberta sobre o novo período de cálculo do DAS.'
+  ]},
   {v:'3.129', d:'2026-11-26', t:'Aviso de atraso mais certeiro', itens:[
     '📧 O aviso de atraso que o robô identifica vira alerta urgente ligado à conta fixa do fornecedor. Se foi você mesmo quem encaminhou o e-mail, o app só lembra, sem alarme.'
   ]},
