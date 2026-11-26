@@ -1,5 +1,5 @@
 /* =====================================================================
-   assistone-visual.css — o visual novo do AssistONE (personagem + painel)      1.0.0 · 26/Nov/2026
+   assistone-visual.css — o visual novo do AssistONE (personagem + painel)      1.0.1 · 26/Nov/2026
    MASTER no repositório privado MarceloNeco/assist-one (balao/visual/). Nos apps, a pasta
    assistone/ é uma CÓPIA IDÊNTICA: nunca editar a cópia; mudar aqui, testar e copiar.
    Desenho aprovado pelo dono (Claude Design, 26/Nov/2026): docs/desenho-pacote/ESPECIFICACAO.md.
@@ -315,6 +315,7 @@
 /* película atrás da folha (só celular) */
 .aov-scrim{position:fixed;left:0;top:0;right:0;bottom:0;background:var(--ao-scrim);opacity:0;pointer-events:none;transition:opacity .25s;z-index:0}
 .aov-casa.aov-aberto .aov-scrim{opacity:1;pointer-events:auto}
+.aov-casa.aov-aberto.aov-leve .aov-scrim{opacity:0;pointer-events:none}
 
 .aov-painel{position:fixed;left:0;right:0;bottom:0;z-index:1;display:none;flex-direction:column;max-height:88vh;max-height:88dvh;
   background:var(--ao-sheet);color:var(--ao-tx);border-radius:26px 26px 0 0;box-shadow:0 -1px 0 var(--ao-goldl),0 -18px 40px rgba(0,0,0,.30);
@@ -372,7 +373,8 @@
 
 /* computador: painel lateral de 420 px, sem película */
 @media (min-width:900px){
-  .aov-painel{left:auto;top:0;width:420px;max-height:none;border-radius:0;border-left:1px solid var(--ao-line);box-shadow:-1px 0 0 var(--ao-goldl),-18px 0 40px rgba(0,0,0,.22)}
+  /* --aov-topo: o app pode começar o painel abaixo da barra do topo dele (padrão: altura toda) */
+  .aov-painel{left:auto;top:var(--aov-topo,0px);width:420px;max-height:none;border-radius:0;border-left:1px solid var(--ao-line);box-shadow:-1px 0 0 var(--ao-goldl),-18px 0 40px rgba(0,0,0,.22)}
   @keyframes aovLado{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
   .aov-casa.aov-aberto .aov-painel{animation-name:aovLado}
   .aov-grab{display:none}

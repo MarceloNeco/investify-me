@@ -2202,6 +2202,8 @@ html[data-theme="light"] .topbar{background:color-mix(in srgb, #fff 88%, transpa
 .assistone.desligado{display:none}
 /* aberto, o menu fica acima do selo da nuvem (9990) e da pílula do Fundo; abaixo do passeio (9995) e das telas da nuvem */
 .assistone.aov-aberto{z-index:9991}
+/* no computador o painel começa abaixo da barra do topo (65 px): a conta, o 📥 e o selo da nuvem continuam à mão */
+@media (min-width:900px){ .assistone{--aov-topo:65px} }
 body:has(.modal-wrap:not(.hidden)) .assistone, body:has(#lockScreen:not(.hidden)) .assistone,
 body:has(.sidenav.open) .assistone, body:has(.popup-an) .assistone{display:none}
 .aone-ola{display:flex; align-items:center; gap:10px; margin:0 2px 10px}

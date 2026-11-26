@@ -1,5 +1,5 @@
 /* =====================================================================
-   assistone-visual.js — o visual novo do AssistONE (personagem + painel)       1.0.0 · 26/Nov/2026
+   assistone-visual.js — o visual novo do AssistONE (personagem + painel)       1.0.1 · 26/Nov/2026
    MASTER no repositório privado MarceloNeco/assist-one (balao/visual/). Nos apps, a pasta
    assistone/ é uma CÓPIA IDÊNTICA: nunca editar a cópia; mudar aqui, testar e copiar.
    Desenho aprovado pelo dono (Claude Design, 26/Nov/2026, decisões D-A15 e de 26/11):
@@ -131,7 +131,8 @@
        acao:   function (id) { … },                          // perguntar | comecar | tour | procurar | ajuda_tela | agora_nao | desligar
        aoAbrir: function () {}, aoFechar: function () {}
      });
-     v.abrir({ aviso: '<b>Olá!</b> …' })   // abre no menu (aviso opcional, texto do app, acima do "Você está em")
+     v.abrir({ aviso: '<b>Olá!</b> …', leve: true })   // abre no menu (aviso opcional, texto do app, acima do "Você está em";
+                                                    // leve = sem película que segura o toque, para aberturas que a pessoa não pediu)
      v.conteudo({ titulo, sub, html | no })  // troca o miolo por outra vista, com "Voltar ao menu"; devolve o miolo
      v.menu() · v.fechar() · v.aberto() · v.atualizar() · v.textos() · v.destruir()
    Ordem fixa do menu: Perguntar ao assistente (selo IA) · Começar · Tour rápido · Procurar algo · Ajuda desta tela;
@@ -326,7 +327,7 @@
       }, 30);
     }
     function esconder() {
-      casa.classList.remove('aov-aberto');
+      casa.classList.remove('aov-aberto', 'aov-leve');
       raizAo.style.transform = '';
       avisoAtual = null; vista = 'menu';
       if (op.aoFechar) try { op.aoFechar(); } catch (e) {}
@@ -353,6 +354,9 @@
       abrir: function (o) {
         o = o || {};
         avisoAtual = o.aviso || null;
+        /* leve: abertura que a pessoa não pediu (ex.: o "Olá" da primeira visita): sem película que segura o toque; um toque
+           fora fecha o menu E vale para o que foi tocado */
+        casa.classList.toggle('aov-leve', !!o.leve);
         if (ch.isOpen()) { menu(); return; }
         vista = 'menu'; ch.open();
       },
@@ -372,5 +376,5 @@
     };
   }
 
-  global.AssistOneVisual = { VERSAO: '1.0.0', montar: montar, TEXTOS: TX, icone: icone };
+  global.AssistOneVisual = { VERSAO: '1.0.1', montar: montar, TEXTOS: TX, icone: icone };
 })(window);

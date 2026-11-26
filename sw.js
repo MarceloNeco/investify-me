@@ -25,7 +25,7 @@ var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './aju
   './modulos/conciliacao.js?v=1.0.0', './modulos/calendario-menu.js?v=1.2.1',
   './modulos/pessoas.js?v=1.3.0', './modulos/indicadores.js?v=1.0.0', './modulos/saldo-banco.js?v=2.1.2', './modulos/espelho.js?v=1.1.2',
   /* 3.110: o visual novo do AssistONE (cópia do master assist-one balao/visual/); o de 40 quadros (só computador) é guardado no 1º uso */
-  './assistone/assistone-visual.css?v=1.0.0', './assistone/assistone-visual.js?v=1.0.0', './assistone/img/sprite-celular-8-quadros.webp', './assistone/img/brilho-celular-8-quadros.webp',
+  './assistone/assistone-visual.css?v=1.0.1', './assistone/assistone-visual.js?v=1.0.1', './assistone/img/sprite-celular-8-quadros.webp', './assistone/img/brilho-celular-8-quadros.webp',
   './assistone/fontes/manrope.woff2', './assistone/fontes/newsreader-500.woff2',
   './modulos/tour.js?v=1.1.0', './modulos/cartoes.js?v=1.2.0', './modulos/cartao-foto.js?v=1.0.0',
   /* 3.65: o motor do Leitor OCR para o cartão por foto (cópia do leitor-ocr; leitor/tesseract/ é guardado no 1º uso) */

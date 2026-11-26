@@ -48,6 +48,7 @@ const TIPOS = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '
       ok(sobre || await p.evaluate(() => { const c = document.querySelector('#assistOne .ao-cw').getBoundingClientRect(), pa = document.querySelector('.aov-painel');
         return innerWidth >= 900 ? c.right <= innerWidth - pa.offsetWidth + 1 : c.bottom <= innerHeight - pa.offsetHeight + 1; }), 'o personagem não fica por cima do menu');
       if (nome === 'celular') ok(await p.evaluate(() => { const c = document.querySelector('.aov-corpo'); return c.scrollHeight <= c.clientHeight + 1; }), 'folha do celular: tudo cabe, sem rolar');
+      if (nome === 'computador') ok(await p.$eval('.aov-painel', (e) => Math.round(e.getBoundingClientRect().top)) === 65, 'computador: o painel começa abaixo da barra do topo (a conta continua à mão)');
 
       await p.click('[data-aov="ajuda_tela"]'); await p.waitForTimeout(150);
       ok(await aberto(p) && await p.textContent('.aov-tit') === 'Ajuda desta tela' && await p.textContent('.aov-sub') === 'Painel do BudgetONE', '"Ajuda desta tela" abre dentro do painel, com o nome da tela');
@@ -76,6 +77,12 @@ const TIPOS = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '
       await p.click('#perfilMenu [data-pm="ajuda"], #perfilMenu button:has-text("Ajuda e tutorial")'); await p.waitForTimeout(500);
       ok(await p.evaluate(() => ST.config.assistOne === true) && await aberto(p), '"Ajuda e tutorial" do menu da conta religa e abre o mesmo menu (sem fechar no mesmo toque)');
 
+      await p.keyboard.press('Escape'); await p.waitForTimeout(150);
+      await p.evaluate(() => AssistOne.abrir('ola')); await p.waitForTimeout(300);
+      ok(/Olá! Eu sou o AssistONE/.test(await p.textContent('.aov-aviso')) && await p.$eval('.aov-scrim', (e) => getComputedStyle(e).pointerEvents) === 'none', 'o "Olá" da 1ª visita aparece no menu, sem segurar o toque');
+      await p.mouse.click(nome === 'celular' ? 40 : 600, nome === 'celular' ? 120 : 300); await p.waitForTimeout(200);
+      ok(!(await aberto(p)), 'um toque fora fecha o "Olá"');
+      await p.evaluate(() => AssistOne.abrir('tela')); await p.waitForTimeout(300);
       await p.evaluate(() => { ST.tema = 'light'; document.documentElement.setAttribute('data-theme', 'light'); });
       ok(await p.$eval('.aov-painel', (e) => getComputedStyle(e).backgroundColor) === 'rgb(247, 240, 224)', 'tema claro do app: o menu fica Pérola, com ele aberto');
       await p.keyboard.press('Escape'); await p.waitForTimeout(150);

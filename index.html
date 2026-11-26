@@ -17,7 +17,7 @@
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
 <link rel="stylesheet" href="estilo.css?v=3.110">
-<link rel="stylesheet" href="assistone/assistone-visual.css?v=1.0.0">
+<link rel="stylesheet" href="assistone/assistone-visual.css?v=1.0.1">
 </head>
 <body>
 
@@ -18896,7 +18896,7 @@ const AssistOne = {
       ? '<b>' + (pt ? 'Olá! Eu sou o AssistONE 👋' : 'Hi! I am AssistONE 👋') + '</b>' +
         esc(pt ? 'Eu explico cada tela e abro os atalhos. Fico aqui no canto, sem atrapalhar.' : 'I explain each screen and open the shortcuts. I stay here in the corner, out of the way.')
       : null;
-    this.vis.abrir({ aviso });
+    this.vis.abrir({ aviso, leve: modo === 'ola' });   /* o "Olá" da 1ª visita não segura o toque: tocar fora fecha e vale */
     this.aberto = this.vis.aberto();
   },
 
@@ -30151,7 +30151,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=2.1.2"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
-<script src="assistone/assistone-visual.js?v=1.0.0"></script>
+<script src="assistone/assistone-visual.js?v=1.0.1"></script>
 <script src="modulos/tour.js?v=1.1.0"></script>
 <script src="modulos/cartoes.js?v=1.2.0"></script>
 <script src="modulos/cartao-foto.js?v=1.0.0"></script>
