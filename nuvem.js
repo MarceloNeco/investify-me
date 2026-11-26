@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.8 · 26/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.9 · 26/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -3200,7 +3200,12 @@
       logado: function () { return Conta.on(); },
       disponivel: function () { return Conta.rpc('assist_disponivel', { p_app: 'moneytrio' }); },
       perguntar: function (tela, pergunta, idioma) { return Conta.rpc('assist_perguntar', { p_app: 'moneytrio', p_tela: tela, p_pergunta: pergunta, p_idioma: idioma }); },
-      resposta: function (id) { return Conta.rpc('assist_minha_resposta', { p_id: id }); }
+      resposta: function (id) { return Conta.rpc('assist_minha_resposta', { p_id: id }); },
+      /* 1.15.9 (3.111): a conversa nova do AssistONE — "Isso responde?" (Sim/Não), as conversas dos últimos 7 dias e apagar */
+      avaliar: function (id, util) { return Conta.rpc('assist_avaliar', { p_id: id, p_util: util }); },
+      conversas: function () { return Conta.rpc('assist_minhas_conversas', { p_app: 'moneytrio' }); },
+      apagar: function (id) { return Conta.rpc('assist_apagar_conversa', { p_id: id }); },
+      apagarTudo: function () { return Conta.rpc('assist_apagar_tudo', { p_app: 'moneytrio' }); }
     },
     criarPinConta: function () { return Portao.criarPinConta(); },
     iniciado: false, familia: null, podeLevar: false,

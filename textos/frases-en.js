@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.110 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.111 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.111 */
+  'Conversa nova com o AssistONE':'A new conversation with AssistONE',
+  '💬 "Perguntar ao assistente" ganhou a conversa do visual novo: sua pergunta e a resposta aparecem como numa conversa, com as perguntas dos últimos 7 dias. Enquanto ele responde, aparecem três pontinhos.':'💬 "Ask the assistant" now has the new-look conversation: your question and the answer show up like a chat, along with your questions from the last 7 days. While it answers, three dots appear.',
+  '👍 Depois de cada resposta, "Isso responde?" com Sim e Não. A sua escolha ajuda a melhorar as respostas.':'👍 After each answer, "Does this answer it?" with Yes and No. Your choice helps improve the answers.',
   /* 3.110 */
   'O AssistONE de visual novo':'AssistONE with a new look',
   '✨ O AssistONE ganhou visual novo: tocando nele, o personagem vira de frente e abre um menu mais limpo, que diz em que tela você está. No celular o menu sobe de baixo; no computador, abre ao lado. Ele segue o tema claro ou escuro do app e fica parado quando o aparelho pede menos movimento.':'✨ AssistONE has a new look: tap it and the character turns to face you and opens a cleaner menu that shows which screen you are on. On a phone the menu slides up from the bottom; on a computer it opens at the side. It follows the app\'s light or dark theme and stays still when your device asks for less motion.',

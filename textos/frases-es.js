@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.110 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.111 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,10 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.111 — rascunho, revisar */
+  'Conversa nova com o AssistONE':'Conversación nueva con AssistONE',
+  '💬 "Perguntar ao assistente" ganhou a conversa do visual novo: sua pergunta e a resposta aparecem como numa conversa, com as perguntas dos últimos 7 dias. Enquanto ele responde, aparecem três pontinhos.':'💬 "Preguntar al asistente" tiene la conversación del aspecto nuevo: tu pregunta y la respuesta aparecen como en un chat, junto con tus preguntas de los últimos 7 días. Mientras responde, aparecen tres puntos.',
+  '👍 Depois de cada resposta, "Isso responde?" com Sim e Não. A sua escolha ajuda a melhorar as respostas.':'👍 Después de cada respuesta, "¿Esto responde tu pregunta?" con Sí y No. Tu elección ayuda a mejorar las respuestas.',
   /* 3.110 — rascunho, revisar */
   'O AssistONE de visual novo':'AssistONE con un aspecto nuevo',
   '✨ O AssistONE ganhou visual novo: tocando nele, o personagem vira de frente e abre um menu mais limpo, que diz em que tela você está. No celular o menu sobe de baixo; no computador, abre ao lado. Ele segue o tema claro ou escuro do app e fica parado quando o aparelho pede menos movimento.':'✨ AssistONE tiene un aspecto nuevo: al tocarlo, el personaje se gira hacia ti y abre un menú más limpio que dice en qué pantalla estás. En el móvil el menú sube desde abajo; en el ordenador, se abre a un lado. Sigue el tema claro u oscuro de la app y se queda quieto cuando el dispositivo pide menos movimiento.',
