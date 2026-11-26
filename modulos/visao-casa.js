@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.1.8 · 24/Nov/2026
+   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.2.0 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 11/Nov/2026; desenho em DESENHO-visao-da-casa.md)
      Um membro da família com a visão "Só a casa" vê a parte da casa; o resto fica RESERVADO e nem chega ao aparelho dele
@@ -158,14 +158,25 @@
   function Nn(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
   function nomeComp(p) { return window.Pessoas ? Pessoas.nomeCompleto(p) : (p.nome || ''); }
   function contaNome() { return window.MoneyNuvem && MoneyNuvem.nomePessoa ? String(MoneyNuvem.nomePessoa() || '') : ''; }
+  function contaEmail() { try { return window.MoneyNuvem && MoneyNuvem.email ? String(MoneyNuvem.email() || '') : ''; } catch (e) { return ''; } }
   function ehDaConta(p, eu) { var c = Nn(contaNome()); return (eu && p.uid === eu) || (!!c && Nn(nomeComp(p)) === c); }
   function vinculo(eu) { var v = ST.config && ST.config.vcEu; return v && eu && v.uid === eu ? v.pessoa : null; }
+  /* 1.2.0 (3.125, dono: acabar com "Qual destas fichas é você?"): o app liga SOZINHO a ficha do dono à conta logada (Pessoas.minhaFicha:
+     o uid, o e-mail da conta, ou a única ficha com o nome da conta) e nunca cria outra. Só quando há duas fichas que parecem ser você,
+     oferece "Juntar" (sem pergunta de escolher). */
   API.chefeEJuntar = function (pessoas, eu) {
-    var v = vinculo(eu), euP = v && v !== 'nenhuma' ? pessoas.filter(function (p) { return p.id === v; })[0] || null : null;
-    var conta = pessoas.filter(function (p) { return p !== euP && ehDaConta(p, eu); })[0] || null;
-    var nao = (ST.config && ST.config.vcJuntarNao) || {};
-    return { eu: euP, conta: conta, perguntar: !!eu && !v && pessoas.length > 0,
-      juntar: euP && conta && !nao[conta.id + '|' + euP.id] ? { fica: euP, sai: conta } : null };
+    var v = vinculo(eu);
+    if (!v && eu && window.Pessoas && Pessoas.minhaFicha) {
+      var mf = Pessoas.minhaFicha();
+      if (mf && pessoas.indexOf(mf) >= 0) { (ST.config = ST.config || {}).vcEu = { uid: eu, pessoa: mf.id }; mf.uid = eu; v = mf.id; setTimeout(function () { if (typeof Store !== 'undefined') Store.salvar(); }, 0); }
+    }
+    var euP = v && v !== 'nenhuma' ? pessoas.filter(function (p) { return p.id === v; })[0] || null : null;
+    var em = contaEmail(), porEmail = function (p) { return !!em && !!p.email && Nn(p.email) === Nn(em); };
+    var daConta = pessoas.filter(function (p) { return p !== euP && (ehDaConta(p, eu) || porEmail(p)); });
+    var conta = daConta[0] || null, nao = (ST.config && ST.config.vcJuntarNao) || {};
+    /* a ficha que a PESSOA fez (com o e-mail da conta) fica; a que o app criou para a conta (o uid) sai */
+    var par = euP && conta ? (porEmail(conta) && !porEmail(euP) ? { fica: conta, sai: euP } : { fica: euP, sai: conta }) : (!euP && daConta.length >= 2 ? { fica: daConta[0], sai: daConta[1] } : null);
+    return { eu: euP, conta: conta, perguntar: false, juntar: par && !nao[par.sai.id + '|' + par.fica.id] ? par : null };
   };
   API.nomeVer = function (p) { var n = nomeComp(p) || p.apelido || ''; return n + (p.apelido && Nn(p.apelido) !== Nn(p.nome) && Nn(p.apelido) !== Nn(n) ? ' (' + p.apelido + ')' : ''); };
   function cartaoChefe() {
@@ -200,9 +211,10 @@
           '<button class="btn sm" data-acao="vc-juntar-nao" data-par="' + esc(cj.juntar.sai.id + '|' + cj.juntar.fica.id) + '">' + esc(tr('Não são', 'They are not')) + '</button></div>' : '') +
         '<div class="vc-pessoas">' + (pessoas.length ? pessoas.map(function (p) {
           return '<label class="linha-check" style="margin-right:18px"><input type="checkbox" data-acao="vc-pessoa" data-id="' + esc(p.id) + '"' + (marcadas.indexOf(p.id) >= 0 ? ' checked' : '') + '> ' + esc(API.nomeVer(p)) + '</label>';
-        }).join(' ') : '<span class="small muted">' + esc(tr('Cadastre as pessoas da casa em "Pessoas da família".', 'Add the household people in "Family people".')) + '</span>') + '</div>' +
+        }).join(' ') : '<span class="small muted">' + esc(tr('Cadastre as pessoas da casa em ', 'Add the household people in ')) + '<button type="button" class="linkinho" data-acao="ps-lista">' + esc(tr('Pessoas da família', 'Family people')) + '</button>.</span>') + '</div>' +
         '<p class="tiny muted">' + esc(tr('Você (o chefe) vê tudo e não precisa estar na lista. Alguém aqui não é da família (ex.: quem paga aluguel)? Mude o tipo para "Outras pessoas" em Pessoas da família.',
-          'You (the head) see everything and need not be on the list. Someone here is not family (e.g. a tenant)? Change their type to "Other people" in Family people.')) + '</p>' +
+          'You (the head) see everything and need not be on the list. Someone here is not family (e.g. a tenant)? Change their type to "Other people" in Family people.')) +
+          ' <button type="button" class="linkinho" data-acao="ps-lista">' + esc(tr('Abrir Pessoas da família', 'Open Family people')) + '</button></p>' +   /* 1.2.0 (3.125) */
         (deFora.length ? '<p class="small muted vc-fora">' + esc(tr('Outras pessoas (não são da família): ', 'Other people (not family): ') + deFora.map(API.nomeVer).join(', ')) + '</p>' : '') +
         '<p class="small muted">' + esc(tr('Compromissos de PJ (contador, DAS, TFE…) ficam sempre só seus. Você pode mudar um item depois.', 'Business commitments (accountant, taxes…) always stay yours only. You can change an item later.')) + '</p>' +
         '<button class="btn primary" data-acao="vc-preparar"' + (marcadas.length && Tela.pinConta !== false ? '' : ' disabled') + '>' + esc(tr('Preparar a visão da família', 'Prepare the family view')) + '</button>' +
@@ -236,7 +248,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'visao-casa', versao: '1.1.8', colecoes: [COL],
+    id: 'visao-casa', versao: '1.2.0', colecoes: [COL],
     pontos: {
       'budget.painel': function () { return API.soCasa() ? gastosDaFamilia() : ''; },
       /* 1.1.0 (3.75): no 📥, o que se pede e por quê, numa linha; o botão abre o cartão sem trocar de app */
@@ -263,7 +275,9 @@
         Store.salvar(); render();
       },
       'vc-juntar': function (el) {
-        var n = window.Pessoas ? Pessoas.juntar(el.dataset.fica, el.dataset.sai) : 0; Store.salvar(); render();
+        var n = window.Pessoas ? Pessoas.juntar(el.dataset.fica, el.dataset.sai) : 0;
+        var c = ST.config || {}; if (c.vcEu && c.vcEu.pessoa === el.dataset.sai) c.vcEu.pessoa = el.dataset.fica;   /* 1.2.0 (3.125): o vínculo vai junto */
+        Store.salvar(); render();
         toast(tr('Juntado: ', 'Merged: ') + n + tr(' registro(s) passaram para uma ficha só.', ' record(s) moved to a single card.'));
       },
       'vc-juntar-nao': function (el) { var c = ST.config = ST.config || {}; c.vcJuntarNao = c.vcJuntarNao || {}; c.vcJuntarNao[el.dataset.par] = 1; Store.salvar(); render(); },

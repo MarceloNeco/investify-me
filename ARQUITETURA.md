@@ -767,6 +767,10 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.125 — Pessoas da família sem pergunta repetida.** pessoas 1.5.0: e-mail opcional (`psEmail`, validado), `minhaFicha` por
+  uid/e-mail/nome único, preenchimento pelo e-mail e pela conta, ação `ps-lista`. visao-casa 1.2.0: liga a ficha do chefe sozinha (sem
+  "Qual destas fichas é você?", sem ficha repetida), "Juntar" mantém a ficha com e-mail, atalhos abrem Pessoas da família. Testes:
+  `teste-pessoas-email.js` (novo), `teste-familia-casa`.
   **3.124 — Conta fixa que faltava.** contas-mes: "Parece conta fixa" também quando a conta fixa parecida não cobre o último mês (outro
   período, ex.: escola 2026 × 2027), com a explicação (`outro`). Teste: `teste-conta-fixa-sugestao.js` (novo).
   **3.123 — Notas de serviço de saúde e educação.** comprovantes: `notaDe`/`educacao`/`aplicarNota` — a NFS-e vale para educação além de
