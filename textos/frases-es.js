@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.126 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.127 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,9 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.127 — rascunho, revisar */
+  'Aluguel recebido':'Alquiler recibido',
+  '🏠 O demonstrativo do aluguel que a imobiliária manda mostra a conta no crédito (aluguel, IPTU, taxa de administração e o líquido) e vira renda prevista no dia 12, até o fim do contrato.':'🏠 El extracto del alquiler que envía la inmobiliaria muestra el desglose en el crédito (alquiler, IPTU, comisión de administración y neto) y pasa a ingreso previsto el día 12, hasta el fin del contrato.',
   /* 3.126 — rascunho, revisar */
   'Investimento no exterior e contas de terceiros':'Inversiones en el exterior y facturas de terceros',
   '🌎 Os avisos da corretora no exterior que chegam no e-mail aparecem na Carteira como eventos (data, ativo, CUSIP, conta), sem valor: a posição continua vindo do extrato.':'🌎 Los avisos del bróker en el exterior que llegan por correo aparecen en la Cartera como eventos (fecha, activo, CUSIP, cuenta), sin importe: la posición sigue viniendo del extracto.',
