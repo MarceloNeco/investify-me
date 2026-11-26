@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.2.1 · 24/Nov/2026
+   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.3.0 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, "adiante tudo do e-mail"; sem IA)
      · A caixa do robô (nuvem.js, money_entrada) traz um tipo novo de item, tipo "comprovante", tirado dos e-mails lidos
@@ -31,6 +31,8 @@
        recibo_exterior em BRL: o recibo × cartão casa pelo valor em reais, sem câmbio nem IOF (modulos/recibo-exterior.js 1.0.1).
      · 1.2.1 (3.105): "Não é meu (conta de outra pessoa)" e a lista de terceiros (modulos/terceiros.js): o que bate com "ignorar" é
        dispensado sozinho (sai do 📥); "processar" ganha o "para quem".
+     · 1.3.0 (3.119): guarda a `ficha` do robô (fichaLimpa: só dados simples e limitados) — consumo de luz/gás (modulos/consumo.js) e as
+       próximas (consórcio, fatura, NFS-e); debito_automatico=false (ou ficha.sem_debito_automatico) nunca mostra "⛔ não pague".
    API (window.Comprovantes)
      receber(l, escopo?) → true (guardado) | false · lista() · abertos() · ligarTudo() · casarCompra(x) · palpiteCat(loja)
    DADOS
@@ -51,6 +53,18 @@
   function num(v) { var n = Number(v); return isFinite(n) ? n : null; }
   function txt(v, m) { return v == null ? '' : String(v).trim().slice(0, m || 120); }
   function dataOk(d) { return /^\d{4}-\d{2}-\d{2}$/.test(String(d || '')) ? d : ''; }
+  /* 1.3.0 (3.119): a ficha que o robô manda junto (consumo de luz/gás, consórcio, fatura, NFS-e…): só dados simples, limitados
+     (texto até 200, listas até 60 itens, 3 níveis); nada de função nem objeto estranho */
+  function fichaLimpa(o, nivel) {
+    nivel = nivel || 0; if (o == null || nivel > 3) return null;
+    if (typeof o === 'number') return isFinite(o) ? o : null;
+    if (typeof o === 'boolean') return o;
+    if (typeof o === 'string') return o.trim().slice(0, 200);
+    if (Array.isArray(o)) return o.slice(0, 60).map(function (v) { return fichaLimpa(v, nivel + 1); }).filter(function (v) { return v != null; });
+    if (typeof o !== 'object') return null;
+    var r = {}; Object.keys(o).slice(0, 60).forEach(function (k) { if (!/^[a-z0-9_]{1,40}$/i.test(k)) return; var v = fichaLimpa(o[k], nivel + 1); if (v != null) r[k] = v; });
+    return r;
+  }
   function dias(a, b) { return Math.round((Date.parse(a + 'T12:00:00Z') - Date.parse(b + 'T12:00:00Z')) / 86400000); }
   function hoje() { return API._hoje || hojeISO(); }
   function br(d) { return d ? d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4) : ''; }
@@ -158,7 +172,10 @@
     }) || null;
   }
   function ligarBoleto(x) { if (x.pagoId && gasto(x.pagoId)) return; var g = pagoDe(x); if (g) { x.pagoId = g.id; x.estado = 'ok'; } }
-  function debito(x) { return window.DebitoAuto ? DebitoAuto.conflito({ nome: quem(x), cnpj: x.cnpj || '', texto: [x.descricao, x.assunto].join(' ') }) : null; }
+  /* 1.3.0 (3.119): a conta que o robô diz que NÃO está no débito automático (debito_automatico=false / ficha.sem_debito_automatico)
+     nunca mostra "⛔ não pague" */
+  function semDebito(x) { return !!(x.semDebito || (x.ficha && (x.ficha.sem_debito_automatico === true || x.ficha.debito_automatico === false))); }
+  function debito(x) { if (semDebito(x)) return null; return window.DebitoAuto ? DebitoAuto.conflito({ nome: quem(x), cnpj: x.cnpj || '', texto: [x.descricao, x.assunto].join(' ') }) : null; }
 
   function processar(x) {
     if (x.estado === 'dispensado') return;
@@ -190,6 +207,8 @@
         links: (Array.isArray(l.links) ? l.links : l.links ? [l.links] : []).map(function (a) { return txt(a, 300); }).filter(function (u) { return /^https:\/\/(drive|docs)\.google\.com\//.test(u); }).slice(0, 10)
       };
       CAMPOS.forEach(function (k) { d[k] = txt(l[k], k === 'descricao' || k === 'linha' ? 300 : 120); });
+      if (l.ficha && typeof l.ficha === 'object') d.ficha = fichaLimpa(l.ficha);   /* 1.3.0 (3.119) */
+      if (l.debito_automatico === false) d.semDebito = true;
       var x = lista().find(function (y) { return y.id === id; });
       if (x) Object.assign(x, d);
       else { x = Object.assign({ id: id, escopo: escopo === 'casa' ? 'casa' : 'reservado', recebidoEm: new Date().toISOString(), estado: 'novo' }, d); lista().push(x); }
@@ -280,7 +299,7 @@
   function achar(el) { return lista().find(function (y) { return y.id === el.dataset.id; }); }
 
   MoneyModulos.registrar({
-    id: 'comprovantes', versao: '1.2.1', colecoes: [COL],
+    id: 'comprovantes', versao: '1.3.0', colecoes: [COL],
     pontos: {
       'lancamentos.topo': function () {
         var n = API.abertos().length; if (!n) return '';

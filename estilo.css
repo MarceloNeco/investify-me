@@ -2776,3 +2776,10 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .proj-tbl .proj-grupo th, .proj-tbl .proj-grupo td{background:var(--card2); font-weight:700; font-size:1.02em}
 .proj-g{font:inherit; font-weight:700; font-size:1.02em; color:var(--txt); text-decoration:none}
 .fc-tbl tbody th{text-transform:none; letter-spacing:0; font-size:.92rem; color:var(--txt); font-weight:500}
+
+/* 3.119: consumo de luz e gás no detalhe do lançamento e na linha da categoria (modulos/consumo.js) */
+.cs-hist{display:flex; align-items:flex-end; gap:4px; margin-top:6px; height:58px}
+.cs-col{display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:2px; flex:1 1 0; min-width:14px}
+.cs-col i{display:block; width:100%; max-width:18px; background:var(--line2,var(--line)); border-radius:3px 3px 0 0}
+.cs-col.cs-atual i{background:var(--accent)}
+.cs-col small{font-size:.62rem; color:var(--txt3)}
