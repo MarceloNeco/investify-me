@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.111 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.112 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,9 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.112 — rascunho, revisar */
+  'AssistONE pequeno no canto':'AssistONE pequeño en la esquina',
+  '🔎 Parado, o AssistONE voltou a ficar pequeno, no canto da tela, sem tampar o que está atrás. Ao tocar nele, ele cresce e vira de frente.':'🔎 En reposo, AssistONE vuelve a ser pequeño, en la esquina de la pantalla, sin tapar lo que hay detrás. Al tocarlo, crece y se gira hacia ti.',
   /* 3.111 — rascunho, revisar */
   'Conversa nova com o AssistONE':'Conversación nueva con AssistONE',
   '💬 "Perguntar ao assistente" ganhou a conversa do visual novo: sua pergunta e a resposta aparecem como numa conversa, com as perguntas dos últimos 7 dias. Enquanto ele responde, aparecem três pontinhos.':'💬 "Preguntar al asistente" tiene la conversación del aspecto nuevo: tu pregunta y la respuesta aparecen como en un chat, junto con tus preguntas de los últimos 7 días. Mientras responde, aparecen tres puntos.',

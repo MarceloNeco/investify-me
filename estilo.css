@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.110 · 26/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.112 · 26/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2197,8 +2197,9 @@ html[data-theme="light"] .topbar{background:color-mix(in srgb, #fff 88%, transpa
 }
 
 /* ---- AssistONE: o personagem no canto (3.110: personagem e menu vêm de assistone/assistone-visual.css, o master) ----
-   Aqui fica só onde ele mora no MoneyTRIO. 26 px de folga em volta: ao abrir ele cresce 1,4× (ESPECIFICACAO.md 5.1). */
-.assistone{position:fixed; right:26px; bottom:calc(26px + env(safe-area-inset-bottom)); z-index:95}
+   Aqui fica só onde ele mora no MoneyTRIO. 3.112 (pedido do dono): fechado ele é pequeno e fica no canto, no lugar do "?"
+   de antes; ao abrir, o master afasta ele da borda para crescer (ESPECIFICACAO.md 5.1). */
+.assistone{position:fixed; right:12px; bottom:calc(16px + env(safe-area-inset-bottom)); z-index:95}
 .assistone.desligado{display:none}
 /* aberto, o menu fica acima do selo da nuvem (9990) e da pílula do Fundo; abaixo do passeio (9995) e das telas da nuvem */
 .assistone.aov-aberto{z-index:9991}
@@ -2222,8 +2223,8 @@ body:has(.sidenav.open) .assistone, body:has(.popup-an) .assistone{display:none}
 .aone-pe button{background:none; border:0; color:var(--txt3); font:inherit; font-size:.76rem; cursor:pointer; padding:8px 0; min-height:32px}
 .aone-pe button:hover{color:var(--txt)}
 @media (max-width:760px){
-  .assistone{right:26px; bottom:calc(76px + env(safe-area-inset-bottom))}
-  .content{padding-bottom:250px}   /* 3.110: o personagem novo é maior; dá para rolar o fim da tela para cima dele */
+  .assistone{right:12px; bottom:calc(76px + env(safe-area-inset-bottom))}
+  .content{padding-bottom:150px}
 }
 @media (min-width:761px){ #toasts{bottom:96px} }
 

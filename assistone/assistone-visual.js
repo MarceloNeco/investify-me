@@ -1,5 +1,5 @@
 /* =====================================================================
-   assistone-visual.js — o visual novo do AssistONE (personagem + painel)       1.1.0 · 26/Nov/2026
+   assistone-visual.js — o visual novo do AssistONE (personagem + painel)       1.1.1 · 26/Nov/2026
    MASTER no repositório privado MarceloNeco/assist-one (balao/visual/). Nos apps, a pasta
    assistone/ é uma CÓPIA IDÊNTICA: nunca editar a cópia; mudar aqui, testar e copiar.
    Desenho aprovado pelo dono (Claude Design, 26/Nov/2026, decisões D-A15 e de 26/11):
@@ -428,7 +428,10 @@
       /* mede a CASA (não se mexe) e o tamanho do painel (não o retângulo: no começo ele ainda está deslizando para entrar) */
       var r = casa.getBoundingClientRect(), W = global.innerWidth, H = global.innerHeight, nx = 0, ny = 0;
       if (computador()) { var esq = W - painel.offsetWidth; if (r.right > esq - 42) nx = -(r.right - (esq - 42)); }   // 42 = folga de 16 + o quanto ele cresce (1,4×)
-      else { var topo = H - painel.offsetHeight; if (r.bottom > topo - 4) ny = -(r.bottom - (topo - 4)); }
+      else {
+        var topo = H - painel.offsetHeight; if (r.bottom > topo - 4) ny = -(r.bottom - (topo - 4));
+        if (r.right > W - 26) nx = -(r.right - (W - 26));   // 1.1.1: no canto (fechado) ele fica colado; aberto, precisa de 26 px para crescer 1,4×
+      }
       /* folha alta (a conversa): não cabe em cima dela; o personagem sai de cena e fica só o pequeno, no cabeçalho */
       var semLugar = !computador() && r.top + ny < 8;
       raizAo.classList.toggle('aov-sem-lugar', semLugar);
@@ -499,5 +502,5 @@
     };
   }
 
-  global.AssistOneVisual = { VERSAO: '1.1.0', montar: montar, TEXTOS: TX, icone: icone };
+  global.AssistOneVisual = { VERSAO: '1.1.1', montar: montar, TEXTOS: TX, icone: icone };
 })(window);
