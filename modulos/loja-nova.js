@@ -63,7 +63,7 @@
         var l = API.lojas(); if (!l.length) return [];
         return [{ id: 'confirmar', n: l.length, html: l.map(function (x) {
           var g = ultimo(x);
-          return '<li class="inb-item"><div><b>🏪 ' + esc(tr('Loja nova: ', 'New store: ') + x.rotulo + tr('. O que é?', '. What is it?')) + '</b><span class="t-sub">' + esc(x.itens.length + tr(' lançamento(s) · o último ', ' entr(ies) · the last ') + fmt(g.valor) + ' · ' + I18n.data(g.data)) + '</span></div>' +
+          return '<li class="inb-item"><div><b>🏪 ' + esc(tr('Loja nova: ', 'New store: ') + x.rotulo + tr('. O que é?', '. What is it?')) + '</b>' + (window.Origem && Origem.detalhe ? Origem.detalhe(x) : '<span class="t-sub">' + esc(x.itens.length + tr(' lançamento(s) · o último ', ' entr(ies) · the last ') + fmt(g.valor) + ' · ' + I18n.data(g.data)) + '</span>') + '</div>' +   /* 3.107: total, período, último, a lista */
             '<span class="inb-acoes"><button class="btn sm primary" data-acao="ln-abrir" data-k="' + esc(x.chave) + '">' + esc(tr('Responder', 'Answer')) + '</button></span></li>';
         }).join('') }];
       }

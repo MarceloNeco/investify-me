@@ -123,7 +123,7 @@
   function fraseCobrar(x) {
     return x.quem + tr(' ainda não estornou ', ' has not refunded ') + fmt(API.restante(x)) + tr(' (pedido em ', ' (asked on ') + I18n.data(x.pedidoEm) + '). ' + tr('Cobrar de novo?', 'Chase it again?');
   }
-  function fraseCaiu(n) { return tr('Caiu o estorno de ', 'Refund from ') + n.x.quem + tr(': ', ' arrived: ') + fmt(n.valor); }
+  function fraseCaiu(n) { return tr('Caiu o estorno de ', 'Refund from ') + n.x.quem + tr(': ', ' arrived: ') + fmt(n.valor) + (n.data ? tr(' em ', ' on ') + I18n.data(n.data) : ''); }   /* 3.107: com a data */
   function botoesCobrar(x) {
     return '<button class="btn sm primary" data-acao="ar-recebi" data-id="' + esc(x.id) + '">✓ ' + esc(tr('Já recebi', 'Received')) + '</button>' +
       '<button class="btn sm" data-acao="ar-cobrei" data-id="' + esc(x.id) + '">' + esc(tr('Cobrei de novo (+30 dias)', 'Chased again (+30 days)')) + '</button>' +
@@ -132,7 +132,7 @@
   /* os avisos "caiu": guardados até "ok, entendi" */
   function caidos() {
     var vistos = cfg().inboxVistos || {}, out = [];
-    lista().forEach(function (x) { (x.recebidos || []).forEach(function (r) { if (r.gid && !r.manual) { var k = 'ar|' + x.id + '|' + r.gid; if (!vistos[k]) out.push({ x: x, valor: r.valor, k: k }); } }); });
+    lista().forEach(function (x) { (x.recebidos || []).forEach(function (r) { if (r.gid && !r.manual) { var k = 'ar|' + x.id + '|' + r.gid; if (!vistos[k]) out.push({ x: x, valor: r.valor, data: r.data, k: k }); } }); });
     return out;
   }
 
