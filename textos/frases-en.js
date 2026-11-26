@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.122 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.123 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.123 */
+  'Notas de serviço de saúde e educação':'Health and education service invoices',
+  '🧾 A nota fiscal de serviço que o robô traz agora vale também para educação: liga à mensalidade e marca o IR. O aluno ou paciente vira o "para quem", com o serviço e a categoria sugerida. A despesa escolar extra (período ampliado, alimentação) liga, mas não entra na dedução.':'🧾 The service invoice the robot brings now also works for education: it links to the tuition and marks it for taxes. The student or patient becomes the "for whom", with the service and the suggested category. Extra school costs (extended day, meals) link but are not deducted.',
   /* 3.122 */
   'Conferência da fatura do cartão':'Card bill check',
   '💳 A fatura do cartão que o robô lê mostra a conferência: quantos lançamentos casaram com o banco, o que está só na fatura e só no banco, os encargos (juros, multa, IOF), o limite usado, as próximas faturas e os avisos do robô.':'💳 The card bill the robot reads shows the check: how many entries matched the bank, what is only on the bill or only at the bank, the charges (interest, late fee, IOF), credit used, the next bills and the robot\'s notes.',

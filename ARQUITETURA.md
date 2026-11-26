@@ -767,6 +767,9 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.123 — Notas de serviço de saúde e educação.** comprovantes: `notaDe`/`educacao`/`aplicarNota` — a NFS-e vale para educação além de
+  saúde (`irpf_candidata`), beneficiário vira o "para quem", serviço, data do serviço, categoria sugerida e desconto já aplicado; despesa
+  escolar extra liga sem dedução; `ligarNota` prefere o mesmo valor e depois a data mais perto. Teste: `teste-nfse.js` (novo).
   **3.122 — Conferência da fatura do cartão.** Novo `modulos/fatura-conferencia.js` 1.0.0 (`FaturaConf`: de/resumo/bloco): a `ficha` da
   fatura (lançamentos casados, só na fatura, só no banco, encargos, limite, próximas, avisos) na linha do 📥 dos comprovantes e no
   pagamento (`lancamento.form`). Teste: `teste-fatura-conferencia.js` (novo).

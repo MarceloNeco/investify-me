@@ -113,6 +113,7 @@ Lista viva (diretriz "Lista de pendências do app"). Mais nova em cima. Situaç�
 | N105 | **3.120 — Consumo de luz e gás dentro da categoria** (dono, pelo chat principal, item F, 26/Nov/2026). Feito: o consumo no lançamento e na linha da categoria; conta fora do débito automático nunca mostra "não pague". | dono · chat principal | ✅ 3.120 |
 | N106 | **3.121 — Consórcio por dentro** (dono, pelo chat principal, item G). Feito: a cota na parcela e na conta fixa, todos os consórcios com filtro e as parcelas. | dono · chat principal | ✅ 3.121 |
 | N107 | **3.122 — Conferência da fatura do cartão** (dono, pelo chat principal, item H). Feito: a conferência que o robô manda no 📥 e no pagamento da fatura. | dono · chat principal | ✅ 3.122 |
+| N108 | **3.123 — NFS-e de saúde e educação** (dono, pelo chat principal, item I). Feito: educação, para quem, serviço, categoria sugerida, desconto já aplicado, despesa escolar extra sem dedução. | dono · chat principal | ✅ 3.123 |
 
 ## Segurança do repositório (06/Nov/2026)
 - Dados pessoais que tinham ido para testes e documentos (nome da filha, escola, saldos e empregadores do FGTS,
