@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/assist-hermes.js — "💬 Perguntar ao assistente" no AssistONE            1.1.0 · 26/Nov/2026 (3.111)
+   modulos/assist-hermes.js — "💬 Perguntar ao assistente" no AssistONE            1.1.1 · 26/Nov/2026 (3.113)
    ---------------------------------------------------------------------
    PILOTO da IA da plataforma no AssistONE (só o MoneyTRIO, só quem está logado na nuvem).
    Como funciona: a pergunta (com o nome da tela onde a pessoa está) vai para a fila assist_perguntas no Supabase
@@ -25,14 +25,22 @@
   /* o item só aparece quando a conta está logada e o assist_config deste app está ligado */
   function conferir() {
     var n = nuvem();
-    if (!n || !n.logado()) { disponivel = false; return Promise.resolve(false); }
+    if (!n || !n.logado()) { disponivel = false; conferidoEm = 0; return Promise.resolve(false); }   /* sem login: confere assim que entrar */
     if (conferindo) return conferindo;
+    var antes = disponivel;
     conferindo = n.disponivel().then(function (v) { disponivel = v === true; }, function () { disponivel = false; })
-      .then(function () { conferidoEm = Date.now(); conferindo = null; return disponivel; });
+      .then(function () {
+        conferidoEm = Date.now(); conferindo = null;
+        /* 1.1.1 (3.113): a resposta mudou com o menu aberto → o menu se redesenha, venha de onde vier a abertura
+           (desde a 3.110 o toque no personagem abre o menu sem passar por AssistOne.abrir, e o item não aparecia) */
+        if (disponivel !== antes && typeof AssistOne !== 'undefined' && AssistOne.aberto && AssistOne.vis && AssistOne.vis.vista() === 'menu') AssistOne.vis.menu();
+        return disponivel;
+      });
     return conferindo;
   }
+  /* o menu pergunta isto a cada desenho: com o item liberado, confere de novo a cada 5 min; sem ele, a cada 30 s */
   function estaDisponivel() {
-    if (Date.now() - conferidoEm > 5 * 60000) conferir();
+    if (Date.now() - conferidoEm > (disponivel ? 5 * 60000 : 30000)) conferir();
     return disponivel && !!(nuvem() && nuvem().logado());
   }
 
@@ -95,31 +103,9 @@
     });
   }
 
-  /* 1.0.1 (3.109): na 1ª abertura do balão o item não aparecia. A conferência é assíncrona (pergunta ao banco) e só rodava
-     3, 15 e 45 s depois de carregar; se a conta ainda estava entrando, ou o balão abria antes da resposta, o menu saía sem
-     o item e só ganhava o item na próxima abertura. Agora: toda abertura do balão confere (sem repetir à toa: com o item
-     já liberado, a cada 5 min; sem ele, a cada 30 s) e, quando a resposta chega com o balão ainda aberto no menu, o menu
-     se redesenha sozinho com o item. */
-  var ultimoModo = 'tela';
-  function ganchar() {
-    if (typeof AssistOne === 'undefined' || AssistOne.__ah) return;
-    var original = AssistOne.abrir.bind(AssistOne);
-    AssistOne.abrir = function (modo) {
-      ultimoModo = modo || 'tela';
-      original(modo);
-      var velho = Date.now() - conferidoEm > (disponivel ? 5 * 60000 : 30000);
-      if (!AssistOne.aberto || (disponivel && !velho) || (!disponivel && conferidoEm && !velho)) return;
-      var antes = disponivel;
-      conferir().then(function (v) {
-        /* redesenha só se o item passou a valer e o balão continua aberto no menu (não na caixinha da pergunta) */
-        if (v && !antes && AssistOne.aberto && AssistOne.vis && AssistOne.vis.vista() === 'menu') original(ultimoModo);
-      });
-    };
-    AssistOne.__ah = 1;
-  }
-
+  /* 1.0.1 (3.109) embrulhava AssistOne.abrir para conferir e redesenhar; 1.1.1 (3.113): isso mora no conferir() e no
+     estaDisponivel() acima, que o menu chama a cada desenho, seja qual for o jeito de abrir. */
   window.AssistHermes = { disponivel: estaDisponivel, conferir: conferir, abrir: abrir };
-  ganchar();
   /* a nuvem entra depois do carregamento: confere algumas vezes no começo */
   [3000, 15000, 45000].forEach(function (ms) { setTimeout(conferir, ms); });
 })();

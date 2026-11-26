@@ -36,6 +36,12 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos: [], r
     const depois = await p.evaluate(() => ({ aberto: AssistOne.aberto, ops: [...document.querySelectorAll('#assistBalao [data-aov]')].map((b) => b.dataset.aov) }));
     ok(!primeira.includes('perguntar') && depois.aberto && depois.ops.includes('perguntar'), 'sem tocar em nada, "Perguntar ao assistente" entra no menu aberto quando a conferência chega');
     await p.evaluate(() => AssistOne.fechar());
+    console.log('0b) 3.113: aberto pelo TOQUE no personagem (não por AssistOne.abrir), com a conta entrando depois do carregamento');
+    await p.evaluate(() => { window.__log = false; MoneyNuvem.assist = { logado: () => window.__log, disponivel: () => new Promise((r) => setTimeout(() => r(true), 300)) }; return AssistHermes.conferir(); });
+    await p.evaluate(() => { window.__log = true; });
+    await p.click('#assistOne .ao-btn'); await p.waitForTimeout(900);
+    ok((await p.$$eval('#assistBalao [data-aov]', (l) => l.map((e) => e.dataset.aov))).includes('perguntar'), 'tocando no personagem, "Perguntar ao assistente" entra no menu aberto quando a conferência chega');
+    await p.evaluate(() => AssistOne.fechar()); await p.waitForTimeout(200);
     await p.evaluate(() => { I18n.atual = 'pt'; Assist.marcarTutorial(); ST.config.assistOne = false; AssistOne.aplicar(); abrirApp('budget'); irPara('b-painel'); render(); });
     const abrirMenu = () => p.evaluate(() => { ST.config.assistOne = true; AssistOne.aplicar(); AssistOne.abrir('tela');
       return [...document.querySelectorAll('#assistBalao [data-aov]')].map((b) => b.dataset.aov); });
