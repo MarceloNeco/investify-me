@@ -158,15 +158,23 @@
           var chave = k + '|' + tipo + '|' + Math.round(Math.log(media) / Math.log(1.3)) + '|' + Math.round(c.dia / 10);
           if (recus[chave]) return;
           /* já tem conta fixa parecida? */
+          /* 3.123 (dono: a escola de 2026 não estava cadastrada, só a de 2027): a conta fixa parecida só conta se cobre o mês dos pagamentos;
+             a de outro período não esconde a sugestão (e a sugestão diz que existe a outra) */
+          var mesUlt = String(ult.data || '').slice(0, 7), outro = null;
           var ja = (typeof Recorrente !== 'undefined' ? Recorrente.ativos() : []).some(function (r) {
             var v = Number(r.valor) || 0; if (!(v > 0) || Math.abs(v - media) > media * 0.15) return false;
             if (tipo === 'mensal' && r.regra !== 'anual' && Math.abs((Number(r.dia) || 0) - c.dia) > 5) return false;
-            return r.grupo === g0.grupo || Origem.chaveDesc(r.nome).split(' ').some(function (w) { return w.length > 3 && Origem.chaveDesc(g0.desc).indexOf(w) >= 0; });
+            var parecida = r.grupo === g0.grupo || Origem.chaveDesc(r.nome).split(' ').some(function (w) { return w.length > 3 && Origem.chaveDesc(g0.desc).indexOf(w) >= 0; });
+            if (!parecida) return false;
+            var cobre = (!r.desde || String(r.desde).slice(0, 7) <= mesUlt) && (!r.ate || String(r.ate).slice(0, 7) >= mesUlt);
+            if (!cobre) { outro = outro || r; return false; }
+            return true;
           });
           if (ja) return;
           out.push({ chave: chave, tipo: tipo, nome: window.Apelido ? Apelido.texto(g0) : (g0.desc || ''), valor: media, dia: c.dia, mes: c.mes || 0,
             grupo: g0.grupo, sub: g0.sub, n: c.itens.length, origem: k, ultimo: n2(ult.valor), quem: ult.quem || '',
             total: n2(c.itens.reduce(function (s, g) { return s + (Number(g.valor) || 0); }, 0)), de: c.itens.map(function (g) { return g.data; }).sort()[0], ate: ult.data,   /* 3.116 */
+            outro: outro ? { nome: outro.nome, de: String(outro.desde || '').slice(0, 7), ate: String(outro.ate || '').slice(0, 7) } : null,   /* 3.123 */
             diaMin: Math.min.apply(null, c.itens.map(function (g) { return +g.data.slice(8, 10); })), diaMax: Math.max.apply(null, c.itens.map(function (g) { return +g.data.slice(8, 10); })),
             pj: !casa() && (IMPOSTO.test(textoG(ult)) || !!empresaDe(ult)), empresaId: (empresaDe(ult) || {}).id || '',
             pjTipo: /\bdas\b/i.test(ult.desc || ult.descRobo || '') ? 'das' : /\bdarf\b|receita fed/i.test(ult.desc || ult.descRobo || '') ? 'darf' : '' });
@@ -225,6 +233,7 @@
     return s.map(function (x) {
       var quando = x.tipo === 'anual' ? tr('todo ano em ', 'every year in ') + new Date(2026, x.mes - 1, 15).toLocaleDateString(I18n.locale(), { month: 'long' }) : tr('todo dia ~', 'every month on day ~') + x.dia;
       return '<div class="cfs-item"><p class="small" style="margin:0 0 6px">📌 ' + esc((x.pj ? tr('Parece imposto ou custo da empresa: ', 'Looks like a company tax or cost: ') : tr('Parece conta fixa: ', 'Looks like a fixed bill: ')) + x.nome + ' · ~' + fmt(x.valor) + ' · ' + quando + '.') + '</p>' +
+        (x.outro ? '<p class="small" style="margin:-4px 0 6px">⚠️ ' + esc(tr('Já existe a conta fixa "', 'There is already the fixed bill "', 'Ya existe la cuenta fija "') + x.outro.nome + '"' + (x.outro.de || x.outro.ate ? ' (' + [x.outro.de ? tr('de ', 'from ', 'de ') + x.outro.de.slice(5) + '/' + x.outro.de.slice(0, 4) : '', x.outro.ate ? tr('até ', 'to ', 'hasta ') + x.outro.ate.slice(5) + '/' + x.outro.ate.slice(0, 4) : ''].filter(Boolean).join(' ') + ')' : '') + tr(', mas ela não cobre estes pagamentos. Cadastrar esta também?', ', but it does not cover these payments. Add this one too?', ', pero no cubre estos pagos. ¿Registrar esta también?')) + '</p>' : '') +   /* 3.123 */
         (x.de ? '<p class="small muted" style="margin:-4px 0 6px">' + esc(x.n + tr(' pagamentos · ', ' payments · ', ' pagos · ') + fmt(x.total) + tr(' · de ', ' · from ', ' · del ') + dm(x.de) + tr(' a ', ' to ', ' al ') + dm(x.ate) + tr(' · último ', ' · last ', ' · último ') + fmt(x.ultimo)) + '</p>' : '') +   /* 3.116 */
         '<button type="button" class="btn sm primary" data-acao="cfs-revisar" data-chave="' + esc(x.chave) + '">' + esc(tr('Revisar', 'Review')) + '</button> ' +
         '<button type="button" class="btn sm" data-acao="cfs-nao" data-chave="' + esc(x.chave) + '">' + esc(tr('Não acompanhar', 'Do not track')) + '</button></div>';
