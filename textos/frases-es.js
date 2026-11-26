@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.108 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.109 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,9 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.109 — rascunho, revisar */
+  'Perguntar ao assistente desde a primeira abertura':'Preguntar al asistente desde la primera apertura',
+  '💬 "Perguntar ao assistente" aparece já na primeira vez que você abre o AssistONE. Antes, logo depois de entrar no app, o item às vezes só aparecia na segunda abertura.':'💬 «Preguntar al asistente» aparece ya la primera vez que abres AssistONE. Antes, justo después de entrar en la app, la opción a veces solo salía la segunda vez.',
   /* 3.108 — rascunho, revisar */
   'Tour rápido de acordo com a tela':'Visita rápida según la pantalla',
   '🧭 O "Tour rápido" agora mostra só o que está na tela em que você está. No Início: o BudgetONE, o InvestifyONE e o FiscalONE, como ir e voltar entre eles, a sua conta e o AssistONE. Dentro de cada um: o menu, a troca de módulo pelo nome no topo e as telas daquele módulo. Todo passo escurece o fundo e destaca a peça de que está falando.':'🧭 La "Visita rápida" ahora muestra solo lo que hay en la pantalla en la que estás. En Inicio: BudgetONE, InvestifyONE y FiscalONE, cómo ir y volver entre ellos, tu cuenta y AssistONE. Dentro de cada uno: el menú, el cambio de módulo desde el nombre de arriba y las pantallas de ese módulo. Cada paso oscurece el fondo y resalta la parte de la que habla.',
