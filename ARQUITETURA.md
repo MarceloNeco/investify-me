@@ -1225,7 +1225,11 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   espelho); com algum total, o %; sem total, indeterminada; só aparece depois de 400 ms; some com fade; respeita reduzir movimento.
   **Passeio** (`modulos/tour.js`, `Assist.abrir('tutorial')`): spotlight (sombra recortando o alvo), balão que se move (transition em
   left/top) com seta, alvo por lista de seletores em ordem (computador: `#navLista`; celular: `#btnMenu`), fora da tela rola até ele,
-  teclado (→ ← Esc), foco preso, sem alvo → balão no meio; `html:has(.tour)` trava o fundo. **Calendário do menu**: animação de altura
+  teclado (→ ← Esc), foco preso, sem alvo → balão no meio; `html:has(.tour)` trava o fundo. **1.1.0 (3.108): um passeio por tela**
+  (`TOURS.inicio` quando `#hubTela` está aberto: os três cartões `.hub-card[data-app]`, `.hub-topo` "ir e voltar", `#nvSelo`, AssistONE;
+  `TOURS.app` dentro de um módulo: menu, `#btnMarca`, e os passos com `app:'budget'` só no BudgetONE); o passo cuja peça não está à vista
+  é pulado ao começar (`montarLista`), e o balão no meio fica só para peça que some no meio do passeio; `Tour.atual()` diz o passeio
+  aberto, `Tour.PASSOS` junta todos os textos (testes de nome e tradução). **Calendário do menu**: animação de altura
   (Web Animations, 220 ms) e o chevron gira; `pedirLateral()` no fim. **Lançamentos**: `.desc-txt` com line-clamp 2 e o texto no title.
   **Cartões** (`modulos/cartoes.js`): o cartão é a conta (fatura) com `finais [{fim, tipo, titular}]`, `contaId` (conta_cartao da
   Pluggy), `titular`, `usa` ("Quem usa"); final novo da mesma conta entra como virtual (novo); sem conta pergunta uma vez

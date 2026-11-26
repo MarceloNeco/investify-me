@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.107 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.108 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,9 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.108 — rascunho, revisar */
+  'Tour rápido de acordo com a tela':'Visita rápida según la pantalla',
+  '🧭 O "Tour rápido" agora mostra só o que está na tela em que você está. No Início: o BudgetONE, o InvestifyONE e o FiscalONE, como ir e voltar entre eles, a sua conta e o AssistONE. Dentro de cada um: o menu, a troca de módulo pelo nome no topo e as telas daquele módulo. Todo passo escurece o fundo e destaca a peça de que está falando.':'🧭 La "Visita rápida" ahora muestra solo lo que hay en la pantalla en la que estás. En Inicio: BudgetONE, InvestifyONE y FiscalONE, cómo ir y volver entre ellos, tu cuenta y AssistONE. Dentro de cada uno: el menú, el cambio de módulo desde el nombre de arriba y las pantallas de ese módulo. Cada paso oscurece el fondo y resalta la parte de la que habla.',
   /* 3.107 — rascunho, revisar */
   'Pergunte ao AssistONE (piloto)':'Pregunta al AssistONE (piloto)',
   '💬 Novo no AssistONE: "Perguntar ao assistente". Escreva a dúvida e o assistente da SolverONE responde em poucos segundos, pelas dicas e manuais do app; quando ainda não sabe, ele diz e sugere abrir um chamado. Aparece só com a conta logada. Não escreva valores, contas, senhas nem dados pessoais.':'💬 Nuevo en AssistONE: «Preguntar al asistente». Escribe tu duda y el asistente de SolverONE responde en pocos segundos, a partir de los consejos y manuales de la app; cuando aún no lo sabe, lo dice y sugiere abrir un ticket. Solo aparece con la cuenta iniciada. No escribas importes, cuentas, contraseñas ni datos personales.',
