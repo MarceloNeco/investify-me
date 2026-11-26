@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.107 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.108 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.108 */
+  'Tour rápido de acordo com a tela':'Quick tour that fits the screen',
+  '🧭 O "Tour rápido" agora mostra só o que está na tela em que você está. No Início: o BudgetONE, o InvestifyONE e o FiscalONE, como ir e voltar entre eles, a sua conta e o AssistONE. Dentro de cada um: o menu, a troca de módulo pelo nome no topo e as telas daquele módulo. Todo passo escurece o fundo e destaca a peça de que está falando.':'🧭 The "Quick tour" now shows only what is on the screen you are on. On Home: BudgetONE, InvestifyONE and FiscalONE, how to go back and forth between them, your account and AssistONE. Inside each one: the menu, switching modules from the name at the top and that module\'s screens. Every step dims the background and highlights the part it is talking about.',
   /* 3.107 */
   'Pergunte ao AssistONE (piloto)':'Ask AssistONE (pilot)',
   '💬 Novo no AssistONE: "Perguntar ao assistente". Escreva a dúvida e o assistente da SolverONE responde em poucos segundos, pelas dicas e manuais do app; quando ainda não sabe, ele diz e sugere abrir um chamado. Aparece só com a conta logada. Não escreva valores, contas, senhas nem dados pessoais.':'💬 New in AssistONE: "Ask the assistant". Type your question and the SolverONE assistant answers in a few seconds, from the app tips and manuals; when it does not know yet, it says so and suggests opening a ticket. Shows only when you are signed in. Do not type amounts, accounts, passwords or personal data.',

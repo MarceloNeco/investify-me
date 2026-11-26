@@ -1,17 +1,18 @@
 /* =====================================================================
-   modulos/tour.js — o passeio de verdade, com spotlight (3.65)        1.0.2 · 13/Nov/2026
+   modulos/tour.js — o passeio de verdade, com spotlight (3.65)        1.1.0 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      O tutorial deixou de ser uma janela no meio da tela. Cada passo leva o balão até o elemento de verdade:
      escurece o resto, recorta o alvo e põe uma seta apontando para ele. O balão se MOVE de um alvo para o outro
      com animação; alvo fora da tela → rola até ele; no celular, o balão fica acima ou abaixo do alvo, sem cobrir.
      Teclado: → próximo, ← anterior, Esc pula; o foco fica preso no balão. Botões Pular, Anterior e Próximo.
-     Alvo que não existe (ou está escondido) → só naquele passo, o balão centralizado. "Reduzir movimento": sem
-     animação. Enquanto o passeio está aberto, a tela de trás não rola (html:has(.tour), estilo.css).
-   PASSOS (os 5 de antes, apontando para os lugares certos)
-     menu · Painel · Lançamentos · nuvem/perfil · AssistONE
+     Passo sem a peça à vista é pulado ao começar (1.1.0); se a peça sumir no meio do passeio, o balão fica no meio só
+     naquele passo. "Reduzir movimento": sem animação. Enquanto o passeio está aberto, a tela de trás não rola (html:has(.tour), estilo.css).
+   PASSEIOS (1.1.0: um por tela; passo sem a peça à vista é pulado ao começar)
+     Início: BudgetONE · InvestifyONE · FiscalONE · ir e voltar · conta · AssistONE
+     Módulo: menu · trocar de módulo · (só no BudgetONE: Painel · Lançamentos · Contas fixas) · conta · AssistONE
    API (window.Tour)
-     iniciar(passo?) · ir(i) · proximo() · anterior() · fechar(fim) · aberto() · PASSOS
+     iniciar(passo?) · ir(i) · proximo() · anterior() · fechar(fim) · aberto() · atual() · TOURS · PASSOS (todos os textos)
    PONTOS QUE USA
      Assist.abrir('tutorial') (index.html) chama Tour.iniciar(); Assist.marcarTutorial() no fim ou ao pular
    ===================================================================== */
@@ -31,26 +32,71 @@
   }
   function calmo() { return (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) || document.documentElement.classList.contains('sem-animacao'); }
 
-  var PASSOS = [
-    { alvo: ['#sidenav #navLista', '#btnMenu'], ico: '☰',
-      pt: { t: 'O menu', x: 'Três apps num lugar só: BudgetONE para o dia a dia, InvestifyONE para os investimentos e FiscalONE para o imposto. Pelo menu você chega a todas as telas; no celular, ele abre no ☰.' },
-      en: { t: 'The menu', x: 'Three apps in one place: BudgetONE for day-to-day money, InvestifyONE for investments and FiscalONE for tax. The menu takes you to every screen; on a phone it opens from ☰.' } },
-    { alvo: ['#sidenav .nav-item[data-view$="painel"]', '.tabbar .tab[data-view$="painel"]', '.kpis'], ico: '📊',
-      pt: { t: 'O Painel', x: 'O resumo: o que entrou, o que saiu, quanto sobrou e os indicadores do mês. Todo número com ⓘ tem explicação, no nível que você escolher.' },
-      en: { t: 'The Dashboard', x: 'The summary: what came in, what went out, what was left and this month\'s indicators. Every number with an ⓘ has an explanation, at the level you choose.' } },
-    { alvo: ['#sidenav .nav-item[data-view="b-lanc"]', '.tabbar .tab[data-view="b-lanc"]', '#sidenav .nav-item[data-view="movimentos"]', '.tabbar .tab[data-view="movimentos"]'], ico: '🧾',
-      pt: { t: 'Lançamentos', x: 'Cada gasto e cada entrada. Importe o extrato, escaneie a nota ou lance à mão; o robô do banco também lança aqui.' },
-      en: { t: 'Entries', x: 'Every expense and every income. Import the statement, scan the receipt or type it in; the bank robot adds entries here too.' } },
-    { alvo: ['#sidenav .nav-item[data-view="b-custos"]', '.tabbar .tab[data-view="b-custos"]', '#sidenav #navLista', '#btnMenu'], ico: '📌',   /* 3.74 */
-      pt: { t: 'Contas fixas', x: 'As contas fixas e os gastos que se repetem (aluguel, escola, assinaturas), com o dia de cada uma e o aviso antes de vencer. No BudgetONE, fica no menu como "Contas fixas".' },
-      en: { t: 'Fixed bills', x: 'Fixed bills and recurring expenses (rent, school, subscriptions), with each one\'s day and a reminder before it is due. In BudgetONE it is in the menu as "Fixed bills".' } },
-    { alvo: ['#btnPerfil', '#nvSelo'], ico: '☁️',
-      pt: { t: 'Sua conta e a nuvem', x: 'Aqui ficam a sua conta, a nuvem (tudo fechado com a chave da família) e as Configurações. Seus dados são seus.' },
-      en: { t: 'Your account and the cloud', x: 'Your account, the cloud (everything sealed with the family key) and Settings live here. Your data is yours.' } },
-    { alvo: ['#assistOne'], ico: '💡',
-      pt: { t: 'O AssistONE', x: 'Na dúvida, toque no AssistONE: ele explica a tela em que você está e refaz este passeio quando você quiser.' },
-      en: { t: 'AssistONE', x: 'When in doubt, tap AssistONE: it explains the screen you are on and runs this tour again whenever you like.' } }
-  ];
+  /* 1.1.0 (3.108, pedido do dono, 26/Nov/2026): UM PASSEIO POR TELA. Antes era a mesma lista de 6 passos em todo lugar,
+     e na tela Início (onde não existem menu, Painel nem Lançamentos) o balão ficava solto no meio, sem escurecer nada.
+     Agora: Início → os três cartões, como ir e voltar entre eles, a conta e o AssistONE; dentro de um módulo → o menu,
+     a troca de módulo pelo nome no topo e os passos daquele módulo (app: 'budget' = só no BudgetONE). Passo cuja peça
+     não está na tela é PULADO ao começar (nunca mais balão solto falando do que não existe). */
+  var TOURS = {
+    inicio: [
+      { alvo: ['.hub-card[data-app="budget"]'], ico: '🧮',
+        pt: { t: 'BudgetONE', x: 'O orçamento da casa: o que entra, o que sai e as contas que vêm pela frente. Toque no cartão para entrar.' },
+        en: { t: 'BudgetONE', x: 'The household budget: what comes in, what goes out and the bills ahead. Tap the card to open it.' } },
+      { alvo: ['.hub-card[data-app="investify"]'], ico: '📈',
+        pt: { t: 'InvestifyONE', x: 'Os investimentos, no Brasil e no exterior: quanto rendeu de verdade e para onde vai o próximo aporte.' },
+        en: { t: 'InvestifyONE', x: 'Your investments, in Brazil and abroad: what they really returned and where the next contribution goes.' } },
+      { alvo: ['.hub-card[data-app="tax"]'], ico: '🧾',
+        pt: { t: 'FiscalONE', x: 'O imposto de renda e a PJ, aproveitando o que o BudgetONE e o InvestifyONE já registraram.' },
+        en: { t: 'FiscalONE', x: 'Income tax and your company, using what BudgetONE and InvestifyONE already recorded.' } },
+      { alvo: ['.hub-topo'], ico: '🔁',
+        pt: { t: 'Ir e voltar', x: 'É o mesmo dinheiro visto de três jeitos. Lá dentro, toque no nome do app no topo (com ▾) para voltar a este Início ou trocar de módulo. Nada se perde na troca.' },
+        en: { t: 'Going back and forth', x: 'It is the same money seen three ways. Inside, tap the app name at the top (with ▾) to come back to this Home or switch modules. Nothing is lost when you switch.' } },
+      { alvo: ['#nvSelo'], ico: '👤',
+        pt: { t: 'Sua conta', x: 'Toque aqui para ver a sua conta e onde os seus dados estão guardados.' },
+        en: { t: 'Your account', x: 'Tap here to see your account and where your data is kept.' } },
+      { alvo: ['#assistOne'], ico: '💡',
+        pt: { t: 'O AssistONE', x: 'Na dúvida, toque no AssistONE: ele explica a tela em que você está e refaz este passeio quando você quiser.' },
+        en: { t: 'AssistONE', x: 'When in doubt, tap AssistONE: it explains the screen you are on and runs this tour again whenever you like.' } }
+    ],
+    app: [
+      { alvo: ['#sidenav #navLista', '#btnMenu'], ico: '☰',
+        pt: { t: 'O menu', x: 'Pelo menu você chega a todas as telas deste módulo; no celular, ele abre no ☰.' },
+        en: { t: 'The menu', x: 'The menu takes you to every screen in this module; on a phone it opens from ☰.' } },
+      { alvo: ['#btnMarca'], ico: '🔁',
+        pt: { t: 'Trocar de módulo', x: 'Toque no nome do app para voltar ao Início ou ir direto para BudgetONE, InvestifyONE ou FiscalONE.' },
+        en: { t: 'Switch modules', x: 'Tap the app name to go back to Home or jump straight to BudgetONE, InvestifyONE or FiscalONE.' } },
+      { app: 'budget', alvo: ['#sidenav .nav-item[data-view="b-painel"]', '.tabbar .tab[data-view="b-painel"]', '.kpis'], ico: '📊',
+        pt: { t: 'O Painel', x: 'O resumo: o que entrou, o que saiu, quanto sobrou e os indicadores do mês. Todo número com ⓘ tem explicação, no nível que você escolher.' },
+        en: { t: 'The Dashboard', x: 'The summary: what came in, what went out, what was left and this month\'s indicators. Every number with an ⓘ has an explanation, at the level you choose.' } },
+      { app: 'budget', alvo: ['#sidenav .nav-item[data-view="b-lanc"]', '.tabbar .tab[data-view="b-lanc"]', '#sidenav .nav-item[data-view="movimentos"]', '.tabbar .tab[data-view="movimentos"]'], ico: '🧾',
+        pt: { t: 'Lançamentos', x: 'Cada gasto e cada entrada. Importe o extrato, escaneie a nota ou lance à mão; o robô do banco também lança aqui.' },
+        en: { t: 'Entries', x: 'Every expense and every income. Import the statement, scan the receipt or type it in; the bank robot adds entries here too.' } },
+      { app: 'budget', alvo: ['#sidenav .nav-item[data-view="b-custos"]', '.tabbar .tab[data-view="b-custos"]', '#sidenav #navLista', '#btnMenu'], ico: '📌',   /* 3.74 */
+        pt: { t: 'Contas fixas', x: 'As contas fixas e os gastos que se repetem (aluguel, escola, assinaturas), com o dia de cada uma e o aviso antes de vencer. Fica no menu como "Contas fixas".' },
+        en: { t: 'Fixed bills', x: 'Fixed bills and recurring expenses (rent, school, subscriptions), with each one\'s day and a reminder before it is due. It is in the menu as "Fixed bills".' } },
+      { alvo: ['#btnPerfil', '#nvSelo'], ico: '👤',
+        pt: { t: 'Sua conta', x: 'Aqui ficam a sua conta e as Configurações.' },
+        en: { t: 'Your account', x: 'Your account and Settings live here.' } },
+      { alvo: ['#assistOne'], ico: '💡',
+        pt: { t: 'O AssistONE', x: 'Na dúvida, toque no AssistONE: ele explica a tela em que você está e refaz este passeio quando você quiser.' },
+        en: { t: 'AssistONE', x: 'When in doubt, tap AssistONE: it explains the screen you are on and runs this tour again whenever you like.' } }
+    ]
+  };
+  /* todos os textos juntos (os testes de nomes e de tradução leem Tour.PASSOS) */
+  var TODOS = TOURS.inicio.concat(TOURS.app);
+  /* qual passeio vale agora: o do Início quando ele está aberto; senão, o do módulo */
+  function qualTour() {
+    var hub = document.getElementById('hubTela');
+    return hub && !hub.classList.contains('hidden') ? 'inicio' : 'app';
+  }
+  function appAtual() { try { return (typeof ST !== 'undefined' && ST.appAtual) || 'budget'; } catch (e) { return 'budget'; } }
+  /* os passos desta tela que têm a peça à vista (os outros são pulados); se nenhum tiver, fica o último, no meio */
+  function montarLista() {
+    var tour = TOURS[qualTour()], app = appAtual();
+    var l = tour.filter(function (p) { return (!p.app || p.app === app) && !!primeiro(p.alvo); });
+    return l.length ? l : [tour[tour.length - 1]];
+  }
+  var PASSOS = [];
 
   var raiz = null, furo = null, balao = null, seta = null, passo = 0, alvoAtual = null, quadro = 0, antesFoco = null;
 
@@ -133,14 +179,19 @@
     else { seta.style.top = dir === 'cima' ? '-7px' : (bh - 7) + 'px'; seta.style.left = Math.round(Math.min(Math.max(14, r.left + r.width / 2 - left - 7), w - 28)) + 'px'; }
   }
 
+  var qual = '';
   var API = {
-    PASSOS: PASSOS,
+    PASSOS: TODOS,
+    TOURS: TOURS,
+    /* o passeio aberto agora: qual ('inicio' ou 'app') e os passos que entraram */
+    atual: function () { return { qual: qual, passos: PASSOS.slice() }; },
     aberto: function () { return !!raiz; },
     iniciar: function (i) {
       if (raiz) API.fechar(null);
       antesFoco = document.activeElement;
       if (typeof fecharPerfilMenu === 'function') fecharPerfilMenu();
       try { if (typeof AssistOne !== 'undefined' && AssistOne.fechar) AssistOne.fechar(); } catch (e) {}   /* o balão de "Olá" não fica atrás do passeio */
+      PASSOS = montarLista(); qual = qualTour();
       montar(); passo = Math.max(0, Math.min(PASSOS.length - 1, i || 0)); desenhar();
     },
     ir: function (i) { if (!raiz) return; passo = Math.max(0, Math.min(PASSOS.length - 1, i)); desenhar(); },
@@ -159,6 +210,6 @@
     }
   };
 
-  MoneyModulos.registrar({ id: 'tour', versao: '1.0.2' });
+  MoneyModulos.registrar({ id: 'tour', versao: '1.1.0' });
   window.Tour = API;
 })();

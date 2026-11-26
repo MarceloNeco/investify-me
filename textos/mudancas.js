@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.107 · 26/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.108 · 26/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.108', d:'2026-11-26', t:'Tour rápido de acordo com a tela', itens:[
+    '🧭 O "Tour rápido" agora mostra só o que está na tela em que você está. No Início: o BudgetONE, o InvestifyONE e o FiscalONE, como ir e voltar entre eles, a sua conta e o AssistONE. Dentro de cada um: o menu, a troca de módulo pelo nome no topo e as telas daquele módulo. Todo passo escurece o fundo e destaca a peça de que está falando.'
+  ]},
   {v:'3.107', d:'2026-11-26', t:'Pergunte ao AssistONE (piloto)', itens:[
     '💬 Novo no AssistONE: "Perguntar ao assistente". Escreva a dúvida e o assistente da SolverONE responde em poucos segundos, pelas dicas e manuais do app; quando ainda não sabe, ele diz e sugere abrir um chamado. Aparece só com a conta logada. Não escreva valores, contas, senhas nem dados pessoais.'
   ]},
