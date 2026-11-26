@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.123 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.124 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.124 */
+  'Conta fixa que faltava':'The missing fixed bill',
+  '📌 Um pagamento que se repete todo mês e não tem conta fixa valendo para aquele período agora é sugerido mesmo quando existe uma parecida de outro ano (ex.: a escola de 2027 cadastrada, a de 2026 não).':'📌 A payment that repeats every month and has no fixed bill for that period is now suggested even when a similar one exists for another year (e.g. the 2027 school added, the 2026 one not).',
   /* 3.123 */
   'Notas de serviço de saúde e educação':'Health and education service invoices',
   '🧾 A nota fiscal de serviço que o robô traz agora vale também para educação: liga à mensalidade e marca o IR. O aluno ou paciente vira o "para quem", com o serviço e a categoria sugerida. A despesa escolar extra (período ampliado, alimentação) liga, mas não entra na dedução.':'🧾 The service invoice the robot brings now also works for education: it links to the tuition and marks it for taxes. The student or patient becomes the "for whom", with the service and the suggested category. Extra school costs (extended day, meals) link but are not deducted.',

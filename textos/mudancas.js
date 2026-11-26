@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.123 · 26/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.124 · 26/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.124', d:'2026-11-26', t:'Conta fixa que faltava', itens:[
+    '📌 Um pagamento que se repete todo mês e não tem conta fixa valendo para aquele período agora é sugerido mesmo quando existe uma parecida de outro ano (ex.: a escola de 2027 cadastrada, a de 2026 não).'
+  ]},
   {v:'3.123', d:'2026-11-26', t:'Notas de serviço de saúde e educação', itens:[
     '🧾 A nota fiscal de serviço que o robô traz agora vale também para educação: liga à mensalidade e marca o IR. O aluno ou paciente vira o "para quem", com o serviço e a categoria sugerida. A despesa escolar extra (período ampliado, alimentação) liga, mas não entra na dedução.'
   ]},

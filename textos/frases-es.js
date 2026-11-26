@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.123 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.124 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,9 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.124 — rascunho, revisar */
+  'Conta fixa que faltava':'La cuenta fija que faltaba',
+  '📌 Um pagamento que se repete todo mês e não tem conta fixa valendo para aquele período agora é sugerido mesmo quando existe uma parecida de outro ano (ex.: a escola de 2027 cadastrada, a de 2026 não).':'📌 Un pago que se repite cada mes y no tiene cuenta fija para ese periodo ahora se sugiere aunque exista una parecida de otro año (ej.: el colegio de 2027 registrado y el de 2026 no).',
   /* 3.123 — rascunho, revisar */
   'Notas de serviço de saúde e educação':'Facturas de servicios de salud y educación',
   '🧾 A nota fiscal de serviço que o robô traz agora vale também para educação: liga à mensalidade e marca o IR. O aluno ou paciente vira o "para quem", com o serviço e a categoria sugerida. A despesa escolar extra (período ampliado, alimentação) liga, mas não entra na dedução.':'🧾 La factura de servicio que trae el robot ahora también vale para educación: se vincula a la mensualidad y marca la renta. El alumno o paciente pasa a ser el "para quién", con el servicio y la categoría sugerida. El gasto escolar extra (horario ampliado, comida) se vincula pero no se deduce.',
