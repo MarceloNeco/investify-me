@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.7 · 24/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.15.8 · 26/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -3195,6 +3195,13 @@
     },
     arquivos: Arquivos,
     ajudaPin: function () { return Portao.ajudaPin(); },   /* 3.106: o tópico "PIN da conta e aparelho novo" (AssistONE) */
+    /* 1.15.8 (3.107): AssistONE com Hermes (piloto) — fila assist_perguntas no Supabase da plataforma; modulos/assist-hermes.js */
+    assist: {
+      logado: function () { return Conta.on(); },
+      disponivel: function () { return Conta.rpc('assist_disponivel', { p_app: 'moneytrio' }); },
+      perguntar: function (tela, pergunta, idioma) { return Conta.rpc('assist_perguntar', { p_app: 'moneytrio', p_tela: tela, p_pergunta: pergunta, p_idioma: idioma }); },
+      resposta: function (id) { return Conta.rpc('assist_minha_resposta', { p_id: id }); }
+    },
     criarPinConta: function () { return Portao.criarPinConta(); },
     iniciado: false, familia: null, podeLevar: false,
     /* 3.32: o nome da pessoa no topo (no lugar de "Dono da carteira"): nome do perfil SolverONE (user_settings.display_name),

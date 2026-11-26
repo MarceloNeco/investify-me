@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.106 · 24/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.107 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.107 */
+  'Pergunte ao AssistONE (piloto)':'Ask AssistONE (pilot)',
+  '💬 Novo no AssistONE: "Perguntar ao assistente". Escreva a dúvida e o assistente da SolverONE responde em poucos segundos, pelas dicas e manuais do app; quando ainda não sabe, ele diz e sugere abrir um chamado. Aparece só com a conta logada. Não escreva valores, contas, senhas nem dados pessoais.':'💬 New in AssistONE: "Ask the assistant". Type your question and the SolverONE assistant answers in a few seconds, from the app tips and manuals; when it does not know yet, it says so and suggests opening a ticket. Shows only when you are signed in. Do not type amounts, accounts, passwords or personal data.',
   /* 3.106 */
   '👆 Os avisos rápidos saem da frente: toque, arraste para o lado ou toque no ✕. No celular eles ficam no topo, sem tampar os botões. O aviso do token da B3 aparece no máximo 1 vez por dia e fica no 📥 com "Resolver".':'👆 Quick notices get out of the way: tap, swipe sideways or tap the ✕. On the phone they sit at the top, without covering buttons. The B3 token notice shows at most once a day and stays in the 📥 with "Fix it".',
   '📲 No Android: se o app abrir dentro de outro app (WhatsApp, Gmail) ou fora do Chrome, a tela de entrada mostra "Abrir no Chrome"; depois de entrar, "Instalar na tela inicial" num toque.':'📲 On Android: if the app opens inside another app (WhatsApp, Gmail) or outside Chrome, the sign-in screen shows "Open in Chrome"; after signing in, "Install on home screen" in one tap.',

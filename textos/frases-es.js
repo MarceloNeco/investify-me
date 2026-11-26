@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.106 · 24/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.107 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,9 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.107 — rascunho, revisar */
+  'Pergunte ao AssistONE (piloto)':'Pregunta al AssistONE (piloto)',
+  '💬 Novo no AssistONE: "Perguntar ao assistente". Escreva a dúvida e o assistente da SolverONE responde em poucos segundos, pelas dicas e manuais do app; quando ainda não sabe, ele diz e sugere abrir um chamado. Aparece só com a conta logada. Não escreva valores, contas, senhas nem dados pessoais.':'💬 Nuevo en AssistONE: «Preguntar al asistente». Escribe tu duda y el asistente de SolverONE responde en pocos segundos, a partir de los consejos y manuales de la app; cuando aún no lo sabe, lo dice y sugiere abrir un ticket. Solo aparece con la cuenta iniciada. No escribas importes, cuentas, contraseñas ni datos personales.',
   /* 3.106 — rascunho, revisar */
   '👆 Os avisos rápidos saem da frente: toque, arraste para o lado ou toque no ✕. No celular eles ficam no topo, sem tampar os botões. O aviso do token da B3 aparece no máximo 1 vez por dia e fica no 📥 com "Resolver".':'👆 Los avisos rápidos se quitan de en medio: toca, desliza hacia un lado o toca la ✕. En el móvil se quedan arriba, sin tapar los botones. El aviso del token de la B3 sale como mucho 1 vez al día y queda en el 📥 con "Resolver".',
   '📲 No Android: se o app abrir dentro de outro app (WhatsApp, Gmail) ou fora do Chrome, a tela de entrada mostra "Abrir no Chrome"; depois de entrar, "Instalar na tela inicial" num toque.':'📲 En Android: si la app se abre dentro de otra app (WhatsApp, Gmail) o fuera de Chrome, la pantalla de entrada muestra "Abrir en Chrome"; después de entrar, "Instalar en la pantalla de inicio" con un toque.',
