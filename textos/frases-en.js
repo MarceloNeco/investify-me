@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.112 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.113 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.113 */
+  'Perguntar ao assistente de volta no menu':'Ask the assistant back in the menu',
+  '💬 "Perguntar ao assistente" voltou a aparecer no menu do AssistONE quando você abre tocando no personagem. Desde a 3.110 ele só aparecia se o AssistONE fosse aberto pelo menu da conta.':'💬 "Ask the assistant" shows up again in the AssistONE menu when you open it by tapping the character. Since 3.110 it only appeared when AssistONE was opened from the account menu.',
   /* 3.112 */
   'AssistONE pequeno no canto':'AssistONE small in the corner',
   '🔎 Parado, o AssistONE voltou a ficar pequeno, no canto da tela, sem tampar o que está atrás. Ao tocar nele, ele cresce e vira de frente.':'🔎 When idle, AssistONE is small again, in the corner of the screen, without covering what is behind it. Tap it and it grows and turns to face you.',

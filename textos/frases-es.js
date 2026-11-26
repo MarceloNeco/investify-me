@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.112 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.113 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,9 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.113 — rascunho, revisar */
+  'Perguntar ao assistente de volta no menu':'Preguntar al asistente vuelve al menú',
+  '💬 "Perguntar ao assistente" voltou a aparecer no menu do AssistONE quando você abre tocando no personagem. Desde a 3.110 ele só aparecia se o AssistONE fosse aberto pelo menu da conta.':'💬 "Preguntar al asistente" vuelve a aparecer en el menú de AssistONE cuando lo abres tocando el personaje. Desde la 3.110 solo aparecía si AssistONE se abría desde el menú de la cuenta.',
   /* 3.112 — rascunho, revisar */
   'AssistONE pequeno no canto':'AssistONE pequeño en la esquina',
   '🔎 Parado, o AssistONE voltou a ficar pequeno, no canto da tela, sem tampar o que está atrás. Ao tocar nele, ele cresce e vira de frente.':'🔎 En reposo, AssistONE vuelve a ser pequeño, en la esquina de la pantalla, sin tapar lo que hay detrás. Al tocarlo, crece y se gira hacia ti.',
