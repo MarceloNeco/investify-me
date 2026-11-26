@@ -1,12 +1,13 @@
 /* =====================================================================
-   assistone-visual.js — o visual novo do AssistONE (personagem + painel)       1.0.1 · 26/Nov/2026
+   assistone-visual.js — o visual novo do AssistONE (personagem + painel)       1.1.0 · 26/Nov/2026
    MASTER no repositório privado MarceloNeco/assist-one (balao/visual/). Nos apps, a pasta
    assistone/ é uma CÓPIA IDÊNTICA: nunca editar a cópia; mudar aqui, testar e copiar.
    Desenho aprovado pelo dono (Claude Design, 26/Nov/2026, decisões D-A15 e de 26/11):
    docs/desenho-pacote/ESPECIFICACAO.md. JS puro, sem biblioteca, sem rede (funciona sem internet).
    Precisa de assistone-visual.css (mesma pasta, com img/ e fontes/).
    Partes: 1) o personagem (assistone-personagem.js do pacote, com 2 ajustes marcados "AssistONE 1.0.0");
-           2) o painel com o menu (AssistOneVisual).
+           2) o painel com o menu (AssistOneVisual) e, desde a 1.1.0, a conversa (v.conversa: escrevendo, três pontinhos,
+              resposta com "Isso responde?" Sim/Não).
    Quem liga e desliga continua sendo o RootifyONE (data-recurso="assistone" e os interruptores do app).
    ===================================================================== */
 
@@ -147,7 +148,7 @@
   var TX = {
     pt: { menu: { tag_ia: 'IA', perguntar: 'Perguntar ao assistente', comecar: 'Começar', tour: 'Tour rápido', procurar: 'Procurar algo',
                   ajuda_tela: 'Ajuda desta tela', agora_nao: 'Agora não', desligar: 'Desligar o AssistONE', voce_esta_em: 'Você está em' },
-          conversa: { titulo: 'AssistONE', hoje: 'Hoje', ultimos7: 'Últimos 7 dias', respondendo: 'AssistONE está respondendo…', aguarde: 'Aguarde a resposta…',
+          conversa: { titulo: 'AssistONE', hoje: 'Hoje', ultimos7: 'Últimos 7 dias', respondendo: 'AssistONE está respondendo…', respondendo_curto: 'respondendo…', aguarde: 'Aguarde a resposta…',
                       outra: 'Escreva outra pergunta', nota: 'Não escreva senha, PIN nem dados de cartão.', isso_responde: 'Isso responde?', sim: 'Sim', nao: 'Não' },
           aria: { fechar: 'Fechar', enviar: 'Enviar pergunta', enviar_aguarde: 'Enviar pergunta (aguarde)', voltar_menu: 'Voltar ao menu', abrir_personagem: 'AssistONE' },
           historico: { title: 'Conversas', showing: 'Mostrando os últimos 7 dias.', delall: 'Apagar tudo', delone: 'Apagar esta conversa', only: 'Só você vê estas conversas.',
@@ -157,7 +158,7 @@
                        ask: 'Perguntar ao assistente', grupo_hoje: 'Hoje', grupo_ontem: 'Ontem' } },
     en: { menu: { tag_ia: 'AI', perguntar: 'Ask the assistant', comecar: 'Get started', tour: 'Quick tour', procurar: 'Find something',
                   ajuda_tela: 'Help with this screen', agora_nao: 'Not now', desligar: 'Turn off AssistONE', voce_esta_em: 'You are on' },
-          conversa: { titulo: 'AssistONE', hoje: 'Today', ultimos7: 'Last 7 days', respondendo: 'AssistONE is answering…', aguarde: 'Wait for the answer…',
+          conversa: { titulo: 'AssistONE', hoje: 'Today', ultimos7: 'Last 7 days', respondendo: 'AssistONE is answering…', respondendo_curto: 'answering…', aguarde: 'Wait for the answer…',
                       outra: 'Write another question', nota: 'Do not type a password, PIN or card details.', isso_responde: 'Does this answer it?', sim: 'Yes', nao: 'No' },
           aria: { fechar: 'Close', enviar: 'Send question', enviar_aguarde: 'Send question (wait)', voltar_menu: 'Back to the menu', abrir_personagem: 'AssistONE' },
           historico: { title: 'Conversations', showing: 'Showing the last 7 days.', delall: 'Delete all', delone: 'Delete this conversation', only: 'Only you can see these conversations.',
@@ -167,7 +168,7 @@
                        ask: 'Ask the assistant', grupo_hoje: 'Today', grupo_ontem: 'Yesterday' } },
     es: { menu: { tag_ia: 'IA', perguntar: 'Preguntar al asistente', comecar: 'Empezar', tour: 'Recorrido rápido', procurar: 'Buscar algo',
                   ajuda_tela: 'Ayuda de esta pantalla', agora_nao: 'Ahora no', desligar: 'Apagar AssistONE', voce_esta_em: 'Estás en' },
-          conversa: { titulo: 'AssistONE', hoje: 'Hoy', ultimos7: 'Últimos 7 días', respondendo: 'AssistONE está respondiendo…', aguarde: 'Espera la respuesta…',
+          conversa: { titulo: 'AssistONE', hoje: 'Hoy', ultimos7: 'Últimos 7 días', respondendo: 'AssistONE está respondiendo…', respondendo_curto: 'respondiendo…', aguarde: 'Espera la respuesta…',
                       outra: 'Escribe otra pregunta', nota: 'No escribas contraseña, PIN ni datos de tarjeta.', isso_responde: '¿Esto responde tu pregunta?', sim: 'Sí', nao: 'No' },
           aria: { fechar: 'Cerrar', enviar: 'Enviar pregunta', enviar_aguarde: 'Enviar pregunta (espera)', voltar_menu: 'Volver al menú', abrir_personagem: 'AssistONE' },
           historico: { title: 'Conversaciones', showing: 'Mostrando los últimos 7 días.', delall: 'Borrar todo', delone: 'Borrar esta conversación', only: 'Solo tú ves estas conversaciones.',
@@ -285,7 +286,7 @@
 
     function menu() {
       vista = 'menu';
-      painel.classList.remove('aov-vista-conteudo');
+      painel.classList.remove('aov-vista-conteudo', 'aov-vista-conversa');
       cabecalho('', '', false);
       corpo.innerHTML = htmlMenu();
       corpo.scrollTop = 0;
@@ -297,6 +298,7 @@
       c = c || {};
       vista = 'conteudo';
       painel.classList.add('aov-vista-conteudo');
+      painel.classList.remove('aov-vista-conversa');
       cabecalho(c.titulo, c.sub, c.voltar !== false);
       if (c.no) { corpo.innerHTML = ''; corpo.appendChild(c.no); } else corpo.innerHTML = c.html || '';
       corpo.scrollTop = 0;
@@ -304,13 +306,133 @@
       return corpo;
     }
 
+    /* ---- CONVERSA (quadro E-Conversa, ESPECIFICACAO.md seção 7) ----------------------------------------------------
+       v.conversa({ titulo, sub, exemplo,
+                    enviar:   function (texto) → Promise<{ id, resposta } | { erro: 'texto para a pessoa' }>,
+                    avaliar:  function (id, util) → Promise (opcional; "Isso responde?" Sim = true, Não = false),
+                    carregar: function () → Promise<[{ id, pergunta, resposta, util, criado_em }]> (opcional: as dos últimos 7 dias) })
+       Fases: escrevendo → enviou (três pontinhos, "AssistONE está respondendo…" para o leitor de tela, a caixa fica cinza,
+       o brilho do personagem acende) → respondeu ("Isso responde?" Sim e Não, só isso). O aviso do cadeado fica fixo.
+       A conversa desta visita fica guardada aqui (fio) enquanto a página estiver aberta. */
+    var fio = [], antigas = [], conv = null;
+    function dia(q) { var x = new Date(q); return isNaN(x) ? null : new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); }
+    function rotuloDia(ms) {
+      var x = t(), h = dia(Date.now());
+      if (ms === h) return x.conversa.hoje;
+      if (ms === h - 864e5) return x.historico.grupo_ontem;
+      var dt = new Date(ms); return ('0' + dt.getDate()).slice(-2) + '/' + ('0' + (dt.getMonth() + 1)).slice(-2);
+    }
+    function textoEmLinhas(s) { return esc(s).replace(/\n/g, '<br>'); }
+    function esperando() { return fio.some(function (i) { return i.estado === 'esperando'; }); }
+
+    function desenharConversa() {
+      if (!conv || vista !== 'conversa') return;
+      var x = t(), msgs = conv.no.querySelector('.aov-msgs');
+      var ids = {}; fio.forEach(function (i) { if (i.id != null) ids[i.id] = 1; });
+      var lista = antigas.filter(function (i) { return !ids[i.id]; }).slice().reverse().concat(fio);
+      var h = '', ultimoDia = null, ultimaRespondida = null;
+      /* "Isso responde?" só logo depois de uma resposta desta visita (a última da conversa) */
+      var ult = lista[lista.length - 1];
+      if (ult && fio.indexOf(ult) >= 0 && ult.estado === 'respondida' && !ult.erro && ult.id != null) ultimaRespondida = ult;
+      lista.forEach(function (i) {
+        var dd = dia(i.quando);
+        if (dd !== ultimoDia) { h += '<div class="aov-dia">' + esc(rotuloDia(dd)) + '</div>'; ultimoDia = dd; }
+        h += '<div class="aov-eu">' + textoEmLinhas(i.pergunta) + '</div>';
+        if (i.estado === 'esperando') {
+          h += '<div class="aov-espera"><div class="aov-bot" role="status" aria-live="polite"><span class="ao-sr">' + esc(x.conversa.respondendo) + '</span>' +
+               '<span class="aov-dots" aria-hidden="true"><i></i><i></i><i></i></span></div><div class="aov-lblt" aria-hidden="true">' + esc(x.conversa.respondendo) + '</div></div>';
+        } else if (i.erro) {
+          h += '<div class="aov-bot aov-bot-erro" role="status">' + textoEmLinhas(i.erro) + '</div>';
+        } else {
+          h += '<div class="aov-bot">' + textoEmLinhas(i.resposta || '') + '</div>';
+          if (i === ultimaRespondida && conv.op.avaliar) {
+            h += '<div class="aov-lblt" id="' + painel.id + '-ir">' + esc(x.conversa.isso_responde) + '</div><div class="aov-q2" role="group" aria-labelledby="' + painel.id + '-ir">' +
+              '<button type="button" class="aov-chip2" data-util="1" aria-pressed="' + (i.util === true) + '">' + esc(x.conversa.sim) + '</button>' +
+              '<button type="button" class="aov-chip2" data-util="0" aria-pressed="' + (i.util === false) + '">' + esc(x.conversa.nao) + '</button></div>';
+          }
+        }
+      });
+      msgs.innerHTML = h;
+      msgs.scrollTop = msgs.scrollHeight;
+      var espera = esperando(), ta = conv.no.querySelector('.aov-ta'), bt = conv.no.querySelector('.aov-send');
+      ta.disabled = espera; bt.disabled = espera;
+      ta.placeholder = espera ? x.conversa.aguarde : (fio.length || antigas.length ? x.conversa.outra : (conv.op.exemplo || x.conversa.outra));
+      bt.setAttribute('aria-label', espera ? x.aria.enviar_aguarde : x.aria.enviar);
+      painel.querySelector('.aov-sub').textContent = espera ? x.conversa.respondendo_curto : (conv.op.sub || '');
+      casa.classList.toggle('aov-pensando', espera);
+    }
+
+    function enviarPergunta() {
+      if (!conv || esperando()) return;
+      var ta = conv.no.querySelector('.aov-ta'), txt = (ta.value || '').trim();
+      if (txt.length < 2) { try { ta.focus(); } catch (e) {} return; }
+      var item = { pergunta: txt, quando: new Date().toISOString(), estado: 'esperando' }, op2 = conv.op;
+      fio.push(item); ta.value = ''; ajustarAltura(ta);
+      desenharConversa();
+      var fim = function () {
+        item.estado = 'respondida';
+        if (!global.document.contains(painel)) return;
+        casa.classList.toggle('aov-pensando', esperando());
+        desenharConversa();
+        var t2 = conv && conv.no.querySelector('.aov-ta'); if (t2 && vista === 'conversa') try { t2.focus({ preventScroll: true }); } catch (e) {}
+      };
+      Promise.resolve().then(function () { return op2.enviar(txt); }).then(function (r) {
+        r = r || {};
+        if (r.erro) item.erro = String(r.erro); else { item.id = r.id; item.resposta = r.resposta; }
+      }, function (e) { item.erro = (op2.erroPadrao && op2.erroPadrao(e)) || (e && e.message) || '…'; }).then(fim);
+    }
+    function ajustarAltura(ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 132) + 'px'; }
+
+    function conversa(c) {
+      c = c || {};
+      var x = t();
+      var no = d.createElement('div'); no.className = 'aov-conv';
+      no.innerHTML = '<div class="aov-msgs"></div>' +
+        '<div class="aov-comp"><div class="aov-comp-l"><textarea class="aov-ta" rows="1" maxlength="2000" aria-label="' + esc(c.titulo || x.menu.perguntar) + '"></textarea>' +
+        '<button type="button" class="aov-send">' + icone('send') + '</button></div>' +
+        '<div class="aov-nota">' + icone('lock', 18) + '<span>' + esc(x.conversa.nota) + '</span></div></div>';
+      conteudo({ titulo: c.titulo || x.menu.perguntar, sub: c.sub, no: no });
+      vista = 'conversa';
+      painel.classList.add('aov-vista-conversa');
+      conv = { op: c, no: no };
+      posicionar();
+      var ta = no.querySelector('.aov-ta');
+      ta.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' && !ev.shiftKey && !ev.isComposing) { ev.preventDefault(); enviarPergunta(); } });
+      ta.addEventListener('input', function () { ajustarAltura(ta); });
+      no.querySelector('.aov-send').addEventListener('click', enviarPergunta);
+      no.addEventListener('click', function (ev) {
+        var b = ev.target.closest('.aov-chip2'); if (!b) return;
+        var ult = fio[fio.length - 1], alvo = ult && ult.estado === 'respondida' && !ult.erro && ult.id != null ? ult : null;
+        if (!alvo) return;
+        alvo.util = b.getAttribute('data-util') === '1';
+        desenharConversa();
+        if (c.avaliar) Promise.resolve().then(function () { return c.avaliar(alvo.id, alvo.util); }).catch(function () {});
+        var f = no.querySelector('.aov-chip2[aria-pressed="true"]'); if (f) try { f.focus({ preventScroll: true }); } catch (e) {}
+      });
+      desenharConversa();
+      if (c.carregar) Promise.resolve().then(c.carregar).then(function (l) {
+        antigas = (l || []).filter(function (i) { return i && i.pergunta; }).map(function (i) {
+          return { id: i.id, pergunta: i.pergunta, resposta: i.resposta, util: i.util === true ? true : i.util === false ? false : null,
+                   quando: i.criado_em || i.quando, estado: i.estado === 'respondida' ? 'respondida' : 'antiga',
+                   erro: i.estado === 'respondida' ? null : (i.resposta || null) };
+        }).filter(function (i) { return i.estado === 'respondida'; });
+        desenharConversa();
+      }, function () {});
+      setTimeout(function () { try { ta.focus({ preventScroll: true }); } catch (e) {} }, 40);
+      return no;
+    }
+
     /* o personagem sai da frente do painel: sobe junto da folha (celular) ou vai para a esquerda do painel (computador) */
     function posicionar() {
-      if (!ch.isOpen()) { raizAo.style.transform = ''; return; }
+      if (!ch.isOpen()) { raizAo.style.transform = ''; raizAo.classList.remove('aov-sem-lugar'); return; }
       /* mede a CASA (não se mexe) e o tamanho do painel (não o retângulo: no começo ele ainda está deslizando para entrar) */
       var r = casa.getBoundingClientRect(), W = global.innerWidth, H = global.innerHeight, nx = 0, ny = 0;
       if (computador()) { var esq = W - painel.offsetWidth; if (r.right > esq - 42) nx = -(r.right - (esq - 42)); }   // 42 = folga de 16 + o quanto ele cresce (1,4×)
       else { var topo = H - painel.offsetHeight; if (r.bottom > topo - 4) ny = -(r.bottom - (topo - 4)); }
+      /* folha alta (a conversa): não cabe em cima dela; o personagem sai de cena e fica só o pequeno, no cabeçalho */
+      var semLugar = !computador() && r.top + ny < 8;
+      raizAo.classList.toggle('aov-sem-lugar', semLugar);
+      if (semLugar) ny = 0;
       raizAo.style.transform = (nx || ny) ? 'translate(' + Math.round(nx) + 'px, ' + Math.round(ny) + 'px)' : '';
     }
 
@@ -328,7 +450,7 @@
     }
     function esconder() {
       casa.classList.remove('aov-aberto', 'aov-leve');
-      raizAo.style.transform = '';
+      raizAo.style.transform = ''; raizAo.classList.remove('aov-sem-lugar');
       avisoAtual = null; vista = 'menu';
       if (op.aoFechar) try { op.aoFechar(); } catch (e) {}
       if (painel.contains(d.activeElement)) try { btAo.focus({ preventScroll: true }); } catch (e) {}
@@ -347,7 +469,7 @@
     global.addEventListener('resize', function () { if (ch.isOpen()) posicionar(); });
 
     /* trocar o tema ou o idioma com ele aberto não quebra nada: os tokens são CSS; os textos se refazem aqui */
-    function atualizar() { rotulos(); if (ch.isOpen() && vista === 'menu') menu(); else posicionar(); }
+    function atualizar() { rotulos(); if (ch.isOpen() && vista === 'menu') menu(); else { if (vista === 'conversa') desenharConversa(); posicionar(); } }
 
     rotulos();
     return {
@@ -364,6 +486,7 @@
       aberto: function () { return ch.isOpen(); },
       menu: menu,
       conteudo: conteudo,
+      conversa: conversa,
       atualizar: atualizar,
       corpo: corpo,
       painel: painel,
@@ -376,5 +499,5 @@
     };
   }
 
-  global.AssistOneVisual = { VERSAO: '1.0.1', montar: montar, TEXTOS: TX, icone: icone };
+  global.AssistOneVisual = { VERSAO: '1.1.0', montar: montar, TEXTOS: TX, icone: icone };
 })(window);

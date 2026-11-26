@@ -1,5 +1,5 @@
 /* =====================================================================
-   assistone-visual.css — o visual novo do AssistONE (personagem + painel)      1.0.1 · 26/Nov/2026
+   assistone-visual.css — o visual novo do AssistONE (personagem + painel)      1.1.0 · 26/Nov/2026
    MASTER no repositório privado MarceloNeco/assist-one (balao/visual/). Nos apps, a pasta
    assistone/ é uma CÓPIA IDÊNTICA: nunca editar a cópia; mudar aqui, testar e copiar.
    Desenho aprovado pelo dono (Claude Design, 26/Nov/2026): docs/desenho-pacote/ESPECIFICACAO.md.
@@ -311,6 +311,7 @@
 /* o personagem anda junto quando o painel abre (para não ficar por cima dele) */
 .aov-ao{transition:transform .35s cubic-bezier(.2,.8,.3,1)}
 .aov-ao .ao-btn{position:relative}
+.aov-ao.aov-sem-lugar{opacity:0;pointer-events:none}
 
 /* película atrás da folha (só celular) */
 .aov-scrim{position:fixed;left:0;top:0;right:0;bottom:0;background:var(--ao-scrim);opacity:0;pointer-events:none;transition:opacity .25s;z-index:0}
@@ -371,6 +372,46 @@
   background:var(--ao-card);font-size:13.5px;font-weight:600}
 .aov-painel .aov-chip:hover{border-color:var(--ao-goldl)}
 
+/* conversa (quadro E-Conversa): a folha do celular fica alta (≈ 90%); no computador, o painel inteiro */
+.aov-painel.aov-vista-conversa{height:88vh;height:88dvh}
+.aov-painel.aov-vista-conversa .aov-corpo{overflow:hidden;padding-bottom:0;display:flex}
+.aov-conv{flex:1;min-height:0;display:flex;flex-direction:column}
+.aov-msgs{flex:1;min-height:0;overflow:auto;padding:10px 16px 12px;display:flex;flex-direction:column;gap:12px;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 46px);mask-image:linear-gradient(to bottom,transparent 0,#000 46px)}
+.aov-msgs > :first-child{margin-top:auto}
+.aov-dia{align-self:center;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ao-mu);padding:6px 0}
+.aov-eu{align-self:flex-end;max-width:84%;background:var(--ao-goldt);border:1px solid var(--ao-goldl);border-radius:16px 16px 4px 16px;padding:10px 13px;
+  font-size:14.5px;line-height:1.45;overflow-wrap:anywhere}
+.aov-bot{align-self:flex-start;max-width:92%;background:var(--ao-acard,var(--ao-card));border:1px solid var(--ao-line);border-radius:16px 16px 16px 4px;
+  padding:11px 14px;font-size:14.5px;line-height:1.5;overflow-wrap:anywhere}
+.aov-bot-erro{border-color:var(--ao-goldl)}
+.aov-espera{display:flex;flex-direction:column;gap:4px;align-self:flex-start}
+.aov-dots{display:inline-flex;align-items:center;height:20px;padding:0 2px}
+.aov-dots i{display:inline-block;width:7px;height:7px;margin:0 3px;border-radius:50%;background:var(--ao-goldtx);opacity:.35;animation:aovDot 1.25s ease-in-out infinite}
+.aov-dots i:nth-child(2){animation-delay:.18s}
+.aov-dots i:nth-child(3){animation-delay:.36s}
+@keyframes aovDot{0%,100%{transform:translateY(0);opacity:.35}40%{transform:translateY(-4px);opacity:1}}
+.aov-lblt{font-size:12.5px;color:var(--ao-mu);padding-left:4px;align-self:flex-start}
+.aov-q2{display:flex;gap:8px;align-self:flex-start;flex-wrap:wrap;margin-top:-4px}
+.aov-painel .aov-chip2{height:44px;padding:0 18px;border-radius:99px;border:1.5px solid var(--ao-goldl);font-size:14px;font-weight:700;color:var(--ao-tx)}
+.aov-painel .aov-chip2[aria-pressed="true"]{background:var(--ao-goldt);border-color:var(--ao-gold)}
+.aov-painel .aov-chip2:focus-visible{outline-offset:2px}
+.aov-comp{padding:10px 14px 14px;border-top:1px solid var(--ao-line);display:flex;flex-direction:column;gap:8px;flex:none;background:var(--ao-sheet)}
+.aov-comp-l{display:flex;gap:10px;align-items:flex-end}
+.aov-ta{flex:1;min-width:0;min-height:52px;max-height:132px;resize:none;border:1.5px solid var(--ao-line);border-radius:14px;padding:14px 14px;
+  font:inherit;font-size:15px;line-height:1.4;background:var(--ao-acard,var(--ao-card));color:var(--ao-tx);box-sizing:border-box}
+.aov-ta::placeholder{color:var(--ao-mu);opacity:1}
+.aov-ta:focus-visible{outline:2px solid var(--ao-focus);outline-offset:2px;border-color:var(--ao-gold)}
+.aov-ta:disabled{opacity:.6;background:var(--ao-card)}
+.aov-painel .aov-send{width:52px;height:52px;border-radius:50%;background:var(--ao-btn);color:var(--ao-btntx);display:flex;align-items:center;justify-content:center;flex:none}
+.aov-painel .aov-send:disabled{background:var(--ao-line);color:var(--ao-mu);opacity:.7;cursor:default}
+.aov-painel .aov-send:focus-visible{outline-offset:2px}
+.aov-nota{display:flex;gap:8px;align-items:center;font-size:12.5px;line-height:1.4;color:var(--ao-mu)}
+/* enquanto responde, o brilho do personagem acende */
+.aov-casa.aov-pensando .ao-root{--ao-en:1;--ao-arc:.9}
+@media (prefers-reduced-motion: reduce){ .aov-dots i{animation:none;opacity:.8} .aov-casa.aov-pensando .ao-root{--ao-en:0 !important} }
+html.sem-animacao .aov-dots i{animation:none;opacity:.8}
+
 /* computador: painel lateral de 420 px, sem película */
 @media (min-width:900px){
   /* --aov-topo: o app pode começar o painel abaixo da barra do topo dele (padrão: altura toda) */
@@ -378,6 +419,7 @@
   @keyframes aovLado{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
   .aov-casa.aov-aberto .aov-painel{animation-name:aovLado}
   .aov-grab{display:none}
+  .aov-painel.aov-vista-conversa{height:auto}
   .aov-hd{padding-top:12px;min-height:64px}
   .aov-casa.aov-aberto .aov-scrim{opacity:0;pointer-events:none}
 }

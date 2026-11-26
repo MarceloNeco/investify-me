@@ -1544,8 +1544,10 @@ deixaram de ser do MoneyTRIO: vêm do **master** do AssistONE, `balao/visual/` d
 - **Tema:** segue o `data-theme` do app (escuro = Joia, claro = Pérola). Para com "reduzir movimento" do aparelho, com o "menos
   movimento" do app (`html.sem-animacao`) e com a aba escondida.
 - **Onde mora:** `estilo.css` só posiciona o `#assistOne` (26 px de folga; aberto, z-index acima do selo da nuvem e abaixo do passeio).
-- **Perguntar ao assistente:** `modulos/assist-hermes.js` 1.0.2 escreve a caixinha no miolo do painel (`AssistOne.vis.conteudo`), com o
-  "Voltar ao menu" e o "Fechar" no cabeçalho. O visual novo da conversa é a próxima fase.
+- **Perguntar ao assistente (3.111):** `modulos/assist-hermes.js` 1.1.0 abre a conversa do master (`AssistOne.vis.conversa`): manda a
+  pergunta e espera a resposta (a cada 2 s, até 75 s, mesmo com o painel fechado), mostra as conversas dos últimos 7 dias
+  (`MoneyNuvem.assist.conversas` → `assist_minhas_conversas`) e guarda o "Isso responde?" (`MoneyNuvem.assist.avaliar` → `assist_avaliar`).
+  `nuvem.js` 1.15.9 também já tem `apagar` e `apagarTudo` para a tela Conversas (próxima fase). SQL: solverone-app `2026-11-26g`.
 - **Teste:** `node teste/teste-assistone-visual.js` (encaixe no app, celular e computador); o resto (44 px, Esc, movimento, aba
   escondida, tema e idioma com ele aberto) é testado no master (`node teste/rodar.js` no assist-one).
 
