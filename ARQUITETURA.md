@@ -844,12 +844,30 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas ou uma sem, e do mesmo CNPJ ou loja, sem precisar do `mesmaCompra`; fica o do pagamento: o final, senão a data mais nova); o
   seletor de cartão por `Cartoes.doFinal` (qualquer final); `osRot` na linha ("OS n · Veículo › sub · 🚗 apelido"); `acharCarro` também com a
   palavra do apelido dentro da palavra lida ("LRENEGADE").
+  **3.116 — Aviso de saldo mais claro e o 📥 com valor e data.** (1) saldo-previsto 1.3.0: `alerta()` com `piorDia`; `frase()` em HTML
+  ("fica negativa em DD/MM (−R$ a) e chega a −R$ p em DD/MM. Resgate R$ Y até DD/MM (cobre o pior dia + 5% de folga)") com o nome da pessoa
+  num botão `ps-abrir` (pessoas 1.4.0: abre Configurações › Pessoas com o apelido em foco; dica do apelido); `porque()` = `<details>` com as
+  5 maiores saídas até o pior dia. saldo-banco 2.3.0: `receber` guarda `numero_conta`/`agencia`; `SaldoBanco.numero(r, curto)` e
+  `inteira(r)` — a conta inteira ("ag. 0001 · conta 00012-3", hífen do dígito no Itaú/BB/Caixa/Bradesco/Santander) só para o PRÓPRIO dono
+  (`Pessoas.achar(r.dono).uid` = `MoneyNuvem.escopos.eu()`, ou sem como saber); visão da casa (`Escopo.soCasa`) e outro membro = "···final";
+  `rotulo(r, {curto})` usa isso (Conferência com o banco, aviso do saldo); `contaDe(g)` + ponto `lancamento.form` ("🏦 Conta: …" no detalhe
+  do lançamento); `numeroDoBanco(nome)` no seletor "Por qual banco" (`selectBancoHTML`, quando há uma conta só naquele banco). (2) origem 1.1.0: `resumo/sugestao/motivo/viagem/detalhe(x)` —
+  cada grupo de "Confirmar classificação" (📥 e tela b-confirmar) mostra total, quantos, "de DD/MM a DD/MM", o último valor, a lista
+  (`<details>`: data, valor, conta/cartão, descrição original), "Sugestão: Grupo > Categoria (motivo)" (motivo: `palpiteMcc` → tipo de loja;
+  `catPluggy` → categoria do banco; um confirmado com a mesma 1ª palavra → parecido; senão o robô pela descrição), "Parece da viagem X"
+  (`Viagem.sugestoes`) ou, sem viagem, "Compra em X: foi viagem?" + `vg-criar` (não repete a cidade que o 📥 de viagem já pergunta, nem a
+  recusada, nem a de casa); loja-nova usa o mesmo detalhe. (3) nuvem.js 1.16.1: grupo CARTAO do robô (débito da fatura do cartão) =
+  OUTROS › "Pagamento de fatura", sem palpite (as partes da fatura Porto chegam "confirmada" do robô e ficam). (4) Todo item do 📥 sobre
+  dinheiro com valor e data (ou total e período): a-receber (caiu, com a data), debito-nao-caiu (aviso por e-mail e "ver com o banco"),
+  contas-mes (sugestão de conta fixa: N pagamentos, total, período, último), material-escolar e viagem (total e período das compras), viagem
+  "Parece que você está viajando" (total), profissionais (período), pj (o contador: a data), seguros (o prêmio), avisos do index (a data).
+  Testes: `teste-saldo-dono` (3b), `teste-confirmar-detalhe.js` (novo: 1–6).
   **3.115 — A versão na tela inicial.** `viewHub()` ganhou, embaixo da linha dos dados, `.hub-versao` (à direita, mais apagada):
   "MoneyTRIO <VERSAO> · <I18n.data(VERSAO_DATA)>" (do topo de `textos/mudancas.js`), botão `ver-mudancas` (abre as Novidades).
   `teste-fumaca-telas` passa a fotografar também a tela inicial (`hub`) e ignora o `style=""` vazio que a foto com animações
   desligadas às vezes deixa num campo em transição. Teste: `teste/teste-versao-hub.js`. Também (dono, a lista "Seus aparelhos"
   confusa: no Android, a aba aberta dentro de outro app e o Chrome têm armazenamento separado, então cada um vira um aparelho):
-  nuvem.js 1.15.8 — `Painel.aparelhos` em "No MoneyTRIO" / "Em outros apps SolverONE"; "aprovado em …, mas nunca terminou de entrar"
+  nuvem.js 1.16.0 — `Painel.aparelhos` em "No MoneyTRIO" / "Em outros apps SolverONE"; "aprovado em …, mas nunca terminou de entrar"
   (visto = criado, > 1 h) com "Tirar da lista"; `Aparelhos.substituirAntigos` (item 5: no primeiro `aoAbrir` do aparelho novo, os registros
   antigos do mesmo nome e app que nunca terminaram de entrar ou sumiram há > 7 dias saem sozinhos, com o aviso "Substituímos o registro
   antigo do seu celular (de 11/Nov)." nos dois aparelhos; substitui a sugestão da 3.106 e a dica); `nomeAparelho()` com `AbrirChrome.detectar(…).dentroDeApp`

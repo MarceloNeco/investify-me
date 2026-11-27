@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/loja-nova.js — "Loja nova: X. O que é?" no 📥 (3.87)        1.0.0 · 14/Nov/2026
+   modulos/loja-nova.js — "Loja nova: X. O que é?" no 📥 (3.87)        1.0.1 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 14/Nov/2026; sem IA)
      · Loja que chegou do robô sem regra (a origem toda "A identificar": nenhum lançamento dela já confirmado) → no 📥
@@ -57,13 +57,13 @@
   function val(id) { var e = document.getElementById(id); return e ? String(e.value || '').trim() : ''; }
 
   MoneyModulos.registrar({
-    id: 'loja-nova', versao: '1.0.0',
+    id: 'loja-nova', versao: '1.0.1',
     pontos: {
       'inbox.grupos': function () {
         var l = API.lojas(); if (!l.length) return [];
         return [{ id: 'confirmar', n: l.length, html: l.map(function (x) {
           var g = ultimo(x);
-          return '<li class="inb-item"><div><b>🏪 ' + esc(tr('Loja nova: ', 'New store: ') + x.rotulo + tr('. O que é?', '. What is it?')) + '</b><span class="t-sub">' + esc(x.itens.length + tr(' lançamento(s) · o último ', ' entr(ies) · the last ') + fmt(g.valor) + ' · ' + I18n.data(g.data)) + '</span></div>' +
+          return '<li class="inb-item"><div><b>🏪 ' + esc(tr('Loja nova: ', 'New store: ') + x.rotulo + tr('. O que é?', '. What is it?')) + '</b>' + (window.Origem && Origem.detalhe ? Origem.detalhe(x) : '<span class="t-sub">' + esc(x.itens.length + tr(' lançamento(s) · o último ', ' entr(ies) · the last ') + fmt(g.valor) + ' · ' + I18n.data(g.data)) + '</span>') + '</div>' +   /* 3.116: total, período, último, a lista */
             '<span class="inb-acoes"><button class="btn sm primary" data-acao="ln-abrir" data-k="' + esc(x.chave) + '">' + esc(tr('Responder', 'Answer')) + '</button></span></li>';
         }).join('') }];
       }

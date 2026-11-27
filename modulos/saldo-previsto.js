@@ -1,5 +1,8 @@
 /* =====================================================================
-   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.2.0 · 20/Nov/2026
+   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.3.0 · 26/Nov/2026
+   1.3.0 (3.116, dono: "que conta é essa?"): o aviso diz o primeiro dia negativo E o pior dia ("fica negativa em 30/11 (−R$ 968,83) e chega a
+   −R$ 1.9xx em 05/12. Resgate R$ 2.100 até 29/11 (cobre o pior dia + 5% de folga)") e "ver por quê" lista as maiores saídas até o pior dia;
+   a conta aparece inteira como o banco manda (agência e conta, dígito com hífen nos bancos conhecidos); o nome da pessoa abre a ficha dela.
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · Para cada conta corrente com saldo vindo do robô (SaldoBanco): parte do saldo de hoje e soma, dia a dia, nos
@@ -119,12 +122,14 @@
     dono: function (c) {
       var p = c.dono && window.Pessoas && Pessoas.achar ? Pessoas.achar(c.dono) : null, n = p ? Pessoas.rotulo(p) : String(c.dono || '').trim();
       if (!p && /^[a-z]/.test(n)) n = n.charAt(0).toUpperCase() + n.slice(1);
-      return { nome: n, fem: p && p.genero ? p.genero === 'f' : /a$/i.test(N(n).split(' ')[0] || '') };
+      return { nome: n, id: p ? p.id : '', fem: p && p.genero ? p.genero === 'f' : /a$/i.test(N(n).split(' ')[0] || '') };
     },
+    /* 1.3.0 (3.116): a agência e a conta INTEIRAS como o banco manda ("ag. 1234 · conta 63129-2"); sem o número inteiro, o final */
+    conta: function (c) { return window.SaldoBanco && SaldoBanco.numero ? SaldoBanco.numero(c) : (c.final ? '···' + c.final : ''); },   /* 3.116: SaldoBanco.numero (inteira só para o dono) */
     nome: function (c) {
-      var d = API.dono(c), b = String(c.banco || '').trim(), ct = String(c.conta || '').trim();
+      var d = API.dono(c), b = String(c.banco || '').trim(), ct = String(c.conta || '').trim(), num = API.conta(c);
       var extra = d.nome ? (d.fem ? tr(' da ', ' — ') : tr(' do ', ' — ')) + d.nome : (ct && N(ct).indexOf(N(b)) < 0 && N(b).indexOf(N(ct)) < 0 ? ' ' + ct : '');
-      return (b || ct) + extra + (c.final ? ' ···' + c.final : '');
+      return (b || ct) + extra + (num ? (c.numero ? ' (' + num + ')' : ' ' + num) : '');
     },
     dados: function (c) {
       var em = c.atualizadoEm && !isNaN(Date.parse(c.atualizadoEm)) ? new Date(Date.parse(c.atualizadoEm)) : null, agora = API._agora || Date.now();
@@ -154,8 +159,12 @@
     },
     alerta: function (conta) {
       var l = API.linha(conta), neg = l.filter(function (x) { return x.saldo < 0; })[0]; if (!neg) return null;
-      var pior = l.reduce(function (m, x) { return Math.min(m, x.saldo); }, 0), y = API.resgate(pior), de = API.deOnde(y);
-      return { dia: neg.data, valor: neg.saldo, pior: pior, resgate: y, ate: mais(neg.data, -1), pedirAte: mais(neg.data, -1 - (de ? de.dias : 0)), de: de };
+      var piorX = l.reduce(function (m, x) { return x.saldo < m.saldo ? x : m; }, { saldo: 0 }), pior = piorX.saldo, y = API.resgate(pior), de = API.deOnde(y);
+      return { dia: neg.data, valor: neg.saldo, pior: pior, piorDia: piorX.data, resgate: y, ate: mais(neg.data, -1), pedirAte: mais(neg.data, -1 - (de ? de.dias : 0)), de: de };
+    },
+    /* 1.3.0 (3.116): "ver por quê" — as maiores saídas até o pior dia (o resgate se explica sozinho) */
+    porque: function (c, a) {
+      return API.eventos(c).filter(function (e) { return e.valor < 0 && e.data <= a.piorDia; }).sort(function (x, y) { return x.valor - y.valor || (x.data < y.data ? -1 : 1); }).slice(0, 5);
     }
   };
 
@@ -171,12 +180,22 @@
       (typeof Cal !== 'undefined' ? Cal.campo('spData' + c.id, mais(hoje(), 1), {}) : '<input id="spData' + esc(c.id) + '" type="date">') +
       '<button class="btn sm primary" data-acao="sp-salvar" data-id="' + esc(c.id) + '">' + esc(tr('Guardar', 'Save')) + '</button></div>';
   }
+  /* 1.3.0 (3.116): HTML. O primeiro dia negativo E o pior dia (o resgate cobre o pior + 5%); o nome da pessoa abre a ficha dela */
   function frase(c, a) {
-    var s = tr('Sua conta ', 'Your account ') + nomeConta(c) + tr(' fica negativa em ', ' goes negative on ') + dm(a.dia) + ' (−' + fmt(Math.abs(a.valor)) + '). ' +
-      tr('Resgate ', 'Redeem ') + fmt(a.resgate) + tr(' até ', ' by ') + dm(a.ate) + '.';
-    var cz = window.TransfAgendada ? TransfAgendada.causa(c) : ''; if (cz) s += ' ' + cz;   /* 1.2.0 (3.91) */
-    if (a.de) s += ' ' + tr('De: ', 'From: ') + a.de.nome + ' — ' + (a.de.dias === 0 ? tr('cai no mesmo dia', 'lands the same day') : tr('cai no dia seguinte: peça até ', 'lands the next day: ask by ') + dm(a.pedirAte)) + '.';
+    var d = API.dono(c), b = String(c.banco || '').trim() || String(c.conta || '').trim(), num = API.conta(c);
+    var quem = d.nome ? (d.fem ? tr(' da ', ' — ') : tr(' do ', ' — ')) + (d.id ? '<button type="button" class="linkinho sp-pessoa" data-acao="ps-abrir" data-id="' + esc(d.id) + '" title="' + esc(tr('Mudar o nome que aparece', 'Change the name shown', 'Cambiar el nombre que aparece')) + '">' + esc(d.nome) + '</button>' : esc(d.nome)) : '';
+    var s = esc(tr('Sua conta ', 'Your account ', 'Tu cuenta ') + b) + quem + (num ? esc(c.numero ? ' (' + num + ')' : ' ' + num) : '') +
+      esc(tr(' fica negativa em ', ' goes negative on ', ' queda en negativo el ') + dm(a.dia) + ' (−' + fmt(Math.abs(a.valor)) + ')' +
+        (a.pior < a.valor - 0.005 ? tr(' e chega a ', ' and reaches ', ' y llega a ') + '−' + fmt(Math.abs(a.pior)) + tr(' em ', ' on ', ' el ') + dm(a.piorDia) : '') + '. ' +
+        tr('Resgate ', 'Redeem ', 'Rescata ') + fmt(a.resgate) + tr(' até ', ' by ', ' hasta el ') + dm(a.ate) + tr(' (cobre o pior dia + 5% de folga).', ' (covers the worst day + 5% margin).', ' (cubre el peor día + 5% de margen).'));
+    var cz = window.TransfAgendada ? TransfAgendada.causa(c) : ''; if (cz) s += ' ' + esc(cz);   /* 1.2.0 (3.91) */
+    if (a.de) s += ' ' + esc(tr('De: ', 'From: ') + a.de.nome + ' — ' + (a.de.dias === 0 ? tr('cai no mesmo dia', 'lands the same day') : tr('cai no dia seguinte: peça até ', 'lands the next day: ask by ') + dm(a.pedirAte)) + '.');
     return s;
+  }
+  function porque(c, a) {
+    var l = API.porque(c, a); if (!l.length) return '';
+    return '<details class="sp-porque"><summary class="small">' + esc(tr('ver por quê', 'see why', 'ver por qué')) + '</summary><ul class="small" style="margin:4px 0 0;padding-left:18px">' +
+      l.map(function (e) { return '<li>' + esc(e.nome + ' · ' + dm(e.data) + ' · −' + fmt(Math.abs(e.valor))) + '</li>'; }).join('') + '</ul></details>';
   }
   function grafico(l) {
     var W = 600, H = 120, P = 6, vs = l.map(function (x) { return x.saldo; }), mn = Math.min(0, Math.min.apply(null, vs)), mx = Math.max(0, Math.max.apply(null, vs));
@@ -196,7 +215,7 @@
         var l = API.linha(c), a = API.alerta(c), fimS = l[l.length - 1].saldo;
         return '<div class="sp-conta"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap"><b>' + esc(nomeConta(c)) + '</b><span class="small">' +
           esc(tr('hoje ', 'today ') + fmt(c.saldo) + ' · ' + tr('em 45 dias ', 'in 45 days ') + fmt(fimS)) + '</span>' + selo(c) + '</div>' + grafico(l) +
-          (a ? '<div class="aviso-box sp-alerta"><b>⚠ ' + esc(frase(c, a)) + '</b></div>' : '') +
+          (a ? '<div class="aviso-box sp-alerta"><b>⚠ ' + frase(c, a) + '</b>' + porque(c, a) + '</div>' : '') +
           '<p class="tiny muted" style="margin:4px 0 0"><button class="linkinho" data-acao="sp-ajustar" data-id="' + esc(c.id) + '">' + esc(tr('Já resgatei / já agendei', 'Already redeemed / scheduled')) + '</button></p>' +
           (aberto === c.id && aondeForm === 'card' ? formAjuste(c) : '') + '</div>';
       }).join('') + '</div>';
@@ -204,13 +223,13 @@
   function alertas() { return API.contas().map(function (c) { var a = API.alerta(c); return a ? { c: c, a: a } : null; }).filter(Boolean); }
 
   MoneyModulos.registrar({
-    id: 'saldo-previsto', versao: '1.2.0', colecoes: [COL],
+    id: 'saldo-previsto', versao: '1.3.0', colecoes: [COL],
     pontos: {
       'budget.painel': cartao, 'custos.contas': cartao,
       'budget.atencao': function () {
         var l = alertas(); if (!l.length) return '';
         return '<div class="card sp-atencao"><div class="card-head"><h3>' + esc(tr('Precisa da sua atenção', 'Needs your attention')) + '</h3></div>' +
-          l.map(function (x) { return '<div class="sp-aviso sp-conta" style="margin:0 0 8px"><div class="row" style="gap:8px;align-items:flex-start"><p class="small" style="margin:0">⚠ ' + esc(frase(x.c, x.a)) + '</p>' + selo(x.c) + '</div>' +
+          l.map(function (x) { return '<div class="sp-aviso sp-conta" style="margin:0 0 8px"><div class="row" style="gap:8px;align-items:flex-start"><p class="small" style="margin:0">⚠ ' + frase(x.c, x.a) + '</p>' + selo(x.c) + '</div>' + porque(x.c, x.a) +
             '<button class="btn sm" data-acao="sp-ajustar" data-onde="atencao" data-id="' + esc(x.c.id) + '">' + esc(tr('Já agendei', 'Already scheduled')) + '</button>' +
             (aberto === x.c.id && aondeForm === 'atencao' ? formAjuste(x.c) : '') + '</div>'; }).join('') + '</div>';
       },
@@ -218,7 +237,7 @@
         var l = alertas(); if (!l.length) return [];
         return [{ id: 'saldo', n: l.length, html: l.map(function (x) {
           var d = API.dados(x.c);
-          return '<li class="inb-item"><div><b>' + esc(frase(x.c, x.a)) + '</b>' + (d.txt ? '<span class="t-sub' + (d.velho ? ' sp-velho' : '') + '"' + (d.velho ? ' style="color:var(--warn)"' : '') + '>' + esc(d.txt + (d.velho ? tr(' · pode estar desatualizado', ' · may be out of date') : '')) + '</span>' : '') + '</div><span class="inb-acoes"><button class="btn sm" data-acao="sp-ajustar" data-onde="atencao" data-id="' + esc(x.c.id) + '" data-close="genModal" data-irpara="b-painel">' +
+          return '<li class="inb-item"><div><b>' + frase(x.c, x.a) + '</b>' + porque(x.c, x.a) + (d.txt ? '<span class="t-sub' + (d.velho ? ' sp-velho' : '') + '"' + (d.velho ? ' style="color:var(--warn)"' : '') + '>' + esc(d.txt + (d.velho ? tr(' · pode estar desatualizado', ' · may be out of date') : '')) + '</span>' : '') + '</div><span class="inb-acoes"><button class="btn sm" data-acao="sp-ajustar" data-onde="atencao" data-id="' + esc(x.c.id) + '" data-close="genModal" data-irpara="b-painel">' +
             esc(tr('Já agendei', 'Already scheduled')) + '</button></span></li>';
         }).join('') }];
       }

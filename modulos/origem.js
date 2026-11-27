@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/origem.js — "A confirmar" / "A identificar" e confirmar por ORIGEM (3.65)        1.0.1 · 11/Nov/2026
+   modulos/origem.js — "A confirmar" / "A identificar" e confirmar por ORIGEM (3.65)        1.1.0 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · Selo na coluna Categoria (no lugar do "palpite do robô"): amarelo "A confirmar" (o robô tem sugestão,
@@ -17,6 +17,8 @@
    API (window.Origem)
      chaveDesc(t) · mesma(a, b) · status(g) → 'confirmar' | 'identificar' | ''
      replicar(g, antes) → n · desfazer() → n · grupos() → [{chave, rotulo, itens, grupo, sub}] · confirmarGrupo(chave) → n
+     1.1.0 (3.116): resumo(x) {n, total, de, ate, ultimo, itens} · sugestao(x) "Bancários > Tarifa" · motivo(x) {k: mcc|banco|parecido|robo, txt}
+       · viagem(x) {v, n} | {cidade, nome, de, ate} | null · detalhe(x) → o html do grupo (📥 e tela b-confirmar)
    PONTOS QUE USA
      lancamento.categoria (selo) · lancamentos.topo (aviso) · tela b-confirmar · ações or-*
    ===================================================================== */
@@ -118,6 +120,70 @@
         return x;
       }).sort(function (a, b) { return b.itens.length - a.itens.length; });
     },
+    /* 1.1.0 (3.116): o que a pessoa precisa para decidir sem abrir nada: total, quantos, de quando a quando, o último valor;
+       a sugestão legível e por que o app sugeriu; se parece de uma viagem; a lista (data, valor, conta/cartão, descrição original) */
+    resumo: function (x) {
+      var l = x.itens.slice().sort(function (a, b) { return String(a.data || '') < String(b.data || '') ? -1 : 1; }), ult = l[l.length - 1] || {};
+      return { n: l.length, total: Math.round(l.reduce(function (s, g) { return s + (Number(g.valor) || 0); }, 0) * 100) / 100,
+        de: (l[0] || {}).data || '', ate: ult.data || '', ultimo: Number(ult.valor) || 0, itens: l };
+    },
+    sugestao: function (x) {
+      if (x.status !== 'confirmar') return '';
+      return ((GRUPOS[x.grupo] || {}).nome || x.grupo) + ' > ' + x.sub;
+    },
+    /* por que o app sugeriu: o tipo de loja (MCC), a categoria do banco, um parecido que a pessoa já confirmou, ou o robô pela descrição */
+    motivo: function (x) {
+      var base = x.itens.filter(function (g) { return g.grupo === x.grupo && g.sub === x.sub; }), g0 = base[0] || x.itens[0] || {};
+      if (base.some(function (g) { return g.palpiteMcc; })) return { k: 'mcc', txt: tr('pelo tipo de loja que o banco informa', 'from the store type the bank reports', 'por el tipo de tienda que informa el banco') };
+      var cb = (base.find(function (g) { return g.catPluggy; }) || {}).catPluggy;
+      if (cb) return { k: 'banco', txt: tr('pela categoria que o banco informa ("', 'from the bank\'s category ("', 'por la categoría que informa el banco ("') + cb + '")' };
+      var k = API.chaveDesc(g0.descRobo || g0.desc).split(' ')[0] || '', ids = {}; x.itens.forEach(function (g) { ids[g.id] = 1; });
+      var par = k.length >= 4 && Gasto.todos().find(function (o) { return !ids[o.id] && (o.confirmadoEm || o.editadoPessoa) && o.grupo === x.grupo && o.sub === x.sub && API.chaveDesc(o.descRobo || o.desc).split(' ')[0] === k; });
+      if (par) return { k: 'parecido', txt: tr('parecido com "', 'similar to "', 'parecido a "') + String(par.desc || '').slice(0, 40) + tr('", que você já confirmou', '", which you already confirmed', '", que ya confirmaste') };
+      return { k: 'robo', txt: tr('o robô sugeriu pela descrição do banco', 'the robot suggested it from the bank description', 'el robot lo sugirió por la descripción del banco') };
+    },
+    /* parece da viagem cadastrada (as datas e a cidade batem), ou, sem viagem, a cidade no texto do cartão */
+    viagem: function (x) {
+      if (!window.Viagem) return null;
+      var ids = {}; x.itens.forEach(function (g) { ids[g.id] = 1; });
+      var achou = null;
+      (Viagem.lista() || []).some(function (v) { var n = Viagem.sugestoes(v).filter(function (s) { return ids[s.g.id]; }).length; if (n) achou = { v: v, n: n }; return !!n; });
+      if (achou) return achou;
+      var c = ''; x.itens.some(function (g) { c = Viagem.cidadeDe(g); return !!c; });
+      if (!c) return null;
+      /* o 📥 "Parece que você está viajando" já pergunta por esta cidade, ou a pessoa disse "Não foi viagem": não repete */
+      var mesma = function (o) { return o && (o.indexOf(c) >= 0 || c.indexOf(o) >= 0); };
+      var r = API.resumo(x), perto = function (o) { return o.de && r.ate >= somaD(o.de, -2) && r.de <= somaD(o.ate || o.de, 2); };
+      if ((Viagem.detectar() || []).some(function (o) { return mesma(o.cidade) || perto(o); })) return null;
+      if (Object.keys((ST.config || {}).viagemSugNao || {}).some(function (k) { return mesma(k.split('|')[0]); })) return null;
+      /* a cidade de casa (a mesma regra do viagem.js: 3 ou mais gastos com o mesmo fim de 6 letras ou mais) não é viagem */
+      var fim = function (a, b) { var i = 0; while (i < a.length && i < b.length && a[a.length - 1 - i] === b[b.length - 1 - i]) i++; return i; };
+      if (Gasto.todos().filter(function (g) { if (ids[g.id] || !g.data) return false; var o = Viagem.cidadeDe(g); return o && fim(o, c) >= Math.min(6, c.length); }).length >= 3) return null;
+      return { cidade: c, nome: c.charAt(0) + c.slice(1).toLowerCase(), de: r.de, ate: r.ate };
+    },
+    detalhe: function (x, op) {
+      op = op || {};
+      var r = API.resumo(x), d = function (iso) { return iso ? String(iso).slice(8, 10) + '/' + String(iso).slice(5, 7) : ''; };   /* DD/MM */
+      var h = '<span class="t-sub">' + esc(r.n + tr(' lançamento(s) · ', ' entr(ies) · ', ' movimiento(s) · ') + fmt(r.total) +
+        (r.de ? (r.de === r.ate ? tr(' · em ', ' · on ', ' · el ') + d(r.de) : tr(' · de ', ' · from ', ' · del ') + d(r.de) + tr(' a ', ' to ', ' al ') + d(r.ate)) : '') +
+        (r.n > 1 ? tr(' · último ', ' · last ', ' · último ') + fmt(r.ultimo) : '')) + '</span>';
+      var sg = API.sugestao(x);
+      if (sg) h += '<span class="t-sub or-sug">' + esc(tr('Sugestão: ', 'Suggestion: ', 'Sugerencia: ') + sg + ' (' + API.motivo(x).txt + ')') + '</span>';
+      var vg = API.viagem(x);
+      if (vg && vg.v) h += '<span class="t-sub or-viagem">✈️ ' + esc(tr('Parece da viagem ', 'Looks like the trip ', 'Parece del viaje ') + vg.v.nome) +
+        ' · <button type="button" class="linkinho" data-acao="vg-abrir" data-close="genModal" data-v="' + esc(vg.v.id) + '">' + esc(tr('conferir na viagem', 'check in the trip', 'revisar en el viaje')) + '</button></span>';
+      else if (vg && vg.cidade) h += '<span class="t-sub or-viagem">✈️ ' + esc(tr('Compra em ', 'Purchase in ', 'Compra en ') + vg.nome + tr(': foi viagem?', ': was it a trip?', ': ¿fue un viaje?')) +
+        ' <button type="button" class="linkinho" data-acao="vg-criar" data-n="' + esc(vg.nome) + '" data-de="' + esc(vg.de) + '" data-ate="' + esc(vg.ate) + '">' + esc(tr('Criar a viagem', 'Create the trip', 'Crear el viaje')) + '</button></span>';
+      var conta = function (g) {
+        var c = g.cartaoId && Array.isArray(ST.cartoes) && ST.cartoes.find(function (k) { return k.id === g.cartaoId; });
+        return c ? (c.apelido || c.nome || tr('cartão', 'card', 'tarjeta')) + (c.fim ? ' ···' + c.fim : '') : (g.cartaoNome || g.conta || '');
+      };
+      h += '<details class="or-lista"' + (op.aberto ? ' open' : '') + '><summary class="small">' + esc(tr('ver os lançamentos', 'see the entries', 'ver los movimientos')) + '</summary>' +
+        '<ul class="small" style="margin:4px 0 0;padding-left:18px">' + r.itens.slice().reverse().slice(0, 30).map(function (g) {
+          return '<li>' + esc([d(g.data), fmt(Number(g.valor) || 0), conta(g), String(g.descRobo || g.desc || '').slice(0, 80)].filter(Boolean).join(' · ')) + '</li>';
+        }).join('') + (r.n > 30 ? '<li>' + esc(tr('… e mais ', '… and ', '… y ') + (r.n - 30)) + '</li>' : '') + '</ul></details>';
+      return h;
+    },
     confirmarGrupo: function (chave) {
       var x = API.grupos().find(function (y) { return y.chave === chave; }); if (!x || x.status !== 'confirmar') return 0;
       var base = x.itens.find(function (g) { return g.grupo === x.grupo && g.sub === x.sub; }) || x.itens[0];
@@ -127,6 +193,7 @@
     }
   };
 
+  function somaD(iso, n) { var x = new Date(iso + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
   function avisar(n) {
     var caixa = document.getElementById('toasts'); if (!caixa) return;
     var d = document.createElement('div'); d.className = 'toast or-toast';
@@ -148,8 +215,7 @@
         'Each row groups entries from the same origin. Confirm them all at once, or tap Change: what you choose applies to all from the same origin.')) + '</p>';
     if (!gs.length) return h + '<div class="card"><p class="small muted" style="margin:0">' + esc(tr('Nada a confirmar. 🎉', 'Nothing to confirm. 🎉')) + '</p></div>';
     return h + '<div class="card sem-pad"><table class="tbl or-tbl"><tbody>' + gs.map(function (x) {
-      var total = x.itens.reduce(function (s, g) { return s + (Number(g.valor) || 0); }, 0);
-      return '<tr><td><span class="t-main">' + esc(x.rotulo) + '</span><div class="t-sub">' + x.itens.length + tr(' lançamento(s) · ', ' entr(ies) · ') + fmt(total) + '</div></td>' +
+      return '<tr><td><span class="t-main">' + esc(x.rotulo) + '</span><div class="or-det">' + API.detalhe(x) + '</div></td>' +
         '<td>' + (x.status === 'confirmar' ? esc(nome(x.grupo) + ' › ' + x.sub) + ' <span class="or-selo or-amarelo">' + esc(tr('A confirmar', 'To confirm')) + '</span>'
           : '<span class="or-selo or-vermelho">' + esc(tr('A identificar', 'To identify')) + '</span>') + '</td>' +
         '<td class="num"><div class="row" style="gap:6px;justify-content:flex-end">' +
@@ -160,7 +226,7 @@
 
   MoneyModulos.registrar({
     id: 'origem',
-    versao: '1.0.1',
+    versao: '1.1.0',
     pontos: {
       'lancamento.categoria': function (ctx) { return selo(ctx.g); },
       'lancamentos.topo': function () {

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/material-escolar.js — 📚 MATERIAL ESCOLAR (campanha por ano letivo) (3.102)        1.0.1 · 24/Nov/2026
+   modulos/material-escolar.js — 📚 MATERIAL ESCOLAR (campanha por ano letivo) (3.102)        1.0.2 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 24/Nov/2026; sem IA, sem integração; no modelo da ✈️ Viagem, modulos/viagem.js)
      · Uma "campanha" por ano letivo ("Material escolar 2027"), com a janela de datas (padrão: 1º/nov até o fim de fevereiro) e os
@@ -252,16 +252,19 @@
   function filhoEscolhido(id) { var e = document.querySelector('.me-filho[data-g="' + id + '"]'); return e ? e.value : ''; }
   function depois() { Store.salvar(); if (typeof render === 'function') render(); if (typeof renderInboxN === 'function') renderInboxN(); }
 
+  function dmy(iso) { return String(iso || '').slice(8, 10) + '/' + String(iso || '').slice(5, 7); }
   MoneyModulos.registrar({
-    id: 'material-escolar', versao: '1.0.1', colecoes: [COL],
+    id: 'material-escolar', versao: '1.0.2', colecoes: [COL],
     pontos: {
       'inbox.grupos': function () {
         if (casa()) return [];
         API.ligarTudo();
         var h = '', n = 0;
         lista().filter(visivel).forEach(function (c) {
-          var k = sugestoes(c).length; if (!k) return; n++;
-          h += '<li class="inb-item me-inb"><div><b>📚 ' + esc(c.nome + ': ' + k + tr(' compras para confirmar', ' purchases to confirm', ' compras por confirmar')) + '</b><span class="t-sub">' + esc(I18n.data(c.de) + ' – ' + I18n.data(c.ate)) + '</span></div><span class="inb-acoes">' +
+          var sg = sugestoes(c), k = sg.length; if (!k) return; n++;
+          /* 3.116: o total e o período das compras (não só a janela da campanha) */
+          var ds = sg.map(function (s) { return s.g.data; }).filter(Boolean).sort(), tot = sg.reduce(function (a, s) { return a + Math.abs(Number(s.g.valor) || 0); }, 0);
+          h += '<li class="inb-item me-inb"><div><b>📚 ' + esc(c.nome + ': ' + k + tr(' compras para confirmar', ' purchases to confirm', ' compras por confirmar')) + '</b><span class="t-sub">' + esc(fmt(tot) + (ds.length ? tr(' · de ', ' · from ', ' · del ') + dmy(ds[0]) + tr(' a ', ' to ', ' al ') + dmy(ds[ds.length - 1]) : '')) + '</span></div><span class="inb-acoes">' +
             botao('me-abrir', tr('Confirmar', 'Confirm', 'Confirmar'), ' data-c="' + esc(c.id) + '" data-close="genModal"', 'primary') + '</span></li>';
         });
         return n ? [{ id: 'confirmar', n: n, html: h }] : [];

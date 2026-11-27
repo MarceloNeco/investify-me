@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/debito-nao-caiu.js — O DÉBITO AUTOMÁTICO QUE NÃO CAIU (3.100)        1.1.0 · 24/Nov/2026
+   modulos/debito-nao-caiu.js — O DÉBITO AUTOMÁTICO QUE NÃO CAIU (3.100)        1.1.1 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (caso real do dono, 23/Nov/2026: a conta de luz no débito automático do cartão não foi debitada em novembro, o app
    mostrou "paga" e só um e-mail de cobrança avisou; o medo é a multa e o corte)
@@ -157,8 +157,14 @@
     return tr('O débito automático de ', 'The auto-debit of ', 'El débito automático de ') + x.r.nome + ' (' + fmt(x.valor) + tr(', venceu em ', ', due on ', ', venció el ') + I18n.data(x.data) +
       tr(') não apareceu no banco. Pague hoje para evitar multa e corte.', ') did not show up at the bank. Pay today to avoid late fees and a service cut.', ') no apareció en el banco. Paga hoy para evitar recargos y el corte.');
   }
+  /* 3.116: todo item do 📥 com valor e data: o do comprovante do e-mail (ou o da conta fixa) */
+  function valorData(a) {
+    var v = Number(a.x.valor) || (a.r ? Number(a.r.valor) || 0 : 0), d = a.x.vencimento || a.x.data || '';
+    var t = [v ? fmt(v) : '', d ? tr('vence ', 'due ', 'vence ') + I18n.data(d) : ''].filter(Boolean).join(' · ');
+    return t ? t + ' · ' : '';
+  }
   MoneyModulos.registrar({
-    id: 'debito-nao-caiu', versao: '1.1.0',
+    id: 'debito-nao-caiu', versao: '1.1.1',
     pontos: {
       'inbox.grupos': function () {
         if (casa() || typeof Recorrente === 'undefined') return [];
@@ -173,14 +179,14 @@
         API.avisosEmail().forEach(function (a) {
           n++;
           h += '<li class="inb-item dnc-email" style="border-left:4px solid var(--down);padding-left:8px"><div><b style="color:var(--down)">📧 ' + esc(tr('Aviso de atraso por e-mail', 'Overdue notice by e-mail', 'Aviso de atraso por correo') + (a.r ? ': ' + a.r.nome : '') + ' — ' + (a.x.assunto || a.x.loja || a.x.remetente || '')) + '</b>' +
-            '<span class="t-sub">' + esc(tr('Confira no app ou site oficial (não clique no e-mail) e pague para evitar o corte.', 'Check the official app or site (do not click the e-mail) and pay to avoid a cut.', 'Compruébalo en la app o web oficial (no hagas clic en el correo) y paga para evitar el corte.')) + '</span></div>' +
+            '<span class="t-sub">' + esc(valorData(a)) + esc(tr('Confira no app ou site oficial (não clique no e-mail) e pague para evitar o corte.', 'Check the official app or site (do not click the e-mail) and pay to avoid a cut.', 'Compruébalo en la app o web oficial (no hagas clic en el correo) y paga para evitar el corte.')) + '</span></div>' +
             '<span class="inb-acoes">' + botao('dnc-email-ok', tr('Entendi', 'Got it', 'Entendido'), ' data-id="' + esc(a.x.id) + '"') + '</span></li>';
         });
         API.atrasos().forEach(function (x) {
           var k = x.r.id + '|' + x.data, b = API.bancoDe(x.r.id, x.data); if (b.resolvido) return; n++;
           var d = ' data-k="' + esc(k) + '"';
           h += '<li class="inb-item dnc-banco"><div><b>🏦 ' + esc(tr('Ver com o banco por que o débito automático de ', 'Ask the bank why the auto-debit of ', 'Consulta con el banco por qué no se hizo el débito automático de ') + x.r.nome + tr(' não caiu', ' did not go through', '')) + '</b>' +
-            '<span class="t-sub">' + esc(tr('Venceu em ', 'Due on ', 'Venció el ') + I18n.data(x.data) + ' · ' + tr('paga com atraso', 'paid late', 'pagada con atraso') + (x.como ? ' (' + x.como + tr(' em ', ' on ', ' el ') + I18n.data(x.em) + ')' : ' (' + I18n.data(x.em) + ')')) + '</span>' +
+            '<span class="t-sub">' + esc((x.valor ? fmt(x.valor) + ' · ' : '') + tr('Venceu em ', 'Due on ', 'Venció el ') + I18n.data(x.data) + ' · ' + tr('paga com atraso', 'paid late', 'pagada con atraso') + (x.como ? ' (' + x.como + tr(' em ', ' on ', ' el ') + I18n.data(x.em) + ')' : ' (' + I18n.data(x.em) + ')')) + '</span>' +
             '<div class="row" style="gap:6px;margin-top:4px"><input class="dnc-nota" data-k="' + esc(k) + '" maxlength="200" placeholder="' + esc(tr('anotação (o que o banco disse)', 'note (what the bank said)', 'nota (lo que dijo el banco)')) + '" value="' + esc(b.nota || '') + '" style="flex:1;min-width:10em">' +
             botao('dnc-nota-ok', tr('Guardar', 'Save', 'Guardar'), d + ' data-inb-fica="1"') + botao('dnc-resolvido', tr('Resolvido', 'Resolved', 'Resuelto'), d, 'primary') + '</div></div></li>';
         });

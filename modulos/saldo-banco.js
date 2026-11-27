@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.1.2 · 14/Nov/2026
+   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.3.0 · 26/Nov/2026 (a conta inteira para o dono; o final na visão da casa)
    ---------------------------------------------------------------------
    O QUE FAZ
      O robô manda, na mesma caixa (money_entrada), itens que NUNCA viram lançamento (nuvem.js desvia para cá):
@@ -67,6 +67,9 @@
       r.tipo = tipoDe(it); r.banco = banco; r.conta = String(it.conta || '').trim().slice(0, 80);
       if (contaId) r.contaId = contaId;
       r.final = String(it.final_conta || '').replace(/\D/g, '').slice(-4) || r.final || '';
+      /* 2.2.0 (3.116): o número inteiro como o banco manda (o dono autorizou mostrar; fica no cofre do app) e a agência, se vier */
+      var nr = String(it.numero_conta || it.final_conta || '').replace(/[^\dXx-]/g, '').slice(0, 20); if (nr.replace(/\D/g, '').length > 4) r.numero = nr;
+      var ag = String(it.agencia || '').replace(/[^\d-]/g, '').slice(0, 10); if (ag) r.agencia = ag;
       r.dono = String(it.dono || '').trim().slice(0, 60); r.moeda = String(it.moeda || 'BRL').slice(0, 3);
       /* 2.1.2 (3.86): quando chegaram estes dados (o horário do robô, se ele mandar; senão, o da chegada no app) */
       var em = [it.atualizado_em, it.coletado_em, it.criado_em].filter(function (x) { return x && !isNaN(Date.parse(x)); })[0];
@@ -89,10 +92,28 @@
       return true;
     },
     contas: lista,
-    rotulo: function (r) {
+    /* 2.3.0 (3.116): a agência e a conta INTEIRAS, como o banco manda, para o PRÓPRIO dono da conta ("ag. 0001 · conta 00012-3"; no
+       Itaú, BB, Caixa, Bradesco e Santander o dígito vai depois do hífen). Na visão da casa e para outro membro da família, só o final. */
+    inteira: function (r) {
+      if (window.Escopo && Escopo.soCasa && Escopo.soCasa()) return false;
+      var eu = window.MoneyNuvem && MoneyNuvem.escopos && MoneyNuvem.escopos.eu ? MoneyNuvem.escopos.eu() : '';
+      var p = r && r.dono && window.Pessoas && Pessoas.achar ? Pessoas.achar(r.dono) : null;
+      return !(eu && p && p.uid && p.uid !== eu);
+    },
+    numero: function (r, curto) {
+      if (r && r.numero && !curto && API.inteira(r)) {
+        var nr = String(r.numero), so = nr.replace(/\D/g, '');
+        if (nr.indexOf('-') < 0 && so.length > 1 && /ita[uú]|banco do brasil|\bbb\b|caixa|bradesco|santander/i.test(N(r.banco))) nr = so.slice(0, -1) + '-' + so.slice(-1);
+        return (r.agencia ? tr('ag. ', 'branch ', 'suc. ') + r.agencia + ' · ' : '') + tr('conta ', 'account ', 'cuenta ') + nr;
+      }
+      var f = (r && (r.final || String(r.numero || '').replace(/\D/g, '').slice(-4))) || '';
+      return f ? '···' + f : '';
+    },
+    rotulo: function (r, op) {
       var nome = r.tipo === 'poupanca' ? tr('Poupança', 'Savings') : r.tipo === 'conta' ? (/invest/i.test(r.conta) ? r.conta : tr('Conta corrente', 'Checking account')) : r.conta;
       if (r.tipo === 'conta' && r.conta && !/^(conta|conta corrente|corrente|checking|itau|itaú)$/i.test(r.conta) && N(r.conta) !== N(r.banco)) nome = r.conta;
-      return [r.banco, nome].filter(Boolean).join(' · ') + (r.final ? ' ···' + r.final : '');
+      var nr = API.numero(r, op && op.curto);   /* 2.3.0: a conta inteira para o dono; op.curto (a lista compacta) = o final */
+      return [r.banco, nome].filter(Boolean).join(' · ') + (nr ? ' ' + nr : '');
     },
     zerada: function (r) { return Math.abs(r.saldo || 0) < 0.005 && r.hist.every(function (h) { return Math.abs(h.saldo) < 0.005; }) && !API.lancamentos(r).some(function (g) { return g.data >= menos(r.data, 90); }); },
     /* as três seções; nome e final iguais = um item só (o mais novo) */
@@ -122,6 +143,19 @@
       var bancosComInv = {}; invs.forEach(function (r) { if (r.tipo === 'investimento') bancosComInv[N(r.banco)] = 1; });
       var semInv = []; contas.forEach(function (r) { if (!bancosComInv[N(r.banco)] && semInv.indexOf(r.banco) < 0) semInv.push(r.banco); });
       return { contas: contas, cartoes: cartoes, invs: invs, semInv: semInv };
+    },
+    /* 2.3.0 (3.116): no seletor "Por qual banco", a conta inteira ao lado do banco, quando a pessoa tem uma conta só nele */
+    numeroDoBanco: function (nome) {
+      var w = function (t) { return N(t).split(' ')[0] || ''; }, b = w(nome); if (b.length < 2) return '';   /* "Itaú Unibanco" e "Itau": a 1ª palavra */
+      var cs = lista().filter(function (x) { return x.tipo === 'conta' && x.numero && w(x.banco) === b; });
+      return cs.length === 1 && API.inteira(cs[0]) ? API.numero(cs[0]) : '';
+    },
+    /* 2.3.0 (3.116): de qual conta é o lançamento (o detalhe mostra a conta inteira para o dono) */
+    contaDe: function (g) {
+      if (!g || g.cartaoId || g.cartaoNome || g.finalCartao || !g.conta) return null;
+      var b = N(g.conta), cs = lista().filter(function (x) { return N(x.banco) === b && (x.tipo === 'conta' || x.tipo === 'poupanca'); });
+      if (g.contaRobo) return cs.find(function (r) { return N(g.contaRobo) === N(r.conta) || (r.contaId && g.contaRobo === r.contaId); }) || null;
+      return cs.length === 1 ? cs[0] : (cs.find(function (r) { return r.tipo === 'conta'; }) || null);
     },
     lancamentos: function (r) {
       var b = N(r.banco), contasDoBanco = lista().filter(function (x) { return N(x.banco) === b && (x.tipo === 'conta' || x.tipo === 'poupanca'); }).length;
@@ -196,9 +230,14 @@
 
   MoneyModulos.registrar({
     id: 'saldo-banco',
-    versao: '2.1.1',
+    versao: '2.3.0',
     colecoes: [COL],
-    pontos: { 'budget.painel': cartao },
+    pontos: { 'budget.painel': cartao,
+      /* 2.3.0 (3.116): no detalhe do lançamento, a conta (inteira para o dono; o final para os outros) */
+      'lancamento.form': function (ctx) {
+        var r = API.contaDe(ctx && ctx.g); if (!r) return '';
+        return '<p class="small muted sb-conta-lanc" style="margin:0 0 8px">🏦 ' + esc(tr('Conta: ', 'Account: ', 'Cuenta: ') + API.rotulo(r)) + '</p>';
+      } },
     acoes: {
       'sb-ver': function (el) {
         var r = lista().find(function (x) { return x.id === el.dataset.id; }); if (!r) return;

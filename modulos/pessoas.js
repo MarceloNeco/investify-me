@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.3.0 · 13/Nov/2026
+   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.4.0 · 26/Nov/2026 (3.116: o nome no aviso do saldo abre a pessoa; o apelido explicado)
    ---------------------------------------------------------------------
    O QUE FAZ
      Um cadastro só de "quem": Da casa (responsáveis e dependentes), Outras pessoas (pai, amigo, sócio) e
@@ -350,7 +350,8 @@
         cp(tr('Nome', 'First name'), inp('psNome', p.nome)) +
         '<div class="ps-nao-empresa">' + cp(tr('Nome do meio (opcional)', 'Middle name (optional)'), inp('psMeio', p.meio)) + '</div>' +
         '<div class="ps-nao-empresa">' + cp(tr('Sobrenome', 'Last name'), inp('psSobrenome', p.sobrenome), tr('O nome completo ajuda o leitor de documentos a saber de quem é um contrato ou exame.', 'The full name helps the document reader know whose contract or exam it is.')) + '</div>' +
-        cp(tr('Apelido (como aparece no app)', 'Nickname (how it shows in the app)'), inp('psApelido', p.apelido, tr('vazio = o primeiro nome', 'blank = first name'))) +
+        cp(tr('Apelido (como aparece no app)', 'Nickname (how it shows in the app)', 'Apodo (como aparece en la app)'), inp('psApelido', p.apelido, tr('vazio = o primeiro nome', 'blank = first name', 'vacío = el nombre')),
+          tr('O apelido aparece no lugar do nome em todo o app (deixe vazio para usar o nome).', 'The nickname shows instead of the name everywhere in the app (leave it blank to use the name).', 'El apodo aparece en lugar del nombre en toda la app (déjalo vacío para usar el nombre).')) +
         cp(tr('Nomes no banco (como aparece no extrato)', 'Names at the bank (as on the statement)'), inp('psBanco', (p.banco || []).join(', '), tr('ex.: MARIA S LIMA — separe por vírgula', 'e.g. MARIA S LIMA — comma separated')),
           p.tipo === 'casa' && API.nomesDoBanco(p).length ? tr('Já reconhecidos pelo nome completo: ', 'Already recognised from the full name: ') + API.nomesDoBanco(p).join(' · ') : '') +
         cp(tr('Também chamado no app', 'Also called in the app'), inp('psAliases', (p.aliases || []).join(', '), tr('nomes antigos, apelidos do robô', 'old names, robot nicknames'))) +
@@ -442,7 +443,7 @@
 
   MoneyModulos.registrar({
     id: 'pessoas',
-    versao: '1.3.0',
+    versao: '1.4.0',
     colecoes: [COL],
     iniciar: function () {
       try { if (ST && !cfg().pessoasV && (ST.gastos || []).length + (ST.recorrentes || []).length) { API.migrar(); Store.salvar(); } } catch (e) { console.warn('pessoas', e); }
@@ -470,6 +471,8 @@
       'ps-novo': function () { editando = 'novo'; render(); },
       'ps-familia': function () { API.trazerDaFamilia().then(function (n) { salvarERender(n ? n + tr(' pessoa(s) trazida(s) da família.', ' person(s) brought from the family.') : tr('Ninguém novo na família.', 'Nobody new in the family.')); }); },
       'ps-editar': function (el) { editando = el.dataset.id; render(); },
+      /* 3.116: de um aviso (ex.: o saldo previsto), tocar no nome da pessoa abre a ficha dela aqui */
+      'ps-abrir': function (el) { editando = el.dataset.id; if (el.closest('#genModal') && typeof fechar === 'function') fechar('genModal'); if (typeof irPara === 'function') irPara('cfg-pessoas'); else render(); setTimeout(function () { var f = document.querySelector('.ps-form'); if (f) f.scrollIntoView({ block: 'start' }); var a = document.getElementById('psApelido'); if (a) a.focus(); }, 80); },
       'ps-cancelar': function () { editando = null; render(); },
       'ps-salvar': function () {
         try { var p = API.salvar(lerForm()); editando = null; salvarERender(tr('Salvo: ', 'Saved: ') + API.rotulo(p)); }

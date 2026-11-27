@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.16.0 · 26/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.16.1 · 26/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -86,6 +86,9 @@
       "Falta só um passo" (pinAntigo): com L.prf, a digital é o botão principal ("uma vez só") e o PIN antigo vem depois; Portao.migrarPin:
       o PIN da conta nasceu em outro aparelho e este, aberto com a chave do aparelho, ainda está no PIN antigo (sem L.srv) → pede uma vez
       o PIN da conta (conferirPin, no foco ou no evento 'pin') e grava (Pin.gravar); novoPin avisa que os outros aparelhos confirmam uma vez.
+  26. 1.16.1 (3.116) — Caixa.converter: o grupo CARTAO do robô (o débito da fatura do cartão na conta, ex.: o da fatura Porto) vira
+      "Pagamento de fatura" (como o extrato OFX), sem palpite: não vai para "Confirmar classificação". As partes que o robô separa da
+      fatura Porto (consórcio, anuidade "Tarifa Cartao Credito", seguro) chegam com confianca "confirmada" e ficam como vieram.
   20. 1.15.3 (3.87) — o robô mandar de novo um lançamento DIVIDIDO pela pessoa não desfaz a divisão (corrigir compara com o total).
   13. 1.11.1 (3.64.1) — "Sair" do menu do perfil sai DE VERDADE (Nuvem.sair: tela "Saindo…", tranca, sai, location.replace;
       página guardada pelo navegador recarrega); conta sem PIN da conta e cadeado aberto (PIN ou digital): "Criar o PIN da
@@ -1712,7 +1715,11 @@
       /* 1.11.0: estorno (valor negativo) = lançamento NEGATIVO na categoria do gasto de origem, na data em que aconteceu;
          abate o "Para onde foi" e não conta como renda */
       if (valor < 0) this.estornar(g);
-      if (g.grupo === 'OUTROS') g.revisar = true;
+      /* 1.16.1 (3.116): grupo CARTAO do robô (o débito da fatura do cartão na conta, ex.: "DEB AUTOR PORTOSEG SA CR") = "Pagamento de
+         fatura" (o mesmo do extrato OFX), já decidido: não vai para "Confirmar classificação". As partes que o robô separa da fatura Porto
+         (consórcio, anuidade, seguro) chegam com o grupo e a categoria delas e confianca "confirmada": ficam como vieram. */
+      if (grupoRobo === 'CARTAO' && valor > 0) { g.grupo = 'OUTROS'; g.sub = 'Pagamento de fatura'; delete g.confianca; }
+      else if (g.grupo === 'OUTROS') g.revisar = true;
       /* cartão: pelo final */
       /* 1.12.0: cartão pela conta do cartão e pelos finais (modulos/cartoes.js); antes procurava c.final, mas o app guarda c.fim */
       if (window.Cartoes) Cartoes.doRobo(l, g);
