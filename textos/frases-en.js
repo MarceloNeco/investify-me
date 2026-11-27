@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.125 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.126 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.126 */
+  'Investimento no exterior e contas de terceiros':'Investments abroad and other people\'s bills',
+  '🌎 Os avisos da corretora no exterior que chegam no e-mail aparecem na Carteira como eventos (data, ativo, CUSIP, conta), sem valor: a posição continua vindo do extrato.':'🌎 Notices from the broker abroad that arrive by e-mail show in the Portfolio as events (date, asset, CUSIP, account), with no amount: the position still comes from the statement.',
+  '📋 Na lista de contas de outras pessoas, dá para juntar duas palavras com "+" (ex.: "FORNECEDOR + ENDEREÇO"), e a tela explica como.':'📋 In the list of other people\'s bills you can join two words with "+" (e.g. "SUPPLIER + ADDRESS"), and the screen explains how.',
   /* 3.125 */
   'Pessoas da família sem pergunta repetida':'Family people without repeated questions',
   '👪 O app liga sozinho a sua ficha à sua conta (pelo e-mail, pelo nome ou pela conta) e não pergunta mais "Qual destas fichas é você?", nem cria uma ficha repetida. Quando há duas fichas que parecem ser você, ele oferece "Juntar".':'👪 The app links your card to your account by itself (by e-mail, name or account) and no longer asks "Which of these cards is you?", nor creates a duplicate card. When two cards look like you, it offers "Merge".',

@@ -1,11 +1,15 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.125 · 26/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.126 · 26/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.126', d:'2026-11-26', t:'Investimento no exterior e contas de terceiros', itens:[
+    '🌎 Os avisos da corretora no exterior que chegam no e-mail aparecem na Carteira como eventos (data, ativo, CUSIP, conta), sem valor: a posição continua vindo do extrato.',
+    '📋 Na lista de contas de outras pessoas, dá para juntar duas palavras com "+" (ex.: "FORNECEDOR + ENDEREÇO"), e a tela explica como.'
+  ]},
   {v:'3.125', d:'2026-11-26', t:'Pessoas da família sem pergunta repetida', itens:[
     '👪 O app liga sozinho a sua ficha à sua conta (pelo e-mail, pelo nome ou pela conta) e não pergunta mais "Qual destas fichas é você?", nem cria uma ficha repetida. Quando há duas fichas que parecem ser você, ele oferece "Juntar".',
     '✉️ Na ficha de quem entra no app, um e-mail opcional, que liga a ficha ao convite da família. Os atalhos da família abrem direto Pessoas da família.'

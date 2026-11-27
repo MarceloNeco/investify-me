@@ -767,6 +767,9 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.126 — Investimento no exterior e contas de terceiros.** Novo `modulos/invest-exterior.js` 1.0.0: a `ficha.investimento_exterior`
+  vira evento na Carteira (data, ativo, CUSIP, conta), sem valor (`investify.carteira.topo`). terceiros 1.1.0: marcador composto "A + B"
+  (as duas palavras) com a dica `tc-composto`. Testes: `teste-invest-exterior.js` (novo), `teste-terceiros`.
   **3.125 — Pessoas da família sem pergunta repetida.** pessoas 1.5.0: e-mail opcional (`psEmail`, validado), `minhaFicha` por
   uid/e-mail/nome único, preenchimento pelo e-mail e pela conta, ação `ps-lista`. visao-casa 1.2.0: liga a ficha do chefe sozinha (sem
   "Qual destas fichas é você?", sem ficha repetida), "Juntar" mantém a ficha com e-mail, atalhos abrem Pessoas da família. Testes:

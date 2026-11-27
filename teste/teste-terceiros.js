@@ -80,6 +80,14 @@ const C = (id, extra) => Object.assign({ id: 'evid-' + id, tipo: 'comprovante', 
       await p.evaluate((x) => { I18n.atual = x; irPara('config'); cfgSecao = 'todos'; render(); }, l);
       ok(rx.test(await p.evaluate(() => (document.querySelector('.tc-cfg') || {}).textContent || '')), l.toUpperCase() + ': a seção da lista');
     }
+    /* 3.126: o marcador composto "A + B" (as duas partes precisam aparecer) e a dica na tela */
+    const cmp = await p.evaluate(() => { I18n.atual = 'pt'; const it = Terceiros.salvar({ nome: 'Casa Ficticia da Tia', marcadores: ['LUZ FICTICIA + RUA EXEMPLO'], acao: 'ignorar' });
+      const a = Terceiros.casa({ loja: 'LUZ FICTICIA', descricao: 'Unidade na RUA EXEMPLO 10' }), b0 = Terceiros.casa({ loja: 'LUZ FICTICIA', descricao: 'Unidade na OUTRA RUA 5' });
+      Terceiros.tirar(it.id); return { a: a && a.nome, b: b0 && b0.nome }; });
+    ok(cmp.a === 'Casa Ficticia da Tia' && !cmp.b, '"LUZ FICTICIA + RUA EXEMPLO" só reconhece o e-mail que tem as duas partes');
+    const dica = await p.evaluate(() => { const it = Terceiros.salvar({ nome: 'Dica Ficticia', marcadores: ['MARCADOR FICTICIO'], acao: 'ignorar' }); document.body.insertAdjacentHTML('beforeend', '<button id="zzTc" data-acao="tc-editar" data-id="' + it.id + '">x</button>'); document.getElementById('zzTc').click();
+      const t = (document.querySelector('#genBody .tc-composto') || {}).textContent || ''; Terceiros.tirar(it.id); fechar('genModal'); return t; });
+    ok(/junte duas palavras com "\+"/.test(dica) && /FORNECEDOR \+ ENDEREÇO/.test(dica), 'o formulário explica o marcador composto: ' + dica.slice(0, 80));
     ok(!p.erros.length, 'sem erro na página ' + p.erros.join(' | '));
   } finally { await b.close(); srv.close(); }
   console.log((falhas ? '✗ ' : '✓ ') + oks + ' ok, ' + falhas + ' falha(s)');
