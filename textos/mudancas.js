@@ -7,7 +7,7 @@
    ===================================================================== */
 const MUDANCAS = [
   {v:'3.138', d:'2026-11-27', t:'O assistente mostra onde fica', itens:[
-    '📍 Pergunte ao assistente onde fica alguma coisa (ex.: "como eu lanço um gasto?") e toque em "Me mostra onde fica": o app vai até a tela e acende o botão, sem clicar por você.'
+    '📍 Pergunte ao assistente onde fica alguma coisa (ex.: "como eu lanço um gasto?") e toque em "Me mostra onde fica": o app vai até a tela e acende o botão, sem clicar por você. Tocando fora, você volta para a conversa.'
   ]},
   {v:'3.137', d:'2026-11-27', t:'Compartilhar PDF, extrato ou nota com o app', itens:[
     '📤 No celular, o MoneyTRIO agora aparece no "Compartilhar" também para PDF, CSV, XML de nota fiscal e extrato OFX, e não só para foto. O app pergunta "O que é isto?" e já sugere a resposta pelo nome e pelo texto do arquivo.',
