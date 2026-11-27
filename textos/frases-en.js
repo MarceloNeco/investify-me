@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.128 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.129 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.129 */
+  'Aviso de atraso mais certeiro':'Sharper overdue notices',
+  '📧 O aviso de atraso que o robô identifica vira alerta urgente ligado à conta fixa do fornecedor. Se foi você mesmo quem encaminhou o e-mail, o app só lembra, sem alarme.':'📧 The overdue notice the robot identifies becomes an urgent alert linked to the supplier\'s fixed bill. If you forwarded the e-mail yourself, the app just reminds you, without the alarm.',
   /* 3.128 */
   'Categoria pelo item da compra':'Category from the purchase item',
   '🏷️ Quando o robô reconhece o item da compra, o 📥 pergunta "É isso?" com a categoria e o item. A resposta classifica o lançamento e vira regra.':'🏷️ When the robot recognizes the purchase item, the 📥 asks "Is it this?" with the category and the item. Your answer classifies the entry and becomes a rule.',

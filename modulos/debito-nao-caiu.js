@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/debito-nao-caiu.js — O DÉBITO AUTOMÁTICO QUE NÃO CAIU (3.100)        1.1.1 · 26/Nov/2026
+   modulos/debito-nao-caiu.js — O DÉBITO AUTOMÁTICO QUE NÃO CAIU (3.100)        1.2.0 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (caso real do dono, 23/Nov/2026: a conta de luz no débito automático do cartão não foi debitada em novembro, o app
    mostrou "paga" e só um e-mail de cobrança avisou; o medo é a multa e o corte)
@@ -146,8 +146,15 @@
     avisosEmail: function () {
       if (casa() || !window.Comprovantes) return [];
       var visto = cfg().dncEmailVisto || {}, rs = typeof Recorrente !== 'undefined' ? Recorrente.ativos().filter(emDebito) : [];
-      return Comprovantes.lista().filter(function (x) { return x.estado !== 'dispensado' && !visto[x.id] && RX_ATRASO.test([x.assunto, x.descricao, x.produto].join(' ')); })
-        .map(function (x) { var t = [x.loja, x.remetente, x.assunto, x.descricao].join(' '); return { x: x, r: rs.find(function (r) { return nomeBate(t, r); }) || null }; });
+      /* 1.2.0 (3.129): o robô também marca na ficha (aviso_atraso + fornecedor_aviso); a conta fixa do fornecedor é achada entre TODAS as
+         ativas (não só as do débito automático). encaminhado_pela_pessoa: ela mesma encaminhou (já viu) → só informa, sem alarme */
+      var todas = typeof Recorrente !== 'undefined' ? Recorrente.ativos().filter(function (r) { return r.fluxo !== 'entrada'; }) : [];
+      return Comprovantes.lista().filter(function (x) { return x.estado !== 'dispensado' && !visto[x.id] && ((x.ficha && x.ficha.aviso_atraso) || RX_ATRASO.test([x.assunto, x.descricao, x.produto].join(' '))); })
+        .map(function (x) {
+          var f = x.ficha || {}, forn = String(f.fornecedor_aviso || ''), t = [forn, x.loja, x.remetente, x.assunto, x.descricao].join(' ');
+          var r = (forn && todas.find(function (y) { return nomeBate(forn, y); })) || rs.find(function (y) { return nomeBate(t, y); }) || todas.find(function (y) { return nomeBate(t, y); }) || null;
+          return { x: x, r: r, fornecedor: forn, encaminhado: f.encaminhado_pela_pessoa === true };
+        });
     }
   };
 
@@ -164,7 +171,7 @@
     return t ? t + ' · ' : '';
   }
   MoneyModulos.registrar({
-    id: 'debito-nao-caiu', versao: '1.1.1',
+    id: 'debito-nao-caiu', versao: '1.2.0',
     pontos: {
       'inbox.grupos': function () {
         if (casa() || typeof Recorrente === 'undefined') return [];
@@ -178,7 +185,13 @@
         });
         API.avisosEmail().forEach(function (a) {
           n++;
-          h += '<li class="inb-item dnc-email" style="border-left:4px solid var(--down);padding-left:8px"><div><b style="color:var(--down)">📧 ' + esc(tr('Aviso de atraso por e-mail', 'Overdue notice by e-mail', 'Aviso de atraso por correo') + (a.r ? ': ' + a.r.nome : '') + ' — ' + (a.x.assunto || a.x.loja || a.x.remetente || '')) + '</b>' +
+          if (a.encaminhado) {   /* 1.2.0 (3.129): ela mesma encaminhou: só informa */
+            h += '<li class="inb-item dnc-email dnc-info"><div><b>ℹ️ ' + esc(tr('Você encaminhou o aviso de atraso', 'You forwarded the overdue notice', 'Reenviaste el aviso de atraso') + (a.r ? ': ' + a.r.nome : a.fornecedor ? ': ' + a.fornecedor : '')) + '</b>' +
+              '<span class="t-sub">' + esc(valorData(a)) + esc(tr('Só para lembrar: confira se já foi pago.', 'Just a reminder: check whether it was paid.', 'Solo para recordar: comprueba si ya se pagó.')) + '</span></div>' +
+              '<span class="inb-acoes">' + botao('dnc-email-ok', tr('Entendi', 'Got it', 'Entendido'), ' data-id="' + esc(a.x.id) + '"') + '</span></li>';
+            return;
+          }
+          h += '<li class="inb-item dnc-email" style="border-left:4px solid var(--down);padding-left:8px"><div><b style="color:var(--down)">📧 ' + esc(tr('Aviso de atraso por e-mail', 'Overdue notice by e-mail', 'Aviso de atraso por correo') + (a.r ? ': ' + a.r.nome : a.fornecedor ? ': ' + a.fornecedor : '') + ' — ' + (a.x.assunto || a.x.loja || a.x.remetente || '')) + '</b>' +
             '<span class="t-sub">' + esc(valorData(a)) + esc(tr('Confira no app ou site oficial (não clique no e-mail) e pague para evitar o corte.', 'Check the official app or site (do not click the e-mail) and pay to avoid a cut.', 'Compruébalo en la app o web oficial (no hagas clic en el correo) y paga para evitar el corte.')) + '</span></div>' +
             '<span class="inb-acoes">' + botao('dnc-email-ok', tr('Entendi', 'Got it', 'Entendido'), ' data-id="' + esc(a.x.id) + '"') + '</span></li>';
         });

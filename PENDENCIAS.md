@@ -119,6 +119,7 @@ Lista viva (diretriz "Lista de pendências do app"). Mais nova em cima. Situaç�
 | N111 | **3.126 — Eventos do investimento no exterior e o marcador "FORNECEDOR + ENDEREÇO"** (dono, pelo chat principal, itens N e O). Feito: evento sem valor na Carteira; marcador composto explicado na tela. | dono · chat principal | ✅ 3.126 |
 | N112 | **3.127 — Aluguel recebido pela imobiliária** (dono, pelo chat principal, item P). Feito: a conta do demonstrativo no crédito e a renda prevista no dia 12. | dono · chat principal | ✅ 3.127 |
 | N113 | **3.128 — Categoria sugerida pelo item da compra** (dono, pelo chat principal, item Q). Feito: "É isso?" com o item; a resposta vira regra. | dono · chat principal | ✅ 3.128 |
+| N114 | **3.129 — Aviso de atraso ligado à conta do fornecedor** (dono, pelo chat principal, item R). Feito: alerta urgente ligado à conta fixa; o e-mail encaminhado pela própria pessoa só informa. | dono · chat principal | ✅ 3.129 |
 
 ## Segurança do repositório (06/Nov/2026)
 - Dados pessoais que tinham ido para testes e documentos (nome da filha, escola, saldos e empregadores do FGTS,

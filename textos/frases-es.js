@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.128 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.129 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,9 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.129 — rascunho, revisar */
+  'Aviso de atraso mais certeiro':'Avisos de atraso más certeros',
+  '📧 O aviso de atraso que o robô identifica vira alerta urgente ligado à conta fixa do fornecedor. Se foi você mesmo quem encaminhou o e-mail, o app só lembra, sem alarme.':'📧 El aviso de atraso que identifica el robot se convierte en alerta urgente vinculada a la cuenta fija del proveedor. Si fuiste tú quien reenvió el correo, la app solo lo recuerda, sin alarma.',
   /* 3.128 — rascunho, revisar */
   'Categoria pelo item da compra':'Categoría por el artículo de la compra',
   '🏷️ Quando o robô reconhece o item da compra, o 📥 pergunta "É isso?" com a categoria e o item. A resposta classifica o lançamento e vira regra.':'🏷️ Cuando el robot reconoce el artículo de la compra, el 📥 pregunta "¿Es esto?" con la categoría y el artículo. La respuesta clasifica el movimiento y se convierte en regla.',
