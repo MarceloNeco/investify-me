@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/importar-posicoes.js — "Importar posições (JSON)" (InvestifyONE)   1.2.0 · 27/Nov/2026 (3.134: colar texto e foto, a mesma prévia; 3.137: a data da importação)
+   modulos/importar-posicoes.js — "Importar posições (JSON)" (InvestifyONE)   1.3.0 · 27/Nov/2026 (3.134: colar texto e foto, a mesma prévia; 3.137: a data da importação; 3.139: preço médio a informar)
    ---------------------------------------------------------------------
    O QUE FAZ
      Lê um arquivo {"tipo":"moneytrio-posicoes","versao":1,"itens":[…]} e mostra a prévia em tabela:
@@ -33,10 +33,12 @@
     if (tp.fonte === 'taxa' || tp.fonte === 'manual') {
       p.qtd = 1; p.pm = Number(x.pm != null ? x.pm : x.valor) || 0;
       if (tp.fonte === 'taxa') { p.ix = String(x.ix || 'cdi'); p.taxa = Number(x.taxa) || 0; p.moeda = 'BRL'; }
+      if (x.pmAInformar) p.pmAInformar = true;
       if (tp.fonte === 'manual' && Number(x.valorAtual) > 0) { p.valorManual = Number(x.valorAtual); p.valorManualData = new Date().toISOString(); p.historicoManual = [[hojeISO(), p.valorManual]]; }
       if (!(p.pm > 0)) throw new Error(pt() ? 'falta o valor aplicado (pm)' : 'missing invested amount (pm)');
     } else {
       p.qtd = Number(x.qtd) || 0; p.pm = Number(x.pm) || 0;
+      if (x.pmAInformar && !(p.pm > 0)) p.pmAInformar = true;   /* 1.3.0 (3.139): veio de extrato, sem preço médio */
       if (tp.fonte === 'moeda') { p.ticker = p.moeda; if (!p.nome) p.nome = (pt() ? 'Dinheiro em ' : 'Cash in ') + p.moeda; }
       if (!(p.qtd > 0)) throw new Error(pt() ? 'falta a quantidade (qtd)' : 'missing quantity (qtd)');
     }
@@ -54,7 +56,9 @@
           if (r.liq) {
             r.item = itemLiquido(x);
             var ja = ST.posicoes.find(function (y) { return norm(y.ticker) === norm(r.item.ticker) && norm(y.inst) === norm(r.item.inst); });
-            if (ja) r.jaExiste = ja.ticker + (ja.inst ? ' · ' + ja.inst : '');
+            /* 1.3.0 (3.139): a posição com o preço médio a informar recebe o preço médio de verdade do arquivo/declaração */
+            if (ja && ja.pmAInformar && !r.item.pmAInformar && Number(r.item.pm) > 0) r.preenchePm = ja.id;
+            else if (ja) r.jaExiste = ja.ticker + (ja.inst ? ' · ' + ja.inst : '');
           } else {
             r.item = PatrimonioIliquido.arruma(x);
             var j2 = PatrimonioIliquido.iguais(r.item); if (j2) r.jaExiste = j2.nome + (j2.inst ? ' · ' + j2.inst : '');
@@ -68,7 +72,8 @@
     importar: function (l) {
       var n = { liquidas: 0, iliquidas: 0 };
       l.filter(function (r) { return r.marcado && !r.problema; }).forEach(function (r) {
-        if (r.liq) { var p = Object.assign({ id: uid() }, r.item, { atualizadoEm: hojeISO() }); ST.posicoes.push(p); n.liquidas++; if (window.InvestBanco && InvestBanco.marcarEdicao) InvestBanco.marcarEdicao(p.inst); }   /* 1.2.0 (3.137): a data da importação */
+        if (r.liq && r.preenchePm) { var q = ST.posicoes.find(function (y) { return y.id === r.preenchePm; }); if (q) { q.pm = Number(r.item.pm); if (r.item.data && !q.data) q.data = r.item.data; delete q.pmAInformar; q.atualizadoEm = hojeISO(); n.preenchidos = (n.preenchidos || 0) + 1; } return; }   /* 1.3.0 (3.139) */
+        if (r.liq) { var p = Object.assign({ id: uid() }, r.item, { atualizadoEm: hojeISO(), veioDe: 'arquivo' });   /* 1.3.0 (3.139): de onde veio */ ST.posicoes.push(p); n.liquidas++; if (window.InvestBanco && InvestBanco.marcarEdicao) InvestBanco.marcarEdicao(p.inst); }   /* 1.2.0 (3.137): a data da importação */
         else { PatrimonioIliquido.adicionar(r.item); n.iliquidas++; }
       });
       return n;
@@ -97,7 +102,7 @@
       var x = r.item || {}, nome = r.liq ? (x.ticker + (x.nome && x.nome !== x.ticker ? ' · ' + x.nome : '')) : x.nome;
       var tipo = r.liq ? ((TIPOS[x.tipo] || {}).curto || x.tipo) : '🔒 ' + ((PatrimonioIliquido.TIPOS[x.tipo] || {})[pt() ? 'pt' : 'en'] || x.tipo);
       var valor = r.liq ? (x.qtd === 1 ? fmt(x.valorManual || x.pm) : (x.qtd + ' × ' + fmt(x.pm))) : fmt(x.valor);
-      var aviso = r.problema ? '<div class="t-sub" style="color:var(--down)">' + esc(r.problema) + '</div>' : r.jaExiste ? '<div class="t-sub" style="color:var(--warn)">' + esc((pt() ? 'já existe: ' : 'already there: ') + r.jaExiste) + '</div>' : '';
+      var aviso = r.problema ? '<div class="t-sub" style="color:var(--down)">' + esc(r.problema) + '</div>' : r.preenchePm ? '<div class="t-sub pi-preenche" style="color:var(--up)">' + esc(pt() ? 'já existe sem preço médio: preenche o preço médio' : 'already there without average price: fills it in') + '</div>' : r.jaExiste ? '<div class="t-sub" style="color:var(--warn)">' + esc((pt() ? 'já existe: ' : 'already there: ') + r.jaExiste) + '</div>' : '';
       return '<tr><td><input type="checkbox" class="pi-ck" data-i="' + i + '"' + (r.marcado ? ' checked' : '') + (r.problema ? ' disabled' : '') + '></td>' +
         '<td><span class="t-main">' + esc(nome || '—') + '</span>' + aviso + '</td><td>' + esc(tipo) + '</td><td>' + esc(x.inst || '') + '</td><td class="num">' + esc(valor) + '</td></tr>';
     }).join('');
@@ -113,7 +118,7 @@
 
   MoneyModulos.registrar({
     id: 'importar-posicoes',
-    versao: '1.2.0',
+    versao: '1.3.0',
     pontos: {
       'investify.carteira.topo': function () { return '<div class="row il-acoes" style="gap:8px;margin:0 0 12px;justify-content:flex-end;flex-wrap:wrap">' +
         (window.PosicoesTexto ? PosicoesTexto.botoes() : '') +   /* 1.1.0 (3.134): 📋 Colar texto e 📷 Foto ou print */

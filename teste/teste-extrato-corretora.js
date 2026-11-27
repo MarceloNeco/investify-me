@@ -51,7 +51,7 @@ const IT = (t, data, classe, qtd, preco, valor) => ({ tipo: 'investimento', id: 
     const a = await pos('ABCD');
     ok(a.qtd === 12 && a.pm === 50 && a.doExtrato && a.doExtrato.data === '2026-11-30', 'ABCD (importado à mão) casa pelo ticker: a quantidade vai a 12 e o preço médio da pessoa (50) não muda');
     const nb = await pos('NEWB'), bd = await pos('BOND1'), din = await p.evaluate(() => ST.posicoes.find((q) => q.tipo === 'caixa' && /avenue/i.test(q.inst)));
-    ok(nb && nb.tipo === 'etf-us' && nb.qtd === 4 && nb.pm === 100 && nb.doExtrato && /Preço médio não veio no extrato/.test(nb.notas), 'papel novo (NEWB) entra como ETF dos EUA, com "veio do extrato" e o aviso de que o preço médio não veio');
+    ok(nb && nb.tipo === 'etf-us' && nb.qtd === 4 && nb.pm === 0 && nb.pmAInformar === true && nb.doExtrato && nb.valorEntrada && nb.valorEntrada.valor === 400 && nb.valorEntrada.data === '2026-11-30', 'papel novo (NEWB) entra como ETF dos EUA, com "veio do extrato", preço médio a informar (3.139) e o valor do dia em que entrou (US$ 400 em 30/11)');
     ok(bd && bd.tipo === 'bond-us' && bd.valorManual === 2000, 'o bond entra com o valor atual (US$ 2.000)');
     ok(din && din.nome === 'Dinheiro em USD' && din.ticker === 'USD' && din.qtd === 150, 'o caixa vira "Dinheiro em USD" da Avenue (150)');
     ok(!(await pos('OLDX')), 'o OLDX vendido continua fora (não está no extrato novo)');

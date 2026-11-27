@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/invest-banco.js — os investimentos que o robô manda do banco entram na Carteira   1.1.0 · 27/Nov/2026 (3.119; 3.137: extrato da corretora)
+   modulos/invest-banco.js — os investimentos que o robô manda do banco entram na Carteira   1.3.0 · 27/Nov/2026 (3.119; 3.137: extrato da corretora; 3.139: preço médio a informar, de onde veio cada número)
    ---------------------------------------------------------------------
    O QUE FAZ
      O robô manda {tipo:'investimento', banco, conta (nome do papel), conta_id, classe, subtipo, saldo, data, dono, moeda,
@@ -118,9 +118,9 @@
       var np = { id: 'bk_' + safe(chaveDe(r)), ticker: cx ? (r.moeda || 'USD') : tk(inv.ticker), nome: cx ? 'Dinheiro em ' + (r.moeda || 'USD') : (r.conta || inv.ticker || ''), tipo: tipo, inst: r.banco || '',
         moeda: r.moeda || 'USD', data: data, notas: '', doExtrato: { data: data, banco: r.banco || '' } };
       if (cx) { np.qtd = valor; np.pm = 1; }
-      else if (tipo === 'bond-us') { np.qtd = 1; np.pm = valor; np.valorManual = valor; np.valorManualData = data + 'T12:00:00'; np.historicoManual = [[data, valor]]; }
-      else { np.qtd = qtd; np.pm = preco || (qtd ? Math.round(valor / qtd * 100) / 100 : 0); }
-      if (!cx) np.notas = tr('Preço médio não veio no extrato (está o preço do dia): confira.', 'Average price was not in the statement (today\'s price is used): check it.', 'El precio medio no venía en el extracto (está el del día): revísalo.');
+      else if (tipo === 'bond-us') { np.qtd = 1; np.pm = valor; np.pmAInformar = true; np.valorManual = valor; np.valorManualData = data + 'T12:00:00'; np.historicoManual = [[data, valor]]; }
+      else { np.qtd = qtd; np.pm = 0; np.pmAInformar = true; }   /* 1.2.0 (3.139): o extrato não traz preço médio: "a informar", nunca o preço do dia */
+      np.valorEntrada = { data: data, valor: valor, moeda: r.moeda || 'USD' };   /* 1.2.0 (3.139): o saldo inicial da rentabilidade (Mov.entradaDe) */
       posicoes().push(np);
       return 1;
     },
@@ -158,7 +158,7 @@
           posicoes().push(p); mudou++;
         }
         var d = p.doBanco || {}, inv = r.inv || {};
-        var novo = { chave: chave, data: data, banco: r.banco || '', classe: inv.classe || '', subtipo: inv.subtipo || '', vencimento: inv.vencimento || '',
+        var novo = { chave: chave, data: data, banco: r.banco || '', fonte: r.viaExtrato || (r.moeda && r.moeda !== 'BRL') ? 'extrato' : 'openfinance',   /* em dólar: o Open Finance é dos bancos do Brasil */ classe: inv.classe || '', subtipo: inv.subtipo || '', vencimento: inv.vencimento || '',
           taxa: inv.taxa == null ? null : inv.taxa, indexador: inv.indexador || '', dono: r.dono || '' };
         if (p.valorManual === saldo && d.data === data && JSON.stringify(d) === JSON.stringify(novo)) return;
         if (!(d.data && data < d.data)) {   /* um saldo mais velho nunca passa por cima do de hoje */
@@ -174,31 +174,46 @@
       return mudou;
     },
     /* o quadro "Veio do banco": por banco, e dentro dele por produto */
+    /* 1.3.0 (3.139): DE ONDE VEIO cada número, por posição — Open Finance (o banco manda todo dia) · extrato por e-mail (o robô lê o
+       PDF da corretora) · arquivo ou foto (importado no app) · digitado. Antes tudo o que o robô mandava aparecia como Open Finance. */
+    origemDe: function (p) {
+      if (p.doExtrato) return 'extrato';
+      if (p.doBanco) return p.doBanco.fonte || (p.moeda && p.moeda !== 'BRL' ? 'extrato' : 'openfinance');
+      if (p.veioDe === 'arquivo') return 'arquivo';
+      return 'digitado';
+    },
+    ORIGENS: {
+      openfinance: function () { return ['🏦', tr('Open Finance', 'Open Finance', 'Open Finance'), tr('Saldo mandado pelo banco (Open Finance), atualizado todo dia', 'Balance sent by the bank (Open Finance), updated daily', 'Saldo enviado por el banco (Open Finance), actualizado cada día')]; },
+      extrato: function () { return ['📄', tr('extrato por e-mail', 'statement by e-mail', 'extracto por correo'), tr('Veio do extrato que chega por e-mail (o robô lê o documento da corretora); muda quando chega o próximo extrato', 'From the statement that arrives by e-mail (the robot reads the broker\'s document); changes when the next statement arrives', 'Vino del extracto que llega por correo (el robot lee el documento del bróker); cambia cuando llega el siguiente extracto')]; },
+      arquivo: function () { return ['📎', tr('arquivo ou foto', 'file or photo', 'archivo o foto'), tr('Importado no app de um arquivo, foto ou texto colado', 'Imported in the app from a file, photo or pasted text', 'Importado en la app desde un archivo, foto o texto pegado')]; },
+      digitado: function () { return ['✍️', tr('digitado', 'typed in', 'escrito a mano'), tr('Cadastrado à mão', 'Entered by hand', 'Introducido a mano')]; }
+    },
+    /* o selo da linha da Carteira, só para o que veio de fora (banco ou extrato) */
+    selo: function (p) {
+      var o = p ? API.origemDe(p) : 'openfinance', x = API.ORIGENS[o]();
+      return '<span class="badge banco' + (o === 'openfinance' ? '' : ' ib-' + o) + '" title="' + e(x[2]) + '">' + x[0] + ' ' + e(x[1]) + '</span>';
+    },
+    /* no fim da Carteira, recolhido: "De onde veio cada número" (cada valor na moeda dele) */
     quadro: function () {
-      var l = posicoes().filter(function (p) { return p.doBanco; });
-      if (!l.length) return '';
-      var bancos = {};
-      l.forEach(function (p) {
-        var b = p.doBanco.banco || p.inst || '—', prod = p.doBanco.subtipo || p.doBanco.classe || ((window.TIPOS && TIPOS[p.tipo]) ? TIPOS[p.tipo].curto : p.tipo);
-        bancos[b] = bancos[b] || {}; (bancos[b][prod] = bancos[b][prod] || []).push(p);
-      });
-      var h = '<details class="card ib-quadro" open><summary><b>🏦 ' + e(tr('Veio do banco', 'From the bank', 'Vino del banco')) + '</b> <span class="tiny muted">' +
-        e(tr('saldos que o banco manda pelo Open Finance, atualizados todo dia', 'balances the bank sends via Open Finance, updated daily', 'saldos que el banco envía por Open Finance, actualizados cada día')) + '</span></summary>';
-      Object.keys(bancos).sort().forEach(function (b) {
-        var tot = 0; Object.keys(bancos[b]).forEach(function (k) { bancos[b][k].forEach(function (p) { tot += Number(p.valorManual) || 0; }); });
-        h += '<div class="ib-banco"><div class="row" style="justify-content:space-between"><b>' + e(b) + '</b><b class="mono">' + e(dinheiro(tot)) + '</b></div>';
-        Object.keys(bancos[b]).sort().forEach(function (prod) {
-          h += '<div class="ib-prod tiny muted">' + e(prod) + '</div>';
-          bancos[b][prod].slice().sort(function (x, y) { return (x.nome || '').localeCompare(y.nome || ''); }).forEach(function (p) {
-            var v = p.doBanco.vencimento;
-            h += '<div class="ib-linha"><div><span>' + e(p.nome || p.ticker) + '</span>' +
-              '<div class="tiny muted">' + e(tr('Liquidez: ', 'Liquidity: ', 'Liquidez: ') + API.liquidez(p)) +
-              (v ? ' · ' + e(tr('vence ', 'matures ', 'vence ') + dma(v)) : '') +
-              (p.doBanco.data ? ' · ' + e(tr('saldo de ', 'balance on ', 'saldo del ') + dma(p.doBanco.data)) : '') + '</div></div>' +
-              '<span class="mono">' + e(dinheiro(p.valorManual, p.moeda)) + '</span></div>';
-          });
-        });
-        h += '</div>';
+      var l = posicoes(); if (!l.length) return '';
+      var grupos = {}, ordem = ['openfinance', 'extrato', 'arquivo', 'digitado'];
+      l.forEach(function (p) { var o = API.origemDe(p); (grupos[o] = grupos[o] || []).push(p); });
+      var h = '<details class="card ib-quadro ib-origens"><summary><b>🧭 ' + e(tr('De onde veio cada número', 'Where each number came from', 'De dónde vino cada número')) + '</b> <span class="tiny muted">' +
+        e(tr('Open Finance, extrato por e-mail, arquivo ou digitado', 'Open Finance, statement by e-mail, file or typed in', 'Open Finance, extracto por correo, archivo o escrito a mano')) + '</span></summary>';
+      ordem.forEach(function (o) {
+        var g = grupos[o]; if (!g) return;
+        var x = API.ORIGENS[o](), tot = {};
+        var linhas = g.slice().sort(function (a, b) { return ((a.inst || '') + (a.nome || a.ticker)).localeCompare((b.inst || '') + (b.nome || b.ticker)); }).map(function (p) {
+          var c = typeof calc === 'function' ? calc(p) : null, m = c ? c.moeda : (p.moeda || 'BRL'), v = c ? c.valorAtivo : Number(p.valorManual) || 0;
+          tot[m] = (tot[m] || 0) + v;
+          var d = (p.doExtrato && p.doExtrato.data) || (p.doBanco && p.doBanco.data) || '';
+          return '<div class="ib-linha"><div><span>' + e(p.tipo === 'bond-us' && p.nome ? p.nome : (p.nome || p.ticker)) + '</span>' +
+            '<div class="tiny muted">' + e([p.inst || '', d ? tr('de ', 'as of ', 'del ') + dma(d) : '', p.doBanco ? tr('Liquidez: ', 'Liquidity: ', 'Liquidez: ') + API.liquidez(p) : '', p.doBanco && p.doBanco.vencimento ? tr('vence ', 'matures ', 'vence ') + dma(p.doBanco.vencimento) : ''].filter(Boolean).join(' · ')) + '</div></div>' +
+            '<span class="mono">' + e(dinheiro(v, m)) + '</span></div>';
+        }).join('');
+        h += '<div class="ib-banco"><div class="row" style="justify-content:space-between"><b title="' + e(x[2]) + '">' + x[0] + ' ' + e(x[1]) + ' (' + g.length + ')</b><b class="mono">' +
+          Object.keys(tot).map(function (m) { return e(dinheiro(tot[m], m)); }).join(' + ') + '</b></div>' +
+          '<div class="tiny muted">' + e(x[2]) + '</div>' + linhas + '</div>';
       });
       return h + '</details>';
     }
@@ -207,10 +222,10 @@
   var agendado = false;
   MoneyModulos.registrar({
     id: 'invest-banco',
-    versao: '1.1.0',
+    versao: '1.3.0',
     colecoes: [],
     pontos: {
-      'investify.carteira.topo': function () { return API.quadro(); },
+      'investify.carteira.fim': function () { return API.quadro(); },   /* 1.3.0 (3.139): no fim, recolhido (antes no topo, aberto) */
       /* 1.1.0 (3.137): "Não está no extrato de dd/mm: vendeu?" */
       'inbox.grupos': function () {
         if (typeof ST === 'undefined' || !ST || (window.Escopo && Escopo.soCasa && Escopo.soCasa())) return [];

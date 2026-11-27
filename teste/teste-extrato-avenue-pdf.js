@@ -51,13 +51,13 @@ const JUNTO = EXTRATO.replace(/[ \t]+/g, ' ');   /* como o leitor de PDF do app 
       const r = await p.evaluate((t) => PosicoesTexto.ler(t), txt);
       const by = (t) => r.itens.find((x) => x.ticker === t) || {};
       ok(r.inst === 'Avenue' && r.data === '2026-10-31' && r.itens.length === 5, 'Avenue, data 31/10/2026 (fim do período), 5 itens: 3 papéis, 1 bond e o caixa (' + r.itens.map((x) => x.ticker).join(',') + ')');
-      ok(by('EXEF').tipo === 'etf-us' && by('EXEF').qtd === 106.0001 && by('EXEF').pm === 50.71 && by('EXEF').nome === 'Exemplo ETF Fund', 'EXEF: ETF, 106.0001 cotas a US$ 50,71 (números americanos)');
+      ok(by('EXEF').tipo === 'etf-us' && by('EXEF').qtd === 106.0001 && by('EXEF').pm === 0 && by('EXEF').pmAInformar === true && by('EXEF').nome === 'Exemplo ETF Fund', 'EXEF: ETF, 106.0001 cotas (números americanos), preço médio a informar (3.139: nunca o preço do dia)');
       ok(by('EXCO').tipo === 'acao-us' && by('EXCO').qtd === 13 && by('EXCO').nome === 'Exemplo Corp. - Class A', 'EXCO: ação, 13, "Exemplo Corp. - Class A"');
-      ok(by('EXSE').qtd === 5 && by('EXSE').pm === 406.13 && by('EXSE').nome === 'Exemplo Semicondutores ADR', 'o "ADR" da linha de baixo continua o nome: "' + by('EXSE').nome + '"');
+      ok(by('EXSE').qtd === 5 && by('EXSE').pmAInformar === true && by('EXSE').nome === 'Exemplo Semicondutores ADR', 'o "ADR" da linha de baixo continua o nome: "' + by('EXSE').nome + '"');
       const bd = by('5ABCD12');
       ok(bd.tipo === 'bond-us' && bd.valorAtual === 3043.5 && bd.pm === 3043.5 && bd.vencimento === '2028-01-28' && /^EXBZ 6\.75 28\/01\/28/.test(bd.nome), 'o bond (CUSIP 5ABCD12): valor de mercado US$ 3.043,50, título "EXBZ 6.75 28/01/28", vencimento 28/01/2028');
       ok(by('USD').tipo === 'caixa' && by('USD').qtd === 528.21 && by('USD').nome === 'Dinheiro em USD', 'o caixa: "Dinheiro em USD" US$ 528,21');
-      ok(r.itens.filter((x) => x.tipo !== 'caixa').every((x) => /Preço médio não veio no extrato/.test(x.notas)), 'sem preço médio no extrato: cada papel leva o aviso na observação');
+      ok(r.itens.filter((x) => x.tipo !== 'caixa').every((x) => x.pmAInformar && /Preço médio a informar: o extrato de 31\/10\/2026 não traz\./.test(x.notas)), 'sem preço médio no extrato: cada papel fica "a informar", com o aviso na observação');
     }
 
     console.log('— pelo Compartilhar (o PDF, com o texto que o leitor de PDF devolve)');
