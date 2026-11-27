@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.16.1 · 26/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.17.0 · 27/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -86,6 +86,8 @@
       "Falta só um passo" (pinAntigo): com L.prf, a digital é o botão principal ("uma vez só") e o PIN antigo vem depois; Portao.migrarPin:
       o PIN da conta nasceu em outro aparelho e este, aberto com a chave do aparelho, ainda está no PIN antigo (sem L.srv) → pede uma vez
       o PIN da conta (conferirPin, no foco ou no evento 'pin') e grava (Pin.gravar); novoPin avisa que os outros aparelhos confirmam uma vez.
+  27. 1.17.0 (3.133) — Nuvem.emails: os e-mails que podem mandar para o MoneyTRIO (Comms Router do solverone-app: comm_inbox_*),
+      com o token da pessoa e o grupo da família; nada muda no servidor (modulos/email-entrada.js).
   26. 1.16.1 (3.116) — Caixa.converter: o grupo CARTAO do robô (o débito da fatura do cartão na conta, ex.: o da fatura Porto) vira
       "Pagamento de fatura" (como o extrato OFX), sem palpite: não vai para "Confirmar classificação". As partes que o robô separa da
       fatura Porto (consórcio, anuidade "Tarifa Cartao Credito", seguro) chegam com confianca "confirmada" e ficam como vieram.
@@ -3242,6 +3244,7 @@
     marcarLido: function (id) { return Conta.rpc('sol_ponte_marcar_lido', { p_id: id, p_app: APP }); }
   };
 
+  var INBOX_APP = 'moneytrio';   /* 1.17.0 (3.133): o app do MoneyTRIO no Comms Router (comm_inbox_apps) */
   var Nuvem = {
     ponte: { marcarLido: function (id) { return Ponte.marcarLido(id); } },
     /* 1.14.0 (3.66): os dois cofres — para a tela "Família no MoneyTRIO" (modulos/visao-casa.js) */
@@ -3277,6 +3280,19 @@
       conversas: function () { return Conta.rpc('assist_minhas_conversas', { p_app: 'moneytrio' }); },
       apagar: function (id) { return Conta.rpc('assist_apagar_conversa', { p_id: id }); },
       apagarTudo: function () { return Conta.rpc('assist_apagar_tudo', { p_app: 'moneytrio' }); }
+    },
+    /* 1.17.0 (3.133): "📧 Mandar e-mails para o MoneyTRIO" — as funções do Comms Router (solverone-app), só com o token da pessoa.
+       can_manage → boolean; sender_list → [{id, email, person_name, status 'pending'|'confirmed'|'expired', confirm_expires_at, send_to}]
+       (as canceladas não vêm); sender_add e sender_renew → {id, email, code, send_to, subject, expires_at} (o código só vem aqui);
+       message_list só as não lidas (o app nunca marca como lido: quem marca é o robô). */
+    emails: {
+      logado: function () { return Conta.on() && !!Sinc.gid; },
+      podeGerenciar: function () { return Conta.rpc('comm_inbox_can_manage', { p_group: Sinc.gid }); },
+      lista: function () { return Conta.rpc('comm_inbox_sender_list', { p_app: INBOX_APP, p_group: Sinc.gid }); },
+      adicionar: function (email, pessoa) { return Conta.rpc('comm_inbox_sender_add', { p_app: INBOX_APP, p_group: Sinc.gid, p_email: email, p_person: pessoa || '' }); },
+      renovar: function (id) { return Conta.rpc('comm_inbox_sender_renew', { p_id: id }); },
+      cancelar: function (id) { return Conta.rpc('comm_inbox_sender_cancel', { p_id: id }); },
+      mensagens: function () { return Conta.rpc('comm_inbox_message_list', { p_app: INBOX_APP, p_group: Sinc.gid, p_only_unread: true, p_limit: 200 }); }
     },
     criarPinConta: function () { return Portao.criarPinConta(); },
     iniciado: false, familia: null, podeLevar: false,

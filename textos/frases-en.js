@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.132 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.133 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.133 */
+  'Mande e-mails para o MoneyTRIO':'Send e-mails to MoneyTRIO',
+  '📧 Em Configurações › Compartilhadas, "Mandar e-mails para o MoneyTRIO": cadastre os e-mails da família que podem mandar contas, notas e compras para moneytrio@solverone.com.br. Cada endereço se confirma com um código de 6 dígitos, e o botão "Abrir e-mail pronto" já preenche tudo.':'📧 In Settings › Shared, "Send e-mails to MoneyTRIO": add the family e-mails that can send bills, invoices and purchases to moneytrio@solverone.com.br. Each address is confirmed with a 6-digit code, and the "Open ready e-mail" button fills everything in.',
+  '↪️ O passo a passo para encaminhar sozinho no Gmail (com os filtros prontos para baixar e importar), no Outlook/Hotmail e no iCloud, e o caminho do Yahoo, que só encaminha à mão.':'↪️ Step by step to forward automatically in Gmail (with ready filters to download and import), Outlook/Hotmail and iCloud, and the Yahoo way, which only forwards by hand.',
   /* 3.132 */
   'Pessoas da família mais simples e os cartões agrupados sozinhos':'Simpler family people and cards grouped by themselves',
   '👥 A tela não pula mais para o topo: depois de salvar, cancelar, apagar ou arquivar, você continua onde estava. O "editar" abre logo abaixo do nome, e apagar ou arquivar mostra "Desfazer" por alguns segundos.':'👥 The screen no longer jumps to the top: after saving, cancelling, deleting or archiving, you stay where you were. "Edit" opens right below the name, and deleting or archiving shows "Undo" for a few seconds.',

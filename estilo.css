@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.132 · 27/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.133 · 27/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2808,3 +2808,12 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .ct-enc-acoes .ct-enc-nome{flex-basis:100%}
 .ps-papel-sel{margin-top:4px; max-width:100%}
 .ps-soltos summary{cursor:pointer; padding:4px 0}
+/* 3.133: "📧 Mandar e-mails para o MoneyTRIO" (modulos/email-entrada.js) */
+.ee-lista{list-style:none; padding:0; margin:6px 0}
+.ee-item{border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin:6px 0; word-break:break-word}
+.ee-codigo{margin:6px 0}
+.ee-num{font-size:2rem; font-weight:700; letter-spacing:.15em; font-family:monospace; margin:4px 0 8px}
+.ee-num-g{font-family:monospace; letter-spacing:.08em}
+.ee-guia{margin:4px 0} .ee-guia summary{cursor:pointer; padding:4px 0}
+.ee-passos{padding-left:20px; margin:4px 0} .ee-passos code{word-break:break-all}
+.ee-filtros .linha-check{display:block; margin:2px 0}

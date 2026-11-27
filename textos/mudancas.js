@@ -1,11 +1,15 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.132 · 26/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.133 · 26/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.133', d:'2026-11-26', t:'Mande e-mails para o MoneyTRIO', itens:[
+    '📧 Em Configurações › Compartilhadas, "Mandar e-mails para o MoneyTRIO": cadastre os e-mails da família que podem mandar contas, notas e compras para moneytrio@solverone.com.br. Cada endereço se confirma com um código de 6 dígitos, e o botão "Abrir e-mail pronto" já preenche tudo.',
+    '↪️ O passo a passo para encaminhar sozinho no Gmail (com os filtros prontos para baixar e importar), no Outlook/Hotmail e no iCloud, e o caminho do Yahoo, que só encaminha à mão.'
+  ]},
   {v:'3.132', d:'2026-11-26', t:'Pessoas da família mais simples e os cartões agrupados sozinhos', itens:[
     '👥 A tela não pula mais para o topo: depois de salvar, cancelar, apagar ou arquivar, você continua onde estava. O "editar" abre logo abaixo do nome, e apagar ou arquivar mostra "Desfazer" por alguns segundos.',
     '👪 Em Pessoas da família, a sua família vem primeiro, depois as outras pessoas. Empresas e bancos não aparecem mais como "a identificar", e os nomes soltos ficam numa linha só, no fim. Quando a mesma pessoa está em duas fichas, o app pergunta e junta. Os papéis (responsável ou dependente) se confirmam num lugar só.',
