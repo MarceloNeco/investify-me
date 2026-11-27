@@ -48,6 +48,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     await ctx.route('**/*', (r) => r.request().url().startsWith(BASE) ? r.continue() : r.abort());
     await ctx.addInitScript((t) => { if (!sessionStorage.getItem('s')) { localStorage.setItem('investifyme.dados.v1', t); localStorage.setItem('moneytrio.soNesteAparelho', '1'); localStorage.setItem('moneytrio.tutorial.v1', 'visto'); sessionStorage.setItem('s', '1'); } }, JSON.stringify(LOCAL));
     const p = await ctx.newPage(); p.erros = []; p.on('pageerror', (e) => p.erros.push(String(e))); p.on('dialog', (x) => x.accept());
+    await p.clock.setFixedTime(new Date('2026-11-16T12:00:00-03:00'));   /* 3.136: a página inteira no mesmo dia dos módulos (_hoje); com a data real, o que roda em segundo plano via as contas de nov/2026 como vencidas e o teste oscilava */
     await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && typeof PJ !== 'undefined');
     await p.evaluate(() => { I18n.atual = 'pt'; Assist.marcarTutorial(); ST.config.assistOne = false; AssistOne.aplicar(); PJ._hoje = '2026-11-13'; });
 
