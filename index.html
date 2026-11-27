@@ -683,8 +683,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.139"></script>
-<script src="textos/frases-es.js?v=3.139"></script>
+<script src="textos/frases-en.js?v=3.140"></script>
+<script src="textos/frases-es.js?v=3.140"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -2418,7 +2418,10 @@ const Mercado = {
       this.buscarCripto(Array.from(new Set(cripto)))
     ]);
     await this.buscarB3(Array.from(new Set(b3)), (config.chaves||{}).brapi);
-    await this.buscarUS(Array.from(new Set(us)), config.chaves || {});
+    /* 3.140: os papéis dos EUA vêm primeiro do servidor (modulos/cotacoes-eua.js); o que ele não entregar segue pelas chaves gratuitas */
+    let usResto = Array.from(new Set(us));
+    if(window.CotacoesEua && CotacoesEua.ativo()) try{ usResto = await CotacoesEua.buscar(usResto); }catch(e){}
+    await this.buscarUS(usResto, config.chaves || {});
 
     this.ultima = new Date();
     this.gravarCache();
@@ -7715,7 +7718,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.139"></script>
+<script src="textos/mudancas.js?v=3.140"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -30299,10 +30302,13 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/profissionais.js?v=1.2.2"></script>
 <script src="modulos/saude.js?v=1.1.0"></script>
 <script src="modulos/ponte-omnilife.js?v=1.0.0"></script>
-<script src="modulos/patrimonio-iliquido.js?v=1.1.1"></script>
-<script src="modulos/fgts.js?v=1.0.0"></script>
-<script src="modulos/importar-posicoes.js?v=1.3.0"></script>
-<script src="modulos/posicoes-texto.js?v=1.2.0"></script>
+<script src="modulos/carregar-doc.js?v=1.0.0"></script>
+<script src="modulos/bens.js?v=1.0.0"></script>
+<script src="modulos/cotacoes-eua.js?v=1.0.0"></script>
+<script src="modulos/patrimonio-iliquido.js?v=1.2.0"></script>
+<script src="modulos/fgts.js?v=1.1.0"></script>
+<script src="modulos/importar-posicoes.js?v=1.4.0"></script>
+<script src="modulos/posicoes-texto.js?v=1.3.0"></script>
 <script src="modulos/assinaturas.js?v=1.1.1"></script>
 <script src="modulos/compromisso-de.js?v=1.7.2"></script>
 <script src="modulos/previsto.js?v=1.0.2"></script>
@@ -30317,7 +30323,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/cartoes.js?v=1.4.0"></script>
 <script src="modulos/cartao-foto.js?v=1.0.0"></script>
 <script src="modulos/contraparte.js?v=1.0.0"></script>
-<script src="modulos/declaracao-escolhas.js?v=1.1.0"></script>
+<script src="modulos/declaracao-escolhas.js?v=1.1.1"></script>
 <script src="modulos/origem.js?v=1.1.0"></script>
 <script src="modulos/apelido.js?v=1.1.0"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
@@ -30343,7 +30349,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/pre-autorizacao.js?v=1.0.2"></script>
 <script src="modulos/dividir.js?v=1.0.0"></script>
 <script src="modulos/print-colar.js?v=1.5.0"></script>
-<script src="modulos/partilha.js?v=1.0.0"></script>
+<script src="modulos/partilha.js?v=1.1.0"></script>
 <script src="modulos/loja-nova.js?v=1.0.1"></script>
 <script src="modulos/transf-agendada.js?v=1.0.1"></script>
 <script src="modulos/salto-preco.js?v=1.0.0"></script>
@@ -30377,6 +30383,6 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/pj-oportunidades.js?v=1.0.1"></script>
 <script src="modulos/pj-notas.js?v=1.0.0"></script>
 <script src="modulos/email-entrada.js?v=1.0.0"></script>
-<script src="nuvem.js?v=1.17.0"></script>
+<script src="nuvem.js?v=1.18.0"></script>
 </body>
 </html>

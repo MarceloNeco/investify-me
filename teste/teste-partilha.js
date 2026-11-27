@@ -63,7 +63,7 @@ const OFX = 'OFXHEADER:100\nDATA:OFXSGML\nVERSION:102\n\n<OFX><BANKMSGSRSV1><STM
     await p.goto(BASE + '/?print=1');
     await p.waitForFunction(() => window.Partilha && document.getElementById('genTitle').textContent === 'O que é isto?', null, { timeout: 15000, polling: 250 });
     const q = await p.evaluate(() => ({ t: document.getElementById('genBody').textContent.replace(/\s+/g, ' '), b: [...document.querySelectorAll('#genBody [data-acao="pa-dest"]')].map((x) => x.dataset.v + (x.classList.contains('primary') ? '*' : '')).join(',') }));
-    ok(/Stmt_20261031\.pdf/.test(q.t) && /Parece: 📈 Posições de investimento/.test(q.t) && q.b === 'posicoes*,nota,extrato', '"O que é isto?" mostra o arquivo, "Parece: 📈 Posições de investimento" e o palpite vem primeiro, em destaque (' + q.b + ')');
+    ok(/Stmt_20261031\.pdf/.test(q.t) && /Parece: 📈 Posições de investimento/.test(q.t) && q.b === 'posicoes*,nota,extrato,fgts,informe,declaracao,imovel', '"O que é isto?" mostra o arquivo, "Parece: 📈 Posições de investimento" e o palpite vem primeiro, em destaque (' + q.b + ')');
     ok(/Lido aqui no aparelho, sem IA/.test(q.t) && await p.evaluate(async () => (await (await caches.open('partilha-moneytrio')).keys()).length === 0 && !/print=1/.test(location.search)), 'lido no aparelho, sem IA; o cache de passagem é apagado na hora');
     await p.evaluate((t) => { PdfTexto.extrair = async () => t; }, TAB);   /* o PDF de texto, simulado: o que o leitor de PDF do app devolve */
     await p.click('#genBody [data-acao="pa-dest"][data-v="posicoes"]');

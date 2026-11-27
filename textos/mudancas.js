@@ -1,11 +1,16 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.139 · 27/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.140 · 27/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.140', d:'2026-11-27', t:'Carregar documento, imóveis e bens guiados, e cotações dos EUA', itens:[
+    '📎 O topo da Carteira ficou com dois botões. "Carregar documento" recebe numa janela só um arquivo (PDF, planilha, OFX, CSV, XML, ZIP), uma foto ou um texto colado; o ⓘ diz o que o app entende (extrato da corretora, informe de rendimentos, declaração do IR, extrato do FGTS, extrato bancário, contrato de imóvel), e o app já sugere o que é.',
+    '🏠 "Imóveis, carro e outros bens": um cadastro guiado, passo a passo. Escolha o tipo (imóvel pronto, na planta, carro, terreno, empresa, outro), diga quanto vale e de quem é; se é financiado, a dívida e a parcela entram sozinhas; se é alugado, o aluguel vira renda. O que veio da declaração do IR aparece marcado.',
+    '🇺🇸 Ações e ETFs dos EUA com cotação pelo servidor da SolverONE (com a sua conta): preço, fonte, data e hora, e se é fechamento. Sem cotação, o app não inventa valor; mudança grande pergunta antes de trocar. "Atualizar agora" busca na hora (3 por dia). Só o código do papel sai do app; os bonds continuam com o valor que você informou.'
+  ]},
   {v:'3.139', d:'2026-11-27', t:'Rentabilidade sem número absurdo e de onde veio cada valor', itens:[
     '📊 "Rentabilidade de verdade" corrigida: o que entrou na Carteira sem uma compra registrada (do banco, do extrato, de um arquivo) conta como dinheiro que entrou naquele dia, não como lucro. Com menos de 1 ano, o retorno aparece "em N dias", sem anualizar; e um número fora do normal em poucos dias vira "conferindo os dados", com o porquê.',
     '🧭 Cada valor diz de onde veio: 🏦 Open Finance (o banco manda todo dia), 📄 extrato por e-mail, 📎 arquivo ou foto, ✍️ digitado. O quadro "De onde veio cada número" fica no fim da Carteira, recolhido, e o que é em dólar aparece em US$.',

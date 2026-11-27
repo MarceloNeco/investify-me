@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/fgts.js — extrato do FGTS: leitura do PDF e saldo estimado entre um extrato e outro   1.0.0 · 06/Nov/2026
+   modulos/fgts.js — extrato do FGTS: leitura do PDF e saldo estimado entre um extrato e outro   1.1.0 · 27/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · "📄 Ler extrato do FGTS (PDF)" no cartão 🔒 Sem liquidez: lê, SEM IA e por modelo, o PDF que o app
@@ -157,16 +157,15 @@
 
   MoneyModulos.registrar({
     id: 'fgts',
-    versao: '1.0.0',
+    versao: '1.1.0',
     pontos: {
       'iliquido.valor': function (ctx) {
         var e = API.estimar(ctx.item); if (!e) return [];
         return [{ valor: e.valor, nota: (pt() ? 'estimado desde ' : 'estimated since ') + I18n.data(e.desde) + (pt() ? ' (JAM; distribuição de resultado a confirmar)' : ' (JAM; yearly profit share to confirm)') }];
       },
       'iliquido.topo': function () {
-        return (API.precisaAtualizar() ? '<div class="aviso-box fg-aviso small">📅 ' + esc(pt() ? 'Agosto: atualize o FGTS. Gere o extrato de cada conta no app do FGTS ("Gerar extrato PDF") e leia aqui — sai a distribuição de resultado do ano.'
-            : 'August: update your FGTS. Export each account statement in the FGTS app and read it here.') + '</div>' : '') +
-          '<button class="btn sm" data-acao="fgts-ler">📄 ' + (pt() ? 'Ler extrato do FGTS (PDF)' : 'Read FGTS statement (PDF)') + '</button>';
+        return (API.precisaAtualizar() ? '<div class="aviso-box fg-aviso small">📅 ' + esc(pt() ? 'Agosto: atualize o FGTS. Gere o extrato de cada conta no app do FGTS ("Gerar extrato PDF") e leia em 📎 Carregar documento — sai a distribuição de resultado do ano.'
+            : 'August: update your FGTS. Export each account statement in the FGTS app and read it here.') + '</div>' : '');   /* 1.1.0 (3.140): o botão está em "📎 Carregar documento" */
       }
     },
     acoes: {
@@ -178,5 +177,6 @@
       'fgts-gravar': function () { gravarFila().catch(function (e) { toast(e.message, 'err'); }); }
     }
   });
+  API.lerArquivos = lerArquivos;   /* 1.1.0 (3.140): o "📎 Carregar documento" (modulos/carregar-doc.js, partilha.js) */
   window.Fgts = API;
 })();

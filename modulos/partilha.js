@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/partilha.js — COMPARTILHAR PDF, CSV, XML ou OFX com o app (3.137)        1.0.0 · 27/Nov/2026
+   modulos/partilha.js — COMPARTILHAR PDF, CSV, XML ou OFX com o app (3.137)        1.1.0 · 27/Nov/2026 (3.140: o Carregar documento)
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono: o MoneyTRIO não aparecia no "Compartilhar" do Android para um PDF, ex.: o extrato da corretora)
      · manifest.json: o share_target aceita, além de imagem, PDF, CSV, texto, XML (NF-e) e OFX/QFX (campo "arquivos"); o sw.js
@@ -28,7 +28,13 @@
   var ROT = {
     posicoes: function () { return '📈 ' + tr('Posições de investimento', 'Investment positions', 'Posiciones de inversión'); },
     nota: function () { return '🧾 ' + tr('Nota, recibo ou conta', 'Invoice, receipt or bill', 'Factura, recibo o cuenta'); },
-    extrato: function () { return '🏦 ' + tr('Extrato do banco', 'Bank statement', 'Extracto del banco'); }
+    extrato: function () { return '🏦 ' + tr('Extrato do banco', 'Bank statement', 'Extracto del banco'); },
+    /* 1.1.0 (3.140): o "📎 Carregar documento" da Carteira usa a mesma pergunta */
+    fgts: function () { return '💼 ' + tr('Extrato do FGTS', 'FGTS statement', 'Extracto del FGTS'); },
+    informe: function () { return '📑 ' + tr('Informe de rendimentos', 'Income statement', 'Certificado de rendimientos'); },
+    declaracao: function () { return '🦁 ' + tr('Declaração do IR', 'Tax return', 'Declaración de la renta'); },
+    imovel: function () { return '🏠 ' + tr('Contrato ou escritura de imóvel', 'Property contract or deed', 'Contrato o escritura de inmueble'); },
+    print: function () { return '📱 ' + tr('Print do app do banco', 'Bank app screenshot', 'Captura de la app del banco'); }
   };
   var pendentes = null;
 
@@ -36,6 +42,11 @@
     palpite: function (arquivos, texto) {
       var nomes = [].map.call(arquivos || [], function (f) { return f.name || ''; }).join(' '), t = String(texto || '').slice(0, 6000);
       if ([].some.call(arquivos || [], function (f) { return /^(ofx|qfx|ofc)$/.test(ext(f)) || /ofx/.test(f.type || ''); }) || /OFXHEADER|<OFX>/i.test(t)) return 'extrato';
+      /* 1.1.0 (3.140) */
+      if (/fgts|fundo de garantia/i.test(nomes + ' ' + t)) return 'fgts';
+      if (/declara[cç][aã]o de ajuste|recibo de entrega da declara|\bdirpf\b|declaracao[_ -]?(ir|irpf)/i.test(nomes + ' ' + t)) return 'declaracao';
+      if (/informe de rendimentos|comprovante de rendimentos|informe[_ -]rendimentos/i.test(nomes + ' ' + t)) return 'informe';
+      if (/escritura|matr[ií]cula do im[oó]vel|compromisso de compra e venda|contrato de compra e venda|registro de im[oó]veis/i.test(nomes + ' ' + t)) return 'imovel';
       if ([].some.call(arquivos || [], eXml) || /<infNFe|nfeProc|\bNF-?e\b|DANFE|nota fiscal/i.test(nomes + ' ' + t)) return 'nota';
       if (/stmt_|statement|avenue|posi[cç](ao|oes|ões)|carteira|portfolio|cust[oó]dia|holdings/i.test(nomes + ' ' + t)) return 'posicoes';
       if ([].some.call(arquivos || [], function (f) { return /^(csv|tsv)$/.test(ext(f)) || /csv/.test(f.type || ''); }) || /\bextrato\b|saldo anterior/i.test(nomes + ' ' + t)) return 'extrato';
@@ -56,7 +67,9 @@
       if (!p) {   /* sem palpite pelo nome: olha o começo do texto (no aparelho) */
         var t = ''; for (var i = 0; i < pendentes.length && !p; i++) { if (eImg(pendentes[i])) continue; try { t = await API.textoDe(pendentes[i]); } catch (e) { t = ''; } p = API.palpite([pendentes[i]], t); }
       }
-      var ordem = ['posicoes', 'nota', 'extrato']; if (p) ordem = [p].concat(ordem.filter(function (k) { return k !== p; }));
+      var ordem = ['posicoes', 'nota', 'extrato', 'fgts', 'informe', 'declaracao', 'imovel'];
+      if (pendentes.every(eImg)) ordem.splice(1, 0, 'print');   /* 1.1.0 (3.140): só imagem também pode ser print do app do banco */
+      if (p) ordem = [p].concat(ordem.filter(function (k) { return k !== p; }));
       $('#genTitle').textContent = tr('O que é isto?', 'What is this?', '¿Qué es esto?');
       $('#genBody').innerHTML = Verter.html('<p class="small muted pa-nomes">' + esc(pendentes.map(function (f) { return f.name || tr('arquivo', 'file', 'archivo'); }).join(' · ')) + '</p>' +
         (p ? '<p class="small pa-palpite">' + esc(tr('Parece: ', 'Looks like: ', 'Parece: ') + ROT[p]()) + '</p>' : '') +
@@ -68,6 +81,12 @@
     ir: async function (dest, arquivos) {
       arquivos = [].slice.call(arquivos || []); if (!arquivos.length) return;
       var temFundo = typeof Fundo !== 'undefined', id = 'partilha-' + dest;
+      /* 1.1.0 (3.140): os leitores que já existem */
+      if (dest === 'fgts') { var pdfs = arquivos.filter(ePdf); return window.Fgts && Fgts.lerArquivos && pdfs.length ? Fgts.lerArquivos(pdfs) : undefined; }
+      if (dest === 'declaracao') { if (typeof importarDeclaracao !== 'function') return; abrirApp('tax'); irPara('t-declaracoes'); return importarDeclaracao(arquivos); }
+      if (dest === 'informe') { if (typeof lerDocumentosIR !== 'function') return; abrirApp('tax'); irPara('t-docs'); return lerDocumentosIR(arquivos); }
+      if (dest === 'imovel') return window.Bens ? Bens.abrir('imovel', { arquivos: arquivos }) : undefined;
+      if (dest === 'print') return window.PrintColar ? PrintColar.processar(arquivos) : undefined;
       if (dest === 'nota') {   /* o 📷 Foto de nota ou recibo (que já roda no Fundo); o XML entra como texto */
         var fs = [];
         for (var i = 0; i < arquivos.length; i++) fs.push(eXml(arquivos[i]) ? new File([await API.textoDe(arquivos[i])], (arquivos[i].name || 'nota').replace(/\.xml$/i, '') + '.txt', { type: 'text/plain' }) : arquivos[i]);
@@ -100,7 +119,7 @@
 
   MoneyModulos.registrar({
     id: 'partilha',
-    versao: '1.0.0',
+    versao: '1.1.0',
     acoes: { 'pa-dest': function (el) { var fs = pendentes; pendentes = null; fechar('genModal'); if (fs) API.ir(el.dataset.v, fs); } }
   });
   window.Partilha = API;

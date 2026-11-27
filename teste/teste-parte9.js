@@ -40,8 +40,9 @@ const ARQ = { tipo: 'moneytrio-posicoes', versao: 1, itens: [
       await p.evaluate(() => { I18n.atual = 'pt'; abrirApp('investify'); irPara('carteira'); });
       await p.waitForFunction(() => window.scrollY === 0);
       const valor0 = await p.evaluate(() => totais().valor);
-      ok(await p.isVisible('[data-acao="posimp-escolher"]') && await p.isVisible('[data-acao="iliq-novo"]'), 'Carteira: "Importar posições (JSON)" e "Patrimônio sem liquidez"');
-      const abrirArq = async (a) => { await semToasts(); const [fc] = await Promise.all([p.waitForEvent('filechooser'), p.click('[data-acao="posimp-escolher"]')]); await fc.setFiles(a); await p.waitForSelector('#genModal:not(.hidden)'); };
+      ok(await p.isVisible('[data-acao="cd-abrir"]') && await p.isVisible('[data-acao="bens-novo"]') && !(await p.isVisible('[data-acao="posimp-escolher"]')), 'Carteira (3.140): "📎 Carregar documento" e "🏠 Imóveis, carro e outros bens"; o JSON saiu da tela');
+      /* 3.140: o .json entra pelo "📎 Carregar documento" (sem botão próprio) */
+      const abrirArq = async (a) => { await semToasts(); await p.click('[data-acao="cd-abrir"]'); const [fc] = await Promise.all([p.waitForEvent('filechooser'), p.click('#genBody [data-acao="cd-arquivo"]')]); await fc.setFiles(a); await p.waitForSelector('#genModal:not(.hidden) #genBody .pi-tbl, #genModal:not(.hidden) #genBody .imp-erro'); };
       await abrirArq(outro);
       ok(/não é uma lista de posições/.test(await p.textContent('#genBody')), 'arquivo de outro tipo: avisa e não importa');
       await p.click('#genBody [data-close="genModal"]');
@@ -64,12 +65,13 @@ const ARQ = { tipo: 'moneytrio-posicoes', versao: 1, itens: [
       ok(await p.evaluate(() => { const v = PatrimonioIliquido.total(); return v === 150000.75; }), 'total sem liquidez R$ 150.000,75');
       /* à mão: cadastrar, editar, excluir */
       await p.evaluate(() => irPara('carteira')); await p.waitForFunction(() => window.scrollY === 0);
-      await semToasts(); await p.click('#view-carteira .il-card [data-acao="iliq-novo"]'); await p.waitForSelector('#ilForm');
-      await p.fill('#ilNome', 'Previdência da empresa'); await p.selectOption('#ilTipo', 'previdencia'); await p.fill('#ilValor', '1000');
-      await semToasts(); await p.click('[data-acao="iliq-salvar"]');
+      /* 3.140: o cadastro guiado (modulos/bens.js): "o que é?" → os campos daquele tipo */
+      await semToasts(); await p.click('#view-carteira .il-card [data-acao="bens-novo"]'); await p.click('#genBody [data-acao="bens-tipo"][data-v="previdencia"]'); await p.waitForSelector('#bnNome');
+      await p.fill('#bnNome', 'Previdência da empresa'); await p.fill('#bnValor', '1000');
+      await semToasts(); await p.click('[data-acao="bens-salvar"]'); await p.waitForFunction(() => document.getElementById('genModal').classList.contains('hidden'));
       ok(await p.evaluate(() => PatrimonioIliquido.total()) === 151000.75, 'cadastrar à mão soma ao total');
-      await semToasts(); await p.click('#view-carteira tr[data-acao="iliq-editar"]:has-text("Previdência da empresa")'); await p.waitForSelector('#ilForm');
-      await semToasts(); await p.click('[data-acao="iliq-excluir"]');
+      await semToasts(); await p.click('#view-carteira tr[data-acao="bens-editar"]:has-text("Previdência da empresa")'); await p.waitForSelector('#bnNome');
+      await semToasts(); await p.click('[data-acao="bens-excluir"]');
       ok(await p.evaluate(() => Store.estado.patrimonio_iliquido.length) === 2, 'excluir tira o item');
       await p.reload(); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.patrimonio_iliquido || []).length === 2);
       ok(true, 'depois de recarregar, continua');
