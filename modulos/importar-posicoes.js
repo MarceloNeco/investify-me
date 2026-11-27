@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/importar-posicoes.js — "Importar posições (JSON)" (InvestifyONE)   1.1.0 · 27/Nov/2026 (3.134: colar texto e foto, a mesma prévia)
+   modulos/importar-posicoes.js — "Importar posições (JSON)" (InvestifyONE)   1.2.0 · 27/Nov/2026 (3.134: colar texto e foto, a mesma prévia; 3.137: a data da importação)
    ---------------------------------------------------------------------
    O QUE FAZ
      Lê um arquivo {"tipo":"moneytrio-posicoes","versao":1,"itens":[…]} e mostra a prévia em tabela:
@@ -68,7 +68,7 @@
     importar: function (l) {
       var n = { liquidas: 0, iliquidas: 0 };
       l.filter(function (r) { return r.marcado && !r.problema; }).forEach(function (r) {
-        if (r.liq) { var p = Object.assign({ id: uid() }, r.item); ST.posicoes.push(p); n.liquidas++; }
+        if (r.liq) { var p = Object.assign({ id: uid() }, r.item, { atualizadoEm: hojeISO() }); ST.posicoes.push(p); n.liquidas++; if (window.InvestBanco && InvestBanco.marcarEdicao) InvestBanco.marcarEdicao(p.inst); }   /* 1.2.0 (3.137): a data da importação */
         else { PatrimonioIliquido.adicionar(r.item); n.iliquidas++; }
       });
       return n;
@@ -113,7 +113,7 @@
 
   MoneyModulos.registrar({
     id: 'importar-posicoes',
-    versao: '1.1.0',
+    versao: '1.2.0',
     pontos: {
       'investify.carteira.topo': function () { return '<div class="row il-acoes" style="gap:8px;margin:0 0 12px;justify-content:flex-end;flex-wrap:wrap">' +
         (window.PosicoesTexto ? PosicoesTexto.botoes() : '') +   /* 1.1.0 (3.134): 📋 Colar texto e 📷 Foto ou print */

@@ -9,7 +9,8 @@ const MUDANCAS = [
   {v:'3.137', d:'2026-11-27', t:'Compartilhar PDF, extrato ou nota com o app', itens:[
     '📤 No celular, o MoneyTRIO agora aparece no "Compartilhar" também para PDF, CSV, XML de nota fiscal e extrato OFX, e não só para foto. O app pergunta "O que é isto?" e já sugere a resposta pelo nome e pelo texto do arquivo.',
     '📈 Posições de investimento vão para a mesma conferência da Carteira; 🧾 nota, recibo ou conta vai para o "Foto de nota ou recibo"; 🏦 extrato do banco vai para o "Importar arquivo". Tudo é lido no próprio aparelho, sem IA.',
-    '📲 Para aparecer no "Compartilhar", o app precisa estar instalado pelo Chrome. Se ele já estava instalado e não aparece para PDF, desinstale e instale de novo.'
+    '📲 Para aparecer no "Compartilhar", o app precisa estar instalado pelo Chrome. Se ele já estava instalado e não aparece para PDF, desinstale e instale de novo.',
+    '🗂️ O extrato mensal da corretora (Avenue) que chega por e-mail atualiza a Carteira: a quantidade de cada papel muda, o seu preço médio nunca; papel novo entra com o selo "📄 veio do extrato"; o dinheiro parado vira "Dinheiro em USD". Extrato mais velho que a sua última importação não mexe em nada, e papel que sumiu do extrato pergunta "vendeu?" antes de sair.'
   ]},
   {v:'3.136', d:'2026-11-27', t:'Serviço novo ou aumento na conta de telefone e internet', itens:[
     '⚠️ Quando a conta de telefone, internet ou TV traz um serviço que não estava na fatura anterior, o 📥 pergunta: "serviço novo na fatura — Você contratou?". "Sim, contratei" não pergunta mais por ele; "Não pedi" mostra como contestar (app da operadora, central ou ANATEL 1331) e o aviso fica até o valor sair da fatura.',
