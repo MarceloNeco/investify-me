@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/declaracao-escolhas.js — importar a declaração do IR COM ESCOLHAS (3.65)        1.1.0 · 13/Nov/2026
+   modulos/declaracao-escolhas.js — importar a declaração do IR COM ESCOLHAS (3.65)        1.1.1 · 27/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (leitura por texto, como já era; nada de IA)
      Ao importar a declaração (FiscalONE → Declarações), antes de salvar, uma lista de escolhas, cada uma com uma frase:
@@ -276,7 +276,7 @@
         var data = (d.anoCalendario || (d.exercicio - 1)) + '-12-31', o = x.ja;
         if (o) { o.valor = Math.round(x.b.depois * 100) / 100; o.data = data; if (obs) o.obs = obs; r.bens++; }
         else { o = PatrimonioIliquido.adicionar({ nome: x.nome, tipo: x.tipo, inst: '', valor: x.b.depois, data: data, obs: obs }); r.novos++; }
-        o.decRef = x.b.grupo + '.' + x.b.codigo + '|' + N(x.b.desc).slice(0, 40);
+        o.decRef = x.b.grupo + '.' + x.b.codigo + '|' + N(x.b.desc).slice(0, 40); if (d.exercicio) o.decAno = d.exercicio;   /* 1.1.1 (3.140): "veio da declaração de <ano>" */
         if (p) { o.dono = Pessoas.rotulo(p); o.donoId = p.id; }
         if (dv) o.divida = { desc: String(dv.desc).slice(0, 80), valor: dv.depois };
       });
@@ -361,6 +361,6 @@
     var c = document.getElementById('dePos'); if (c && ps.lista.some(function (x) { return x.marcado; })) c.checked = true;
   });
 
-  MoneyModulos.registrar({ id: 'declaracao-escolhas', versao: '1.1.0', pontos: { 'declaracao.escolhas': function (ctx) { return API.html(ctx.d); } } });
+  MoneyModulos.registrar({ id: 'declaracao-escolhas', versao: '1.1.1', pontos: { 'declaracao.escolhas': function (ctx) { return API.html(ctx.d); } } });
   window.DeclEscolhas = API;
 })();

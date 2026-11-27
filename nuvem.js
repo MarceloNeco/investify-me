@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.17.0 · 27/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.18.0 · 27/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -86,6 +86,8 @@
       "Falta só um passo" (pinAntigo): com L.prf, a digital é o botão principal ("uma vez só") e o PIN antigo vem depois; Portao.migrarPin:
       o PIN da conta nasceu em outro aparelho e este, aberto com a chave do aparelho, ainda está no PIN antigo (sem L.srv) → pede uma vez
       o PIN da conta (conferirPin, no foco ou no evento 'pin') e grava (Pin.gravar); novoPin avisa que os outros aparelhos confirmam uma vez.
+  28. 1.18.0 (3.140) — Nuvem.cotacoes: as cotações dos papéis dos EUA pela função "cotacoes" do servidor (functions/v1/cotacoes, com o
+      token da pessoa e a chave pública); só os tickers saem do app (modulos/cotacoes-eua.js). Conta.funcao chama uma função do servidor.
   27. 1.17.0 (3.133) — Nuvem.emails: os e-mails que podem mandar para o MoneyTRIO (Comms Router do solverone-app: comm_inbox_*),
       com o token da pessoa e o grupo da família; nada muda no servidor (modulos/email-entrada.js).
   26. 1.16.1 (3.116) — Caixa.converter: o grupo CARTAO do robô (o débito da fatura do cartão na conta, ex.: o da fatura Porto) vira
@@ -322,6 +324,14 @@
       return j;
     },
     rpc: function (nome, args) { return this.rest('POST', 'rpc/' + nome, args || {}); },
+    /* 1.18.0 (3.140): uma função do servidor (functions/v1/<nome>); o erro leva o status e o código ("sem-acesso", "limite-manual") */
+    funcao: async function (nome, corpo) {
+      var t = await this.token(); if (!t) { var e0 = new Error(tt('Entre na sua conta SolverONE.', 'Sign in to your SolverONE account.')); e0.status = 401; throw e0; }
+      var r = await fetch(SB + '/functions/v1/' + nome, { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + t, 'Content-Type': 'application/json' }, body: JSON.stringify(corpo || {}) });
+      var txt = await r.text(), j = null; try { j = txt ? JSON.parse(txt) : null; } catch (e) {}
+      if (!r.ok) { var e = new Error((j && (j.message || j.erro || j.error)) || 'HTTP ' + r.status); e.status = r.status; e.codigo = j && (j.codigo || j.erro || j.error || j.code); throw e; }
+      return j;
+    },
     /* registro de acesso (C9), sem esperar a resposta; uma vez por aba e por conta */
     registrarAcesso: async function (evento) {
       try {
@@ -3293,6 +3303,12 @@
       renovar: function (id) { return Conta.rpc('comm_inbox_sender_renew', { p_id: id }); },
       cancelar: function (id) { return Conta.rpc('comm_inbox_sender_cancel', { p_id: id }); },
       mensagens: function () { return Conta.rpc('comm_inbox_message_list', { p_app: INBOX_APP, p_group: Sinc.gid, p_only_unread: true, p_limit: 200 }); }
+    },
+    /* 1.18.0 (3.140): cotações dos EUA pelo servidor — só os tickers saem do app */
+    cotacoes: {
+      logado: function () { return Conta.on(); },
+      buscar: function (tickers, forcar) { return Conta.funcao('cotacoes', { acao: 'buscar', tickers: tickers, forcar: !!forcar }); },
+      confirmar: function (ticker, aceitar) { return Conta.funcao('cotacoes', { acao: 'confirmar', ticker: ticker, aceitar: !!aceitar }); }
     },
     criarPinConta: function () { return Portao.criarPinConta(); },
     iniciado: false, familia: null, podeLevar: false,

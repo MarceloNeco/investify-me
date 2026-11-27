@@ -49,9 +49,12 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, gastos: [], posicoes: [{ id
     ok((await p.evaluate((t) => PosicoesTexto.ler(t).itens.length, LIXO)) === 0, 'texto lixo: nada reconhecido');
 
     console.log('2) Colar texto → a instituição → a mesma prévia → importar');
-    const bts = await p.evaluate(() => [...document.querySelectorAll('.il-acoes button')].map((x) => x.textContent.trim()));
-    ok(bts.some((x) => /Colar texto/.test(x)) && bts.some((x) => /Foto ou print/.test(x)) && bts.some((x) => /Importar posições \(JSON\)/.test(x)), 'no topo da Carteira: "📋 Colar texto", "📷 Foto ou print" e o "Importar posições (JSON)" de antes');
-    await p.evaluate(() => document.querySelector('[data-acao="pt-colar"]').click());
+    /* 3.140: o topo tem só "📎 Carregar documento" e "🏠 Imóveis, carro e outros bens"; o colar e a foto ficam dentro da janela */
+    const bts = await p.evaluate(() => [...document.querySelectorAll('.cd-acoes button')].map((x) => x.textContent.trim()));
+    await p.click('[data-acao="cd-abrir"]');
+    const jan = await p.evaluate(() => [...document.querySelectorAll('#genBody button')].map((x) => x.textContent.trim()));
+    ok(bts.length === 2 && /Carregar documento/.test(bts[0]) && /Imóveis, carro e outros bens/.test(bts[1]) && jan.some((x) => /Colar texto/.test(x)) && jan.some((x) => /Foto ou print/.test(x)), 'o topo da Carteira: "📎 Carregar documento" (com 📋 Colar texto e 📷 Foto ou print dentro) e "🏠 Imóveis…"');
+    await p.click('#genBody [data-acao="cd-colar"]'); await p.waitForSelector('#ptTexto');
     await p.fill('#ptTexto', TAB_US);
     await p.click('[data-acao="pt-ler"]'); await p.waitForTimeout(150);
     ok(await p.evaluate(() => document.getElementById('ptInst').value === 'Avenue' && /Achei 3 posição/.test(document.getElementById('genBody').textContent)), 'pergunta a corretora uma vez, já com o palpite "Avenue"');
@@ -63,7 +66,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, gastos: [], posicoes: [{ id
     ok(await p.evaluate((n) => ST.posicoes.length === n + 2 && ST.posicoes.filter((x) => x.ticker === 'ABCD').length === 1 && ST.posicoes.find((x) => x.ticker === 'VOO').inst === 'Avenue', n0), 'importou 2, sem duplicar o ABCD; a instituição foi junto');
 
     console.log('3) texto lixo e a foto');
-    await p.evaluate(() => document.querySelector('[data-acao="pt-colar"]').click());
+    await p.evaluate(() => MoneyModulos.acao('pt-colar', document.body));
     await p.fill('#ptTexto', LIXO); await p.click('[data-acao="pt-ler"]'); await p.waitForTimeout(150);
     const lx = await p.evaluate(() => document.getElementById('genBody').textContent);
     ok(/Não reconheci este formato; cole o texto ou mande a tela por e-mail\./.test(lx) && /Nenhum número útil/.test(lx), 'lixo: "Não reconheci este formato; cole o texto ou mande a tela por e-mail", com o texto lido');

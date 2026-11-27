@@ -166,8 +166,11 @@ const LOCAL = { v: 1, posicoes: [], config: {}, gastos: [], recorrentes: [],
       ok(await p.evaluate(() => Fgts.precisaAtualizar('2026-08-10') && !Fgts.precisaAtualizar('2026-09-10')), 'em agosto: "atualize o FGTS" (fora de agosto, não)');
 
       await p.evaluate(() => { abrirApp('investify'); irPara('carteira'); }); await p.waitForFunction(() => window.scrollY === 0); await semToasts();
-      const [fc2] = await Promise.all([p.waitForEvent('filechooser'), p.click('#view-carteira [data-acao="fgts-ler"]')]);
-      await fc2.setFiles([fF1, fF2]); await p.waitForSelector('#genModal:not(.hidden) .fg-item');
+      /* 3.140: o extrato do FGTS entra pelo "📎 Carregar documento" → "O que é isto?" (palpite: FGTS) */
+      await p.click('#view-carteira [data-acao="cd-abrir"]');
+      const [fc2] = await Promise.all([p.waitForEvent('filechooser'), p.click('#genBody [data-acao="cd-arquivo"]')]);
+      await fc2.setFiles([fF1, fF2]); await p.waitForSelector('#genBody [data-acao="pa-dest"][data-v="fgts"].primary');
+      await p.click('#genBody [data-acao="pa-dest"][data-v="fgts"]'); await p.waitForSelector('#genModal:not(.hidden) .fg-item');
       const prev = await p.textContent('#genBody');
       ok(/Atualizar FGTS — Exemplo: R\$\s?90\.000,00 → R\$\s?100\.000,00/.test(prev) && /Nova conta: FGTS — Outra Firma/.test(prev) && /Saldo zero/.test(prev), 'prévia: atualiza a conta que já existe e cria a outra (zerada)');
       await semToasts(); await p.click('#genBody [data-acao="fgts-gravar"]');

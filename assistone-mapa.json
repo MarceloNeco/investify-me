@@ -340,6 +340,74 @@
    }
   },
   {
+   "id": "carregar-documento",
+   "modulo": "investify",
+   "tela": "carteira",
+   "nome": {
+    "pt": "Carregar documento",
+    "en": "Upload a document",
+    "es": "Subir un documento"
+   },
+   "dica": {
+    "pt": "Toque aqui para carregar o extrato da corretora, o informe, a declaração, o FGTS, um extrato do banco ou um contrato.",
+    "en": "Tap here to upload a broker statement, income statement, tax return, FGTS, bank statement or contract.",
+    "es": "Toca aquí para subir el extracto del bróker, el certificado, la declaración, el FGTS, un extracto del banco o un contrato."
+   },
+   "palavras": {
+    "pt": [
+     "carregar documento",
+     "extrato da corretora",
+     "ler extrato do fgts",
+     "importar posicoes",
+     "subir um pdf",
+     "informe de rendimentos"
+    ],
+    "en": [
+     "upload a document",
+     "broker statement",
+     "import positions"
+    ],
+    "es": [
+     "subir un documento",
+     "extracto del broker"
+    ]
+   }
+  },
+  {
+   "id": "bens",
+   "modulo": "investify",
+   "tela": "carteira",
+   "nome": {
+    "pt": "Imóveis, carro e outros bens",
+    "en": "Property, car and other assets",
+    "es": "Inmuebles, coche y otros bienes"
+   },
+   "dica": {
+    "pt": "Toque aqui para cadastrar um imóvel, carro, FGTS, previdência ou participação em empresa.",
+    "en": "Tap here to add a property, car, FGTS, pension or company stake.",
+    "es": "Toca aquí para añadir un inmueble, coche, FGTS, pensión o participación en empresa."
+   },
+   "palavras": {
+    "pt": [
+     "cadastrar imovel",
+     "cadastrar um carro",
+     "meu apartamento",
+     "patrimonio sem liquidez",
+     "financiamento do imovel",
+     "imovel na planta"
+    ],
+    "en": [
+     "add a property",
+     "add a car",
+     "my apartment"
+    ],
+    "es": [
+     "anadir un inmueble",
+     "anadir un coche"
+    ]
+   }
+  },
+  {
    "id": "declaracao-importar",
    "modulo": "tax",
    "tela": "t-declaracoes",

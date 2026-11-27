@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/posicoes-texto.js — "Importar posições" sem arquivo: 📋 Colar texto e 📷 Foto ou print   1.2.0 · 27/Nov/2026 (3.134)
+   modulos/posicoes-texto.js — "Importar posições" sem arquivo: 📋 Colar texto e 📷 Foto ou print   1.3.0 · 27/Nov/2026 (3.134)
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono: "deveria ter um jeito mais conveniente")
      Duas entradas novas no topo da Carteira, que caem na MESMA prévia do "Importar posições (JSON)" (modulos/importar-posicoes.js:
@@ -16,7 +16,7 @@
        saldo bruto; o resto na observação). A instituição é perguntada uma vez, com palpite pelo texto.
      Nada reconhecido: mostra o texto lido e "não reconheci este formato; cole o texto ou mande a tela por e-mail".
    API (window.PosicoesTexto)
-     num(t) · ler(texto) → {itens, inst} · daTexto(texto) · daImagens(arquivos) · botoes()
+     num(t) · ler(texto) → {itens, inst} · daTexto(texto) · daImagens(arquivos)  (1.3.0, 3.140: os botões estão no "📎 Carregar documento")
    ===================================================================== */
 (function () {
   'use strict';
@@ -150,16 +150,12 @@
       } catch (e) { if (temFundo) Fundo.limpar(id); }
       return API.daTexto(txt);
     },
-    botoes: function () {
-      return '<button class="btn sm" data-acao="pt-colar">📋 ' + e$(tr('Colar texto', 'Paste text', 'Pegar texto')) + '</button>' +
-        '<button class="btn sm" data-acao="pt-foto">📷 ' + e$(tr('Foto ou print', 'Photo or screenshot', 'Foto o captura')) + '</button>';
-    },
     _lido: null
   };
 
   MoneyModulos.registrar({
     id: 'posicoes-texto',
-    versao: '1.2.0',
+    versao: '1.3.0',
     acoes: {
       'pt-colar': function () {
         $('#genTitle').textContent = tr('Colar posições', 'Paste positions', 'Pegar posiciones');
@@ -169,11 +165,6 @@
         abrir('genModal'); setTimeout(function () { var x = document.getElementById('ptTexto'); if (x) x.focus(); }, 50);
       },
       'pt-ler': function () { API.daTexto((document.getElementById('ptTexto') || {}).value || ''); },
-      'pt-foto': function () {
-        var i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*'; i.multiple = true; i.style.display = 'none';
-        i.addEventListener('change', function () { var fs = [].slice.call(i.files || []); if (i.parentNode) i.parentNode.removeChild(i); if (fs.length) API.daImagens(fs); });
-        document.body.appendChild(i); i.click();
-      },
       'pt-previa': function () {
         var r = API._lido; if (!r) return;
         var inst = String((document.getElementById('ptInst') || {}).value || '').trim();

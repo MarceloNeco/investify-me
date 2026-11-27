@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/importar-posicoes.js — "Importar posições (JSON)" (InvestifyONE)   1.3.0 · 27/Nov/2026 (3.134: colar texto e foto, a mesma prévia; 3.137: a data da importação; 3.139: preço médio a informar)
+   modulos/importar-posicoes.js — "Importar posições (JSON)" (InvestifyONE)   1.4.0 · 27/Nov/2026 (3.134: colar texto e foto, a mesma prévia; 3.137: a data da importação; 3.139: preço médio a informar; 3.140: sem botões no topo)
    ---------------------------------------------------------------------
    O QUE FAZ
      Lê um arquivo {"tipo":"moneytrio-posicoes","versao":1,"itens":[…]} e mostra a prévia em tabela:
@@ -80,6 +80,14 @@
     },
     /* 1.1.0 (3.134): a mesma prévia para o que veio do texto colado ou da foto (modulos/posicoes-texto.js) */
     mostrarPrevia: function (l) { lista = l; mostrar(); },
+    /* 1.4.0 (3.140): o arquivo .json que chega pelo "📎 Carregar documento" */
+    deArquivo: async function (a) {
+      var o = null; try { o = JSON.parse(await a.text()); } catch (e) { o = null; }
+      $('#genTitle').textContent = pt() ? 'Importar posições' : 'Import positions';
+      var r = o ? API.preparar(o) : { ok: false, erro: pt() ? 'Este arquivo não é um JSON válido.' : 'This file is not valid JSON.' };
+      if (!r.ok) { $('#genBody').innerHTML = Verter.html('<p class="imp-erro small">' + esc(r.erro) + '</p><div class="f-actions"><button class="btn" data-close="genModal">OK</button></div>'); abrir('genModal'); return; }
+      lista = r.lista; mostrar();
+    },
     escolher: function () {
       var i = document.createElement('input'); i.type = 'file'; i.accept = 'application/json,.json'; i.style.display = 'none';
       i.addEventListener('change', async function () {
@@ -118,12 +126,8 @@
 
   MoneyModulos.registrar({
     id: 'importar-posicoes',
-    versao: '1.3.0',
-    pontos: {
-      'investify.carteira.topo': function () { return '<div class="row il-acoes" style="gap:8px;margin:0 0 12px;justify-content:flex-end;flex-wrap:wrap">' +
-        (window.PosicoesTexto ? PosicoesTexto.botoes() : '') +   /* 1.1.0 (3.134): 📋 Colar texto e 📷 Foto ou print */
-        '<button class="btn sm" data-acao="posimp-escolher">⬆ ' + (pt() ? 'Importar posições (JSON)' : 'Import positions (JSON)') + '</button></div>'; }
-    },
+    versao: '1.4.0',
+    pontos: {},   /* 1.4.0 (3.140): os botões do topo saíram; o arquivo entra pelo "📎 Carregar documento" (modulos/carregar-doc.js) */
     acoes: {
       'posimp-escolher': function () { API.escolher(); },
       'posimp-ok': function () {
