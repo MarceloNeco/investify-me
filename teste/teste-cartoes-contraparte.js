@@ -25,7 +25,7 @@ const LOCAL = { v: 1, config: {}, posicoes: [], gastos: [], recorrentes: [], pes
   await ctx.addInitScript((t) => { if (!sessionStorage.getItem('s')) { localStorage.setItem('investifyme.dados.v1', t); localStorage.setItem('moneytrio.soNesteAparelho', '1'); localStorage.setItem('moneytrio.tutorial.v1', 'visto'); sessionStorage.setItem('s', '1'); } }, JSON.stringify(LOCAL));
   const p = await ctx.newPage(); const erros = []; p.on('pageerror', (e) => erros.push(String(e))); p.on('dialog', (d) => d.accept());
   await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && window.Cartoes && window.Contraparte && window.DeclEscolhas);
-  await p.evaluate(() => { I18n.atual = 'pt'; abrirApp('budget'); });
+  await p.evaluate(() => { I18n.atual = 'pt'; Cartoes._hoje = '2026-11-01'; abrirApp('budget'); });   /* 3.132: as datas do teste são fixas (o "sem uso" conta 90 dias) */
 
   console.log('cartões por conta');
   const c1 = await p.evaluate(() => {
@@ -33,7 +33,7 @@ const LOCAL = { v: 1, config: {}, posicoes: [], gastos: [], recorrentes: [], pes
     const conta = { id: 'acc-black-1', nome: 'BLACK TESTE MULT' };
     ['1101', '2202', '3303'].forEach((f, i) => add({ id: 'k' + i, data: '2026-10-0' + (i + 1), valor: 100 + i, descricao: 'LOJA ' + i, final: f, conta_cartao: conta }));
     add({ id: 'k9', data: '2026-10-05', valor: 50, descricao: 'LOJA VISA', final: '4404', cartao: 'VISA', conta_cartao: { id: 'acc-visa-2', nome: 'VISA TESTE' } });
-    add({ id: 'k10', data: '2026-10-06', valor: 70, descricao: 'LOJA ANTIGA', final: '7777' });   /* sem conta_cartao (dado antigo) */
+    add({ id: 'k10', data: '2026-10-06', valor: 70, descricao: 'LOJA ANTIGA', final: '7777', cartao: 'ELO' });   /* sem conta_cartao (dado antigo) e sem conta Elo nenhuma: 3.132, só esse ainda pergunta */
     const enc = Cartoes.encontrados(); render(); irPara('b-painel');
     return { enc: enc.map((x) => (x.nome || '?') + ':' + x.finais.join(',')), dica: (document.querySelector('.ct-dica') || {}).textContent || '' };
   });
@@ -48,7 +48,7 @@ const LOCAL = { v: 1, config: {}, posicoes: [], gastos: [], recorrentes: [], pes
   await p.evaluate(() => { const s = Cartoes.semente(Cartoes.encontrados().find((x) => x.contaId === 'acc-black-1').chave); abrirCartao(null, s); });
   await p.waitForTimeout(200);
   const form = await p.evaluate(() => ({ ap: document.getElementById('ctApelido').value, fins: [...document.querySelectorAll('.ct-f-fim')].map((x) => x.value).join(','), conta: document.getElementById('ctContaId').value, tipos: [...document.querySelectorAll('.ct-f-tipo')].map((x) => x.value).join(',') }));
-  ok(form.ap === 'BLACK TESTE MULT' && form.fins === '1101,2202,3303' && form.conta === 'acc-black-1' && /virtual/.test(form.tipos), 'o cadastro abre preenchido (apelido, os 3 finais como virtuais, a conta do cartão)');
+  ok(form.ap === 'BLACK TESTE MULT' && form.fins === '1101,2202,3303' && form.conta === 'acc-black-1' && /^fisico,(unico|virtual),(unico|virtual)$/.test(form.tipos), 'o cadastro abre preenchido (apelido, os 3 finais — 3.132: o de mais compras como físico, os outros virtuais —, a conta do cartão): ' + form.tipos);
   await p.fill('#ctApelido', 'Black'); await p.fill('#ctTitular', 'Carlos');
   await p.selectOption('#ctFecha', '5'); await p.selectOption('#ctVence', '12');
   await p.selectOption('.ct-final:nth-child(1) .ct-f-tipo', 'fisico');
@@ -61,7 +61,7 @@ const LOCAL = { v: 1, config: {}, posicoes: [], gastos: [], recorrentes: [], pes
     const c = Banco.cartoes().find((x) => x.contaId === 'acc-black-1'), gs = ['k0', 'k1', 'k2'].map((i) => Gasto.todos().find((g) => g.idRobo === i));
     return { n: Banco.cartoes().length, fins: Cartoes.finais(c).map((f) => f.fim + ':' + f.tipo).join(','), ligados: gs.every((g) => g.cartaoId === c.id), quem: gs.map((g) => g.quem).join(','), id: c.id };
   });
-  ok(c2.n === 1 && c2.ligados && c2.fins === '1101:fisico,2202:virtual,3303:virtual,4455:adicional', 'um cartão só para os 3 finais (+ o adicional); as compras antigas ganham o cartão (' + c2.fins + ')');
+  ok(c2.n === 1 && c2.ligados && /^1101:fisico,2202:(virtual|unico),3303:(virtual|unico),4455:adicional$/.test(c2.fins), 'um cartão só para os 3 finais (+ o adicional); as compras antigas ganham o cartão (' + c2.fins + ')');
   ok(c2.quem === 'Cacá,Cacá,Cacá', '"Quem pagou" das compras = o titular (Carlos → mostra o apelido Cacá)');
   const c3 = await p.evaluate((cid) => {
     const C = MoneyNuvem._teste.Caixa;

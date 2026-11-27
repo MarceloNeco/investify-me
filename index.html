@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.131">
+<link rel="stylesheet" href="estilo.css?v=3.132">
 <link rel="stylesheet" href="assistone/assistone-visual.css?v=1.1.2">
 </head>
 <body>
@@ -683,8 +683,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.131"></script>
-<script src="textos/frases-es.js?v=3.131"></script>
+<script src="textos/frases-en.js?v=3.132"></script>
+<script src="textos/frases-es.js?v=3.132"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7679,7 +7679,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.131"></script>
+<script src="textos/mudancas.js?v=3.132"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -27691,7 +27691,7 @@ function toast(msg, op){
   while(caixa.children.length > MAX_TOASTS) caixa.firstElementChild.remove();
 
   /* texto longo merece mais tempo de leitura, até 9s */
-  const tempo = Math.min(9000, 4200 + msg.length * 22);
+  const tempo = op.tempo || Math.min(9000, 4200 + msg.length * 22);   /* 3.132: o "Desfazer" fica 8 s */
   setTimeout(() => { d.style.opacity = '0'; d.style.transition = '.3s'; setTimeout(() => d.remove(), 320); }, tempo);
 }
 
@@ -27726,6 +27726,10 @@ function render(){
   /* 3.41: telas que moram num módulo (modulos/*.js) */
   if(!views[viewAtual] && window.MoneyModulos && MoneyModulos.tela(viewAtual)) views[viewAtual] = MoneyModulos.tela(viewAtual);
   if(!views[viewAtual]) viewAtual = 'painel';
+  /* 3.132: redesenhar a MESMA tela (salvar, apagar, cancelar…) mantém a rolagem onde estava; antes o "esconde tudo" encolhia a
+     página e ela voltava ao topo (o dono: "preciso descer tudo de novo"). Trocar de tela continua começando do topo. */
+  const rolador = document.scrollingElement || document.documentElement, mesmaTela = render._ultima === viewAtual;
+  const yAntes = mesmaTela ? rolador.scrollTop : 0;
   $$('.view').forEach(s => s.classList.add('hidden'));
   let el = $('#view-' + viewAtual);
   if(!el){ el = document.createElement('section'); el.className = 'view hidden'; el.id = 'view-' + viewAtual; $('#view-painel').parentNode.appendChild(el); }
@@ -27733,6 +27737,8 @@ function render(){
      e em português esta linha não faz nada */
   el.innerHTML = Verter.html(views[viewAtual]());
   el.classList.remove('hidden');
+  if(mesmaTela && yAntes) rolador.scrollTop = yAntes;
+  render._ultima = viewAtual;
   renderTopo();
   ligarIdioma();
   renderCalendarioMenu();
@@ -30175,13 +30181,13 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/previsto.js?v=1.0.2"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
 <script src="modulos/calendario-menu.js?v=1.2.1"></script>
-<script src="modulos/pessoas.js?v=1.6.0"></script>
+<script src="modulos/pessoas.js?v=1.7.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=2.4.0"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
 <script src="assistone/assistone-visual.js?v=1.1.2"></script>
 <script src="modulos/tour.js?v=1.1.0"></script>
-<script src="modulos/cartoes.js?v=1.3.0"></script>
+<script src="modulos/cartoes.js?v=1.4.0"></script>
 <script src="modulos/cartao-foto.js?v=1.0.0"></script>
 <script src="modulos/contraparte.js?v=1.0.0"></script>
 <script src="modulos/declaracao-escolhas.js?v=1.1.0"></script>
@@ -30189,7 +30195,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/apelido.js?v=1.1.0"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
-<script src="modulos/visao-casa.js?v=1.3.0"></script>
+<script src="modulos/visao-casa.js?v=1.4.0"></script>
 <script src="modulos/previsao.js?v=1.2.1"></script>
 <script src="modulos/orcamento.js?v=1.2.0"></script>
 <script src="modulos/fluxo-categorias.js?v=1.0.0"></script>
@@ -30224,7 +30230,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/invest-exterior.js?v=1.0.0"></script>
 <script src="modulos/aluguel.js?v=1.0.0"></script>
 <script src="modulos/terceiros.js?v=1.1.0"></script>
-<script src="modulos/assistone-indice.js?v=1.0.0"></script>
+<script src="modulos/assistone-indice.js?v=1.1.0"></script>
 <script src="modulos/assist-hermes.js?v=1.1.1"></script>
 <script src="modulos/abrir-no-chrome.js?v=1.1.0"></script>
 <script src="modulos/toast-fechavel.js?v=1.0.0"></script>

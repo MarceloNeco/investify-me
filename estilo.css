@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.131 · 27/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.132 · 27/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2797,3 +2797,14 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .tbl td.bk-cel .t-sub{display:block}
 .ct-enc-lista{margin:6px 0 0; padding-left:18px}
 .ct-enc-lista li{margin:4px 0; display:flex; flex-wrap:wrap; gap:6px; align-items:center; justify-content:space-between}
+/* 3.132: Família no MoneyTRIO — o "editar" na mesma linha do nome; os cartões encontrados por conta (um card cada, finais em chips) */
+.vc-pessoa-l{display:inline-flex; align-items:center; gap:8px; margin:2px 18px 2px 0}
+.vc-pessoa-l .linha-check{margin:0}
+.ct-enc{border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin:6px 0}
+.ct-enc-fins{display:flex; flex-wrap:wrap; gap:4px; margin:4px 0}
+.ct-chip{font-size:.75rem; padding:2px 8px; border-radius:999px; background:var(--line)}
+.ct-enc-acoes{display:flex; flex-wrap:wrap; gap:6px; align-items:center}
+.ct-enc-acoes input{flex:1 1 9em; min-width:0}
+.ct-enc-acoes .ct-enc-nome{flex-basis:100%}
+.ps-papel-sel{margin-top:4px; max-width:100%}
+.ps-soltos summary{cursor:pointer; padding:4px 0}

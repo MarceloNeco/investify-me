@@ -1,11 +1,18 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.131 · 26/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.132 · 26/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.132', d:'2026-11-26', t:'Pessoas da família mais simples e os cartões agrupados sozinhos', itens:[
+    '👥 A tela não pula mais para o topo: depois de salvar, cancelar, apagar ou arquivar, você continua onde estava. O "editar" abre logo abaixo do nome, e apagar ou arquivar mostra "Desfazer" por alguns segundos.',
+    '👪 Em Pessoas da família, a sua família vem primeiro, depois as outras pessoas. Empresas e bancos não aparecem mais como "a identificar", e os nomes soltos ficam numa linha só, no fim. Quando a mesma pessoa está em duas fichas, o app pergunta e junta. Os papéis (responsável ou dependente) se confirmam num lugar só.',
+    '✏️ Em Família no MoneyTRIO, cada nome tem "editar" e há um botão para Pessoas da família (renomear, e-mail, incluir alguém). A busca 🔍 também acha "renomear pessoa".',
+    '💳 Os cartões das suas compras se agrupam sozinhos por fatura: o físico e os virtuais juntos, cada final marcado. "Cadastrar este cartão" já sugere o nome e quem usa. Cartão sem compra há 90 dias fica recolhido.',
+    '🔒 Um número com cara de CPF grudado num nome aparece só com o final e não fica guardado na ficha.'
+  ]},
   {v:'3.131', d:'2026-11-26', t:'Bancos e cartões mais claros, e a fatura certa', itens:[
     '🏦 Em Configurações › Bancos e cartões, cada banco mostra a agência e a conta numa linha só delas ("Ag. 0001 · Conta 00012-3") e o código e o CNPJ embaixo, sem cortar no celular.',
     '💳 Os cartões encontrados nas suas compras agora vêm por fatura: os virtuais e os adicionais ficam dentro do cartão deles, e "Cadastrar" já traz todos os finais.',

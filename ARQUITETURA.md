@@ -767,6 +767,20 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.132 — Pessoas da família mais simples e os cartões agrupados sozinhos.** (7) `render()`: redesenhar a MESMA tela mantém a rolagem
+  (`render._ultima`; antes o "esconde tudo" encolhia a página e ela voltava ao topo) — vale para toda tela que faz render() numa ação;
+  pessoas 1.7.0: o formulário de editar abre na própria ficha (`ps-form-linha`), salvar/cancelar voltam para ela (`irAte`), apagar e
+  arquivar sem confirm(), com "Desfazer" por 8 s (`toast` aceita `tempo`). (6) a tela: "a mesma pessoa?" no topo (`mesmaPessoa`: a ficha
+  da conta + a ficha cujo nome é o `dono` que o banco manda nos itens; "Juntar" = `Pessoas.juntar`, "Não são" em `psJuntarNao`), Sua
+  família, Outras pessoas, Empresas, e os nomes soltos recolhidos no fim; `pareceEmpresa` tira empresa/banco/instituição/CNPJ de "A
+  identificar"; um só "Confirme: quem é responsável e quem é dependente" com `.ps-papel-sel` por linha; `semDoc`/`docMascara`: sequência
+  de 11 ou 14 dígitos não fica guardada e aparece como "···901". (5) visao-casa 1.4.0: "editar" (ps-abrir) ao lado de cada nome e o botão
+  "👥 Pessoas da família (renomear, e-mail, incluir alguém)"; assistone-indice 1.1.0: a busca acha renomear/mudar nome/e-mail da pessoa.
+  Cartões 1.4.0: sem a conta, o final vai para a ÚNICA conta em uso (compra nos últimos 90 dias) do mesmo banco e bandeira; um card por
+  conta com os finais (físico = o de mais compras; virtual de uso único = até 2 compras e sumiu), "Cadastrar este cartão" com o nome
+  (`nomeSugerido`) e o "quem usa" (`quemUsaSugerido`: o dono do cartão na Conferência com o banco) em um toque (`cadastrarEncontrado`);
+  sem compra há 90 dias: recolhido e fora da contagem; a pergunta "Este final é de qual cartão?" lista também as contas encontradas e
+  "outro". Teste: `teste-3132.js` (novo); `teste-3131`, `teste-cartoes-contraparte` seguem a regra nova (datas fixas com `Cartoes._hoje`).
   **3.131 — Bancos e cartões mais claros, e a fatura certa.** (1) `blocoBancosCartoes`: a célula do banco (`.bk-cel`) com
   `bancoContasHTML(b)` — "Ag. X · Conta Y" de cada conta/poupança do robô daquele banco (1ª palavra do nome; `SaldoBanco.numero`) — e
   "cód. · CNPJ" em linha própria, sem reticências (antes o código e o CNPJ grudavam: "cód. 34160.701.19…"). (2) cartoes 1.3.0:
