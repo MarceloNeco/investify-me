@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.4.0 · 27/Nov/2026
+   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.5.0 · 27/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, "adiante tudo do e-mail"; sem IA)
      · A caixa do robô (nuvem.js, money_entrada) traz um tipo novo de item, tipo "comprovante", tirado dos e-mails lidos
@@ -36,6 +36,10 @@
        que liga mas NÃO deduz (o gasto sai do IR e a nota fica "não precisa").
      · 1.3.0 (3.120): guarda a `ficha` do robô (fichaLimpa: só dados simples e limitados) — consumo de luz/gás (modulos/consumo.js) e as
        próximas (consórcio, fatura, NFS-e); debito_automatico=false (ou ficha.sem_debito_automatico) nunca mostra "⛔ não pague".
+     · 1.5.0 (3.136): o robô manda a ficha INTEIRA: o que vem fora dos campos de lançamento (no topo do item ou em "ficha") entra
+       na ficha; limites maiores (listas até 400 — os lançamentos da fatura —, até 120 chaves, itens da compra até 100);
+       cartao_final vale como final; pago_no_cartao (conta paga no cartão: Vivo no cartão, por exemplo) nunca pede "pague": liga à
+       cobrança no cartão (mesmo valor e final, ±10 dias) e não entra no 📥. Os serviços da conta: modulos/conta-servicos.js.
    API (window.Comprovantes)
      receber(l, escopo?) → true (guardado) | false · lista() · abertos() · ligarTudo() · casarCompra(x) · palpiteCat(loja)
    DADOS
@@ -57,15 +61,15 @@
   function txt(v, m) { return v == null ? '' : String(v).trim().slice(0, m || 120); }
   function dataOk(d) { return /^\d{4}-\d{2}-\d{2}$/.test(String(d || '')) ? d : ''; }
   /* 1.3.0 (3.120): a ficha que o robô manda junto (consumo de luz/gás, consórcio, fatura, NFS-e…): só dados simples, limitados
-     (texto até 200, listas até 60 itens, 5 níveis); nada de função nem objeto estranho */
+     (texto até 200, listas até 400 itens, até 120 chaves, 5 níveis; 1.5.0); nada de função nem objeto estranho */
   function fichaLimpa(o, nivel) {
     nivel = nivel || 0; if (o == null || nivel > 5) return null;
     if (typeof o === 'number') return isFinite(o) ? o : null;
     if (typeof o === 'boolean') return o;
     if (typeof o === 'string') return o.trim().slice(0, 200);
-    if (Array.isArray(o)) return o.slice(0, 60).map(function (v) { return fichaLimpa(v, nivel + 1); }).filter(function (v) { return v != null; });
+    if (Array.isArray(o)) return o.slice(0, 400).map(function (v) { return fichaLimpa(v, nivel + 1); }).filter(function (v) { return v != null; });
     if (typeof o !== 'object') return null;
-    var r = {}; Object.keys(o).slice(0, 60).forEach(function (k) { if (!/^[a-z0-9_]{1,40}$/i.test(k)) return; var v = fichaLimpa(o[k], nivel + 1); if (v != null) r[k] = v; });
+    var r = {}; Object.keys(o).slice(0, 120).forEach(function (k) { if (!/^[a-z0-9_]{1,40}$/i.test(k)) return; var v = fichaLimpa(o[k], nivel + 1); if (v != null) r[k] = v; });
     return r;
   }
   function dias(a, b) { return Math.round((Date.parse(a + 'T12:00:00Z') - Date.parse(b + 'T12:00:00Z')) / 86400000); }
@@ -215,11 +219,21 @@
         (!x.data || g.data >= x.data) && (!ate || dias(g.data, ate) <= 5);
     }) || null;
   }
-  function ligarBoleto(x) { if (x.pagoId && gasto(x.pagoId)) return; var g = pagoDe(x); if (g) { x.pagoId = g.id; x.estado = 'ok'; } }
+  function ligarBoleto(x) { if (x.pagoId && gasto(x.pagoId)) return; var g = x.noCartao ? cobrancaNoCartao(x) : pagoDe(x); if (g) { x.pagoId = g.id; x.estado = 'ok'; } }
+  /* 1.5.0 (3.136): a conta paga no cartão: a cobrança do mesmo valor no cartão do final (±10 dias da data ou do vencimento) */
+  function finalDe(g) { var c = g.cartaoId && (ST.cartoes || []).find(function (k) { return k.id === g.cartaoId; }); return String(g.finalCartao || (c && c.fim) || '').slice(-4); }
+  function cobrancaNoCartao(x) {
+    if (!(x.valor > 0)) return null;
+    var ref = x.vencimento || x.data, usados = {}; lista().forEach(function (y) { if (y !== x && y.pagoId) usados[y.pagoId] = 1; });
+    return Gasto.todos().find(function (g) {
+      return g.fluxo !== 'entrada' && !usados[g.id] && g.data && Math.abs(Number(g.valor) - x.valor) < 0.005 && (!x.final || finalDe(g) === x.final) &&
+        (!ref || Math.abs(dias(g.data, ref)) <= 10);
+    }) || null;
+  }
   /* 1.3.0 (3.120): a conta que o robô diz que NÃO está no débito automático (debito_automatico=false / ficha.sem_debito_automatico)
      nunca mostra "⛔ não pague" */
   function semDebito(x) { return !!(x.semDebito || (x.ficha && (x.ficha.sem_debito_automatico === true || x.ficha.debito_automatico === false))); }
-  function debito(x) { if (semDebito(x)) return null; return window.DebitoAuto ? DebitoAuto.conflito({ nome: quem(x), cnpj: x.cnpj || '', texto: [x.descricao, x.assunto].join(' ') }) : null; }
+  function debito(x) { if (semDebito(x) || x.noCartao) return null; return window.DebitoAuto ? DebitoAuto.conflito({ nome: quem(x), cnpj: x.cnpj || '', texto: [x.descricao, x.assunto].join(' ') }) : null; }
 
   function processar(x) {
     if (x.estado === 'dispensado') return;
@@ -237,6 +251,14 @@
   }
 
   var CAMPOS = ['loja', 'cnpj', 'produto', 'pedido', 'numero', 'descritor_fatura', 'linha', 'referencia', 'remetente', 'assunto', 'arquivo', 'descricao'];
+  /* 1.5.0 (3.136): os campos de lançamento; o resto do item do robô é ficha */
+  var BASE = CAMPOS.concat(['id', 'tipo', 'subtipo', 'data', 'vencimento', 'valor', 'moeda', 'parcelas', 'valor_parcela', 'final', 'cartao_final', 'confianca', 'opcoes',
+    'arquivos', 'fotos_a_ler', 'links', 'itens', 'dividir_por_categoria', 'aviso_envio', 'ficha', 'escopo']);
+  function fichaDe(l) {
+    var f = {}; Object.keys(l).forEach(function (k) { if (BASE.indexOf(k) < 0) f[k] = l[k]; });
+    if (l.ficha && typeof l.ficha === 'object' && !Array.isArray(l.ficha)) Object.assign(f, l.ficha);
+    return Object.keys(f).length ? fichaLimpa(f) : null;
+  }
   var API = {
     _hoje: null, SUBS: SUBS, lista: lista, palpiteCat: palpiteCat, casarCompra: casarCompra,
     /* o item do robô (tipo "comprovante"); o mesmo id de novo atualiza, nunca duplica */
@@ -247,7 +269,7 @@
         data: dataOk(l.data), vencimento: dataOk(l.vencimento), valor: num(l.valor) != null ? n2(Math.abs(num(l.valor))) : null,
         moeda: /^usd$/i.test(l.moeda || '') ? 'USD' : 'BRL', parcelas: Math.max(0, Math.round(num(l.parcelas) || 0)),
         valor_parcela: num(l.valor_parcela) != null ? n2(Math.abs(num(l.valor_parcela))) : null,
-        final: String(l.final || '').replace(/\D/g, '').slice(-4),
+        final: String(l.final || l.cartao_final || '').replace(/\D/g, '').slice(-4),   /* 1.5.0: cartao_final também */
         confianca: /^(baixa|media|alta)$/.test(String(l.confianca || '')) ? String(l.confianca) : '',
         opcoes: Array.isArray(l.opcoes) ? l.opcoes.map(Number).filter(function (v) { return v > 0; }).slice(0, 5) : [],
         arquivos: Array.isArray(l.arquivos) ? l.arquivos.slice(0, 20).map(function (a) { return txt(a); }) : [],
@@ -256,10 +278,12 @@
         links: (Array.isArray(l.links) ? l.links : l.links ? [l.links] : []).map(function (a) { return txt(a, 300); }).filter(function (u) { return /^https:\/\/(drive|docs)\.google\.com\//.test(u); }).slice(0, 10)
       };
       CAMPOS.forEach(function (k) { d[k] = txt(l[k], k === 'descricao' || k === 'linha' ? 300 : 120); });
-      if (l.ficha && typeof l.ficha === 'object') d.ficha = fichaLimpa(l.ficha);   /* 1.3.0 (3.120) */
-      if (l.debito_automatico === false) d.semDebito = true;
+      var fc = fichaDe(l); if (fc) d.ficha = fc;   /* 1.3.0 (3.120); 1.5.0 (3.136): a ficha inteira */
+      if (l.debito_automatico === false || (fc && fc.debito_automatico === false)) d.semDebito = true;
+      if (l.pago_no_cartao === true || (fc && fc.pago_no_cartao === true)) d.noCartao = true;   /* 1.5.0: paga no cartão: nunca "pague" */
+      var its = Array.isArray(l.itens) ? l.itens : fc && Array.isArray(fc.itens) ? fc.itens : null;
       /* 1.4.0 (3.135): os itens da compra (modulos/compra-itens.js) e o aviso de "Enviado/Entregue" (não é outra compra) */
-      if (Array.isArray(l.itens)) d.itens = l.itens.slice(0, 40).map(function (it) {
+      if (its) d.itens = its.slice(0, 100).map(function (it) {
         var c = it && it.categoria_sugerida && typeof it.categoria_sugerida === 'object' ? catDoRobo({ ficha: { categoria_sugerida: it.categoria_sugerida } }) : null;
         return { produto: txt(it && it.produto, 120), quantidade: Math.max(1, Math.round(num(it && it.quantidade) || 1)), valor: num(it && it.valor) != null ? n2(Math.abs(num(it.valor))) : 0, cat: c };
       }).filter(function (it) { return it.produto; });
@@ -280,7 +304,7 @@
         if (x.fotos_a_ler && x.fotos_a_ler.length && !x.fotosLidas) return true;
         if (x.estado !== 'novo') return false;
         if (x.subtipo === 'compra') return !!(x.gastoId || (x.cands && x.cands.length) || (x.perto && x.perto.length));
-        if (x.subtipo === 'boleto' || x.subtipo === 'fatura') return !!(x.vencimento || x.data) && dias(x.vencimento || x.data, h) <= 2;
+        if (x.subtipo === 'boleto' || x.subtipo === 'fatura') return !x.noCartao && !!(x.vencimento || x.data) && dias(x.vencimento || x.data, h) <= 2;
         return x.subtipo === 'outro' || x.subtipo === 'nota_fiscal';
       });
     },
@@ -313,6 +337,7 @@
         case 'recibo_exterior': return x.reciboId ? (x.moeda === 'BRL' ? tr('Em Recibo × cartão (em reais: sem câmbio nem IOF)', 'In Receipt × card (in reais: no exchange rate or IOF)', 'En Recibo × tarjeta (en reales: sin cambio ni IOF)') : tr('Em Recibo × cartão (câmbio e IOF)', 'In Receipt × card (exchange rate and IOF)', 'En Recibo × tarjeta (cambio e IOF)')) : '';
         case 'boleto': case 'fatura': {
           if (x.pagoId) return tr('Pago: ', 'Paid: ', 'Pagado: ') + nomeG(gasto(x.pagoId) || {});
+          if (x.noCartao) return '💳 ' + tr('Paga no cartão', 'Paid by card', 'Pagada con tarjeta') + (x.final ? tr(' final ', ' ending ', ' acabada en ') + x.final : '') + ': ' + tr('liga sozinha quando a cobrança aparecer', 'links on its own when the charge shows up', 'se vincula sola cuando aparezca el cargo');   /* 1.5.0 (3.136) */
           var v = x.vencimento || x.data, dd = v ? dias(v, h) : null, c = debito(x);
           var nc = !c && window.DebitoNaoCaiu ? DebitoNaoCaiu.paraTexto([quem(x), x.assunto, x.descricao].join(' ')) : null;   /* 1.1.1 (3.100) */
           return (c ? '⛔ ' + DebitoAuto.frase(c) + ' · ' : nc ? '⚠️ ' + tr('O débito automático não caiu: pague este boleto', 'The auto-debit did not go through: pay this slip', 'El débito automático no se hizo: paga este boleto') + ' · ' : '') +
