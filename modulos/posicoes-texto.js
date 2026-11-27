@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/posicoes-texto.js — "Importar posições" sem arquivo: 📋 Colar texto e 📷 Foto ou print   1.0.0 · 27/Nov/2026 (3.134)
+   modulos/posicoes-texto.js — "Importar posições" sem arquivo: 📋 Colar texto e 📷 Foto ou print   1.1.0 · 27/Nov/2026 (3.134)
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono: "deveria ter um jeito mais conveniente")
      Duas entradas novas no topo da Carteira, que caem na MESMA prévia do "Importar posições (JSON)" (modulos/importar-posicoes.js:
@@ -78,6 +78,36 @@
         } else if (valor) it = { ticker: T, nome: nome, tipo: 'outro', moeda: linhaUsd ? 'USD' : 'BRL', pm: valor, valorAtual: valor };
         if (it) itens.push(it);
       });
+      /* c) 1.1.0 (3.137): o extrato mensal da Avenue (PDF), com as colunas pela ordem: [descrição] SYMBOL "C" QUANTIDADE PREÇO [$] VALOR …;
+         a linha sem dígitos logo depois do papel continua o nome; o título do bond ("EXBZ 6.75 28/01/28") vem depois da linha do bond;
+         números americanos (1,234.56); sem preço médio (fica o preço do extrato, com o aviso) */
+      if (/SYMBOL\/|TOTAL PRICED PORTFOLIO|AVENUE ACCOUNT NUMBER/i.test(t)) {
+        var us = function (x) { var v = Number(String(x || '').replace(/[$,\s]/g, '')); return isFinite(v) ? v : null; };
+        var MES = { january: '01', february: '02', march: '03', april: '04', may: '05', june: '06', july: '07', august: '08', september: '09', october: '10', november: '11', december: '12' };
+        var per = t.match(/[A-Za-z]+ \d{1,2}, \d{4}\s*-\s*([A-Za-z]+) (\d{1,2}), (\d{4})/), data = per && MES[per[1].toLowerCase()] ? per[3] + '-' + MES[per[1].toLowerCase()] + '-' + ('0' + per[2]).slice(-2) : '';
+        var aviso = tr('Preço médio não veio no extrato (está o preço do extrato', 'Average price was not in the statement (the statement price is used', 'El precio medio no venía en el extracto (está el del extracto') + (data ? ' ' + tr('de ', 'of ', 'del ') + data.slice(8) + '/' + data.slice(5, 7) + '/' + data.slice(0, 4) : '') + tr('): confira.', '): check it.', '): revísalo.');
+        var secao = 'acoes', ult = null, av = [];
+        linhas.forEach(function (l0) {
+          var l = l0.replace(/\s+/g, ' ').trim(); if (!l) return;
+          if (/^EQUITIES/i.test(l)) { secao = 'acoes'; ult = null; return; }
+          if (/^FIXED INCOME/i.test(l)) { secao = 'bonds'; ult = null; return; }
+          var cx = l.match(/^Total Cash\b[^$\d]*\$?\s*([\d,]+\.\d{2})/i);
+          if (cx) { var vc = us(cx[1]); if (vc > 0) av.push({ ticker: 'USD', nome: 'Dinheiro em USD', tipo: 'caixa', moeda: 'USD', qtd: vc, pm: 1 }); ult = null; return; }
+          if (/^total\b/i.test(l)) { ult = null; return; }
+          var m = /^(.*?)\s*\b([A-Z0-9]{1,9})\s+C\s+(-?[\d,]*\.?\d+)\s+(-?[\d,]*\.?\d+)\s+\$?\s*(-?[\d,]*\.?\d+)/.exec(l);
+          if (m) {
+            var tk = m[2], q = us(m[3]), pr = us(m[4]), vm = us(m[5]), nome = m[1].replace(/\s*-\s*$/, '').trim() || tk;
+            if (secao === 'bonds') ult = { ticker: tk, nome: nome, tipo: 'bond-us', moeda: 'USD', pm: vm, valorAtual: vm, notas: aviso };
+            else ult = { ticker: tk, nome: nome, tipo: ETFS_US.test(tk) || /\betf\b|\bfund\b|\btrust\b/i.test(nome) ? 'etf-us' : 'acao-us', moeda: 'USD', qtd: q, pm: pr || (q ? vm / q : 0), notas: aviso };
+            av.push(ult); return;
+          }
+          var bt = /^([A-Z]{3,})\s+([\d.]+)\s+(\d{2})\/(\d{2})\/(\d{2})$/.exec(l);
+          if (bt && ult && ult.tipo === 'bond-us') { ult.nome = l + (ult.nome && ult.nome !== ult.ticker ? ' · ' + ult.nome : ''); ult.vencimento = '20' + bt[5] + '-' + bt[4] + '-' + bt[3]; return; }
+          if (ult && !/\d/.test(l) && l.length <= 60) { ult.nome = (ult.nome === ult.ticker ? '' : ult.nome + ' ') + l; return; }
+          ult = null;
+        });
+        if (av.length) { av.forEach(function (x) { itens.push(x); }); return { itens: itens, inst: 'Avenue', data: data }; }
+      }
       /* b) a previdência: um bloco por "Plano NNNN" */
       var partes = t.split(/(?=\bplano\s*(?:n[ºo°.]?\s*)?\d{3,})/i);
       partes.forEach(function (b) {
@@ -102,6 +132,7 @@
       }
       API._lido = r;
       $('#genBody').innerHTML = Verter.html('<p class="small">' + e$(tr('Achei ' + r.itens.length + ' posição(ões). De qual corretora ou banco?', 'I found ' + r.itens.length + ' position(s). Which broker or bank?', 'Encontré ' + r.itens.length + ' posición(es). ¿De qué bróker o banco?')) + '</p>' +
+        (r.data ? '<p class="small pt-data">' + e$(tr('Extrato de ', 'Statement of ', 'Extracto del ') + r.data.slice(8) + '/' + r.data.slice(5, 7) + '/' + r.data.slice(0, 4) + tr(': se você vendeu algum papel depois, desmarque.', ': if you sold anything after that, untick it.', ': si vendiste algo después, desmárcalo.')) + '</p>' : '') +   /* 1.1.0 (3.137) */
         '<label class="f"><span class="lb">' + e$(tr('Corretora ou banco', 'Broker or bank', 'Bróker o banco')) + '</span><input id="ptInst" value="' + e$(r.inst) + '" placeholder="' + e$(tr('ex.: Avenue, BTG, XP', 'e.g. Avenue, BTG, XP', 'ej.: Avenue, BTG, XP')) + '" autocomplete="off"></label>' +
         '<div class="f-actions"><button class="btn" data-close="genModal">' + e$(tr('Cancelar', 'Cancel', 'Cancelar')) + '</button><button class="btn primary" data-acao="pt-previa">' + e$(tr('Ver a prévia', 'See the preview', 'Ver la vista previa')) + '</button></div>');
       abrir('genModal'); return r;
@@ -127,7 +158,7 @@
 
   MoneyModulos.registrar({
     id: 'posicoes-texto',
-    versao: '1.0.0',
+    versao: '1.1.0',
     acoes: {
       'pt-colar': function () {
         $('#genTitle').textContent = tr('Colar posições', 'Paste positions', 'Pegar posiciones');
