@@ -54,9 +54,9 @@
   function txt(v, m) { return v == null ? '' : String(v).trim().slice(0, m || 120); }
   function dataOk(d) { return /^\d{4}-\d{2}-\d{2}$/.test(String(d || '')) ? d : ''; }
   /* 1.3.0 (3.120): a ficha que o robô manda junto (consumo de luz/gás, consórcio, fatura, NFS-e…): só dados simples, limitados
-     (texto até 200, listas até 60 itens, 3 níveis); nada de função nem objeto estranho */
+     (texto até 200, listas até 60 itens, 5 níveis); nada de função nem objeto estranho */
   function fichaLimpa(o, nivel) {
-    nivel = nivel || 0; if (o == null || nivel > 3) return null;
+    nivel = nivel || 0; if (o == null || nivel > 5) return null;
     if (typeof o === 'number') return isFinite(o) ? o : null;
     if (typeof o === 'boolean') return o;
     if (typeof o === 'string') return o.trim().slice(0, 200);
@@ -179,6 +179,7 @@
 
   function processar(x) {
     if (x.estado === 'dispensado') return;
+    if (x.ficha && x.ficha.consorcio) { x.estado = 'ok'; return; }   /* 1.3.0 (3.121): o extrato do consórcio é informação (modulos/consorcio.js), não pede nada */
     if (window.Terceiros && Terceiros.aplicar(x)) return;   /* 1.2.1 (3.105): conta de outra pessoa a ignorar */
     if (x.subtipo === 'compra') casarCompra(x);
     else if (x.subtipo === 'reembolso') ligarReembolso(x);

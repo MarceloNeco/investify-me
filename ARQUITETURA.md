@@ -767,6 +767,9 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.121 — Seus consórcios.** Novo `modulos/consorcio.js` 1.0.0: cotas pela `ficha.consorcio` (id `consorcio-<grupo>-<cota>`), a cota no
+  detalhe da parcela (só com "cara de consórcio") e na conta fixa (`recorrente.linha`), "Ver todos os consórcios" com filtro
+  Auto/Imóvel/Ambos (localStorage `moneytrio.consorcio.filtro`) e as parcelas. Teste: `teste-consorcio.js` (novo).
   **3.120 — Consumo de luz e gás.** Novo `modulos/consumo.js` 1.0.0 (`Consumo`: de/doGasto/daCategoria/linha/bloco): a `ficha` da conta
   de luz (kWh, dias, média, bandeira, tarifa, multa, juros, COSIP, histórico) e de gás (m³, kg, período) no detalhe do lançamento
   (`lancamento.form`) e na linha da categoria do "Por categoria". comprovantes 1.3.0: guarda `x.ficha` (`fichaLimpa`: 5 níveis, 60 itens,
