@@ -844,6 +844,13 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   parcelas ou uma sem, e do mesmo CNPJ ou loja, sem precisar do `mesmaCompra`; fica o do pagamento: o final, senão a data mais nova); o
   seletor de cartão por `Cartoes.doFinal` (qualquer final); `osRot` na linha ("OS n · Veículo › sub · 🚗 apelido"); `acharCarro` também com a
   palavra do apelido dentro da palavra lida ("LRENEGADE").
+  **3.117 — Foto de nota ou recibo mais simples.** canhotos 1.4.0 (pedidos do dono sobre a janela): sem a frase "Lido no aparelho…", uma
+  frase por seção; o item em linhas (`linhas`: loja + valor e parcelas; data e hora · tipo; categoria · 🚗 apelido ou "Cadastrar este carro";
+  "No banco: … · parcela k de n · data"); "Pronto" (`terminar`) aplica o que casou e deixa ⏳ aguardando o que não veio (`esperarUm`: a ficha
+  do parcelado, ou a pendente do print pelo cartão escolhido, pelo do final ou só pelo final — print-colar 1.3.2 `mesmoLugar` casa pelo
+  final); "Lançar à mão" só para dinheiro/fora do banco; no "Classificar", seletor de categoria do grupo (`opcoesSub`, Gasto.arvore) com
+  "+ Nova categoria…" (prompt + confirm → ST.categorias), "Fechar"/"Salvar" e "Salvar as mudanças?" no Pronto. Testes: `teste-foto-pronto.js`
+  (novo), `teste-canhotos`, `teste-os-oficina`.
   **3.116 — Aviso de saldo mais claro e o 📥 com valor e data.** (1) saldo-previsto 1.3.0: `alerta()` com `piorDia`; `frase()` em HTML
   ("fica negativa em DD/MM (−R$ a) e chega a −R$ p em DD/MM. Resgate R$ Y até DD/MM (cobre o pior dia + 5% de folga)") com o nome da pessoa
   num botão `ps-abrir` (pessoas 1.4.0: abre Configurações › Pessoas com o apelido em foco; dica do apelido); `porque()` = `<details>` com as

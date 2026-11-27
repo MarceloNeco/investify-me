@@ -1,10 +1,15 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.116 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.117 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.117 */
+  'Foto de nota ou recibo mais simples':'A simpler receipt or invoice photo',
+  '📷 Na "Foto de nota ou recibo", cada item aparece em linhas fáceis de ler: a loja e o valor (com as parcelas), a data e a hora, a categoria com o apelido do carro e o que está no banco ("parcela 1 de 5"). Se o carro da nota não está cadastrado, "Cadastrar este carro" resolve com um toque.':'📷 In "Receipt or invoice photo", each item shows in easy-to-read lines: the store and the amount (with installments), the date and time, the category with the car\'s nickname and what is at the bank ("installment 1 of 5"). If the car on the receipt is not registered, "Add this car" fixes it with one tap.',
+  '✅ "Pronto" resolve o caso comum sozinho: o que já está no banco fica completado e o que ainda não veio fica ⏳ aguardando o banco e se junta sozinho quando ele mandar. "Lançar à mão" ficou só para pagamento em dinheiro ou fora do banco.':'✅ "Done" handles the common case by itself: what is already at the bank gets completed and what has not come yet waits ⏳ for the bank and joins by itself when it arrives. "Enter manually" is now only for cash or off-bank payments.',
+  '🏷️ Em "Classificar", a categoria é escolhida na lista do grupo, com "+ Nova categoria…" (pede confirmação). Sem mudança o botão é "Fechar"; com mudança, "Salvar", e o "Pronto" pergunta se quer salvar.':'🏷️ In "Classify", the category is picked from the group\'s list, with "+ New category…" (asks for confirmation). With no change the button is "Close"; with a change, "Save", and "Done" asks whether to save.',
   /* 3.116 */
   'Aviso de saldo mais claro e o 📥 com valor e data em tudo':'Clearer balance alert and every 📥 item with amount and date',
   '📉 O aviso de conta negativa diz o primeiro dia negativo e o pior dia, quanto resgatar (cobre o pior dia + 5% de folga) e, em "ver por quê", as maiores saídas até lá. A conta aparece com agência e número inteiros para quem é dono dela; na visão da casa, só o final. Tocar no nome da pessoa abre Configurações › Pessoas.':'📉 The negative-balance alert shows the first negative day and the worst day, how much to redeem (covers the worst day + 5% margin) and, under "see why", the largest outflows until then. The account shows the full branch and number to its owner; in the household view, only the last digits. Tapping the person\'s name opens Settings › People.',

@@ -57,8 +57,10 @@ const IT = (papel, valor, extra) => Object.assign({ arquivo: 'canhoto.jpg', pape
     const n0 = await p.evaluate(() => Gasto.todos().length);
     await p.evaluate((x) => { Canhotos._ler = async () => x; irPara('b-lanc'); render(); return Canhotos.processar([new File([new Uint8Array([137, 80, 78, 71, 1, 2, 3])], 'canhoto.jpg', { type: 'image/jpeg' })]); }, [IT(1, 6500)]);
     await p.click('#genBody .cn-item[data-grupo="casou"][data-i="0"] [data-acao="cn-classe"]');
-    ok(/5x de R\$\s?1\.300,00/.test(await p.textContent('#genBody .cn-item[data-grupo="casou"][data-i="0"]')), 'a tela mostra "5x de R$ 1.300,00"');
-    await p.evaluate((c) => { const e = document.querySelector('#genBody .cn-item[data-grupo="casou"][data-i="0"]'); e.querySelector('[data-cn="grupo"]').value = 'VEICULO'; e.querySelector('[data-cn="sub"]').value = 'Funilaria e pintura'; e.querySelector('[data-cn="veiculo"]').value = c; }, car1);
+    ok(/5[x×] de R\$\s?1\.300,00/.test(await p.textContent('#genBody .cn-item[data-grupo="casou"][data-i="0"]')), 'a tela mostra "5x de R$ 1.300,00"');
+    await p.evaluate((c) => { const e = document.querySelector('#genBody .cn-item[data-grupo="casou"][data-i="0"]'); /* 3.117: a categoria é um seletor do grupo; o "Salvar" só vale com mudança (o evento change) */
+      const muda = (k, v) => { const s = e.querySelector('[data-cn="' + k + '"]'); s.value = v; s.dispatchEvent(new Event('change', { bubbles: true })); };
+      muda('grupo', 'VEICULO'); muda('sub', 'Funilaria e pintura'); muda('veiculo', c); }, car1);
     await p.click('#genBody .cn-item[data-grupo="casou"][data-i="0"] [data-acao="cn-aplicar"]');
     await p.waitForFunction(() => { const f = CompraParcelada.lista()[0]; return f && f.docId; }, null, { timeout: 10000 }).catch(() => {});
     const f1 = await p.evaluate(() => JSON.parse(JSON.stringify(CompraParcelada.lista()[0])));
@@ -75,7 +77,7 @@ const IT = (papel, valor, extra) => Object.assign({ arquivo: 'canhoto.jpg', pape
 
     console.log('3) foto antes da fatura e o print "em 5x"');
     await p.evaluate((x) => { Canhotos._ler = async () => x; return Canhotos.processar([new File([new Uint8Array([1, 2, 3])], 'canhoto2.jpg', { type: 'image/jpeg' })]); }, [IT(3, 2400, { parcelas: 4, loja: 'AUTO PECAS FICTICIA', data: '20/11/2026' })]);
-    await p.click('#genBody .cn-item[data-grupo="novo"][data-i="0"] [data-acao="cn-esperar"]'); await p.waitForTimeout(200);
+    await p.click('#genBody [data-acao="cn-fechar"]'); await p.waitForTimeout(200);   /* 3.117: o "Pronto" deixa ⏳ aguardando o banco */
     const f2 = await p.evaluate(() => JSON.parse(JSON.stringify(CompraParcelada.lista().find((x) => x.loja === 'AUTO PECAS FICTICIA'))));
     ok(f2 && f2.estado === 'aguardando' && f2.vp === 600 && await p.evaluate(() => Gasto.todos().length) === n0 + 1, 'a foto chegou antes da fatura: "⏳ aguardando o banco" (nenhum gasto criado)');
     await p.evaluate(() => { fechar('genModal'); Gasto.add({ id: 'rb_q1', idRobo: 'q1', data: '2026-11-21', valor: 600, desc: 'AUTO PECAS FICTICIA 01/04', descRobo: 'AUTO PECAS FICTICIA 01/04', fluxo: 'saida', grupo: 'OUTROS', sub: '', origem: 'robo', cartaoId: 'c1' }); CompraParcelada.ligarTudo(); });
