@@ -17,7 +17,7 @@
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
 <link rel="stylesheet" href="estilo.css?v=3.133">
-<link rel="stylesheet" href="assistone/assistone-visual.css?v=1.1.2">
+<link rel="stylesheet" href="assistone/assistone-visual.css?v=1.2.1">
 </head>
 <body>
 
@@ -18958,8 +18958,25 @@ const AssistOne = {
     this.aberto = false;
   },
 
-  /* 3.138: leva até a tela de um lugar do mapa; o AssistONE espera o elemento [data-ajuda] e destaca (nunca clica sozinho) */
-  irLugar(g){
+  /* 3.138: "algo não salvo" = uma janela aberta com um campo que a pessoa mudou */
+  naoSalvo(){
+    return $$('.modal-wrap:not(.hidden)').some(m => Array.from(m.querySelectorAll('input, textarea, select')).some(c => {
+      if(c.type === 'checkbox' || c.type === 'radio') return c.checked !== c.defaultChecked;
+      if(c.tagName === 'SELECT'){ const i = Array.from(c.options).findIndex(o => o.defaultSelected); return c.selectedIndex !== (i < 0 ? 0 : i); }
+      return c.type !== 'file' && c.type !== 'hidden' && c.value !== c.defaultValue;
+    }));
+  },
+
+  /* 3.138: leva até a tela de um lugar do mapa; o AssistONE espera o elemento [data-ajuda] e destaca (nunca clica sozinho).
+     Com algo não salvo, pergunta antes; se a pessoa preferir ficar, devolve false e nada muda (o visual 1.2.1 mantém a conversa). */
+  async irLugar(g){
+    if(this.naoSalvo()){
+      const l = I18n.atual;
+      if(!confirm(l === 'pt' ? 'Há algo não salvo nesta janela. Sair dela e ir até lá mesmo assim?'
+                 : l === 'es' ? 'Hay algo sin guardar en esta ventana. ¿Salir de ella e ir allí de todos modos?'
+                 : 'There is something unsaved in this window. Leave it and go there anyway?')) return false;
+    }
+    $$('.modal-wrap:not(.hidden)').forEach(m => { if(sairDoWizard(m.id)){ if(m.id === 'assetModal') recGuardarRascunho(); m.classList.add('hidden'); } });   /* como o Esc */
     try{
       if(g.modulo === 'hub') mostrarHub();
       else if(!g.modulo){ if($('#app').classList.contains('hidden')) abrirApp(ST.appAtual || 'budget'); }   /* o topo: no app em que a pessoa está */
@@ -18969,7 +18986,8 @@ const AssistOne = {
         if(g.tela === 'config' && g.secao){ cfgSecao = g.secao; render(); }   /* a aba das Configurações em que o lugar está */
       }
     }catch(e){}
-    return new Promise(ok => setTimeout(ok, 60));
+    await new Promise(ok => setTimeout(ok, 60));
+    return true;
   },
 
   /* o nome e a frase da tela em que a pessoa está ("Você está em"); a frase some quando o RootifyONE desliga "assistone.dicas" */
@@ -30300,7 +30318,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=2.6.0"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
-<script src="assistone/assistone-visual.js?v=1.1.2"></script>
+<script src="assistone/assistone-visual.js?v=1.2.1"></script>
 <script src="modulos/tour.js?v=1.1.0"></script>
 <script src="modulos/cartoes.js?v=1.4.0"></script>
 <script src="modulos/cartao-foto.js?v=1.0.0"></script>
