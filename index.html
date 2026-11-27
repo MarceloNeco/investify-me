@@ -25658,6 +25658,7 @@ function cardRentabilidade(t){
   const periodo = r.xirr != null ? Math.pow(1 + r.xirr, r.dias / 365) - 1 : null;
   const trava = r.dias < 60 && ((periodo != null && Math.abs(periodo) > 0.5) || Math.abs(r.lucroPct) > 50 || (r.twr != null && r.diasTwr < 60 && Math.abs(r.twr) > 0.5));
   const taxaMostra = anual ? r.xirr : periodo;
+  const nDias = Math.round(r.dias) + (Math.round(r.dias) === 1 ? ' dia' : ' dias');
   const cdiMostra = cdiInicio ? (anual ? cdiInicio.ano : cdiInicio.total) : null;
   if(!cdiInicio && r.desde && r.xirr != null) carregarCdiInicio(r.desde);
   const venceuCdi = (cdiMostra != null && taxaMostra != null && !trava) ? taxaMostra - cdiMostra : null;
@@ -25678,8 +25679,8 @@ function cardRentabilidade(t){
       (si ? ' ' + si + ' posição(ões) entraram sem compra e já contam como saldo inicial no dia em que entraram (veja no ⓘ do Capital aportado).' : '') + '</p></div>';
   }
   h += '<div class="grid g4" style="margin-bottom:12px">' +
-    kpi('Retorno do seu bolso', trava ? '<span class="small">conferindo os dados</span>' : taxaMostra != null ? fmtPct(taxaMostra * 100, true) + ' <span class="un">' + (anual ? 'a.a.' : 'em ' + Math.round(r.dias) + ' dias') + '</span>' : '—', 'xirr',
-        r.xirr != null && r.desde ? 'desde ' + fmtData(r.desde) + ' · ' + Math.round(r.dias) + ' dias' + (anual ? '' : ' (menos de 1 ano: sem anualizar)')
+    kpi('Retorno do seu bolso', trava ? '<span class="small">conferindo os dados</span>' : taxaMostra != null ? fmtPct(taxaMostra * 100, true) + ' <span class="un">' + (anual ? 'a.a.' : 'em ' + nDias) + '</span>' : '—', 'xirr',
+        r.xirr != null && r.desde ? 'desde ' + fmtData(r.desde) + ' · ' + nDias + (anual ? '' : ' (menos de 1 ano: sem anualizar)')
                                   : 'precisa da data das aplicações') +
     kpi('Retorno da estratégia', trava ? '<span class="small">conferindo os dados</span>' : r.twr != null ? fmtPct(r.twr * 100, true) : '—', 'twr',
         r.twr != null ? Math.round(r.diasTwr) + ' dias registrados' : 'aparece com alguns dias de uso') +
@@ -25694,7 +25695,7 @@ function cardRentabilidade(t){
     if(cdiMostra != null){
       const barras = [{nome:'Sua carteira', valor: taxaMostra * 100, cor: COR_BENCH.carteira},
                       {nome:'CDI no mesmo período', valor: cdiMostra * 100, cor: COR_BENCH.cdi}];
-      h += '<div class="sub-lbl">' + (anual ? 'Retorno anual: você contra o CDI' : 'Retorno em ' + Math.round(r.dias) + ' dias: você contra o CDI') + '</div>' +
+      h += '<div class="sub-lbl">' + (anual ? 'Retorno anual: você contra o CDI' : 'Retorno em ' + nDias + ': você contra o CDI') + '</div>' +
         barrasTaxa(barras) +
         '<p class="small ' + (venceuCdi >= 0 ? 'up' : 'down') + '" style="margin-top:8px">' +
         (venceuCdi >= 0
