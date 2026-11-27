@@ -1,5 +1,5 @@
 /* =====================================================================
-   assistone-visual.js — o visual novo do AssistONE (personagem + painel)       1.1.2 · 26/Nov/2026
+   assistone-visual.js — o visual novo do AssistONE (personagem + painel)       1.2.1 · 27/Nov/2026
    MASTER no repositório privado MarceloNeco/assist-one (balao/visual/). Nos apps, a pasta
    assistone/ é uma CÓPIA IDÊNTICA: nunca editar a cópia; mudar aqui, testar e copiar.
    Desenho aprovado pelo dono (Claude Design, 26/Nov/2026, decisões D-A15 e de 26/11):
@@ -130,12 +130,17 @@
        tela:   function () { return { titulo: 'Início', frase: 'O mesmo dinheiro visto de três jeitos.' } },
        itens:  function () { return { perguntar: true } },  // o "Perguntar ao assistente" só aparece com a IA liberada
        acao:   function (id) { … },                          // perguntar | comecar | tour | procurar | ajuda_tela | agora_nao | desligar
-       aoAbrir: function () {}, aoFechar: function () {}
+       aoAbrir: function () {}, aoFechar: function () {},
+       mapa:   function () { return lugares },           // 1.2.0: os lugares que dá para mostrar (arquivo fixo do app, sem dados de ninguém)
+       ir:     function (lugar) { … return Promise }      // 1.2.0: leva até a tela do lugar (o app navega; o AssistONE destaca);
+                                                         // 1.2.1: devolve false se a pessoa preferiu ficar (algo não salvo)
      });
      v.abrir({ aviso: '<b>Olá!</b> …', leve: true })   // abre no menu (aviso opcional, texto do app, acima do "Você está em";
                                                     // leve = sem película que segura o toque, para aberturas que a pessoa não pediu)
      v.conteudo({ titulo, sub, html | no })  // troca o miolo por outra vista, com "Voltar ao menu"; devolve o miolo
      v.menu() · v.fechar() · v.aberto() · v.atualizar() · v.textos() · v.destruir()
+     1.2.0: v.mostrarLugar(id | lugar) → Promise<true | false (não achou) | 'ficou' (op.ir devolveu false)> · v.escolherLugar(pergunta, resposta) · AssistOneVisual.destacar(el, { titulo, texto })
+     Na conversa, depois da resposta, aparece "Me mostra onde fica" quando há um lugar do mapa para a pergunta.
    Ordem fixa do menu: Perguntar ao assistente (selo IA) · Começar · Tour rápido · Procurar algo · Ajuda desta tela;
    no rodapé, discretos: Agora não · Desligar o AssistONE. Nada de "Abrir um chamado" nem "Dar opinião" (seção 3).
    --------------------------------------------------------------------- */
@@ -147,7 +152,7 @@
      EN/ES dele e do menu são proposta, sem revisão nativa (seção 14). */
   var TX = {
     pt: { menu: { tag_ia: 'IA', perguntar: 'Perguntar ao assistente', comecar: 'Começar', tour: 'Tour rápido', procurar: 'Procurar algo',
-                  ajuda_tela: 'Ajuda desta tela', agora_nao: 'Agora não', desligar: 'Desligar o AssistONE', voce_esta_em: 'Você está em' },
+                  ajuda_tela: 'Ajuda desta tela', agora_nao: 'Agora não', desligar: 'Desligar o AssistONE', voce_esta_em: 'Você está em', me_mostra: 'Me mostra onde fica', nao_achei: 'Não consegui achar esse lugar agora. Ele pode estar em outra tela ou escondido.' },
           conversa: { titulo: 'AssistONE', hoje: 'Hoje', ultimos7: 'Últimos 7 dias', respondendo: 'AssistONE está respondendo…', respondendo_curto: 'respondendo…', aguarde: 'Aguarde a resposta…',
                       outra: 'Escreva outra pergunta', nota: 'Não escreva senha, PIN nem dados de cartão.', isso_responde: 'Isso responde?', sim: 'Sim', nao: 'Não' },
           aria: { fechar: 'Fechar', enviar: 'Enviar pergunta', enviar_aguarde: 'Enviar pergunta (aguarde)', voltar_menu: 'Voltar ao menu', abrir_personagem: 'AssistONE' },
@@ -157,7 +162,7 @@
                        empty_h: 'Nenhuma conversa nos últimos 7 dias', empty_p: 'Quando você perguntar algo ao AssistONE, a conversa aparece aqui.',
                        ask: 'Perguntar ao assistente', grupo_hoje: 'Hoje', grupo_ontem: 'Ontem' } },
     en: { menu: { tag_ia: 'AI', perguntar: 'Ask the assistant', comecar: 'Get started', tour: 'Quick tour', procurar: 'Find something',
-                  ajuda_tela: 'Help with this screen', agora_nao: 'Not now', desligar: 'Turn off AssistONE', voce_esta_em: 'You are on' },
+                  ajuda_tela: 'Help with this screen', agora_nao: 'Not now', desligar: 'Turn off AssistONE', voce_esta_em: 'You are on', me_mostra: 'Show me where it is', nao_achei: 'I could not find that place right now. It may be on another screen or hidden.' },
           conversa: { titulo: 'AssistONE', hoje: 'Today', ultimos7: 'Last 7 days', respondendo: 'AssistONE is answering…', respondendo_curto: 'answering…', aguarde: 'Wait for the answer…',
                       outra: 'Write another question', nota: 'Do not type a password, PIN or card details.', isso_responde: 'Does this answer it?', sim: 'Yes', nao: 'No' },
           aria: { fechar: 'Close', enviar: 'Send question', enviar_aguarde: 'Send question (wait)', voltar_menu: 'Back to the menu', abrir_personagem: 'AssistONE' },
@@ -167,7 +172,7 @@
                        empty_h: 'No conversations in the last 7 days', empty_p: 'When you ask AssistONE something, the conversation shows up here.',
                        ask: 'Ask the assistant', grupo_hoje: 'Today', grupo_ontem: 'Yesterday' } },
     es: { menu: { tag_ia: 'IA', perguntar: 'Preguntar al asistente', comecar: 'Empezar', tour: 'Recorrido rápido', procurar: 'Buscar algo',
-                  ajuda_tela: 'Ayuda de esta pantalla', agora_nao: 'Ahora no', desligar: 'Apagar AssistONE', voce_esta_em: 'Estás en' },
+                  ajuda_tela: 'Ayuda de esta pantalla', agora_nao: 'Ahora no', desligar: 'Apagar AssistONE', voce_esta_em: 'Estás en', me_mostra: 'Muéstrame dónde está', nao_achei: 'No pude encontrar ese lugar ahora. Puede estar en otra pantalla u oculto.' },
           conversa: { titulo: 'AssistONE', hoje: 'Hoy', ultimos7: 'Últimos 7 días', respondendo: 'AssistONE está respondiendo…', respondendo_curto: 'respondiendo…', aguarde: 'Espera la respuesta…',
                       outra: 'Escribe otra pregunta', nota: 'No escribas contraseña, PIN ni datos de tarjeta.', isso_responde: '¿Esto responde tu pregunta?', sim: 'Sí', nao: 'No' },
           aria: { fechar: 'Cerrar', enviar: 'Enviar pregunta', enviar_aguarde: 'Enviar pregunta (espera)', voltar_menu: 'Volver al menú', abrir_personagem: 'AssistONE' },
@@ -195,6 +200,7 @@
     trash: '<path d="M5 7h14M9.5 7V5h5v2M7 7l.8 11a1.6 1.6 0 0 0 1.6 1.5h5.2a1.6 1.6 0 0 0 1.6-1.5L17 7M10.2 11v5M13.8 11v5"></path>',
     check: '<path d="M5.5 12.5l4.3 4.3L18.5 8"></path>',
     chevron: '<path d="M9.5 6.5l5.5 5.5-5.5 5.5"></path>',
+    screen: '<path d="M4 8V6.5A2.5 2.5 0 0 1 6.5 4H8M16 4h1.5A2.5 2.5 0 0 1 20 6.5V8M20 16v1.5a2.5 2.5 0 0 1-2.5 2.5H16M8 20H6.5A2.5 2.5 0 0 1 4 17.5V16"></path><rect x="8" y="9" width="8" height="6" rx="1.5"></rect>',
     doc: '<path d="M7 3.5h6.5L18 8v11.5a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-15a1 1 0 0 1 1-1zM13.5 3.5V8H18M9 12.5h6M9 16h4"></path>'
   };
   function icone(nome, px) {
@@ -215,10 +221,95 @@
     { id: 'ajuda_tela', ico: 'help-screen' }
   ];
 
+  /* ---- DESTAQUE NA TELA ("Me mostra onde fica", 1.2.0) -------------------------------------------------------------
+     Escurece a tela e deixa só o lugar procurado aceso, com um balão explicando. NUNCA clica nem preenche nada sozinho:
+     quem toca é a pessoa (tocar no lugar aceso fecha o destaque e vale como o toque dela). Nada da tela é lido para a IA.
+     AssistOneVisual.destacar(elemento, { titulo, texto, aoFechar(tocouNoLugar) }) → { fechar }
+     1.2.1 (dono, 27/Nov): no "Me mostra" da conversa, tocar fora, ✕ ou Esc tira o destaque e REABRE a conversa onde estava;
+     tocar no lugar aceso vale como o toque da pessoa e a conversa não reabre. */
+  var destaqueAtual = null;
+  function destacar(alvo, o) {
+    o = o || {};
+    if (destaqueAtual) destaqueAtual.fechar();
+    if (!alvo || !alvo.getBoundingClientRect) return null;
+    var x = TX[lingua0()] || TX.pt, antesFoco = d.activeElement, folga = 8;
+    try { alvo.scrollIntoView({ block: 'center', inline: 'nearest', behavior: calmo() ? 'auto' : 'smooth' }); } catch (e) {}
+    var raizD = d.createElement('div'); raizD.className = 'aov-destaque';
+    var idT = 'aov-dest-' + Date.now();
+    raizD.innerHTML = '<div class="aov-furo" aria-hidden="true"></div>' +
+      '<div class="aov-dbalao" role="dialog" aria-modal="false" aria-labelledby="' + idT + '"><div class="aov-dbalao-t">' +
+      '<b id="' + idT + '">' + esc(o.titulo || '') + '</b><button type="button" class="aov-dfechar" aria-label="' + esc(x.aria.fechar) + '">' + icone('close', 20) + '</button></div>' +
+      (o.texto ? '<p>' + esc(o.texto) + '</p>' : '') + '</div>';
+    d.body.appendChild(raizD);
+    var furo = raizD.querySelector('.aov-furo'), bal = raizD.querySelector('.aov-dbalao'), rect = null;
+    function lugar() {
+      var r = alvo.getBoundingClientRect(), W = global.innerWidth, H = global.innerHeight;
+      rect = { l: r.left - folga, t: r.top - folga, w: r.width + 2 * folga, h: r.height + 2 * folga };
+      furo.style.cssText = 'left:' + Math.round(rect.l) + 'px;top:' + Math.round(rect.t) + 'px;width:' + Math.round(rect.w) + 'px;height:' + Math.round(rect.h) + 'px';
+      var bw = Math.min(320, W - 32); bal.style.width = bw + 'px';
+      var bh = bal.offsetHeight, embaixo = rect.t + rect.h + 12 + bh <= H - 8;
+      var top = embaixo ? rect.t + rect.h + 12 : Math.max(8, rect.t - 12 - bh);
+      var left = Math.min(Math.max(16, rect.l + rect.w / 2 - bw / 2), W - 16 - bw);
+      bal.style.left = Math.round(left) + 'px'; bal.style.top = Math.round(top) + 'px';
+    }
+    function fechar(valeToque) {
+      if (!raizD.parentNode) return;
+      raizD.parentNode.removeChild(raizD);
+      global.removeEventListener('resize', lugar); global.removeEventListener('scroll', lugar, true);
+      d.removeEventListener('keydown', tecla, true);
+      destaqueAtual = null;
+      try { alvo.focus({ preventScroll: true }); } catch (e) { try { if (antesFoco) antesFoco.focus(); } catch (e2) {} }
+      if (valeToque) try { alvo.click(); } catch (e) {}
+      if (o.aoFechar) try { o.aoFechar(!!valeToque); } catch (e) {}   /* 1.2.1: quem abriu decide o que vem depois (ex.: reabrir a conversa) */
+    }
+    function tecla(ev) { if (ev.key === 'Escape' || ev.key === 'Esc') { ev.stopPropagation(); fechar(false); } }
+    raizD.addEventListener('click', function (ev) {
+      if (ev.target.closest('.aov-dfechar')) { fechar(false); return; }
+      if (ev.target.closest('.aov-dbalao')) return;
+      /* tocou no lugar aceso: é o toque da pessoa naquele botão */
+      var dentro = rect && ev.clientX >= rect.l && ev.clientX <= rect.l + rect.w && ev.clientY >= rect.t && ev.clientY <= rect.t + rect.h;
+      fechar(dentro);
+    });
+    global.addEventListener('resize', lugar); global.addEventListener('scroll', lugar, true);
+    d.addEventListener('keydown', tecla, true);
+    setTimeout(function () { lugar(); raizD.classList.add('aov-dest-on'); try { bal.querySelector('.aov-dfechar').focus({ preventScroll: true }); } catch (e) {} }, calmo() ? 0 : 350);
+    lugar();
+    destaqueAtual = { fechar: function () { fechar(false); }, elemento: alvo };
+    return destaqueAtual;
+  }
+  var linguaGlobal = function () { return 'pt'; };
+  function lingua0() { var l = String(linguaGlobal() || 'pt').slice(0, 2).toLowerCase(); return TX[l] ? l : 'pt'; }
+
+  /* ---- O MAPA DO APP E A ESCOLHA DO LUGAR (1.2.0) --------------------------------------------------------------------
+     O app diz, num arquivo fixo e SEM dados de ninguém (ex.: assistone-mapa.json), os lugares que dá para mostrar:
+       { id, nome:{pt,en,es}, dica:{pt,en,es}, palavras:{pt:[…],en:[…],es:[…]}, alvo (o data-ajuda do elemento; padrão = id), …o resto é do app }
+     Qual lugar mostrar: (1) a resposta do Hermes traz [[mostrar:id]] (o código sai do texto e só vale se existir no mapa);
+     (2) sem isso, as palavras do lugar na PERGUNTA da pessoa (sem acento, palavra inteira; só se um lugar ganhar sozinho). */
+  function semAcento(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+  function tx3(v, l) { if (!v) return ''; if (typeof v === 'string') return v; return v[l] || v.pt || v.en || ''; }
+  function lista3(v, l) { if (!v) return []; if (Array.isArray(v)) return v; return [].concat(v[l] || [], l !== 'pt' ? v.pt || [] : []); }
+  var MARCA = /\[\[\s*mostrar\s*:\s*([a-z0-9][a-z0-9_-]{0,59})\s*\]\]/gi;
+  function escolherLugar(pergunta, resposta, lugares, l) {
+    lugares = lugares || [];
+    var porId = {}; lugares.forEach(function (g) { if (g && g.id) porId[g.id] = g; });
+    var m, achado = null; MARCA.lastIndex = 0;
+    while ((m = MARCA.exec(resposta || ''))) { if (porId[m[1].toLowerCase()]) { achado = porId[m[1].toLowerCase()]; break; } }
+    if (achado) return achado;
+    var q = ' ' + semAcento(pergunta).replace(/[^a-z0-9]+/g, ' ') + ' ', melhor = null, pts = 0, segundo = 0;
+    lugares.forEach(function (g) {
+      var termos = lista3(g.palavras, l).concat([tx3(g.nome, l)]), n = 0;
+      termos.forEach(function (t) { var tt = semAcento(t).replace(/[^a-z0-9]+/g, ' ').trim(); if (tt.length > 2 && q.indexOf(' ' + tt + ' ') >= 0) n += tt.split(' ').length; });
+      if (n > pts) { segundo = pts; pts = n; melhor = g; } else if (n > segundo) segundo = n;
+    });
+    return pts > 0 && pts > segundo ? melhor : null;
+  }
+  function tirarMarcas(t) { return String(t || '').replace(MARCA, '').replace(/[ \t]+\n/g, '\n').trim(); }
+
   function montar(casa, op) {
     op = op || {};
     function lingua() { var l = (op.idioma && op.idioma()) || 'pt'; l = String(l).slice(0, 2).toLowerCase(); return TX[l] ? l : 'pt'; }
     function t() { return TX[lingua()]; }
+    linguaGlobal = lingua;
 
     casa.classList.add('aov-casa');
     casa.innerHTML = '';
@@ -325,6 +416,39 @@
     function textoEmLinhas(s) { return esc(s).replace(/\n/g, '<br>'); }
     function esperando() { return fio.some(function (i) { return i.estado === 'esperando'; }); }
 
+    /* "Me mostra onde fica": o app leva até a tela (op.ir), o AssistONE espera o lugar aparecer (até 4 s), fecha o painel e
+       destaca. Se não achar, avisa na conversa. Devolve uma Promise<boolean>. */
+    function lugares() { var m = op.mapa; try { m = typeof m === 'function' ? m() : m; } catch (e) { m = null; } return Array.isArray(m) ? m : (m && m.lugares) || []; }
+    function mostrarLugar(g) {
+      if (typeof g === 'string') g = lugares().filter(function (x) { return x.id === g; })[0];
+      if (!g) return Promise.resolve(false);
+      var l = lingua(), sel = '[data-ajuda="' + String(g.alvo || g.id).replace(/["\\]/g, '') + '"]';
+      function visivel() {
+        var lista = d.querySelectorAll(sel);
+        for (var i = 0; i < lista.length; i++) { var r = lista[i].getBoundingClientRect(); if (r.width > 0 && r.height > 0 && !painel.contains(lista[i])) return lista[i]; }
+        return null;
+      }
+      var ficou = false;
+      return Promise.resolve().then(function () { return op.ir ? op.ir(g) : null; }).catch(function () {}).then(function (r) {
+        /* 1.2.1: o app devolve false quando a pessoa preferiu ficar (ex.: havia algo não salvo na tela) → nada acontece */
+        if (r === false) { ficou = true; return null; }
+        return new Promise(function (ok) {
+          var fim = Date.now() + 4000;
+          (function olhar() { var el = visivel(); if (el || Date.now() > fim) ok(el); else setTimeout(olhar, 150); })();
+        });
+      }).then(function (el) {
+        if (ficou) return 'ficou';
+        if (!el) return false;
+        var voltar = conv && vista === 'conversa' ? conv.op : null;
+        if (ch.isOpen()) ch.close();
+        destacar(el, { titulo: tx3(g.nome, l), texto: tx3(g.dica, l), aoFechar: function (tocou) {
+          if (tocou || !voltar) return;
+          ch.open(); conversa(voltar);   /* tocou fora: volta para a conversa, no ponto em que estava */
+        } });
+        return true;
+      });
+    }
+
     function desenharConversa() {
       if (!conv || vista !== 'conversa') return;
       var x = t(), msgs = conv.no.querySelector('.aov-msgs');
@@ -344,7 +468,9 @@
         } else if (i.erro) {
           h += '<div class="aov-bot aov-bot-erro" role="status">' + textoEmLinhas(i.erro) + '</div>';
         } else {
-          h += '<div class="aov-bot">' + textoEmLinhas(i.resposta || '') + '</div>';
+          h += '<div class="aov-bot">' + textoEmLinhas(tirarMarcas(i.resposta)) + '</div>';
+          if (i.lugar) h += '<button type="button" class="aov-chip aov-mostra" data-lugar="' + esc(i.lugar.id) + '">' + icone('screen', 20) + esc(x.menu.me_mostra) + '</button>' +
+            (i.naoAchou ? '<div class="aov-lblt" role="status">' + esc(x.menu.nao_achei) + '</div>' : '');
           if (i === ultimaRespondida && conv.op.avaliar) {
             h += '<div class="aov-lblt" id="' + painel.id + '-ir">' + esc(x.conversa.isso_responde) + '</div><div class="aov-q2" role="group" aria-labelledby="' + painel.id + '-ir">' +
               '<button type="button" class="aov-chip2" data-util="1" aria-pressed="' + (i.util === true) + '">' + esc(x.conversa.sim) + '</button>' +
@@ -378,7 +504,7 @@
       };
       Promise.resolve().then(function () { return op2.enviar(txt); }).then(function (r) {
         r = r || {};
-        if (r.erro) item.erro = String(r.erro); else { item.id = r.id; item.resposta = r.resposta; }
+        if (r.erro) item.erro = String(r.erro); else { item.id = r.id; item.resposta = r.resposta; item.lugar = escolherLugar(item.pergunta, r.resposta, lugares(), lingua()); }
       }, function (e) { item.erro = (op2.erroPadrao && op2.erroPadrao(e)) || (e && e.message) || '…'; }).then(fim);
     }
     function ajustarAltura(ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 132) + 'px'; }
@@ -401,6 +527,13 @@
       ta.addEventListener('input', function () { ajustarAltura(ta); });
       no.querySelector('.aov-send').addEventListener('click', enviarPergunta);
       no.addEventListener('click', function (ev) {
+        var bm = ev.target.closest('.aov-mostra');
+        if (bm) {
+          var it = fio.filter(function (i) { return i.lugar && i.lugar.id === bm.getAttribute('data-lugar'); }).pop();
+          bm.disabled = true;
+          mostrarLugar(it && it.lugar).then(function (ok) { if (ok === 'ficou') { bm.disabled = false; return; } if (it) it.naoAchou = !ok; if (!ok) { desenharConversa(); } });
+          return;
+        }
         var b = ev.target.closest('.aov-chip2'); if (!b) return;
         var ult = fio[fio.length - 1], alvo = ult && ult.estado === 'respondida' && !ult.erro && ult.id != null ? ult : null;
         if (!alvo) return;
@@ -494,6 +627,8 @@
       menu: menu,
       conteudo: conteudo,
       conversa: conversa,
+      mostrarLugar: mostrarLugar,
+      escolherLugar: function (pergunta, resposta) { return escolherLugar(pergunta, resposta, lugares(), lingua()); },
       atualizar: atualizar,
       corpo: corpo,
       painel: painel,
@@ -506,5 +641,5 @@
     };
   }
 
-  global.AssistOneVisual = { VERSAO: '1.1.2', montar: montar, TEXTOS: TX, icone: icone };
+  global.AssistOneVisual = { VERSAO: '1.2.1', montar: montar, TEXTOS: TX, icone: icone, destacar: destacar };
 })(window);
