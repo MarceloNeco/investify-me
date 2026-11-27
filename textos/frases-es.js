@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.131 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.132 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,13 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.132 — rascunho, revisar */
+  'Pessoas da família mais simples e os cartões agrupados sozinhos':'Personas de la familia más simples y las tarjetas agrupadas solas',
+  '👥 A tela não pula mais para o topo: depois de salvar, cancelar, apagar ou arquivar, você continua onde estava. O "editar" abre logo abaixo do nome, e apagar ou arquivar mostra "Desfazer" por alguns segundos.':'👥 La pantalla ya no salta arriba: después de guardar, cancelar, borrar o archivar, sigues donde estabas. "Editar" se abre justo debajo del nombre, y borrar o archivar muestra "Deshacer" unos segundos.',
+  '👪 Em Pessoas da família, a sua família vem primeiro, depois as outras pessoas. Empresas e bancos não aparecem mais como "a identificar", e os nomes soltos ficam numa linha só, no fim. Quando a mesma pessoa está em duas fichas, o app pergunta e junta. Os papéis (responsável ou dependente) se confirmam num lugar só.':'👪 En Personas de la familia, tu familia va primero y después las otras personas. Empresas y bancos ya no aparecen como "por identificar", y los nombres sueltos quedan en una sola línea al final. Cuando la misma persona está en dos fichas, la app pregunta y las junta. Los papeles (responsable o dependiente) se confirman en un solo lugar.',
+  '✏️ Em Família no MoneyTRIO, cada nome tem "editar" e há um botão para Pessoas da família (renomear, e-mail, incluir alguém). A busca 🔍 também acha "renomear pessoa".':'✏️ En Familia en MoneyTRIO, cada nombre tiene "editar" y hay un botón para Personas de la familia (renombrar, correo, añadir a alguien). La búsqueda 🔍 también encuentra "renombrar persona".',
+  '💳 Os cartões das suas compras se agrupam sozinhos por fatura: o físico e os virtuais juntos, cada final marcado. "Cadastrar este cartão" já sugere o nome e quem usa. Cartão sem compra há 90 dias fica recolhido.':'💳 Las tarjetas de tus compras se agrupan solas por factura: la física y las virtuales juntas, cada final marcado. "Registrar esta tarjeta" ya sugiere el nombre y quién la usa. Una tarjeta sin compras en 90 días queda recogida.',
+  '🔒 Um número com cara de CPF grudado num nome aparece só com o final e não fica guardado na ficha.':'🔒 Un número con pinta de documento pegado a un nombre solo muestra el final y no se guarda en la ficha.',
   /* 3.131 — rascunho, revisar */
   'Bancos e cartões mais claros, e a fatura certa':'Bancos y tarjetas más claros, y la factura correcta',
   '🏦 Em Configurações › Bancos e cartões, cada banco mostra a agência e a conta numa linha só delas ("Ag. 0001 · Conta 00012-3") e o código e o CNPJ embaixo, sem cortar no celular.':'🏦 En Configuración › Bancos y tarjetas, cada banco muestra la sucursal y la cuenta en una línea propia ("Suc. 0001 · Cuenta 00012-3") y el código y el CNPJ debajo, sin cortarse en el móvil.',

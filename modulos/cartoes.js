@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/cartoes.js — cartões por conta, com vários finais (3.65)        1.3.0 · 27/Nov/2026
+   modulos/cartoes.js — cartões por conta, com vários finais (3.65)        1.4.0 · 27/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      CARTÃO = a conta do cartão (a fatura): apelido, titular, "Quem usa", bandeira, banco, fechamento, vencimento.
@@ -30,6 +30,8 @@
      faturas: cadastrar".
    1.3.0 (3.131): "Cartões encontrados" por CONTA do cartão: o final sem conta_cartao vai para a conta que outra compra dele trouxe;
      sem conta nenhuma, o mesmo banco e a mesma bandeira formam um cartão provável; "Cadastrar" com um toque, com os finais dentro.
+   1.4.0 (3.132): sem a conta, o final vai para a única conta EM USO do mesmo banco e bandeira; um card por conta com os finais marcados
+     (físico, virtual, virtual de uso único), "Cadastrar este cartão" com o nome e o "quem usa" sugeridos; sem compra há 90 dias: recolhido.
    API (window.Cartoes)
      finais(c) · doFinal(fim) · daConta(id) · doRobo(l, g) · quemPagou(c, fim) · encontrados() · perguntas()
      ligarRetro(c) → n · semente(chave) → dados para o cadastro · responder(fim, cartaoId|'novo'|'nao')
@@ -45,7 +47,7 @@
   'use strict';
   var TIPOS = { fisico: ['físico', 'physical', 'físico'], virtual: ['virtual', 'virtual', 'virtual'], unico: ['virtual de uso único', 'single-use virtual', 'virtual de un solo uso'],
     permanente: ['virtual permanente', 'permanent virtual', 'virtual permanente'], adicional: ['adicional', 'additional', 'adicional'], naosei: ['não sei', 'not sure', 'no sé'] };
-  var VIRTUAIS = { virtual: 1, unico: 1, permanente: 1 }, ANTIGO_DIAS = 183;
+  var VIRTUAIS = { virtual: 1, unico: 1, permanente: 1 }, ANTIGO_DIAS = 183, SEM_USO_DIAS = 90;
   function rotTipo(k) { var t = TIPOS[k] || TIPOS.naosei; return pt() ? t[0] : (I18n.atual === 'es' ? t[2] : t[1]); }
   function hojeX() { return API._hoje || hojeISO(); }
   function maisDias(d, n) { var x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
@@ -98,27 +100,75 @@
     },
     /* os finais do robô que ainda não são de nenhum cartão, agrupados pela conta do cartão */
     encontrados: function () {
-      var grupos = {}, gs = ((typeof ST !== 'undefined' && ST && ST.gastos) || []), contaDoFinal = {};
-      /* 1.3.0 (3.131): a conta do cartão de cada final, por qualquer compra que a trouxe (as antigas, sem conta_cartao, vão junto) */
-      gs.forEach(function (g) { if (g.finalCartao && g.contaCartao && g.contaCartao.id && !contaDoFinal[g.finalCartao]) contaDoFinal[g.finalCartao] = g.contaCartao; });
+      var gs = ((typeof ST !== 'undefined' && ST && ST.gastos) || []), contas = {}, contaDoFinal = {}, resp = cfg().cartoesPergunta || {};
+      var b1 = function (t) { return N(t).split(' ')[0] || ''; }, limite = maisDias(hojeX(), -SEM_USO_DIAS);
+      /* 1.4.0 (3.132): as contas de cartão conhecidas — pelas compras que trazem conta_cartao e pelos cartões cadastrados */
+      gs.forEach(function (g) {
+        if (!g.contaCartao || !g.contaCartao.id) return;
+        var k = g.contaCartao.id, x = contas[k] || (contas[k] = { id: k, nome: g.contaCartao.nome || '', banco: g.conta || '', bandeira: '', ultima: '' });
+        if (!x.bandeira && g.cartaoNome) x.bandeira = bandeiraDe(g.cartaoNome);
+        if ((g.data || '') > x.ultima) x.ultima = g.data || '';
+        if (g.finalCartao && !contaDoFinal[g.finalCartao]) contaDoFinal[g.finalCartao] = k;
+      });
+      cartoes().forEach(function (c) { if (c.contaId && !contas[c.contaId]) contas[c.contaId] = { id: c.contaId, nome: c.contaNome || c.apelido || '', banco: typeof Banco !== 'undefined' && c.bancoId ? Banco.curto(c.bancoId) : '', bandeira: c.bandeira || '', ultima: '' }; });
+      /* sem a conta: o final vai para a ÚNICA conta em uso (compra nos últimos 90 dias) do mesmo banco e da mesma bandeira
+         (o virtual Mastercard do banco vai para o Mastercard dele; o Visa, para o Visa em uso) */
+      function inferir(g) {
+        var r = resp[g.finalCartao]; if (r && r.indexOf('c:') === 0) return r.slice(2);
+        var band = g.cartaoNome ? bandeiraDe(g.cartaoNome) : '', bk = b1(g.conta); if (!bk || !band || band === 'outra') return '';
+        var cs = Object.keys(contas).map(function (k) { return contas[k]; }).filter(function (c) { return b1(c.banco) === bk && c.bandeira === band && (!c.ultima || c.ultima >= limite); });
+        return cs.length === 1 ? cs[0].id : '';
+      }
+      var grupos = {};
       gs.forEach(function (g) {
         if (g.cartaoId || !g.finalCartao) return;
-        var cc = (g.contaCartao && g.contaCartao.id) ? g.contaCartao : contaDoFinal[g.finalCartao] || null;
-        if (API.doFinal(g.finalCartao) || (cc && API.daConta(cc.id))) return;
-        /* sem a conta: o mesmo banco e a mesma bandeira são o mesmo cartão provável (os virtuais dividem a fatura) */
-        var band = g.cartaoNome ? bandeiraDe(g.cartaoNome) : '', k = cc ? 'c:' + cc.id : (g.conta || band ? 'b:' + N(g.conta) + '|' + band : 'f:' + g.finalCartao);
-        var x = grupos[k] || (grupos[k] = { chave: k, contaId: cc ? cc.id : '', nome: cc ? cc.nome || '' : '', bandeira: '', banco: '', finais: [], porFinal: {}, n: 0, ultima: '' });
+        var cid = (g.contaCartao && g.contaCartao.id) || contaDoFinal[g.finalCartao] || inferir(g);
+        if (API.doFinal(g.finalCartao) || (cid && API.daConta(cid))) return;
+        var band = g.cartaoNome ? bandeiraDe(g.cartaoNome) : '', k = cid ? 'c:' + cid : 'f:' + g.finalCartao;
+        var cc = cid ? contas[cid] : null;
+        var x = grupos[k] || (grupos[k] = { chave: k, contaId: cid || '', nome: cc ? cc.nome || '' : '', bandeira: '', banco: '', finais: [], porFinal: {}, ultFinal: {}, n: 0, ultima: '' });
         if (x.finais.indexOf(g.finalCartao) < 0) x.finais.push(g.finalCartao);
         x.porFinal[g.finalCartao] = (x.porFinal[g.finalCartao] || 0) + 1;
+        if ((g.data || '') > (x.ultFinal[g.finalCartao] || '')) x.ultFinal[g.finalCartao] = g.data || '';
         x.n++; if ((g.data || '') > x.ultima) x.ultima = g.data || '';
-        if (!x.bandeira && g.cartaoNome) x.bandeira = bandeiraDe(g.cartaoNome);
+        if (!x.bandeira && band) x.bandeira = band;
         if (!x.banco && g.conta) x.banco = g.conta;
       });
-      return Object.keys(grupos).map(function (k) { return grupos[k]; }).sort(function (a, b) { return b.n - a.n; });
+      return Object.keys(grupos).map(function (k) {
+        var x = grupos[k];
+        /* o físico = o final com mais compras; virtual de uso único = poucas compras (até 2) e sumiu (nada no último mês) */
+        x.finais.sort(function (a, b) { return x.porFinal[b] - x.porFinal[a]; });
+        x.tipos = {}; x.finais.forEach(function (f, i) { x.tipos[f] = i === 0 ? 'fisico' : (x.porFinal[f] <= 2 && (x.ultFinal[f] || '') < maisDias(hojeX(), -30) ? 'unico' : 'virtual'); });
+        x.semUso = !!x.ultima && x.ultima < limite;
+        return x;
+      }).sort(function (a, b) { return b.n - a.n; });
+    },
+    /* 1.4.0 (3.132): o nome sugerido ("Black Itaú"): o nome da conta na Pluggy, sem o nome do banco repetido; senão a bandeira + o banco */
+    nomeSugerido: function (x) {
+      var b = String(x.banco || '').split(/\s+/)[0] || '', nome = String(x.nome || '').trim();
+      if (nome) { nome = nome.toLowerCase().replace(/(^|\s)\S/g, function (m) { return m.toUpperCase(); }); if (b && N(nome).indexOf(N(b)) < 0) nome += ' ' + b; return nome.slice(0, 40); }
+      return (((BANDEIRA_POR_ID[x.bandeira] || {}).nome || tr('Cartão', 'Card', 'Tarjeta')) + (b ? ' ' + b : '')).slice(0, 40);
+    },
+    /* "quem usa" sugerido: o dono que o banco manda para essa conta de cartão (Conferência com o banco) */
+    quemUsaSugerido: function (x) {
+      var r = x.contaId && window.SaldoBanco ? SaldoBanco.contas().find(function (s) { return s.tipo === 'cartao' && s.contaId === x.contaId; }) : null;
+      var p = r && r.dono && window.Pessoas ? Pessoas.achar(r.dono) : null;
+      return p ? Pessoas.rotulo(p) : (r && r.dono) || '';
+    },
+    /* um toque: cadastra a conta do cartão com todos os finais (os tipos já marcados) e liga as compras deles */
+    cadastrarEncontrado: function (chave, apelido, usa) {
+      var x = API.encontrados().find(function (e) { return e.chave === chave; }); if (!x || typeof Banco === 'undefined') return null;
+      var s = API.semente(chave), c = Banco.salvarCartao({ apelido: String(apelido || '').trim() || API.nomeSugerido(x), bandeira: s.bandeira, fim: s.fim, bancoId: s.bancoId });
+      if (!c) return null;
+      if (x.contaId) { c.contaId = x.contaId; c.contaNome = x.nome || ''; }
+      c.finais = x.finais.map(function (f) { return { fim: f, tipo: x.tipos[f] || 'naosei' }; });
+      if (String(usa || '').trim()) { c.usa = String(usa).trim().slice(0, 60); if (window.Pessoas) Pessoas.ligar(c, 'usa', 'usaId'); }
+      API.ligarRetro(c);
+      return c;
     },
     /* "Este final é de qual cartão?": só quando já há cartão cadastrado e o final veio SEM a conta do cartão */
     perguntas: function () {
-      if (!cartoes().length) return [];
+      if (!cartoes().length && !API.encontrados().some(function (x) { return x.contaId; })) return [];
       var resp = cfg().cartoesPergunta || {};
       var out = [];   /* 1.3.0: um por final (o grupo sem conta pode ter vários) */
       API.encontrados().filter(function (x) { return !x.contaId; }).forEach(function (x) { x.finais.forEach(function (f) { out.push({ fim: f, n: x.porFinal[f] || x.n, ultima: x.ultima }); }); });
@@ -126,7 +176,7 @@
     },
     responder: function (fim, alvo) {
       (cfg().cartoesPergunta = cfg().cartoesPergunta || {})[fim] = alvo;
-      if (alvo && alvo !== 'nao' && alvo !== 'novo') {
+      if (alvo && alvo !== 'nao' && alvo !== 'novo' && alvo.indexOf('c:') !== 0) {
         var c = cartoes().find(function (x) { return x.id === alvo; });
         if (c) { c.finais = API.finais(c); if (!c.finais.some(function (f) { return f.fim === fim; })) c.finais.push({ fim: fim, tipo: 'naosei' }); return API.ligarRetro(c); }
       }
@@ -148,7 +198,7 @@
       var x = API.encontrados().find(function (e) { return e.chave === chave; }); if (!x) return null;
       var banco = (typeof Banco !== 'undefined' && x.banco) ? Banco.todos().find(function (b) { return N(b.apelido || b.nome).indexOf(N(x.banco)) >= 0 || N(x.banco).indexOf(N(b.nome)) >= 0; }) : null;
       return { apelido: x.nome || '', fim: x.finais[0], bandeira: x.bandeira || 'outra', bancoId: banco ? banco.id : '', contaId: x.contaId, contaNome: x.nome,
-        finais: x.finais.map(function (f, i) { return { fim: f, tipo: x.contaId ? (x.finais.length > 1 ? 'virtual' : 'naosei') : 'naosei' }; }) };
+        finais: x.finais.map(function (f) { return { fim: f, tipo: (x.tipos && x.tipos[f]) || 'naosei' }; }), usa: API.quemUsaSugerido(x) };
     },
     /* 1.1.0: a última compra de cada final e os virtuais antigos (sem compra há mais de 6 meses; nunca apagados) */
     ultimaCompra: function (c, fim) {
@@ -221,22 +271,32 @@
     var enc = API.encontrados(), q = API.perguntas(), novos = [];
     cartoes().forEach(function (c) { API.finais(c).forEach(function (f) { if (f.novo) novos.push({ c: c, f: f }); }); });
     var h = '';
-    var comConta = enc.filter(function (x) { return x.contaId || !cartoes().length; });
+    /* 1.4.0 (3.132): um card por CONTA de cartão, com os finais dentro (físico, virtual, virtual de uso único); "Cadastrar este cartão"
+       com o nome sugerido e quem usa (dá para trocar); conta sem compra há 90 dias fica recolhida e não conta */
+    var comConta = enc.filter(function (x) { return x.contaId || (!cartoes().length && x.finais.length > 1); });
+    var ativos = comConta.filter(function (x) { return !x.semUso; }), parados = comConta.filter(function (x) { return x.semUso; });
+    var card = function (x) {
+      return '<div class="ct-enc" data-chave="' + esc(x.chave) + '"><div class="ct-enc-t"><b>' + esc(API.nomeSugerido(x)) + '</b> <span class="tiny muted">' +
+        esc(x.n + tr(' compra(s)', ' purchase(s)', ' compra(s)') + (x.ultima ? ' · ' + tr('última ', 'last ', 'última ') + String(I18n.data(x.ultima)).replace(/\/\d{4}$/, '') : '')) + '</span></div>' +
+        '<div class="ct-enc-fins">' + x.finais.map(function (f) { return '<span class="ct-chip">••' + esc(f) + ' · ' + esc(rotTipo(x.tipos[f])) + '</span>'; }).join(' ') + '</div>' +
+        '<div class="ct-enc-acoes"><input class="ct-enc-nome" value="' + esc(API.nomeSugerido(x)) + '" aria-label="' + esc(tr('Nome do cartão', 'Card name', 'Nombre de la tarjeta')) + '">' +
+        '<input class="ct-enc-usa" data-pessoa list="ctPessoasEnc" value="' + esc(API.quemUsaSugerido(x)) + '" placeholder="' + esc(tr('quem usa', 'who uses it', 'quién la usa')) + '" aria-label="' + esc(tr('Quem usa', 'Who uses it', 'Quién la usa')) + '">' +
+        '<button type="button" class="btn sm primary" data-acao="ct-cadastrar-enc" data-chave="' + esc(x.chave) + '">' + esc(tr('Cadastrar este cartão', 'Add this card', 'Registrar esta tarjeta')) + '</button></div></div>';
+    };
     if (comConta.length) {
-      /* 1.3.0 (3.131): uma linha por CONTA de cartão (a fatura), com os finais dentro dela; cadastrar com um toque */
-      h += '<div class="callout ct-encontrados"><b>💳 ' + esc(comConta.length === 1 ? tr('Encontrei 1 cartão nas suas compras', 'I found 1 card in your purchases', 'Encontré 1 tarjeta en tus compras') :
-          tr('Encontrei ' + comConta.length + ' cartões nas suas compras', 'I found ' + comConta.length + ' cards in your purchases', 'Encontré ' + comConta.length + ' tarjetas en tus compras')) + '</b>' +
-        '<p class="tiny muted" style="margin:2px 0 0">' + esc(tr('Um por fatura: os cartões virtuais e os adicionais ficam dentro do cartão deles.', 'One per bill: virtual and additional cards stay inside their card.', 'Una por factura: las tarjetas virtuales y adicionales quedan dentro de la suya.')) + '</p>' +
-        '<ul class="small ct-enc-lista">' + comConta.map(function (x) {
-          return '<li><span>' + esc(rotuloEnc(x) + ' · ' + x.n + tr(' compra(s)', ' purchase(s)', ' compra(s)')) + '</span>' +
-            ' <button type="button" class="btn sm" data-acao="ct-encontrado" data-chave="' + esc(x.chave) + '">' + esc(tr('Cadastrar', 'Add', 'Registrar')) + '</button></li>';
-        }).join('') + '</ul></div>';
+      h += '<div class="callout ct-encontrados"><b>💳 ' + esc(ativos.length === 1 ? tr('Encontrei 1 cartão nas suas compras', 'I found 1 card in your purchases', 'Encontré 1 tarjeta en tus compras') :
+          tr('Encontrei ' + ativos.length + ' cartões nas suas compras', 'I found ' + ativos.length + ' cards in your purchases', 'Encontré ' + ativos.length + ' tarjetas en tus compras')) + '</b>' +
+        '<p class="tiny muted" style="margin:2px 0 6px">' + esc(tr('Um por fatura: o físico e os virtuais ficam juntos.', 'One per bill: the physical and virtual cards stay together.', 'Una por factura: la física y las virtuales quedan juntas.')) + '</p>' +
+        ativos.map(card).join('') + (window.Pessoas ? Pessoas.opcoes('ctPessoasEnc') : '') +
+        (parados.length ? '<details class="ct-sem-uso"><summary class="small">' + esc(parados.length + tr(' sem uso (nenhuma compra há 90 dias)', ' unused (no purchase in 90 days)', ' sin uso (ninguna compra en 90 días)')) + '</summary>' + parados.map(card).join('') + '</details>' : '') +
+        '</div>';
     }
     if (q.length) {
-      var ops = cartoes().map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(typeof Banco !== 'undefined' ? Banco.rotuloCartao(c.id) : (c.apelido || c.fim)) + '</option>'; }).join('');
+      var ops = cartoes().map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(typeof Banco !== 'undefined' ? Banco.rotuloCartao(c.id) : (c.apelido || c.fim)) + '</option>'; }).join('') +
+        comConta.map(function (x) { return '<option value="c:' + esc(x.contaId) + '">' + esc(API.nomeSugerido(x)) + '</option>'; }).join('');   /* 1.4.0: as contas encontradas */
       h += '<div class="ct-perguntas">' + q.map(function (x) {
         return '<div class="ps-q"><span>' + esc(tr('Este final ', 'This ending ') + x.fim + tr(' é de qual cartão?', ' belongs to which card?')) + ' <span class="muted small">(' + x.n + tr(' compra(s)', ' purchase(s)') + ')</span></span>' +
-          '<select class="ct-q-sel" data-fim="' + esc(x.fim) + '">' + ops + '<option value="novo">' + esc(tr('novo cartão', 'new card')) + '</option></select>' +
+          '<select class="ct-q-sel" data-fim="' + esc(x.fim) + '">' + ops + '<option value="novo">' + esc(tr('outro', 'other', 'otro')) + '</option></select>' +
           '<button type="button" class="btn sm primary" data-acao="ct-final-de" data-fim="' + esc(x.fim) + '">OK</button>' +
           '<button type="button" class="btn sm" data-acao="ct-final-nao" data-fim="' + esc(x.fim) + '">' + esc(tr('Não sei', 'Not sure')) + '</button></div>';
       }).join('') + '</div>';
@@ -253,7 +313,7 @@
 
   MoneyModulos.registrar({
     id: 'cartoes',
-    versao: '1.3.0',
+    versao: '1.4.0',
     pontos: {
       'cartao.form': function (ctx) {
         var c = ctx.c || ctx.semente || {};
@@ -314,12 +374,17 @@
     acoes: {
       'ct-cadastrar': function () { if (typeof abrirCartao === 'function') abrirCartao(null); },
       'ct-encontrado': function (el) { var s = API.semente(el.dataset.chave); if (s && typeof abrirCartao === 'function') abrirCartao(null, s); },
+      'ct-cadastrar-enc': function (el) {   /* 1.4.0 (3.132): um toque cadastra a conta com todos os finais */
+        var box = el.closest('.ct-enc'), nome = box ? box.querySelector('.ct-enc-nome').value : '', usa = box ? box.querySelector('.ct-enc-usa').value : '';
+        var c = API.cadastrarEncontrado(el.dataset.chave, nome, usa); if (!c) return;
+        Store.salvar(); render(); toast(tr('Cadastrado: ', 'Added: ', 'Registrada: ') + (c.apelido || c.fim));
+      },
       'ct-final-mais': function () { var ul = document.querySelector('.ct-finais'); if (ul) { ul.insertAdjacentHTML('beforeend', linhaFinal({ fim: '', tipo: 'virtual' })); ul.lastElementChild.querySelector('input').focus(); } },
       'ct-final-tirar': function (el) { var li = el.closest('.ct-final'); if (li) li.parentNode.removeChild(li); },
       'ct-final-de': function (el) {
         var sel = document.querySelector('.ct-q-sel[data-fim="' + el.dataset.fim + '"]'), v = sel ? sel.value : '';
         if (v === 'novo') { API.responder(el.dataset.fim, 'novo'); abrirCartao(null, { fim: el.dataset.fim, finais: [{ fim: el.dataset.fim, tipo: 'naosei' }] }); return; }
-        var n = API.responder(el.dataset.fim, v); Store.salvar(); render(); toast(n + tr(' compra(s) ligada(s) ao cartão.', ' purchase(s) linked to the card.'));
+        var n = API.responder(el.dataset.fim, v); Store.salvar(); render(); if (v.indexOf('c:') !== 0) toast(n + tr(' compra(s) ligada(s) ao cartão.', ' purchase(s) linked to the card.'));
       },
       'ct-final-nao': function (el) { API.responder(el.dataset.fim, 'nao'); Store.salvar(); render(); },
       'ct-inb-ok': function (el) {

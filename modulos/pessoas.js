@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.6.0 · 27/Nov/2026 (3.131: ficha que nasce de terceiro é "outra"; pareceDeFora)
+   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.7.0 · 27/Nov/2026 (3.132: família primeiro, Juntar, papéis, Desfazer, editar na ficha, sem CPF no nome)
    ---------------------------------------------------------------------
    O QUE FAZ
      Um cadastro só de "quem": Da casa (responsáveis e dependentes), Outras pessoas (pai, amigo, sócio) e
@@ -53,6 +53,10 @@
   function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function temST() { return typeof ST !== 'undefined' && !!ST; }
   function lista() { if (!temST()) return []; return (ST[COL] = Array.isArray(ST[COL]) ? ST[COL] : []); }
+  /* 1.7.0 (3.132): CPF/CNPJ grudado no nome ("FULANO 12345678901"): some do que se guarda; na tela fica só o final ("···901") */
+  var DOC = /(\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b|\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b)/g;
+  function semDoc(t) { return String(t == null ? '' : t).replace(DOC, '').replace(/\s{2,}/g, ' ').trim(); }
+  function docMascara(t) { return String(t == null ? '' : t).replace(DOC, function (m) { return '···' + m.replace(/\D/g, '').slice(-3); }); }
   function N(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
   function cfg() { return temST() ? (ST.config = ST.config || {}) : {}; }
   function novoId() { return 'ps' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
@@ -166,13 +170,13 @@
       var limpo = {
         tipo: TIPOS[d.tipo] ? d.tipo : 'casa',
         papel: d.tipo === 'casa' || !d.tipo ? (d.papel === 'dependente' ? 'dependente' : (d.papel === 'responsavel' ? 'responsavel' : '')) : '',
-        nome: String(d.nome || '').trim().slice(0, 80), meio: String(d.meio || '').trim().slice(0, 80),
-        sobrenome: String(d.sobrenome || '').trim().slice(0, 120), apelido: String(d.apelido || '').trim().slice(0, 40),
-        banco: (Array.isArray(d.banco) ? d.banco : String(d.banco || '').split(/[,;\n]/)).map(function (x) { return String(x).trim().slice(0, 60); }).filter(Boolean)
+        nome: semDoc(d.nome).slice(0, 80), meio: semDoc(d.meio).slice(0, 80),
+        sobrenome: semDoc(d.sobrenome).slice(0, 120), apelido: semDoc(d.apelido).slice(0, 40),
+        banco: (Array.isArray(d.banco) ? d.banco : String(d.banco || '').split(/[,;\n]/)).map(function (x) { return semDoc(x).slice(0, 60); }).filter(Boolean)
           .filter(function (x, i, a) { return a.map(N).indexOf(N(x)) === i; }),
         cnpj: d.tipo === 'empresa' ? String(d.cnpj || '').replace(/[^\d./-]/g, '').slice(0, 18) : ''
       };
-      if (d.aliases != null) limpo.aliases = (Array.isArray(d.aliases) ? d.aliases : String(d.aliases).split(/[,;\n]/)).map(function (x) { return String(x).trim().slice(0, 40); }).filter(Boolean);
+      if (d.aliases != null) limpo.aliases = (Array.isArray(d.aliases) ? d.aliases : String(d.aliases).split(/[,;\n]/)).map(function (x) { return semDoc(x).slice(0, 40); }).filter(Boolean);
       if (!limpo.nome) throw new Error(tr('Escreva o nome.', 'Type the name.'));
       if (d.uid) limpo.uid = String(d.uid); if (d.perfil) limpo.perfil = String(d.perfil);
       /* 1.5.0 (3.125): o e-mail (opcional) de quem entra no app; só da família (tipo casa) */
@@ -242,11 +246,18 @@
       return API.soltos().map(function (s) { var q = API.parecida(s.texto); return q ? { texto: s.texto, n: s.n, sugestao: q.p } : null; }).filter(Boolean);
     },
     aIdentificar: function () {
-      return API.soltos().filter(function (s) { return !API.parecida(s.texto) && !(cfg().pessoasNao || {})[N(s.texto)]; });
+      return API.soltos().filter(function (s) { return !API.parecida(s.texto) && !(cfg().pessoasNao || {})[N(s.texto)] && !API.pareceEmpresa(s.texto); });
+    },
+    /* 1.7.0 (3.132): nome de empresa, banco ou instituição (ou com CNPJ) não é pessoa: não entra em "A identificar" */
+    pareceEmpresa: function (texto) {
+      var s = String(texto || ''), n = N(s);
+      if (/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/.test(s)) return true;
+      if (/\b(ltda|s ?a|eireli|me|epp|mei|instituicao|pagamentos?|banco|caixa economica|associacao|cooperativa|seguros?|seguradora|comercio|servicos|eletropaulo|enel|sabesp|condominio|mercado|supermercados?|farmacias?|drogarias?|shpp|shopee|amazon|ifood|uber)\b/.test(n)) return true;
+      return /^(itau|bradesco|santander|nubank|inter|btg|c6|caixa|bb|banco do brasil|picpay|mercado pago|pagbank|pagseguro|stone|sicoob|sicredi|original|safra|xp|neon|next|will|avenue|bs2)\b/.test(n);
     },
     confirmarParecida: function (texto, id) {
       var p = API.porId(id); if (!p) return 0;
-      var t = String(texto).trim().slice(0, 60), doBanco = /^[A-Z0-9 .'-]{4,}$/.test(t) && /\s/.test(t);   /* "MARIA S LIMA" é do extrato; "Neco" é apelido */
+      var t = semDoc(texto).slice(0, 60), doBanco = /^[A-Z0-9 .'-]{4,}$/.test(t) && /\s/.test(t);   /* "MARIA S LIMA" é do extrato; "Neco" é apelido */
       var l = doBanco ? (p.banco = p.banco || []) : (p.aliases = p.aliases || []);
       if (l.map(N).indexOf(N(t)) < 0) l.push(t);
       return API.religar();
@@ -255,6 +266,17 @@
     pareceDeFora: function (x) {
       var p = typeof x === 'object' && x ? x : null, t = N(p ? [p.nome, p.apelido, p.sobrenome].join(' ') : x);
       return /\b(inquilin[oa]s?|locatari[oa]s?|locador[a]?|prestador[a]?|propriet[a]ri[oa]|imobiliaria|sindic[oa]|condominio|porteir[oa]|zelador[a]?|fornecedor[a]?)\b/.test(t);
+    },
+    /* 1.7.0 (3.132): "Neco e Marcelo são a mesma pessoa?": a ficha da conta (minhaFicha) e a ficha da casa, sem conta nem e-mail, cujo nome é
+       o "dono" que o robô manda em mais itens do banco (o dono da conta não aparece com o nome dela). Responder "Não são" guarda. */
+    mesmaPessoa: function () {
+      var eu = API.minhaFicha(); if (!eu) return null;
+      var donos = {}, nao = cfg().psJuntarNao || {};
+      ((typeof ST !== 'undefined' && ST.saldos_banco) || []).forEach(function (r) { if (r && r.dono) { var k = N(r.dono); donos[k] = (donos[k] || 0) + 1; } });
+      if (chaves(eu).some(function (k) { return donos[k]; })) return null;
+      var cs = lista().filter(function (p) { return p !== eu && p.tipo === 'casa' && !p.arquivada && !p.uid && !p.email && !nao[p.id + '|' + eu.id] && chaves(p).some(function (k) { return donos[k]; }); })
+        .map(function (p) { return { p: p, n: Math.max.apply(null, chaves(p).map(function (k) { return donos[k] || 0; })) }; }).sort(function (a, b) { return b.n - a.n; });
+      return cs.length ? { fica: eu, sai: cs[0].p } : null;
     },
     naoEhParecida: function (texto) { (cfg().pessoasNao = cfg().pessoasNao || {})[N(texto)] = 1; },
     /* "Neco", "Beta", "PJ"… viram pessoas; o texto de hoje fica como apelido do banco (o extrato continua batendo) */
@@ -391,18 +413,31 @@
   }
   function linhaPessoa(p) {
     var usos = API.usos(p.id);
-    var sub = [p.tipo === 'casa' ? (PAPEIS[p.papel || ''] || PAPEIS[''])[pt() ? 0 : 1] : TIPOS[p.tipo][pt() ? 0 : 1],
+    var confirmar = p.tipo === 'casa' && !p.arquivada && papeisPorConfirmar();
+    var sub = [p.tipo === 'casa' ? (confirmar ? '' : (p.papel ? PAPEIS[p.papel][pt() ? 0 : 1] : '')) : TIPOS[p.tipo][pt() ? 0 : 1],
       API.nomeCompleto(p) !== API.rotulo(p) ? API.nomeCompleto(p) : '', (p.banco || []).length ? tr('extrato: ', 'statement: ') + p.banco.join(', ') : '',
       p.cnpj ? 'CNPJ ' + p.cnpj : ((p.cnpjs || [])[0] ? 'CNPJ ' + p.cnpjs[0].replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') : '')].filter(Boolean).join(' · ');   /* o idp nunca aparece */
-    return '<tr' + (p.arquivada ? ' class="muted"' : '') + '><td><span class="t-main">' + esc(API.rotulo(p)) + (p.revisar ? ' <span class="ps-novo">' + esc(tr('revisar', 'review')) + '</span>' : '') +
-      (p.arquivada ? ' <span class="small">(' + esc(tr('arquivada', 'archived')) + ')</span>' : '') + '</span><div class="t-sub">' + esc(sub) + '</div></td>' +
+    return '<tr data-ps="' + esc(p.id) + '"' + (p.arquivada ? ' class="muted"' : '') + '><td><span class="t-main">' + esc(docMascara(API.rotulo(p))) +
+      (p.arquivada ? ' <span class="small">(' + esc(tr('arquivada', 'archived')) + ')</span>' : '') + '</span><div class="t-sub">' + esc(docMascara(sub)) + '</div>' +
+      (confirmar ? '<select class="ps-papel-sel" data-id="' + esc(p.id) + '" aria-label="' + esc(tr('Papel na casa', 'Role at home', 'Papel en la casa')) + '">' +
+        '<option value="">' + esc(tr('escolha…', 'choose…', 'elige…')) + '</option>' +
+        ['responsavel', 'dependente'].map(function (k) { return '<option value="' + k + '"' + (p.papel === k ? ' selected' : '') + '>' + esc(PAPEIS[k][pt() ? 0 : 1]) + '</option>'; }).join('') + '</select>' : '') + '</td>' +
       '<td class="num small muted">' + usos + '</td><td class="num"><div class="row" style="gap:4px;justify-content:flex-end">' +
       '<button class="btn sm" data-acao="ps-editar" data-id="' + esc(p.id) + '">' + esc(tr('editar', 'edit')) + '</button>' +
       (p.arquivada ? '<button class="btn sm" data-acao="ps-desarquivar" data-id="' + esc(p.id) + '">' + esc(tr('voltar', 'restore')) + '</button>'
         : (usos ? '<button class="btn sm" data-acao="ps-arquivar" data-id="' + esc(p.id) + '">' + esc(tr('arquivar', 'archive')) + '</button>'
           : '<button class="btn sm" data-acao="ps-apagar" data-id="' + esc(p.id) + '">' + esc(tr('apagar', 'delete')) + '</button>')) +
-      '</div></td></tr>';
+      '</div></td></tr>' +
+      (editando === p.id ? '<tr class="ps-form-linha"><td colspan="3">' + formPessoa(p) + '</td></tr>' : '');
   }
+  /* 1.7.0 (3.132): depois de editar/salvar/cancelar, a tela fica onde a pessoa estava (o render mantém a rolagem) e vai até a ficha */
+  function irAte(sel) { setTimeout(function () { var e = document.querySelector(sel); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'nearest' }); }, 30); }
+  /* apagar e arquivar sem confirm(): faz na hora e mostra "Apagado: X · Desfazer" por 8 s */
+  function comDesfazer(msg, desfaz) {
+    toast(msg, { tempo: 8000, acao: { rotulo: tr('Desfazer', 'Undo', 'Deshacer'), fn: function () { desfaz(); Store.salvar(); render(); } } });
+  }
+  /* 1.7.0 (3.132): enquanto a lista não foi revisada (ou alguém da casa está sem papel), um só "Confirme" com um seletor por linha */
+  function papeisPorConfirmar() { return !!cfg().pessoasRevisar || lista().some(function (p) { return p.tipo === 'casa' && !p.arquivada && !p.papel; }); }
   function tela() {
     if (!cfg().pessoasV) API.migrar();
     API.solverone();
@@ -411,17 +446,29 @@
       '<button class="btn sm primary" data-acao="ps-novo">' + esc(tr('+ Adicionar', '+ Add')) + '</button></div></div>' +
       '<p class="small muted aba-explica">' + esc(tr('Quem aparece nos lançamentos, compromissos e rendas. Mudou o nome aqui, muda em tudo na hora. CPF o app não pede.',
         'Who shows up in entries, commitments and income. Rename here and it changes everywhere at once. The app never asks for personal tax IDs.')) + '</p>';
-    if (cfg().pessoasRevisar) h += '<div class="callout ps-revise"><b>' + esc(tr('Revise a lista uma vez', 'Review the list once')) + '</b> — ' +
-      esc(tr('o app montou esta lista com os nomes que já estavam nos lançamentos e com a família da plataforma. Ajuste nomes, apelidos e quem é dependente.',
-        'the app built this list from the names already in your entries and from the family on the platform. Fix names, nicknames and who is a dependant.')) +
-      ' <button class="btn sm" data-acao="ps-revisado">' + esc(tr('Está certo', 'Looks right')) + '</button></div>';
-    if (editando) h += formPessoa(editando === 'novo' ? null : API.porId(editando));
+    if (editando === 'novo') h += formPessoa(null);   /* 1.7.0 (3.132): editar abre na própria ficha (linhaPessoa); só o "+ Adicionar" abre aqui */
+    /* 1.7.0 (3.132): a ordem — "a mesma pessoa?" no topo, a família, as outras pessoas, as empresas; os nomes soltos no fim, recolhidos */
+    var mp = API.mesmaPessoa();
+    if (mp) h += '<div class="callout ps-juntar"><b>' + esc(tr(API.rotulo(mp.sai) + ' e ' + API.rotulo(mp.fica) + ' são a mesma pessoa?', 'Are ' + API.rotulo(mp.sai) + ' and ' + API.rotulo(mp.fica) + ' the same person?', '¿' + API.rotulo(mp.sai) + ' y ' + API.rotulo(mp.fica) + ' son la misma persona?')) + '</b> ' +
+      esc(tr('Juntar: os lançamentos das duas ficam numa só, e "' + API.rotulo(mp.sai) + '" vai para "Também chamado".', 'Merge: the entries of both stay in one, and "' + API.rotulo(mp.sai) + '" goes to "Also called".', 'Juntar: los movimientos de las dos quedan en una sola, y "' + API.rotulo(mp.sai) + '" pasa a "También llamado".')) +
+      ' <button class="btn sm primary" data-acao="ps-juntar" data-fica="' + esc(mp.fica.id) + '" data-sai="' + esc(mp.sai.id) + '">' + esc(tr('Juntar', 'Merge', 'Juntar')) + '</button>' +
+      ' <button class="btn sm" data-acao="ps-juntar-nao" data-par="' + esc(mp.sai.id + '|' + mp.fica.id) + '">' + esc(tr('Não são', 'They are not', 'No lo son')) + '</button></div>';
+    var titulos = { casa: [tr('Sua família', 'Your family', 'Tu familia')], outra: [TIPOS.outra[pt() ? 0 : 1] + tr(' (inquilino, diarista…)', ' (tenant, cleaner…)', ' (inquilino, asistenta…)')], empresa: [TIPOS.empresa[pt() ? 0 : 1]] };
+    ['casa', 'outra', 'empresa'].forEach(function (tp) {
+      var l = lista().filter(function (p) { return p.tipo === tp; }).sort(function (a, b) { return (a.arquivada ? 1 : 0) - (b.arquivada ? 1 : 0) || API.rotulo(a).localeCompare(API.rotulo(b)); });
+      if (tp === 'empresa' && !l.length) return;
+      h += '<div class="card sem-pad ps-grupo" data-grupo="' + tp + '"><div class="card-head" style="padding:12px 16px 0"><h3>' + esc(titulos[tp][0]) + '</h3></div>' +
+        (tp === 'casa' && papeisPorConfirmar() ? '<div class="callout ps-revise" style="margin:8px 16px"><b>' + esc(tr('Confirme: quem é responsável e quem é dependente', 'Confirm: who is a guardian and who is a dependant', 'Confirma: quién es responsable y quién es dependiente')) + '</b>' +
+          ' <button class="btn sm" data-acao="ps-revisado">' + esc(tr('Está certo', 'Looks right', 'Está bien')) + '</button></div>' : '') +
+        (l.length ? '<table class="tbl"><thead><tr><th>' + esc(tr('Nome', 'Name')) + '</th><th class="num">' + esc(tr('usos', 'uses')) + '</th><th></th></tr></thead><tbody>' + l.map(linhaPessoa).join('') + '</tbody></table>'
+          : '<p class="small muted" style="padding:0 16px 12px;margin:0">' + esc(tr('Ninguém ainda.', 'Nobody yet.')) + '</p>') + '</div>';
+    });
     var q = API.perguntas();
     if (q.length) {
       h += '<div class="card"><div class="card-head"><h3>' + esc(tr('É a mesma pessoa?', 'Is it the same person?')) + ' <b>' + q.length + '</b></h3></div>' +
         '<p class="small muted" style="margin:0 0 8px">' + esc(tr('Nomes parecidos, mas sem certeza. Responda uma vez por nome.', 'Similar names, but not certain. Answer once per name.')) + '</p>';
       q.slice(0, 20).forEach(function (x) {
-        h += '<div class="ps-q"><span>“' + esc(x.texto) + '” (' + x.n + ') — ' + esc(tr('é ', 'is it ')) + '<b>' + esc(API.rotulo(x.sugestao)) + '</b>?</span>' +
+        h += '<div class="ps-q"><span>“' + esc(docMascara(x.texto)) + '” (' + x.n + ') — ' + esc(tr('é ', 'is it ')) + '<b>' + esc(API.rotulo(x.sugestao)) + '</b>?</span>' +
           '<button class="btn sm primary" data-acao="ps-e-sim" data-texto="' + esc(x.texto) + '" data-id="' + esc(x.sugestao.id) + '">' + esc(tr('Sim', 'Yes')) + '</button>' +
           '<button class="btn sm" data-acao="ps-e-nao" data-texto="' + esc(x.texto) + '">' + esc(tr('Não', 'No')) + '</button></div>';
       });
@@ -429,21 +476,15 @@
     }
     var ai = API.aIdentificar();
     if (ai.length) {
-      h += '<div class="card"><div class="card-head"><h3>' + esc(tr('A identificar', 'To identify')) + ' <b>' + ai.length + '</b></h3></div>' +
-        '<p class="small muted" style="margin:0 0 8px">' + esc(tr('Textos soltos que não batem com ninguém. Podem ficar assim (vizinho, pagamento pontual) ou virar pessoa.',
+      h += '<details class="card ps-soltos"><summary class="small">' + esc(ai.length + (ai.length === 1 ? tr(' nome solto nos lançamentos · ver', ' loose name in your entries · see', ' nombre suelto en los movimientos · ver') : tr(' nomes soltos nos lançamentos · ver', ' loose names in your entries · see', ' nombres sueltos en los movimientos · ver'))) + '</summary>' +
+        '<p class="small muted" style="margin:8px 0">' + esc(tr('Textos que não batem com ninguém. Podem ficar assim (vizinho, pagamento pontual) ou virar pessoa.',
           'Loose names that match nobody. They can stay as they are (neighbour, one-off payment) or become a person.')) + '</p>';
       ai.slice(0, 30).forEach(function (x) {
-        h += '<div class="ps-q"><span>“' + esc(x.texto) + '” (' + x.n + ')</span>' +
+        h += '<div class="ps-q"><span>“' + esc(docMascara(x.texto)) + '” (' + x.n + ')</span>' +
           '<button class="btn sm" data-acao="ps-cadastrar-texto" data-texto="' + esc(x.texto) + '">' + esc(tr('+ cadastrar', '+ add')) + '</button></div>';
       });
-      h += '</div>';
+      h += '</details>';
     }
-    ['casa', 'outra', 'empresa'].forEach(function (tp) {
-      var l = lista().filter(function (p) { return p.tipo === tp; }).sort(function (a, b) { return (a.arquivada ? 1 : 0) - (b.arquivada ? 1 : 0) || API.rotulo(a).localeCompare(API.rotulo(b)); });
-      h += '<div class="card sem-pad ps-grupo"><div class="card-head" style="padding:12px 16px 0"><h3>' + esc(TIPOS[tp][pt() ? 0 : 1]) + '</h3></div>' +
-        (l.length ? '<table class="tbl"><thead><tr><th>' + esc(tr('Nome', 'Name')) + '</th><th class="num">' + esc(tr('usos', 'uses')) + '</th><th></th></tr></thead><tbody>' + l.map(linhaPessoa).join('') + '</tbody></table>'
-          : '<p class="small muted" style="padding:0 16px 12px;margin:0">' + esc(tr('Ninguém ainda.', 'Nobody yet.')) + '</p>') + '</div>';
-    });
     return h;
   }
   function lerForm() {
@@ -463,6 +504,14 @@
   }
   document.addEventListener('input', function (e) { var t = e.target; if (t && t.matches && t.matches('input[data-pessoa]')) atualizarDica(t); });
   document.addEventListener('change', function (e) { var t = e.target; if (t && t.matches && t.matches('#psTipo')) mostrarCampos(); });
+  /* 1.7.0 (3.132): o papel escolhido na própria linha */
+  document.addEventListener('change', function (e) {
+    var t = e.target; if (!t || !t.matches || !t.matches('.ps-papel-sel')) return;
+    var p = API.porId(t.dataset.id); if (!p) return;
+    p.papel = t.value === 'dependente' ? 'dependente' : (t.value === 'responsavel' ? 'responsavel' : ''); delete p.revisar;
+    if (!lista().some(function (x) { return x.tipo === 'casa' && !x.arquivada && !x.papel; })) delete cfg().pessoasRevisar;
+    Store.salvar(); render();
+  });
   function mostrarCampos() {
     var tp = (document.getElementById('psTipo') || {}).value || 'casa';
     document.querySelectorAll('.ps-so-casa').forEach(function (x) { x.hidden = tp !== 'casa'; });
@@ -472,7 +521,7 @@
 
   MoneyModulos.registrar({
     id: 'pessoas',
-    versao: '1.6.0',
+    versao: '1.7.0',
     colecoes: [COL],
     iniciar: function () {
       try { if (ST && !cfg().pessoasV && (ST.gastos || []).length + (ST.recorrentes || []).length) { API.migrar(); Store.salvar(); } } catch (e) { console.warn('pessoas', e); }
@@ -499,18 +548,27 @@
     acoes: {
       'ps-novo': function () { editando = 'novo'; render(); },
       'ps-familia': function () { API.trazerDaFamilia().then(function (n) { salvarERender(n ? n + tr(' pessoa(s) trazida(s) da família.', ' person(s) brought from the family.') : tr('Ninguém novo na família.', 'Nobody new in the family.')); }); },
-      'ps-editar': function (el) { editando = el.dataset.id; render(); },
+      'ps-editar': function (el) { editando = el.dataset.id; render(); irAte('.ps-form'); },
       /* 3.116: de um aviso (ex.: o saldo previsto), tocar no nome da pessoa abre a ficha dela aqui */
       'ps-abrir': function (el) { editando = el.dataset.id; if (el.closest('#genModal') && typeof fechar === 'function') fechar('genModal'); if (typeof irPara === 'function') irPara('cfg-pessoas'); else render(); setTimeout(function () { var f = document.querySelector('.ps-form'); if (f) f.scrollIntoView({ block: 'start' }); var a = document.getElementById('psApelido'); if (a) a.focus(); }, 80); },
       'ps-lista': function (el) { if (el.closest('#genModal') && typeof fechar === 'function') fechar('genModal'); if (typeof irPara === 'function') irPara('cfg-pessoas'); else render(); },   /* 1.5.0 (3.125): os atalhos abrem Pessoas da família */
-      'ps-cancelar': function () { editando = null; render(); },
+      'ps-cancelar': function () { var id = editando; editando = null; render(); if (id && id !== 'novo') irAte('[data-ps="' + id + '"]'); },
       'ps-salvar': function () {
-        try { var p = API.salvar(lerForm()); editando = null; salvarERender(tr('Salvo: ', 'Saved: ') + API.rotulo(p)); }
+        try { var p = API.salvar(lerForm()); editando = null; salvarERender(tr('Salvo: ', 'Saved: ') + API.rotulo(p)); irAte('[data-ps="' + p.id + '"]'); }
         catch (e) { toast(e.message, 'warn'); }
       },
-      'ps-arquivar': function (el) { API.arquivar(el.dataset.id); salvarERender(); },
+      'ps-arquivar': function (el) {
+        var id = el.dataset.id, p = API.arquivar(id); salvarERender();
+        if (p) comDesfazer(tr('Arquivado: ', 'Archived: ', 'Archivado: ') + API.rotulo(p), function () { API.desarquivar(id); });
+      },
       'ps-desarquivar': function (el) { API.desarquivar(el.dataset.id); salvarERender(); },
-      'ps-apagar': function (el) { try { API.apagar(el.dataset.id); salvarERender(); } catch (e) { toast(e.message, 'warn'); } },
+      'ps-apagar': function (el) {
+        var id = el.dataset.id, i = lista().findIndex(function (x) { return x.id === id; }), copia = i >= 0 ? JSON.parse(JSON.stringify(lista()[i])) : null;
+        try { API.apagar(id); salvarERender(); } catch (e) { return toast(e.message, 'warn'); }
+        if (copia) comDesfazer(tr('Apagado: ', 'Deleted: ', 'Borrado: ') + API.rotulo(copia), function () { if (!API.porId(copia.id)) lista().splice(Math.min(i, lista().length), 0, copia); });
+      },
+      'ps-juntar': function (el) { var n = API.juntar(el.dataset.fica, el.dataset.sai); salvarERender(tr('Juntadas: ', 'Merged: ', 'Juntadas: ') + n + tr(' registro(s).', ' record(s).', ' registro(s).')); },
+      'ps-juntar-nao': function (el) { (cfg().psJuntarNao = cfg().psJuntarNao || {})[el.dataset.par] = 1; salvarERender(); },
       'ps-revisado': function () { delete cfg().pessoasRevisar; lista().forEach(function (p) { delete p.revisar; }); salvarERender(); },
       'ps-e-sim': function (el) { var n = API.confirmarParecida(el.dataset.texto, el.dataset.id); salvarERender(n + tr(' registro(s) ligado(s).', ' record(s) linked.')); },
       'ps-e-nao': function (el) { API.naoEhParecida(el.dataset.texto); salvarERender(); },
@@ -518,7 +576,7 @@
         var dica = el.closest('.ps-dica'), inp = dica && dica.dataset.para ? document.getElementById(dica.dataset.para) : null;
         var texto = el.dataset.texto || (inp ? inp.value : '');
         if (!String(texto).trim()) return;
-        var doBanco = /^[A-Z0-9 .'-]{4,}$/.test(String(texto).trim());
+        texto = semDoc(texto); var doBanco = /^[A-Z0-9 .'-]{4,}$/.test(String(texto).trim());
         var p = API.salvar({ tipo: /\b(LTDA|S\.?A|ME|EIRELI|EPP)\b/i.test(texto) ? 'empresa' : 'outra', nome: titulo(texto), apelido: doBanco ? titulo(texto) : String(texto).trim(), banco: doBanco ? [texto] : [], aliases: doBanco ? [] : [texto] });
         Store.salvar();
         if (inp) { inp.value = API.rotulo(p); atualizarDica(inp); toast(tr('Cadastrado: ', 'Added: ') + API.rotulo(p)); }

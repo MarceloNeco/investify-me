@@ -34,7 +34,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
       await ctx.addInitScript((t) => { if (!sessionStorage.getItem('s')) { localStorage.setItem('investifyme.dados.v1', t); localStorage.setItem('moneytrio.soNesteAparelho', '1'); localStorage.setItem('moneytrio.tutorial.v1', 'visto'); sessionStorage.setItem('s', '1'); } }, JSON.stringify(LOCAL));
       const p = await ctx.newPage(); p.erros = []; p.on('pageerror', (e) => p.erros.push(String(e))); p.on('dialog', (x) => x.accept());
       await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && window.SaldoBanco && window.Cartoes && window.Pessoas);
-      await p.evaluate(() => { I18n.atual = 'pt'; Assist.marcarTutorial(); ST.config.assistOne = false; AssistOne.aplicar();
+      await p.evaluate(() => { I18n.atual = 'pt'; Assist.marcarTutorial(); ST.config.assistOne = false; AssistOne.aplicar(); Cartoes._hoje = '2026-11-27';   /* datas fixas do teste */
         Banco.adicionar('341', '');
         ST.saldos_banco = [];
         SaldoBanco.receber({ tipo: 'saldo', id: 's1', banco: 'Itaú', conta: 'Conta corrente', conta_id: 'ca1', categoria_conta: 'conta', numero_conta: '000123', agencia: '0001', saldo: 1000, data: hojeISO() });
@@ -49,12 +49,13 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
 
       /* 2) os cartões encontrados, por conta */
       const enc = await p.evaluate(() => Cartoes.encontrados().map((x) => x.chave + ':' + x.finais.slice().sort().join('+')).sort());
-      ok(enc.join(' ') === 'b:banco beta|visa:3303+3304 c:cc-a:1101+2202 c:cc-b:5505', W + ': 5 finais viram 3 cartões: a conta cc-a (o 2202 antigo, sem conta, vai junto), a cc-b e os virtuais do mesmo banco e bandeira: ' + enc.join(' '));
-      const ct = await p.evaluate(() => { const c = document.querySelector('.ct-encontrados'); return c ? { tit: c.querySelector('b').textContent, n: c.querySelectorAll('li').length, bt: c.querySelectorAll('[data-acao="ct-encontrado"]').length } : null; });
-      ok(ct && /Encontrei 3 cartões nas suas compras/.test(ct.tit) && ct.n === 3 && ct.bt === 3, W + ': "Encontrei 3 cartões nas suas compras", um "Cadastrar" por conta');
-      await p.evaluate(() => document.querySelector('.ct-encontrados [data-acao="ct-encontrado"][data-chave="c:cc-a"]').click()); await p.waitForTimeout(200);
-      const fs1 = await p.evaluate(() => [...document.querySelectorAll('#assetModal .ct-f-fim, .ct-finais .ct-f-fim')].map((x) => x.value).filter(Boolean).sort().join('+'));
-      ok(fs1 === '1101+2202', W + ': "Cadastrar" abre o cartão já com os finais da conta (1101 e 2202): ' + fs1);
+      /* 3.132: os virtuais sem conta vão para a única conta em uso do mesmo banco e bandeira (a cc-b, Visa do Banco Beta) */
+      ok(enc.join(' ') === 'c:cc-a:1101+2202 c:cc-b:3303+3304+5505', W + ': 5 finais viram 2 cartões: a conta cc-a (o 2202 antigo, sem conta, vai junto) e a cc-b (com os virtuais Visa do mesmo banco): ' + enc.join(' '));
+      const ct = await p.evaluate(() => { const c = document.querySelector('.ct-encontrados'); return c ? { tit: c.querySelector('b').textContent, bt: c.querySelectorAll('[data-acao="ct-cadastrar-enc"]').length } : null; });
+      ok(ct && /Encontrei 2 cartões nas suas compras/.test(ct.tit) && ct.bt === 2, W + ': "Encontrei 2 cartões nas suas compras", um "Cadastrar este cartão" por conta');
+      await p.evaluate(() => document.querySelector('.ct-encontrados [data-acao="ct-cadastrar-enc"][data-chave="c:cc-a"]').click()); await p.waitForTimeout(200);
+      const fs1 = await p.evaluate(() => { const c = (ST.cartoes || []).find((x) => x.contaId === 'cc-a'); return c ? c.finais.map((f) => f.fim).sort().join('+') : ''; });
+      ok(fs1 === '1101+2202', W + ': "Cadastrar este cartão" cadastra a conta com os finais dela (1101 e 2202): ' + fs1);
       await p.evaluate(() => { document.querySelectorAll('.modal:not(.hidden)').forEach((m) => m.classList.add('hidden')); });
 
       /* 3) fatura a pagar × limite usado */

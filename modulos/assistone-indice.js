@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/assistone-indice.js — a busca do AssistONE acha o próprio app   1.0.0 · 24/Nov/2026 (3.106)
+   modulos/assistone-indice.js — a busca do AssistONE acha o próprio app   1.1.0 · 27/Nov/2026 (3.132: Pessoas da família)
    ---------------------------------------------------------------------
    O QUE FAZ
      Diretriz geral: "O AssistONE conhece TUDO o que o app tem". Antes, o 🔎 Buscar só procurava nas aulas do Coach e no
@@ -24,7 +24,7 @@
    ===================================================================== */
 (function () {
   'use strict';
-  var VER = '1.0.0';
+  var VER = '1.1.0';
   var cache = null, cacheL = '', cacheEm = 0, acoes = [];
 
   function tr(pt, en, es) { return I18n.tr(pt, en, es); }
@@ -111,6 +111,10 @@
     ].forEach(function (c) {
       out.push({ ico: c[0], t: tr(c[1], c[2], c[3]), x: no(c[4]), extra: c[1] + ' ' + c[4] + ' ' + c[6], onde: tr('Começar', 'Get started', 'Empezar'), peso: 2, ir: function () { acionar(c[5]); } });
     });
+    /* 1.1.0 (3.132): renomear uma pessoa, o e-mail dela, incluir alguém → Pessoas da família */
+    out.push({ ico: '👥', t: tr('Pessoas da família: renomear, e-mail, incluir alguém', 'Family people: rename, e-mail, add someone', 'Personas de la familia: renombrar, correo, añadir a alguien'),
+      x: tr('Mude o nome ou o apelido de alguém (muda em tudo), ponha o e-mail de quem entra no app ou inclua uma pessoa.', 'Change someone\'s name or nickname (it changes everywhere), add the e-mail of who signs in, or add a person.', 'Cambia el nombre o el apodo de alguien (cambia en todo), pon el correo de quien entra en la app o añade a una persona.'),
+      k: 'renomear pessoa mudar nome trocar nome apelido email e-mail da pessoa familia incluir alguem rename person', onde: tr('Configurações', 'Settings', 'Configuración'), peso: 3, ir: function () { irTela('cfg-pessoas'); } });
     /* o botão da foto de gasto (a OS da oficina, a nota, o recibo, o canhoto) */
     out.push({ ico: '📷', t: tr('Foto de nota ou recibo', 'Photo of an invoice or receipt', 'Foto de factura o recibo'),
       x: tr('OS da oficina, nota, recibo ou canhoto: o app lê e liga ao banco (em Lançamentos).', 'Workshop service order, invoice, receipt or card slip: the app reads it and links it to the bank (in Entries).', 'Orden del taller, factura, recibo o ticket: la app lo lee y lo vincula al banco (en Movimientos).'),

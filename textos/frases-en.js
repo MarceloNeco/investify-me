@@ -1,10 +1,17 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.131 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.132 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.132 */
+  'Pessoas da família mais simples e os cartões agrupados sozinhos':'Simpler family people and cards grouped by themselves',
+  '👥 A tela não pula mais para o topo: depois de salvar, cancelar, apagar ou arquivar, você continua onde estava. O "editar" abre logo abaixo do nome, e apagar ou arquivar mostra "Desfazer" por alguns segundos.':'👥 The screen no longer jumps to the top: after saving, cancelling, deleting or archiving, you stay where you were. "Edit" opens right below the name, and deleting or archiving shows "Undo" for a few seconds.',
+  '👪 Em Pessoas da família, a sua família vem primeiro, depois as outras pessoas. Empresas e bancos não aparecem mais como "a identificar", e os nomes soltos ficam numa linha só, no fim. Quando a mesma pessoa está em duas fichas, o app pergunta e junta. Os papéis (responsável ou dependente) se confirmam num lugar só.':'👪 In Family people, your family comes first, then other people. Companies and banks no longer show as "to identify", and loose names sit on a single line at the end. When the same person is on two cards, the app asks and merges them. Roles (guardian or dependant) are confirmed in one place.',
+  '✏️ Em Família no MoneyTRIO, cada nome tem "editar" e há um botão para Pessoas da família (renomear, e-mail, incluir alguém). A busca 🔍 também acha "renomear pessoa".':'✏️ In Family in MoneyTRIO, each name has "edit" and there is a button for Family people (rename, e-mail, add someone). Search 🔍 also finds "rename person".',
+  '💳 Os cartões das suas compras se agrupam sozinhos por fatura: o físico e os virtuais juntos, cada final marcado. "Cadastrar este cartão" já sugere o nome e quem usa. Cartão sem compra há 90 dias fica recolhido.':'💳 The cards from your purchases group themselves by bill: the physical and virtual cards together, each ending marked. "Add this card" already suggests the name and who uses it. A card with no purchase in 90 days is collapsed.',
+  '🔒 Um número com cara de CPF grudado num nome aparece só com o final e não fica guardado na ficha.':'🔒 A number that looks like a personal tax ID stuck to a name shows only its last digits and is not kept on the card.',
   /* 3.131 */
   'Bancos e cartões mais claros, e a fatura certa':'Clearer banks and cards, and the right bill',
   '🏦 Em Configurações › Bancos e cartões, cada banco mostra a agência e a conta numa linha só delas ("Ag. 0001 · Conta 00012-3") e o código e o CNPJ embaixo, sem cortar no celular.':'🏦 In Settings › Banks and cards, each bank shows the branch and account on a line of their own ("Branch 0001 · Account 00012-3"), with the bank code and tax ID below, never cut off on the phone.',
