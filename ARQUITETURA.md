@@ -767,6 +767,14 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.134 — Importar posições colando ou por foto.** Novo `modulos/posicoes-texto.js` 1.0.0 (`PosicoesTexto`): "📋 Colar texto" e "📷 Foto
+  ou print" no topo da Carteira (ao lado do "Importar posições (JSON)", importar-posicoes 1.1.0 `mostrarPrevia`), que caem na MESMA prévia.
+  Leitor sem IA (`ler`): a tabela com | ou tab e cabeçalho (Ticker/Ativo, Nome, Qtd, Preço médio, Preço atual, Valor atual, Valor
+  aplicado) e os blocos de previdência "Plano NNNN / Saldo bruto / Saldo líquido estimado / Modalidade / Regime tributário"; `num` aceita
+  1.234,56 e 1234.56; US$ pelo texto (US$, dólar, USD, Avenue); tipos acao-us, etf-us, bond-us (valor aplicado e atual), acao-br, fii,
+  previdencia (pm = valorAtual = saldo bruto; o resto em notas), outro; a instituição perguntada uma vez com o palpite (`palpiteInst`).
+  A foto: OCR no aparelho pelo `PrintColar.lerImagem` (print-colar 1.4.0), no Fundo; a imagem compartilhada ganha "📈 Posições de
+  investimento". Nada reconhecido: o texto lido e "não reconheci este formato…". Teste: `teste-posicoes-texto.js` (novo).
   **3.133 — Mande e-mails para o MoneyTRIO.** Novo `modulos/email-entrada.js` 1.0.0 (`EmailEntrada`), no ponto `config.todos`, só para quem
   gerencia a família (`comm_inbox_can_manage`): a lista dos e-mails que podem mandar para moneytrio@solverone.com.br com o estado
   (confirmado, esperando o código, cancelado), "+ Adicionar e-mail" ligado a uma pessoa da casa, o código de 6 dígitos grande com o mailto

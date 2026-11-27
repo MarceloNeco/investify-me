@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/print-colar.js — "📋 Colar print": notificação do banco vira lançamento (3.87)        1.3.2 · 26/Nov/2026
+   modulos/print-colar.js — "📋 Colar print": notificação do banco vira lançamento (3.87)        1.4.0 · 27/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 14/Nov/2026; sem IA)
      · Entradas: colar da área de transferência (Ctrl+V no computador; no celular o botão "Colar", com
@@ -233,7 +233,8 @@
     $('#genTitle').textContent = tr('O que é esta imagem?', 'What is this image?', '¿Qué es esta imagen?');
     $('#genBody').innerHTML = Verter.html('<p>' + esc(tr('É print do app do banco ou nota/canhoto/orçamento?', 'Is it a screenshot of the bank app or an invoice/receipt/quote?', '¿Es una captura de la app del banco o una factura/ticket/presupuesto?')) + '</p>' +
       '<div class="f-actions" style="flex-wrap:wrap;gap:6px"><button class="btn primary" data-acao="pc-dest" data-v="print">📱 ' + esc(tr('Print do app do banco', 'Bank app screenshot', 'Captura de la app del banco')) + '</button>' +
-      '<button class="btn primary" data-acao="pc-dest" data-v="canhoto">🧾 ' + esc(tr('Nota, canhoto ou orçamento', 'Invoice, receipt or quote', 'Factura, ticket o presupuesto')) + '</button></div>');
+      '<button class="btn primary" data-acao="pc-dest" data-v="canhoto">🧾 ' + esc(tr('Nota, canhoto ou orçamento', 'Invoice, receipt or quote', 'Factura, ticket o presupuesto')) + '</button>' +
+      (window.PosicoesTexto ? '<button class="btn primary" data-acao="pc-dest" data-v="posicoes">📈 ' + esc(tr('Posições de investimento', 'Investment positions', 'Posiciones de inversión')) + '</button>' : '') + '</div>');   /* 1.4.0 (3.134) */
     abrir('genModal');
   }
   setTimeout(compartilhado, 1500);
@@ -387,6 +388,8 @@
 
   var API = {
     _hoje: null, _ocr: null,
+    /* 1.4.0 (3.134): o mesmo OCR no aparelho para "📷 Foto ou print" das posições (modulos/posicoes-texto.js) */
+    lerImagem: function (arquivo, aviso) { return (API._ocr || lerImagem)(arquivo, aviso); },
     itensDoTexto: itensDoTexto, processar: processar, abrirPrevia: abrirPrevia, conciliar: conciliar, pendentes: pendentes, lojaParecida: lojaParecida, opcoes: opcoes,
     /* o saldo previsto: o Pix/pagamento de uma conta do robô ainda não entregue sai amanhã (já aconteceu no banco) */
     eventos: function (conta) {
@@ -395,7 +398,7 @@
   };
 
   MoneyModulos.registrar({
-    id: 'print-colar', versao: '1.3.2',
+    id: 'print-colar', versao: '1.4.0',
     pontos: {
       'lancamentos.topo': function () {
         if (conciliar()) Store.salvar();
@@ -451,7 +454,7 @@
         lido = null; conciliar(); fechar('genModal'); depois();
         toast(its.length + tr(' item(ns) do print: ', ' screenshot item(s): ') + (np ? np + tr(' aguardando o banco', ' waiting for the bank') : '') + (np && np < its.length ? ' · ' : '') + (its.length - np ? (its.length - np) + tr(' lançado(s)', ' added') : ''));
       },
-      'pc-dest': function (el) { var fs = compartilhados; compartilhados = null; fechar('genModal'); if (!fs) return; if (el.dataset.v === 'canhoto') Canhotos.processar(fs); else processar(fs); },
+      'pc-dest': function (el) { var fs = compartilhados; compartilhados = null; fechar('genModal'); if (!fs) return; if (el.dataset.v === 'canhoto') Canhotos.processar(fs); else if (el.dataset.v === 'posicoes' && window.PosicoesTexto) PosicoesTexto.daImagens(fs); else processar(fs); },
       'pc-par': function (el) { var p = lista().find(function (x) { return x.id === el.dataset.id; }), g = p && alvo(p.par); if (p && g) { unir(p, g); depois(); } },
       'pc-parnao': function (el) { var p = lista().find(function (x) { return x.id === el.dataset.id; }); if (!p) return; (p.parNao = p.parNao || {})[p.par] = 1; delete p.par; depois(); },
       'pc-amao': function (el) {

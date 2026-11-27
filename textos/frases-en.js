@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.133 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.134 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.134 */
+  'Importar posições colando ou por foto':'Import positions by pasting or by photo',
+  '📋 No topo da Carteira, "Colar texto": cole a tabela que você copiou da corretora (ou que outro assistente gerou) ou a tela da previdência, e o app monta as posições. Funciona com números 1.234,56 e 1234.56, em reais ou dólares.':'📋 At the top of the Portfolio, "Paste text": paste the table you copied from the broker (or another assistant made) or the pension screen, and the app builds the positions. Works with 1.234,56 and 1234.56, in reais or dollars.',
+  '📷 "Foto ou print": o app lê a tela no próprio aparelho, sem mandar para lugar nenhum. A imagem compartilhada com o app também pode ir para "Posições de investimento". Tudo cai na mesma conferência de antes: o que já existe vem desmarcado e nada é duplicado.':'📷 "Photo or screenshot": the app reads the screen on the device itself, without sending it anywhere. An image shared with the app can also go to "Investment positions". Everything lands on the same check as before: what already exists comes unticked and nothing is duplicated.',
   /* 3.133 */
   'Mande e-mails para o MoneyTRIO':'Send e-mails to MoneyTRIO',
   '📧 Em Configurações › Compartilhadas, "Mandar e-mails para o MoneyTRIO": cadastre os e-mails da família que podem mandar contas, notas e compras para moneytrio@solverone.com.br. Cada endereço se confirma com um código de 6 dígitos, e o botão "Abrir e-mail pronto" já preenche tudo.':'📧 In Settings › Shared, "Send e-mails to MoneyTRIO": add the family e-mails that can send bills, invoices and purchases to moneytrio@solverone.com.br. Each address is confirmed with a 6-digit code, and the "Open ready e-mail" button fills everything in.',

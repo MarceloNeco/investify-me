@@ -1,11 +1,15 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.133 · 26/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.134 · 26/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.134', d:'2026-11-26', t:'Importar posições colando ou por foto', itens:[
+    '📋 No topo da Carteira, "Colar texto": cole a tabela que você copiou da corretora (ou que outro assistente gerou) ou a tela da previdência, e o app monta as posições. Funciona com números 1.234,56 e 1234.56, em reais ou dólares.',
+    '📷 "Foto ou print": o app lê a tela no próprio aparelho, sem mandar para lugar nenhum. A imagem compartilhada com o app também pode ir para "Posições de investimento". Tudo cai na mesma conferência de antes: o que já existe vem desmarcado e nada é duplicado.'
+  ]},
   {v:'3.133', d:'2026-11-26', t:'Mande e-mails para o MoneyTRIO', itens:[
     '📧 Em Configurações › Compartilhadas, "Mandar e-mails para o MoneyTRIO": cadastre os e-mails da família que podem mandar contas, notas e compras para moneytrio@solverone.com.br. Cada endereço se confirma com um código de 6 dígitos, e o botão "Abrir e-mail pronto" já preenche tudo.',
     '↪️ O passo a passo para encaminhar sozinho no Gmail (com os filtros prontos para baixar e importar), no Outlook/Hotmail e no iCloud, e o caminho do Yahoo, que só encaminha à mão.'

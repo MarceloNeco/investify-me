@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/importar-posicoes.js — "Importar posições (JSON)" (InvestifyONE)   1.0.0 · 06/Nov/2026
+   modulos/importar-posicoes.js — "Importar posições (JSON)" (InvestifyONE)   1.1.0 · 27/Nov/2026 (3.134: colar texto e foto, a mesma prévia)
    ---------------------------------------------------------------------
    O QUE FAZ
      Lê um arquivo {"tipo":"moneytrio-posicoes","versao":1,"itens":[…]} e mostra a prévia em tabela:
@@ -73,6 +73,8 @@
       });
       return n;
     },
+    /* 1.1.0 (3.134): a mesma prévia para o que veio do texto colado ou da foto (modulos/posicoes-texto.js) */
+    mostrarPrevia: function (l) { lista = l; mostrar(); },
     escolher: function () {
       var i = document.createElement('input'); i.type = 'file'; i.accept = 'application/json,.json'; i.style.display = 'none';
       i.addEventListener('change', async function () {
@@ -111,9 +113,11 @@
 
   MoneyModulos.registrar({
     id: 'importar-posicoes',
-    versao: '1.0.0',
+    versao: '1.1.0',
     pontos: {
-      'investify.carteira.topo': function () { return '<div class="row il-acoes" style="gap:8px;margin:0 0 12px;justify-content:flex-end"><button class="btn sm" data-acao="posimp-escolher">⬆ ' + (pt() ? 'Importar posições (JSON)' : 'Import positions (JSON)') + '</button></div>'; }
+      'investify.carteira.topo': function () { return '<div class="row il-acoes" style="gap:8px;margin:0 0 12px;justify-content:flex-end;flex-wrap:wrap">' +
+        (window.PosicoesTexto ? PosicoesTexto.botoes() : '') +   /* 1.1.0 (3.134): 📋 Colar texto e 📷 Foto ou print */
+        '<button class="btn sm" data-acao="posimp-escolher">⬆ ' + (pt() ? 'Importar posições (JSON)' : 'Import positions (JSON)') + '</button></div>'; }
     },
     acoes: {
       'posimp-escolher': function () { API.escolher(); },

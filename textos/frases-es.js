@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.133 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.134 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,10 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.134 — rascunho, revisar */
+  'Importar posições colando ou por foto':'Importar posiciones pegando o por foto',
+  '📋 No topo da Carteira, "Colar texto": cole a tabela que você copiou da corretora (ou que outro assistente gerou) ou a tela da previdência, e o app monta as posições. Funciona com números 1.234,56 e 1234.56, em reais ou dólares.':'📋 Arriba en la Cartera, "Pegar texto": pega la tabla que copiaste del bróker (o que generó otro asistente) o la pantalla de la previsión, y la app arma las posiciones. Funciona con 1.234,56 y 1234.56, en reales o dólares.',
+  '📷 "Foto ou print": o app lê a tela no próprio aparelho, sem mandar para lugar nenhum. A imagem compartilhada com o app também pode ir para "Posições de investimento". Tudo cai na mesma conferência de antes: o que já existe vem desmarcado e nada é duplicado.':'📷 "Foto o captura": la app lee la pantalla en el propio dispositivo, sin enviarla a ninguna parte. La imagen compartida con la app también puede ir a "Posiciones de inversión". Todo cae en la misma revisión de antes: lo que ya existe viene desmarcado y nada se duplica.',
   /* 3.133 — rascunho, revisar */
   'Mande e-mails para o MoneyTRIO':'Envía correos a MoneyTRIO',
   '📧 Em Configurações › Compartilhadas, "Mandar e-mails para o MoneyTRIO": cadastre os e-mails da família que podem mandar contas, notas e compras para moneytrio@solverone.com.br. Cada endereço se confirma com um código de 6 dígitos, e o botão "Abrir e-mail pronto" já preenche tudo.':'📧 En Configuración › Compartidas, "Enviar correos a MoneyTRIO": registra los correos de la familia que pueden enviar facturas, notas y compras a moneytrio@solverone.com.br. Cada dirección se confirma con un código de 6 dígitos, y el botón "Abrir correo listo" ya lo rellena todo.',
