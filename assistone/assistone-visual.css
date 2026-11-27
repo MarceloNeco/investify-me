@@ -1,5 +1,5 @@
 /* =====================================================================
-   assistone-visual.css — o visual novo do AssistONE (personagem + painel)      1.1.2 · 26/Nov/2026
+   assistone-visual.css — o visual novo do AssistONE (personagem + painel)      1.2.1 · 27/Nov/2026
    MASTER no repositório privado MarceloNeco/assist-one (balao/visual/). Nos apps, a pasta
    assistone/ é uma CÓPIA IDÊNTICA: nunca editar a cópia; mudar aqui, testar e copiar.
    Desenho aprovado pelo dono (Claude Design, 26/Nov/2026): docs/desenho-pacote/ESPECIFICACAO.md.
@@ -416,6 +416,25 @@
 .aov-casa.aov-pensando .ao-root{--ao-en:1;--ao-arc:.9}
 @media (prefers-reduced-motion: reduce){ .aov-dots i{animation:none;opacity:.8} .aov-casa.aov-pensando .ao-root{--ao-en:0 !important} }
 html.sem-animacao .aov-dots i{animation:none;opacity:.8}
+
+/* "Me mostra onde fica" (1.2.0): botão na resposta e o destaque na tela (tudo escuro, só o lugar aceso, balão explicando) */
+.aov-painel .aov-mostra{align-self:flex-start;margin-top:-4px;color:var(--ao-goldtx);border-color:var(--ao-goldl)}
+.aov-painel .aov-mostra svg{color:var(--ao-gold)}
+.aov-painel .aov-mostra:disabled{opacity:.6;cursor:default}
+.aov-destaque{position:fixed;left:0;top:0;right:0;bottom:0;z-index:9996;font-family:var(--ao-font);color:var(--ao-tx)}
+.aov-furo{position:fixed;border-radius:14px;box-shadow:0 0 0 200vmax var(--ao-scrim),0 0 0 2px var(--ao-gold) inset;outline:2px solid var(--ao-gold);outline-offset:0;
+  transition:left .3s,top .3s,width .3s,height .3s;pointer-events:none;opacity:0}
+.aov-destaque.aov-dest-on .aov-furo{opacity:1;transition:opacity .25s,left .3s,top .3s,width .3s,height .3s}
+.aov-dbalao{position:fixed;background:var(--ao-sheet);border:1px solid var(--ao-goldl);border-radius:16px;padding:10px 6px 12px 16px;
+  box-shadow:0 12px 32px rgba(0,0,0,.35);font-size:14.5px;line-height:1.45;box-sizing:border-box;opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s}
+.aov-destaque.aov-dest-on .aov-dbalao{opacity:1;transform:none}
+.aov-dbalao-t{display:flex;align-items:center;gap:8px}
+.aov-dbalao-t b{flex:1;font-size:15px}
+.aov-dbalao p{margin:2px 10px 0 0;color:var(--ao-mu)}
+.aov-dbalao .aov-dfechar{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:0;background:none;color:var(--ao-mu);cursor:pointer;flex:none}
+.aov-dbalao .aov-dfechar:focus-visible{outline:2px solid var(--ao-focus);outline-offset:-2px}
+@media (prefers-reduced-motion: reduce){ .aov-furo,.aov-dbalao{transition:none !important} }
+html.sem-animacao .aov-furo,html.sem-animacao .aov-dbalao{transition:none !important}
 
 /* computador: painel lateral de 420 px, sem película */
 @media (min-width:900px){

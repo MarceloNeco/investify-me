@@ -17,7 +17,7 @@
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
 <link rel="stylesheet" href="estilo.css?v=3.133">
-<link rel="stylesheet" href="assistone/assistone-visual.css?v=1.1.2">
+<link rel="stylesheet" href="assistone/assistone-visual.css?v=1.2.1">
 </head>
 <body>
 
@@ -46,8 +46,8 @@
 
     <div class="topbar-actions">
       <button type="button" class="icon-btn ia-ico" id="btnIA" data-acao="ia-abrir" data-recurso="ia" aria-label="Perguntar à IA sobre o que está na tela" title="Perguntar à IA sobre o que está na tela">✨</button>
-      <button type="button" class="icon-btn" id="btnBusca" aria-label="Buscar" title="Buscar no app">🔍</button>
-      <button type="button" class="icon-btn inbox-bt" id="btnInbox" aria-label="Mensagens" title="Mensagens e avisos"
+      <button type="button" class="icon-btn" id="btnBusca" data-ajuda="busca" aria-label="Buscar" title="Buscar no app">🔍</button>
+      <button type="button" class="icon-btn inbox-bt" id="btnInbox" data-ajuda="inbox" aria-label="Mensagens" title="Mensagens e avisos"
               aria-haspopup="dialog">📥<span class="inbox-n hidden" id="inboxN" aria-hidden="true"></span></button>
       <span class="sr-only" id="inboxLive" aria-live="polite"></span>
       <div class="perfil-caixa">
@@ -132,7 +132,7 @@
           <span id="fvVersao">versão —</span>
           <span class="fv-sep">·</span>
           <span id="fvData">—</span>
-          <button class="linkinho" data-acao="ver-mudancas">o que mudou</button>
+          <button class="linkinho" data-acao="ver-mudancas" data-ajuda="o-que-mudou">o que mudou</button>
         </div>
         <details class="footer-legal"><summary>Avisos legais e privacidade</summary>
         <p><b>Uso pessoal, estudo e pesquisa.</b> Esta ferramenta foi construída por uma pessoa física para
@@ -683,8 +683,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.137"></script>
-<script src="textos/frases-es.js?v=3.137"></script>
+<script src="textos/frases-en.js?v=3.138"></script>
+<script src="textos/frases-es.js?v=3.138"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7679,7 +7679,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.137"></script>
+<script src="textos/mudancas.js?v=3.138"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -10199,16 +10199,20 @@ const B_VAZIO = {
   'b-futuro': {h:'Projeção',    ico:'🔮', t:'O futuro se desenha com o histórico',
                p:'Com alguns meses de lançamentos o app projeta os próximos. Comece por uma foto, pela planilha ou na mão.'}
 };
+/* 3.138: os lugares do mapa do AssistONE ("Me mostra onde fica", assistone-mapa.json) nas telas vazias */
+const AJUDA_ACAO = {'b-lanc': {'b-novo':'lanc-novo', 'b-escanear':'ler-comprovante', 'b-importar':'importar-extrato'}, 'b-custos': {'rec-novo':'conta-fixa-nova'},
+  'b-renda': {'sal-cad-novo':'renda-salario', 'renda-nova':'renda-nova'}};   /* só na tela do lugar: as outras telas ficam na página, escondidas */
+const AJUDA_TELA = {'b-fluxo':'fluxo', 'b-futuro':'projecao'};
 const B_VAZIO_ACOES = [['b-escanear','📷 Ler comprovante',true],['wz-abrir','✨ Começar pelo básico'],['b-importar','📄 Importar arquivo'],['b-novo','+ Novo lançamento']];
 function bVazio(tela){
   const v = B_VAZIO[tela || viewAtual] || B_VAZIO['b-painel'];
-  return '<div class="card-head"><h1>' + v.h + '</h1></div>' +
+  return '<div class="card-head"><h1' + (AJUDA_TELA[tela || viewAtual] ? ' data-ajuda="' + AJUDA_TELA[tela || viewAtual] + '"' : '') + '>' + v.h + '</h1></div>' +
     '<div class="card"><div class="vazio">' +
       '<div class="vazio-ico">' + v.ico + '</div>' +
       '<h3>' + v.t + '</h3>' +
       '<p>' + v.p + '</p>' +
       '<div class="f-actions vazio-acoes">' +
-        (v.acoes || B_VAZIO_ACOES).map(a => '<button class="btn' + (a[2] ? ' primary' : '') + '" data-acao="' + a[0] + '">' + a[1] + '</button>').join('') +
+        (v.acoes || B_VAZIO_ACOES).map(a => '<button class="btn' + (a[2] ? ' primary' : '') + '" data-acao="' + a[0] + '"' + ((AJUDA_ACAO[tela || viewAtual] || {})[a[0]] ? ' data-ajuda="' + AJUDA_ACAO[tela || viewAtual][a[0]] + '"' : '') + '>' + a[1] + '</button>').join('') +
       '</div>' +
     '</div></div>';
 }
@@ -10244,9 +10248,9 @@ function viewBLanc(){
 
   let h = '<div class="card-head"><h1>Lançamentos</h1>' +
     '<div class="head-acoes">' +
-      '<button class="btn sm" data-acao="b-escanear">📷 Escanear</button>' +
-      '<button class="btn sm" data-acao="b-importar">📄 Importar arquivo</button>' +
-      '<button class="btn primary sm" data-acao="b-novo">+ Novo</button>' +
+      '<button class="btn sm" data-acao="b-escanear" data-ajuda="ler-comprovante">📷 Escanear</button>' +
+      '<button class="btn sm" data-acao="b-importar" data-ajuda="importar-extrato">📄 Importar arquivo</button>' +
+      '<button class="btn primary sm" data-acao="b-novo" data-ajuda="lanc-novo">+ Novo</button>' +
     '</div></div>';
 
   h += (window.MoneyModulos ? MoneyModulos.html('lancamentos.topo', {}) : '');
@@ -11012,8 +11016,8 @@ function viewBRenda(){
   let h = '<div class="card-head"><h1>Renda</h1>' +
     '<span class="small muted">' + toda.length + ' lançamentos desde ' +
     (toda.length ? fmtData(toda.map(g => g.data).filter(Boolean).sort()[0]) : '—') + '</span>' +
-    '<div class="head-acoes"><button class="btn primary sm" data-acao="renda-nova">+ ' + (I18n.atual === 'pt' ? 'Nova renda' : 'New income') + '</button>' +
-    '<button class="btn sm" data-acao="sal-cad-novo">+ ' + (I18n.atual === 'pt' ? 'Salário' : 'Salary') + '</button></div></div>' +
+    '<div class="head-acoes"><button class="btn primary sm" data-acao="renda-nova" data-ajuda="renda-nova">+ ' + (I18n.atual === 'pt' ? 'Nova renda' : 'New income') + '</button>' +
+    '<button class="btn sm" data-acao="sal-cad-novo" data-ajuda="renda-salario">+ ' + (I18n.atual === 'pt' ? 'Salário' : 'Salary') + '</button></div></div>' +
     barraFiltros({busca:false});
 
   if(!toda.length)
@@ -11067,7 +11071,7 @@ function viewBFuturo(){
   const segAnos = '<div class="seg" id="bAnosSeg">' + [3,5,10,20].map(a => '<button data-banos="' + a + '"' + (a === bAnos ? ' class="active"' : '') + '>' + a + (pt ? ' anos' : ' years') + '</button>').join('') + '</div>';
   const segModo = '<div class="seg proj-modo">' + [['mes', pt ? 'por mês' : 'per month'], ['ano', pt ? 'por ano' : 'per year']].map(m =>
     '<button data-acao="proj-modo" data-v="' + m[0] + '"' + (projModo === m[0] ? ' class="active"' : '') + '>' + m[1] + '</button>').join('') + '</div>';
-  let h = '<div class="card-head"><h1>' + esc(t('nav.futuro')) + '</h1>' + segAnos + '</div>';
+  let h = '<div class="card-head"><h1 data-ajuda="projecao">' + esc(t('nav.futuro')) + '</h1>' + segAnos + '</div>';
 
   if(!bProj){
     const busca = Orcamento._buscando;
@@ -12282,7 +12286,7 @@ function viewBFluxo(){
   const lista = bLista();
   const serie = Gasto.serieMensal(lista);
 
-  let h = '<div class="card-head"><h1>Fluxo</h1></div>' + barraFiltros({busca:false});
+  let h = '<div class="card-head"><h1 data-ajuda="fluxo">Fluxo</h1></div>' + barraFiltros({busca:false});
 
   if(cob.desequilibrada)
     h += '<div class="aviso-box"><b>A renda começa depois das despesas</b>' +
@@ -17450,7 +17454,7 @@ function viewBCustos(){
 
   /* 3.76: um botão só, "+ Adicionar", com as opções explicadas (o menu junta as do app e as dos módulos) */
   let h = '<div class="card-head"><h1>' + esc(t('nav.custos')) + '</h1>' +
-    '<div class="head-acoes"><button class="btn primary sm" data-acao="cf-adicionar">+ ' + (pt ? 'Adicionar' : 'Add') + '</button></div></div>';
+    '<div class="head-acoes"><button class="btn primary sm" data-acao="cf-adicionar" data-ajuda="conta-fixa-nova">+ ' + (pt ? 'Adicionar' : 'Add') + '</button></div></div>';
   /* 3.76: duas partes — as contas que se repetem e os gastos que dá para prever (viagens, carro, parcelados) */
   const sec = (s, rot) => '<button type="button" class="btn sm' + (custosSecao === s ? ' primary' : '') + '" data-acao="cf-secao" data-v="' + s + '" aria-pressed="' + (custosSecao === s) + '">' + rot + '</button>';
   h += '<div class="seg cf-secoes" role="group" style="margin:0 0 12px">' + sec('contas', '📌 ' + esc(pt ? 'Contas fixas' : 'Fixed bills')) + sec('planejados', '🧭 ' + esc(pt ? 'Gastos planejados' : 'Planned expenses')) + '</div>';
@@ -18878,12 +18882,17 @@ const AssistOne = {
   ligar(){
     const casa = $('#assistOne');
     if(!casa || this.vis || !window.AssistOneVisual) return;
+    /* 3.138: "Me mostra onde fica" — o mapa dos lugares do app (assistone-mapa.json, fixo, sem dado de pessoa) */
+    this.mapa = [];
+    fetch('assistone-mapa.json').then(r => r.ok ? r.json() : null).then(j => { this.mapa = (j && j.lugares) || []; }).catch(() => {});
     this.vis = AssistOneVisual.montar(casa, {
       idioma: () => I18n.atual,
       corpoId: 'assistBalao',
       tela: () => this.infoTela(),
       itens: () => ({ perguntar: !!(window.AssistHermes && AssistHermes.disponivel()) }),
       acao: id => this.opcao(id),
+      mapa: () => this.mapa || [],   /* 3.138 */
+      ir: (g) => this.irLugar(g),
       aoAbrir: () => { this.aberto = true; },
       aoFechar: () => { this.aberto = false; }
     });
@@ -18908,6 +18917,38 @@ const AssistOne = {
   fechar(){
     if(this.vis) this.vis.fechar();
     this.aberto = false;
+  },
+
+  /* 3.138: "algo não salvo" = uma janela aberta com um campo que a pessoa mudou */
+  naoSalvo(){
+    return $$('.modal-wrap:not(.hidden)').some(m => Array.from(m.querySelectorAll('input, textarea, select')).some(c => {
+      if(c.type === 'checkbox' || c.type === 'radio') return c.checked !== c.defaultChecked;
+      if(c.tagName === 'SELECT'){ const i = Array.from(c.options).findIndex(o => o.defaultSelected); return c.selectedIndex !== (i < 0 ? 0 : i); }
+      return c.type !== 'file' && c.type !== 'hidden' && c.value !== c.defaultValue;
+    }));
+  },
+
+  /* 3.138: leva até a tela de um lugar do mapa; o AssistONE espera o elemento [data-ajuda] e destaca (nunca clica sozinho).
+     Com algo não salvo, pergunta antes; se a pessoa preferir ficar, devolve false e nada muda (o visual 1.2.1 mantém a conversa). */
+  async irLugar(g){
+    if(this.naoSalvo()){
+      const l = I18n.atual;
+      if(!confirm(l === 'pt' ? 'Há algo não salvo nesta janela. Sair dela e ir até lá mesmo assim?'
+                 : l === 'es' ? 'Hay algo sin guardar en esta ventana. ¿Salir de ella e ir allí de todos modos?'
+                 : 'There is something unsaved in this window. Leave it and go there anyway?')) return false;
+    }
+    $$('.modal-wrap:not(.hidden)').forEach(m => { if(sairDoWizard(m.id)){ if(m.id === 'assetModal') recGuardarRascunho(); m.classList.add('hidden'); } });   /* como o Esc */
+    try{
+      if(g.modulo === 'hub') mostrarHub();
+      else if(!g.modulo){ if($('#app').classList.contains('hidden')) abrirApp(ST.appAtual || 'budget'); }   /* o topo: no app em que a pessoa está */
+      else{
+        if(g.modulo && ((ST.appAtual || '') !== g.modulo || $('#app').classList.contains('hidden'))) abrirApp(g.modulo);
+        if(g.tela) irPara(g.tela);
+        if(g.tela === 'config' && g.secao){ cfgSecao = g.secao; render(); }   /* a aba das Configurações em que o lugar está */
+      }
+    }catch(e){}
+    await new Promise(ok => setTimeout(ok, 60));
+    return true;
   },
 
   /* o nome e a frase da tela em que a pessoa está ("Você está em"); a frase some quando o RootifyONE desliga "assistone.dicas" */
@@ -18975,7 +19016,7 @@ function blocoBancosCartoes(){
   const bancos = Banco.todos();
   const cartoes = Banco.cartoes();
 
-  let h = '<div class="card cfg-sec" data-sec="budget">' +
+  let h = '<div class="card cfg-sec" data-sec="budget" data-ajuda="bancos-cartoes">' +
     '<div class="card-head"><h3>' + (pt ? 'Bancos e cartões' : 'Banks and cards') + '</h3></div>' +
     '<p class="small muted">' + (pt
       ? 'Cadastre uma vez e depois é só escolher na hora de lançar. Com o cartão cadastrado, o app soma sozinho quanto está aberto em cada fatura.'
@@ -22354,7 +22395,7 @@ function viewTDeclaracoes(){
   const l = Tax.estado().declaracoes;
   let h = '<div class="card-head"><h1>' + (pt ? 'Declarações' : 'Tax returns') + '</h1>' +
     '<div class="f-actions" style="margin:0"><button class="btn sm" data-acao="tx-dec-manual">' + (pt ? 'Digitar' : 'Type in') + '</button>' +
-    '<button class="btn primary sm" data-acao="tx-importar">📄 ' + (pt ? 'Importar PDF' : 'Import PDF') + '</button></div></div>' +
+    '<button class="btn primary sm" data-acao="tx-importar" data-ajuda="declaracao-importar">📄 ' + (pt ? 'Importar PDF' : 'Import PDF') + '</button></div></div>' +
     '<input type="file" id="txArquivo" accept=".pdf,image/*" multiple class="hidden">';
   if(!l.length){
     h += '<div class="card"><p class="small" style="margin-top:0">' + (pt
@@ -23875,7 +23916,7 @@ function viewTDocs(){
   const anos = Array.from(new Set([Number(hojeISO().slice(0, 4)) - 1, Number(hojeISO().slice(0, 4)) - 2].concat(DocIR.anos()))).sort((x, y) => y - x).slice(0, 5);
   let h = '<div class="card-head"><h1>' + (pt ? 'Documentos do IR' : 'Tax documents') + '</h1>' +
     '<div class="f-actions" style="margin:0"><button class="btn sm" data-acao="as-camera">📷 ' + (pt ? 'Ler comprovante' : 'Read receipt') + '</button>' +
-    '<button class="btn primary sm" data-acao="doc-ler">📎 ' + (pt ? 'Ler documentos' : 'Read documents') + '</button></div></div>' +
+    '<button class="btn primary sm" data-acao="doc-ler" data-ajuda="documentos-ir">📎 ' + (pt ? 'Ler documentos' : 'Read documents') + '</button></div></div>' +
     '<input type="file" id="docArquivo" accept=".pdf,image/*" multiple class="hidden">' +
     '<div class="chips tx-anos">' + anos.map(a => '<button class="chip' + (a === A ? ' on' : '') + '" data-acao="doc-ano" data-ano="' + a + '">' +
       (pt ? 'Ano ' : 'Year ') + a + '</button>').join('') + '</div>';
@@ -24961,7 +25002,7 @@ function viewCarteira(){
   const t = totais();
   let h = '<div class="card-head"><h1>Carteira</h1><div class="spacer"></div>' +
     '<button class="btn sm" data-acao="csv">⬇ CSV</button>' +
-    '<button class="btn primary sm" data-acao="nova">+ Novo investimento</button></div>';
+    '<button class="btn primary sm" data-acao="nova" data-ajuda="investimento-novo">+ Novo investimento</button></div>';
   h += (window.MoneyModulos ? MoneyModulos.html('investify.carteira.topo', {}) : '');   /* 3.45: importar posições, sem liquidez */
 
   if(!ST.posicoes.length){
@@ -26715,7 +26756,7 @@ function viewConfig(){
   '</div>';
 
   /* chaves */
-  h += '<div class="card cfg-sec" data-sec="todos"><div class="card-head"><h3>Chaves gratuitas (opcional)</h3></div>' +
+  h += '<div class="card cfg-sec" data-sec="todos" data-ajuda="chaves-gratuitas"><div class="card-head"><h3>Chaves gratuitas (opcional)</h3></div>' +
     '<p class="small muted">Funcionam sem cadastro: câmbio, cripto, indicadores do Banco Central e as principais ações da B3. ' +
     'Para FIIs, ETFs brasileiros e ações dos EUA, cole abaixo as chaves gratuitas — é rápido e não precisa de cartão.</p>' +
 
@@ -26781,7 +26822,7 @@ function viewConfig(){
   '</div>';
 
   /* armazenamento */
-  h += '<div class="card cfg-sec" data-sec="todos"><div class="card-head"><h3>Onde seus dados ficam salvos</h3></div>' +
+  h += '<div class="card cfg-sec" data-sec="todos" data-ajuda="backup"><div class="card-head"><h3>Onde seus dados ficam salvos</h3></div>' +
     '<div class="tbl-wrap"><table class="status-tbl"><tbody>' +
     linhaStatus('No navegador (principal)', 'Guarda a carteira inteira neste computador ou celular. Some se você limpar os dados do navegador.', 'ativo') +
     linhaStatus('Cookie (espelho de segurança)', Store.statusCookie, cfg.usarCookie ? 'ativo' : 'desligado') +
@@ -26839,7 +26880,7 @@ function viewConfig(){
   '</div>';
 
   /* drive */
-  h += '<div class="card cfg-sec" data-sec="todos"><div class="card-head"><h3>Sincronizar com o Google Drive</h3></div>' +
+  h += '<div class="card cfg-sec" data-sec="todos" data-ajuda="google-drive"><div class="card-head"><h3>Sincronizar com o Google Drive</h3></div>' +
     '<p class="small muted">Guarda uma cópia da sua carteira numa pasta privada do seu próprio Drive, para você abrir o app em outro aparelho ' +
     'e continuar de onde parou. O app enxerga apenas essa pasta — nenhum outro arquivo seu.</p>' +
     '<details' + (cfg.driveClientId ? '' : ' open') + '><summary class="small" style="cursor:pointer;margin-bottom:10px"><b>Passo a passo para ligar (uma vez só)</b></summary>' +
@@ -26983,7 +27024,7 @@ function viewConfig(){
     'Exportar backup em Compartilhadas salva os dois apps de uma vez.</p></div>';
 
   /* ---- compartilhadas: idioma, biometria, compartilhar ---- */
-  h += '<div class="card cfg-sec" data-sec="todos"><div class="card-head"><h3>' +
+  h += '<div class="card cfg-sec" data-sec="todos" data-ajuda="idioma"><div class="card-head"><h3>' +
     (I18n.atual === 'pt' ? 'Idioma e formatos' : 'Language and formats') + '</h3></div>' +
     '<div class="chips" style="margin-bottom:12px">' + I18n.visiveis().map(k =>
       '<button class="chip click' + (I18n.atual === k ? ' on' : '') + '" data-idioma="' + k + '">' +
@@ -30189,11 +30230,11 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/previsto.js?v=1.0.2"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
 <script src="modulos/calendario-menu.js?v=1.2.1"></script>
-<script src="modulos/pessoas.js?v=1.7.0"></script>
+<script src="modulos/pessoas.js?v=1.7.1"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
 <script src="modulos/saldo-banco.js?v=2.5.0"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
-<script src="assistone/assistone-visual.js?v=1.1.2"></script>
+<script src="assistone/assistone-visual.js?v=1.2.1"></script>
 <script src="modulos/tour.js?v=1.1.0"></script>
 <script src="modulos/cartoes.js?v=1.4.0"></script>
 <script src="modulos/cartao-foto.js?v=1.0.0"></script>

@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.137 · 27/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.138 · 27/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,9 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.138 — rascunho, revisar */
+  'O assistente mostra onde fica':'El asistente te muestra dónde está',
+  '📍 Pergunte ao assistente onde fica alguma coisa (ex.: "como eu lanço um gasto?") e toque em "Me mostra onde fica": o app vai até a tela e acende o botão, sem clicar por você. Tocando fora, você volta para a conversa.':'📍 Pregunta al asistente dónde está algo (p. ej.: "¿cómo apunto un gasto?") y toca "Muéstrame dónde está": la app va a la pantalla y resalta el botón, sin pulsar por ti. Si tocas fuera, vuelves a la conversación.',
   /* 3.137 — rascunho, revisar */
   '🗂️ O extrato mensal da corretora (Avenue) que chega por e-mail atualiza a Carteira: a quantidade de cada papel muda, o seu preço médio nunca; papel novo entra com o selo "📄 veio do extrato"; o dinheiro parado vira "Dinheiro em USD". Extrato mais velho que a sua última importação não mexe em nada, e papel que sumiu do extrato pergunta "vendeu?" antes de sair.':'🗂️ El extracto mensual del bróker (Avenue) que llega por correo actualiza la Cartera: cambia la cantidad de cada valor, tu precio medio nunca; un valor nuevo entra con la etiqueta "📄 vino del extracto"; el dinero parado pasa a "Dinero en USD". Un extracto más antiguo que tu última importación no cambia nada, y un valor que desaparece del extracto pregunta "¿lo vendiste?" antes de salir.',
   'Compartilhar PDF, extrato ou nota com o app':'Compartir un PDF, extracto o factura con la app',

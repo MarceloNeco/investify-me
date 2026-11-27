@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.137 · 27/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.138 · 27/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.138 */
+  'O assistente mostra onde fica':'The assistant shows you where it is',
+  '📍 Pergunte ao assistente onde fica alguma coisa (ex.: "como eu lanço um gasto?") e toque em "Me mostra onde fica": o app vai até a tela e acende o botão, sem clicar por você. Tocando fora, você volta para a conversa.':'📍 Ask the assistant where something is (e.g. "how do I add an expense?") and tap "Show me where": the app goes to the screen and lights up the button, without clicking for you. Tap outside to go back to the conversation.',
   /* 3.137 */
   '🗂️ O extrato mensal da corretora (Avenue) que chega por e-mail atualiza a Carteira: a quantidade de cada papel muda, o seu preço médio nunca; papel novo entra com o selo "📄 veio do extrato"; o dinheiro parado vira "Dinheiro em USD". Extrato mais velho que a sua última importação não mexe em nada, e papel que sumiu do extrato pergunta "vendeu?" antes de sair.':'🗂️ The broker\'s monthly statement (Avenue) that arrives by e-mail updates the Portfolio: each holding\'s quantity changes, your average price never does; a new holding comes in with the "📄 from the statement" tag; idle cash becomes "Cash in USD". A statement older than your last import changes nothing, and a holding missing from the statement asks "did you sell it?" before leaving.',
   'Compartilhar PDF, extrato ou nota com o app':'Share a PDF, statement or invoice with the app',
