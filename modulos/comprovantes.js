@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.3.1 · 26/Nov/2026
+   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.4.0 · 27/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, "adiante tudo do e-mail"; sem IA)
      · A caixa do robô (nuvem.js, money_entrada) traz um tipo novo de item, tipo "comprovante", tirado dos e-mails lidos
@@ -111,7 +111,9 @@
   }
   /* 1.3.0 (3.128): ficha.categoria_sugerida = {grupo, categoria, confianca: 'palpite', motivo: 'pelo item: friso'} */
   function catDoRobo(x) {
-    var c = x.ficha && x.ficha.categoria_sugerida; if (!c || typeof c !== 'object' || typeof GRUPOS === 'undefined') return null;
+    var c = x.ficha && x.ficha.categoria_sugerida;
+    if (!c && x.itens && x.itens.length && window.CompraItens) { var u = CompraItens.grupoUnico(x.itens); if (u) return { grupo: u.grupo, sub: u.sub, motivo: tr('pelos itens', 'by the items', 'por los artículos'), robo: true }; }   /* 1.4.0 (3.135): itens todos da mesma categoria */
+    if (!c || typeof c !== 'object' || typeof GRUPOS === 'undefined') return null;
     var ng = N(c.grupo), gk = Object.keys(GRUPOS).find(function (k) { return N(k) === ng || N(GRUPOS[k].nome) === ng; }); if (!gk) return null;
     return { grupo: gk, sub: String(c.categoria || c.sub || '').slice(0, 80), motivo: String(c.motivo || '').slice(0, 80), robo: true };
   }
@@ -121,6 +123,7 @@
     /* 1.1.0 (3.96): a pessoa confirmou um valor incerto: o valor do banco vale */
     if (incertoDe(x)) { if (x.parcelas > 1) x.valor_parcela = n2(g.valor); else x.valor = n2(g.valor); x.confianca = 'conferido'; }
     g.ficha = { cid: x.id, produto: x.produto || '', pedido: x.pedido || '', loja: x.loja || '', nf: (g.ficha && g.ficha.nf) || '' };
+    if (x.itens && x.itens.length) g.ficha.itens = x.itens.map(function (it) { return { produto: it.produto, quantidade: it.quantidade, valor: it.valor }; });   /* 1.4.0 (3.135): "ver itens" */
     var s = catDoRobo(x) || palpiteCat(x.descritor_fatura) || palpiteCat(x.loja);   /* 1.3.0 (3.128): a categoria que o robô sugere pelo item vem primeiro */
     x.sugestao = s && (s.grupo !== g.grupo || (s.sub || '') !== (g.sub || '')) ? s : null;
   }
@@ -220,6 +223,7 @@
 
   function processar(x) {
     if (x.estado === 'dispensado') return;
+    if (x.avisoEnvio) { x.estado = 'ok'; return; }   /* 1.4.0 (3.135): "Enviado/Entregue" é a mesma compra: não concilia, não pede nada */
     if (x.ficha && (x.ficha.consorcio || x.ficha.investimento_exterior || (x.ficha.aluguel != null && x.ficha.valor != null))) {   /* 3.127: o demonstrativo do aluguel também */
       x.estado = 'ok'; if (x.ficha.aluguel != null && window.Aluguel) Aluguel.garantirRenda(); return;
     }   /* 3.126: o evento da corretora no exterior também (modulos/invest-exterior.js) */   /* 1.3.0 (3.121): o extrato do consórcio é informação (modulos/consorcio.js), não pede nada */
@@ -254,6 +258,13 @@
       CAMPOS.forEach(function (k) { d[k] = txt(l[k], k === 'descricao' || k === 'linha' ? 300 : 120); });
       if (l.ficha && typeof l.ficha === 'object') d.ficha = fichaLimpa(l.ficha);   /* 1.3.0 (3.120) */
       if (l.debito_automatico === false) d.semDebito = true;
+      /* 1.4.0 (3.135): os itens da compra (modulos/compra-itens.js) e o aviso de "Enviado/Entregue" (não é outra compra) */
+      if (Array.isArray(l.itens)) d.itens = l.itens.slice(0, 40).map(function (it) {
+        var c = it && it.categoria_sugerida && typeof it.categoria_sugerida === 'object' ? catDoRobo({ ficha: { categoria_sugerida: it.categoria_sugerida } }) : null;
+        return { produto: txt(it && it.produto, 120), quantidade: Math.max(1, Math.round(num(it && it.quantidade) || 1)), valor: num(it && it.valor) != null ? n2(Math.abs(num(it.valor))) : 0, cat: c };
+      }).filter(function (it) { return it.produto; });
+      if (l.dividir_por_categoria === true) d.dividir = true;
+      if (l.aviso_envio === true) d.avisoEnvio = true;
       var x = lista().find(function (y) { return y.id === id; });
       if (x) Object.assign(x, d);
       else { x = Object.assign({ id: id, escopo: escopo === 'casa' ? 'casa' : 'reservado', recebidoEm: new Date().toISOString(), estado: 'novo' }, d); lista().push(x); }
@@ -319,7 +330,9 @@
       h += '<button type="button" class="btn sm" data-acao="cn-abrir">📷 ' + esc(tr('Foto a ler: abrir "Foto de nota ou recibo"', 'Photo to read: open "Receipt or invoice photo"', 'Foto por leer: abrir "Foto de factura o recibo"')) + '</button>' + b('cp-foto-ok', tr('Já li a foto', 'Photo read', 'Foto leída'));
     if (x.estado === 'novo') {
       if (x.subtipo === 'compra' && x.gastoId) {
-        if (x.sugestao && x.sugestao.robo) h += '<span class="small cp-eisso">' + esc(tr('É isso? ', 'Is it this? ', '¿Es esto? ') + ((GRUPOS[x.sugestao.grupo] || {}).nome || x.sugestao.grupo) + (x.sugestao.sub ? ' › ' + x.sugestao.sub : '') +
+        var ci = window.CompraItens ? CompraItens.html(x, gasto(x.gastoId)) : '';   /* 1.4.0 (3.135): itens de categorias diferentes → dividir */
+        if (ci) h += ci;
+        else if (x.sugestao && x.sugestao.robo) h += '<span class="small cp-eisso">' + esc(tr('É isso? ', 'Is it this? ', '¿Es esto? ') + ((GRUPOS[x.sugestao.grupo] || {}).nome || x.sugestao.grupo) + (x.sugestao.sub ? ' › ' + x.sugestao.sub : '') +
           (x.sugestao.motivo ? ' (' + x.sugestao.motivo + ')' : '') + (x.produto ? ' — ' + tr('item: ', 'item: ', 'artículo: ') + x.produto : '')) + '</span> ' + b('cp-cat', '✓ ' + tr('É isso', 'Yes, that', 'Es eso'));   /* 1.3.0 (3.128) */
         else if (x.sugestao) h += b('cp-cat', tr('Usar ', 'Use ', 'Usar ') + ((GRUPOS[x.sugestao.grupo] || {}).nome || x.sugestao.grupo) + (x.sugestao.sub ? ' · ' + x.sugestao.sub : ''));
         h += b('cp-ok', tr('Está certo', 'Correct', 'Es correcto')) + b('cp-naoe', tr('Não é este lançamento', 'Not this entry', 'No es este movimiento'));
@@ -354,7 +367,7 @@
   function achar(el) { return lista().find(function (y) { return y.id === el.dataset.id; }); }
 
   MoneyModulos.registrar({
-    id: 'comprovantes', versao: '1.3.1', colecoes: [COL],
+    id: 'comprovantes', versao: '1.4.0', colecoes: [COL],
     pontos: {
       'lancamentos.topo': function () {
         var n = API.abertos().length; if (!n) return '';
