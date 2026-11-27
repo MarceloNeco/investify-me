@@ -1,5 +1,5 @@
 /* =====================================================================
-   assistone-visual.js — o visual novo do AssistONE (personagem + painel)       1.2.0 · 27/Nov/2026
+   assistone-visual.js — o visual novo do AssistONE (personagem + painel)       1.2.1 · 27/Nov/2026
    MASTER no repositório privado MarceloNeco/assist-one (balao/visual/). Nos apps, a pasta
    assistone/ é uma CÓPIA IDÊNTICA: nunca editar a cópia; mudar aqui, testar e copiar.
    Desenho aprovado pelo dono (Claude Design, 26/Nov/2026, decisões D-A15 e de 26/11):
@@ -132,13 +132,14 @@
        acao:   function (id) { … },                          // perguntar | comecar | tour | procurar | ajuda_tela | agora_nao | desligar
        aoAbrir: function () {}, aoFechar: function () {},
        mapa:   function () { return lugares },           // 1.2.0: os lugares que dá para mostrar (arquivo fixo do app, sem dados de ninguém)
-       ir:     function (lugar) { … return Promise }      // 1.2.0: leva até a tela do lugar (o app navega; o AssistONE destaca)
+       ir:     function (lugar) { … return Promise }      // 1.2.0: leva até a tela do lugar (o app navega; o AssistONE destaca);
+                                                         // 1.2.1: devolve false se a pessoa preferiu ficar (algo não salvo)
      });
      v.abrir({ aviso: '<b>Olá!</b> …', leve: true })   // abre no menu (aviso opcional, texto do app, acima do "Você está em";
                                                     // leve = sem película que segura o toque, para aberturas que a pessoa não pediu)
      v.conteudo({ titulo, sub, html | no })  // troca o miolo por outra vista, com "Voltar ao menu"; devolve o miolo
      v.menu() · v.fechar() · v.aberto() · v.atualizar() · v.textos() · v.destruir()
-     1.2.0: v.mostrarLugar(id | lugar) → Promise<achou> · v.escolherLugar(pergunta, resposta) · AssistOneVisual.destacar(el, { titulo, texto })
+     1.2.0: v.mostrarLugar(id | lugar) → Promise<true | false (não achou) | 'ficou' (op.ir devolveu false)> · v.escolherLugar(pergunta, resposta) · AssistOneVisual.destacar(el, { titulo, texto })
      Na conversa, depois da resposta, aparece "Me mostra onde fica" quando há um lugar do mapa para a pergunta.
    Ordem fixa do menu: Perguntar ao assistente (selo IA) · Começar · Tour rápido · Procurar algo · Ajuda desta tela;
    no rodapé, discretos: Agora não · Desligar o AssistONE. Nada de "Abrir um chamado" nem "Dar opinião" (seção 3).
@@ -223,7 +224,9 @@
   /* ---- DESTAQUE NA TELA ("Me mostra onde fica", 1.2.0) -------------------------------------------------------------
      Escurece a tela e deixa só o lugar procurado aceso, com um balão explicando. NUNCA clica nem preenche nada sozinho:
      quem toca é a pessoa (tocar no lugar aceso fecha o destaque e vale como o toque dela). Nada da tela é lido para a IA.
-     AssistOneVisual.destacar(elemento, { titulo, texto }) → { fechar } */
+     AssistOneVisual.destacar(elemento, { titulo, texto, aoFechar(tocouNoLugar) }) → { fechar }
+     1.2.1 (dono, 27/Nov): no "Me mostra" da conversa, tocar fora, ✕ ou Esc tira o destaque e REABRE a conversa onde estava;
+     tocar no lugar aceso vale como o toque da pessoa e a conversa não reabre. */
   var destaqueAtual = null;
   function destacar(alvo, o) {
     o = o || {};
@@ -257,6 +260,7 @@
       destaqueAtual = null;
       try { alvo.focus({ preventScroll: true }); } catch (e) { try { if (antesFoco) antesFoco.focus(); } catch (e2) {} }
       if (valeToque) try { alvo.click(); } catch (e) {}
+      if (o.aoFechar) try { o.aoFechar(!!valeToque); } catch (e) {}   /* 1.2.1: quem abriu decide o que vem depois (ex.: reabrir a conversa) */
     }
     function tecla(ev) { if (ev.key === 'Escape' || ev.key === 'Esc') { ev.stopPropagation(); fechar(false); } }
     raizD.addEventListener('click', function (ev) {
@@ -424,15 +428,23 @@
         for (var i = 0; i < lista.length; i++) { var r = lista[i].getBoundingClientRect(); if (r.width > 0 && r.height > 0 && !painel.contains(lista[i])) return lista[i]; }
         return null;
       }
-      return Promise.resolve().then(function () { return op.ir ? op.ir(g) : null; }).catch(function () {}).then(function () {
+      var ficou = false;
+      return Promise.resolve().then(function () { return op.ir ? op.ir(g) : null; }).catch(function () {}).then(function (r) {
+        /* 1.2.1: o app devolve false quando a pessoa preferiu ficar (ex.: havia algo não salvo na tela) → nada acontece */
+        if (r === false) { ficou = true; return null; }
         return new Promise(function (ok) {
           var fim = Date.now() + 4000;
           (function olhar() { var el = visivel(); if (el || Date.now() > fim) ok(el); else setTimeout(olhar, 150); })();
         });
       }).then(function (el) {
+        if (ficou) return 'ficou';
         if (!el) return false;
+        var voltar = conv && vista === 'conversa' ? conv.op : null;
         if (ch.isOpen()) ch.close();
-        destacar(el, { titulo: tx3(g.nome, l), texto: tx3(g.dica, l) });
+        destacar(el, { titulo: tx3(g.nome, l), texto: tx3(g.dica, l), aoFechar: function (tocou) {
+          if (tocou || !voltar) return;
+          ch.open(); conversa(voltar);   /* tocou fora: volta para a conversa, no ponto em que estava */
+        } });
         return true;
       });
     }
@@ -519,7 +531,7 @@
         if (bm) {
           var it = fio.filter(function (i) { return i.lugar && i.lugar.id === bm.getAttribute('data-lugar'); }).pop();
           bm.disabled = true;
-          mostrarLugar(it && it.lugar).then(function (ok) { if (it) it.naoAchou = !ok; if (!ok) { desenharConversa(); } });
+          mostrarLugar(it && it.lugar).then(function (ok) { if (ok === 'ficou') { bm.disabled = false; return; } if (it) it.naoAchou = !ok; if (!ok) { desenharConversa(); } });
           return;
         }
         var b = ev.target.closest('.aov-chip2'); if (!b) return;
@@ -629,5 +641,5 @@
     };
   }
 
-  global.AssistOneVisual = { VERSAO: '1.2.0', montar: montar, TEXTOS: TX, icone: icone, destacar: destacar };
+  global.AssistOneVisual = { VERSAO: '1.2.1', montar: montar, TEXTOS: TX, icone: icone, destacar: destacar };
 })(window);
