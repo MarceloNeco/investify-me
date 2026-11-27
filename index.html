@@ -1838,6 +1838,7 @@ const Store = {
       Object.keys(chavesAtuais).forEach(k => { if(!novas[k] && chavesAtuais[k]) novas[k] = chavesAtuais[k]; });
       this.estado.config.chaves = novas;
     }
+    ST = this.estado; if(window.Categorias) Categorias.migrar();   /* 3.141: backup antigo com um nome de categoria que mudou ("Sem Parar / Pedagio") → o novo */
     this.salvar();
     return this.estado.posicoes.length;
   },
@@ -12478,7 +12479,7 @@ const SUGESTOES_WZ = {
     {nome:{pt:'Seguro do carro',        en:'Car insurance'},     grupo:'VEICULO', sub:'Seguro Auto', dia:10},
     {nome:{pt:'IPVA e licenciamento',   en:'Road tax'},          grupo:'VEICULO', sub:'IPVA / Inspecao / Licenciamento', dia:15, regra:'anual', mes:1},
     {nome:{pt:'Estacionamento mensal',  en:'Monthly parking'},   grupo:'VEICULO', sub:'Estacionamento',   dia:5},
-    {nome:{pt:'Pedágio e tag',          en:'Tolls'},             grupo:'VEICULO', sub:'Sem Parar / Pedagio', dia:20},
+    {nome:{pt:'Tag e pedágio',          en:'Toll tag and tolls'}, grupo:'VEICULO', sub:'Tag e pedágio', dia:20},
     {nome:{pt:'Revisão',                en:'Servicing'},         grupo:'VEICULO', sub:'Revisao Periodica', dia:15, regra:'anual', mes:7}
   ],
   seguros: [
@@ -30330,7 +30331,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/origem.js?v=1.1.0"></script>
 <script src="modulos/apelido.js?v=1.1.0"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
-<script src="modulos/categorias.js?v=1.0.0"></script>
+<script src="modulos/categorias.js?v=1.1.0"></script>
 <script src="modulos/visao-casa.js?v=1.4.0"></script>
 <script src="modulos/previsao.js?v=1.2.1"></script>
 <script src="modulos/orcamento.js?v=1.2.0"></script>
@@ -30376,7 +30377,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/toast-fechavel.js?v=1.0.0"></script>
 <script src="modulos/viagem.js?v=1.0.3"></script>
 <script src="modulos/compra-parcelada.js?v=1.1.0"></script>
-<script src="modulos/veiculos.js?v=1.0.2"></script>
+<script src="modulos/veiculos.js?v=1.0.3"></script>
 <script src="modulos/google-drive.js?v=1.0.0"></script>
 <script src="modulos/carro-drive.js?v=1.0.2"></script>
 <script src="modulos/debito-nao-caiu.js?v=1.2.0"></script>
@@ -30387,6 +30388,6 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/pj-oportunidades.js?v=1.0.1"></script>
 <script src="modulos/pj-notas.js?v=1.0.0"></script>
 <script src="modulos/email-entrada.js?v=1.0.0"></script>
-<script src="nuvem.js?v=1.18.0"></script>
+<script src="nuvem.js?v=1.18.1"></script>
 </body>
 </html>

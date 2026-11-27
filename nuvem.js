@@ -1,5 +1,5 @@
 /* =====================================================================
-   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.18.0 · 27/Nov/2026
+   nuvem.js — MoneyTRIO na nuvem (usada pelo index.html desde a 3.30)       1.18.1 · 27/Nov/2026
    ---------------------------------------------------------------------
    O que faz, na ordem (igual ao OmniLifeONE — ARQUITETURA.md dele, "Conta", "Cofre", "CloudDriver"):
    1. Conta SolverONE (a mesma de todos os apps): e-mail e senha ou Google, por REST, sem biblioteca.
@@ -1748,6 +1748,7 @@
       /* 1.13.0 (3.65.2): "Por qual banco" a partir do banco que o robô manda (só o já cadastrado; senão o formulário mostra
          escolhido e salvar cadastra) */
       try { if (!g.bancoId && g.conta && typeof Banco !== 'undefined' && Banco.palpite) { var bp = Banco.palpite(g.conta); if (bp && bp.indexOf('cod:') !== 0) g.bancoId = bp; } } catch (e) {}
+      if (window.Categorias) Categorias.alias(g);   /* 1.18.1 (3.141): nome antigo de categoria (ex.: "Sem Parar / Pedagio") → o novo, antes de comparar com o que já existe */
       return g;
     },
     andamento: function (mais) {
