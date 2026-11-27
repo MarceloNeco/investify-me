@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.3.0 · 26/Nov/2026 (a conta inteira para o dono; o final na visão da casa)
+   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.3.1 · 26/Nov/2026 (3.119: avisa a Carteira quando chega investimento)
    ---------------------------------------------------------------------
    O QUE FAZ
      O robô manda, na mesma caixa (money_entrada), itens que NUNCA viram lançamento (nuvem.js desvia para cá):
@@ -17,7 +17,7 @@
          com conta e sem investimentos: "o <banco> não compartilhou investimentos pelo Open Finance: verifique a autorização
          no Meu Pluggy".
      Contas zeradas e sem movimento há 90 dias ficam recolhidas em "mostrar contas zeradas".
-     (Cruzar os investimentos com a carteira do InvestifyONE: PENDENCIAS.)
+     (3.119: os investimentos vão também para a Carteira do InvestifyONE — modulos/invest-banco.js.)
    API (window.SaldoBanco)
      receber(item) · receberInvest(item) · contas() · secoes() · conferir(reg)
    DADOS
@@ -89,6 +89,7 @@
       r.contaId = it.conta_id ? String(it.conta_id).slice(0, 80) : ''; r.dono = String(it.dono || '').trim().slice(0, 60); r.moeda = String(it.moeda || 'BRL').slice(0, 3);
       r.inv = { classe: String(it.classe || '').slice(0, 40), subtipo: String(it.subtipo || '').slice(0, 40), vencimento: it.vencimento || '', taxa: num(it.taxa), indexador: String(it.indexador || '').slice(0, 20) };
       hist(r, data, saldo);
+      if (window.MoneyModulos) MoneyModulos.emitir('investimento.banco', r);   /* 2.3.1 (3.119): a Carteira do InvestifyONE (modulos/invest-banco.js) */
       return true;
     },
     contas: lista,
@@ -230,7 +231,7 @@
 
   MoneyModulos.registrar({
     id: 'saldo-banco',
-    versao: '2.3.0',
+    versao: '2.3.1',
     colecoes: [COL],
     pontos: { 'budget.painel': cartao,
       /* 2.3.0 (3.116): no detalhe do lançamento, a conta (inteira para o dono; o final para os outros) */

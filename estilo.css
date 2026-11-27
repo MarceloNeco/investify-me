@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.118 · 26/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.119 · 26/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -160,6 +160,12 @@ html[data-theme="light"] .topbar{background:rgba(255,255,255,.9)}
 .badge.est{background:rgba(255,184,77,.15); color:var(--warn)}
 .badge.live{background:rgba(61,220,151,.14); color:var(--up)}
 .badge.man{background:rgba(43,179,255,.14); color:var(--accent2)}
+.badge.banco{background:rgba(61,220,151,.14); color:#2fbf7f}
+/* 3.119: o quadro "Veio do banco" da Carteira (modulos/invest-banco.js) */
+.ib-quadro summary{cursor:pointer}
+.ib-banco{margin-top:10px; padding-top:8px; border-top:1px solid var(--line,rgba(255,255,255,.08))}
+.ib-prod{margin:6px 0 2px; text-transform:uppercase; letter-spacing:.04em}
+.ib-linha{display:flex; justify-content:space-between; gap:10px; padding:3px 0}
 
 /* tabelas */
 .tbl-wrap{overflow-x:auto}

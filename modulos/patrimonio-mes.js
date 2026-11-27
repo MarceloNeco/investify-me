@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/patrimonio-mes.js — o patrimônio de verdade, mês a mês, para o Fluxo (3.69)        1.1.0 · 13/Nov/2026
+   modulos/patrimonio-mes.js — o patrimônio de verdade, mês a mês, para o Fluxo (3.69)        1.1.1 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · Uma foto por mês do patrimônio de hoje (a mesma conta do patrimonioHoje(): saldos das contas + carteira do
@@ -56,7 +56,7 @@
       if (f) return { valor: f.valor, caixa: f.caixa, invest: f.invest, fonte: 'foto' };
       /* remontar das fontes que existem hoje: todas têm de ter valor no mês */
       var sb = window.SaldoBanco && SaldoBanco.patrimonio ? SaldoBanco.patrimonio() : null;
-      var cart = (ST.posicoes || []).length > 0, contas = (ST.saldos_banco || []);
+      var cart = (ST.posicoes || []).some(function (p) { return !p.doBanco; }), contas = (ST.saldos_banco || []);
       if (!sb && !cart) return null;
       var caixa = 0, invest = 0, falta = false;
       if (sb && sb.contas) contas.forEach(function (r) {
@@ -64,6 +64,7 @@
         var v = ultimoNoMes(r.hist || [], mes, function (h) { return h.data; }, function (h) { return Number(h.saldo) || 0; });
         if (v == null) falta = true; else caixa += v;
       });
+      /* 1.1.1 (3.119): só com papéis cadastrados à mão vale a foto da carteira; os que vieram do banco (invest-banco.js) têm o histórico do banco */
       if (cart) {
         var c = ultimoNoMes(ST.fotos || [], mes, function (h) { return h[0]; }, function (h) { return Number(h[1]) || 0; });
         if (c == null) falta = true; else invest = c;
@@ -89,6 +90,6 @@
     temReal: function (s) { return (s || []).some(function (x) { return x.real; }); }
   };
 
-  MoneyModulos.registrar({ id: 'patrimonio-mes', versao: '1.1.0', colecoes: [COL] });
+  MoneyModulos.registrar({ id: 'patrimonio-mes', versao: '1.1.1', colecoes: [COL] });
   window.PatrimonioMes = API;
 })();

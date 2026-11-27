@@ -767,6 +767,16 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.119 — Os investimentos do banco na Carteira.** Novo `modulos/invest-banco.js` 1.0.0 (`InvestBanco`): cada investimento que o robô
+  manda (saldos_banco, tipo 'investimento') vira posição da Carteira com id fixo `bk_<conta_id>` (o mesmo em todo aparelho; nunca duplica),
+  `doBanco` {chave, data, banco, classe, subtipo, vencimento, taxa, indexador, dono}, `valorManual` = o saldo do banco e o
+  `historicoManual` por dia; um saldo mais velho não passa por cima; saldo zero não cria. O papel já cadastrado à mão (mesmo banco e
+  mesmo nome, ou mesmo vencimento) é casado em vez de criar outro. `sincronizar()` roda ao abrir, quando o SaldoBanco emite
+  `investimento.banco` (saldo-banco 2.3.1) e no começo da `viewCarteira`. `calc(p)`: com `doBanco`, o valor é o do banco (origem 'banco',
+  selo "🏦 veio do banco"), também na renda fixa (sem a estimativa pela taxa). Quadro "Veio do banco" no ponto `investify.carteira.topo`:
+  por banco e produto, com a liquidez (`SaldoPrevisto.liquidez` ou "no vencimento") e o vencimento. patrimonio-mes 1.1.1: com só papéis
+  do banco, os meses passados usam o histórico do banco (a foto da carteira só vale quando há papel cadastrado à mão). Teste:
+  `teste-invest-banco.js` (novo).
   **3.118 — Fluxo por categoria e de onde vem o previsto.** Novo `modulos/fluxo-categorias.js` 1.0.0 (`FluxoCat`), no ponto novo
   `fluxo.fim` (as duas saídas do `viewBFluxo`): "Este mês" (barra de cada categoria contra o previsto) e "Últimos 6 meses" (grade:
   verde < 80 %, âmbar 80–100 %, vermelho > 100 %); grupo em destaque e categorias em ordem alfabética; filtro por pessoa em

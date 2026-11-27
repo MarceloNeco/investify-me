@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.118 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.119 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.119 */
+  'Seus investimentos do banco na Carteira':'Your bank investments in the Portfolio',
+  '🏦 Os investimentos que o banco manda pelo Open Finance agora entram na Carteira do InvestifyONE: uma linha por aplicação, com o saldo atualizado todo dia e o selo "veio do banco". Se você já tinha cadastrado o mesmo papel à mão, o app junta os dois em vez de criar outro.':'🏦 The investments your bank sends via Open Finance now go into the InvestifyONE Portfolio: one line per investment, with the balance updated daily and the "from the bank" tag. If you had already added the same investment by hand, the app merges them instead of creating another.',
+  '📋 No topo da Carteira, o quadro "Veio do banco" mostra tudo por banco e por produto, com a liquidez e o vencimento de cada aplicação.':'📋 At the top of the Portfolio, the "From the bank" box shows everything by bank and by product, with each investment\'s liquidity and maturity.',
   /* 3.118 */
   'Fluxo por categoria e de onde vem o previsto':'Flow by category and where the forecast comes from',
   '📊 Em Fluxo, o novo "Por categoria": cada grupo em destaque, com as categorias em ordem alfabética. "Este mês" mostra a barra de todas as categorias; "Últimos 6 meses" mostra uma grade colorida (verde abaixo de 80% do previsto, âmbar de 80 a 100%, vermelho acima). Tocar num valor abre os lançamentos daquele mês.':'📊 In Flow, the new "By category": each group highlighted, with its categories in alphabetical order. "This month" shows a bar for every category; "Last 6 months" shows a colored grid (green under 80% of the forecast, amber 80 to 100%, red above). Tapping an amount opens that month\'s entries.',

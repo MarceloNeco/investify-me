@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.118 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.119 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,10 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.119 — rascunho, revisar */
+  'Seus investimentos do banco na Carteira':'Tus inversiones del banco en la Cartera',
+  '🏦 Os investimentos que o banco manda pelo Open Finance agora entram na Carteira do InvestifyONE: uma linha por aplicação, com o saldo atualizado todo dia e o selo "veio do banco". Se você já tinha cadastrado o mesmo papel à mão, o app junta os dois em vez de criar outro.':'🏦 Las inversiones que el banco envía por Open Finance ahora entran en la Cartera de InvestifyONE: una línea por inversión, con el saldo actualizado cada día y la etiqueta "vino del banco". Si ya habías registrado la misma inversión a mano, la app las junta en vez de crear otra.',
+  '📋 No topo da Carteira, o quadro "Veio do banco" mostra tudo por banco e por produto, com a liquidez e o vencimento de cada aplicação.':'📋 Arriba en la Cartera, el cuadro "Vino del banco" muestra todo por banco y por producto, con la liquidez y el vencimiento de cada inversión.',
   /* 3.118 — rascunho, revisar */
   'Fluxo por categoria e de onde vem o previsto':'Flujo por categoría y de dónde sale el previsto',
   '📊 Em Fluxo, o novo "Por categoria": cada grupo em destaque, com as categorias em ordem alfabética. "Este mês" mostra a barra de todas as categorias; "Últimos 6 meses" mostra uma grade colorida (verde abaixo de 80% do previsto, âmbar de 80 a 100%, vermelho acima). Tocar num valor abre os lançamentos daquele mês.':'📊 En Flujo, el nuevo "Por categoría": cada grupo destacado, con sus categorías en orden alfabético. "Este mes" muestra la barra de todas las categorías; "Últimos 6 meses" muestra una cuadrícula de colores (verde por debajo del 80 % del previsto, ámbar del 80 al 100 %, rojo por encima). Tocar un importe abre los movimientos de ese mes.',
