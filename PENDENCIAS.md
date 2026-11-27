@@ -117,6 +117,7 @@ Lista viva (diretriz "Lista de pendências do app"). Mais nova em cima. Situaç�
 | N109 | **3.124 — Sugerir conta fixa do período que falta** (dono, pelo chat principal, item J). Feito: escola 2026 × 2027, com a explicação. | dono · chat principal | ✅ 3.124 |
 | N110 | **3.125 — Pessoas: e-mail, ficha ligada sozinha e atalhos** (dono, pelo chat principal, item K). Feito: e-mail opcional ligado ao convite, sem "Qual destas fichas é você?", Juntar, atalhos para Pessoas da família. | dono · chat principal | ✅ 3.125 |
 | N111 | **3.126 — Eventos do investimento no exterior e o marcador "FORNECEDOR + ENDEREÇO"** (dono, pelo chat principal, itens N e O). Feito: evento sem valor na Carteira; marcador composto explicado na tela. | dono · chat principal | ✅ 3.126 |
+| N112 | **3.127 — Aluguel recebido pela imobiliária** (dono, pelo chat principal, item P). Feito: a conta do demonstrativo no crédito e a renda prevista no dia 12. | dono · chat principal | ✅ 3.127 |
 
 ## Segurança do repositório (06/Nov/2026)
 - Dados pessoais que tinham ido para testes e documentos (nome da filha, escola, saldos e empregadores do FGTS,

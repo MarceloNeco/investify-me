@@ -1,10 +1,13 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.126 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.127 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.127 */
+  'Aluguel recebido':'Rent received',
+  '🏠 O demonstrativo do aluguel que a imobiliária manda mostra a conta no crédito (aluguel, IPTU, taxa de administração e o líquido) e vira renda prevista no dia 12, até o fim do contrato.':'🏠 The rent statement from the agency shows the breakdown on the credit (rent, property tax, management fee and net) and becomes expected income on the 12th, until the end of the lease.',
   /* 3.126 */
   'Investimento no exterior e contas de terceiros':'Investments abroad and other people\'s bills',
   '🌎 Os avisos da corretora no exterior que chegam no e-mail aparecem na Carteira como eventos (data, ativo, CUSIP, conta), sem valor: a posição continua vindo do extrato.':'🌎 Notices from the broker abroad that arrive by e-mail show in the Portfolio as events (date, asset, CUSIP, account), with no amount: the position still comes from the statement.',

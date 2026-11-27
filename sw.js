@@ -2,12 +2,12 @@
    Faz o site abrir sem internet e permite instalar como app.
    AO PUBLICAR UMA VERSÃO NOVA, troque o número abaixo (v1 -> v2).
    É o que avisa os celulares de que existe conteúdo novo. */
-var VERSAO = 'v126';
+var VERSAO = 'v127';
 var CACHE = 'moneytrio-' + VERSAO;
 /* O que fica guardado para abrir sem internet. Cada <script src> do index.html entra aqui com o MESMO ?v=
    (teste/teste-modulos.js confere). Módulo novo = uma linha aqui + uma no index.html. */
 var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './ajuda-botao.png', './icone-192.png', './icone-512.png', './icone-512-maskable.png', './icone.svg', './icone-32.png',
-  './estilo.css?v=3.120', './textos/frases-en.js?v=3.126', './textos/frases-es.js?v=3.126', './textos/pj-textos.js?v=3.85', './textos/mudancas.js?v=3.126',
+  './estilo.css?v=3.120', './textos/frases-en.js?v=3.127', './textos/frases-es.js?v=3.127', './textos/pj-textos.js?v=3.85', './textos/mudancas.js?v=3.127',
   './textos/glossario.js?v=3.51', './textos/coach.js?v=3.51',
   './modulos/base.js?v=1.1.1',
   './modulos/arquivos.js?v=1.1.0',
@@ -36,6 +36,7 @@ var ARQUIVOS = ['./', './index.html', './manifest.json', './recursos.js', './aju
   './modulos/consorcio.js?v=1.0.0',
   './modulos/fatura-conferencia.js?v=1.0.0',
   './modulos/invest-exterior.js?v=1.0.0',
+  './modulos/aluguel.js?v=1.0.0',
   './nuvem.js?v=1.16.1'];
 /* O motor de leitura de fotos (leitor/tesseract: Tesseract e português, uns 9 MB, a MESMA pasta do motor do
    Leitor OCR; assets/ocr: ZXing e jsQR) tem cache próprio, que NÃO muda a cada versão do app:
