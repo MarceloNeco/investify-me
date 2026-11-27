@@ -1,10 +1,15 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.117 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.118 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.118 */
+  'Fluxo por categoria e de onde vem o previsto':'Flow by category and where the forecast comes from',
+  '📊 Em Fluxo, o novo "Por categoria": cada grupo em destaque, com as categorias em ordem alfabética. "Este mês" mostra a barra de todas as categorias; "Últimos 6 meses" mostra uma grade colorida (verde abaixo de 80% do previsto, âmbar de 80 a 100%, vermelho acima). Tocar num valor abre os lançamentos daquele mês.':'📊 In Flow, the new "By category": each group highlighted, with its categories in alphabetical order. "This month" shows a bar for every category; "Last 6 months" shows a colored grid (green under 80% of the forecast, amber 80 to 100%, red above). Tapping an amount opens that month\'s entries.',
+  'ⓘ Toque no ⓘ (no Fluxo e no Orçamento do Painel) para ver de onde vem o previsto: contas certas, a média dos 6 meses e a meta que você definiu. Quando um gasto salta muito acima do histórico, o app oferece cadastrar como conta fixa ou definir um limite.':'ⓘ Tap ⓘ (in Flow and in the Dashboard budget) to see where the forecast comes from: fixed bills, the 6-month average and the goal you set. When spending jumps far above history, the app offers to add it as a fixed bill or set a limit.',
+  '📈 Na Projeção, o grupo aparece em destaque e as categorias em ordem alfabética.':'📈 In Projection, the group is highlighted and categories are in alphabetical order.',
   /* 3.117 */
   'Foto de nota ou recibo mais simples':'A simpler receipt or invoice photo',
   '📷 Na "Foto de nota ou recibo", cada item aparece em linhas fáceis de ler: a loja e o valor (com as parcelas), a data e a hora, a categoria com o apelido do carro e o que está no banco ("parcela 1 de 5"). Se o carro da nota não está cadastrado, "Cadastrar este carro" resolve com um toque.':'📷 In "Receipt or invoice photo", each item shows in easy-to-read lines: the store and the amount (with installments), the date and time, the category with the car\'s nickname and what is at the bank ("installment 1 of 5"). If the car on the receipt is not registered, "Add this car" fixes it with one tap.',

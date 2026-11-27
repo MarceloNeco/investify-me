@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.115">
+<link rel="stylesheet" href="estilo.css?v=3.118">
 <link rel="stylesheet" href="assistone/assistone-visual.css?v=1.1.2">
 </head>
 <body>
@@ -683,8 +683,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.117"></script>
-<script src="textos/frases-es.js?v=3.117"></script>
+<script src="textos/frases-en.js?v=3.118"></script>
+<script src="textos/frases-es.js?v=3.118"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7679,7 +7679,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.117"></script>
+<script src="textos/mudancas.js?v=3.118"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -11109,7 +11109,7 @@ function viewBFuturo(){
     const G = GRUPOS[l.grupo] || {}, aberto = !!projAbertos[l.grupo];
     tb += linha('<button type="button" class="linkinho proj-g" data-acao="proj-grupo" data-g="' + esc(l.grupo) + '" aria-expanded="' + aberto + '">' + (aberto ? '▾ ' : '▸ ') + (G.ico || '') + ' ' + esc(l.nome) + '</button>',
       '', l.taxa, l.mensal, l.grupo, 'proj-grupo');
-    if(aberto) Gasto.porChave(doze.filter(g => g.grupo === l.grupo), 'sub').forEach(c =>
+    if(aberto) Gasto.porChave(doze.filter(g => g.grupo === l.grupo), 'sub').sort((a, b) => String(a.chave).localeCompare(String(b.chave), 'pt', {sensitivity:'base'})).forEach(c =>   /* 3.118: em ordem alfabética */
       tb += linha('<span class="proj-cat">' + esc(c.chave) + '</span>', '', l.taxa, c.valor / 12, l.grupo, 'proj-sub'));
   });
   tb += '</tbody><tfoot>' + linha('<b>' + esc(pt ? 'Total' : 'Total') + '</b>', '', null, p.hojeMensal, '__total', 'proj-total') + '</tfoot></table></div>';
@@ -12294,7 +12294,7 @@ function viewBFluxo(){
 
   if(serie.length < 2)
     return h + '<div class="card"><p class="muted small" style="margin:0">Poucos meses no recorte. ' +
-      'Escolha um período maior lá em cima.</p></div>';
+      'Escolha um período maior lá em cima.</p></div>' + (window.MoneyModulos ? MoneyModulos.html('fluxo.fim', {}) : '');   /* 3.118 */
 
   /* 3.69 (pedido do dono): o patrimônio real mês a mês (modulos/patrimonio-mes.js); a barra de aporte separada do gasto */
   const pt = I18n.atual === 'pt', casa = !!(window.Escopo && Escopo.soCasa && Escopo.soCasa());
@@ -12357,6 +12357,7 @@ function viewBFluxo(){
           '<td class="num ' + (sobra >= 0 ? 'up' : 'down') + '">' + fmt(sobra) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
   }
+  h += window.MoneyModulos ? MoneyModulos.html('fluxo.fim', {}) : '';   /* 3.118: "Por categoria" (modulos/fluxo-categorias.js) */
   return h;
 }
 
@@ -30167,7 +30168,8 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/categorias.js?v=1.0.0"></script>
 <script src="modulos/visao-casa.js?v=1.1.8"></script>
 <script src="modulos/previsao.js?v=1.2.1"></script>
-<script src="modulos/orcamento.js?v=1.1.1"></script>
+<script src="modulos/orcamento.js?v=1.2.0"></script>
+<script src="modulos/fluxo-categorias.js?v=1.0.0"></script>
 <script src="modulos/patrimonio-mes.js?v=1.1.0"></script>
 <script src="modulos/dividas.js?v=1.0.0"></script>
 <script src="modulos/seguros.js?v=1.0.2"></script>

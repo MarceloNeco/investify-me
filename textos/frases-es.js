@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.117 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.118 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,11 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.118 — rascunho, revisar */
+  'Fluxo por categoria e de onde vem o previsto':'Flujo por categoría y de dónde sale el previsto',
+  '📊 Em Fluxo, o novo "Por categoria": cada grupo em destaque, com as categorias em ordem alfabética. "Este mês" mostra a barra de todas as categorias; "Últimos 6 meses" mostra uma grade colorida (verde abaixo de 80% do previsto, âmbar de 80 a 100%, vermelho acima). Tocar num valor abre os lançamentos daquele mês.':'📊 En Flujo, el nuevo "Por categoría": cada grupo destacado, con sus categorías en orden alfabético. "Este mes" muestra la barra de todas las categorías; "Últimos 6 meses" muestra una cuadrícula de colores (verde por debajo del 80 % del previsto, ámbar del 80 al 100 %, rojo por encima). Tocar un importe abre los movimientos de ese mes.',
+  'ⓘ Toque no ⓘ (no Fluxo e no Orçamento do Painel) para ver de onde vem o previsto: contas certas, a média dos 6 meses e a meta que você definiu. Quando um gasto salta muito acima do histórico, o app oferece cadastrar como conta fixa ou definir um limite.':'ⓘ Toca ⓘ (en Flujo y en el Presupuesto del Panel) para ver de dónde sale el previsto: cuentas fijas, la media de 6 meses y la meta que definiste. Cuando un gasto salta muy por encima del historial, la app ofrece registrarlo como cuenta fija o definir un límite.',
+  '📈 Na Projeção, o grupo aparece em destaque e as categorias em ordem alfabética.':'📈 En Proyección, el grupo aparece destacado y las categorías en orden alfabético.',
   /* 3.117 — rascunho, revisar */
   'Foto de nota ou recibo mais simples':'Foto de factura o recibo más sencilla',
   '📷 Na "Foto de nota ou recibo", cada item aparece em linhas fáceis de ler: a loja e o valor (com as parcelas), a data e a hora, a categoria com o apelido do carro e o que está no banco ("parcela 1 de 5"). Se o carro da nota não está cadastrado, "Cadastrar este carro" resolve com um toque.':'📷 En "Foto de factura o recibo", cada elemento aparece en líneas fáciles de leer: la tienda y el importe (con las cuotas), la fecha y la hora, la categoría con el apodo del coche y lo que está en el banco ("cuota 1 de 5"). Si el coche de la factura no está registrado, "Registrar este coche" lo resuelve con un toque.',

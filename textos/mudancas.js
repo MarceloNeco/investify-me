@@ -1,11 +1,16 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.117 · 26/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.118 · 26/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.118', d:'2026-11-26', t:'Fluxo por categoria e de onde vem o previsto', itens:[
+    '📊 Em Fluxo, o novo "Por categoria": cada grupo em destaque, com as categorias em ordem alfabética. "Este mês" mostra a barra de todas as categorias; "Últimos 6 meses" mostra uma grade colorida (verde abaixo de 80% do previsto, âmbar de 80 a 100%, vermelho acima). Tocar num valor abre os lançamentos daquele mês.',
+    'ⓘ Toque no ⓘ (no Fluxo e no Orçamento do Painel) para ver de onde vem o previsto: contas certas, a média dos 6 meses e a meta que você definiu. Quando um gasto salta muito acima do histórico, o app oferece cadastrar como conta fixa ou definir um limite.',
+    '📈 Na Projeção, o grupo aparece em destaque e as categorias em ordem alfabética.'
+  ]},
   {v:'3.117', d:'2026-11-26', t:'Foto de nota ou recibo mais simples', itens:[
     '📷 Na "Foto de nota ou recibo", cada item aparece em linhas fáceis de ler: a loja e o valor (com as parcelas), a data e a hora, a categoria com o apelido do carro e o que está no banco ("parcela 1 de 5"). Se o carro da nota não está cadastrado, "Cadastrar este carro" resolve com um toque.',
     '✅ "Pronto" resolve o caso comum sozinho: o que já está no banco fica completado e o que ainda não veio fica ⏳ aguardando o banco e se junta sozinho quando ele mandar. "Lançar à mão" ficou só para pagamento em dinheiro ou fora do banco.',

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/orcamento.js — orçamento por categoria com alerta e a projeção do mês (3.67)        1.1.1 · 13/Nov/2026
+   modulos/orcamento.js — orçamento por categoria com alerta e a projeção do mês (3.67)        1.2.0 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedidos do dono, 13/Nov/2026; o layout do Painel NÃO muda agora: são dois cartões no ponto budget.painel)
      · Orçamento do mês: um limite mensal por categoria (grupo › categoria). Barra de progresso do mês atual; a partir de
@@ -90,6 +90,7 @@
     return '<div class="orc-linha orc-' + (sit ? sit.estado : 'ok') + ' pv-' + p.estado + '"><div class="orc-nome"><b>' + esc(p.sub) + '</b> <span class="t-sub">' + esc(nomeG(p.grupo)) + '</span></div>' +
       '<div class="orc-valor">' + esc(fmt(p.gasto)) + ' <span class="tiny muted">' + esc(tr('de ', 'of ') + fmt(p.previsto) + tr(' previsto', ' forecast') +
         (o ? tr(' · meta ', ' · goal ') + fmt(o.limite) : '') + (p.gasto > p.previsto ? tr(' · passou ', ' · over by ') + fmt(p.gasto - p.previsto) : '')) + '</span>' +
+      (window.FluxoCat ? ' ' + FluxoCat.info(p, o && o.limite) : '') +   /* 1.2.0 (3.118): de onde vem o previsto */
       (o ? ' <button type="button" class="linkinho" data-acao="orc-tirar" data-id="' + esc(o.id) + '" aria-label="' + esc(tr('Tirar o limite de ', 'Remove the limit of ') + o.sub) + '">✕</button>' : '') + '</div>' +
       barra(p, o && o.limite) + (vem ? '<div class="tiny muted pv-vem">' + esc(vem) + '</div>' : '') + '</div>';
   }
@@ -129,7 +130,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'orcamento', versao: '1.1.1', colecoes: [COL],
+    id: 'orcamento', versao: '1.2.0', colecoes: [COL],
     pontos: { 'budget.painel': function () { return cartaoOrcamento() + cartaoProjecao(); } },
     acoes: {
       'orc-salvar': function () {

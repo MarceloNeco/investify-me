@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.115 · 26/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.118 · 26/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2748,3 +2748,31 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .hub-versao{text-align:right; margin:4px 0 0; opacity:.75}
 .hub-versao .linkinho{color:inherit; text-decoration:none}
 .hub-versao .linkinho:hover,.hub-versao .linkinho:focus-visible{text-decoration:underline}
+
+/* 3.118: Fluxo › "Por categoria" (modulos/fluxo-categorias.js) e o ⓘ do previsto (também no Orçamento do Painel) */
+.fc-grupo{display:flex; justify-content:space-between; align-items:center; gap:8px; width:100%; text-align:left; font:inherit; font-size:1.02rem; font-weight:700;
+  color:var(--txt); background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin:10px 0 4px; cursor:pointer}
+.fc-grupo .fc-tot{font-weight:500; color:var(--txt2)}
+.fc-cat{padding:6px 4px 8px 14px; border-bottom:1px solid var(--line)}
+.fc-cat-l{display:flex; justify-content:space-between; gap:8px; align-items:baseline; flex-wrap:wrap}
+.fc-barra{position:relative; height:8px; border-radius:6px; background:var(--card2); margin-top:4px; overflow:visible}
+.fc-gasto{display:block; height:100%; border-radius:6px}
+.fc-prev{position:absolute; top:-3px; width:2px; height:14px; background:var(--txt2)}
+.fc-grade{overflow-x:auto; -webkit-overflow-scrolling:touch}
+.fc-tbl{min-width:640px}
+.fc-tbl .fc-col1{position:sticky; left:0; z-index:1; background:var(--bg2,#121821); min-width:150px; text-align:left}
+.fc-tbl .fc-g .fc-grupo{margin:2px 0}
+.fc-tbl .fc-sub{font-weight:500; padding-left:18px}
+.fc-c.fc-ok{color:var(--up)} .fc-c.fc-perto{color:var(--warn)} .fc-c.fc-passou{color:var(--down)} .fc-c.fc-zero{color:var(--txt3)}
+.fc-c.fc-ok{background:rgba(46,204,113,.08)} .fc-c.fc-perto{background:rgba(255,184,77,.12)} .fc-c.fc-passou{background:rgba(255,92,92,.12)}
+.fc-cel{font:inherit; color:inherit; background:none; border:0; padding:2px; cursor:pointer; text-decoration:underline dotted}
+.fc-passou th, .fc-passou td{border-top:2px solid var(--line); font-weight:600}
+.pv-info{display:inline-block; position:relative}
+.pv-info > summary{list-style:none; cursor:pointer; display:inline-flex; width:22px; height:22px; align-items:center; justify-content:center; border-radius:50%; color:var(--accent2,var(--accent))}
+.pv-info > summary::-webkit-details-marker{display:none}
+.pv-info[open] .pv-info-c{position:absolute; right:0; z-index:5; min-width:240px; max-width:320px; background:var(--bg2,#121821); border:1px solid var(--line2,var(--line)); border-radius:10px; padding:8px 10px; box-shadow:var(--shadow); text-align:left; white-space:normal; color:var(--txt)}
+.fc-salto{margin-top:6px; display:flex; gap:6px; flex-wrap:wrap}
+/* 3.118: na Projeção, o grupo em destaque (antes pequeno e sublinhado) */
+.proj-tbl .proj-grupo th, .proj-tbl .proj-grupo td{background:var(--card2); font-weight:700; font-size:1.02em}
+.proj-g{font:inherit; font-weight:700; font-size:1.02em; color:var(--txt); text-decoration:none}
+.fc-tbl tbody th{text-transform:none; letter-spacing:0; font-size:.92rem; color:var(--txt); font-weight:500}
