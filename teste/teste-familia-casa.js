@@ -63,18 +63,20 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
     await p.waitForTimeout(300);
     const lista = () => p.evaluate(() => { const c = document.getElementById('vcFamilia'); return { nomes: [...c.querySelectorAll('.vc-pessoas label')].map((x) => x.textContent.trim()), fora: (c.querySelector('.vc-fora') || {}).textContent || '', juntar: (c.querySelector('.vc-juntar') || {}).textContent || '', pergunta: (c.querySelector('.vc-quem-sou') || {}).textContent || '' }; });
     const l0 = await lista();
-    ok(/Qual destas fichas é você\?/.test(l0.pergunta) && /Fulaninho/.test(l0.pergunta) && /Nenhuma/.test(l0.pergunta) && !l0.juntar, 'sem vínculo, o app NÃO adivinha: pergunta "Qual destas fichas é você?" (as fichas + "Nenhuma") e ainda não sugere juntar');
-    ok(l0.nomes.indexOf('Fulano de Tal') < 0, 'a ficha com o nome da conta (e o uid dela) já fica fora da lista');
+    /* 3.125 (dono: acabar com "Qual destas fichas é você?"): o app liga sozinho a ficha com o uid da conta; nada de pergunta */
+    ok(!l0.pergunta && await p.evaluate(() => ST.config.vcEu && ST.config.vcEu.uid === 'u1' && ST.config.vcEu.pessoa === 'p2'), 'sem perguntar: a ficha com o uid da conta (Fulano de Tal) fica ligada à conta sozinha');
+    ok(l0.nomes.indexOf('Fulano de Tal') < 0, 'a ficha da conta fica fora da lista');
     ok(/Outras pessoas \(não são da família\): Inquilino Exemplo \(Inquilino\)/.test(l0.fora), 'o inquilino separado em "Outras pessoas (não são da família)"');
-    await p.click('#vcFamilia [data-acao="vc-sou"][data-id="p1"]'); await p.waitForTimeout(200);
+    ok(await p.evaluate(() => !!document.querySelector('#vcFamilia [data-acao="ps-lista"]')), 'o atalho "Abrir Pessoas da família"');
+    /* a ficha que a pessoa fez para si ("Fulaninho") com o e-mail da conta: o app oferece juntar (a dela fica; a criada para a conta sai) */
+    await p.evaluate(() => { MoneyNuvem.email = () => 'fulano@exemplo.invalid'; Pessoas.porId('p1').email = 'fulano@exemplo.invalid'; render(); }); await p.waitForTimeout(200);
     const l = await lista();
-    ok(await p.evaluate(() => ST.config.vcEu.uid === 'u1' && ST.config.vcEu.pessoa === 'p1' && Pessoas.porId('p1').uid === 'u1'), 'a resposta liga a ficha "Fulaninho" à conta (vínculo guardado)');
-    ok(!l.pergunta && l.nomes.join('|') === 'Beatriz Exemplo (Bia)|Dora Exemplo', 'a pergunta some (uma vez só); na lista ficam Beatriz Exemplo (Bia) e Dora Exemplo, sem o chefe: ' + l.nomes.join(' | '));
-    ok(/Fulaninho e Fulano de Tal são a mesma pessoa \(você\)\? Juntar/.test(l.juntar), 'a ficha com o nome da conta recebe a sugestão de juntar');
+    ok(/Fulaninho e Fulano de Tal são a mesma pessoa \(você\)\? Juntar/.test(l.juntar), 'com o e-mail da conta na ficha "Fulaninho": "Fulaninho e Fulano de Tal são a mesma pessoa (você)? Juntar"');
     await p.click('#vcFamilia [data-acao="vc-juntar"]'); await p.waitForTimeout(200);
-    const j = await p.evaluate(() => ({ n: ST.pessoas.length, g1: Gasto.todos().find((g) => g.id === 'g1'), p1: Pessoas.porId('p1'), caixa: !!document.querySelector('#vcFamilia .vc-juntar') }));
-    ok(j.n === 4 && j.g1.quemId === 'p1' && j.p1.uid === 'u1' && j.p1.aliases.indexOf('Fulano de Tal') >= 0 && !j.caixa, 'juntado: a ficha da conta sai, o lançamento dela passa para "Fulaninho" (nada se perde) e a sugestão some');
-    ok((await lista()).nomes.join('|') === 'Beatriz Exemplo (Bia)|Dora Exemplo' && !(await lista()).pergunta, 'e o chefe continua fora da lista, sem perguntar de novo');
+    const j = await p.evaluate(() => ({ n: ST.pessoas.length, g1: Gasto.todos().find((g) => g.id === 'g1'), p1: Pessoas.porId('p1'), caixa: !!document.querySelector('#vcFamilia .vc-juntar'), eu: ST.config.vcEu.pessoa }));
+    ok(j.n === 4 && j.g1.quemId === 'p1' && j.p1.uid === 'u1' && j.p1.aliases.indexOf('Fulano de Tal') >= 0 && !j.caixa && j.eu === 'p1', 'juntado: a ficha criada para a conta sai, o lançamento dela passa para "Fulaninho", o vínculo vai junto e a sugestão some');
+    ok((await lista()).nomes.join('|') === 'Beatriz Exemplo (Bia)|Dora Exemplo' && !(await lista()).pergunta, 'na lista ficam Beatriz Exemplo (Bia) e Dora Exemplo, sem o chefe e sem perguntar nada');
+    await p.evaluate(() => { MoneyNuvem.email = () => ''; });
 
     console.log('3) sem PIN da conta, "Preparar" travado');
     await p.click('#vcFamilia .vc-pessoas input'); await p.waitForTimeout(200);

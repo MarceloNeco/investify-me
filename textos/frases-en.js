@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.124 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.125 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.125 */
+  'Pessoas da família sem pergunta repetida':'Family people without repeated questions',
+  '👪 O app liga sozinho a sua ficha à sua conta (pelo e-mail, pelo nome ou pela conta) e não pergunta mais "Qual destas fichas é você?", nem cria uma ficha repetida. Quando há duas fichas que parecem ser você, ele oferece "Juntar".':'👪 The app links your card to your account by itself (by e-mail, name or account) and no longer asks "Which of these cards is you?", nor creates a duplicate card. When two cards look like you, it offers "Merge".',
+  '✉️ Na ficha de quem entra no app, um e-mail opcional, que liga a ficha ao convite da família. Os atalhos da família abrem direto Pessoas da família.':'✉️ On the card of whoever signs in, an optional e-mail that links the card to the family invite. The family shortcuts open Family people directly.',
   /* 3.124 */
   'Conta fixa que faltava':'The missing fixed bill',
   '📌 Um pagamento que se repete todo mês e não tem conta fixa valendo para aquele período agora é sugerido mesmo quando existe uma parecida de outro ano (ex.: a escola de 2027 cadastrada, a de 2026 não).':'📌 A payment that repeats every month and has no fixed bill for that period is now suggested even when a similar one exists for another year (e.g. the 2027 school added, the 2026 one not).',

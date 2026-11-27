@@ -1,11 +1,15 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.124 · 26/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.125 · 26/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.125', d:'2026-11-26', t:'Pessoas da família sem pergunta repetida', itens:[
+    '👪 O app liga sozinho a sua ficha à sua conta (pelo e-mail, pelo nome ou pela conta) e não pergunta mais "Qual destas fichas é você?", nem cria uma ficha repetida. Quando há duas fichas que parecem ser você, ele oferece "Juntar".',
+    '✉️ Na ficha de quem entra no app, um e-mail opcional, que liga a ficha ao convite da família. Os atalhos da família abrem direto Pessoas da família.'
+  ]},
   {v:'3.124', d:'2026-11-26', t:'Conta fixa que faltava', itens:[
     '📌 Um pagamento que se repete todo mês e não tem conta fixa valendo para aquele período agora é sugerido mesmo quando existe uma parecida de outro ano (ex.: a escola de 2027 cadastrada, a de 2026 não).'
   ]},

@@ -115,6 +115,7 @@ Lista viva (diretriz "Lista de pendências do app"). Mais nova em cima. Situaç�
 | N107 | **3.122 — Conferência da fatura do cartão** (dono, pelo chat principal, item H). Feito: a conferência que o robô manda no 📥 e no pagamento da fatura. | dono · chat principal | ✅ 3.122 |
 | N108 | **3.123 — NFS-e de saúde e educação** (dono, pelo chat principal, item I). Feito: educação, para quem, serviço, categoria sugerida, desconto já aplicado, despesa escolar extra sem dedução. | dono · chat principal | ✅ 3.123 |
 | N109 | **3.124 — Sugerir conta fixa do período que falta** (dono, pelo chat principal, item J). Feito: escola 2026 × 2027, com a explicação. | dono · chat principal | ✅ 3.124 |
+| N110 | **3.125 — Pessoas: e-mail, ficha ligada sozinha e atalhos** (dono, pelo chat principal, item K). Feito: e-mail opcional ligado ao convite, sem "Qual destas fichas é você?", Juntar, atalhos para Pessoas da família. | dono · chat principal | ✅ 3.125 |
 
 ## Segurança do repositório (06/Nov/2026)
 - Dados pessoais que tinham ido para testes e documentos (nome da filha, escola, saldos e empregadores do FGTS,

@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.124 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.125 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,10 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.125 — rascunho, revisar */
+  'Pessoas da família sem pergunta repetida':'Personas de la familia sin preguntas repetidas',
+  '👪 O app liga sozinho a sua ficha à sua conta (pelo e-mail, pelo nome ou pela conta) e não pergunta mais "Qual destas fichas é você?", nem cria uma ficha repetida. Quando há duas fichas que parecem ser você, ele oferece "Juntar".':'👪 La app vincula sola tu ficha a tu cuenta (por el correo, el nombre o la cuenta) y ya no pregunta "¿Cuál de estas fichas eres tú?", ni crea una ficha repetida. Cuando hay dos fichas que parecen ser tú, ofrece "Juntar".',
+  '✉️ Na ficha de quem entra no app, um e-mail opcional, que liga a ficha ao convite da família. Os atalhos da família abrem direto Pessoas da família.':'✉️ En la ficha de quien entra en la app, un correo opcional que vincula la ficha a la invitación de la familia. Los atajos de la familia abren directamente Personas de la familia.',
   /* 3.124 — rascunho, revisar */
   'Conta fixa que faltava':'La cuenta fija que faltaba',
   '📌 Um pagamento que se repete todo mês e não tem conta fixa valendo para aquele período agora é sugerido mesmo quando existe uma parecida de outro ano (ex.: a escola de 2027 cadastrada, a de 2026 não).':'📌 Un pago que se repite cada mes y no tiene cuenta fija para ese periodo ahora se sugiere aunque exista una parecida de otro año (ej.: el colegio de 2027 registrado y el de 2026 no).',
