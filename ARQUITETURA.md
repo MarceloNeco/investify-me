@@ -767,6 +767,17 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.131 — Bancos e cartões mais claros, e a fatura certa.** (1) `blocoBancosCartoes`: a célula do banco (`.bk-cel`) com
+  `bancoContasHTML(b)` — "Ag. X · Conta Y" de cada conta/poupança do robô daquele banco (1ª palavra do nome; `SaldoBanco.numero`) — e
+  "cód. · CNPJ" em linha própria, sem reticências (antes o código e o CNPJ grudavam: "cód. 34160.701.19…"). (2) cartoes 1.3.0:
+  `encontrados()` agrupa pela conta do cartão (o final sem `contaCartao` herda a conta de outra compra dele; sem conta, banco + bandeira
+  = um cartão provável); "Encontrei N cartões" com "Cadastrar" por conta; `perguntas()` um por final. (3) saldo-banco 2.4.0: o saldo do
+  cartão na Pluggy é o limite usado; `cartao.fatura` só com `fatura_aberta` do robô novo e `fatura_fechada` ≠ false (`faturaAPagar`),
+  `cartao.limiteUsado` (`limiteUsado`); a Conferência mostra "Fatura a pagar R$ X (vence dd/mm)" e "Limite usado R$ Y (inclui parcelas
+  futuras)"; saldo-previsto 1.3.1 tira só a fatura a pagar, com o vencimento em data. (4) pessoas 1.6.0: a migração dos nomes soltos
+  (`migrar`, roda uma vez por aparelho) criava toda ficha como "casa" — o "para quem" só da lista de terceiros/comprovantes (ou nome de
+  fora, `pareceDeFora`) nasce "outra"; visao-casa 1.3.0: "Esta pessoa é da família?" + "Não, é de fora" (`vc-de-fora`). Teste:
+  `teste-3131.js` (novo); `teste-origem` e `teste-pessoas-espelho` acompanham a fatura × limite usado.
   **3.130 — As notas da PJ e o DAS do mês (item M).** Novo `modulos/pj-notas.js` 1.0.0 (`PJNotas`), tudo informativo: a NFS-e do robô
   com o CNPJ de uma empresa cadastrada (`daEmpresa`; comprovantes 1.3.1 a marca 'ok', não é compra) liga ao crédito da conta da PJ pela
   moeda e `valorMoeda` (BS2) ou ao crédito mais perto (45 dias, ±5 %); receita em reais = o crédito; exportação (sem PIS/COFINS; ISS a

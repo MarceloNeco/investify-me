@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.2.0 · 26/Nov/2026
+   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.3.0 · 27/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 11/Nov/2026; desenho em DESENHO-visao-da-casa.md)
      Um membro da família com a visão "Só a casa" vê a parte da casa; o resto fica RESERVADO e nem chega ao aparelho dele
@@ -210,7 +210,10 @@
           '<button class="btn sm primary" data-acao="vc-juntar" data-fica="' + esc(cj.juntar.fica.id) + '" data-sai="' + esc(cj.juntar.sai.id) + '">' + esc(tr('Juntar', 'Merge')) + '</button> ' +
           '<button class="btn sm" data-acao="vc-juntar-nao" data-par="' + esc(cj.juntar.sai.id + '|' + cj.juntar.fica.id) + '">' + esc(tr('Não são', 'They are not')) + '</button></div>' : '') +
         '<div class="vc-pessoas">' + (pessoas.length ? pessoas.map(function (p) {
-          return '<label class="linha-check" style="margin-right:18px"><input type="checkbox" data-acao="vc-pessoa" data-id="' + esc(p.id) + '"' + (marcadas.indexOf(p.id) >= 0 ? ' checked' : '') + '> ' + esc(API.nomeVer(p)) + '</label>';
+          return '<label class="linha-check" style="margin-right:18px"><input type="checkbox" data-acao="vc-pessoa" data-id="' + esc(p.id) + '"' + (marcadas.indexOf(p.id) >= 0 ? ' checked' : '') + '> ' + esc(API.nomeVer(p)) + '</label>' +
+            /* 1.3.0 (3.131): nome de quem parece ser de fora (inquilino, prestador…): "Esta pessoa é da família?" */
+            (window.Pessoas && Pessoas.pareceDeFora && Pessoas.pareceDeFora(p) ? '<span class="aviso-box vc-de-fora small">' + esc(tr('Esta pessoa é da família?', 'Is this person family?', '¿Esta persona es de la familia?')) +
+              ' <button type="button" class="btn sm" data-acao="vc-de-fora" data-id="' + esc(p.id) + '">' + esc(tr('Não, é de fora', 'No, not family', 'No, es de fuera')) + '</button></span> ' : '');
         }).join(' ') : '<span class="small muted">' + esc(tr('Cadastre as pessoas da casa em ', 'Add the household people in ')) + '<button type="button" class="linkinho" data-acao="ps-lista">' + esc(tr('Pessoas da família', 'Family people')) + '</button>.</span>') + '</div>' +
         '<p class="tiny muted">' + esc(tr('Você (o chefe) vê tudo e não precisa estar na lista. Alguém aqui não é da família (ex.: quem paga aluguel)? Mude o tipo para "Outras pessoas" em Pessoas da família.',
           'You (the head) see everything and need not be on the list. Someone here is not family (e.g. a tenant)? Change their type to "Other people" in Family people.')) +
@@ -248,7 +251,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'visao-casa', versao: '1.2.0', colecoes: [COL],
+    id: 'visao-casa', versao: '1.3.0', colecoes: [COL],
     pontos: {
       'budget.painel': function () { return API.soCasa() ? gastosDaFamilia() : ''; },
       /* 1.1.0 (3.75): no 📥, o que se pede e por quê, numa linha; o botão abre o cartão sem trocar de app */
@@ -282,6 +285,12 @@
       },
       'vc-juntar-nao': function (el) { var c = ST.config = ST.config || {}; c.vcJuntarNao = c.vcJuntarNao || {}; c.vcJuntarNao[el.dataset.par] = 1; Store.salvar(); render(); },
       'vc-criar-pin': function () { var n = nv(); if (n && n.criarPinConta) { Tela.pinConta = undefined; n.criarPinConta(); } },
+      'vc-de-fora': function (el) {   /* 1.3.0 (3.131): vira "Outras pessoas" e sai da lista da casa */
+        var p = (ST.pessoas || []).find(function (x) { return x.id === el.dataset.id; }); if (!p) return;
+        p.tipo = 'outra'; p.papel = '';
+        if (ST.visaoCasa && Array.isArray(ST.visaoCasa.pessoas)) ST.visaoCasa.pessoas = ST.visaoCasa.pessoas.filter(function (id) { return id !== p.id; });
+        Store.salvar(); render(); toast(tr('Agora está em Outras pessoas.', 'Now in Other people.', 'Ahora está en Otras personas.'));
+      },
       'vc-pessoa': function (el) {
         var v = ST.visaoCasa = Object.assign({ pessoas: [] }, ST.visaoCasa), id = el.dataset.id;
         v.pessoas = v.pessoas.filter(function (x) { return x !== id; }); if (el.checked) v.pessoas.push(id);

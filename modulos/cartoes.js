@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/cartoes.js — cartões por conta, com vários finais (3.65)        1.2.0 · 24/Nov/2026
+   modulos/cartoes.js — cartões por conta, com vários finais (3.65)        1.3.0 · 27/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      CARTÃO = a conta do cartão (a fatura): apelido, titular, "Quem usa", bandeira, banco, fechamento, vencimento.
@@ -28,6 +28,8 @@
    1.2.0 (3.106): o "+ Novo cartão" mostra no topo "Detectados nas suas compras" ("Mastercard (Itaú) · finais ••9458, ••6514 e mais 11
      virtuais · última compra 23/Nov"); um toque preenche bandeira, banco, conta e finais com os tipos. Painel: "Achamos 3 cartões nas suas
      faturas: cadastrar".
+   1.3.0 (3.131): "Cartões encontrados" por CONTA do cartão: o final sem conta_cartao vai para a conta que outra compra dele trouxe;
+     sem conta nenhuma, o mesmo banco e a mesma bandeira formam um cartão provável; "Cadastrar" com um toque, com os finais dentro.
    API (window.Cartoes)
      finais(c) · doFinal(fim) · daConta(id) · doRobo(l, g) · quemPagou(c, fim) · encontrados() · perguntas()
      ligarRetro(c) → n · semente(chave) → dados para o cadastro · responder(fim, cartaoId|'novo'|'nao')
@@ -96,13 +98,18 @@
     },
     /* os finais do robô que ainda não são de nenhum cartão, agrupados pela conta do cartão */
     encontrados: function () {
-      var grupos = {};
-      ((typeof ST !== 'undefined' && ST && ST.gastos) || []).forEach(function (g) {
+      var grupos = {}, gs = ((typeof ST !== 'undefined' && ST && ST.gastos) || []), contaDoFinal = {};
+      /* 1.3.0 (3.131): a conta do cartão de cada final, por qualquer compra que a trouxe (as antigas, sem conta_cartao, vão junto) */
+      gs.forEach(function (g) { if (g.finalCartao && g.contaCartao && g.contaCartao.id && !contaDoFinal[g.finalCartao]) contaDoFinal[g.finalCartao] = g.contaCartao; });
+      gs.forEach(function (g) {
         if (g.cartaoId || !g.finalCartao) return;
-        if (API.doFinal(g.finalCartao) || (g.contaCartao && API.daConta(g.contaCartao.id))) return;
-        var k = g.contaCartao && g.contaCartao.id ? 'c:' + g.contaCartao.id : 'f:' + g.finalCartao;
-        var x = grupos[k] || (grupos[k] = { chave: k, contaId: g.contaCartao && g.contaCartao.id || '', nome: g.contaCartao && g.contaCartao.nome || '', bandeira: '', banco: '', finais: [], n: 0, ultima: '' });
+        var cc = (g.contaCartao && g.contaCartao.id) ? g.contaCartao : contaDoFinal[g.finalCartao] || null;
+        if (API.doFinal(g.finalCartao) || (cc && API.daConta(cc.id))) return;
+        /* sem a conta: o mesmo banco e a mesma bandeira são o mesmo cartão provável (os virtuais dividem a fatura) */
+        var band = g.cartaoNome ? bandeiraDe(g.cartaoNome) : '', k = cc ? 'c:' + cc.id : (g.conta || band ? 'b:' + N(g.conta) + '|' + band : 'f:' + g.finalCartao);
+        var x = grupos[k] || (grupos[k] = { chave: k, contaId: cc ? cc.id : '', nome: cc ? cc.nome || '' : '', bandeira: '', banco: '', finais: [], porFinal: {}, n: 0, ultima: '' });
         if (x.finais.indexOf(g.finalCartao) < 0) x.finais.push(g.finalCartao);
+        x.porFinal[g.finalCartao] = (x.porFinal[g.finalCartao] || 0) + 1;
         x.n++; if ((g.data || '') > x.ultima) x.ultima = g.data || '';
         if (!x.bandeira && g.cartaoNome) x.bandeira = bandeiraDe(g.cartaoNome);
         if (!x.banco && g.conta) x.banco = g.conta;
@@ -113,8 +120,9 @@
     perguntas: function () {
       if (!cartoes().length) return [];
       var resp = cfg().cartoesPergunta || {};
-      return API.encontrados().filter(function (x) { return !x.contaId; }).map(function (x) { return { fim: x.finais[0], n: x.n, ultima: x.ultima }; })
-        .filter(function (x) { return !resp[x.fim]; });
+      var out = [];   /* 1.3.0: um por final (o grupo sem conta pode ter vários) */
+      API.encontrados().filter(function (x) { return !x.contaId; }).forEach(function (x) { x.finais.forEach(function (f) { out.push({ fim: f, n: x.porFinal[f] || x.n, ultima: x.ultima }); }); });
+      return out.filter(function (x) { return !resp[x.fim]; });
     },
     responder: function (fim, alvo) {
       (cfg().cartoesPergunta = cfg().cartoesPergunta || {})[fim] = alvo;
@@ -215,11 +223,13 @@
     var h = '';
     var comConta = enc.filter(function (x) { return x.contaId || !cartoes().length; });
     if (comConta.length) {
-      h += '<div class="callout ct-encontrados"><b>💳 ' + esc(tr('Encontrei ' + comConta.length + ' cartão(ões) nas suas compras', 'I found ' + comConta.length + ' card(s) in your purchases')) + '</b>' +
-        '<ul class="small" style="margin:6px 0 0;padding-left:18px">' + comConta.map(function (x) {
-          var nome = x.nome || ((BANDEIRA_POR_ID[x.bandeira] || {}).nome || tr('Cartão', 'Card'));
-          return '<li>' + esc(nome + (x.banco ? ' · ' + x.banco : '') + ' (' + tr(x.finais.length > 1 ? 'finais ' : 'final ', x.finais.length > 1 ? 'endings ' : 'ending ') + x.finais.join(', ') + ') · ' + x.n + tr(' compra(s)', ' purchase(s)')) +
-            ' <button type="button" class="linkinho" data-acao="ct-encontrado" data-chave="' + esc(x.chave) + '">' + esc(tr('Dar nome', 'Name it')) + '</button></li>';
+      /* 1.3.0 (3.131): uma linha por CONTA de cartão (a fatura), com os finais dentro dela; cadastrar com um toque */
+      h += '<div class="callout ct-encontrados"><b>💳 ' + esc(comConta.length === 1 ? tr('Encontrei 1 cartão nas suas compras', 'I found 1 card in your purchases', 'Encontré 1 tarjeta en tus compras') :
+          tr('Encontrei ' + comConta.length + ' cartões nas suas compras', 'I found ' + comConta.length + ' cards in your purchases', 'Encontré ' + comConta.length + ' tarjetas en tus compras')) + '</b>' +
+        '<p class="tiny muted" style="margin:2px 0 0">' + esc(tr('Um por fatura: os cartões virtuais e os adicionais ficam dentro do cartão deles.', 'One per bill: virtual and additional cards stay inside their card.', 'Una por factura: las tarjetas virtuales y adicionales quedan dentro de la suya.')) + '</p>' +
+        '<ul class="small ct-enc-lista">' + comConta.map(function (x) {
+          return '<li><span>' + esc(rotuloEnc(x) + ' · ' + x.n + tr(' compra(s)', ' purchase(s)', ' compra(s)')) + '</span>' +
+            ' <button type="button" class="btn sm" data-acao="ct-encontrado" data-chave="' + esc(x.chave) + '">' + esc(tr('Cadastrar', 'Add', 'Registrar')) + '</button></li>';
         }).join('') + '</ul></div>';
     }
     if (q.length) {
@@ -243,7 +253,7 @@
 
   MoneyModulos.registrar({
     id: 'cartoes',
-    versao: '1.2.0',
+    versao: '1.3.0',
     pontos: {
       'cartao.form': function (ctx) {
         var c = ctx.c || ctx.semente || {};

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.5.0 · 26/Nov/2026 (3.125: e-mail opcional, a ficha do dono ligada à conta sem ficha repetida; 3.116: o nome no aviso do saldo abre a pessoa)
+   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.6.0 · 27/Nov/2026 (3.131: ficha que nasce de terceiro é "outra"; pareceDeFora)
    ---------------------------------------------------------------------
    O QUE FAZ
      Um cadastro só de "quem": Da casa (responsáveis e dependentes), Outras pessoas (pai, amigo, sócio) e
@@ -226,12 +226,14 @@
     /* os textos soltos (sem ID) de todos os registros, contados */
     soltos: function () {
       var c = {};
-      cadaRegistro(function (o) {
+      cadaRegistro(function (o, col) {
         PARES.forEach(function (x) {
           if (typeof o[x[0]] !== 'string') return;   /* ex.: "quem vai" dos trajetos é uma lista */
           var t = o[x[0]].trim();
           if (!t || o[x[1]] || casaToda(t)) return;
-          var k = N(t); (c[k] = c[k] || { texto: t, n: 0 }).n++;
+          var k = N(t), s = (c[k] = c[k] || { texto: t, n: 0, fora: true }); s.n++;
+          /* 1.6.0 (3.131): o texto que só aparece como "para quem" das contas de terceiros ou dos comprovantes (o robô) é de fora */
+          if (!(x[0] === 'paraQuem' && (col === 'terceiros' || col === 'comprovantes'))) s.fora = false;
         });
       });
       return Object.keys(c).map(function (k) { return c[k]; }).sort(function (a, b) { return b.n - a.n; });
@@ -249,6 +251,11 @@
       if (l.map(N).indexOf(N(t)) < 0) l.push(t);
       return API.religar();
     },
+    /* 1.6.0 (3.131): nome que parece de quem é de fora da família (o aviso "Esta pessoa é da família?" em Quem é da casa) */
+    pareceDeFora: function (x) {
+      var p = typeof x === 'object' && x ? x : null, t = N(p ? [p.nome, p.apelido, p.sobrenome].join(' ') : x);
+      return /\b(inquilin[oa]s?|locatari[oa]s?|locador[a]?|prestador[a]?|propriet[a]ri[oa]|imobiliaria|sindic[oa]|condominio|porteir[oa]|zelador[a]?|fornecedor[a]?)\b/.test(t);
+    },
     naoEhParecida: function (texto) { (cfg().pessoasNao = cfg().pessoasNao || {})[N(texto)] = 1; },
     /* "Neco", "Beta", "PJ"… viram pessoas; o texto de hoje fica como apelido do banco (o extrato continua batendo) */
     migrar: function () {
@@ -257,7 +264,9 @@
       API.soltos().forEach(function (s) {
         if (API.achar(s.texto) || API.parecida(s.texto)) return;   /* parecido com quem já entrou: pergunta depois ("é a mesma pessoa?") */
         var empresa = /^pj$/i.test(s.texto.trim()), varias = /\s/.test(s.texto.trim());
-        lista().push({ id: novoId(), tipo: empresa ? 'empresa' : 'casa', papel: '', nome: empresa ? 'PJ' : titulo(s.texto), meio: '', sobrenome: '', apelido: empresa ? 'PJ' : (varias ? s.texto.trim() : ''),
+        /* 1.6.0 (3.131): ficha que nasce de terceiro (ou com nome de quem é de fora: inquilino, prestador…) nasce "outra", nunca "casa" */
+        var fora = !empresa && (s.fora || API.pareceDeFora(s.texto));
+        lista().push({ id: novoId(), tipo: empresa ? 'empresa' : (fora ? 'outra' : 'casa'), papel: '', nome: empresa ? 'PJ' : titulo(s.texto), meio: '', sobrenome: '', apelido: empresa ? 'PJ' : (varias ? s.texto.trim() : ''),
           banco: [], aliases: [s.texto.trim()], cnpj: '', revisar: true, criadoEm: new Date().toISOString() });
         criadas++;
       });
@@ -463,7 +472,7 @@
 
   MoneyModulos.registrar({
     id: 'pessoas',
-    versao: '1.5.0',
+    versao: '1.6.0',
     colecoes: [COL],
     iniciar: function () {
       try { if (ST && !cfg().pessoasV && (ST.gastos || []).length + (ST.recorrentes || []).length) { API.migrar(); Store.salvar(); } } catch (e) { console.warn('pessoas', e); }

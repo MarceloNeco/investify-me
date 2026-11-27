@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.3.0 · 26/Nov/2026
+   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.3.1 · 27/Nov/2026
    1.3.0 (3.116, dono: "que conta é essa?"): o aviso diz o primeiro dia negativo E o pior dia ("fica negativa em 30/11 (−R$ 968,83) e chega a
    −R$ 1.9xx em 05/12. Resgate R$ 2.100 até 29/11 (cobre o pior dia + 5% de folga)") e "ver por quê" lista as maiores saídas até o pior dia;
    a conta aparece inteira como o banco manda (agência e conta, dígito com hífen nos bancos conhecidos); o nome da pessoa abre a ficha dela.
@@ -78,8 +78,11 @@
       /* faturas: a aberta que o robô mandou, no vencimento; depois, os parcelados de cada mês */
       (ST.saldos_banco || []).filter(function (x) { return x.tipo === 'cartao' && x.cartao; }).forEach(function (k) {
         var c = contaPara(k.banco + ' ' + (k.conta || '')); if (!c || c.id !== id) return;
-        var dia = Number(k.cartao.vence) || 0, v = Number(k.cartao.fatura) || 0; if (!dia || !(v > 0)) return;
-        var d = h.slice(0, 8) + ('0' + dia).slice(-2); if (d <= h) d = mais(d.slice(0, 8) + '01', 32).slice(0, 8) + ('0' + dia).slice(-2);
+        /* 1.3.1 (3.131): só a FATURA a pagar (nunca o limite usado, que tem as parcelas futuras); o vencimento vem em data (ou dia) */
+        var v = window.SaldoBanco && SaldoBanco.faturaAPagar ? SaldoBanco.faturaAPagar(k) || 0 : 0, iso = /^\d{4}-\d{2}-\d{2}$/.test(String(k.cartao.vence || '')) ? k.cartao.vence : '';
+        var dia = iso ? 0 : Number(k.cartao.vence) || 0; if ((!dia && !iso) || !(v > 0)) return;
+        var d = iso; if (!d) { d = h.slice(0, 8) + ('0' + dia).slice(-2); if (d <= h) d = mais(d.slice(0, 8) + '01', 32).slice(0, 8) + ('0' + dia).slice(-2); }
+        if (d <= h) return;
         if (d <= fim) ev.push({ data: d, valor: n2(-v), nome: tr('Fatura ', 'Bill ') + (k.conta || k.banco) });
       });
       /* 1.0.1 (3.80): as pré-autorizações do cartão (pendente e caução) saem no vencimento da fatura em que caem */
@@ -223,7 +226,7 @@
   function alertas() { return API.contas().map(function (c) { var a = API.alerta(c); return a ? { c: c, a: a } : null; }).filter(Boolean); }
 
   MoneyModulos.registrar({
-    id: 'saldo-previsto', versao: '1.3.0', colecoes: [COL],
+    id: 'saldo-previsto', versao: '1.3.1', colecoes: [COL],
     pontos: {
       'budget.painel': cartao, 'custos.contas': cartao,
       'budget.atencao': function () {

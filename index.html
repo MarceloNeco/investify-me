@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MoneyTRIO">
 <link rel="apple-touch-icon" href="icone-192.png">
-<link rel="stylesheet" href="estilo.css?v=3.130">
+<link rel="stylesheet" href="estilo.css?v=3.131">
 <link rel="stylesheet" href="assistone/assistone-visual.css?v=1.1.2">
 </head>
 <body>
@@ -683,8 +683,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.130"></script>
-<script src="textos/frases-es.js?v=3.130"></script>
+<script src="textos/frases-en.js?v=3.131"></script>
+<script src="textos/frases-es.js?v=3.131"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7679,7 +7679,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.130"></script>
+<script src="textos/mudancas.js?v=3.131"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -18990,10 +18990,12 @@ function blocoBancosCartoes(){
       const base = BANCO_POR_COD[b.cod] || BANCO_POR_COD['000'];
       return '<tr>' +
         '<td style="width:52px">' + Banco.selo(b.cod) + '</td>' +
-        '<td><b>' + esc(b.apelido || b.nome) + '</b>' +
-          (b.apelido ? '<span class="t-sub">' + esc(b.nome) + '</span>' : '') + '</td>' +
-        '<td class="tiny muted">' + (pt ? 'cód. ' : 'code ') + esc(b.cod) +
-          (b.cnpj ? '<span class="t-sub">' + esc(b.cnpj) + '</span>' : '') + '</td>' +
+        /* 3.131: cada coisa na sua linha, sem cortar (o dono: "muito grudadinho"): a agência e a conta de cada conta desse banco
+           que o robô conhece (SaldoBanco.numero: inteira para o dono), e o código com o CNPJ embaixo */
+        '<td class="bk-cel"><b>' + esc(b.apelido || b.nome) + '</b>' +
+          (b.apelido ? '<span class="t-sub">' + esc(b.nome) + '</span>' : '') +
+          bancoContasHTML(b) +
+          '<span class="t-sub bk-cod">' + (pt ? 'cód. ' : 'code ') + esc(b.cod) + (b.cnpj ? ' · CNPJ ' + esc(b.cnpj) : '') + '</span></td>' +
         '<td style="text-align:right"><button class="linkinho" data-bkdel="' + b.id + '">' +
           (pt ? 'remover' : 'remove') + '</button></td>' +
       '</tr>';
@@ -19034,6 +19036,19 @@ function blocoBancosCartoes(){
     : 'The coloured badge is drawn by the app itself, in the institution colour. I do not use any bank trademark.') + '</p>';
 
   return h + '</div>';
+}
+
+/* 3.131: "Ag. 0001 · Conta 00012-3", uma linha por conta (corrente ou poupança) desse banco nos saldos que o robô manda */
+function bancoContasHTML(b){
+  if(!window.SaldoBanco || !SaldoBanco.contas || !SaldoBanco.numero) return '';
+  const vistos = {}, w = x => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim().split(' ')[0] || '';
+  const nomes = [w(b.nome), w(b.apelido)].filter(x => x.length >= 2);   /* "Itaú Unibanco S.A." e o "Itau" do robô: a 1ª palavra */
+  return SaldoBanco.contas().filter(r => (r.tipo === 'conta' || r.tipo === 'poupanca') && nomes.indexOf(w(r.banco)) >= 0).map(r => {
+    const nr = SaldoBanco.numero(r).replace(/^ag\. /, 'Ag. ').replace(/^branch /, 'Branch ').replace(/^suc\. /, 'Suc. ')
+      .replace(' · conta ', ' · Conta ').replace(' · account ', ' · Account ').replace(' · cuenta ', ' · Cuenta ').replace(/^conta /, 'Conta ').replace(/^account /, 'Account ').replace(/^cuenta /, 'Cuenta ');
+    if(!nr || vistos[nr]) return ''; vistos[nr] = 1;
+    return '<span class="t-sub bk-conta">' + esc(nr + (r.tipo === 'poupanca' ? (I18n.atual === 'pt' ? ' (poupança)' : ' (savings)') : '')) + '</span>';
+  }).join('');
 }
 
 /* ---------- formulário do banco ---------- */
@@ -30160,13 +30175,13 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/previsto.js?v=1.0.2"></script>
 <script src="modulos/conciliacao.js?v=1.0.0"></script>
 <script src="modulos/calendario-menu.js?v=1.2.1"></script>
-<script src="modulos/pessoas.js?v=1.5.0"></script>
+<script src="modulos/pessoas.js?v=1.6.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
-<script src="modulos/saldo-banco.js?v=2.3.1"></script>
+<script src="modulos/saldo-banco.js?v=2.4.0"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
 <script src="assistone/assistone-visual.js?v=1.1.2"></script>
 <script src="modulos/tour.js?v=1.1.0"></script>
-<script src="modulos/cartoes.js?v=1.2.0"></script>
+<script src="modulos/cartoes.js?v=1.3.0"></script>
 <script src="modulos/cartao-foto.js?v=1.0.0"></script>
 <script src="modulos/contraparte.js?v=1.0.0"></script>
 <script src="modulos/declaracao-escolhas.js?v=1.1.0"></script>
@@ -30174,7 +30189,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/apelido.js?v=1.1.0"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.0.0"></script>
-<script src="modulos/visao-casa.js?v=1.2.0"></script>
+<script src="modulos/visao-casa.js?v=1.3.0"></script>
 <script src="modulos/previsao.js?v=1.2.1"></script>
 <script src="modulos/orcamento.js?v=1.2.0"></script>
 <script src="modulos/fluxo-categorias.js?v=1.0.0"></script>
@@ -30188,7 +30203,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/documentos.js?v=1.1.0"></script>
 <script src="modulos/contas-mes.js?v=1.2.1"></script>
 <script src="modulos/planejados.js?v=1.0.0"></script>
-<script src="modulos/saldo-previsto.js?v=1.3.0"></script>
+<script src="modulos/saldo-previsto.js?v=1.3.1"></script>
 <script src="modulos/debito-auto.js?v=1.0.1"></script>
 <script src="modulos/cofre-empresa.js?v=1.3.0"></script>
 <script src="modulos/a-receber.js?v=1.0.1"></script>

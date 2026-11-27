@@ -1,11 +1,17 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.130 · 26/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.131 · 26/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.131', d:'2026-11-26', t:'Bancos e cartões mais claros, e a fatura certa', itens:[
+    '🏦 Em Configurações › Bancos e cartões, cada banco mostra a agência e a conta numa linha só delas ("Ag. 0001 · Conta 00012-3") e o código e o CNPJ embaixo, sem cortar no celular.',
+    '💳 Os cartões encontrados nas suas compras agora vêm por fatura: os virtuais e os adicionais ficam dentro do cartão deles, e "Cadastrar" já traz todos os finais.',
+    '🧾 Na conferência com o banco, o cartão mostra a "Fatura a pagar" com o vencimento e, à parte, o "Limite usado" (que inclui as parcelas futuras). O saldo previsto da conta tira só a fatura a pagar.',
+    '👪 Quem vem da lista de contas de outras pessoas (ex.: um inquilino) entra como "Outras pessoas", não como da casa. Em "Quem é da casa", um nome que parece de fora pergunta "Esta pessoa é da família?" com o botão "Não, é de fora".'
+  ]},
   {v:'3.130', d:'2026-11-26', t:'As notas da PJ e o DAS do mês', itens:[
     '🧾 No FiscalONE › PJ, o novo "Notas e DAS do mês": as notas que a empresa emitiu, ligadas ao crédito que caiu na conta (a receita em reais pelo câmbio do dia), com a marca de exportação (sem PIS/COFINS; ISS: confirme com o contador) e o que vale do IBS/CBS.',
     '📅 O DAS do mês é estimado pela competência (as notas do mês) ou pelo caixa (o que entrou): você escolhe em Configurações da PJ, no Cofre da empresa. Vence no dia 20 do mês seguinte e aparece "pago" quando chega do banco. Tudo é informativo: confirme com o contador.',
