@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.122 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.123 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,9 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.123 — rascunho, revisar */
+  'Notas de serviço de saúde e educação':'Facturas de servicios de salud y educación',
+  '🧾 A nota fiscal de serviço que o robô traz agora vale também para educação: liga à mensalidade e marca o IR. O aluno ou paciente vira o "para quem", com o serviço e a categoria sugerida. A despesa escolar extra (período ampliado, alimentação) liga, mas não entra na dedução.':'🧾 La factura de servicio que trae el robot ahora también vale para educación: se vincula a la mensualidad y marca la renta. El alumno o paciente pasa a ser el "para quién", con el servicio y la categoría sugerida. El gasto escolar extra (horario ampliado, comida) se vincula pero no se deduce.',
   /* 3.122 — rascunho, revisar */
   'Conferência da fatura do cartão':'Conciliación de la factura de la tarjeta',
   '💳 A fatura do cartão que o robô lê mostra a conferência: quantos lançamentos casaram com o banco, o que está só na fatura e só no banco, os encargos (juros, multa, IOF), o limite usado, as próximas faturas e os avisos do robô.':'💳 La factura de la tarjeta que lee el robot muestra la conciliación: cuántos movimientos coincidieron con el banco, lo que está solo en la factura y solo en el banco, los cargos (intereses, multa, IOF), el límite usado, las próximas facturas y los avisos del robot.',
