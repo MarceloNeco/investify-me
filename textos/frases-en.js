@@ -1,10 +1,15 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.135 · 27/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.136 · 27/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.136 */
+  'Serviço novo ou aumento na conta de telefone e internet':'New service or price rise on the phone and internet bill',
+  '⚠️ Quando a conta de telefone, internet ou TV traz um serviço que não estava na fatura anterior, o 📥 pergunta: "serviço novo na fatura — Você contratou?". "Sim, contratei" não pergunta mais por ele; "Não pedi" mostra como contestar (app da operadora, central ou ANATEL 1331) e o aviso fica até o valor sair da fatura.':'⚠️ When the phone, internet or TV bill has a service that was not on the previous bill, the 📥 asks: "new service on the bill — Did you sign up for it?". "Yes, I did" stops asking about it; "I did not ask for it" shows how to dispute it (carrier app, call center or ANATEL 1331) and the notice stays until the charge leaves the bill.',
+  '📈 Se a conta subiu, um aviso mostra de quanto para quanto (e a porcentagem), com "ver o que mudou": o que entrou, o que subiu e o que saiu. Na ficha do lançamento que pagou a conta, "🧾 serviços desta fatura".':'📈 If the bill went up, a notice shows from how much to how much (and the percentage), with "see what changed": what was added, what went up and what was removed. On the entry that paid the bill, "🧾 services on this bill".',
+  '💳 A conta paga no cartão de crédito não pede mais "pague": o app liga a conta à cobrança no cartão. E os detalhes que vêm do e-mail (loja, itens, consumo, consórcio, fatura) agora chegam inteiros.':'💳 A bill paid by credit card no longer asks you to "pay": the app links the bill to the card charge. And the details from the e-mail (store, items, usage, consortium, card bill) now arrive in full.',
   /* 3.135 */
   'Compra com itens de categorias diferentes vira lançamento dividido':'A purchase with items in different categories becomes a split entry',
   '🧾 Quando o e-mail de uma compra traz itens de categorias diferentes (um livro e papel higiênico, por exemplo), o 📥 pergunta "dividir assim?", com o valor de cada categoria e os itens. O frete ou desconto é rateado na proporção e aparece separado.':'🧾 When a purchase e-mail has items in different categories (a book and toilet paper, for example), the 📥 asks "split like this?", with the amount of each category and its items. Shipping or discount is shared out proportionally and shown separately.',

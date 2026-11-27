@@ -1,11 +1,16 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.135 · 27/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.136 · 27/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.136', d:'2026-11-27', t:'Serviço novo ou aumento na conta de telefone e internet', itens:[
+    '⚠️ Quando a conta de telefone, internet ou TV traz um serviço que não estava na fatura anterior, o 📥 pergunta: "serviço novo na fatura — Você contratou?". "Sim, contratei" não pergunta mais por ele; "Não pedi" mostra como contestar (app da operadora, central ou ANATEL 1331) e o aviso fica até o valor sair da fatura.',
+    '📈 Se a conta subiu, um aviso mostra de quanto para quanto (e a porcentagem), com "ver o que mudou": o que entrou, o que subiu e o que saiu. Na ficha do lançamento que pagou a conta, "🧾 serviços desta fatura".',
+    '💳 A conta paga no cartão de crédito não pede mais "pague": o app liga a conta à cobrança no cartão. E os detalhes que vêm do e-mail (loja, itens, consumo, consórcio, fatura) agora chegam inteiros.'
+  ]},
   {v:'3.135', d:'2026-11-27', t:'Compra com itens de categorias diferentes vira lançamento dividido', itens:[
     '🧾 Quando o e-mail de uma compra traz itens de categorias diferentes (um livro e papel higiênico, por exemplo), o 📥 pergunta "dividir assim?", com o valor de cada categoria e os itens. O frete ou desconto é rateado na proporção e aparece separado.',
     '✂️ "Dividir" usa a mesma divisão de sempre; "Tudo numa categoria" deixa inteiro; "Ajustar" abre o lançamento. Item sem palpite pergunta a categoria na própria linha, e a resposta fica guardada por item (nunca pela loja). Na ficha do lançamento, "ver itens".',

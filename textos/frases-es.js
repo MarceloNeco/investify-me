@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.135 · 27/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.136 · 27/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,11 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.136 — rascunho, revisar */
+  'Serviço novo ou aumento na conta de telefone e internet':'Servicio nuevo o subida en la factura de teléfono e internet',
+  '⚠️ Quando a conta de telefone, internet ou TV traz um serviço que não estava na fatura anterior, o 📥 pergunta: "serviço novo na fatura — Você contratou?". "Sim, contratei" não pergunta mais por ele; "Não pedi" mostra como contestar (app da operadora, central ou ANATEL 1331) e o aviso fica até o valor sair da fatura.':'⚠️ Cuando la factura de teléfono, internet o TV trae un servicio que no estaba en la anterior, el 📥 pregunta: "servicio nuevo en la factura — ¿Lo contrataste?". "Sí, lo contraté" no vuelve a preguntar; "No lo pedí" muestra cómo reclamar (app de la operadora, atención al cliente o ANATEL 1331) y el aviso sigue hasta que el cargo salga de la factura.',
+  '📈 Se a conta subiu, um aviso mostra de quanto para quanto (e a porcentagem), com "ver o que mudou": o que entrou, o que subiu e o que saiu. Na ficha do lançamento que pagou a conta, "🧾 serviços desta fatura".':'📈 Si la factura subió, un aviso muestra de cuánto a cuánto (y el porcentaje), con "ver qué cambió": lo que entró, lo que subió y lo que salió. En la ficha del movimiento que pagó la factura, "🧾 servicios de esta factura".',
+  '💳 A conta paga no cartão de crédito não pede mais "pague": o app liga a conta à cobrança no cartão. E os detalhes que vêm do e-mail (loja, itens, consumo, consórcio, fatura) agora chegam inteiros.':'💳 La factura pagada con tarjeta de crédito ya no pide "paga": la app la vincula al cargo en la tarjeta. Y los detalles del correo (tienda, artículos, consumo, consorcio, extracto) ahora llegan completos.',
   /* 3.135 — rascunho, revisar */
   'Compra com itens de categorias diferentes vira lançamento dividido':'Una compra con artículos de categorías distintas se vuelve un movimiento dividido',
   '🧾 Quando o e-mail de uma compra traz itens de categorias diferentes (um livro e papel higiênico, por exemplo), o 📥 pergunta "dividir assim?", com o valor de cada categoria e os itens. O frete ou desconto é rateado na proporção e aparece separado.':'🧾 Cuando el correo de una compra trae artículos de categorías distintas (un libro y papel higiénico, por ejemplo), el 📥 pregunta "¿dividir así?", con el importe de cada categoría y sus artículos. El envío o el descuento se reparte en proporción y aparece aparte.',
