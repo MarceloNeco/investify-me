@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/posicoes-texto.js — "Importar posições" sem arquivo: 📋 Colar texto e 📷 Foto ou print   1.1.0 · 27/Nov/2026 (3.134)
+   modulos/posicoes-texto.js — "Importar posições" sem arquivo: 📋 Colar texto e 📷 Foto ou print   1.2.0 · 27/Nov/2026 (3.134)
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono: "deveria ter um jeito mais conveniente")
      Duas entradas novas no topo da Carteira, que caem na MESMA prévia do "Importar posições (JSON)" (modulos/importar-posicoes.js:
@@ -85,7 +85,7 @@
         var us = function (x) { var v = Number(String(x || '').replace(/[$,\s]/g, '')); return isFinite(v) ? v : null; };
         var MES = { january: '01', february: '02', march: '03', april: '04', may: '05', june: '06', july: '07', august: '08', september: '09', october: '10', november: '11', december: '12' };
         var per = t.match(/[A-Za-z]+ \d{1,2}, \d{4}\s*-\s*([A-Za-z]+) (\d{1,2}), (\d{4})/), data = per && MES[per[1].toLowerCase()] ? per[3] + '-' + MES[per[1].toLowerCase()] + '-' + ('0' + per[2]).slice(-2) : '';
-        var aviso = tr('Preço médio não veio no extrato (está o preço do extrato', 'Average price was not in the statement (the statement price is used', 'El precio medio no venía en el extracto (está el del extracto') + (data ? ' ' + tr('de ', 'of ', 'del ') + data.slice(8) + '/' + data.slice(5, 7) + '/' + data.slice(0, 4) : '') + tr('): confira.', '): check it.', '): revísalo.');
+        var aviso = tr('Preço médio a informar: o extrato', 'Average price to add: the statement', 'Precio medio por informar: el extracto') + (data ? ' ' + tr('de ', 'of ', 'del ') + data.slice(8) + '/' + data.slice(5, 7) + '/' + data.slice(0, 4) : '') + tr(' não traz.', ' does not have it.', ' no lo trae.');
         var secao = 'acoes', ult = null, av = [];
         linhas.forEach(function (l0) {
           var l = l0.replace(/\s+/g, ' ').trim(); if (!l) return;
@@ -97,8 +97,9 @@
           var m = /^(.*?)\s*\b([A-Z0-9]{1,9})\s+C\s+(-?[\d,]*\.?\d+)\s+(-?[\d,]*\.?\d+)\s+\$?\s*(-?[\d,]*\.?\d+)/.exec(l);
           if (m) {
             var tk = m[2], q = us(m[3]), pr = us(m[4]), vm = us(m[5]), nome = m[1].replace(/\s*-\s*$/, '').trim() || tk;
-            if (secao === 'bonds') ult = { ticker: tk, nome: nome, tipo: 'bond-us', moeda: 'USD', pm: vm, valorAtual: vm, notas: aviso };
-            else ult = { ticker: tk, nome: nome, tipo: ETFS_US.test(tk) || /\betf\b|\bfund\b|\btrust\b/i.test(nome) ? 'etf-us' : 'acao-us', moeda: 'USD', qtd: q, pm: pr || (q ? vm / q : 0), notas: aviso };
+            /* 1.2.0 (3.139): sem preço médio no extrato: "a informar" (nunca o preço do dia) */
+            if (secao === 'bonds') ult = { ticker: tk, nome: nome, tipo: 'bond-us', moeda: 'USD', pm: vm, valorAtual: vm, pmAInformar: true, notas: aviso };
+            else ult = { ticker: tk, nome: nome, tipo: ETFS_US.test(tk) || /\betf\b|\bfund\b|\btrust\b/i.test(nome) ? 'etf-us' : 'acao-us', moeda: 'USD', qtd: q, pm: 0, pmAInformar: true, notas: aviso };
             av.push(ult); return;
           }
           var bt = /^([A-Z]{3,})\s+([\d.]+)\s+(\d{2})\/(\d{2})\/(\d{2})$/.exec(l);
@@ -158,7 +159,7 @@
 
   MoneyModulos.registrar({
     id: 'posicoes-texto',
-    versao: '1.1.0',
+    versao: '1.2.0',
     acoes: {
       'pt-colar': function () {
         $('#genTitle').textContent = tr('Colar posições', 'Paste positions', 'Pegar posiciones');

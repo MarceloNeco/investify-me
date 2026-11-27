@@ -1,10 +1,15 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.138 · 27/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.139 · 27/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.139 */
+  'Rentabilidade sem número absurdo e de onde veio cada valor':'Returns without absurd numbers, and where each value came from',
+  '📊 "Rentabilidade de verdade" corrigida: o que entrou na Carteira sem uma compra registrada (do banco, do extrato, de um arquivo) conta como dinheiro que entrou naquele dia, não como lucro. Com menos de 1 ano, o retorno aparece "em N dias", sem anualizar; e um número fora do normal em poucos dias vira "conferindo os dados", com o porquê.':'📊 "True returns" fixed: what came into the Portfolio without a recorded purchase (from the bank, the statement, a file) counts as money that came in on that day, not as profit. Under 1 year, the return shows "in N days", not annualised; and an unusual number over a few days becomes "checking the data", with the reason.',
+  '🧭 Cada valor diz de onde veio: 🏦 Open Finance (o banco manda todo dia), 📄 extrato por e-mail, 📎 arquivo ou foto, ✍️ digitado. O quadro "De onde veio cada número" fica no fim da Carteira, recolhido, e o que é em dólar aparece em US$.':'🧭 Each value says where it came from: 🏦 Open Finance (the bank sends it daily), 📄 statement by e-mail, 📎 file or photo, ✍️ typed in. The "Where each number came from" box sits at the end of the Portfolio, collapsed, and dollar amounts show in US$.',
+  '✏️ Papel que veio do extrato fica com o "preço médio a informar" (o extrato não traz), sem lucro inventado; importar um arquivo com o preço médio preenche. O título (bond) aparece pelo nome, com o código pequeno embaixo. E tocar num filtro não pula mais a tela para o topo.':'✏️ A holding from the statement shows "average price to add" (the statement does not have it), with no made-up profit; importing a file with the average price fills it in. Bonds show by name, with the code small underneath. And tapping a filter no longer jumps the screen to the top.',
   /* 3.138 */
   'O assistente mostra onde fica':'The assistant shows you where it is',
   '📍 Pergunte ao assistente onde fica alguma coisa (ex.: "como eu lanço um gasto?") e toque em "Me mostra onde fica": o app vai até a tela e acende o botão, sem clicar por você.':'📍 Ask the assistant where something is (e.g. "how do I add an expense?") and tap "Show me where": the app goes to the screen and lights up the button, without clicking for you.',

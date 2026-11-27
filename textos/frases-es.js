@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.138 · 27/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.139 · 27/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,11 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.139 — rascunho, revisar */
+  'Rentabilidade sem número absurdo e de onde veio cada valor':'Rentabilidad sin números absurdos y de dónde vino cada valor',
+  '📊 "Rentabilidade de verdade" corrigida: o que entrou na Carteira sem uma compra registrada (do banco, do extrato, de um arquivo) conta como dinheiro que entrou naquele dia, não como lucro. Com menos de 1 ano, o retorno aparece "em N dias", sem anualizar; e um número fora do normal em poucos dias vira "conferindo os dados", com o porquê.':'📊 "Rentabilidad real" corregida: lo que entró en la Cartera sin una compra registrada (del banco, del extracto, de un archivo) cuenta como dinero que entró ese día, no como beneficio. Con menos de 1 año, el rendimiento aparece "en N días", sin anualizar; y un número fuera de lo normal en pocos días pasa a "revisando los datos", con el porqué.',
+  '🧭 Cada valor diz de onde veio: 🏦 Open Finance (o banco manda todo dia), 📄 extrato por e-mail, 📎 arquivo ou foto, ✍️ digitado. O quadro "De onde veio cada número" fica no fim da Carteira, recolhido, e o que é em dólar aparece em US$.':'🧭 Cada valor dice de dónde vino: 🏦 Open Finance (el banco lo envía cada día), 📄 extracto por correo, 📎 archivo o foto, ✍️ escrito a mano. El cuadro "De dónde vino cada número" está al final de la Cartera, plegado, y lo que es en dólares aparece en US$.',
+  '✏️ Papel que veio do extrato fica com o "preço médio a informar" (o extrato não traz), sem lucro inventado; importar um arquivo com o preço médio preenche. O título (bond) aparece pelo nome, com o código pequeno embaixo. E tocar num filtro não pula mais a tela para o topo.':'✏️ Un valor que vino del extracto queda con el "precio medio por informar" (el extracto no lo trae), sin beneficio inventado; importar un archivo con el precio medio lo completa. El bono aparece por su nombre, con el código pequeño debajo. Y tocar un filtro ya no salta la pantalla arriba.',
   /* 3.138 — rascunho, revisar */
   'O assistente mostra onde fica':'El asistente te muestra dónde está',
   '📍 Pergunte ao assistente onde fica alguma coisa (ex.: "como eu lanço um gasto?") e toque em "Me mostra onde fica": o app vai até a tela e acende o botão, sem clicar por você.':'📍 Pregunta al asistente dónde está algo (p. ej.: "¿cómo apunto un gasto?") y toca "Muéstrame dónde está": la app va a la pantalla y resalta el botón, sin pulsar por ti.',

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.5.0 · 27/Nov/2026 (3.131: fatura a pagar × limite usado; 3.137: ticker e quantidade)
+   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.6.0 · 27/Nov/2026 (3.131: fatura a pagar × limite usado; 3.137: ticker e quantidade; 3.139: extrato × Open Finance)
    ---------------------------------------------------------------------
    O QUE FAZ
      O robô manda, na mesma caixa (money_entrada), itens que NUNCA viram lançamento (nuvem.js desvia para cá):
@@ -93,6 +93,7 @@
       if (!r) { r = { id: id, abertura: { data: data, saldo: saldo }, hist: [] }; lista().push(r); }
       r.tipo = 'investimento'; r.banco = String(it.banco || '').trim().slice(0, 60); r.conta = String(it.conta || '').trim().slice(0, 80);
       r.contaId = it.conta_id ? String(it.conta_id).slice(0, 80) : ''; r.dono = String(it.dono || '').trim().slice(0, 60); r.moeda = String(it.moeda || 'BRL').slice(0, 3);
+      r.viaExtrato = !!(it.ticker || it.quantidade != null || /extrato/i.test(String(it.fonte || it.origem || '')));   /* 2.6.0 (3.139): extrato por e-mail, não Open Finance */
       r.inv = { classe: String(it.classe || '').slice(0, 40), subtipo: String(it.subtipo || '').slice(0, 40), vencimento: it.vencimento || '', taxa: num(it.taxa), indexador: String(it.indexador || '').slice(0, 20),
         ticker: String(it.ticker || '').trim().toUpperCase().slice(0, 20), quantidade: it.quantidade == null ? null : num(it.quantidade), preco: it.preco == null ? null : num(it.preco) };   /* 2.5.0 (3.137): o extrato da corretora (papel, quantidade, preço) */
       hist(r, data, saldo);
@@ -245,7 +246,7 @@
 
   MoneyModulos.registrar({
     id: 'saldo-banco',
-    versao: '2.5.0',
+    versao: '2.6.0',
     colecoes: [COL],
     pontos: { 'budget.painel': cartao,
       /* 2.3.0 (3.116): no detalhe do lançamento, a conta (inteira para o dono; o final para os outros) */

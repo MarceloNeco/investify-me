@@ -56,13 +56,13 @@ const inv = (id, conta, classe, subtipo, saldo, data, venc) => ({ tipo: 'investi
 
     await p.evaluate(() => { abrirApp('investify'); irPara('carteira'); render(); });
     await p.waitForTimeout(200);
-    const t = await p.evaluate(() => { const q = document.querySelector('.ib-quadro'); return { selos: document.querySelectorAll('.badge.banco').length, q: q ? q.textContent.replace(/\s+/g, ' ') : '' }; });
+    const t = await p.evaluate(() => { const q = document.querySelector('.ib-quadro'), v = document.getElementById('view-carteira'), filhos = q ? [...q.parentNode.children] : []; return { selos: document.querySelectorAll('.badge.banco').length, q: q ? q.textContent.replace(/\s+/g, ' ') : '', aberto: q ? q.open : null, topo: q ? filhos.indexOf(q) < 3 : null, fim: q ? !q.nextElementSibling : null }; });
     ok(t.selos >= 2, 'o selo "🏦 veio do banco" nas duas linhas da Carteira (' + t.selos + ')');
-    ok(/Veio do banco/.test(t.q) && /Banco Ficticio/.test(t.q) && /CDB/.test(t.q) && /Fundo DI/.test(t.q), 'o quadro "Veio do banco": por banco e por produto (CDB, Fundo DI)');
+    ok(/De onde veio cada número/.test(t.q) && /Open Finance \(2\)/.test(t.q) && /Banco Ficticio/.test(t.q) && t.fim && !t.topo && !t.aberto, '3.139: "De onde veio cada número" no fim da Carteira, recolhido (antes "Veio do banco" no topo): Open Finance (2), do Banco Ficticio');
     ok(/vence 15\/03\/2028/.test(t.q) && /Liquidez: no vencimento/.test(t.q) && /Liquidez: em 1 dia/.test(t.q), 'com a liquidez (no vencimento; em 1 dia útil para o fundo DI) e o vencimento');
     await p.screenshot({ path: '/tmp/invest-banco.png', fullPage: false });
     await p.evaluate(() => { I18n.atual = 'en'; });
-    ok(/from the bank/.test(await p.evaluate(() => InvestBanco.selo())), 'o selo em inglês: "from the bank"');
+    ok(await p.evaluate(() => /Open Finance/.test(InvestBanco.selo()) && /statement by e-mail/.test(InvestBanco.selo({ doExtrato: {} }))), 'os selos em inglês: "Open Finance" e "statement by e-mail"');
     ok(!p.erros.length, 'sem erro na página' + (p.erros.length ? ': ' + p.erros.join(' | ') : ''));
     await ctx.close();
   } finally { await b.close(); srv.close(); }
