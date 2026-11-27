@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/abrir-no-chrome.js — "Abrir no Chrome" e "Instalar o app"   1.1.0 · 26/Nov/2026 (3.115)
+   modulos/abrir-no-chrome.js — "Abrir no Chrome" e "Instalar o app"   1.2.0 · 27/Nov/2026 (3.115; 3.137: o Compartilhar)
    ---------------------------------------------------------------------
    O QUE FAZ (dono, 24/Nov/2026: "mandar tocar nos ⋮ é amador"; o convite translúcido e a figura que parecia botão)
      · Tela de entrada, só no Android: quando o app abriu DENTRO de outro app (a aba do WhatsApp/Gmail, a Custom Tab com o X no topo:
@@ -120,6 +120,7 @@
       '<p class="small">' + esc(tr('Fica com um ícone como um app: abre mais rápido e funciona até sem internet.', 'It gets an icon like an app: opens faster and works even offline.', 'Queda con un icono como una app: abre más rápido y funciona incluso sin internet.')) + '</p>' +
       (prompt ? '' : '<ol class="ac-passos" id="acPassos">' + passos(ctx).map(function (p) { return '<li>' + p.html + '</li>'; }).join('') + '</ol>' +
         (/^android|^customtab|^samsung/.test(ctx) ? figura() : '')) +
+      (cel ? '<p class="tiny muted ac-partilha">' + esc(tr('No Android, o MoneyTRIO aparece no "Compartilhar" (fotos, PDF, extrato, nota) só quando instalado pelo Chrome. Se ele já estava instalado antes da versão 3.137 e não aparece para PDF, desinstale e instale de novo.', 'On Android, MoneyTRIO shows up in "Share" (photos, PDF, statement, invoice) only when installed from Chrome. If it was installed before version 3.137 and does not show up for PDFs, uninstall and install it again.', 'En Android, MoneyTRIO aparece en "Compartir" (fotos, PDF, extracto, factura) solo si se instaló desde Chrome. Si ya estaba instalada antes de la versión 3.137 y no aparece para PDF, desinstálala e instálala de nuevo.')) + '</p>' : '') +   /* 1.2.0 (3.137) */
       '<div class="ac-acoes">' + (prompt ? '<button type="button" class="btn primary" id="acInstalarSim">' + esc(tr('Instalar', 'Install', 'Instalar')) + '</button>' : '') +
         '<button type="button" class="btn" id="acInstalarNao">' + esc(prompt ? tr('Agora não', 'Not now', 'Ahora no') : tr('Fechar', 'Close', 'Cerrar')) + '</button></div></div>';
     document.body.appendChild(el);
@@ -160,7 +161,7 @@
   function atualizar() { try { if (typeof montarNav === 'function') montarNav(); if (typeof render === 'function' && typeof viewAtual !== 'undefined' && viewAtual === 'config') render(); } catch (e) { /* nada */ } }
 
   MoneyModulos.registrar({
-    id: 'abrir-no-chrome', versao: '1.1.0', colecoes: [], telas: {}, ouvir: {},
+    id: 'abrir-no-chrome', versao: '1.2.0', colecoes: [], telas: {}, ouvir: {},
     pontos: { 'config.todos': function () { return htmlBotao('config'); } },
     acoes: { 'ac-instalar': function () { if (typeof fecharGaveta === 'function') try { fecharGaveta(); } catch (e) { /* sem gaveta */ } abrir(); } },
     /* depois de entrar: o convite aparece uns segundos depois (dá tempo do beforeinstallprompt chegar) */

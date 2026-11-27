@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/assistone-indice.js — a busca do AssistONE acha o próprio app   1.1.0 · 27/Nov/2026 (3.132: Pessoas da família)
+   modulos/assistone-indice.js — a busca do AssistONE acha o próprio app   1.2.0 · 27/Nov/2026 (3.132: Pessoas da família; 3.137: Compartilhar)
    ---------------------------------------------------------------------
    O QUE FAZ
      Diretriz geral: "O AssistONE conhece TUDO o que o app tem". Antes, o 🔎 Buscar só procurava nas aulas do Coach e no
@@ -163,6 +163,9 @@
     C('📲', ['Instalar o app no celular', 'Install the app on the phone', 'Instalar la app en el móvil'],
       ['No Chrome, toque em ⋮ e em Instalar app: o ícone vai para a tela do celular.', 'In Chrome, tap ⋮ and Install app: the icon goes to the phone screen.', 'En Chrome, toca ⋮ e Instalar app: el icono va a la pantalla del móvil.'],
       'instalar icone tela inicial celular atalho install', ajudaPin);
+    C('📤', ['Compartilhar PDF, extrato ou nota com o app', 'Share a PDF, statement or invoice with the app', 'Compartir un PDF, extracto o factura con la app'],
+      ['No celular, abra o arquivo, toque em Compartilhar e escolha o MoneyTRIO (só aparece com o app instalado pelo Chrome; se não aparecer para PDF, reinstale). O app pergunta "O que é isto?" e lê aqui no aparelho.', 'On the phone, open the file, tap Share and pick MoneyTRIO (it only shows up with the app installed from Chrome; if it does not show for PDFs, reinstall). The app asks "What is this?" and reads it here on the device.', 'En el móvil, abre el archivo, toca Compartir y elige MoneyTRIO (solo aparece con la app instalada desde Chrome; si no aparece para PDF, reinstálala). La app pregunta "¿Qué es esto?" y lo lee aquí en el dispositivo.'],
+      'compartilhar share pdf extrato csv ofx xml nota arquivo enviar', ajudaPin);
     C('🔐', ['Segurança e aparelhos', 'Security and devices', 'Seguridad y dispositivos'],
       ['Seus dados na nuvem, PIN e digital, seus aparelhos, robô do banco e sair.', 'Your cloud data, PIN and fingerprint, your devices, bank robot and sign out.', 'Tus datos en la nube, PIN y huella, tus dispositivos, robot del banco y salir.'],
       'seguranca aparelhos nuvem sair conta', painel);

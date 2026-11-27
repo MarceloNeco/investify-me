@@ -1,10 +1,15 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.136 · 27/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.137 · 27/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.137 */
+  'Compartilhar PDF, extrato ou nota com o app':'Share a PDF, statement or invoice with the app',
+  '📤 No celular, o MoneyTRIO agora aparece no "Compartilhar" também para PDF, CSV, XML de nota fiscal e extrato OFX, e não só para foto. O app pergunta "O que é isto?" e já sugere a resposta pelo nome e pelo texto do arquivo.':'📤 On the phone, MoneyTRIO now shows up in "Share" for PDF, CSV, invoice XML and OFX statements too, not only photos. The app asks "What is this?" and suggests the answer from the file name and text.',
+  '📈 Posições de investimento vão para a mesma conferência da Carteira; 🧾 nota, recibo ou conta vai para o "Foto de nota ou recibo"; 🏦 extrato do banco vai para o "Importar arquivo". Tudo é lido no próprio aparelho, sem IA.':'📈 Investment positions go to the same Portfolio check; 🧾 invoice, receipt or bill goes to "Receipt or invoice photo"; 🏦 bank statement goes to "Import file". Everything is read on the device itself, no AI.',
+  '📲 Para aparecer no "Compartilhar", o app precisa estar instalado pelo Chrome. Se ele já estava instalado e não aparece para PDF, desinstale e instale de novo.':'📲 To show up in "Share", the app must be installed from Chrome. If it was already installed and does not show up for PDFs, uninstall and install it again.',
   /* 3.136 */
   'Serviço novo ou aumento na conta de telefone e internet':'New service or price rise on the phone and internet bill',
   '⚠️ Quando a conta de telefone, internet ou TV traz um serviço que não estava na fatura anterior, o 📥 pergunta: "serviço novo na fatura — Você contratou?". "Sim, contratei" não pergunta mais por ele; "Não pedi" mostra como contestar (app da operadora, central ou ANATEL 1331) e o aviso fica até o valor sair da fatura.':'⚠️ When the phone, internet or TV bill has a service that was not on the previous bill, the 📥 asks: "new service on the bill — Did you sign up for it?". "Yes, I did" stops asking about it; "I did not ask for it" shows how to dispute it (carrier app, call center or ANATEL 1331) and the notice stays until the charge leaves the bill.',

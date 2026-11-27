@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/print-colar.js — "📋 Colar print": notificação do banco vira lançamento (3.87)        1.4.0 · 27/Nov/2026
+   modulos/print-colar.js — "📋 Colar print": notificação do banco vira lançamento (3.87)        1.5.0 · 27/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 14/Nov/2026; sem IA)
      · Entradas: colar da área de transferência (Ctrl+V no computador; no celular o botão "Colar", com
@@ -220,7 +220,7 @@
     if (!/[?&]print=1\b/.test(location.search) || !window.caches) return;
     try {
       var c = await caches.open('partilha-moneytrio'), ks = await c.keys(), fs = [];
-      for (var i = 0; i < ks.length; i++) { var r = await c.match(ks[i]); if (r) { var b = await r.blob(); fs.push(new File([b], 'print', { type: b.type || 'image/png' })); } await c.delete(ks[i]); }
+      for (var i = 0; i < ks.length; i++) { var r = await c.match(ks[i]); if (r) { var b = await r.blob(), nm = decodeURIComponent(r.headers.get('x-nome') || ''); fs.push(new File([b], nm || 'print', { type: b.type || 'image/png' }));   /* 1.5.0 (3.137): com o nome */ } await c.delete(ks[i]); }
       history.replaceState(null, '', location.pathname + location.hash);
       if (fs.length) perguntarDestino(fs);
     } catch (e) { /* nada a ler */ }
@@ -228,6 +228,7 @@
   /* 1.3.0 (3.99): a foto compartilhada pode ser print do app do banco OU nota, canhoto ou orçamento: a pessoa diz e vai para o lugar certo */
   var compartilhados = null;
   function perguntarDestino(fs) {
+    if (window.Partilha && fs.some(function (f) { return !/^image\//.test(f.type || ''); })) return Partilha.perguntar(fs);   /* 1.5.0 (3.137): PDF, CSV, XML, OFX: "O que é isto?" (modulos/partilha.js) */
     if (!window.Canhotos || !Canhotos.processar) return processar(fs);
     compartilhados = fs;
     $('#genTitle').textContent = tr('O que é esta imagem?', 'What is this image?', '¿Qué es esta imagen?');
@@ -398,7 +399,7 @@
   };
 
   MoneyModulos.registrar({
-    id: 'print-colar', versao: '1.4.0',
+    id: 'print-colar', versao: '1.5.0',
     pontos: {
       'lancamentos.topo': function () {
         if (conciliar()) Store.salvar();
