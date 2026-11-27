@@ -767,6 +767,9 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.128 — Categoria pelo item da compra.** comprovantes: `catDoRobo` — a `ficha.categoria_sugerida` vira "É isso?" no 📥 com o item e o
+  motivo; `cp-cat` grava `confirmadoEm`, chama `Espelho.registrar` e `Origem.depoisDe` (a resposta vira regra). Teste: `teste-categoria-
+  sugerida.js` (novo).
   **3.127 — Aluguel recebido.** Novo `modulos/aluguel.js` 1.0.0: o demonstrativo da imobiliária (`ficha.aluguel`) no crédito (aluguel,
   IPTU, taxa, líquido) e a renda prevista `alug-<imovel>` no dia 12 até o fim do contrato (origem 'aluguel'; `ST.config.aluguelCriadas`
   não recria o que a pessoa apagou). Teste: `teste-aluguel.js` (novo).
