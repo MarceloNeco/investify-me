@@ -767,6 +767,8 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   reclassificar item a item (`config.veicReclassNao`). `relatorio(vid, mes)`: blocos ter/usar/manutenção por `bloco(sub)`, por categoria,
   contratado (fichas) × caiu no mês, itens com documento, 12 meses e média. `eventoServico(x)` monta o evento para o OmniLifeONE
   (servico_veiculo_feito) — NÃO envia (regra zero). Teste: `teste/teste-carro.js`.
+  **3.124 — Conta fixa que faltava.** contas-mes: "Parece conta fixa" também quando a conta fixa parecida não cobre o último mês (outro
+  período, ex.: escola 2026 × 2027), com a explicação (`outro`). Teste: `teste-conta-fixa-sugestao.js` (novo).
   **3.123 — Notas de serviço de saúde e educação.** comprovantes: `notaDe`/`educacao`/`aplicarNota` — a NFS-e vale para educação além de
   saúde (`irpf_candidata`), beneficiário vira o "para quem", serviço, data do serviço, categoria sugerida e desconto já aplicado; despesa
   escolar extra liga sem dedução; `ligarNota` prefere o mesmo valor e depois a data mais perto. Teste: `teste-nfse.js` (novo).
