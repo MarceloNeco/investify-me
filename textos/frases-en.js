@@ -1,10 +1,15 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.134 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.135 · 27/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.135 */
+  'Compra com itens de categorias diferentes vira lançamento dividido':'A purchase with items in different categories becomes a split entry',
+  '🧾 Quando o e-mail de uma compra traz itens de categorias diferentes (um livro e papel higiênico, por exemplo), o 📥 pergunta "dividir assim?", com o valor de cada categoria e os itens. O frete ou desconto é rateado na proporção e aparece separado.':'🧾 When a purchase e-mail has items in different categories (a book and toilet paper, for example), the 📥 asks "split like this?", with the amount of each category and its items. Shipping or discount is shared out proportionally and shown separately.',
+  '✂️ "Dividir" usa a mesma divisão de sempre; "Tudo numa categoria" deixa inteiro; "Ajustar" abre o lançamento. Item sem palpite pergunta a categoria na própria linha, e a resposta fica guardada por item (nunca pela loja). Na ficha do lançamento, "ver itens".':'✂️ "Split" uses the usual split; "All in one category" keeps it whole; "Adjust" opens the entry. An item with no guess asks for its category right on the line, and the answer is saved per item (never per store). On the entry card, "see items".',
+  '📦 O e-mail de "pedido enviado" ou "entregue" não vira outra compra nem pede nada.':'📦 A "shipped" or "delivered" e-mail does not become another purchase and asks nothing.',
   /* 3.134 */
   'Importar posições colando ou por foto':'Import positions by pasting or by photo',
   '📋 No topo da Carteira, "Colar texto": cole a tabela que você copiou da corretora (ou que outro assistente gerou) ou a tela da previdência, e o app monta as posições. Funciona com números 1.234,56 e 1234.56, em reais ou dólares.':'📋 At the top of the Portfolio, "Paste text": paste the table you copied from the broker (or another assistant made) or the pension screen, and the app builds the positions. Works with 1.234,56 and 1234.56, in reais or dollars.',

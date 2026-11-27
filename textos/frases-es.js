@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.134 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.135 · 27/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,11 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.135 — rascunho, revisar */
+  'Compra com itens de categorias diferentes vira lançamento dividido':'Una compra con artículos de categorías distintas se vuelve un movimiento dividido',
+  '🧾 Quando o e-mail de uma compra traz itens de categorias diferentes (um livro e papel higiênico, por exemplo), o 📥 pergunta "dividir assim?", com o valor de cada categoria e os itens. O frete ou desconto é rateado na proporção e aparece separado.':'🧾 Cuando el correo de una compra trae artículos de categorías distintas (un libro y papel higiénico, por ejemplo), el 📥 pregunta "¿dividir así?", con el importe de cada categoría y sus artículos. El envío o el descuento se reparte en proporción y aparece aparte.',
+  '✂️ "Dividir" usa a mesma divisão de sempre; "Tudo numa categoria" deixa inteiro; "Ajustar" abre o lançamento. Item sem palpite pergunta a categoria na própria linha, e a resposta fica guardada por item (nunca pela loja). Na ficha do lançamento, "ver itens".':'✂️ "Dividir" usa la división de siempre; "Todo en una categoría" lo deja entero; "Ajustar" abre el movimiento. Un artículo sin sugerencia pregunta su categoría en la misma línea, y la respuesta se guarda por artículo (nunca por tienda). En la ficha del movimiento, "ver artículos".',
+  '📦 O e-mail de "pedido enviado" ou "entregue" não vira outra compra nem pede nada.':'📦 El correo de "pedido enviado" o "entregado" no se vuelve otra compra ni pide nada.',
   /* 3.134 — rascunho, revisar */
   'Importar posições colando ou por foto':'Importar posiciones pegando o por foto',
   '📋 No topo da Carteira, "Colar texto": cole a tabela que você copiou da corretora (ou que outro assistente gerou) ou a tela da previdência, e o app monta as posições. Funciona com números 1.234,56 e 1234.56, em reais ou dólares.':'📋 Arriba en la Cartera, "Pegar texto": pega la tabla que copiaste del bróker (o que generó otro asistente) o la pantalla de la previsión, y la app arma las posiciones. Funciona con 1.234,56 y 1234.56, en reales o dólares.',
