@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.119 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.120 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,10 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.120 — rascunho, revisar */
+  'Consumo de luz e gás':'Consumo de luz y gas',
+  '⚡ A conta de luz que o robô lê mostra o consumo no lançamento que a pagou: kWh, dias, kWh por dia, comparação com a média, bandeira, tarifa, multa, juros e COSIP, com as barrinhas dos meses. No gás: m³, kg e o período. Em Fluxo › Por categoria, a linha da categoria mostra o consumo do mês.':'⚡ La factura de luz que lee el robot muestra el consumo en el movimiento que la pagó: kWh, días, kWh por día, comparación con la media, bandera, tarifa, multa, intereses y COSIP, con barras de los meses. En el gas: m³, kg y el periodo. En Flujo › Por categoría, la línea de la categoría muestra el consumo del mes.',
+  '⛔ Uma conta que o robô diz que não está no débito automático nunca mais aparece com "não pague".':'⛔ Una factura que el robot dice que no está en débito automático ya no aparece con "no pagues".',
   /* 3.119 — rascunho, revisar */
   'Seus investimentos do banco na Carteira':'Tus inversiones del banco en la Cartera',
   '🏦 Os investimentos que o banco manda pelo Open Finance agora entram na Carteira do InvestifyONE: uma linha por aplicação, com o saldo atualizado todo dia e o selo "veio do banco". Se você já tinha cadastrado o mesmo papel à mão, o app junta os dois em vez de criar outro.':'🏦 Las inversiones que el banco envía por Open Finance ahora entran en la Cartera de InvestifyONE: una línea por inversión, con el saldo actualizado cada día y la etiqueta "vino del banco". Si ya habías registrado la misma inversión a mano, la app las junta en vez de crear otra.',

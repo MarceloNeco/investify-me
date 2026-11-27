@@ -13,10 +13,6 @@ let falhas = 0, oks = 0;
 const ok = (c, m) => { if (c) { oks++; console.log('  ✓ ' + m); } else { falhas++; console.log('  ✗ FALHOU: ' + m); } };
 const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos: [], recorrentes: [] };
 
-/* a versão e a data esperadas vêm do topo das Novidades (textos/mudancas.js): o teste vale para toda versão nova */
-const TOPO = fs.readFileSync(path.join(RAIZ, 'textos', 'mudancas.js'), 'utf8').match(/\{v:'([\d.]+)', d:'(\d{4})-(\d{2})-(\d{2})'/);
-const V = TOPO[1], ISO = TOPO[2] + '-' + TOPO[3] + '-' + TOPO[4], MI = +TOPO[3] - 1, RV = V.replace(/\./g, '\\.');
-const MPT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'][MI], MEN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][MI], MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][MI];
 (async () => {
   const srv = http.createServer((q, r) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html');
     if (!p.startsWith(RAIZ) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { r.writeHead(404); return r.end(); }
@@ -30,20 +26,20 @@ const MPT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out
     const p = await ctx.newPage(); const erros = []; p.on('pageerror', (e) => erros.push(String(e)));
     await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && typeof viewHub === 'function');
     const ver = await p.evaluate(() => ({ v: VERSAO, d: VERSAO_DATA, topo: MUDANCAS[0].v }));
-    ok(ver.v === V && ver.d === ISO && ver.topo === ver.v, 'a versão vem do topo das Novidades: ' + ver.v + ' · ' + ver.d);
+    ok(ver.v === '3.115' && ver.d === '2026-11-26' && ver.topo === ver.v, 'a versão vem do topo das Novidades: ' + ver.v + ' · ' + ver.d);
     const linha = async (l) => p.evaluate((x) => { I18n.atual = x; const d = document.createElement('div'); d.id = 'tHub'; d.innerHTML = viewHub(); document.body.appendChild(d);
       const pe = d.querySelector('.hub-pe'), v = d.querySelector('.hub-versao'); const r = { txt: v && v.textContent, depois: !!(pe && pe.nextElementSibling === v), alinha: v && getComputedStyle(v).textAlign, op: v && +getComputedStyle(v).opacity, acao: v && v.querySelector('[data-acao="ver-mudancas"]') ? 1 : 0 };
       d.remove(); return r; }, l);
     const pt = await linha('pt');
-    ok(pt.txt === 'MoneyTRIO ' + V + ' · ' + TOPO[4] + '/' + MPT + '/' + TOPO[2], 'PT: "' + pt.txt + '"');
+    ok(pt.txt === 'MoneyTRIO 3.115 · 26/Nov/2026', 'PT: "' + pt.txt + '"');
     ok(pt.depois && pt.alinha === 'right' && pt.op < 1, 'logo embaixo da linha dos dados, alinhada à direita e mais apagada');
-    ok((await linha('en')).txt === 'MoneyTRIO ' + V + ' · ' + MEN + '/' + TOPO[4] + '/' + TOPO[2], 'EN: a data no formato da plataforma (Mmm/dd/aaaa)');
-    ok(new RegExp('^MoneyTRIO ' + RV + ' · ' + TOPO[4] + '/' + MES + '/' + TOPO[2] + '$', 'i').test((await linha('es')).txt), 'ES: "' + (await linha('es')).txt + '"');
+    ok((await linha('en')).txt === 'MoneyTRIO 3.115 · Nov/26/2026', 'EN: a data no formato da plataforma (Nov/26/2026)');
+    ok(/^MoneyTRIO 3\.115 · 26\/nov\/2026$/i.test((await linha('es')).txt), 'ES: "' + (await linha('es')).txt + '"');
     await p.evaluate(() => { I18n.atual = 'pt'; });
     ok(pt.acao === 1, 'é um botão de "ver as novidades"');
     await p.evaluate(() => { const d = document.createElement('div'); d.id = 'tHub2'; d.innerHTML = viewHub(); document.body.appendChild(d); d.querySelector('.hub-versao button').click(); });
     await p.waitForTimeout(300);
-    ok(await p.evaluate((v) => !document.getElementById('genModal').classList.contains('hidden') && document.getElementById('genModal').textContent.indexOf(v) >= 0, V), 'tocar abre as Novidades, com a ' + V);
+    ok(await p.evaluate(() => !document.getElementById('genModal').classList.contains('hidden') && /3\.115/.test(document.getElementById('genModal').textContent)), 'tocar abre as Novidades, com a 3.115');
     ok(!erros.length, 'sem erro na página ' + erros.join(' | '));
   } finally { await b.close(); srv.close(); }
   console.log((falhas ? '✗ ' : '✓ ') + oks + ' ok, ' + falhas + ' falha(s)');
