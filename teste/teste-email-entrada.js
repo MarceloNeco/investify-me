@@ -29,15 +29,15 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
     /* o servidor simulado: quem gerencia = sim; a lista em memória; o código volta no add e no renew */
     const montar = (pode) => p.evaluate((pd) => {
       I18n.atual = 'pt'; Assist.marcarTutorial(); ST.config.assistOne = false; AssistOne.aplicar();
-      const S = window.__srv = { chamadas: [], lista: [{ id: 's1', email: 'confirmado@example.com', person: 'Fulano', status: 'confirmed' }], msgs: [] };
+      const S = window.__srv = { chamadas: [], lista: [{ id: 's1', email: 'confirmado@example.com', person_name: 'Fulano', status: 'confirmed', send_to: 'moneytrio@solverone.com.br' }, { id: 's0', email: 'vencido@example.com', person_name: '', status: 'expired' }], msgs: [] };
       const real = window.MoneyNuvem || {};
       window.MoneyNuvem = Object.assign(Object.create(real), { iniciado: true, emails: {
         logado: () => true, podeGerenciar: async () => { S.chamadas.push('can'); return pd; },
         lista: async () => { S.chamadas.push('list'); return S.lista.slice(); },
-        adicionar: async (email, pessoa) => { S.chamadas.push('add:' + email + ':' + pessoa); const r = { id: 's' + (S.lista.length + 1), email, person: pessoa, status: 'pending', code: '482913' }; S.lista.push(Object.assign({}, r, { code: undefined })); return r; },
-        renovar: async (id) => { S.chamadas.push('renew:' + id); return { code: '765432' }; },
-        cancelar: async (id) => { S.chamadas.push('cancel:' + id); S.lista.find((x) => x.id === id).status = 'canceled'; return true; },
-        novoCodigo: async () => '000000', mensagens: async () => S.msgs.slice() } });
+        adicionar: async (email, pessoa) => { S.chamadas.push('add:' + email + ':' + pessoa); const id = 's' + (S.lista.length + 1); S.lista.push({ id, email, person_name: pessoa, status: 'pending' }); return { id, email, code: '482913', send_to: 'moneytrio@solverone.com.br', subject: 'CONFIRMAR 482913' }; },
+        renovar: async (id) => { S.chamadas.push('renew:' + id); return { id, code: '765432', subject: 'CONFIRMAR 765432' }; },
+        cancelar: async (id) => { S.chamadas.push('cancel:' + id); S.lista = S.lista.filter((x) => x.id !== id); return true; },   /* as canceladas não vêm na lista */
+        mensagens: async () => S.msgs.slice() } });
       EmailEntrada._estado.pode = null; EmailEntrada._estado.lista = null;
       abrirApp('budget'); irPara('config'); cfgSecao = 'todos'; render();
     }, pode);
@@ -46,7 +46,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
     ok(!(await p.evaluate(() => !!document.getElementById('eeCartao'))), 'quem NÃO gerencia a família não vê o cartão');
     await montar(true); await p.waitForTimeout(300);
     const c1 = await p.evaluate(() => { const c = document.getElementById('eeCartao'); return c ? c.textContent.replace(/\s+/g, ' ') : ''; });
-    ok(/Mandar e-mails para o MoneyTRIO/.test(c1) && /confirmado@example\.com · Fulano ✅ confirmado/.test(c1), 'quem gerencia vê "📧 Mandar e-mails para o MoneyTRIO" e a lista com o estado ("✅ confirmado")');
+    ok(/Mandar e-mails para o MoneyTRIO/.test(c1) && /confirmado@example\.com · Fulano ✅ confirmado/.test(c1) && /vencido@example\.com ⌛ código vencido/.test(c1), 'quem gerencia vê "📧 Mandar e-mails para o MoneyTRIO" e a lista com o estado ("✅ confirmado", "⌛ código vencido")');
 
     await p.evaluate(() => { document.getElementById('eeEmail').value = 'novo@example.com'; document.getElementById('eePessoa').value = 'p2'; });   /* o cartão fica recolhido nas Configurações */
     await p.evaluate(() => document.querySelector('[data-acao="ee-adicionar"]').click()); await p.waitForTimeout(300);
@@ -54,10 +54,11 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
     ok(await p.evaluate(() => __srv.chamadas.indexOf('add:novo@example.com:Beltrana') >= 0), '"+ Adicionar e-mail" manda o endereço com a pessoa da família (Beltrana)');
     ok(c2 && /esperando o código/.test(c2.txt) && c2.num === '482913' && c2.fonte >= 24, 'o novo fica "⏳ esperando o código", com o código grande (482913)');
     ok(c2 && c2.href === 'mailto:moneytrio@solverone.com.br?subject=CONFIRMAR%20482913', '"Abrir e-mail pronto": mailto com o destinatário e o assunto "CONFIRMAR 482913"');
-    await p.evaluate(() => document.querySelector('.ee-item[data-id="s2"] [data-acao="ee-renovar"]').click()); await p.waitForTimeout(300);
-    ok(await p.evaluate(() => __srv.chamadas.indexOf('renew:s2') >= 0 && document.querySelector('.ee-item[data-id="s2"] .ee-num').textContent === '765432'), '"Novo código": mostra o código novo (765432)');
-    await p.evaluate(() => document.querySelector('.ee-item[data-id="s2"] [data-acao="ee-cancelar"]').click()); await p.waitForTimeout(300);
-    ok(await p.evaluate(() => /cancelado/.test(document.querySelector('.ee-item[data-id="s2"]').textContent) && !document.querySelector('.ee-item[data-id="s2"] [data-acao="ee-cancelar"]')), '"Cancelar": fica "cancelado", sem botões');
+    await p.evaluate(() => document.querySelector('.ee-item[data-id="s3"] [data-acao="ee-renovar"]').click()); await p.waitForTimeout(300);
+    ok(await p.evaluate(() => __srv.chamadas.indexOf('renew:s3') >= 0 && document.querySelector('.ee-item[data-id="s3"] .ee-num').textContent === '765432'), '"Novo código": mostra o código novo (765432)');
+    ok(await p.evaluate(() => !!document.querySelector('.ee-item[data-id="s0"] [data-acao="ee-renovar"]') && !document.querySelector('.ee-item[data-id="s0"] .ee-num')), 'o código vencido não aparece; "Novo código" gera outro');
+    await p.evaluate(() => document.querySelector('.ee-item[data-id="s3"] [data-acao="ee-cancelar"]').click()); await p.waitForTimeout(300);
+    ok(await p.evaluate(() => __srv.chamadas.indexOf('cancel:s3') >= 0 && !document.querySelector('.ee-item[data-id="s3"]')), '"Cancelar": o endereço sai da lista');
 
     const g = await p.evaluate(() => { const c = document.getElementById('eeCartao'); return [...c.querySelectorAll('.ee-guia summary')].map((x) => x.textContent.trim()).join('|') + ' :: ' + c.textContent.replace(/\s+/g, ' '); });
     ok(/^Gmail\|Outlook \/ Hotmail\|iCloud\|Yahoo ::/.test(g), 'passo a passo do Gmail, Outlook/Hotmail, iCloud e Yahoo');
@@ -73,7 +74,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
     ok(/name='subject' value='\(boleto OR fatura OR &quot;aviso de cobrança&quot;\)'/.test(xml) && /name='from' value='\(amazon\.com\.br OR mercadolivre\.com/.test(xml) && !/enel\.com\.br|informe de rendimentos/.test(xml), 'os assuntos e os remetentes certos; os grupos desmarcados ficam de fora');
     ok(!/@example|Fulano|Beltrana/.test(xml), 'nada pessoal no arquivo');
 
-    await p.evaluate(() => { __srv.msgs = [{ from: 'forwarding-noreply@google.com', subject: '(#123456789) Gmail Forwarding Confirmation - Receive Mail from fulano@example.com' }]; EmailEntrada._estado.pode = null; render(); });
+    await p.evaluate(() => { __srv.msgs = [{ id: 'm1', from_email: 'forwarding-noreply@google.com', subject: '(#123456789) Gmail Forwarding Confirmation - Receive Mail from fulano@example.com', status: 'nova' }]; EmailEntrada._estado.pode = null; render(); });
     await p.waitForTimeout(300);
     ok(/Código do Google: 123456789/.test(await p.evaluate(() => (document.querySelector('.ee-google') || {}).textContent || '')), 'a mensagem do Google no MoneyTRIO vira o cartão "Código do Google: 123456789 · copie e cole no Gmail"');
     ok(await p.evaluate(() => document.documentElement.scrollWidth <= 391), 'celular (390): nada rola para o lado');

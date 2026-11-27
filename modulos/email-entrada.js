@@ -17,7 +17,8 @@
    PONTOS QUE USA
      config.todos (Configurações › Compartilhadas) · ações ee-*
    NUVEM
-     MoneyNuvem.emails (nuvem.js 1.17.0): podeGerenciar, lista, adicionar, novoCodigo, renovar, cancelar, mensagens
+     MoneyNuvem.emails (nuvem.js 1.17.0): podeGerenciar, lista, adicionar, renovar, cancelar, mensagens (só as não lidas; nunca marca lido).
+     O servidor confirma o endereço sozinho quando chega o e-mail "CONFIRMAR 123456" dele; o app só recarrega a lista ("Atualizar").
    ===================================================================== */
 (function () {
   'use strict';
@@ -45,14 +46,15 @@
     /* o estado vindo do servidor, em três palavras */
     estadoDe: function (r) {
       var s = String((r && (r.status || r.estado || r.state)) || '').toLowerCase();
-      if (/confirm|ativ|active|ok/.test(s)) return 'confirmado';
-      if (/cancel|revog|inativ/.test(s)) return 'cancelado';
+      if (s === 'confirmed') return 'confirmado';
+      if (s === 'expired') return 'vencido';
+      if (s === 'canceled' || s === 'cancelled') return 'cancelado';
       return 'pendente';
     },
     normalizar: function (r) {
       r = r || {};
-      return { id: r.id || r.sender_id || '', email: String(r.email || r.endereco || r.address || ''), pessoa: String(r.person || r.pessoa || r.p_person || ''),
-        estado: API.estadoDe(r), codigo: String(r.code || r.codigo || r.confirm_code || '').replace(/\D/g, '').slice(0, 6), validade: r.code_expires_at || r.expires_at || r.validade || '' };
+      return { id: r.id || '', email: String(r.email || ''), pessoa: String(r.person_name || ''), estado: API.estadoDe(r),
+        codigo: String(r.code || '').replace(/\D/g, '').slice(0, 6), validade: r.confirm_expires_at || r.expires_at || '' };
     },
     mailto: function (codigo) { return 'mailto:' + DESTINO + '?subject=' + encodeURIComponent('CONFIRMAR ' + codigo); },
     /* o XML de filtros do Gmail (Configurações › Filtros › Importar filtros): um filtro por grupo, "encaminhar para" o MoneyTRIO */
@@ -68,15 +70,15 @@
     },
     /* o código de confirmação do encaminhamento do Gmail, quando a mensagem do Google chega ao MoneyTRIO */
     codigoGoogle: function (msgs) {
-      var m = lst(msgs).filter(function (x) { return /forwarding-noreply@google\.com/i.test(String(x.from || x.remetente || x.sender || '')); })
-        .map(function (x) { return (String(x.subject || x.assunto || '').match(/\(#(\d{9})\)/) || [])[1] || ''; }).filter(Boolean);
+      var m = lst(msgs).filter(function (x) { return /forwarding-noreply@google\.com/i.test(String(x.from_email || '') + ' ' + String(x.original_from || '')); })
+        .map(function (x) { return (String(x.subject || '').match(/\(#(\d{9})\)/) || String(x.original_subject || '').match(/\(#(\d{9})\)/) || [])[1] || ''; }).filter(Boolean);
       return m[m.length - 1] || '';
     },
     carregar: function () {
       var n = nv(); if (!n || T.carregando) return;
       T.carregando = true; T.erro = '';
       Promise.resolve(n.podeGerenciar()).then(function (p) {
-        T.pode = p === true || (Array.isArray(p) && p.length && (p[0] === true || Object.keys(p[0] || {}).some(function (k) { return p[0][k] === true; })));
+        T.pode = p === true;
         if (!T.pode) return;
         return Promise.all([n.lista(), n.mensagens ? Promise.resolve(n.mensagens()).catch(function () { return []; }) : []]).then(function (r) {
           T.lista = lst(r[0]).map(API.normalizar).map(function (x) { if (!x.codigo) x.codigo = T.codigos[x.id] || T.codigos[x.email] || ''; return x; }); T.google = API.codigoGoogle(r[1]);
@@ -92,7 +94,7 @@
     _estado: T
   };
 
-  function rotEstado(s) { return s === 'confirmado' ? '✅ ' + tr('confirmado', 'confirmed', 'confirmado') : s === 'cancelado' ? tr('cancelado', 'cancelled', 'cancelado') : '⏳ ' + tr('esperando o código', 'waiting for the code', 'esperando el código'); }
+  function rotEstado(s) { return s === 'confirmado' ? '✅ ' + tr('confirmado', 'confirmed', 'confirmado') : s === 'cancelado' ? tr('cancelado', 'cancelled', 'cancelado') : s === 'vencido' ? '⌛ ' + tr('código vencido', 'code expired', 'código vencido') : '⏳ ' + tr('esperando o código', 'waiting for the code', 'esperando el código'); }
   function blocoCodigo(r) {
     return '<div class="ee-codigo"><p class="small">' + e$(tr('Mande, DESTE endereço (' + r.email + '), um e-mail para ' + DESTINO + ' com este código no assunto:', 'Send, FROM this address (' + r.email + '), an e-mail to ' + DESTINO + ' with this code in the subject:', 'Envía, DESDE esta dirección (' + r.email + '), un correo a ' + DESTINO + ' con este código en el asunto:')) + '</p>' +
       '<div class="ee-num">' + e$(r.codigo) + '</div>' +
@@ -135,13 +137,14 @@
     var h = '<div class="card cfg-sec" data-sec="todos" id="eeCartao"><div class="card-head"><h3>📧 ' + e$(tr('Mandar e-mails para o MoneyTRIO', 'Send e-mails to MoneyTRIO', 'Enviar correos a MoneyTRIO')) + '</h3></div>' +
       '<p class="small muted">' + e$(tr('Contas, notas e compras que chegam no seu e-mail podem ir para ' + DESTINO + ': o app lê e organiza.', 'Bills, invoices and purchases in your e-mail can go to ' + DESTINO + ': the app reads and sorts them.', 'Facturas, notas y compras de tu correo pueden ir a ' + DESTINO + ': la app las lee y ordena.')) + '</p>';
     if (T.google) h += '<div class="callout ee-google"><b>' + e$(tr('Código do Google: ', 'Google code: ', 'Código de Google: ')) + '<span class="ee-num-g">' + e$(T.google) + '</span></b> · ' + e$(tr('copie e cole no Gmail', 'copy it and paste it in Gmail', 'cópialo y pégalo en Gmail')) + '</div>';
-    h += '<h4 class="bl-sub">' + e$(tr('E-mails que podem mandar para o MoneyTRIO', 'E-mails that can send to MoneyTRIO', 'Correos que pueden enviar a MoneyTRIO')) + '</h4>';
+    h += '<h4 class="bl-sub">' + e$(tr('E-mails que podem mandar para o MoneyTRIO', 'E-mails that can send to MoneyTRIO', 'Correos que pueden enviar a MoneyTRIO')) +
+      ' <button class="linkinho" data-acao="ee-recarregar">↻ ' + e$(tr('Atualizar', 'Refresh', 'Actualizar')) + '</button></h4>';
     if (T.erro) h += '<p class="small down">' + e$(tr('Não consegui falar com o servidor agora. ', 'Could not reach the server now. ', 'No pude hablar con el servidor ahora. ')) + '<button class="linkinho" data-acao="ee-recarregar">' + e$(tr('Tentar de novo', 'Try again', 'Reintentar')) + '</button></p>';
     var l = T.lista || [];
     h += l.length ? '<ul class="ee-lista">' + l.map(function (r) {
       return '<li class="ee-item" data-id="' + e$(r.id) + '"><div><b>' + e$(r.email) + '</b>' + (r.pessoa ? ' · ' + e$(r.pessoa) : '') + ' <span class="small">' + rotEstado(r.estado) + '</span></div>' +
         (r.estado === 'pendente' && r.codigo ? blocoCodigo(r) : '') +
-        (r.estado !== 'cancelado' ? '<div class="row" style="gap:6px;flex-wrap:wrap">' + (r.estado === 'pendente' ? '<button class="btn sm" data-acao="ee-renovar" data-id="' + e$(r.id) + '">' + e$(tr('Novo código', 'New code', 'Nuevo código')) + '</button>' : '') +
+        (r.estado !== 'cancelado' ? '<div class="row" style="gap:6px;flex-wrap:wrap">' + (r.estado === 'pendente' || r.estado === 'vencido' ? '<button class="btn sm" data-acao="ee-renovar" data-id="' + e$(r.id) + '">' + e$(tr('Novo código', 'New code', 'Nuevo código')) + '</button>' : '') +
           '<button class="btn sm" data-acao="ee-cancelar" data-id="' + e$(r.id) + '">' + e$(tr('Cancelar', 'Cancel', 'Cancelar')) + '</button></div>' : '') + '</li>';
     }).join('') + '</ul>' : (T.lista ? '<p class="small muted">' + e$(tr('Nenhum ainda.', 'None yet.', 'Ninguno todavía.')) + '</p>' : '<p class="small muted">…</p>');
     h += '<div class="ee-novo grid g2"><label class="f"><span class="lb">' + e$(tr('E-mail', 'E-mail', 'Correo')) + '</span><input id="eeEmail" type="email" inputmode="email" placeholder="nome@example.com" autocomplete="off"></label>' +

@@ -773,7 +773,8 @@ mesmo HTML, sem erro de página; e o texto de cada verbete do glossário e de ca
   "CONFIRMAR 123456", novo código e cancelar; o passo a passo do Gmail, Outlook/Hotmail, iCloud e Yahoo (grátis não encaminha: à mão); o XML
   de filtros do Gmail gerado no aparelho (`xmlFiltros`, um filtro por grupo marcado, forwardTo); o "Código do Google" (`codigoGoogle`, a
   mensagem de forwarding-noreply@google.com). nuvem 1.17.0: `Nuvem.emails` chama as funções do Comms Router (`comm_inbox_*`, solverone-app)
-  com o token da pessoa e `Sinc.gid`; o app não muda nada no servidor. Teste: `teste-email-entrada.js` (novo, servidor simulado).
+  com o token da pessoa e `Sinc.gid` (p_app moneytrio; status pending/confirmed/expired; o código só vem no add e no renew; lê só as
+  mensagens não lidas e nunca marca como lida); o app não muda nada no servidor. Teste: `teste-email-entrada.js` (novo, servidor simulado).
   **3.132 — Pessoas da família mais simples e os cartões agrupados sozinhos.** (7) `render()`: redesenhar a MESMA tela mantém a rolagem
   (`render._ultima`; antes o "esconde tudo" encolhia a página e ela voltava ao topo) — vale para toda tela que faz render() numa ação;
   pessoas 1.7.0: o formulário de editar abre na própria ficha (`ps-form-linha`), salvar/cancelar voltam para ela (`irAte`), apagar e

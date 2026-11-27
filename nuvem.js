@@ -3282,16 +3282,17 @@
       apagarTudo: function () { return Conta.rpc('assist_apagar_tudo', { p_app: 'moneytrio' }); }
     },
     /* 1.17.0 (3.133): "📧 Mandar e-mails para o MoneyTRIO" — as funções do Comms Router (solverone-app), só com o token da pessoa.
-       INBOX_APP e os nomes dos campos: confirmar com o servidor (comm_inbox_apps); o módulo lê o retorno sem depender da forma exata. */
+       can_manage → boolean; sender_list → [{id, email, person_name, status 'pending'|'confirmed'|'expired', confirm_expires_at, send_to}]
+       (as canceladas não vêm); sender_add e sender_renew → {id, email, code, send_to, subject, expires_at} (o código só vem aqui);
+       message_list só as não lidas (o app nunca marca como lido: quem marca é o robô). */
     emails: {
       logado: function () { return Conta.on() && !!Sinc.gid; },
       podeGerenciar: function () { return Conta.rpc('comm_inbox_can_manage', { p_group: Sinc.gid }); },
       lista: function () { return Conta.rpc('comm_inbox_sender_list', { p_app: INBOX_APP, p_group: Sinc.gid }); },
-      adicionar: function (email, pessoa) { return Conta.rpc('comm_inbox_sender_add', { p_app: INBOX_APP, p_group: Sinc.gid, p_email: email, p_person: pessoa || null }); },
-      novoCodigo: function (id) { return Conta.rpc('comm_inbox_new_code', { p_sender: id }); },
+      adicionar: function (email, pessoa) { return Conta.rpc('comm_inbox_sender_add', { p_app: INBOX_APP, p_group: Sinc.gid, p_email: email, p_person: pessoa || '' }); },
       renovar: function (id) { return Conta.rpc('comm_inbox_sender_renew', { p_id: id }); },
       cancelar: function (id) { return Conta.rpc('comm_inbox_sender_cancel', { p_id: id }); },
-      mensagens: function () { return Conta.rpc('comm_inbox_message_list', { p_app: INBOX_APP, p_group: Sinc.gid }); }
+      mensagens: function () { return Conta.rpc('comm_inbox_message_list', { p_app: INBOX_APP, p_group: Sinc.gid, p_only_unread: true, p_limit: 200 }); }
     },
     criarPinConta: function () { return Portao.criarPinConta(); },
     iniciado: false, familia: null, podeLevar: false,
