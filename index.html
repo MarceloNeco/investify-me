@@ -159,6 +159,8 @@
         <p class="muted"><b>Contas de outras pessoas.</b> Os nomes de terceiros que você marca como "conta de outra pessoa" (e o titular ou o
         código do cliente que servem para reconhecê-las) ficam só no seu aparelho e no pacote cifrado para o robô. A plataforma só vê quantas são.</p>
         <p class="muted"><b>Fotos lidas.</b> A foto do canhoto, do print ou da OS da oficina fica só no aparelho em que foi lida, por 90 dias. Com o Google Drive conectado, o original vai também para a pasta MoneyTRIO/Fotos lidas do seu Drive.</p>
+        <p class="muted"><b>Dados para abrir PDFs.</b> O CPF, CNPJ, CEP ou nascimento que você cadastra para abrir PDFs com senha vai só no pacote cifrado para o robô da família; o app guarda só um nome e os 2 últimos dígitos.</p>
+        <p class="muted"><b>Tabela FIPE.</b> Para o valor do carro ou da moto, o app consulta a FIPE (fipe.parallelum.com.br) só com a marca, o modelo e o ano.</p>
         </details>
       </footer>
     </main>
@@ -683,8 +685,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.140"></script>
-<script src="textos/frases-es.js?v=3.140"></script>
+<script src="textos/frases-en.js?v=3.141"></script>
+<script src="textos/frases-es.js?v=3.141"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7718,7 +7720,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.140"></script>
+<script src="textos/mudancas.js?v=3.141"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -30303,7 +30305,8 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/saude.js?v=1.1.0"></script>
 <script src="modulos/ponte-omnilife.js?v=1.0.0"></script>
 <script src="modulos/carregar-doc.js?v=1.0.0"></script>
-<script src="modulos/bens.js?v=1.0.0"></script>
+<script src="modulos/bens.js?v=1.1.0"></script>
+<script src="modulos/fipe.js?v=1.0.0"></script>
 <script src="modulos/cotacoes-eua.js?v=1.0.0"></script>
 <script src="modulos/patrimonio-iliquido.js?v=1.2.0"></script>
 <script src="modulos/fgts.js?v=1.1.0"></script>
@@ -30366,6 +30369,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/invest-exterior.js?v=1.0.0"></script>
 <script src="modulos/aluguel.js?v=1.0.0"></script>
 <script src="modulos/terceiros.js?v=1.1.0"></script>
+<script src="modulos/pistas-pdf.js?v=1.0.0"></script>
 <script src="modulos/assistone-indice.js?v=1.2.0"></script>
 <script src="modulos/assist-hermes.js?v=1.1.1"></script>
 <script src="modulos/abrir-no-chrome.js?v=1.2.0"></script>

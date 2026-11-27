@@ -396,16 +396,22 @@
      "meu apartamento",
      "patrimonio sem liquidez",
      "financiamento do imovel",
-     "imovel na planta"
+     "imovel na planta",
+     "tabela fipe",
+     "valor fipe do carro"
     ],
     "en": [
      "add a property",
      "add a car",
-     "my apartment"
+     "my apartment",
+     "fipe table",
+     "car fipe value"
     ],
     "es": [
      "anadir un inmueble",
-     "anadir un coche"
+     "anadir un coche",
+     "tabla fipe",
+     "valor fipe del coche"
     ]
    }
   },
@@ -735,6 +741,41 @@
     "es": [
      "personas de la familia",
      "anadir a una persona"
+    ]
+   }
+  },
+  {
+   "id": "pistas-pdf",
+   "modulo": "budget",
+   "tela": "config",
+   "secao": "todos",
+   "nome": {
+    "pt": "Dados para abrir PDFs com senha",
+    "en": "Details to open password-protected PDFs",
+    "es": "Datos para abrir PDF con contraseña"
+   },
+   "dica": {
+    "pt": "Aqui você cadastra uma vez os números (documento de pessoa ou de empresa, CEP, nascimento) que abrem os PDFs com senha; o robô da família usa.",
+    "en": "Here you add, once, the numbers (personal or company ID, postcode, date of birth) that open password-protected PDFs; the family robot uses them.",
+    "es": "Aquí registras una vez los números (documento de persona o de empresa, código postal, nacimiento) que abren los PDF con contraseña; el robot de la familia los usa."
+   },
+   "palavras": {
+    "pt": [
+     "pdf com senha",
+     "senha do pdf",
+     "abrir pdf com senha",
+     "conta em pdf com senha",
+     "senha da fatura"
+    ],
+    "en": [
+     "password protected pdf",
+     "pdf password",
+     "open a pdf with a password"
+    ],
+    "es": [
+     "pdf con contrasena",
+     "contrasena del pdf",
+     "abrir un pdf con contrasena"
     ]
    }
   }

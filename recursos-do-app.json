@@ -1,8 +1,8 @@
 {
   "formato": 1,
   "app": "moneytrio",
-  "versao": "3.105",
-  "atualizado": "2026-11-24",
+  "versao": "3.141",
+  "atualizado": "2026-11-27",
   "nota": {
     "pt": "O que o MoneyTRIO lê do Controle dos apps do RootifyONE (recursos/global.json e recursos/moneytrio.json).",
     "en": "What MoneyTRIO reads from RootifyONE's App control (recursos/global.json and recursos/moneytrio.json)."
@@ -13,7 +13,8 @@
     { "id": "ia", "pt": "Botão ✨ IA, janela de perguntas e leitura de foto pela IA", "en": "✨ AI button, question window and photo reading by the AI" },
     { "id": "voz", "pt": "Ouvir em voz alta (🔊) e ditar (🎤)", "en": "Read aloud (🔊) and dictate (🎤)" },
     { "id": "google-drive", "pt": "📁 Conectar meu Google Drive e enviar a foto do serviço do carro ao Drive da pessoa", "en": "📁 Connect my Google Drive and send the car service photo to the person's Drive" },
-    { "id": "terceiros", "pt": "📋 Contas de outras pessoas que chegam no e-mail (\"Não é meu\" no comprovante e a lista em Configurações)", "en": "📋 Other people's bills arriving in the e-mail (\"Not mine\" on the receipt and the list in Settings)" }
+    { "id": "terceiros", "pt": "📋 Contas de outras pessoas que chegam no e-mail (\"Não é meu\" no comprovante e a lista em Configurações)", "en": "📋 Other people's bills arriving in the e-mail (\"Not mine\" on the receipt and the list in Settings)" },
+    { "id": "pistas-pdf", "pt": "🔑 Dados para abrir PDFs com senha (Configurações; o robô da família usa)", "en": "🔑 Details to open password-protected PDFs (Settings; the family robot uses them)" }
   ],
   "comportamentos": [
     { "id": "assistone.dicas", "pt": "Dica da tela no balão do AssistONE (sim/não)", "en": "Screen tip in the AssistONE bubble (yes/no)" },

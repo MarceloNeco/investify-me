@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/bens.js — "🏠 Imóveis, carro e outros bens": o cadastro GUIADO (3.140)        1.0.0 · 27/Nov/2026
+   modulos/bens.js — "🏠 Imóveis, carro e outros bens": o cadastro GUIADO (3.140)        1.1.0 · 27/Nov/2026 (3.141: Tabela FIPE)
    ---------------------------------------------------------------------
    O QUE FAZ (feedback do dono: o "+ Item" abria um formulário genérico com "FGTS" já escolhido e parecia não funcionar)
      · Numa janela (sempre visível, nada de rolar até um formulário escondido): primeiro "o que é?" — Imóvel, Carro ou moto, FGTS,
@@ -8,8 +8,9 @@
        estimado hoje; financiamento (banco, saldo devedor, parcela, dia) → vira DÍVIDA (modulos/dividas.js) e COMPROMISSO (conta fixa
        da parcela); aluguel recebido → vira RENDA (conta fixa de entrada, grupo Renda › Aluguel); na planta: valor do contrato, pago até
        agora, a pagar (contrato − pago) e a data das chaves.
-     · Carro ou moto: marca, modelo, ano, valor estimado hoje (informado; a tabela FIPE ainda não, sem o "pode" do dono), de quem é,
-       financiamento como no imóvel.
+     · Carro ou moto: marca, modelo, ano, valor estimado hoje, de quem é, financiamento como no imóvel. 1.1.0 (3.141): a escolha pela
+       Tabela FIPE (modulos/fipe.js) preenche marca, modelo, ano e o valor, que passa a se atualizar todo mês; "o valor que eu acho"
+       (x.valorManual) não atualiza.
      · FGTS, previdência bloqueada, participação em empresa, outro: o de sempre (nome, onde, valor, saldo em, observação).
      · Os dados continuam em ST.patrimonio_iliquido (modulos/patrimonio-iliquido.js): entram no patrimônio total, separados do que é
        líquido. O documento do imóvel (contrato/escritura) que chega pelo "📎 Carregar documento" fica guardado junto do bem.
@@ -66,6 +67,7 @@
     var h = '<input type="hidden" id="bnId" value="' + esc(x.id || '') + '"><input type="hidden" id="bnTipo" value="' + esc(tipo) + '">' +
       '<div class="grid g2">';
     if (tipo === 'carro') {
+      if (window.Fipe) h = Fipe.bloco(x) + h;
       h += campo(tr('Marca', 'Make', 'Marca'), inp('bnMarca', car.marca, ' placeholder="' + esc(tr('ex.: Marca Exemplo', 'e.g. Example make', 'ej.: Marca Ejemplo')) + '"')) +
         campo(tr('Modelo', 'Model', 'Modelo'), inp('bnModelo', car.modelo)) +
         campo(tr('Ano', 'Year', 'Año'), inp('bnAno', car.ano, ' type="number" min="1950" max="2100" inputmode="numeric"')) +
@@ -99,7 +101,8 @@
     $('#genBody').innerHTML = Verter.html(h + '<div class="f-actions">' + (x.id ? '<button class="btn danger" data-acao="bens-excluir" data-id="' + esc(x.id) + '">' + esc(tr('Excluir', 'Delete', 'Eliminar')) + '</button>' : '<button class="btn" data-acao="bens-voltar">‹ ' + esc(tr('Voltar', 'Back', 'Volver')) + '</button>') +
       '<button class="btn" data-close="genModal">' + esc(tr('Cancelar', 'Cancel', 'Cancelar')) + '</button><button class="btn primary" data-acao="bens-salvar">' + esc(tr('Guardar', 'Save', 'Guardar')) + '</button></div>');
     abrir('genModal');
-    var foco = document.getElementById(tipo === 'carro' ? 'bnMarca' : 'bnNome'); if (foco) foco.focus();
+    var foco = document.getElementById(tipo === 'carro' ? (window.Fipe ? 'bnFipeTipo' : 'bnMarca') : 'bnNome'); if (foco) foco.focus();
+    if (tipo === 'carro' && window.Fipe) Fipe.preparar();
   }
 
   /* o que muda conforme a resposta: na planta, alugado, financiado; o "a pagar" */
@@ -126,10 +129,12 @@
     salvar: function (d, id) {
       var L = PatrimonioIliquido.lista(), x = id ? L.find(function (y) { return y.id === id; }) : null;
       var nome = d.tipo === 'carro' ? (d.nome || [d.carro.marca, d.carro.modelo, d.carro.ano].filter(Boolean).join(' ')) : d.nome;
-      var valor = d.valor; if (!(valor > 0) && d.tipo === 'imovel' && d.uso === 'planta' && d.planta && d.planta.pago > 0) valor = d.planta.pago;
+      var valor = d.valor; if (d.tipo === 'carro' && d.carro && d.carro.fipe && !d.valorManual) valor = d.carro.fipe.valor;   /* 1.1.0: o valor da FIPE */
+      if (!(valor > 0) && d.tipo === 'imovel' && d.uso === 'planta' && d.planta && d.planta.pago > 0) valor = d.planta.pago;
       var base = PatrimonioIliquido.arruma({ nome: nome, tipo: d.tipo, inst: d.inst || (d.fin && d.fin.banco) || '', valor: valor, data: d.data, obs: d.obs });
       if (x) Object.assign(x, base); else x = PatrimonioIliquido.adicionar(base);
       ['uso', 'compra', 'planta', 'carro'].forEach(function (k) { if (d[k] != null && d[k] !== '') x[k] = d[k]; else delete x[k]; });
+      if (d.tipo === 'carro' && d.valorManual) x.valorManual = true; else delete x.valorManual;
       x.donos = d.donos || [];
       if (window.Pessoas) { x.dono = x.donos.map(function (i) { return Pessoas.rotulo(Pessoas.porId(i)); }).filter(Boolean).join(', '); x.donoId = x.donos[0] || ''; }
       /* financiamento → dívida + compromisso (a parcela) */
@@ -159,7 +164,8 @@
         if (d.uso === 'planta') { var c = num(val('bnContrato')), pg = num(val('bnPago')) || 0; d.planta = { contrato: c, pago: pg, aPagar: c ? Math.max(0, n2(c - pg)) : null, chaves: val('bnChaves') }; }
         if (d.uso === 'alugado') d.aluguel = { valor: num(val('bnAluguel')), dia: Math.min(31, Math.max(1, parseInt(val('bnAluguelDia'), 10) || 10)) };
       }
-      if (tipo === 'carro') { d.compra = num(val('bnCompra')); d.carro = { marca: val('bnMarca').trim(), modelo: val('bnModelo').trim(), ano: parseInt(val('bnAno'), 10) || '' }; }
+      if (tipo === 'carro') { d.compra = num(val('bnCompra')); d.carro = { marca: val('bnMarca').trim(), modelo: val('bnModelo').trim(), ano: parseInt(val('bnAno'), 10) || '' };
+        var fp = null; try { fp = val('bnFipe') ? JSON.parse(val('bnFipe')) : null; } catch (e) { fp = null; } if (fp && fp.valor > 0) d.carro.fipe = fp; d.valorManual = marcado('bnManual'); }
       if ((tipo === 'imovel' || tipo === 'carro') && marcado('bnFinanciado')) d.fin = { banco: val('bnFinBanco').trim(), saldo: num(val('bnFinSaldo')) || 0, parcela: num(val('bnFinParcela')) || 0, dia: Math.min(31, Math.max(1, parseInt(val('bnFinDia'), 10) || 10)) };
       return d;
     }
@@ -167,7 +173,7 @@
 
   MoneyModulos.registrar({
     id: 'bens',
-    versao: '1.0.0',
+    versao: '1.1.0',
     acoes: {
       'bens-novo': function () { API.abrir(); },
       'bens-tipo': function (el) { formulario(el.dataset.v, null); },
