@@ -83,7 +83,10 @@
         return Promise.all([n.lista(), n.mensagens ? Promise.resolve(n.mensagens()).catch(function () { return []; }) : []]).then(function (r) {
           T.lista = lst(r[0]).map(API.normalizar).map(function (x) { if (!x.codigo) x.codigo = T.codigos[x.id] || T.codigos[x.email] || ''; return x; }); T.google = API.codigoGoogle(r[1]);
         });
-      }).catch(function (e) { T.erro = String(e && e.message || e); }).then(function () { T.carregando = false; if (typeof render === 'function') render(); });
+      }).catch(function (e) {
+        T.erro = String(e && e.message || e);
+        if (T.pode === null) { T.pode = false; T.falhouEm = Date.now(); }   /* sem resposta do servidor: esconde e tenta de novo daqui a 1 min (nunca em laço) */
+      }).then(function () { T.carregando = false; if (typeof render === 'function') render(); });
     },
     /* o código que o servidor devolveu ao adicionar ou renovar (número solto, {code}, ou a linha da lista) */
     guardarCodigo: function (r, chave) {
@@ -131,6 +134,7 @@
   }
   function cartao() {
     if (!nv()) return '';
+    if (T.pode === false && T.falhouEm && Date.now() - T.falhouEm > 60000) { T.pode = null; T.falhouEm = 0; }
     if (T.pode === null && !T.carregando) { setTimeout(API.carregar, 0); return ''; }
     if (!T.pode) return '';
     var pessoas = window.Pessoas ? Pessoas.ativas().filter(function (p) { return p.tipo === 'casa'; }) : [];

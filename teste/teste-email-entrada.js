@@ -42,6 +42,11 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
       abrirApp('budget'); irPara('config'); cfgSecao = 'todos'; render();
     }, pode);
 
+    /* o servidor com erro (sem rede, sem permissão): o cartão some e NÃO pede de novo em laço (a tela não fica redesenhando) */
+    await montar(true);
+    await p.evaluate(() => { __srv.chamadas = []; MoneyNuvem.emails.podeGerenciar = async () => { __srv.chamadas.push('can'); throw new Error('falha de rede'); }; EmailEntrada._estado.pode = null; render(); });
+    await p.waitForTimeout(1200);
+    ok(await p.evaluate(() => __srv.chamadas.filter((x) => x === 'can').length === 1 && !document.getElementById('eeCartao')), 'com o servidor fora: pergunta uma vez só e esconde o cartão (sem laço de redesenho)');
     await montar(false); await p.waitForTimeout(250);
     ok(!(await p.evaluate(() => !!document.getElementById('eeCartao'))), 'quem NÃO gerencia a família não vê o cartão');
     await montar(true); await p.waitForTimeout(300);
