@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.132 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.133 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,10 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.133 — rascunho, revisar */
+  'Mande e-mails para o MoneyTRIO':'Envía correos a MoneyTRIO',
+  '📧 Em Configurações › Compartilhadas, "Mandar e-mails para o MoneyTRIO": cadastre os e-mails da família que podem mandar contas, notas e compras para moneytrio@solverone.com.br. Cada endereço se confirma com um código de 6 dígitos, e o botão "Abrir e-mail pronto" já preenche tudo.':'📧 En Configuración › Compartidas, "Enviar correos a MoneyTRIO": registra los correos de la familia que pueden enviar facturas, notas y compras a moneytrio@solverone.com.br. Cada dirección se confirma con un código de 6 dígitos, y el botón "Abrir correo listo" ya lo rellena todo.',
+  '↪️ O passo a passo para encaminhar sozinho no Gmail (com os filtros prontos para baixar e importar), no Outlook/Hotmail e no iCloud, e o caminho do Yahoo, que só encaminha à mão.':'↪️ El paso a paso para reenviar solo en Gmail (con los filtros listos para descargar e importar), Outlook/Hotmail e iCloud, y el camino de Yahoo, que solo reenvía a mano.',
   /* 3.132 — rascunho, revisar */
   'Pessoas da família mais simples e os cartões agrupados sozinhos':'Personas de la familia más simples y las tarjetas agrupadas solas',
   '👥 A tela não pula mais para o topo: depois de salvar, cancelar, apagar ou arquivar, você continua onde estava. O "editar" abre logo abaixo do nome, e apagar ou arquivar mostra "Desfazer" por alguns segundos.':'👥 La pantalla ya no salta arriba: después de guardar, cancelar, borrar o archivar, sigues donde estabas. "Editar" se abre justo debajo del nombre, y borrar o archivar muestra "Deshacer" unos segundos.',
