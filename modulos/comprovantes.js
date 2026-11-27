@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.5.0 · 27/Nov/2026
+   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.6.0 · 27/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, "adiante tudo do e-mail"; sem IA)
      · A caixa do robô (nuvem.js, money_entrada) traz um tipo novo de item, tipo "comprovante", tirado dos e-mails lidos
@@ -40,6 +40,8 @@
        na ficha; limites maiores (listas até 400 — os lançamentos da fatura —, até 120 chaves, itens da compra até 100);
        cartao_final vale como final; pago_no_cartao (conta paga no cartão: Vivo no cartão, por exemplo) nunca pede "pague": liga à
        cobrança no cartão (mesmo valor e final, ±10 dias) e não entra no 📥. Os serviços da conta: modulos/conta-servicos.js.
+     · 1.6.0 (3.137): subtipo extrato_investimentos (o extrato mensal da corretora): só informação, "extrato de dd/mm/aaaa · total US$ X"
+       (ficha.total_carteira); as posições chegam à parte, uma por papel (tipo investimento → modulos/invest-banco.js).
    API (window.Comprovantes)
      receber(l, escopo?) → true (guardado) | false · lista() · abertos() · ligarTudo() · casarCompra(x) · palpiteCat(loja)
    DADOS
@@ -53,7 +55,7 @@
    ===================================================================== */
 (function () {
   'use strict';
-  var COL = 'comprovantes', SUBS = ['compra', 'reembolso', 'nota_fiscal', 'recibo_exterior', 'boleto', 'fatura', 'outro'];
+  var COL = 'comprovantes', SUBS = ['compra', 'reembolso', 'nota_fiscal', 'recibo_exterior', 'boleto', 'fatura', 'extrato_investimentos', 'outro'];   /* 1.6.0 (3.137): o extrato da corretora */
   function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
   function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function n2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
@@ -83,7 +85,7 @@
   function nomeG(g) { return ((g.contraparte && g.contraparte.nome) || g.descRobo || g.desc || '') + ' · ' + I18n.data(g.data); }
   function rotSub(s) {
     return ({ compra: tr('Compra', 'Purchase', 'Compra'), reembolso: tr('Reembolso', 'Refund', 'Reembolso'), nota_fiscal: tr('Nota fiscal', 'Invoice', 'Factura'),
-      recibo_exterior: tr('Recibo do exterior', 'Foreign receipt', 'Recibo del exterior'), boleto: tr('Boleto', 'Bank slip', 'Boleto'), fatura: tr('Fatura ou conta', 'Bill', 'Factura o recibo'), outro: tr('Outro', 'Other', 'Otro') })[s] || s;
+      recibo_exterior: tr('Recibo do exterior', 'Foreign receipt', 'Recibo del exterior'), boleto: tr('Boleto', 'Bank slip', 'Boleto'), fatura: tr('Fatura ou conta', 'Bill', 'Factura o recibo'), extrato_investimentos: tr('Extrato de investimentos', 'Investment statement', 'Extracto de inversiones'), outro: tr('Outro', 'Other', 'Otro') })[s] || s;
   }
   function quem(x) { return x.loja || x.remetente || x.descritor_fatura || ''; }
   function valorTxt(x) { return x.valor == null ? '' : (x.moeda === 'USD' ? 'US$ ' + I18n.num(x.valor, 2) : fmt(x.valor)); }
@@ -237,7 +239,7 @@
 
   function processar(x) {
     if (x.estado === 'dispensado') return;
-    if (x.avisoEnvio) { x.estado = 'ok'; return; }   /* 1.4.0 (3.135): "Enviado/Entregue" é a mesma compra: não concilia, não pede nada */
+    if (x.avisoEnvio || x.subtipo === 'extrato_investimentos') { x.estado = 'ok'; return; }   /* 1.6.0 (3.137): o extrato da corretora é informação; as posições vêm à parte (modulos/invest-banco.js) */   /* 1.4.0 (3.135): "Enviado/Entregue" é a mesma compra: não concilia, não pede nada */
     if (x.ficha && (x.ficha.consorcio || x.ficha.investimento_exterior || (x.ficha.aluguel != null && x.ficha.valor != null))) {   /* 3.127: o demonstrativo do aluguel também */
       x.estado = 'ok'; if (x.ficha.aluguel != null && window.Aluguel) Aluguel.garantirRenda(); return;
     }   /* 3.126: o evento da corretora no exterior também (modulos/invest-exterior.js) */   /* 1.3.0 (3.121): o extrato do consórcio é informação (modulos/consorcio.js), não pede nada */
@@ -334,6 +336,7 @@
             x.nfGastoId && !nf.extra ? (nf.educacao ? tr('educação: nota recebida (entra no IR)', 'education: invoice received (tax-deductible)', 'educación: factura recibida (deduce en la renta)') : tr('despesa médica: nota recebida', 'medical expense: invoice received', 'gasto médico: factura recibida')) : '',
             !x.compraId && !x.nfGastoId ? tr('guardada para o IR (nº, CNPJ e prestador)', 'kept for taxes (number, tax ID and provider)', 'guardada para la renta (nº, CIF y proveedor)') : ''].filter(Boolean).join(' · ');
         }
+        case 'extrato_investimentos': { var tc = x.ficha && Number(x.ficha.total_carteira); return tr('extrato de ', 'statement of ', 'extracto del ') + br(x.data) + (isFinite(tc) && tc > 0 ? ' · ' + tr('total ', 'total ', 'total ') + fmt(tc, x.moeda) : ''); }
         case 'recibo_exterior': return x.reciboId ? (x.moeda === 'BRL' ? tr('Em Recibo × cartão (em reais: sem câmbio nem IOF)', 'In Receipt × card (in reais: no exchange rate or IOF)', 'En Recibo × tarjeta (en reales: sin cambio ni IOF)') : tr('Em Recibo × cartão (câmbio e IOF)', 'In Receipt × card (exchange rate and IOF)', 'En Recibo × tarjeta (cambio e IOF)')) : '';
         case 'boleto': case 'fatura': {
           if (x.pagoId) return tr('Pago: ', 'Paid: ', 'Pagado: ') + nomeG(gasto(x.pagoId) || {});
@@ -392,7 +395,7 @@
   function achar(el) { return lista().find(function (y) { return y.id === el.dataset.id; }); }
 
   MoneyModulos.registrar({
-    id: 'comprovantes', versao: '1.4.0', colecoes: [COL],
+    id: 'comprovantes', versao: '1.6.0', colecoes: [COL],
     pontos: {
       'lancamentos.topo': function () {
         var n = API.abertos().length; if (!n) return '';

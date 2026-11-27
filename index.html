@@ -683,8 +683,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.136"></script>
-<script src="textos/frases-es.js?v=3.136"></script>
+<script src="textos/frases-en.js?v=3.137"></script>
+<script src="textos/frases-es.js?v=3.137"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -7679,7 +7679,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.136"></script>
+<script src="textos/mudancas.js?v=3.137"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -25020,11 +25020,12 @@ function viewCarteira(){
     h += '<tr class="group-row"><td colspan="5">' + TIPOS[k].ico + ' ' + TIPOS[k].nome + ' <span class="t-sub">(' + g.length + ')</span></td>' +
          '<td>' + fmt(sub) + '</td><td class="' + cls(subPl) + '">' + fmt(subPl) + '</td><td></td></tr>';
     g.forEach(({p,c}) => {
-      const badge = c.origem === 'auto' ? '<span class="badge live">auto</span>'
+      const badge = (c.origem === 'auto' ? '<span class="badge live">auto</span>'
                  : c.origem === 'estimado' ? '<span class="badge est">estimado</span>'
                  : c.origem === 'manual' ? '<span class="badge man">manual</span>'
                  : c.origem === 'banco' && window.InvestBanco ? InvestBanco.selo()
-                 : '<span class="badge">sem preço</span>';
+                 : '<span class="badge">sem preço</span>') +
+                   (p.doExtrato && window.InvestBanco ? ' ' + InvestBanco.seloExtrato() : '');   /* 3.137: veio do extrato da corretora */
       h += '<tr class="linha-click" data-acoes-ativo="' + p.id + '" title="Clique para ver as opções deste ativo">' +
         '<td><button class="lnk-ativo" data-grafico="' + p.id + '" title="Ver gráfico">' +
             '<span class="t-main">' + esc(p.ticker) + '</span> 📈</button> ' + badge +
@@ -25068,11 +25069,12 @@ function carteiraCartoes(chaves, grupos){
     h += '<div class="grp-head"><span>' + TIPOS[k].ico + ' ' + TIPOS[k].curto + ' <b class="t-sub">(' + g.length + ')</b></span>' +
          '<span class="mono">' + fmt(sub) + ' <b class="' + cls(subPl) + '">' + fmtPct(sub ? subPl/(sub-subPl)*100 : 0, true) + '</b></span></div>';
     g.forEach(({p,c}) => {
-      const badge = c.origem === 'auto' ? '<span class="badge live">auto</span>'
+      const badge = (c.origem === 'auto' ? '<span class="badge live">auto</span>'
                  : c.origem === 'estimado' ? '<span class="badge est">estimado</span>'
                  : c.origem === 'manual' ? '<span class="badge man">manual</span>'
                  : c.origem === 'banco' && window.InvestBanco ? InvestBanco.selo()
-                 : '<span class="badge">sem preço</span>';
+                 : '<span class="badge">sem preço</span>') +
+                   (p.doExtrato && window.InvestBanco ? ' ' + InvestBanco.seloExtrato() : '');   /* 3.137: veio do extrato da corretora */
       h += '<div class="ativo-card linha-click" data-acoes-ativo="' + p.id + '">' +
         '<div class="ac-l1"><button class="lnk-ativo" data-grafico="' + p.id + '"><span class="ac-tk">' +
           esc(p.ticker) + '</span> 📈</button>' + badge +
@@ -27229,6 +27231,8 @@ function salvarAtivo(){
     p.moeda = $('#aMoeda').value;
   }
 
+  p.atualizadoEm = hojeISO();   /* 3.137: a última edição (o extrato mais velho não passa por cima; modulos/invest-banco.js) */
+  if(window.InvestBanco && InvestBanco.marcarEdicao) InvestBanco.marcarEdicao(p.inst);
   if(!editandoId) ST.posicoes.push(p);
   Store.salvar();
   fechar('assetModal');
@@ -28970,6 +28974,7 @@ function ligarEventos(){
       const p = ST.posicoes.find(x => x.id === d.excluir);
       if(p && confirm('Excluir ' + p.ticker + ' da carteira?')){
         ST.posicoes = ST.posicoes.filter(x => x.id !== d.excluir);
+        if(window.InvestBanco && InvestBanco.marcarEdicao) InvestBanco.marcarEdicao(p.inst);   /* 3.137 */
         Store.salvar(); render(); toast('Removido.');
       }
       return;
@@ -29657,6 +29662,8 @@ function ligarEventos(){
       case 'salvar-ativo': salvarAtivo(); break;
       case 'excluir-modal':
         if(editandoId && confirm('Excluir este investimento?')){
+          const pe = ST.posicoes.find(x => x.id === editandoId);
+          if(pe && window.InvestBanco && InvestBanco.marcarEdicao) InvestBanco.marcarEdicao(pe.inst);   /* 3.137 */
           ST.posicoes = ST.posicoes.filter(x => x.id !== editandoId);
           Store.salvar(); fechar('assetModal'); render();
         }
@@ -30175,8 +30182,8 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/ponte-omnilife.js?v=1.0.0"></script>
 <script src="modulos/patrimonio-iliquido.js?v=1.1.1"></script>
 <script src="modulos/fgts.js?v=1.0.0"></script>
-<script src="modulos/importar-posicoes.js?v=1.1.0"></script>
-<script src="modulos/posicoes-texto.js?v=1.0.0"></script>
+<script src="modulos/importar-posicoes.js?v=1.2.0"></script>
+<script src="modulos/posicoes-texto.js?v=1.1.0"></script>
 <script src="modulos/assinaturas.js?v=1.1.1"></script>
 <script src="modulos/compromisso-de.js?v=1.7.2"></script>
 <script src="modulos/previsto.js?v=1.0.2"></script>
@@ -30184,7 +30191,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/calendario-menu.js?v=1.2.1"></script>
 <script src="modulos/pessoas.js?v=1.7.0"></script>
 <script src="modulos/indicadores.js?v=1.0.0"></script>
-<script src="modulos/saldo-banco.js?v=2.4.0"></script>
+<script src="modulos/saldo-banco.js?v=2.5.0"></script>
 <script src="modulos/espelho.js?v=1.1.2"></script>
 <script src="assistone/assistone-visual.js?v=1.1.2"></script>
 <script src="modulos/tour.js?v=1.1.0"></script>
@@ -30200,7 +30207,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/previsao.js?v=1.2.1"></script>
 <script src="modulos/orcamento.js?v=1.2.0"></script>
 <script src="modulos/fluxo-categorias.js?v=1.0.0"></script>
-<script src="modulos/invest-banco.js?v=1.0.0"></script>
+<script src="modulos/invest-banco.js?v=1.1.0"></script>
 <script src="modulos/patrimonio-mes.js?v=1.1.1"></script>
 <script src="modulos/dividas.js?v=1.0.0"></script>
 <script src="modulos/seguros.js?v=1.0.2"></script>
@@ -30216,7 +30223,8 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/a-receber.js?v=1.0.1"></script>
 <script src="modulos/pre-autorizacao.js?v=1.0.2"></script>
 <script src="modulos/dividir.js?v=1.0.0"></script>
-<script src="modulos/print-colar.js?v=1.4.0"></script>
+<script src="modulos/print-colar.js?v=1.5.0"></script>
+<script src="modulos/partilha.js?v=1.0.0"></script>
 <script src="modulos/loja-nova.js?v=1.0.1"></script>
 <script src="modulos/transf-agendada.js?v=1.0.1"></script>
 <script src="modulos/salto-preco.js?v=1.0.0"></script>
@@ -30224,7 +30232,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/recebi-dinheiro.js?v=1.0.0"></script>
 <script src="modulos/canhotos.js?v=1.4.0"></script>
 <script src="modulos/rachai.js?v=1.1.1"></script>
-<script src="modulos/comprovantes.js?v=1.5.0"></script>
+<script src="modulos/comprovantes.js?v=1.6.0"></script>
 <script src="modulos/compra-itens.js?v=1.0.0"></script>
 <script src="modulos/conta-servicos.js?v=1.0.0"></script>
 <script src="modulos/consumo.js?v=1.0.0"></script>
@@ -30233,9 +30241,9 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/invest-exterior.js?v=1.0.0"></script>
 <script src="modulos/aluguel.js?v=1.0.0"></script>
 <script src="modulos/terceiros.js?v=1.1.0"></script>
-<script src="modulos/assistone-indice.js?v=1.1.0"></script>
+<script src="modulos/assistone-indice.js?v=1.2.0"></script>
 <script src="modulos/assist-hermes.js?v=1.1.1"></script>
-<script src="modulos/abrir-no-chrome.js?v=1.1.0"></script>
+<script src="modulos/abrir-no-chrome.js?v=1.2.0"></script>
 <script src="modulos/toast-fechavel.js?v=1.0.0"></script>
 <script src="modulos/viagem.js?v=1.0.3"></script>
 <script src="modulos/compra-parcelada.js?v=1.1.0"></script>

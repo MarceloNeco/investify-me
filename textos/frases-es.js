@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.136 · 27/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.137 · 27/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,12 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.137 — rascunho, revisar */
+  '🗂️ O extrato mensal da corretora (Avenue) que chega por e-mail atualiza a Carteira: a quantidade de cada papel muda, o seu preço médio nunca; papel novo entra com o selo "📄 veio do extrato"; o dinheiro parado vira "Dinheiro em USD". Extrato mais velho que a sua última importação não mexe em nada, e papel que sumiu do extrato pergunta "vendeu?" antes de sair.':'🗂️ El extracto mensual del bróker (Avenue) que llega por correo actualiza la Cartera: cambia la cantidad de cada valor, tu precio medio nunca; un valor nuevo entra con la etiqueta "📄 vino del extracto"; el dinero parado pasa a "Dinero en USD". Un extracto más antiguo que tu última importación no cambia nada, y un valor que desaparece del extracto pregunta "¿lo vendiste?" antes de salir.',
+  'Compartilhar PDF, extrato ou nota com o app':'Compartir un PDF, extracto o factura con la app',
+  '📤 No celular, o MoneyTRIO agora aparece no "Compartilhar" também para PDF, CSV, XML de nota fiscal e extrato OFX, e não só para foto. O app pergunta "O que é isto?" e já sugere a resposta pelo nome e pelo texto do arquivo.':'📤 En el móvil, MoneyTRIO ahora aparece en "Compartir" también para PDF, CSV, XML de factura y extracto OFX, no solo para fotos. La app pregunta "¿Qué es esto?" y ya sugiere la respuesta por el nombre y el texto del archivo.',
+  '📈 Posições de investimento vão para a mesma conferência da Carteira; 🧾 nota, recibo ou conta vai para o "Foto de nota ou recibo"; 🏦 extrato do banco vai para o "Importar arquivo". Tudo é lido no próprio aparelho, sem IA.':'📈 Las posiciones de inversión van a la misma revisión de la Cartera; 🧾 factura, recibo o cuenta va a "Foto de factura o recibo"; 🏦 el extracto del banco va a "Importar archivo". Todo se lee en el propio dispositivo, sin IA.',
+  '📲 Para aparecer no "Compartilhar", o app precisa estar instalado pelo Chrome. Se ele já estava instalado e não aparece para PDF, desinstale e instale de novo.':'📲 Para aparecer en "Compartir", la app debe estar instalada desde Chrome. Si ya estaba instalada y no aparece para PDF, desinstálala e instálala de nuevo.',
   /* 3.136 — rascunho, revisar */
   'Serviço novo ou aumento na conta de telefone e internet':'Servicio nuevo o subida en la factura de teléfono e internet',
   '⚠️ Quando a conta de telefone, internet ou TV traz um serviço que não estava na fatura anterior, o 📥 pergunta: "serviço novo na fatura — Você contratou?". "Sim, contratei" não pergunta mais por ele; "Não pedi" mostra como contestar (app da operadora, central ou ANATEL 1331) e o aviso fica até o valor sair da fatura.':'⚠️ Cuando la factura de teléfono, internet o TV trae un servicio que no estaba en la anterior, el 📥 pregunta: "servicio nuevo en la factura — ¿Lo contrataste?". "Sí, lo contraté" no vuelve a preguntar; "No lo pedí" muestra cómo reclamar (app de la operadora, atención al cliente o ANATEL 1331) y el aviso sigue hasta que el cargo salga de la factura.',
