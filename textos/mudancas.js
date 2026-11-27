@@ -1,11 +1,14 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.137 · 27/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.138 · 27/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.138', d:'2026-11-27', t:'O assistente mostra onde fica', itens:[
+    '📍 Pergunte ao assistente onde fica alguma coisa (ex.: "como eu lanço um gasto?") e toque em "Me mostra onde fica": o app vai até a tela e acende o botão, sem clicar por você.'
+  ]},
   {v:'3.137', d:'2026-11-27', t:'Compartilhar PDF, extrato ou nota com o app', itens:[
     '📤 No celular, o MoneyTRIO agora aparece no "Compartilhar" também para PDF, CSV, XML de nota fiscal e extrato OFX, e não só para foto. O app pergunta "O que é isto?" e já sugere a resposta pelo nome e pelo texto do arquivo.',
     '📈 Posições de investimento vão para a mesma conferência da Carteira; 🧾 nota, recibo ou conta vai para o "Foto de nota ou recibo"; 🏦 extrato do banco vai para o "Importar arquivo". Tudo é lido no próprio aparelho, sem IA.',

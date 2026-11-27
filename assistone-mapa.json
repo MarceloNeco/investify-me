@@ -1,0 +1,672 @@
+{
+ "app": "moneytrio",
+ "versao": 1,
+ "lugares": [
+  {
+   "id": "lanc-novo",
+   "modulo": "budget",
+   "tela": "b-lanc",
+   "nome": {
+    "pt": "Novo lançamento",
+    "en": "New entry",
+    "es": "Nuevo movimiento"
+   },
+   "dica": {
+    "pt": "Toque aqui para lançar um gasto ou uma entrada.",
+    "en": "Tap here to add an expense or income.",
+    "es": "Toca aquí para añadir un gasto o un ingreso."
+   },
+   "palavras": {
+    "pt": [
+     "lancar um gasto",
+     "novo lancamento",
+     "lancar despesa",
+     "registrar um gasto",
+     "anotar uma compra"
+    ],
+    "en": [
+     "add an expense",
+     "new entry",
+     "record a purchase"
+    ],
+    "es": [
+     "anadir un gasto",
+     "nuevo movimiento",
+     "apuntar una compra"
+    ]
+   }
+  },
+  {
+   "id": "ler-comprovante",
+   "modulo": "budget",
+   "tela": "b-lanc",
+   "nome": {
+    "pt": "Ler comprovante",
+    "en": "Read a receipt",
+    "es": "Leer un comprobante"
+   },
+   "dica": {
+    "pt": "Toque aqui para tirar foto de uma nota ou recibo e o app lançar sozinho.",
+    "en": "Tap here to take a photo of a receipt and let the app enter it.",
+    "es": "Toca aquí para hacer una foto de un ticket y que la app lo apunte."
+   },
+   "palavras": {
+    "pt": [
+     "ler comprovante",
+     "foto da nota",
+     "foto do recibo",
+     "escanear nota fiscal",
+     "tirar foto do cupom"
+    ],
+    "en": [
+     "read a receipt",
+     "scan a receipt",
+     "photo of a receipt"
+    ],
+    "es": [
+     "leer un comprobante",
+     "foto del ticket",
+     "escanear una factura"
+    ]
+   }
+  },
+  {
+   "id": "importar-extrato",
+   "modulo": "budget",
+   "tela": "b-lanc",
+   "nome": {
+    "pt": "Importar arquivo ou extrato",
+    "en": "Import a file or statement",
+    "es": "Importar un archivo o extracto"
+   },
+   "dica": {
+    "pt": "Toque aqui para subir o extrato do banco (OFX, CSV, PDF) ou a sua planilha.",
+    "en": "Tap here to upload your bank statement (OFX, CSV, PDF) or your spreadsheet.",
+    "es": "Toca aquí para subir el extracto del banco (OFX, CSV, PDF) o tu hoja de cálculo."
+   },
+   "palavras": {
+    "pt": [
+     "importar extrato",
+     "extrato do banco",
+     "importar planilha",
+     "subir arquivo ofx",
+     "importar arquivo csv"
+    ],
+    "en": [
+     "import a statement",
+     "bank statement",
+     "import a spreadsheet"
+    ],
+    "es": [
+     "importar un extracto",
+     "extracto del banco",
+     "importar una hoja"
+    ]
+   }
+  },
+  {
+   "id": "conta-fixa-nova",
+   "modulo": "budget",
+   "tela": "b-custos",
+   "nome": {
+    "pt": "Nova conta fixa",
+    "en": "New fixed bill",
+    "es": "Nueva cuenta fija"
+   },
+   "dica": {
+    "pt": "Toque aqui para cadastrar uma conta que se repete: aluguel, luz, escola.",
+    "en": "Tap here to add a bill that repeats: rent, power, school.",
+    "es": "Toca aquí para añadir una cuenta que se repite: alquiler, luz, colegio."
+   },
+   "palavras": {
+    "pt": [
+     "conta fixa",
+     "nova conta fixa",
+     "cadastrar aluguel",
+     "gasto recorrente",
+     "conta que se repete"
+    ],
+    "en": [
+     "fixed bill",
+     "recurring expense",
+     "add the rent"
+    ],
+    "es": [
+     "cuenta fija",
+     "gasto recurrente",
+     "anadir el alquiler"
+    ]
+   }
+  },
+  {
+   "id": "renda-salario",
+   "modulo": "budget",
+   "tela": "b-renda",
+   "nome": {
+    "pt": "Cadastrar salário",
+    "en": "Add your salary",
+    "es": "Añadir el sueldo"
+   },
+   "dica": {
+    "pt": "Toque aqui para cadastrar o salário (o app calcula o líquido).",
+    "en": "Tap here to add your salary (the app works out the net pay).",
+    "es": "Toca aquí para añadir el sueldo (la app calcula el neto)."
+   },
+   "palavras": {
+    "pt": [
+     "cadastrar salario",
+     "meu salario",
+     "salario liquido",
+     "holerite do mes"
+    ],
+    "en": [
+     "add my salary",
+     "my salary",
+     "net pay"
+    ],
+    "es": [
+     "anadir el sueldo",
+     "mi sueldo",
+     "sueldo neto"
+    ]
+   }
+  },
+  {
+   "id": "renda-nova",
+   "modulo": "budget",
+   "tela": "b-renda",
+   "nome": {
+    "pt": "Nova renda",
+    "en": "New income",
+    "es": "Nuevo ingreso"
+   },
+   "dica": {
+    "pt": "Toque aqui para cadastrar outra renda: aluguel recebido, freelance, pensão.",
+    "en": "Tap here to add other income: rent received, freelance, pension.",
+    "es": "Toca aquí para añadir otro ingreso: alquiler cobrado, freelance, pensión."
+   },
+   "palavras": {
+    "pt": [
+     "nova renda",
+     "outra renda",
+     "aluguel recebido",
+     "renda extra",
+     "cadastrar uma entrada"
+    ],
+    "en": [
+     "new income",
+     "other income",
+     "rent received"
+    ],
+    "es": [
+     "nuevo ingreso",
+     "otro ingreso",
+     "alquiler cobrado"
+    ]
+   }
+  },
+  {
+   "id": "fluxo",
+   "modulo": "budget",
+   "tela": "b-fluxo",
+   "nome": {
+    "pt": "Fluxo",
+    "en": "Cash flow",
+    "es": "Flujo"
+   },
+   "dica": {
+    "pt": "Aqui estão as entradas e saídas mês a mês e quanto sobra.",
+    "en": "Here are the income and spending month by month and what is left.",
+    "es": "Aquí están las entradas y salidas mes a mes y lo que sobra."
+   },
+   "palavras": {
+    "pt": [
+     "fluxo de caixa",
+     "quanto sobra",
+     "entradas e saidas",
+     "gastos por mes"
+    ],
+    "en": [
+     "cash flow",
+     "how much is left",
+     "money in and out"
+    ],
+    "es": [
+     "flujo de caja",
+     "cuanto sobra",
+     "entradas y salidas"
+    ]
+   }
+  },
+  {
+   "id": "projecao",
+   "modulo": "budget",
+   "tela": "b-futuro",
+   "nome": {
+    "pt": "Projeção",
+    "en": "Projection",
+    "es": "Proyección"
+   },
+   "dica": {
+    "pt": "Aqui o app mostra quanto a mesma vida vai custar nos próximos anos, com a inflação.",
+    "en": "Here the app shows what the same life will cost in the coming years, with inflation.",
+    "es": "Aquí la app muestra cuánto costará la misma vida en los próximos años, con la inflación."
+   },
+   "palavras": {
+    "pt": [
+     "projecao de gastos",
+     "custo no futuro",
+     "quanto vai custar",
+     "inflacao dos gastos"
+    ],
+    "en": [
+     "spending projection",
+     "future cost",
+     "how much it will cost"
+    ],
+    "es": [
+     "proyeccion de gastos",
+     "coste futuro",
+     "cuanto va a costar"
+    ]
+   }
+  },
+  {
+   "id": "bancos-cartoes",
+   "modulo": "budget",
+   "tela": "config",
+   "secao": "budget",
+   "nome": {
+    "pt": "Bancos e cartões",
+    "en": "Banks and cards",
+    "es": "Bancos y tarjetas"
+   },
+   "dica": {
+    "pt": "Aqui ficam os seus bancos e cartões: cadastrar, apelido, quem usa.",
+    "en": "Your banks and cards are here: add them, nickname, who uses them.",
+    "es": "Aquí están tus bancos y tarjetas: añadir, apodo, quién los usa."
+   },
+   "palavras": {
+    "pt": [
+     "bancos e cartoes",
+     "cadastrar cartao",
+     "novo cartao",
+     "meus cartoes",
+     "cadastrar banco"
+    ],
+    "en": [
+     "banks and cards",
+     "add a card",
+     "my cards"
+    ],
+    "es": [
+     "bancos y tarjetas",
+     "anadir una tarjeta",
+     "mis tarjetas"
+    ]
+   }
+  },
+  {
+   "id": "investimento-novo",
+   "modulo": "investify",
+   "tela": "carteira",
+   "nome": {
+    "pt": "Novo investimento",
+    "en": "New investment",
+    "es": "Nueva inversión"
+   },
+   "dica": {
+    "pt": "Toque aqui para cadastrar um investimento na Carteira.",
+    "en": "Tap here to add an investment to the Portfolio.",
+    "es": "Toca aquí para añadir una inversión a la Cartera."
+   },
+   "palavras": {
+    "pt": [
+     "novo investimento",
+     "cadastrar investimento",
+     "cadastrar uma acao",
+     "adicionar na carteira"
+    ],
+    "en": [
+     "new investment",
+     "add an investment",
+     "add a stock"
+    ],
+    "es": [
+     "nueva inversion",
+     "anadir una inversion",
+     "anadir una accion"
+    ]
+   }
+  },
+  {
+   "id": "declaracao-importar",
+   "modulo": "tax",
+   "tela": "t-declaracoes",
+   "nome": {
+    "pt": "Importar declaração do IR",
+    "en": "Import the tax return",
+    "es": "Importar la declaración"
+   },
+   "dica": {
+    "pt": "Toque aqui para subir o PDF da sua declaração do Imposto de Renda.",
+    "en": "Tap here to upload the PDF of your income tax return.",
+    "es": "Toca aquí para subir el PDF de tu declaración de la renta."
+   },
+   "palavras": {
+    "pt": [
+     "importar declaracao",
+     "declaracao do imposto",
+     "declaracao do ir",
+     "pdf da declaracao"
+    ],
+    "en": [
+     "import tax return",
+     "income tax return",
+     "tax return pdf"
+    ],
+    "es": [
+     "importar la declaracion",
+     "declaracion de la renta"
+    ]
+   }
+  },
+  {
+   "id": "documentos-ir",
+   "modulo": "tax",
+   "tela": "t-docs",
+   "nome": {
+    "pt": "Documentos do IR",
+    "en": "Tax documents",
+    "es": "Documentos de la renta"
+   },
+   "dica": {
+    "pt": "Toque aqui para ler os documentos do Imposto de Renda: informes, recibos, notas.",
+    "en": "Tap here to read your tax documents: statements, receipts, invoices.",
+    "es": "Toca aquí para leer los documentos de la renta: certificados, recibos, facturas."
+   },
+   "palavras": {
+    "pt": [
+     "documentos do ir",
+     "pasta do imposto",
+     "informe de rendimentos",
+     "recibo medico",
+     "documentos do imposto"
+    ],
+    "en": [
+     "tax documents",
+     "income statement",
+     "medical receipt"
+    ],
+    "es": [
+     "documentos de la renta",
+     "certificado de rendimientos"
+    ]
+   }
+  },
+  {
+   "id": "busca",
+   "modulo": null,
+   "tela": null,
+   "nome": {
+    "pt": "Buscar no app",
+    "en": "Search the app",
+    "es": "Buscar en la app"
+   },
+   "dica": {
+    "pt": "Toque na lupa para procurar qualquer coisa no app.",
+    "en": "Tap the magnifier to look for anything in the app.",
+    "es": "Toca la lupa para buscar cualquier cosa en la app."
+   },
+   "palavras": {
+    "pt": [
+     "buscar no app",
+     "procurar alguma coisa",
+     "onde fica a busca",
+     "pesquisar no app"
+    ],
+    "en": [
+     "search the app",
+     "look for something",
+     "find something"
+    ],
+    "es": [
+     "buscar en la app",
+     "buscar algo"
+    ]
+   }
+  },
+  {
+   "id": "inbox",
+   "modulo": null,
+   "tela": null,
+   "nome": {
+    "pt": "Pendências e avisos",
+    "en": "To-dos and notices",
+    "es": "Pendientes y avisos"
+   },
+   "dica": {
+    "pt": "Toque aqui para ver o que o app precisa que você confira.",
+    "en": "Tap here to see what the app needs you to check.",
+    "es": "Toca aquí para ver lo que la app necesita que revises."
+   },
+   "palavras": {
+    "pt": [
+     "minhas pendencias",
+     "caixa de entrada",
+     "avisos do app",
+     "o que falta conferir"
+    ],
+    "en": [
+     "my to dos",
+     "app notices",
+     "what to check"
+    ],
+    "es": [
+     "mis pendientes",
+     "avisos de la app"
+    ]
+   }
+  },
+  {
+   "id": "o-que-mudou",
+   "modulo": "budget",
+   "tela": "b-painel",
+   "nome": {
+    "pt": "O que mudou",
+    "en": "What changed",
+    "es": "Qué cambió"
+   },
+   "dica": {
+    "pt": "Toque aqui para ver as novidades de cada versão.",
+    "en": "Tap here to see what is new in each version.",
+    "es": "Toca aquí para ver las novedades de cada versión."
+   },
+   "palavras": {
+    "pt": [
+     "o que mudou",
+     "novidades da versao",
+     "versao do app",
+     "ultimas novidades"
+    ],
+    "en": [
+     "what changed",
+     "what is new",
+     "app version"
+    ],
+    "es": [
+     "que cambio",
+     "novedades de la version"
+    ]
+   }
+  },
+  {
+   "id": "idioma",
+   "modulo": "budget",
+   "tela": "config",
+   "secao": "todos",
+   "nome": {
+    "pt": "Idioma",
+    "en": "Language",
+    "es": "Idioma"
+   },
+   "dica": {
+    "pt": "Aqui você troca o idioma do app: português, inglês ou espanhol.",
+    "en": "Here you switch the app language: Portuguese, English or Spanish.",
+    "es": "Aquí cambias el idioma de la app: portugués, inglés o español."
+   },
+   "palavras": {
+    "pt": [
+     "trocar idioma",
+     "mudar o idioma",
+     "app em ingles",
+     "app em espanhol",
+     "mudar a lingua"
+    ],
+    "en": [
+     "change language",
+     "switch language",
+     "app in english"
+    ],
+    "es": [
+     "cambiar el idioma",
+     "app en espanol"
+    ]
+   }
+  },
+  {
+   "id": "chaves-gratuitas",
+   "modulo": "budget",
+   "tela": "config",
+   "secao": "todos",
+   "nome": {
+    "pt": "Chaves gratuitas",
+    "en": "Free keys",
+    "es": "Claves gratuitas"
+   },
+   "dica": {
+    "pt": "Aqui você coloca as chaves gratuitas de cotação (opcional), guardadas só neste aparelho.",
+    "en": "Here you add the free quote keys (optional), kept only on this device.",
+    "es": "Aquí pones las claves gratuitas de cotización (opcional), guardadas solo en este dispositivo."
+   },
+   "palavras": {
+    "pt": [
+     "chaves gratuitas",
+     "chave de api",
+     "chave de cotacao",
+     "chave da alpha vantage"
+    ],
+    "en": [
+     "free keys",
+     "api key",
+     "quote key"
+    ],
+    "es": [
+     "claves gratuitas",
+     "clave de api"
+    ]
+   }
+  },
+  {
+   "id": "google-drive",
+   "modulo": "budget",
+   "tela": "config",
+   "secao": "todos",
+   "nome": {
+    "pt": "Google Drive",
+    "en": "Google Drive",
+    "es": "Google Drive"
+   },
+   "dica": {
+    "pt": "Aqui você liga a cópia dos seus dados no seu Google Drive.",
+    "en": "Here you turn on the copy of your data in your Google Drive.",
+    "es": "Aquí activas la copia de tus datos en tu Google Drive."
+   },
+   "palavras": {
+    "pt": [
+     "google drive",
+     "salvar no drive",
+     "sincronizar com o drive",
+     "copia no drive"
+    ],
+    "en": [
+     "google drive",
+     "save to drive",
+     "sync with drive"
+    ],
+    "es": [
+     "google drive",
+     "guardar en drive"
+    ]
+   }
+  },
+  {
+   "id": "backup",
+   "modulo": "budget",
+   "tela": "config",
+   "secao": "todos",
+   "nome": {
+    "pt": "Baixar backup",
+    "en": "Download a backup",
+    "es": "Descargar una copia"
+   },
+   "dica": {
+    "pt": "Aqui você baixa uma cópia de tudo (backup) ou restaura de um arquivo.",
+    "en": "Here you download a copy of everything (backup) or restore from a file.",
+    "es": "Aquí descargas una copia de todo o restauras desde un archivo."
+   },
+   "palavras": {
+    "pt": [
+     "baixar backup",
+     "fazer backup",
+     "copia de seguranca",
+     "restaurar backup",
+     "onde ficam meus dados"
+    ],
+    "en": [
+     "download backup",
+     "make a backup",
+     "restore a backup"
+    ],
+    "es": [
+     "descargar copia",
+     "copia de seguridad",
+     "restaurar copia"
+    ]
+   }
+  },
+  {
+   "id": "pessoas-familia",
+   "modulo": "budget",
+   "tela": "config",
+   "secao": "todos",
+   "nome": {
+    "pt": "Pessoas da família",
+    "en": "Family people",
+    "es": "Personas de la familia"
+   },
+   "dica": {
+    "pt": "Aqui você cadastra as pessoas da casa: quem são, o papel de cada uma.",
+    "en": "Here you add the people in your home: who they are and each one's role.",
+    "es": "Aquí añades a las personas de casa: quiénes son y el papel de cada una."
+   },
+   "palavras": {
+    "pt": [
+     "pessoas da familia",
+     "cadastrar familia",
+     "cadastrar uma pessoa",
+     "meus dependentes"
+    ],
+    "en": [
+     "family people",
+     "add a family member",
+     "my dependents"
+    ],
+    "es": [
+     "personas de la familia",
+     "anadir a una persona"
+    ]
+   }
+  }
+ ]
+}

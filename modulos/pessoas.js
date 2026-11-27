@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.7.0 · 27/Nov/2026 (3.132: família primeiro, Juntar, papéis, Desfazer, editar na ficha, sem CPF no nome)
+   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.7.1 · 27/Nov/2026 (3.138: data-ajuda; 3.132: família primeiro, Juntar, papéis, Desfazer, editar na ficha, sem CPF no nome)
    ---------------------------------------------------------------------
    O QUE FAZ
      Um cadastro só de "quem": Da casa (responsáveis e dependentes), Outras pessoas (pai, amigo, sócio) e
@@ -521,7 +521,7 @@
 
   MoneyModulos.registrar({
     id: 'pessoas',
-    versao: '1.7.0',
+    versao: '1.7.1',
     colecoes: [COL],
     iniciar: function () {
       try { if (ST && !cfg().pessoasV && (ST.gastos || []).length + (ST.recorrentes || []).length) { API.migrar(); Store.salvar(); } } catch (e) { console.warn('pessoas', e); }
@@ -537,7 +537,7 @@
     pontos: {
       'config.todos': function () {
         var n = API.ativas().length, q = API.perguntas().length + API.aIdentificar().length;
-        return '<div class="card cfg-sec" data-sec="todos"><div class="card-head"><h3>👥 ' + esc(tr('Pessoas da família', 'Family people')) + '</h3>' +
+        return '<div class="card cfg-sec" data-sec="todos" data-ajuda="pessoas-familia"><div class="card-head"><h3>👥 ' + esc(tr('Pessoas da família', 'Family people')) + '</h3>' +   /* 3.138: o mapa do AssistONE */
           '<button class="btn sm" data-irpara="cfg-pessoas">' + esc(tr('Abrir', 'Open')) + ' ›</button></div>' +
           '<p class="small muted" style="margin:0">' + esc(n + tr(' cadastrada(s)', ' registered')) + (q ? ' · ' + esc(q + tr(' nome(s) para conferir', ' name(s) to check')) : '') +
           (cfg().pessoasRevisar ? ' · <b>' + esc(tr('revise a lista uma vez', 'review the list once')) + '</b>' : '') + '</p></div>';
