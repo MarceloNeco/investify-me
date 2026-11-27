@@ -136,20 +136,20 @@ const LOCAL = { v: 1, config: { pessoasV: 2 }, posicoes: [], recorrentes: [], ga
       SaldoBanco.receber({ tipo: 'saldo', id: 'saldo-x-2026-11-01', banco: 'Banco Alfa', conta: 'alfa', saldo: 3.7, data: '2026-11-01' });   /* o antigo (sem conta_id) */
       SaldoBanco.receber({ tipo: 'saldo', id: 's1', banco: 'Banco Alfa', conta: 'Conta corrente', conta_id: 'ca1', categoria_conta: 'conta', final_conta: '1234', saldo: 3.7, data: '2026-11-10' });
       SaldoBanco.receber({ tipo: 'saldo', id: 's2', banco: 'Banco Alfa', conta: 'Poupança', conta_id: 'ca2', categoria_conta: 'poupanca', final_conta: '5678', saldo: 0, data: '2026-11-10' });
-      SaldoBanco.receber({ tipo: 'saldo', id: 's3', banco: 'Banco Alfa', conta: 'BLACK TESTE', conta_id: 'cc1', categoria_conta: 'cartao', final_conta: '1101', saldo: -22725.83, fatura_aberta: -22725.83, vence: '2026-11-25', fecha: '2026-11-18', limite: 50000, disponivel: 27274.17, data: '2026-11-10' });
+      SaldoBanco.receber({ tipo: 'saldo', id: 's3', banco: 'Banco Alfa', conta: 'BLACK TESTE', conta_id: 'cc1', categoria_conta: 'cartao', final_conta: '1101', saldo: -30000, limite_usado: -30000, fatura_aberta: -22725.83, fatura_fechada: true, vence: '2026-11-25', fecha: '2026-11-18', limite: 50000, disponivel: 27274.17, data: '2026-11-10' });
       SaldoBanco.receber({ tipo: 'saldo', id: 's4', banco: 'Banco Beta', conta: 'VISA TESTE', conta_id: 'cc2', categoria_conta: 'cartao', final_conta: '4404', saldo: -830, data: '2026-11-10' });
       SaldoBanco.receber({ tipo: 'saldo', id: 's5', banco: 'Banco Gama', conta: 'Conta Investimento', conta_id: 'ci1', categoria_conta: 'conta', saldo: 0, data: '2026-11-10' });
       SaldoBanco.receberInvest({ tipo: 'investimento', id: 'i1', banco: 'Banco Gama', conta: 'CDB EXEMPLO 2028', conta_id: 'iv1', classe: 'renda fixa', saldo: 15000, data: '2026-11-10', vencimento: '2028-01-15' });
       Store.salvar(); irPara('b-painel');
       const c = document.querySelector('.sb-card'), t = c.textContent;
       return { secs: [...c.querySelectorAll('.sb-sec span')].map((x) => x.textContent), alfa: (t.match(/Banco Alfa · Conta corrente ···1234/g) || []).length, poup: /Poupança ···5678/.test(t),
-        fat: /Fatura aberta R\$\s?22\.725,83/.test(t) && /vence 25\/11/.test(t) && /fecha 18\/11/.test(t) && /limite disponível R\$\s?27\.274,17/.test(t), neg: /-22\.725/.test(t), pill: !!c.querySelector('.sb-pill'),
+        fat: /Fatura a pagar R\$\s?22\.725,83 \(vence 25\/11\)/.test(t) && /Limite usado R\$\s?30\.000,00 \(inclui parcelas futuras\)/.test(t) && /Limite usado R\$\s?830,00/.test(t) && !/Fatura a pagar R\$\s?830/.test(t) && /fecha 18\/11/.test(t) && /limite disponível R\$\s?27\.274,17/.test(t), neg: /-22\.725/.test(t), pill: !!c.querySelector('.sb-pill'),
         semVence: /cadastre o dia no cartão/.test(t), inv: /CDB EXEMPLO 2028/.test(t) && /Ver no InvestifyONE/.test(t) && /Conta Investimento/.test(t.split('Investimentos')[1] || ''), aviso: /o Banco Alfa não compartilhou investimentos pelo Open Finance/.test(t),
         zeradas: !!c.querySelector('.sb-zeradas'), n: ST.saldos_banco.length };
     });
     ok(sb.secs.join('|') === 'Conta corrente e poupança|Cartões de crédito|Investimentos', W + ': três seções com título e total (' + sb.secs.join(' · ') + ')');
     ok(sb.alfa === 1 && sb.poup && sb.n === 6, W + ': o duplicado sumiu: "Banco Alfa · Conta corrente ···1234" e "Poupança ···5678" (o registro antigo sem conta_id saiu)');
-    ok(sb.fat && !sb.neg && sb.pill && sb.semVence, W + ': cartão: pílula, fatura aberta POSITIVA, vence e fecha dd/mm, limite disponível; sem vencimento: "cadastre o dia no cartão"');
+    ok(sb.fat && !sb.neg && sb.pill && sb.semVence, W + ': cartão: pílula, "Fatura a pagar" POSITIVA com o vencimento e, à parte, "Limite usado" (3.131: o saldo antigo sem fatura_aberta é só limite usado), fecha dd/mm, limite disponível; sem vencimento: "cadastre o dia no cartão"');
     ok(sb.inv && sb.aviso && sb.zeradas, W + ': investimentos por banco com "Ver no InvestifyONE" (a conta-investimento vai para lá); aviso do banco que não compartilhou; contas zeradas recolhidas');
     try { const card = p.locator('.sb-card').first(); await card.scrollIntoViewIfNeeded({ timeout: 5000 }); await card.screenshot({ path: '/tmp/banco-' + W + '.png', timeout: 5000 }); } catch (e) { console.log('  (foto do cartão não saiu: ' + String(e.message).split('\n')[0] + ')'); }   /* 3.80: a foto é só para ver; não é verificação */
     const larg = await p.evaluate(() => document.documentElement.scrollWidth);

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.3.1 · 26/Nov/2026 (3.119: avisa a Carteira quando chega investimento)
+   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.4.0 · 27/Nov/2026 (3.131: fatura a pagar × limite usado)
    ---------------------------------------------------------------------
    O QUE FAZ
      O robô manda, na mesma caixa (money_entrada), itens que NUNCA viram lançamento (nuvem.js desvia para cá):
@@ -74,7 +74,13 @@
       /* 2.1.2 (3.86): quando chegaram estes dados (o horário do robô, se ele mandar; senão, o da chegada no app) */
       var em = [it.atualizado_em, it.coletado_em, it.criado_em].filter(function (x) { return x && !isNaN(Date.parse(x)); })[0];
       r.atualizadoEm = em ? new Date(Date.parse(em)).toISOString() : new Date().toISOString();
-      r.cartao = r.tipo === 'cartao' ? { fatura: Math.abs(num(it.fatura_aberta) !== null ? num(it.fatura_aberta) : saldo), vence: it.vence || '', fecha: it.fecha || '',
+      /* 2.4.0 (3.131): o saldo do cartão na Pluggy é o LIMITE USADO (fatura fechada + compras depois do fechamento + parcelas
+         futuras), não a fatura. A fatura a pagar só vem com fatura_aberta do robô novo (pelas faturas do banco) e, se ele disser
+         fatura_fechada=false, não há fatura fechada: o número é só "limite usado". Dado antigo (sem esses campos): só limite usado. */
+      var novo = it.fatura_fechada !== undefined || num(it.limite_usado) !== null, fa = num(it.fatura_aberta);
+      r.cartao = r.tipo === 'cartao' ? { fatura: novo && it.fatura_fechada !== false && fa !== null ? Math.abs(fa) : null,
+        limiteUsado: Math.abs(num(it.limite_usado) !== null ? num(it.limite_usado) : saldo), fechada: it.fatura_fechada === true ? true : it.fatura_fechada === false ? false : null,
+        vence: it.vence || '', fecha: it.fecha || '',
         limite: num(it.limite), disponivel: num(it.disponivel), bandeira: String(it.bandeira || '').slice(0, 30) } : false;
       hist(r, data, saldo);
       return true;
@@ -174,8 +180,11 @@
       });
       return Math.round(s * 100) / 100;
     },
+    /* 2.4.0 (3.131): a fatura fechada a pagar (null quando o robô não disse) e o limite usado, nunca um no lugar do outro */
+    faturaAPagar: function (r) { var k = r && r.cartao; return k && k.fatura != null && isFinite(Number(k.fatura)) ? Number(k.fatura) : null; },
+    limiteUsado: function (r) { var k = r && r.cartao; return k && k.limiteUsado != null ? Number(k.limiteUsado) : Math.abs(Number(r && r.saldo) || 0); },
     conferir: function (r) {
-      if (r.tipo === 'cartao') return { banco: r.cartao ? r.cartao.fatura : Math.abs(r.saldo), app: null, dif: 0, cartao: true };
+      if (r.tipo === 'cartao') return { banco: API.faturaAPagar(r), app: null, dif: 0, cartao: true };
       if (r.tipo !== 'conta') return { banco: r.saldo, app: null, dif: 0 };
       var ls = API.lancamentos(r), app = API.saldoApp(r, r.data, ls), dif = Math.round((r.saldo - app) * 100) / 100, desde = '';
       if (Math.abs(dif) > 1) { desde = r.abertura.data; r.hist.forEach(function (h) { if (Math.abs(h.saldo - API.saldoApp(r, h.data, ls)) <= 1) desde = h.data; }); }
@@ -202,10 +211,14 @@
     /* 2.1.1 (3.80): o que está pendente ou em caução no cartão já usa o limite */
     var pa = window.PreAut && cad ? PreAut.doCartao(cad.id) : 0;
     if (pa > 0) pedaco.push(tr('limite usado por pendentes/cauções ', 'limit used by pending/holds ') + fmt(pa));
+    /* 2.4.0 (3.131): "Fatura a pagar R$ X (vence dd/mm)" e, à parte, "Limite usado R$ Y (inclui parcelas futuras)" */
+    var fat = API.faturaAPagar(r), usado = API.limiteUsado(r);
+    if (k.vence && fat != null) pedaco.shift();
     return '<tr><td><span class="t-main">' + esc(API.rotulo(r)) + '</span> <span class="sb-pill">' + esc(tr('Cartão de crédito', 'Credit card')) + '</span>' +
-      '<div class="t-sub">' + esc(tr('Fatura aberta ', 'Open bill ') + fmt(k.fatura || 0)) + (pedaco.length ? ' · ' + esc(pedaco.join(' · ')) : '') + '</div>' +
+      (fat != null ? '<div class="t-sub sb-fatura">' + esc(tr('Fatura a pagar ', 'Bill to pay ', 'Factura a pagar ') + fmt(fat) + (k.vence ? tr(' (vence ', ' (due ', ' (vence ') + dm(k.vence) + ')' : '')) + '</div>' : '') +
+      '<div class="t-sub sb-usado">' + esc(tr('Limite usado ', 'Credit used ', 'Límite usado ') + fmt(usado) + tr(' (inclui parcelas futuras)', ' (includes future installments)', ' (incluye cuotas futuras)')) + (pedaco.length ? ' · ' + esc(pedaco.join(' · ')) : '') + '</div>' +
       (!vence ? '<div class="t-sub">' + esc(tr('vence: ', 'due: ')) + '<button class="linkinho" data-acao="sb-cartao" data-id="' + esc(r.id) + '">' + esc(tr('cadastre o dia no cartão', 'add the day to the card')) + '</button></div>' : '') +
-      '</td><td class="num"><b>' + fmt(k.fatura || 0) + '</b></td></tr>';
+      '</td><td class="num"><b>' + (fat != null ? fmt(fat) : '—') + '</b></td></tr>';
   }
   function secao(tit, total, linhas, extra) {
     return '<h4 class="sb-sec"><span>' + esc(tit) + '</span><b>' + fmt(total) + '</b></h4>' +
@@ -217,7 +230,7 @@
     var vivas = s.contas.filter(function (r) { return !API.zerada(r); }), zeradas = s.contas.filter(API.zerada);
     h += secao(tr('Conta corrente e poupança', 'Checking and savings'), vivas.reduce(function (t, r) { return t + (r.saldo || 0); }, 0), vivas.map(linhaConta).join(''),
       zeradas.length ? '<details class="sb-zeradas"><summary class="small">' + esc(tr('mostrar contas zeradas', 'show zero-balance accounts')) + ' (' + zeradas.length + ')</summary><table class="tbl sb-tbl"><tbody>' + zeradas.map(linhaConta).join('') + '</tbody></table></details>' : '');
-    if (s.cartoes.length) h += secao(tr('Cartões de crédito', 'Credit cards'), s.cartoes.reduce(function (t, r) { return t + ((r.cartao || {}).fatura || 0); }, 0), s.cartoes.map(linhaCartao).join(''));
+    if (s.cartoes.length) h += secao(tr('Cartões de crédito', 'Credit cards'), s.cartoes.reduce(function (t, r) { return t + (API.faturaAPagar(r) || 0); }, 0), s.cartoes.map(linhaCartao).join(''));
     var porBanco = {}; s.invs.forEach(function (r) { (porBanco[r.banco] = porBanco[r.banco] || []).push(r); });
     var linhasInv = Object.keys(porBanco).sort(function (a, b) { return N(a).localeCompare(N(b)); }).map(function (b) {
       var l = porBanco[b], tot = l.reduce(function (t, r) { return t + (r.saldo || 0); }, 0);
@@ -231,7 +244,7 @@
 
   MoneyModulos.registrar({
     id: 'saldo-banco',
-    versao: '2.3.1',
+    versao: '2.4.0',
     colecoes: [COL],
     pontos: { 'budget.painel': cartao,
       /* 2.3.0 (3.116): no detalhe do lançamento, a conta (inteira para o dono; o final para os outros) */

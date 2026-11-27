@@ -1,10 +1,16 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.130 · 26/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.131 · 26/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.131 */
+  'Bancos e cartões mais claros, e a fatura certa':'Clearer banks and cards, and the right bill',
+  '🏦 Em Configurações › Bancos e cartões, cada banco mostra a agência e a conta numa linha só delas ("Ag. 0001 · Conta 00012-3") e o código e o CNPJ embaixo, sem cortar no celular.':'🏦 In Settings › Banks and cards, each bank shows the branch and account on a line of their own ("Branch 0001 · Account 00012-3"), with the bank code and tax ID below, never cut off on the phone.',
+  '💳 Os cartões encontrados nas suas compras agora vêm por fatura: os virtuais e os adicionais ficam dentro do cartão deles, e "Cadastrar" já traz todos os finais.':'💳 The cards found in your purchases now come one per bill: virtual and additional cards stay inside their card, and "Add" brings all the endings.',
+  '🧾 Na conferência com o banco, o cartão mostra a "Fatura a pagar" com o vencimento e, à parte, o "Limite usado" (que inclui as parcelas futuras). O saldo previsto da conta tira só a fatura a pagar.':'🧾 In the bank check, the card shows the "Bill to pay" with its due date and, separately, the "Credit used" (which includes future installments). The account forecast only takes out the bill to pay.',
+  '👪 Quem vem da lista de contas de outras pessoas (ex.: um inquilino) entra como "Outras pessoas", não como da casa. Em "Quem é da casa", um nome que parece de fora pergunta "Esta pessoa é da família?" com o botão "Não, é de fora".':'👪 People from the list of other people\'s bills (e.g. a tenant) come in as "Other people", not household. In "Who belongs to the household", a name that looks external asks "Is this person family?" with a "No, not family" button.',
   /* 3.130 */
   'As notas da PJ e o DAS do mês':'Company invoices and the monthly DAS',
   '🧾 No FiscalONE › PJ, o novo "Notas e DAS do mês": as notas que a empresa emitiu, ligadas ao crédito que caiu na conta (a receita em reais pelo câmbio do dia), com a marca de exportação (sem PIS/COFINS; ISS: confirme com o contador) e o que vale do IBS/CBS.':'🧾 In FiscalONE › Company, the new "Invoices and DAS for the month": the invoices the company issued, linked to the credit that reached the account (revenue in reais at that day\'s rate), with the export tag (no PIS/COFINS; ISS: confirm with your accountant) and what applies for IBS/CBS.',

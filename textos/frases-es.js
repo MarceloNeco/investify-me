@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.130 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.131 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,12 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.131 — rascunho, revisar */
+  'Bancos e cartões mais claros, e a fatura certa':'Bancos y tarjetas más claros, y la factura correcta',
+  '🏦 Em Configurações › Bancos e cartões, cada banco mostra a agência e a conta numa linha só delas ("Ag. 0001 · Conta 00012-3") e o código e o CNPJ embaixo, sem cortar no celular.':'🏦 En Configuración › Bancos y tarjetas, cada banco muestra la sucursal y la cuenta en una línea propia ("Suc. 0001 · Cuenta 00012-3") y el código y el CNPJ debajo, sin cortarse en el móvil.',
+  '💳 Os cartões encontrados nas suas compras agora vêm por fatura: os virtuais e os adicionais ficam dentro do cartão deles, e "Cadastrar" já traz todos os finais.':'💳 Las tarjetas encontradas en tus compras ahora aparecen una por factura: las virtuales y las adicionales quedan dentro de la suya, y "Registrar" ya trae todos los finales.',
+  '🧾 Na conferência com o banco, o cartão mostra a "Fatura a pagar" com o vencimento e, à parte, o "Limite usado" (que inclui as parcelas futuras). O saldo previsto da conta tira só a fatura a pagar.':'🧾 En la conciliación con el banco, la tarjeta muestra la "Factura a pagar" con el vencimiento y, aparte, el "Límite usado" (que incluye las cuotas futuras). El saldo previsto de la cuenta solo descuenta la factura a pagar.',
+  '👪 Quem vem da lista de contas de outras pessoas (ex.: um inquilino) entra como "Outras pessoas", não como da casa. Em "Quem é da casa", um nome que parece de fora pergunta "Esta pessoa é da família?" com o botão "Não, é de fora".':'👪 Quien viene de la lista de facturas de otras personas (ej.: un inquilino) entra como "Otras personas", no como de la casa. En "Quién es de la casa", un nombre que parece de fuera pregunta "¿Esta persona es de la familia?" con el botón "No, es de fuera".',
   /* 3.130 — rascunho, revisar */
   'As notas da PJ e o DAS do mês':'Las facturas de la empresa y el DAS del mes',
   '🧾 No FiscalONE › PJ, o novo "Notas e DAS do mês": as notas que a empresa emitiu, ligadas ao crédito que caiu na conta (a receita em reais pelo câmbio do dia), com a marca de exportação (sem PIS/COFINS; ISS: confirme com o contador) e o que vale do IBS/CBS.':'🧾 En FiscalONE › Empresa, el nuevo "Facturas y DAS del mes": las facturas que emitió la empresa, vinculadas al crédito que llegó a la cuenta (el ingreso en reales al cambio del día), con la marca de exportación (sin PIS/COFINS; ISS: confírmalo con el contador) y lo que aplica del IBS/CBS.',
