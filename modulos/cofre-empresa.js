@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/cofre-empresa.js — FiscalONE: o "Cofre da empresa" (3.77)        1.2.0 · 13/Nov/2026
+   modulos/cofre-empresa.js — FiscalONE: o "Cofre da empresa" (3.77)        1.3.0 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      Por empresa (PJ), num lugar só: o cartão CNPJ (PDF ou foto), CNPJ, razão social, regime (Simples, Simples com
@@ -112,6 +112,8 @@
       campo(tr('Regime', 'Tax regime'), '<select id="emRegime"><option value="">—</option>' + REGIMES.map(function (r) { return '<option value="' + r[0] + '"' + (e.regime === r[0] ? ' selected' : '') + '>' + esc(pt() ? r[1] : r[2]) + '</option>'; }).join('') + '</select>') +
       campo(tr('Nome fantasia', 'Trade name'), '<input id="emFantasia" maxlength="120" value="' + esc(e.fantasia || '') + '">') +
       campo(tr('Anexo do Simples', 'Simples annex'), '<select id="emAnexo"><option value="">—</option>' + ANEXOS.map(function (a) { return '<option' + (e.anexo === a ? ' selected' : '') + '>' + a + '</option>'; }).join('') + '</select>') +
+      /* 1.3.0 (3.130): Configurações da PJ — a base do DAS (modulos/pj-notas.js e pj.js baseDas); competência é o padrão */
+      campo(tr('Base do DAS (Simples)', 'DAS basis (Simples)'), '<select id="emBaseDas"><option value="competencia">' + esc(tr('Competência: as notas emitidas no mês (padrão)', 'Accrual: invoices issued in the month (default)')) + '</option><option value="caixa"' + (e.baseDas === 'caixa' ? ' selected' : '') + '>' + esc(tr('Caixa: o que entrou na conta no mês', 'Cash: what came into the account in the month')) + '</option></select>') +
       campo(tr('Situação', 'Status'), '<select id="emSituacao">' + SITUACOES.map(function (x) { return '<option value="' + x[0] + '"' + ((e.situacao || 'ativa') === x[0] ? ' selected' : '') + '>' + esc(pt() ? x[1] : x[2]) + '</option>'; }).join('') + '</select>') +
       campo(tr('Desde (situação)', 'Since (status)'), Cal.campo('emSitData', e.situacaoData || '', {})) +
       campo(tr('Data de abertura', 'Opening date'), Cal.campo('emAbertura', e.abertura || '', {})) +
@@ -203,7 +205,7 @@
   API.textoReceber = textoReceber; API.mailto = mailto; API.linhasReceber = linhasReceber;
 
   MoneyModulos.registrar({
-    id: 'cofre-empresa', versao: '1.2.0', colecoes: [COL],
+    id: 'cofre-empresa', versao: '1.3.0', colecoes: [COL],
     pontos: {
       'inbox.grupos': function () {
         var vistos = (ST.config && ST.config.inboxVistos) || {}, l = API.vencendo().filter(function (x) { return !vistos['emp|' + x.d.id + '|' + x.d.validade]; });
@@ -234,7 +236,7 @@
         }).filter(function (c) { return c.banco || c.agencia || c.conta || c.iban || c.swift; });
         var iso = function (id) { return /^\d{4}-\d{2}-\d{2}$/.test(val(id)) ? val(id) : ''; };
         var dados = { cnpj: cnpj, razao: razao, regime: val('emRegime'), contador: { nome: val('emContNome'), contato: val('emContContato'), cnpj: dig(val('emContCnpj')), honorario: Number(val('emContHon')) || 0 }, contas: contas,
-          fantasia: val('emFantasia'), anexo: val('emAnexo'), situacao: val('emSituacao') || 'ativa', situacaoData: iso('emSitData'), abertura: iso('emAbertura'), im: val('emIm'), endereco: val('emEndereco'),
+          fantasia: val('emFantasia'), anexo: val('emAnexo'), baseDas: val('emBaseDas') === 'caixa' ? 'caixa' : 'competencia', situacao: val('emSituacao') || 'ativa', situacaoData: iso('emSitData'), abertura: iso('emAbertura'), im: val('emIm'), endereco: val('emEndereco'),
           cnaes: val('emCnaes').split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean),
           socios: val('emSocios').split(/\n+/).map(function (l) { var q = l.split(';'); return { nome: q[0].trim(), pct: Number(String(q[1] || '').replace(',', '.').replace('%', '')) || 0 }; }).filter(function (x) { return x.nome; }),
           pix: val('emPix').split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean),

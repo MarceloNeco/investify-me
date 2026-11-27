@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.129 · 26/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.130 · 26/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,11 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.130 — rascunho, revisar */
+  'As notas da PJ e o DAS do mês':'Las facturas de la empresa y el DAS del mes',
+  '🧾 No FiscalONE › PJ, o novo "Notas e DAS do mês": as notas que a empresa emitiu, ligadas ao crédito que caiu na conta (a receita em reais pelo câmbio do dia), com a marca de exportação (sem PIS/COFINS; ISS: confirme com o contador) e o que vale do IBS/CBS.':'🧾 En FiscalONE › Empresa, el nuevo "Facturas y DAS del mes": las facturas que emitió la empresa, vinculadas al crédito que llegó a la cuenta (el ingreso en reales al cambio del día), con la marca de exportación (sin PIS/COFINS; ISS: confírmalo con el contador) y lo que aplica del IBS/CBS.',
+  '📅 O DAS do mês é estimado pela competência (as notas do mês) ou pelo caixa (o que entrou): você escolhe em Configurações da PJ, no Cofre da empresa. Vence no dia 20 do mês seguinte e aparece "pago" quando chega do banco. Tudo é informativo: confirme com o contador.':'📅 El DAS del mes se estima por competencia (las facturas del mes) o por caja (lo que entró): lo eliges en la configuración de la empresa, en el cofre de la empresa. Vence el día 20 del mes siguiente y aparece "pagado" cuando llega del banco. Todo es informativo: confírmalo con el contador.',
+  '🗓️ A partir de dezembro, o 📥 lembra o que decidir com o contador para 2027 na PJ, com a pergunta aberta sobre o novo período de cálculo do DAS.':'🗓️ A partir de diciembre, el 📥 recuerda lo que decidir con el contador para 2027 en la empresa, con la pregunta abierta sobre el nuevo periodo de cálculo del DAS.',
   /* 3.129 — rascunho, revisar */
   'Aviso de atraso mais certeiro':'Avisos de atraso más certeros',
   '📧 O aviso de atraso que o robô identifica vira alerta urgente ligado à conta fixa do fornecedor. Se foi você mesmo quem encaminhou o e-mail, o app só lembra, sem alarme.':'📧 El aviso de atraso que identifica el robot se convierte en alerta urgente vinculada a la cuenta fija del proveedor. Si fuiste tú quien reenvió el correo, la app solo lo recuerda, sin alarma.',

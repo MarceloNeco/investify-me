@@ -120,6 +120,7 @@ Lista viva (diretriz "Lista de pendências do app"). Mais nova em cima. Situaç�
 | N112 | **3.127 — Aluguel recebido pela imobiliária** (dono, pelo chat principal, item P). Feito: a conta do demonstrativo no crédito e a renda prevista no dia 12. | dono · chat principal | ✅ 3.127 |
 | N113 | **3.128 — Categoria sugerida pelo item da compra** (dono, pelo chat principal, item Q). Feito: "É isso?" com o item; a resposta vira regra. | dono · chat principal | ✅ 3.128 |
 | N114 | **3.129 — Aviso de atraso ligado à conta do fornecedor** (dono, pelo chat principal, item R). Feito: alerta urgente ligado à conta fixa; o e-mail encaminhado pela própria pessoa só informa. | dono · chat principal | ✅ 3.129 |
+| N115 | **3.130 — FiscalONE da PJ: as notas emitidas e o DAS do mês** (dono, pelo chat principal, item M, proposta aprovada em 26/Nov/2026 com 3 ajustes). Feito: notas ligadas ao crédito, exportação e IBS/CBS informativos, DAS por competência (padrão) ou caixa em Configurações da PJ, lembrete de 2027 com a pergunta aberta do DAS, campos da NFS-e de exportação opcionais (o robô acrescenta quando chegar a 1ª nota real). | dono · chat principal | ✅ 3.130 |
 
 ## Segurança do repositório (06/Nov/2026)
 - Dados pessoais que tinham ido para testes e documentos (nome da filha, escola, saldos e empregadores do FGTS,
