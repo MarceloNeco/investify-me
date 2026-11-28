@@ -25,7 +25,7 @@ const recorrentes = [
   { id: 'rcA', nome: 'Aluguel Exemplo', grupo: 'HABITACAO', sub: 'Aluguel', valor: 800, dia: +dia(-5).slice(8, 10), regra: 'dia', criadoEm: dia(-7), estadoPadrao: 'pendente' },
   { id: 'rcB', nome: 'Internet Exemplo', grupo: 'HABITACAO', sub: 'Internet', valor: 120, dia: +dia(1).slice(8, 10), regra: 'dia', criadoEm: dia(-7), estadoPadrao: 'pendente' }
 ];
-const LOCAL = { v: 1, config: { fitaLigada: false, contasAuto: false /* 3.142: testa o fluxo de sugestão, sem a conta fixa automática (teste-contas-auto.js) */ }, posicoes: [], gastos, recorrentes, cartoes: [{ id: 'ctP', apelido: 'Cartão Porto', banco: 'Porto Bank', bandeira: 'visa', fim: '0000', fecha: 25, vence: 5 }] };
+const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recorrentes, cartoes: [{ id: 'ctP', apelido: 'Cartão Porto', banco: 'Porto Bank', bandeira: 'visa', fim: '0000', fecha: 25, vence: 5 }] };
 
 (async () => {
   const srv = http.createServer((q, r) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html');

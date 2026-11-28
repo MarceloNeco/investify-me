@@ -14,7 +14,7 @@ const RAIZ = path.join(__dirname, '..');
 let falhas = 0, oks = 0;
 const ok = (c, m) => { if (c) { oks++; console.log('  ✓ ' + m); } else { falhas++; console.log('  ✗ FALHOU: ' + m); } };
 const G = (id, data, valor, desc, extra) => Object.assign({ id, data, valor, desc, descRobo: desc, fluxo: 'saida', grupo: 'OUTROS', sub: 'Outros', origem: 'robo', idRobo: id }, extra || {});
-const LOCAL = { v: 1, config: { fitaLigada: false, contasAuto: false /* 3.142: testa o fluxo de sugestão, sem a conta fixa automática (teste-contas-auto.js) */ }, posicoes: [],
+const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [],
   pessoas: [{ id: 'p1', tipo: 'casa', papel: 'responsavel', nome: 'Fulano', apelido: 'Fulano' }, { id: 'p2', tipo: 'casa', papel: 'responsavel', nome: 'Beltrana', apelido: 'Beltrana' }, { id: 'p3', tipo: 'casa', papel: 'dependente', nome: 'Bia', apelido: 'Bia' }],
   cartoes: [{ id: 'c1', apelido: 'Cartão Ficticio', bandeira: 'visa', fim: '1111', vence: 10, fecha: 3 }],
   saldos_banco: [{ id: 'sbA', tipo: 'conta', banco: 'Banco Ficticio', conta: 'Conta corrente', final: '1111', dono: 'Fulano', saldo: 5000, data: '2026-10-10', hist: [] },

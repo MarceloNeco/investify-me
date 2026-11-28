@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.3.0 · 28/Nov/2026
+   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.2.1 · 26/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · No topo da tela (id b-custos), dois seletores guardados: período "Este mês | Próximos 45 dias" e arrumação
@@ -25,9 +25,6 @@
        último valor"), "só nos meses em que houver receita" (imposto), até quando, a prévia e "Salvar"; depois, "Desfazer"
        por 10 s. Imposto da PJ (DAS, DARF, "PGTO CONCES.PUB … RECEITA FED") já abre como imposto da empresa certa.
        Visão da casa: nada da PJ.
-     · 1.3.0 (3.142): sugestoes({min: 2}) para a conta fixa AUTOMÁTICA (modulos/contas-auto.js: 2 meses seguidos bastam; devolve os ids
-       dos pagamentos); a linha da conta detectada sozinha (r.auto) leva o selinho "detectada automaticamente" e, ao tocar, abre
-       [Não é conta fixa] e [editar] (ContasAuto.abrir).
      · Retrocompatível: nada muda nos dados guardados; as abas de antes continuam embaixo. Visão da casa: só o que ela vê.
    API (window.ContasMes)
      itens(modo) → [{r, data, valor, status, pagoEm, grupo}] · atrasadasAntigas() · resumo(itens) · sugestoes() · STATUS
@@ -119,8 +116,7 @@
     },
 
     /* ---------- "Parece conta fixa" ---------- */
-    sugestoes: function (op) {
-      op = op || {}; var minimo = op.min || 3;   /* 1.3.0 (3.142): 2 meses seguidos para a conta fixa automática */
+    sugestoes: function () {
       if (!window.Origem || typeof Gasto === 'undefined') return [];
       var h = hoje(), desde = somaMes(h.slice(0, 7), -24) + '-01', por = {}, recus = cfg().cfRecusadas || {}, freqs = cfg().cfFrequentes || {};
       Gasto.todos().forEach(function (g) {
@@ -151,7 +147,7 @@
           var ms = Object.keys(meses).sort(), seguidos = 1, melhor = 1;
           for (var i = 1; i < ms.length; i++) { seguidos = somaMes(ms[i - 1], 1) === ms[i] ? seguidos + 1 : 1; if (seguidos > melhor) melhor = seguidos; }
           var tipo = '';
-          if (melhor >= minimo) tipo = 'mensal';
+          if (melhor >= 3) tipo = 'mensal';
           else {
             var porMesAno = {}; ms.forEach(function (m) { (porMesAno[m.slice(5, 7)] = porMesAno[m.slice(5, 7)] || []).push(+m.slice(0, 4)); });
             Object.keys(porMesAno).forEach(function (mm) { var a = porMesAno[mm].sort(); for (var j = 1; j < a.length; j++) if (a[j] === a[j - 1] + 1) { tipo = 'anual'; c.mes = +mm; } });
@@ -179,7 +175,6 @@
             grupo: g0.grupo, sub: g0.sub, n: c.itens.length, origem: k, ultimo: n2(ult.valor), quem: ult.quem || '',
             total: n2(c.itens.reduce(function (s, g) { return s + (Number(g.valor) || 0); }, 0)), de: c.itens.map(function (g) { return g.data; }).sort()[0], ate: ult.data,   /* 3.116 */
             outro: outro ? { nome: outro.nome, de: String(outro.desde || '').slice(0, 7), ate: String(outro.ate || '').slice(0, 7) } : null,   /* 3.124 */
-            ids: c.itens.map(function (g) { return g.id; }),   /* 1.3.0 (3.142) */
             diaMin: Math.min.apply(null, c.itens.map(function (g) { return +g.data.slice(8, 10); })), diaMax: Math.max.apply(null, c.itens.map(function (g) { return +g.data.slice(8, 10); })),
             pj: !casa() && (IMPOSTO.test(textoG(ult)) || !!empresaDe(ult)), empresaId: (empresaDe(ult) || {}).id || '',
             pjTipo: /\bdas\b/i.test(ult.desc || ult.descRobo || '') ? 'das' : /\bdarf\b|receita fed/i.test(ult.desc || ult.descRobo || '') ? 'darf' : '' });
@@ -197,8 +192,8 @@
       x.status === 'paga' && x.pagoEm ? tr('paga em ', 'paid on ') + I18n.data(x.pagoEm) : '',
       x.atraso ? tr('paga com atraso (', 'paid late (', 'pagada con atraso (') + (x.atraso.como ? x.atraso.como + tr(' em ', ' on ', ' el ') : '') + I18n.data(x.atraso.em, { semAno: true }) + ')' : '',
       x.aviso ? '⚠️ ' + x.aviso : ''].filter(Boolean).join(' · ');
-    return '<div class="cm-linha cm-' + x.status + '" style="--cm-cor:var(' + s.cor + ')" data-acao="' + (x.r.auto ? 'ca-abrir' : 'cm-abrir') + '" data-id="' + esc(x.r.id) + '">' +
-      '<div class="cm-txt"><span class="t-main">' + esc(x.r.nome) + '</span>' + (x.r.auto ? ' <span class="ca-selo tiny muted">✨ ' + esc(tr('detectada automaticamente', 'detected automatically', 'detectada automáticamente')) + '</span>' : '') + '<div class="t-sub">' + esc(sub) + '</div></div>' +
+    return '<div class="cm-linha cm-' + x.status + '" style="--cm-cor:var(' + s.cor + ')" data-acao="cm-abrir" data-id="' + esc(x.r.id) + '">' +
+      '<div class="cm-txt"><span class="t-main">' + esc(x.r.nome) + '</span><div class="t-sub">' + esc(sub) + '</div></div>' +
       '<div class="cm-dir"><span class="num">' + fmt(x.valor) + '</span>' + selo(x.status) + '</div></div>';
   }
   function porGrupo(l) {
@@ -343,7 +338,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'contas-mes', versao: '1.3.0',
+    id: 'contas-mes', versao: '1.2.1',
     pontos: {
       'custos.contas': cartao,
       'budget.atencao': cartaoSugestoes,
