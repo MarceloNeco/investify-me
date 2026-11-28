@@ -102,6 +102,7 @@
     },
     lista: lista
   };
+  var chaveLigar = '', listaLigar = null;
   function ligar(x) { if (x.gastoId || x.semCasar) return; var c = API.casar(x); if (c) { x.gastoId = c.g.id; x.iofId = c.iof ? c.iof.id : ''; } }
   function gasto(id) { return id ? Gasto.todos().find(function (g) { return g.id === id; }) : null; }
   function frase(x) {
@@ -138,11 +139,13 @@
   function depois() { Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); }
 
   MoneyModulos.registrar({
-    id: 'recibo-exterior', versao: '1.0.1', colecoes: [COL],
+    id: 'recibo-exterior', versao: '1.0.2', colecoes: [COL],
     pontos: {
       'inbox.grupos': function () {
         if (casa()) return [];
-        lista().forEach(ligar);
+        /* 3.143 (desempenho): só procura de novo o lançamento do cartão quando os dados mudaram (antes, a cada desenho do 📥) */
+        var k = [Gasto.todos().length, Store.salvos || 0, lista().length].join('|');
+        if (k !== chaveLigar || lista() !== listaLigar) { lista().forEach(ligar); chaveLigar = k; listaLigar = lista(); }
         var l = lista().filter(function (x) { return !x.gastoId || !x.marca; }); if (!l.length) return [];
         return [{ id: 'docs', n: l.length, html: l.map(function (x) {
           return '<li class="inb-item"><div><b>🧾 ' + esc((x.servico || '') + ' · ' + I18n.data(x.data)) + '</b><span class="t-sub">' + esc(frase(x) + (x.gastoId ? tr(' · do negócio ou da casa?', ' · business or household?', ' · ¿del negocio o de casa?') : '')) + '</span></div><span class="inb-acoes">' +

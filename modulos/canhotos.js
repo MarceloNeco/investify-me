@@ -496,7 +496,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'canhotos', versao: '1.4.0',
+    id: 'canhotos', versao: '1.4.1',
     pontos: {
       'lancamentos.topo': function () { return '<div class="row" style="margin:0 0 8px;gap:6px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sm" data-acao="cn-abrir">📷 ' + esc(tr('Foto de nota ou recibo', 'Receipt or invoice photo', 'Foto de factura o recibo')) + '</button><span class="small muted">' + esc(tr('OS da oficina, nota, recibo ou canhoto: o app lê e liga ao banco', 'Repair shop work order, invoice, receipt or card slip: the app reads it and links it to the bank', 'Orden del taller, factura, recibo o ticket: la app lo lee y lo vincula al banco')) + '</span></div>'; }
     },

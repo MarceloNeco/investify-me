@@ -305,11 +305,11 @@
     },
     /* 3.143 (desempenho): só cruza de novo quando os dados mudaram (antes rodava a cada desenho de tela, pelo contador do 📥) */
     ligarTudo: function (forcar) {
-      var est = typeof Store !== 'undefined' && Store.estado ? Store.estado : {}, k = [Gasto.todos().length, est.atualizadoEm || '', lista().length, (ST.pagamentos || []).length, window.PreAut ? PreAut.lista().length : 0].join('|');
-      if (!forcar && k === API._chave) return;
+      var k = [Gasto.todos().length, Store.salvos || 0, lista().length, (ST.pagamentos || []).length, (ST.cartao_pendentes || []).length, window.PreAut ? PreAut.lista().length : 0].join('|');
+      if (!forcar && k === API._chave && lista() === API._lista) return;
       passada = {};
       try { lista().forEach(processar); } finally { passada = null; }
-      API._chave = k;
+      API._chave = k; API._lista = lista();
     },
     abertos: function () { return lista().filter(function (x) { return x.estado !== 'dispensado' && visivel(x); }); },
     /* o que pede a pessoa (📥) */
@@ -408,7 +408,7 @@
   function achar(el) { return lista().find(function (y) { return y.id === el.dataset.id; }); }
 
   MoneyModulos.registrar({
-    id: 'comprovantes', versao: '1.6.0', colecoes: [COL],
+    id: 'comprovantes', versao: '1.6.1', colecoes: [COL],
     pontos: {
       'lancamentos.topo': function () {
         var n = API.abertos().length; if (!n) return '';
@@ -448,7 +448,8 @@
       'cp-foto-ok': function (el) { var x = achar(el); if (!x) return; x.fotosLidas = true; depois(); },
       'cp-tirar': function (el) { var x = achar(el); if (!x) return; x.estado = 'dispensado'; var g = gasto(x.gastoId); if (g && g.ficha && g.ficha.cid === x.id) delete g.ficha; depois(); }
     },
-    ouvir: { 'gasto.novo': function () { if (lista().length) API.ligarTudo(); } }
+    /* 3.143 (desempenho): um lote do robô (centenas de lançamentos de uma vez) cruza uma vez só, no fim do lote, e não a cada um */
+    ouvir: { 'gasto.novo': function () { if (!lista().length || API._lote) return; API._lote = 1; Promise.resolve().then(function () { API._lote = 0; API.ligarTudo(); }); } }
   });
   window.Comprovantes = API;
 })();
