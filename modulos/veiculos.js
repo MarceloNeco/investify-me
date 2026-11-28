@@ -1,12 +1,13 @@
 /* =====================================================================
-   modulos/veiculos.js — MEUS VEÍCULOS e "QUANTO O CARRO CUSTA" (3.99)        1.0.2 · 24/Nov/2026
+   modulos/veiculos.js — MEUS VEÍCULOS e "QUANTO O CARRO CUSTA" (3.99)        1.0.3 · 27/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 23/Nov/2026: "quanto o carro me custa e para onde vai o dinheiro"; sem IA)
      · Meus veículos: cada carro com um APELIDO ("Renegade 2019"), nunca a placa. Cada lançamento do grupo Veículo ganha o carro
        (g.veiculoId, uma etiqueta: a categoria não muda). Com um carro só, vai direto; com dois ou mais, o 📥 pergunta "Qual
        carro?" e aprende pela loja (Origem).
      · Categorias do Veículo separadas: Mecânica e revisão · Funilaria e pintura · Pneus · Seguro Auto · IPVA e licenciamento ·
-       Combustível · Estacionamento · Sem Parar / Pedagio · Multas · Lavagem (as que já existiam continuam; as novas entram na
+       Combustível · Estacionamento · Tag e pedágio (até a 3.140 "Sem Parar / Pedagio"; o nome antigo vira o novo em
+       modulos/categorias.js 1.1.0) · Multas · Lavagem (as que já existiam continuam; as novas entram na
        lista do grupo). A antiga "Mecânico / Elétrico / Funilaria" continua valendo; o 📥 oferece reclassificar item a item,
        nunca muda nada sozinho.
      · "🚗 Quanto o carro custa" (tela b-carro): por carro, no mês e no ano, em 3 blocos — ter o carro (prestação/consórcio,
@@ -31,7 +32,7 @@
 (function () {
   'use strict';
   var COL = 'veiculos';
-  var SUBS = ['Mecânica e revisão', 'Funilaria e pintura', 'Pneus', 'Seguro Auto', 'IPVA e licenciamento', 'Combustível', 'Estacionamento', 'Sem Parar / Pedagio', 'Multas', 'Lavagem'];
+  var SUBS = ['Mecânica e revisão', 'Funilaria e pintura', 'Pneus', 'Seguro Auto', 'IPVA e licenciamento', 'Combustível', 'Estacionamento', 'Tag e pedágio', 'Multas', 'Lavagem'];
   var NOVAS_MANUT = ['Mecânica e revisão', 'Funilaria e pintura', 'Pneus'];
   function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
   function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
@@ -192,7 +193,7 @@
   });
 
   MoneyModulos.registrar({
-    id: 'veiculos', versao: '1.0.2', colecoes: [COL],
+    id: 'veiculos', versao: '1.0.3', colecoes: [COL],
     pontos: {
       'inbox.grupos': function () {
         if (window.Escopo && Escopo.soCasa && Escopo.soCasa()) return [];
