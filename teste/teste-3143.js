@@ -52,6 +52,9 @@ const C = (id, subtipo, extra) => Object.assign({ id: 'evid-' + id, tipo: 'compr
     await zera();
     await p.evaluate(() => { irPara('b-lanc'); irPara('b-painel'); irPara('b-custos'); irPara('b-lanc'); });
     ok((await n()).grupos === 0, '4 trocas de tela sem mudar nada: a lista do 📥 não foi montada nenhuma vez (antes: 4 vezes)');
+    await zera();
+    await p.evaluate(() => { mostrarHub(); abrirApp('investify'); render(); mostrarHub(); abrirApp('budget'); render(); });
+    ok((await n()).grupos === 0, 'sair pelo 🏠 e entrar em outro app (grava só qual app está aberto): o 📥 não é recontado');
 
     console.log('2) o número muda quando os dados mudam');
     await p.evaluate(() => { Comprovantes.receber({ id: 'evid-av1', tipo: 'comprovante', subtipo: 'compra', data: '2026-11-20', valor: 777.77, loja: 'Loja Inventada', produto: 'Produto de exemplo', final: '1234', remetente: 'nao-responda@exemplo.com', assunto: 'Assunto de exemplo' }); });

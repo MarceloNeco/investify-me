@@ -1766,9 +1766,9 @@ const Store = {
     }
   },
 
-  salvar(){
+  salvar(soTela){
     this.estado.atualizadoEm = new Date().toISOString();
-    this.salvos = (this.salvos || 0) + 1;   /* 3.143: conta cada salvar (o que foi calculado antes dele é refeito; a hora sozinha pode repetir) */
+    if(!soTela) this.salvos = (this.salvos || 0) + 1;   /* 3.143: conta cada salvar de dados (o que foi calculado antes dele é refeito; a hora sozinha pode repetir); soTela = só qual app está aberto */
     if(this.semPersistir){ return false; }   /* sessão temporária: nada fica no aparelho */
 
     /* as chaves vão para o cofre; a carteira salva fica sem elas */
@@ -9235,7 +9235,8 @@ const Pagamento = {
     const de = new Date(hoje + 'T12:00:00'); de.setMonth(de.getMonth() - (op.meses || 3));
     const abertas = Recorrente.ocorrencias(Recorrente.iso(de), hoje)
       .filter(o => (ESTADOS_PG[o.estado] && ESTADOS_PG[o.estado].conta) || (op.porNome && o.estado === 'semconf'));
-    const palavras = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w.length >= 4);
+    const pal = new Map();   /* 3.143: cada texto vira palavras uma vez só nesta conciliação (antes: a cada par ocorrência × lançamento) */
+    const palavras = t => { t = String(t || ''); let v = pal.get(t); if(!v){ v = t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w.length >= 4); pal.set(t, v); } return v; };
     const nomeBate = (g, r) => { const a = palavras(r.nome); if(!a.length) return false; const b = palavras([g.desc, g.sub].join(' ')); return a.some(w => b.indexOf(w) >= 0); };
     let casados = 0;
     abertas.forEach(o => {
@@ -9962,7 +9963,7 @@ function abrirApp(k){
   if(appsVisiveis().indexOf(k) < 0) k = 'budget';
   if(!APPS[k] || !APPS[k].pronto) return;
   ST.appAtual = k;
-  Store.salvar();
+  Store.salvar(true);
   if(typeof renderFita === 'function') setTimeout(renderFita, 0);
   $('#hubTela').classList.add('hidden');
   $('#app').classList.remove('hidden');
