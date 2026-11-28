@@ -71,7 +71,8 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2, pessoasRevisar: 
     const jt = await p.evaluate(() => (document.querySelector('.ps-juntar') || {}).textContent || '');
     ok(/Apelido.* e Fulano.* são a mesma pessoa\?/.test(jt), 'no topo: "Apelido e Fulano… são a mesma pessoa?" (o dono que o banco manda nos itens da conta): ' + jt.slice(0, 90));
     const conf = await p.evaluate(() => ({ n: document.querySelectorAll('.ps-revise').length, sels: document.querySelectorAll('[data-grupo="casa"] .ps-papel-sel').length, revisar: document.querySelectorAll('.ps-novo').length, adef: /papel a definir/.test(document.getElementById('view-cfg-pessoas').textContent) }));
-    ok(conf.n === 1 && conf.sels >= 3 && conf.revisar === 0 && !conf.adef, 'um só "Confirme: quem é responsável e quem é dependente", com um seletor por linha; sem o "revisar" e o "papel a definir" em cada nome');
+    ok(conf.n === 1 && conf.sels >= 2 && conf.revisar === 0 && !conf.adef,   /* 3.142: o chefe (p-eu) não tem mais seletor: "Responsável 🔒" */
+       'um só "Confirme: quem é responsável e quem é dependente", com um seletor por linha; sem o "revisar" e o "papel a definir" em cada nome ' + JSON.stringify(conf));
     await p.selectOption('[data-grupo="casa"] .ps-papel-sel[data-id="p-b"]', 'dependente'); await p.waitForTimeout(100);
     ok(await p.evaluate(() => ST.pessoas.find((x) => x.id === 'p-b').papel === 'dependente'), 'o seletor da linha grava o papel (Pessoa B: dependente)');
     await p.click('.ps-juntar [data-acao="ps-juntar"]'); await p.waitForTimeout(150);

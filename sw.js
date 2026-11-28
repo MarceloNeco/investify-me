@@ -2,12 +2,12 @@
    Faz o site abrir sem internet e permite instalar como app.
    AO PUBLICAR UMA VERSÃO NOVA, troque o número abaixo (v1 -> v2).
    É o que avisa os celulares de que existe conteúdo novo. */
-var VERSAO = 'v141';
+var VERSAO = 'v142';
 var CACHE = 'moneytrio-' + VERSAO;
 /* O que fica guardado para abrir sem internet. Cada <script src> do index.html entra aqui com o MESMO ?v=
    (teste/teste-modulos.js confere). Módulo novo = uma linha aqui + uma no index.html. */
 var ARQUIVOS = ['./', './index.html', './manifest.json', './assistone-mapa.json', './recursos.js', './ajuda-botao.png', './icone-192.png', './icone-512.png', './icone-512-maskable.png', './icone.svg', './icone-32.png',
-  './estilo.css?v=3.142', './textos/frases-en.js?v=3.141', './textos/frases-es.js?v=3.141', './textos/pj-textos.js?v=3.85', './textos/mudancas.js?v=3.141',
+  './estilo.css?v=3.142', './textos/frases-en.js?v=3.142', './textos/frases-es.js?v=3.142', './textos/pj-textos.js?v=3.85', './textos/mudancas.js?v=3.142',
   './textos/glossario.js?v=3.51', './textos/coach.js?v=3.51',
   './modulos/base.js?v=1.1.1',
   './modulos/arquivos.js?v=1.1.0',

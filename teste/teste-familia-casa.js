@@ -75,11 +75,13 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
     await p.click('#vcFamilia [data-acao="vc-juntar"]'); await p.waitForTimeout(200);
     const j = await p.evaluate(() => ({ n: ST.pessoas.length, g1: Gasto.todos().find((g) => g.id === 'g1'), p1: Pessoas.porId('p1'), caixa: !!document.querySelector('#vcFamilia .vc-juntar'), eu: ST.config.vcEu.pessoa }));
     ok(j.n === 4 && j.g1.quemId === 'p1' && j.p1.uid === 'u1' && j.p1.aliases.indexOf('Fulano de Tal') >= 0 && !j.caixa && j.eu === 'p1', 'juntado: a ficha criada para a conta sai, o lançamento dela passa para "Fulaninho", o vínculo vai junto e a sugestão some');
-    ok((await lista()).nomes.join('|') === 'Beatriz Exemplo (Bia)|Dora Exemplo' && !(await lista()).pergunta, 'na lista ficam Beatriz Exemplo (Bia) e Dora Exemplo, sem o chefe e sem perguntar nada');
+    /* 3.142 (dono): o chefe aparece SEMPRE no topo, marcado e travado ("você · chefe"); antes ficava escondido */
+    const l3 = await lista();
+    ok(/\(você · chefe\)$/.test(l3.nomes[0]) && l3.nomes.slice(1).join('|') === 'Beatriz Exemplo (Bia)|Dora Exemplo' && !l3.pergunta, 'na lista: o chefe no topo ("' + l3.nomes[0] + '"), depois Beatriz Exemplo (Bia) e Dora Exemplo, sem perguntar nada');
     await p.evaluate(() => { MoneyNuvem.email = () => ''; });
 
     console.log('3) sem PIN da conta, "Preparar" travado');
-    await p.click('#vcFamilia .vc-pessoas input'); await p.waitForTimeout(200);
+    await p.click('#vcFamilia .vc-pessoas input:not([disabled])'); await p.waitForTimeout(200);   /* 3.142: a caixa do chefe é travada */
     const pin = await p.evaluate(() => ({ dis: document.querySelector('#vcFamilia [data-acao="vc-preparar"]').disabled, txt: (document.querySelector('#vcFamilia .vc-sem-pin') || {}).textContent || '' }));
     ok(pin.dis && /Crie o PIN da conta primeiro/.test(pin.txt), 'com uma pessoa marcada mas sem PIN da conta: "Preparar" desabilitado e "Crie o PIN da conta primeiro"');
     await p.click('#vcFamilia [data-acao="vc-criar-pin"]');

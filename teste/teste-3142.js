@@ -5,7 +5,11 @@
    todo o app; o Inquilino (que parece de fora) NÃO vem marcado mesmo que estivesse na lista e não conta na parte da casa até marcar;
    "Não, é de fora" → Outras pessoas, com "Desfazer"; a frase curta, sem "ler mais"; o aviso numa linha própria embaixo do nome, dentro
    do cartão, sem sobrepor e com o botão inteiro — com FOTO em 360, 390, 768, 1366, 1920 e 2560 px, em PT, EN e ES; em Pessoas da
-   família, o chefe primeiro, com "(você)".
+   família: o chefe primeiro ("você · chefe", Responsável travado, no formulário Tipo e Papel travados); o seletor de papel com 3 opções
+   (Responsável · Dependente · Não é da família) e quem parece de fora já com a 3ª e "é isso?"; "Não é da família" → Outras pessoas com
+   "Desfazer"; o formulário abre no topo com o Tipo em destaque ("Da casa (família)"…) e "Parece alguém de fora da família. É isso?";
+   a migração única: ficha da casa que parece de fora, sem confirmação nem lançamento marcado à mão como da casa, vai para Outras
+   pessoas com um aviso só; fotos de Pessoas da família nas 6 larguras × 3 idiomas.
    Uso: node teste/teste-3142.js   (fotos em <tmp>/familia-3142/)
    ===================================================================== */
 'use strict';
@@ -15,11 +19,13 @@ const RAIZ = path.join(__dirname, '..'), FOTOS = path.join(os.tmpdir(), 'familia
 let falhas = 0, oks = 0;
 const ok = (c, m) => { if (c) { oks++; console.log('  ✓ ' + m); } else { falhas++; console.log('  ✗ FALHOU: ' + m); } };
 const LARGURAS = [360, 390, 768, 1366, 1920, 2560];
-const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], recorrentes: [], cartoes: [],
+const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2, pessoasFora3142: 1, pessoasRevisar: true }, posicoes: [], recorrentes: [], cartoes: [],
   pessoas: [
     { id: 'pche', tipo: 'casa', papel: 'responsavel', nome: 'Paulo', sobrenome: 'Exemplo', uid: 'u1', banco: [], aliases: [] },
     { id: 'pinq', tipo: 'casa', papel: '', nome: 'Inquilino', banco: [], aliases: [] },
-    { id: 'pana', tipo: 'casa', papel: 'dependente', nome: 'Ana', sobrenome: 'Exemplo', banco: [], aliases: [] }],
+    { id: 'pana', tipo: 'casa', papel: 'dependente', nome: 'Ana', sobrenome: 'Exemplo', banco: [], aliases: [] },
+    { id: 'ppre', tipo: 'casa', papel: '', nome: 'Prestador', sobrenome: 'Exemplo', banco: [], aliases: [] },
+    { id: 'pbia', tipo: 'casa', papel: '', nome: 'Bia', sobrenome: 'Exemplo', banco: [], aliases: [] }],
   visaoCasa: { pessoas: ['pinq', 'pana'] },
   gastos: [{ id: 'g1', data: '2026-11-10', valor: 50, desc: 'MERCADO EXEMPLO', fluxo: 'saida', grupo: 'ALIMENTACAO', sub: 'Supermercado', quem: 'Paulo Exemplo', quemId: 'pche', origem: 'manual' }] };
 
@@ -109,13 +115,87 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
     await p.click('#vcFamilia .vc-chefe [data-acao="ps-abrir"]');
     await p.waitForFunction(() => !!document.getElementById('psNome'));
     const prim = await p.evaluate(() => { const r = document.querySelector('.ps-grupo[data-grupo="casa"] tbody tr'); return r ? r.textContent.replace(/\s+/g, ' ').trim() : ''; });
-    ok(/^Paulo \(você\)/.test(prim), 'em Pessoas da família, o chefe vem primeiro, com "(você)" — ' + prim.slice(0, 40));
+    ok(/^Paulo \(você · chefe\)/.test(prim), 'em Pessoas da família, o chefe vem primeiro, com "(você · chefe)" — ' + prim.slice(0, 40));
     await p.fill('#psNome', 'Alex'); await p.click('[data-acao="ps-salvar"]'); await p.waitForTimeout(150);
     const r4 = await p.evaluate(() => ({ g: ST.gastos.find((x) => x.id === 'g1').quem, rot: Pessoas.rotulo(Pessoas.porId('pche')) }));
     await familia();
     const ch2 = await p.evaluate(() => document.querySelector('#vcFamilia .vc-chefe').textContent.replace(/\s+/g, ' ').trim());
     ok(r4.rot === 'Alex' && r4.g === 'Alex' && /^Alex Exemplo \(você · chefe\)/.test(ch2), 'renomeado de Paulo para Alex: no lançamento ("quem" = Alex), em Pessoas e no topo de "Quem é da casa" (' + r4.g + ' / ' + ch2 + ')');
+
+    console.log('5) Pessoas da família: o "Confirme" com 3 opções, o chefe travado');
+    const pess = async () => { await p.evaluate(() => { irPara('cfg-pessoas'); render(); }); await p.waitForFunction(() => !!document.querySelector('.ps-grupo[data-grupo="casa"]')); await p.waitForTimeout(100); };
+    await pess();
+    const c5 = await p.evaluate(() => { const lin = (id) => document.querySelector('tr[data-ps="' + id + '"]'); const sel = (id) => lin(id) && lin(id).querySelector('.ps-papel-sel');
+      return { chefe: lin('pche').textContent.replace(/\s+/g, ' '), chefeSel: !!sel('pche'), pre: sel('ppre') && [...sel('ppre').options].map((o) => o.value + (o.selected ? '*' : '')).join(','), preIsso: !!lin('ppre').querySelector('[data-acao="ps-fora"]') && /é isso\?/.test(lin('ppre').textContent),
+        bia: sel('pbia') && [...sel('pbia').options].map((o) => o.textContent + (o.selected ? '*' : '')).join(' | ') }; });
+    ok(/Alex \(você · chefe\)/.test(c5.chefe) && !c5.chefeSel && /Responsável 🔒/.test(c5.chefe), 'o chefe: "(você · chefe)", sem seletor, "Responsável 🔒"');
+    ok(c5.bia === 'escolha…* | Responsável | Dependente | Não é da família (de fora)', 'o seletor tem 3 opções: Responsável · Dependente · Não é da família (de fora) — ' + c5.bia);
+    ok(c5.pre === 'responsavel,dependente,fora*' && c5.preIsso, 'quem parece de fora (Prestador) já vem com "Não é da família" escolhido e "é isso? [Sim]", nunca "escolha…"');
+    await p.selectOption('tr[data-ps="pbia"] .ps-papel-sel', 'fora');
+    await p.waitForFunction(() => /Bia agora está em Outras pessoas\./.test(document.getElementById('toasts').textContent));
+    ok(await p.evaluate(() => Pessoas.porId('pbia').tipo === 'outra' && !!document.querySelector('.ps-grupo[data-grupo="outra"] tr[data-ps="pbia"]') && [...document.querySelectorAll('#toasts button')].some((x) => /Desfazer/.test(x.textContent))), 'escolher "Não é da família": vai na hora para "Outras pessoas", com "Desfazer"');
+    await p.evaluate(() => [...document.querySelectorAll('#toasts .toast')].filter((t) => /Bia agora/.test(t.textContent)).forEach((t) => [...t.querySelectorAll('button')].find((x) => /Desfazer/.test(x.textContent)).click()));
+    await p.waitForTimeout(120);
+    ok(await p.evaluate(() => Pessoas.porId('pbia').tipo === 'casa'), '"Desfazer": a Bia volta para a família');
+
+    console.log('6) o formulário abre no topo, com o Tipo em destaque');
+    await p.setViewportSize({ width: 390, height: 800 }); await pess();
+    await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await p.click('tr[data-ps="ppre"] [data-acao="ps-editar"]');
+    await p.waitForTimeout(250);
+    const f6 = await p.evaluate(() => { const t = document.getElementById('psTipo'), r = t.closest('.ps-tipo-destaque').getBoundingClientRect();
+      return { visivel: r.top >= 0 && r.bottom <= innerHeight, ops: [...t.options].map((o) => o.textContent).join(' | '), aviso: (document.querySelector('.ps-fora-aviso') || {}).textContent || '' }; });
+    ok(f6.visivel, 'o formulário abre com o Tipo à vista no topo (390 px)');
+    ok(f6.ops === 'Da casa (família) | Outras pessoas (não é da família) | Empresas e instituições', 'os rótulos do Tipo: ' + f6.ops);
+    ok(/Parece alguém de fora da família\. É isso\?/.test(f6.aviso), 'na ficha do Prestador: "Parece alguém de fora da família. É isso?"');
+    await p.click('[data-acao="ps-cancelar"]'); await p.waitForTimeout(100);
+    await p.click('tr[data-ps="pche"] [data-acao="ps-editar"]'); await p.waitForTimeout(200);
+    ok(await p.evaluate(() => document.getElementById('psTipo').disabled && document.getElementById('psPapel').disabled && document.getElementById('psPapel').value === 'responsavel' && !document.querySelector('.ps-fora-aviso')), 'na ficha do chefe, Tipo e Papel (Responsável) travados');
+    await p.click('[data-acao="ps-cancelar"]'); await p.waitForTimeout(100);
+
+    console.log('7) fotos de Pessoas da família (o "Confirme" e o formulário) nas 6 larguras × 3 idiomas');
+    for (const lang of ['pt', 'en', 'es']) {
+      for (const w of LARGURAS) {
+        await p.setViewportSize({ width: w, height: 900 });
+        await p.evaluate((l) => { I18n.atual = l; }, lang); await pess();
+        await p.click('tr[data-ps="ppre"] [data-acao="ps-editar"]'); await p.waitForTimeout(200);
+        const m = await p.evaluate(() => { const g = document.querySelector('.ps-grupo[data-grupo="casa"]').getBoundingClientRect();
+          const fora = [...document.querySelectorAll('.ps-grupo[data-grupo="casa"] select, .ps-grupo[data-grupo="casa"] .ps-papel-linha, .ps-grupo[data-grupo="casa"] button, .ps-tipo-destaque')].filter((e) => { const r = e.getBoundingClientRect(); return r.width && (r.left < g.left - 0.5 || r.right > g.right + 0.5); }).map((e) => e.className || e.tagName);
+          const fm = document.querySelector('.ps-form').getBoundingClientRect();
+          /* nada do formulário cortado ou para fora dele (rótulos, dicas, campos) */
+          [...document.querySelectorAll('.ps-form .lb, .ps-form .hint, .ps-form input, .ps-form select, .ps-form .ps-fora-aviso')].forEach((e) => { const r = e.getBoundingClientRect(); if (r.width && (r.right > fm.right + 0.5 || r.left < fm.left - 0.5 || e.scrollWidth > e.clientWidth + 1 && !/INPUT|SELECT/.test(e.tagName))) fora.push('form:' + (e.className || e.id || e.tagName)); });
+          /* o título do formulário não fica debaixo do cabeçalho fixo da tabela */
+          const h3 = document.querySelector('.ps-form h3').getBoundingClientRect(), th = document.querySelector('.ps-grupo[data-grupo="casa"] thead th'), thr = th ? th.getBoundingClientRect() : { bottom: 0 };
+          if (h3.top < thr.bottom - 0.5 && h3.bottom > thr.top) fora.push('titulo-coberto');
+          const tp = document.getElementById('psTipo').getBoundingClientRect();
+          return { fora: fora, tipoVisivel: tp.top >= 0 && tp.bottom <= innerHeight, rola: document.documentElement.scrollWidth > innerWidth + 1 }; });
+        ok(!m.fora.length && m.tipoVisivel && !m.rola, w + ' ' + lang + ': Pessoas da família sem nada para fora do cartão, o Tipo à vista, sem rolar para o lado' + (m.fora.length || m.rola || !m.tipoVisivel ? ' — ' + JSON.stringify(m) : ''));
+        const arq = path.join(FOTOS, 'pessoas-' + w + '-' + lang + '.png');
+        for (let k = 0; k < 3; k++) { try { await p.screenshot({ path: arq }); break; } catch (e) { if (k === 2) throw e; await p.waitForTimeout(200); } }
+        fotos.push(arq);
+        await p.click('[data-acao="ps-cancelar"]').catch(() => {});
+      }
+    }
+    console.log('    fotos: ' + FOTOS + ' (' + fotos.length + ' no total)');
+    await p.setViewportSize({ width: 390, height: 900 }); await p.evaluate(() => { I18n.atual = 'pt'; });
     ok(p.erros.length === 0, 'sem erro de página' + (p.erros.length ? ': ' + p.erros.join(' | ') : ''));
+
+    console.log('8) a migração única: o inquilino criado como "da casa" passa para Outras pessoas');
+    const ctx2 = await b.newContext({ viewport: { width: 390, height: 900 }, serviceWorkers: 'block' });
+    await ctx2.route('**/*', (r) => r.request().url().startsWith(BASE) ? r.continue() : r.abort());
+    const L2 = JSON.parse(JSON.stringify(LOCAL)); delete L2.config.pessoasFora3142; delete L2.config.pessoasRevisar;
+    L2.pessoas.find((x) => x.id === 'ppre').nome = 'Prestador'; L2.gastos.push({ id: 'g2', data: '2026-11-12', valor: 80, desc: 'SERVICO EXEMPLO', fluxo: 'saida', grupo: 'HABITACAO', sub: 'Manutenção', quem: 'Prestador Exemplo', quemId: 'ppre', escopo: 'casa', origem: 'manual' });
+    await ctx2.addInitScript((t) => { if (!sessionStorage.getItem('s')) { localStorage.setItem('investifyme.dados.v1', t); localStorage.setItem('moneytrio.soNesteAparelho', '1'); localStorage.setItem('moneytrio.tutorial.v1', 'visto'); sessionStorage.setItem('s', '1'); } }, JSON.stringify(L2));
+    const p2 = await ctx2.newPage(); p2.erros = []; p2.on('pageerror', (e) => p2.erros.push(String(e)));
+    await p2.goto(BASE + '/'); await p2.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && Store.estado.config && Store.estado.config.pessoasFora3142 === 1);
+    await p2.waitForFunction(() => /passou para Outras pessoas/.test((document.getElementById('toasts') || {}).textContent || ''), null, { timeout: 8000 }).catch(() => {});
+    const m8 = await p2.evaluate(() => ({ inq: Pessoas.porId('pinq').tipo, pre: Pessoas.porId('ppre').tipo, ana: Pessoas.porId('pana').tipo, casa: (ST.visaoCasa.pessoas || []).join(), toast: (document.getElementById('toasts') || {}).textContent || '' }));
+    ok(m8.inq === 'outra' && m8.casa === 'pana' && /Inquilino passou para Outras pessoas\./.test(m8.toast) && /Desfazer/.test(m8.toast), 'o Inquilino (da casa, sem confirmação) vai para Outras pessoas, sai da lista da casa e o aviso único "Inquilino passou para Outras pessoas." tem "Desfazer"');
+    ok(m8.pre === 'casa' && m8.ana === 'casa', 'quem tem lançamento marcado à mão como da casa (o Prestador) e quem não parece de fora (a Ana) ficam');
+    await p2.reload(); await p2.waitForFunction(() => typeof Store !== 'undefined' && Store.estado); await p2.waitForTimeout(2200);
+    ok(!/passou para Outras pessoas/.test(await p2.evaluate(() => (document.getElementById('toasts') || {}).textContent || '')), 'o aviso aparece uma vez só (ao abrir de novo, nada)');
+    ok(p2.erros.length === 0, 'migração: sem erro de página' + (p2.erros.length ? ': ' + p2.erros.join(' | ') : ''));
+    await ctx2.close();
   } catch (e) { falhas++; console.log('  ✗ FALHOU: ' + (e && e.stack || e)); }
   finally { await b.close(); srv.close(); }
   console.log((falhas ? '✗ ' : '✓ ') + oks + ' ok, ' + falhas + ' falha(s)');

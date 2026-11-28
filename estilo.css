@@ -1,4 +1,4 @@
-/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.133 · 27/Nov/2026
+/* estilo.css — o visual do MoneyTRIO (InvestifyONE, BudgetONE, TaxONE)   3.142 · 28/Nov/2026
    Saiu do <style> do index.html na 3.48 (arrumação interna; nada mudou na tela).
    Mudou aqui? Troque o ?v= no index.html e no sw.js (teste/teste-modulos.js confere). */
 /* ============ InvestifyONE — estilo ============ */
@@ -2826,3 +2826,16 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .ee-guia{margin:4px 0} .ee-guia summary{cursor:pointer; padding:4px 0}
 .ee-passos{padding-left:20px; margin:4px 0} .ee-passos code{word-break:break-all}
 .ee-filtros .linha-check{display:block; margin:2px 0}
+/* 3.142: Pessoas da família — o Tipo em destaque no topo do formulário; o papel com "Não é da família" e o "é isso?" na mesma linha */
+.ps-tipo-destaque{grid-column:1 / -1; border:1px solid var(--line, rgba(127,127,127,.25)); border-left:4px solid var(--accent, #3b82f6); border-radius:10px; padding:8px 10px}
+.ps-tipo-destaque .f{margin:0}
+.ps-fora-aviso{margin:6px 0 0; color:var(--warn, #f59e0b)}
+.ps-papel-linha{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:4px}
+.ps-papel-linha select{max-width:100%}
+.ps-form label.f .hint{display:block}   /* 3.142: a dica embaixo do campo (no monitor grande ela ia para o lado e era cortada) */
+/* 3.142: o formulário de editar pessoa fica dentro de uma linha da tabela — sem o "não quebra linha" das células (rótulos e dicas
+   eram cortados e se sobrepunham no tablet) e com folga no topo para o cabeçalho fixo não cobrir o título */
+.ps-form-linha > td{white-space:normal; max-width:none; overflow:visible}
+.ps-form, .ps-form *{white-space:normal}
+.ps-form .lb, .ps-form .hint{overflow-wrap:anywhere}
+.ps-form{scroll-margin-top:120px}
