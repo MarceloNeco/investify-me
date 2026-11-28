@@ -60,13 +60,13 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2, pessoasFora3142:
         inq: inq ? inq.checked : null, ana: ana ? ana.checked : null, intro: [...document.querySelectorAll('#vcFamilia .vc-intro p')].map((x) => x.textContent.trim()).join(' '),
         lerMais: document.querySelectorAll('#vcFamilia .explica-mais').length, velho: /não precisa estar na lista/.test(document.querySelector('#vcFamilia').textContent) };
     });
-    ok(/^Paulo Exemplo \(você · chefe\)/.test(t1.primeiro) && t1.marcado && t1.travado && t1.editar, 'o primeiro da lista é "Paulo Exemplo (você · chefe)", marcado, travado e com "editar" — ' + t1.primeiro);
+    ok(/^Paulo \(você · chefe\)/.test(t1.primeiro) && t1.marcado && t1.travado && t1.editar, 'o primeiro da lista é "Paulo (você · chefe)" (3.144: o Nome), marcado, travado e com "editar" — ' + t1.primeiro);
     ok(t1.inq === false && t1.ana === true, 'o Inquilino (que estava na lista) NÃO vem marcado; a Ana continua marcada');
-    ok(t1.intro === 'Quem é da casa Marque quem mora com você. Os gastos dessas pessoas e dos cartões delas entram na parte da casa. Você (chefe) sempre vê tudo.' && t1.lerMais === 0 && !t1.velho, 'a frase curta, sem "ler mais" nem o texto antigo "não precisa estar na lista"');
+    ok(t1.intro === 'Quem é da casa Toda a sua Família (quem mora com você) entra na parte da casa, com os cartões. As Pessoas próximas não entram. Você (chefe) sempre vê tudo.' && t1.lerMais === 0 && !t1.velho, 'a frase curta (3.144: toda a Família entra), sem "ler mais" nem o texto antigo "não precisa estar na lista"');
     await p.click('#vcFamilia .vc-chefe input[type=checkbox]', { force: true }).catch(() => {});
     ok(await p.evaluate(() => document.querySelector('#vcFamilia .vc-chefe input[type=checkbox]').checked), 'a caixa do chefe não desmarca');
     const esc1 = await p.evaluate(() => { Escopo.preparar(Store.estado); return Escopo.pessoasDela().sort().join(); });
-    ok(esc1 === 'pana', 'na parte da casa só entra a Ana; o Inquilino não conta até alguém confirmar (' + esc1 + ')');
+    ok(esc1 === 'pana,pbia', 'na parte da casa entra toda a Família (3.144: Ana e Bia, sem marcar); o Inquilino não conta até alguém confirmar (' + esc1 + ')');
     ok(await p.evaluate(() => !document.querySelector('#vcFamilia [data-acao="vc-preparar"]').disabled), '"Preparar" continua liberado (a Ana conta)');
 
     console.log('2) o aviso numa linha própria, dentro do cartão, em todas as larguras e idiomas (com foto)');
@@ -107,36 +107,34 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2, pessoasFora3142:
     await p.waitForTimeout(150);
     const d2 = await p.evaluate(() => ({ tipo: Pessoas.porId('pinq').tipo, lista: !!document.querySelector('#vcFamilia .vc-pessoa[data-id="pinq"]') }));
     ok(d2.tipo === 'casa' && d2.lista, '"Desfazer": volta para a família, na lista');
-    await p.click('#vcFamilia .vc-pessoa[data-id="pinq"] input[type=checkbox]'); await p.waitForTimeout(150);
+    await p.click('#vcFamilia .vc-pessoa[data-id="pinq"] [data-acao="vc-mora"]'); await p.waitForTimeout(150);   /* 3.144: a caixa ficou travada; "Sim, mora comigo" */
     const d3 = await p.evaluate(() => { Escopo.preparar(Store.estado); return { conf: !!Pessoas.porId('pinq').familiaConfirmada, aviso: !!document.querySelector('#vcFamilia .vc-pessoa[data-id="pinq"] .vc-de-fora'), dela: Escopo.pessoasDela().sort().join(), marcado: document.querySelector('#vcFamilia .vc-pessoa[data-id="pinq"] input').checked }; });
-    ok(d3.conf && !d3.aviso && d3.marcado && d3.dela === 'pana,pinq', 'marcar a caixa = "é da família": o aviso some e passa a contar na parte da casa (' + d3.dela + ')');
+    ok(d3.conf && !d3.aviso && d3.marcado && d3.dela === 'pana,pbia,pinq', '"Sim, mora comigo" = é da família: o aviso some e passa a contar na parte da casa (' + d3.dela + ')');
 
     console.log('4) "editar" do chefe: renomear muda em todo o app; Pessoas da família com o chefe primeiro');
     await p.click('#vcFamilia .vc-chefe [data-acao="ps-abrir"]');
     await p.waitForFunction(() => !!document.getElementById('psNome'));
     const prim = await p.evaluate(() => { const r = document.querySelector('.ps-grupo[data-grupo="casa"] tbody tr'); return r ? r.textContent.replace(/\s+/g, ' ').trim() : ''; });
     ok(/^Paulo \(você · chefe\)/.test(prim), 'em Pessoas da família, o chefe vem primeiro, com "(você · chefe)" — ' + prim.slice(0, 40));
-    await p.fill('#psNome', 'Alex'); await p.click('[data-acao="ps-salvar"]'); await p.waitForTimeout(150);
+    await p.fill('#psNome', 'Alex'); await p.click('#folhaSalvar'); await p.waitForTimeout(150);
     const r4 = await p.evaluate(() => ({ g: ST.gastos.find((x) => x.id === 'g1').quem, rot: Pessoas.rotulo(Pessoas.porId('pche')) }));
     await familia();
     const ch2 = await p.evaluate(() => document.querySelector('#vcFamilia .vc-chefe').textContent.replace(/\s+/g, ' ').trim());
-    ok(r4.rot === 'Alex' && r4.g === 'Alex' && /^Alex Exemplo \(você · chefe\)/.test(ch2), 'renomeado de Paulo para Alex: no lançamento ("quem" = Alex), em Pessoas e no topo de "Quem é da casa" (' + r4.g + ' / ' + ch2 + ')');
+    ok(r4.rot === 'Alex' && r4.g === 'Alex' && /^Alex \(você · chefe\)/.test(ch2), 'renomeado de Paulo para Alex: no lançamento ("quem" = Alex), em Pessoas e no topo de "Quem é da casa" (' + r4.g + ' / ' + ch2 + ')');
 
-    console.log('5) Pessoas da família: o "Confirme" com 3 opções, o chefe travado');
+    console.log('5) Pessoas (3.144): o papel como texto, sem seletor; quem parece de fora: "Mora comigo" ou "Mover para Pessoas próximas"');
     const pess = async () => { await p.evaluate(() => { irPara('cfg-pessoas'); render(); }); await p.waitForFunction(() => !!document.querySelector('.ps-grupo[data-grupo="casa"]')); await p.waitForTimeout(100); };
     await pess();
-    const c5 = await p.evaluate(() => { const lin = (id) => document.querySelector('tr[data-ps="' + id + '"]'); const sel = (id) => lin(id) && lin(id).querySelector('.ps-papel-sel');
-      return { chefe: lin('pche').textContent.replace(/\s+/g, ' '), chefeSel: !!sel('pche'), pre: sel('ppre') && [...sel('ppre').options].map((o) => o.value + (o.selected ? '*' : '')).join(','), preIsso: !!lin('ppre').querySelector('[data-acao="ps-fora"]') && /é isso\?/.test(lin('ppre').textContent),
-        bia: sel('pbia') && [...sel('pbia').options].map((o) => o.textContent + (o.selected ? '*' : '')).join(' | ') }; });
-    ok(/Alex \(você · chefe\)/.test(c5.chefe) && !c5.chefeSel && /Responsável 🔒/.test(c5.chefe), 'o chefe: "(você · chefe)", sem seletor, "Responsável 🔒"');
-    ok(c5.bia === 'escolha…* | Responsável | Dependente | Não é da família (de fora)', 'o seletor tem 3 opções: Responsável · Dependente · Não é da família (de fora) — ' + c5.bia);
-    ok(c5.pre === 'responsavel,dependente,fora*' && c5.preIsso, 'quem parece de fora (Prestador) já vem com "Não é da família" escolhido e "é isso? [Sim]", nunca "escolha…"');
-    await p.selectOption('tr[data-ps="pbia"] .ps-papel-sel', 'fora');
-    await p.waitForFunction(() => /Bia agora está em Outras pessoas\./.test(document.getElementById('toasts').textContent));
-    ok(await p.evaluate(() => Pessoas.porId('pbia').tipo === 'outra' && !!document.querySelector('.ps-grupo[data-grupo="outra"] tr[data-ps="pbia"]') && [...document.querySelectorAll('#toasts button')].some((x) => /Desfazer/.test(x.textContent))), 'escolher "Não é da família": vai na hora para "Outras pessoas", com "Desfazer"');
-    await p.evaluate(() => [...document.querySelectorAll('#toasts .toast')].filter((t) => /Bia agora/.test(t.textContent)).forEach((t) => [...t.querySelectorAll('button')].find((x) => /Desfazer/.test(x.textContent)).click()));
-    await p.waitForTimeout(120);
-    ok(await p.evaluate(() => Pessoas.porId('pbia').tipo === 'casa'), '"Desfazer": a Bia volta para a família');
+    const c5 = await p.evaluate(() => { const lin = (id) => document.querySelector('tr[data-ps="' + id + '"]');
+      return { chefe: lin('pche').textContent.replace(/\s+/g, ' '), sels: document.querySelectorAll('.ps-papel-sel').length, pre: lin('ppre').textContent.replace(/\s+/g, ' ') }; });
+    ok(/Alex \(você · chefe\)/.test(c5.chefe) && /Responsável 🔒/.test(c5.chefe) && c5.sels === 0, 'o chefe: "(você · chefe)", "Responsável 🔒"; nenhum seletor de papel na lista');
+    ok(/Parece alguém que não mora com você\./.test(c5.pre) && /Mora comigo/.test(c5.pre) && /Mover para Pessoas próximas/.test(c5.pre), 'quem parece de fora (Prestador): "Parece alguém que não mora com você. [Mora comigo] [Mover para Pessoas próximas]"');
+    await p.click('tr[data-ps="pbia"] [data-acao="ps-editar"]'); await p.waitForTimeout(100);
+    await p.selectOption('#psTipo', 'outra'); await p.click('#folhaSalvar'); await p.waitForTimeout(150);
+    ok(await p.evaluate(() => Pessoas.porId('pbia').tipo === 'outra' && !!document.querySelector('.ps-grupo[data-grupo="outra"] tr[data-ps="pbia"]')), 'mudar o Tipo na ficha para "Pessoa próxima": a Bia vai para "Pessoas próximas"');
+    await p.click('tr[data-ps="pbia"] [data-acao="ps-editar"]'); await p.waitForTimeout(100);
+    await p.selectOption('#psTipo', 'casa'); await p.click('#folhaSalvar'); await p.waitForTimeout(150);
+    ok(await p.evaluate(() => Pessoas.porId('pbia').tipo === 'casa'), 'e de volta: a Bia volta para a Família');
 
     console.log('6) o formulário abre no topo, com o Tipo em destaque');
     await p.setViewportSize({ width: 390, height: 800 }); await pess();
@@ -146,12 +144,12 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2, pessoasFora3142:
     const f6 = await p.evaluate(() => { const t = document.getElementById('psTipo'), r = t.closest('.ps-tipo-destaque').getBoundingClientRect();
       return { visivel: r.top >= 0 && r.bottom <= innerHeight, ops: [...t.options].map((o) => o.textContent).join(' | '), aviso: (document.querySelector('.ps-fora-aviso') || {}).textContent || '' }; });
     ok(f6.visivel, 'o formulário abre com o Tipo à vista no topo (390 px)');
-    ok(f6.ops === 'Da casa (família) | Outras pessoas (não é da família) | Empresas e instituições', 'os rótulos do Tipo: ' + f6.ops);
+    ok(f6.ops === 'Família (mora com você) | Pessoa próxima (não mora com você) | Empresas e instituições', 'os rótulos do Tipo (3.144): ' + f6.ops);
     ok(/Parece alguém de fora da família\. É isso\?/.test(f6.aviso), 'na ficha do Prestador: "Parece alguém de fora da família. É isso?"');
-    await p.click('[data-acao="ps-cancelar"]'); await p.waitForTimeout(100);
+    await p.click('#folhaCancelar'); await p.waitForTimeout(100);
     await p.click('tr[data-ps="pche"] [data-acao="ps-editar"]'); await p.waitForTimeout(200);
     ok(await p.evaluate(() => document.getElementById('psTipo').disabled && document.getElementById('psPapel').disabled && document.getElementById('psPapel').value === 'responsavel' && !document.querySelector('.ps-fora-aviso')), 'na ficha do chefe, Tipo e Papel (Responsável) travados');
-    await p.click('[data-acao="ps-cancelar"]'); await p.waitForTimeout(100);
+    await p.click('#folhaCancelar'); await p.waitForTimeout(100);
 
     console.log('7) fotos de Pessoas da família (o "Confirme" e o formulário) nas 6 larguras × 3 idiomas');
     for (const lang of ['pt', 'en', 'es']) {
@@ -159,21 +157,19 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2, pessoasFora3142:
         await p.setViewportSize({ width: w, height: 900 });
         await p.evaluate((l) => { I18n.atual = l; }, lang); await pess();
         await p.click('tr[data-ps="ppre"] [data-acao="ps-editar"]'); await p.waitForTimeout(200);
-        const m = await p.evaluate(() => { const g = document.querySelector('.ps-grupo[data-grupo="casa"]').getBoundingClientRect();
-          const fora = [...document.querySelectorAll('.ps-grupo[data-grupo="casa"] select, .ps-grupo[data-grupo="casa"] .ps-papel-linha, .ps-grupo[data-grupo="casa"] button, .ps-tipo-destaque')].filter((e) => { const r = e.getBoundingClientRect(); return r.width && (r.left < g.left - 0.5 || r.right > g.right + 0.5); }).map((e) => e.className || e.tagName);
-          const fm = document.querySelector('.ps-form').getBoundingClientRect();
-          /* nada do formulário cortado ou para fora dele (rótulos, dicas, campos) */
-          [...document.querySelectorAll('.ps-form .lb, .ps-form .hint, .ps-form input, .ps-form select, .ps-form .ps-fora-aviso')].forEach((e) => { const r = e.getBoundingClientRect(); if (r.width && (r.right > fm.right + 0.5 || r.left < fm.left - 0.5 || e.scrollWidth > e.clientWidth + 1 && !/INPUT|SELECT/.test(e.tagName))) fora.push('form:' + (e.className || e.id || e.tagName)); });
-          /* o título do formulário não fica debaixo do cabeçalho fixo da tabela */
-          const h3 = document.querySelector('.ps-form h3').getBoundingClientRect(), th = document.querySelector('.ps-grupo[data-grupo="casa"] thead th'), thr = th ? th.getBoundingClientRect() : { bottom: 0 };
-          if (h3.top < thr.bottom - 0.5 && h3.bottom > thr.top) fora.push('titulo-coberto');
+        const m = await p.evaluate(() => { const fo = document.querySelector('#folhaEditar .folha').getBoundingClientRect(), fora = [];
+          /* 3.144: a ficha abre na folha de edição: nada do formulário cortado ou para fora dela; os botões fixos à vista */
+          const fm = document.querySelector('#folhaEditar .ps-form').getBoundingClientRect();
+          [...document.querySelectorAll('#folhaEditar .ps-form .lb, #folhaEditar .ps-form .hint, #folhaEditar .ps-form input:not([type=radio]):not([type=hidden]), #folhaEditar .ps-form select, #folhaEditar .ps-form .ps-fora-aviso')].forEach((e) => { const r = e.getBoundingClientRect(); if (r.width && (r.right > fm.right + 0.5 || r.left < fm.left - 0.5)) fora.push(e.id || e.className || e.tagName); });
+          if (fo.left < -0.5 || fo.right > innerWidth + 0.5) fora.push('folha');
+          const pe = document.querySelector('.folha-pe').getBoundingClientRect(); if (pe.bottom > innerHeight + 0.5) fora.push('botoes');
           const tp = document.getElementById('psTipo').getBoundingClientRect();
           return { fora: fora, tipoVisivel: tp.top >= 0 && tp.bottom <= innerHeight, rola: document.documentElement.scrollWidth > innerWidth + 1 }; });
         ok(!m.fora.length && m.tipoVisivel && !m.rola, w + ' ' + lang + ': Pessoas da família sem nada para fora do cartão, o Tipo à vista, sem rolar para o lado' + (m.fora.length || m.rola || !m.tipoVisivel ? ' — ' + JSON.stringify(m) : ''));
         const arq = path.join(FOTOS, 'pessoas-' + w + '-' + lang + '.png');
         for (let k = 0; k < 3; k++) { try { await p.screenshot({ path: arq }); break; } catch (e) { if (k === 2) throw e; await p.waitForTimeout(200); } }
         fotos.push(arq);
-        await p.click('[data-acao="ps-cancelar"]').catch(() => {});
+        await p.click('#folhaCancelar').catch(() => {});
       }
     }
     console.log('    fotos: ' + FOTOS + ' (' + fotos.length + ' no total)');

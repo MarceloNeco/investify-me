@@ -88,8 +88,8 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     const inb2 = await p.evaluate(() => { abrirInbox(); return (document.querySelector('#genModal') || {}).textContent || ''; });
     ok(/fica negativa em 20\/11 \(−R\$ 200,00\) e chega a −R\$ 1\.850,00 em 05\/12/.test(inb2) && /cobre o pior dia \+ 5% de folga/.test(inb2) && /ver por quê/.test(inb2) && /ag\. 0001 · conta 00012-3/.test(inb2), 'no 📥: primeiro dia negativo, o pior dia, a folga, "ver por quê" e a conta inteira');
     await p.click('#genModal .sp-pessoa[data-id="p1"] >> nth=0'); await p.waitForTimeout(250);
-    const ps = await p.evaluate(() => ({ fechou: document.getElementById('genModal').classList.contains('hidden'), tela: !!document.querySelector('#view-cfg-pessoas:not(.hidden)'), foco: document.activeElement && document.activeElement.id, dica: /aparece no lugar do nome em todo o app \(deixe vazio para usar o nome\)/.test(document.body.textContent) }));
-    ok(ps.fechou && ps.tela && ps.foco === 'psApelido' && ps.dica, 'tocar no nome abre a pessoa em Configurações › Pessoas (apelido em foco, com a explicação): ' + JSON.stringify(ps));
+    const ps = await p.evaluate(() => ({ fechou: document.getElementById('genModal').classList.contains('hidden'), tela: !!document.querySelector('#view-cfg-pessoas:not(.hidden)'), foco: document.activeElement && document.activeElement.id, dica: /É como aparece no app\./.test((document.getElementById('folhaEditar') || {}).textContent || '') }));
+    ok(ps.fechou && ps.tela && ps.foco === 'psNome' && ps.dica, 'tocar no nome abre a pessoa em Pessoas (3.144: na folha de edição, o Nome em foco, com a explicação): ' + JSON.stringify(ps));
     /* 3.116: a conta inteira só para o PRÓPRIO dono; outro membro (uid diferente) e a visão da casa veem o final */
     const vis = await p.evaluate(() => {
       const c = SaldoPrevisto.contas().find((x) => x.numero === '000123'), ps = Pessoas.todas(), f = ps.find((x) => x.id === 'p1');

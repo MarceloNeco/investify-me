@@ -1,6 +1,7 @@
 /* =====================================================================
-   modulos/contraparte.js — a outra parte de cada lançamento (3.65)        1.0.0 · 11/Nov/2026
+   modulos/contraparte.js — a outra parte de cada lançamento (3.65)        1.0.1 · 28/Nov/2026
    ---------------------------------------------------------------------
+     · 1.0.1 (3.144): o contato reconhecido guarda o código da pessoa (Pessoas.codigoDe), como os outros registros; a tela mostra o Nome.
    O QUE FAZ
      O robô manda, fora da impressão, em cada lançamento: contraparte {cnpj?, id_pessoa?, nome?, meio?, mcc?}.
      (id_pessoa = o CPF virou HMAC no robô; o CPF nunca chega ao app e o id_pessoa nunca aparece na tela.)
@@ -46,7 +47,7 @@
       if (prof && window.Profissionais && !g.editadoPessoa) { Profissionais.aplicar(g, prof); g.reconhecidoPor = temId(prof, cp); }
       var ct = porId(pessoas, cp, 'cnpj') || porId(pessoas, cp, 'idp');
       if (!ct && cp.nome && window.Pessoas) ct = Pessoas.achar(cp.nome);          /* 3. o nome (só quando bate certinho) */
-      if (ct) { g.contato = Pessoas.rotulo(ct); g.contatoId = ct.id; if (!g.reconhecidoPor) g.reconhecidoPor = temId(ct, cp) || 'nome'; }
+      if (ct) { g.contato = Pessoas.codigoDe ? Pessoas.codigoDe(ct) : Pessoas.rotulo(ct); g.contatoId = ct.id;   /* 3.144: o código de sempre (a tela mostra o Nome) */ if (!g.reconhecidoPor) g.reconhecidoPor = temId(ct, cp) || 'nome'; }
       else if (cp.nome && /^(PIX|TED|TEF|BOLETO)$/.test(cp.meio || '')) { g.contato = cp.nome; delete g.contatoId; }   /* fica "A identificar" */
       /* MCC: só palpite, quando o robô não deu categoria (e nenhum profissional classificou) */
       var m = cp.mcc && MCC[cp.mcc];
@@ -68,6 +69,6 @@
       return n;
     }
   };
-  MoneyModulos.registrar({ id: 'contraparte', versao: '1.0.0' });
+  MoneyModulos.registrar({ id: 'contraparte', versao: '1.0.1' });
   window.Contraparte = API;
 })();

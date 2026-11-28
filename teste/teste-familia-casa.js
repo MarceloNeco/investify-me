@@ -50,7 +50,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
     await p.waitForTimeout(300);
     await p.evaluate(() => { irPara('b-painel'); render(); abrirInbox(); });
     const ib = await p.evaluate(() => { const i = inboxItens().find((x) => x.ico === '👪'); return { sub: i && i.sub, btn: !!document.querySelector('#genBody [data-rolar="vcFamilia"]') }; });
-    ok(ib.sub === 'Escolha quem é da casa para Bia poder ver só a parte da casa. Antes, crie o PIN da sua conta.' && ib.btn, 'o 📥 diz numa linha o que se pede e por quê, com o botão "👪 Visão da família": ' + ib.sub);
+    ok(ib.sub === 'Prepare a parte da casa para Beatriz poder ver só ela. Antes, crie o PIN da sua conta.' && ib.btn, 'o 📥 diz numa linha o que se pede e por quê, com o botão "👪 Visão da família": ' + ib.sub);
     await p.click('#genBody [data-rolar="vcFamilia"]'); await p.waitForTimeout(400);
     const a1 = await p.evaluate(() => ({ app: ST.appAtual, v: viewAtual, sec: cfgSecao, card: !!document.getElementById('vcFamilia') }));
     ok(a1.app === 'budget' && a1.v === 'config' && a1.sec === 'todos' && a1.card, 'abre Configurações → Compartilhadas no BudgetONE (não troca para o InvestifyONE) e mostra o cartão da família ' + JSON.stringify(a1));
@@ -66,24 +66,24 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
     /* 3.125 (dono: acabar com "Qual destas fichas é você?"): o app liga sozinho a ficha com o uid da conta; nada de pergunta */
     ok(!l0.pergunta && await p.evaluate(() => ST.config.vcEu && ST.config.vcEu.uid === 'u1' && ST.config.vcEu.pessoa === 'p2'), 'sem perguntar: a ficha com o uid da conta (Fulano de Tal) fica ligada à conta sozinha');
     ok(l0.nomes.indexOf('Fulano de Tal') < 0, 'a ficha da conta fica fora da lista');
-    ok(/Outras pessoas \(não são da família\): Inquilino Exemplo \(Inquilino\)/.test(l0.fora), 'o inquilino separado em "Outras pessoas (não são da família)"');
+    ok(/Pessoas próximas \(não moram com você, não entram\): Inquilino/.test(l0.fora), 'o inquilino separado em "Pessoas próximas (não moram com você, não entram)" (3.144)');
     ok(await p.evaluate(() => !!document.querySelector('#vcFamilia [data-acao="ps-lista"]')), 'o atalho "Abrir Pessoas da família"');
     /* a ficha que a pessoa fez para si ("Fulaninho") com o e-mail da conta: o app oferece juntar (a dela fica; a criada para a conta sai) */
     await p.evaluate(() => { MoneyNuvem.email = () => 'fulano@exemplo.invalid'; Pessoas.porId('p1').email = 'fulano@exemplo.invalid'; render(); }); await p.waitForTimeout(200);
     const l = await lista();
-    ok(/Fulaninho e Fulano de Tal são a mesma pessoa \(você\)\? Juntar/.test(l.juntar), 'com o e-mail da conta na ficha "Fulaninho": "Fulaninho e Fulano de Tal são a mesma pessoa (você)? Juntar"');
+    ok(/Fulaninho e Fulano são a mesma pessoa \(você\)\? Juntar/.test(l.juntar), 'com o e-mail da conta na ficha "Fulaninho": "Fulaninho e Fulano são a mesma pessoa (você)? Juntar" (3.144: o Nome)');
     await p.click('#vcFamilia [data-acao="vc-juntar"]'); await p.waitForTimeout(200);
     const j = await p.evaluate(() => ({ n: ST.pessoas.length, g1: Gasto.todos().find((g) => g.id === 'g1'), p1: Pessoas.porId('p1'), caixa: !!document.querySelector('#vcFamilia .vc-juntar'), eu: ST.config.vcEu.pessoa }));
     ok(j.n === 4 && j.g1.quemId === 'p1' && j.p1.uid === 'u1' && j.p1.aliases.indexOf('Fulano de Tal') >= 0 && !j.caixa && j.eu === 'p1', 'juntado: a ficha criada para a conta sai, o lançamento dela passa para "Fulaninho", o vínculo vai junto e a sugestão some');
     /* 3.142 (dono): o chefe aparece SEMPRE no topo, marcado e travado ("você · chefe"); antes ficava escondido */
     const l3 = await lista();
-    ok(/\(você · chefe\)$/.test(l3.nomes[0]) && l3.nomes.slice(1).join('|') === 'Beatriz Exemplo (Bia)|Dora Exemplo' && !l3.pergunta, 'na lista: o chefe no topo ("' + l3.nomes[0] + '"), depois Beatriz Exemplo (Bia) e Dora Exemplo, sem perguntar nada');
+    ok(/\(você · chefe\)$/.test(l3.nomes[0]) && l3.nomes.slice(1).join('|') === 'Beatriz|Dora' && !l3.pergunta, 'na lista: o chefe no topo ("' + l3.nomes[0] + '"), depois Beatriz e Dora (3.144: o Nome), sem perguntar nada');
     await p.evaluate(() => { MoneyNuvem.email = () => ''; });
 
     console.log('3) sem PIN da conta, "Preparar" travado');
-    await p.click('#vcFamilia .vc-pessoas input:not([disabled])'); await p.waitForTimeout(200);   /* 3.142: a caixa do chefe é travada */
+    /* 3.144: toda a Família já conta (as caixas ficam travadas); não há o que marcar */
     const pin = await p.evaluate(() => ({ dis: document.querySelector('#vcFamilia [data-acao="vc-preparar"]').disabled, txt: (document.querySelector('#vcFamilia .vc-sem-pin') || {}).textContent || '' }));
-    ok(pin.dis && /Crie o PIN da conta primeiro/.test(pin.txt), 'com uma pessoa marcada mas sem PIN da conta: "Preparar" desabilitado e "Crie o PIN da conta primeiro"');
+    ok(pin.dis && /Crie o PIN da conta primeiro/.test(pin.txt), 'com a Família na casa mas sem PIN da conta: "Preparar" desabilitado e "Crie o PIN da conta primeiro"');
     await p.click('#vcFamilia [data-acao="vc-criar-pin"]');
     ok(await p.evaluate(() => window.__pinAberto === 1), 'o botão abre a criação do PIN da conta');
     ok(p.erros.length === 0, 'sem erro de página' + (p.erros.length ? ': ' + p.erros[0] : ''));

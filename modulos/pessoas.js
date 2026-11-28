@@ -594,6 +594,7 @@
       (eu ? ' <span class="small muted ps-voce">(' + esc(tr('você · chefe', 'you · head', 'tú · jefe')) + ')</span>' : '') +
       (p.arquivada ? ' <span class="small">(' + esc(tr('arquivada', 'archived', 'archivada')) + ')</span>' : '') + '</span><div class="t-sub">' + esc(docMascara(sub)) + '</div>' +
       (fora ? '<div class="small ps-fora-linha">⚠ ' + esc(tr('Parece alguém que não mora com você.', 'Looks like someone who does not live with you.', 'Parece alguien que no vive contigo.')) +
+        ' <button type="button" class="btn sm" data-acao="ps-mora" data-id="' + esc(p.id) + '">' + esc(tr('Mora comigo', 'Lives with me', 'Vive conmigo')) + '</button>' +
         ' <button type="button" class="btn sm" data-acao="ps-fora" data-id="' + esc(p.id) + '">' + esc(tr('Mover para Pessoas próximas', 'Move to Close people', 'Mover a Personas cercanas')) + '</button></div>' : '') + '</td>' +
       '<td class="num small muted">' + usos + '</td><td class="num"><div class="row" style="gap:4px;justify-content:flex-end">' +
       '<button class="btn sm" data-acao="ps-editar" data-id="' + esc(p.id) + '">' + esc(tr('editar', 'edit', 'editar')) + '</button>' +
@@ -604,11 +605,14 @@
   }
   /* 1.9.0 (3.144): editar e "+ Adicionar" abrem numa folha própria (modulos/folha-editar.js): tela inteira no celular, painel no computador,
      a lista atrás bloqueada, [Cancelar] [Salvar] fixos embaixo, o Voltar do celular = Cancelar. Ao fechar, a lista volta para o mesmo ponto.
-     foco: o Tipo ao editar; o Apelido quando se abre a pessoa para renomear (tocar no nome no saldo do banco). */
+     foco: o Tipo ao editar; o Nome quando se abre a pessoa para renomear (tocar no nome no saldo do banco). */
   function abrirFolha(p, foco, tipo) {
+    var salvo = '';
     var novo = { tipo: TIPOS[tipo] ? tipo : 'casa', papel: tipo === 'outra' || tipo === 'empresa' ? '' : 'responsavel' };
     Folha.abrir({ titulo: p ? tr('Editar', 'Edit', 'Editar') + ' · ' + API.rotulo(p) : tr('Nova pessoa', 'New person', 'Nueva persona'), html: formPessoa(p || novo), foco: '#' + (foco || (p ? 'psTipo' : 'psNome')),
-      salvar: function () { var q = API.salvar(lerForm()); Store.salvar(); render(); toast(tr('Salvo: ', 'Saved: ', 'Guardado: ') + API.rotulo(q)); return true; } });
+      salvar: function () { var q = API.salvar(lerForm()); salvo = q.id; Store.salvar(); render(); toast(tr('Salvo: ', 'Saved: ', 'Guardado: ') + API.rotulo(q)); return true; },
+      /* a lista volta ao mesmo ponto; se a ficha salva mudou de lugar (outro nome, outra parte), vai até ela */
+      depois: function () { setTimeout(function () { var e = salvo && document.querySelector('[data-ps="' + salvo + '"]'), r = e && e.getBoundingClientRect(); if (r && (r.top < 0 || r.bottom > innerHeight)) e.scrollIntoView({ block: 'center' }); }, 80); } });   /* depois do render (que repõe a rolagem) */
     mostrarCampos();
   }
   /* apagar e arquivar sem confirm(): faz na hora e mostra "Apagado: X · Desfazer" por 8 s */
@@ -743,7 +747,7 @@
       'ps-familia': function () { API.trazerDaFamilia().then(function (n) { salvarERender(n ? n + tr(' pessoa(s) trazida(s) da família.', ' person(s) brought from the family.', ' persona(s) traída(s) de la familia.') : tr('Ninguém novo na família.', 'Nobody new in the family.', 'Nadie nuevo en la familia.')); }); },
       'ps-editar': function (el) { abrirFolha(API.porId(el.dataset.id)); },
       /* 3.116: de um aviso (ex.: o saldo previsto), tocar no nome da pessoa abre a ficha dela aqui */
-      'ps-abrir': function (el) { var p = API.porId(el.dataset.id); if (el.closest('#genModal') && typeof fechar === 'function') fechar('genModal'); if (typeof irPara === 'function') irPara('cfg-pessoas'); else render(); if (p) abrirFolha(p, 'psApelido'); },
+      'ps-abrir': function (el) { var p = API.porId(el.dataset.id); if (el.closest('#genModal') && typeof fechar === 'function') fechar('genModal'); if (typeof irPara === 'function') irPara('cfg-pessoas'); else render(); if (p) abrirFolha(p, 'psNome'); },   /* 3.144: renomear = o Nome */
       'ps-lista': function (el) { if (el.closest('#genModal') && typeof fechar === 'function') fechar('genModal'); if (typeof irPara === 'function') irPara('cfg-pessoas'); else render(); },   /* 1.5.0 (3.125): os atalhos abrem Pessoas da família */
       'ps-arquivar': function (el) {
         var id = el.dataset.id, p = API.arquivar(id); salvarERender();
@@ -758,6 +762,7 @@
       'ps-juntar': function (el) { var n = API.juntar(el.dataset.fica, el.dataset.sai); salvarERender(tr('Juntadas: ', 'Merged: ', 'Juntadas: ') + n + tr(' registro(s).', ' record(s).', ' registro(s).')); },
       'ps-juntar-nao': function (el) { (cfg().psJuntarNao = cfg().psJuntarNao || {})[el.dataset.par] = 1; salvarERender(); },
       'ps-fora': function (el) { var p = API.porId(el.dataset.id); if (p) paraFora(p); },
+      'ps-mora': function (el) { var p = API.porId(el.dataset.id); if (p) { p.familiaConfirmada = true; salvarERender(); } },   /* 1.9.0 (3.144) */
       'ps-e-sim': function (el) { var n = API.confirmarParecida(el.dataset.texto, el.dataset.id); salvarERender(n + tr(' registro(s) ligado(s).', ' record(s) linked.', ' registro(s) vinculado(s).')); },
       'ps-e-nao': function (el) { API.naoEhParecida(el.dataset.texto); salvarERender(); },
       'ps-cadastrar-texto': function (el) {

@@ -29,11 +29,14 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
 
     console.log('1) o e-mail opcional na ficha');
     await p.evaluate(() => { document.body.insertAdjacentHTML('beforeend', '<button id="zzAbrir" data-acao="ps-abrir" data-id="p1">x</button>'); document.getElementById('zzAbrir').click(); }); await p.waitForTimeout(250);
-    const f = await p.evaluate(() => { const e = document.getElementById('psEmail'); const lab = e && e.closest('label'); return { tem: !!e, tipo: e && e.type, dica: lab ? lab.textContent : '' }; });
-    ok(f.tem && f.tipo === 'email' && /Só para quem vai entrar no MoneyTRIO: liga esta ficha ao convite da família/.test(f.dica), 'a ficha da família tem "E-mail (opcional)" com a explicação');
-    await p.evaluate(() => { document.getElementById('psEmail').value = 'nao-e-email'; }); await p.click('[data-acao="ps-salvar"]'); await p.waitForTimeout(200);
+    /* 3.144: o e-mail fica atrás do botão "Convidar para o MoneyTRIO" (na folha de edição) */
+    const f0 = await p.evaluate(() => ({ escondido: document.querySelector('#folhaEditar .ps-email').hidden, bt: !!document.querySelector('#folhaEditar [data-ps-convidar]') }));
+    await p.click('#folhaEditar [data-ps-convidar]');
+    const f = await p.evaluate(() => { const e = document.getElementById('psEmail'); const lab = e && e.closest('label'); return { tem: !!e && !e.closest('.ps-email').hidden, tipo: e && e.type, dica: lab ? lab.textContent : '' }; });
+    ok(f0.escondido && f0.bt && f.tem && f.tipo === 'email' && /Liga esta ficha ao convite da família/.test(f.dica), 'a ficha da família tem "Convidar para o MoneyTRIO", que mostra o e-mail com a explicação');
+    await p.evaluate(() => { document.getElementById('psEmail').value = 'nao-e-email'; }); await p.click('#folhaSalvar'); await p.waitForTimeout(200);
     ok(await p.evaluate(() => !Pessoas.porId('p1').email), 'um e-mail que não parece e-mail não é guardado');
-    await p.evaluate(() => { document.getElementById('psEmail').value = 'Fulano@Exemplo.invalid '; }); await p.click('[data-acao="ps-salvar"]'); await p.waitForTimeout(200);
+    await p.evaluate(() => { document.getElementById('psEmail').value = 'Fulano@Exemplo.invalid '; }); await p.click('#folhaSalvar'); await p.waitForTimeout(200);
     ok(await p.evaluate(() => Pessoas.porId('p1').email === 'fulano@exemplo.invalid'), 'o e-mail é guardado limpo (minúsculas, sem espaço)');
     ok(await p.evaluate(() => { const r = Pessoas.salvar({ id: 'p9', tipo: 'outra', nome: 'Inquilino Ficticio', email: 'inq@exemplo.invalid' }); return !r.email; }), 'quem não é da família (tipo "Outras pessoas") não guarda e-mail');
 

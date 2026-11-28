@@ -137,8 +137,8 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
     ok(r5[0] === 'HABITACAO/Diarista' && r5[1] === 'RENDA/Aluguel recebido', 'Pix sem categoria: para a diarista vira Habitação › Diarista; da inquilina vira Renda › Aluguel recebido: ' + JSON.stringify(r5));
     ok(r5[2] === 'RENDA/Extrato bancário' && r5[3] === 'LAZER/Cinema', 'o que não tem regra (Pix que vem da sogra) e o que já tem categoria ficam como estão');
     ok(await p.evaluate(() => /Pix → Habitação › Diarista/.test(document.querySelector('[data-ps]') && [...document.querySelectorAll('.ps-grupo[data-grupo="outra"] .t-sub')].map((x) => x.textContent).join('|'))), 'a linha da diarista mostra "Diarista · … · Pix → Habitação › Diarista"');
-    const vc = await p.evaluate(() => { Escopo.preparar(Store.estado); return Escopo.pessoasDela().sort().join(','); });
-    ok(vc === 'p1,p2,p3', 'parte da casa: toda a Família (p1, p2, p3), sem marcar nada; nenhuma pessoa próxima: ' + vc);
+    const vc = await p.evaluate(() => { ST.config.vcEu = { uid: 'u-ficticio', pessoa: 'p1' }; Escopo.preparar(Store.estado); const r = Escopo.pessoasDela().sort().join(','); delete ST.config.vcEu; return r; });
+    ok(vc === 'p2,p3', 'parte da casa: toda a Família menos o chefe (p1, que vê tudo), sem marcar nada; nenhuma pessoa próxima: ' + vc);
     const q5 = await p.evaluate(() => { const s = Pessoas.porId(Pessoas.achar('Sogra Exemplo').id); Gasto.add({ id: 'gx5', data: '2026-11-22', valor: 10, grupo: 'PESSOAL', sub: 'Presente', desc: 'X', quem: 'Sogra Exempl', origem: 'manual' });
       irPara('cfg-pessoas'); render(); return [...document.querySelectorAll('.ps-q')].map((x) => x.innerText.replace(/\s+/g, ' ')).join('|'); });
     ok(/Sogra Exemplo \(sogra\)\?.*Sim, é Sogra Exemplo/.test(q5), 'nome solto parecido vira "é Sogra Exemplo (sogra)? [Sim, é Sogra Exemplo]": ' + JSON.stringify(q5));

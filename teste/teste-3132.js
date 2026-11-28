@@ -67,14 +67,15 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2, pessoasRevisar: 
     await p.evaluate(() => { document.querySelector('.ps-soltos').open = true; [...document.querySelectorAll('.ps-soltos [data-acao="ps-cadastrar-texto"]')].find((x) => /BELTRANO/.test(x.dataset.texto)).click(); });
     await p.waitForTimeout(150);
     ok(await p.evaluate(() => { const x = ST.pessoas.find((q) => /Beltrano/i.test(q.nome)); return !!x && !/\d{5}/.test(JSON.stringify(x)); }), 'cadastrar o nome solto não guarda o número na ficha');
-    await p.evaluate(() => { const b = document.querySelector('[data-acao="ps-cancelar"]'); if (b) b.click(); });
+    await p.evaluate(() => { const b = document.getElementById('folhaCancelar'); if (b) b.click(); });   /* 3.144: a ficha abre na folha de edição */
     const jt = await p.evaluate(() => (document.querySelector('.ps-juntar') || {}).textContent || '');
     ok(/Apelido.* e Fulano.* são a mesma pessoa\?/.test(jt), 'no topo: "Apelido e Fulano… são a mesma pessoa?" (o dono que o banco manda nos itens da conta): ' + jt.slice(0, 90));
-    const conf = await p.evaluate(() => ({ n: document.querySelectorAll('.ps-revise').length, sels: document.querySelectorAll('[data-grupo="casa"] .ps-papel-sel').length, revisar: document.querySelectorAll('.ps-novo').length, adef: /papel a definir/.test(document.getElementById('view-cfg-pessoas').textContent) }));
-    ok(conf.n === 1 && conf.sels >= 2 && conf.revisar === 0 && !conf.adef,   /* 3.142: o chefe (p-eu) não tem mais seletor: "Responsável 🔒" */
-       'um só "Confirme: quem é responsável e quem é dependente", com um seletor por linha; sem o "revisar" e o "papel a definir" em cada nome ' + JSON.stringify(conf));
-    await p.selectOption('[data-grupo="casa"] .ps-papel-sel[data-id="p-b"]', 'dependente'); await p.waitForTimeout(100);
-    ok(await p.evaluate(() => ST.pessoas.find((x) => x.id === 'p-b').papel === 'dependente'), 'o seletor da linha grava o papel (Pessoa B: dependente)');
+    /* 3.144 (dono: "os seletores Responsável/Dependente aparecem abertos em cada pessoa"): o papel é texto, deduzido; muda-se na ficha */
+    const conf = await p.evaluate(() => ({ n: document.querySelectorAll('.ps-revise').length, sels: document.querySelectorAll('.ps-papel-sel').length, adef: /papel a definir/.test(document.getElementById('view-cfg-pessoas').textContent) }));
+    ok(conf.n === 0 && conf.sels === 0 && !conf.adef, 'sem "Confirme" e sem seletor aberto em cada pessoa; sem "papel a definir" ' + JSON.stringify(conf));
+    await p.evaluate(() => document.querySelector('[data-ps="p-b"] [data-acao="ps-editar"]').click()); await p.waitForTimeout(100);
+    await p.selectOption('#psPapel', 'dependente'); await p.click('#folhaSalvar'); await p.waitForTimeout(150);
+    ok(await p.evaluate(() => ST.pessoas.find((x) => x.id === 'p-b').papel === 'dependente' && /Dependente/.test(document.querySelector('[data-ps="p-b"] .t-sub').textContent)), 'o papel muda na ficha (Pessoa B: dependente) e aparece como texto na linha');
     await p.click('.ps-juntar [data-acao="ps-juntar"]'); await p.waitForTimeout(150);
     ok(await p.evaluate(() => !ST.pessoas.some((x) => x.id === 'p-apelido') && (ST.pessoas.find((x) => x.id === 'p-eu').aliases || []).indexOf('Apelido Exemplo') >= 0 && !document.querySelector('.ps-juntar')), '"Juntar": fica uma ficha só, e o apelido vai para "Também chamado"');
 
@@ -88,19 +89,19 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2, pessoasRevisar: 
     const t1 = await p.evaluate(() => { const t = [...document.querySelectorAll('#toasts .toast')].find((x) => /Apagado: Vizinho/.test(x.textContent)); return t ? !!t.querySelector('.toast-acao') : null; });
     ok(t1 === true, 'aviso "Apagado: Vizinho" com o botão "Desfazer"');
     await p.evaluate(() => [...document.querySelectorAll('#toasts .toast')].find((x) => /Apagado/.test(x.textContent)).querySelector('.toast-acao').click()); await p.waitForTimeout(200);
-    ok(await p.evaluate(() => !!ST.pessoas.find((x) => x.id === 'px15' && x.nome === 'Vizinho Exemplo P') && !!document.querySelector('[data-ps="px15"]')), '"Desfazer" traz a ficha de volta, igual');
+    ok(await p.evaluate(() => !!ST.pessoas.find((x) => x.id === 'px15' && Pessoas.nomeCompleto(x) === 'Vizinho Exemplo P') && !!document.querySelector('[data-ps="px15"]')), '"Desfazer" traz a ficha de volta, igual');
     await p.evaluate(() => { document.querySelector('[data-ps="px12"]').scrollIntoView({ block: 'center' }); });
     const y2 = await Y();
     await p.evaluate(() => document.querySelector('[data-ps="px12"] [data-acao="ps-editar"]').click()); await p.waitForTimeout(250);
-    const ed = await p.evaluate(() => { const f = document.querySelector('.ps-form'), tr = f && f.closest('tr'), ant = tr && tr.previousElementSibling, r = f && f.getBoundingClientRect();
-      return { lugar: ant && ant.dataset.ps, visivel: !!r && r.top < innerHeight && r.bottom > 0, topo: !!document.querySelector('.card-head + .aba-explica + .ps-form') }; });
+    /* 3.144: "editar" abre numa folha própria (modulos/folha-editar.js), com a lista atrás parada */
+    const ed = await p.evaluate(() => { const f = document.querySelector('#folhaEditar .ps-form'); return { id: f && f.dataset.id, naLista: !!document.querySelector('.ps-grupo .ps-form') }; });
     const y3 = await Y();
-    ok(ed.lugar === 'px12' && ed.visivel && !ed.topo && Math.abs(y3 - y2) < 500, '"editar" abre o formulário logo abaixo da própria ficha, visível (rolagem ' + y2 + ' → ' + y3 + ')');
-    await p.evaluate(() => document.querySelector('[data-acao="ps-cancelar"]').click()); await p.waitForTimeout(250);
+    ok(ed.id === 'px12' && !ed.naLista && Math.abs(y3 - y2) < 2, '"editar" abre a ficha numa folha própria, e a lista atrás não rola (' + y2 + ' → ' + y3 + ')');
+    await p.evaluate(() => document.getElementById('folhaCancelar').click()); await p.waitForTimeout(250);
     const y4 = await Y(), vis = await p.evaluate(() => { const r = document.querySelector('[data-ps="px12"]').getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; });
     ok(vis && y4 > 300, '"Cancelar" volta para a ficha, não para o topo (' + y4 + ')');
     await p.evaluate(() => document.querySelector('[data-ps="px12"] [data-acao="ps-editar"]').click()); await p.waitForTimeout(200);
-    await p.fill('#psApelido', 'Vizinho Novo'); await p.evaluate(() => document.querySelector('[data-acao="ps-salvar"]').click()); await p.waitForTimeout(250);
+    await p.fill('#psNome', 'Vizinho Novo'); await p.evaluate(() => document.getElementById('folhaSalvar').click()); await p.waitForTimeout(250);
     const y5 = await Y(), vis2 = await p.evaluate(() => { const r = document.querySelector('[data-ps="px12"]'); if (!r) return false; const b = r.getBoundingClientRect(); return b.top >= 0 && b.bottom <= innerHeight && /Vizinho Novo/.test(r.textContent); });
     ok(vis2 && y5 > 300, '"Salvar" volta para a ficha salva, não para o topo (' + y5 + ')');
     await p.evaluate(() => { document.querySelector('[data-ps="px10"]').scrollIntoView({ block: 'center' }); });
@@ -113,7 +114,8 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2, pessoasRevisar: 
     ok(fam && fam.ed >= 1 && fam.bt, 'em "Quem é da casa", cada nome tem "editar", e o botão "👥 Pessoas da família (renomear, e-mail, incluir alguém)"');
     await p.evaluate(() => document.querySelector('.vc-pessoas').scrollIntoView({ block: 'center' })); await p.screenshot({ path: '/tmp/teste-3132-familia.png' });
     await p.evaluate(() => document.querySelector('.vc-pessoas [data-acao="ps-abrir"][data-id="p-b"]').click()); await p.waitForTimeout(300);
-    ok(await p.evaluate(() => viewAtual === 'cfg-pessoas' && !!document.querySelector('.ps-form') && document.querySelector('.ps-form').closest('tr').previousElementSibling.dataset.ps === 'p-b'), '"editar" abre a ficha da pessoa em Pessoas da família');
+    ok(await p.evaluate(() => viewAtual === 'cfg-pessoas' && (document.querySelector('#folhaEditar .ps-form') || {}).dataset.id === 'p-b'), '"editar" abre a ficha da pessoa em Pessoas (na folha de edição)');
+    await p.evaluate(() => { const b = document.getElementById('folhaCancelar'); if (b) b.click(); });
     const busca = await p.evaluate(() => ['renomear pessoa', 'mudar nome', 'e-mail da pessoa'].map((q) => (AssistIndice.buscar(q)[0] || {}).t || ''));
     ok(busca.every((t) => /Pessoas da família/.test(t)), 'a busca acha "renomear pessoa", "mudar nome" e "e-mail da pessoa" → Pessoas da família');
 

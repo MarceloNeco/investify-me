@@ -67,7 +67,15 @@
       var dela = {}, cartoes = {}, rec = {};
       /* 1.6.0 (3.144, dono: "Família = quem mora junto"): TODA a Família (tipo casa) conta na parte da casa, sem opção de tirar;
          as Pessoas próximas (tipo outra) nunca entram. Quem parece de fora continua fora até a pessoa confirmar (1.5.0) */
-      (est.pessoas || []).forEach(function (p) { if (p && p.tipo === 'casa' && !p.arquivada && !suspeita(p)) dela[p.id] = 1; });
+      /* o chefe (quem tem a chave reservada; preparar só roda no aparelho dele) nunca entra: ele vê tudo e o que é dele fica reservado.
+         Sem saber quem é o chefe, vale só a lista marcada de antes — nada reservado vaza para a casa */
+      var eu = window.MoneyNuvem && MoneyNuvem.escopos && MoneyNuvem.escopos.eu ? MoneyNuvem.escopos.eu() : '';
+      var chefe = (est.config && est.config.vcEu && est.config.vcEu.pessoa) || (window.Pessoas && Pessoas.minhaFicha && typeof ST !== 'undefined' && est === ST ? (Pessoas.minhaFicha() || {}).id : '') || '';
+      if (chefe && chefe !== 'nenhuma') (est.pessoas || []).forEach(function (p) { if (p && p.tipo === 'casa' && !p.arquivada && p.id !== chefe && !(eu && p.uid === eu) && !suspeita(p)) dela[p.id] = 1; });
+      ((est.visaoCasa && est.visaoCasa.pessoas) || []).forEach(function (id) {
+        var p = (est.pessoas || []).filter(function (x) { return x && x.id === id; })[0];
+        if (p && p.tipo === 'casa' && p.id !== chefe && !suspeita(p)) dela[id] = 1;
+      });
       (est.cartoes || []).forEach(function (c) {
         var quem = c.usaId || c.titularId;
         if (manual(c) === 'casa' || (quem && dela[quem]) || (c.finais || []).some(function (f) { return f.titularId && dela[f.titularId]; })) cartoes[c.id] = 1;
@@ -188,7 +196,8 @@
     var par = euP && conta ? (porEmail(conta) && !porEmail(euP) ? { fica: conta, sai: euP } : { fica: euP, sai: conta }) : (!euP && daConta.length >= 2 ? { fica: daConta[0], sai: daConta[1] } : null);
     return { eu: euP, conta: conta, perguntar: false, juntar: par && !nao[par.sai.id + '|' + par.fica.id] ? par : null };
   };
-  API.nomeVer = function (p) { var n = nomeComp(p) || p.apelido || ''; return n + (p.apelido && Nn(p.apelido) !== Nn(p.nome) && Nn(p.apelido) !== Nn(n) ? ' (' + p.apelido + ')' : ''); };
+  API.nomeVer = function (p) { if (window.Pessoas && p && p.completo != null) return Pessoas.rotulo(p);   /* 1.6.0 (3.144): o Nome (o que aparece no app) */
+    var n = nomeComp(p) || p.apelido || ''; return n + (p.apelido && Nn(p.apelido) !== Nn(p.nome) && Nn(p.apelido) !== Nn(n) ? ' (' + p.apelido + ')' : ''); };
   function cartaoChefe() {
     var n = nv(); if (!n) return '';
     var e = n.estado(); if (!e.tudo) return '';
@@ -232,12 +241,13 @@
           return '<div class="vc-pessoa" data-id="' + esc(p.id) + '"><div class="vc-pessoa-l"><label class="linha-check"><input type="checkbox" disabled aria-disabled="true"' + (marcada ? ' checked' : '') + '> ' + esc(API.nomeVer(p)) + '</label>' +
             ' <button type="button" class="linkinho" data-acao="ps-abrir" data-id="' + esc(p.id) + '">' + esc(tr('editar', 'edit', 'editar')) + '</button></div>' +
             (fora ? '<div class="aviso-box vc-de-fora small"><span>' + esc(tr('Esta pessoa é da família?', 'Is this person family?', '¿Esta persona es de la familia?')) + '</span>' +
+              '<button type="button" class="btn sm" data-acao="vc-mora" data-id="' + esc(p.id) + '">' + esc(tr('Sim, mora comigo', 'Yes, lives with me', 'Sí, vive conmigo')) + '</button>' +   /* 1.6.0 (3.144): a caixa ficou travada */
               '<button type="button" class="btn sm" data-acao="vc-de-fora" data-id="' + esc(p.id) + '">' + esc(tr('Não, é de fora', 'No, not family', 'No, es de fuera')) + '</button></div>' : '') + '</div>';
         }).join('') +
         (pessoas.filter(function (p) { return p !== chefe; }).length ? '' : '<p class="small muted" style="margin:4px 0">' + esc(tr('Cadastre as pessoas da casa em ', 'Add the household people in ', 'Añade a las personas de la casa en ')) + '<button type="button" class="linkinho" data-acao="ps-lista">' + esc(tr('Pessoas da família', 'Family people', 'Personas de la familia')) + '</button>.</p>') + '</div>' +
         '<p style="margin:8px 0"><button type="button" class="btn sm" data-acao="ps-lista">👥 ' + esc(tr('Pessoas da família (renomear, e-mail, incluir alguém)', 'Family people (rename, e-mail, add someone)', 'Personas de la familia (renombrar, correo, añadir a alguien)')) + '</button></p>' +
         '<div class="vc-notas">' +
-        (deFora.length ? '<p class="small muted vc-fora">' + esc(tr('Outras pessoas (não são da família): ', 'Other people (not family): ', 'Otras personas (no son de la familia): ') + deFora.map(API.nomeVer).join(', ')) + '</p>' : '') +
+        (deFora.length ? '<p class="small muted vc-fora">' + esc(tr('Pessoas próximas (não moram com você, não entram): ', 'Close people (do not live with you, not included): ', 'Personas cercanas (no viven contigo, no entran): ') + deFora.map(API.nomeVer).join(', ')) + '</p>' : '') +
         '<p class="small muted">' + esc(tr('Compromissos de PJ (contador, DAS, TFE…) ficam sempre só seus. Você pode mudar um item depois.', 'Business commitments (accountant, taxes…) always stay yours only. You can change an item later.', 'Los compromisos de empresa (gestor, impuestos…) quedan siempre solo para ti. Puedes cambiar un elemento después.')) + '</p></div>' +
         '<button class="btn primary" data-acao="vc-preparar"' + (marcadas.some(function (id) { return !suspeita((ST.pessoas || []).filter(function (x) { return x.id === id; })[0]); }) && Tela.pinConta !== false ? '' : ' disabled') + '>' + esc(tr('Preparar a visão da família', 'Prepare the family view', 'Preparar la vista de la familia')) + '</button>' +
         (Tela.pinConta === false ? '<p class="small vc-sem-pin">🔢 ' + esc(tr('Crie o PIN da conta primeiro.', 'Create the account PIN first.', 'Crea primero el PIN de la cuenta.')) + ' <button class="btn sm" data-acao="vc-criar-pin">' + esc(tr('Criar o PIN da conta', 'Create the account PIN', 'Crear el PIN de la cuenta')) + '</button></p>'
@@ -264,8 +274,8 @@
   function pendente() { var n = nv(); if (!n) return false; var e = n.estado(); return !!(e.tudo && !e.feito); }
   function fraseAviso() {
     var m = (ST.pessoas || []).filter(function (p) { return p.tipo === 'casa' && !p.arquivada && p.papel === 'responsavel' && !ehDaConta(p, nv() && nv().eu ? nv().eu() : '') && p.id !== vinculo(nv() && nv().eu ? nv().eu() : ''); })[0];
-    var quem = m ? (m.apelido || m.nome) : tr('quem é da família', 'family members');
-    return tr('Escolha quem é da casa para ', 'Choose who belongs to the household so ') + quem + tr(' poder ver só a parte da casa', ' can see only the household part') +
+    var quem = m ? API.nomeVer(m) : tr('quem é da família', 'family members');   /* 1.6.0 (3.144): ninguém escolhe mais — toda a Família entra */
+    return tr('Prepare a parte da casa para ', 'Prepare the household part so ') + quem + tr(' poder ver só ela', ' can see only it') +
       (Tela.pinConta === false ? tr('. Antes, crie o PIN da sua conta.', '. First, create your account PIN.') : '.');
   }
 
@@ -282,7 +292,7 @@
         var semPin = Tela.pinConta === false, h = '';
         if (semPin) h += '<li class="inb-item"><div><b>1 · ' + esc(tr('Crie o PIN da sua conta', 'Create your account PIN')) + '</b><span class="t-sub">' + esc(tr('Ele protege tudo e vale em todos os seus aparelhos. Vem antes de separar a parte da casa.', 'It protects everything and works on all your devices. It comes before separating the household part.')) + '</span></div>' +
           '<span class="inb-acoes"><button class="btn sm primary" data-acao="vc-criar-pin" data-close="genModal">' + esc(tr('Criar o PIN', 'Create the PIN')) + '</button></span></li>';
-        h += '<li class="inb-item"><div><b>' + (semPin ? '2 · ' : '') + esc(tr('Escolha quem é da casa', 'Choose who belongs to the household')) + '</b><span class="t-sub">' + esc(fraseAviso()) + '</span></div>' +
+        h += '<li class="inb-item"><div><b>' + (semPin ? '2 · ' : '') + esc(tr('Prepare a parte da casa', 'Prepare the household part')) + '</b><span class="t-sub">' + esc(fraseAviso()) + '</span></div>' +
           '<span class="inb-acoes"><button class="btn sm' + (semPin ? '' : ' primary') + '" data-irpara="config" data-rolar="vcFamilia" data-close="genModal">' + esc(tr('Abrir', 'Open')) + '</button></span></li>';
         return [{ id: 'familia', n: semPin ? 2 : 1, html: h }];
       },
@@ -304,6 +314,7 @@
       },
       'vc-juntar-nao': function (el) { var c = ST.config = ST.config || {}; c.vcJuntarNao = c.vcJuntarNao || {}; c.vcJuntarNao[el.dataset.par] = 1; Store.salvar(); render(); },
       'vc-criar-pin': function () { var n = nv(); if (n && n.criarPinConta) { Tela.pinConta = undefined; n.criarPinConta(); } },
+      'vc-mora': function (el) { var p = window.Pessoas ? Pessoas.porId(el.dataset.id) : null; if (!p) return; p.familiaConfirmada = true; Store.salvar(); render(); },   /* 1.6.0 (3.144) */
       'vc-de-fora': function (el) {   /* 1.3.0 (3.131): vira "Outras pessoas" e sai da lista da casa; 1.5.0 (3.142): com "Desfazer" */
         var p = (ST.pessoas || []).find(function (x) { return x.id === el.dataset.id; }); if (!p) return;
         var antes = { tipo: p.tipo, papel: p.papel, marcada: !!(ST.visaoCasa && (ST.visaoCasa.pessoas || []).indexOf(p.id) >= 0) };

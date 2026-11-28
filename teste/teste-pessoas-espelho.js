@@ -89,8 +89,8 @@ async function parteA(b, BASE) {
       /* ---- "é a mesma pessoa?" e "A identificar" ---- */
       await p.evaluate(() => { Gasto.add({ data: '2026-09-08', valor: 25, grupo: 'PESSOAL', sub: 'Presente', desc: 'PIX AVULSO', quem: 'Fulano Tal' }); Store.salvar(); irPara('cfg-pessoas'); }); await p.waitForTimeout(300);
       const tel = await p.evaluate(() => ({ q: [...document.querySelectorAll('#view-cfg-pessoas .ps-q')].map((x) => x.textContent.replace(/\s+/g, ' ').trim()), rev: !!document.querySelector('.ps-revise') }));
-      ok(tel.q.some((t) => /ZECA M/.test(t) && /Carlos\?/.test(t)) && tel.q.some((t) => /Fulano Tal/.test(t)) && tel.rev,
-        'tela das pessoas: "ZECA M" pergunta "é Carlos?" (parecido, sem certeza: não entra como certo e a migração não cria outra pessoa); "Fulano Tal" (chegou depois) fica em "A identificar"; aviso de revisar a lista');
+      ok(tel.q.some((t) => /ZECA M/.test(t) && /Carlos\?/.test(t)) && tel.q.some((t) => /Fulano Tal/.test(t)) && !tel.rev,   /* 3.144: sem o "Confirme… Está certo" */
+        'tela das pessoas: "ZECA M" pergunta "é Carlos?" (parecido, sem certeza: não entra como certo e a migração não cria outra pessoa); "Fulano Tal" (chegou depois) fica em "A identificar"; sem o aviso de revisar (3.144)');
       await p.screenshot({ path: '/tmp/pessoas-1366.png', fullPage: true });
       await p.click('[data-acao="ps-e-sim"][data-texto="ZECA M"]'); await p.waitForTimeout(200);
       ok(await p.evaluate(() => Gasto.todos().find((g) => g.id === 'a5').quem === 'Carlos' && !!Gasto.todos().find((g) => g.id === 'a5').quemId), '"Sim" uma vez: o lançamento de "ZECA M" vira Carlos e o nome entra nos apelidos do banco');
@@ -220,9 +220,9 @@ async function parteA(b, BASE) {
       await p.evaluate(() => { Pessoas.migrar(); irPara('cfg-pessoas'); }); await p.waitForTimeout(300);
       await p.click('[data-acao="ps-novo"]'); await p.waitForTimeout(200);
       await p.selectOption('#psTipo', 'empresa'); await p.waitForTimeout(100);
-      const m = await p.evaluate(() => ({ sw: document.documentElement.scrollWidth, cnpj: !document.querySelector('#psCnpj').closest('.ps-so-empresa').hidden, sob: document.querySelector('#psSobrenome').closest('.ps-nao-empresa').hidden, cpf: /\bCPF\b/.test(document.querySelector('.ps-form').textContent.replace('CPF o app não pede', '')) }));
-      ok(m.sw <= 391 && m.cnpj && m.sob && !m.cpf, 'celular: tela das pessoas sem rolar para o lado; empresa pede CNPJ (opcional) e esconde sobrenome; nenhum campo de CPF');
-      await p.fill('#psNome', 'Escola Teste'); await p.fill('#psCnpj', '00.000.000/0001-00'); await p.click('[data-acao="ps-salvar"]'); await p.waitForTimeout(200);
+      const m = await p.evaluate(() => ({ sw: document.documentElement.scrollWidth, cnpj: !document.querySelector('#psCnpj').closest('.ps-so-empresa').hidden, sob: document.querySelector('#psCompleto').closest('.ps-nao-empresa').hidden,   /* 3.144: o nome completo em "Mais detalhes" */ cpf: /\bCPF\b/.test(document.querySelector('.ps-form').textContent.replace('CPF o app não pede', '')) }));
+      ok(m.sw <= 391 && m.cnpj && m.sob && !m.cpf, 'celular: tela das pessoas sem rolar para o lado; empresa pede CNPJ (opcional) e esconde o nome completo; nenhum campo de CPF');
+      await p.fill('#psNome', 'Escola Teste'); await p.fill('#psCnpj', '00.000.000/0001-00'); await p.click('#folhaSalvar'); await p.waitForTimeout(200);
       ok(await p.evaluate(() => { const e = Pessoas.achar('Escola Teste'); return !!e && e.tipo === 'empresa' && e.cnpj === '00.000.000/0001-00'; }), 'empresa cadastrada com CNPJ');
       await p.screenshot({ path: '/tmp/pessoas-390.png', fullPage: true });
     }

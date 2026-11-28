@@ -45,9 +45,8 @@
     document.removeEventListener('keydown', a.tecla, true); window.removeEventListener('popstate', a.voltar);
     a.el.remove(); document.body.classList.remove('folha-travada');
     if (a.empurrou && !(op && op.doVoltar) && history.state && history.state.folha) { a.saindo = true; try { history.back(); } catch (e) { /* sem histórico */ } }
-    window.scrollTo(0, a.rolagem);
+    window.scrollTo(0, a.rolagem);   /* a lista volta ao mesmo ponto; o "depois" pode ainda ir até o que foi salvo */
     if (a.depois) try { a.depois(); } catch (e) { console.warn('folha: depois', e); }
-    window.scrollTo(0, a.rolagem);
     if (a.antes && a.antes.isConnected && a.antes.focus) try { a.antes.focus({ preventScroll: true }); } catch (e) { /* sem foco */ }
   }
   function cancelar(op) {
