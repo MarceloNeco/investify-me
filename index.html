@@ -9125,6 +9125,7 @@ const Recorrente = {
     const porSub = new Map();
     doAno.forEach(g => {
       if(/^(estorno|refund)$/i.test(g.sub)) return;
+      if(g.sub === SUB_PAGTO_FATURA || ehPagtoFatura(g.descRobo || g.desc)) return;   /* 3.144: pagar a fatura é transferência, não custo que se repete */
       const k = g.grupo + '|' + norm(g.sub);
       const a = porSub.get(k) || {grupo:g.grupo, sub:g.sub, itens:[]};
       a.itens.push(g); porSub.set(k, a);
@@ -9349,6 +9350,7 @@ const FitaBudget = {
         .slice(0, 4).forEach(m => {
           if(m.novo) add('🆕', m.sub + ': ' + fmt(m.valor) +
                    de(' este mês, não teve no mês passado', ' this month, nothing last month'), 'warn');
+          else if(m.pct > 300) add('🔺', m.sub + ': ' + fmt(m.valor) + de(' este mês, bem acima do mês passado (', ' this month, well above last month (') + fmt(m.ant) + ')', 'down');   /* 3.144: mês passado perto de zero dava % absurda */
           else add(m.pct > 0 ? '🔺' : '🔻',
                    m.sub + ': ' + fmt(m.valor) + de(' este mês, ', ' this month, ') +
                    pnum(Math.abs(m.pct),0) + '% ' +
@@ -11955,7 +11957,10 @@ function aplicarPlanilha(){
    verdade (a base real tem dezenas assim) e não pode ser confundido. */
 const RX_PAGTO_FATURA = /(?:\bpag(?:to|amento|\.)?|\bpgto|\bquita\w*)\s*(?:d[aeo]\s+)?(?:fatura|fat\b|cart[aã]o|cart\b)|card\s*payment/i;
 const RX_NAO_PAGTO = /\biof\b|juros|anuidade|encargo|multa|tarifa|estorno|seguro/i;
-const ehPagtoFatura = desc => RX_PAGTO_FATURA.test(desc || '') && !RX_NAO_PAGTO.test(desc || '');
+/* 3.144: "PAGAMENTO DEBITO AUTOMATICO" sozinho (sem loja depois; só número ou final do cartão) é a fatura do cartão paga no débito automático:
+   transferência, não gasto nem conta que se repete. "DEBITO AUTOMATICO ALFASEG" (com o nome de quem cobra) continua sendo conta. */
+const RX_PAGTO_DEB_AUTO = /^\s*pag(?:to|amento|\.)?\s+(?:por\s+|via\s+)?d[eé]b(?:ito|\.)?\s*autom[aá]t\w*[\s\d\/\-*.#]*$/i;
+const ehPagtoFatura = desc => (RX_PAGTO_FATURA.test(desc || '') || RX_PAGTO_DEB_AUTO.test(desc || '')) && !RX_NAO_PAGTO.test(desc || '');
 const SUB_PAGTO_FATURA = 'Pagamento de fatura';
 
 function ofxLancParaGasto(l){
@@ -30341,7 +30346,7 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/cartao-foto.js?v=1.0.0"></script>
 <script src="modulos/contraparte.js?v=1.0.0"></script>
 <script src="modulos/declaracao-escolhas.js?v=1.1.1"></script>
-<script src="modulos/origem.js?v=1.1.0"></script>
+<script src="modulos/origem.js?v=1.1.1"></script>
 <script src="modulos/apelido.js?v=1.1.0"></script>
 <script src="modulos/lancamento-form.js?v=1.0.0"></script>
 <script src="modulos/categorias.js?v=1.1.0"></script>

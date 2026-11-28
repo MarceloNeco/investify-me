@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/origem.js — "A confirmar" / "A identificar" e confirmar por ORIGEM (3.65)        1.1.0 · 26/Nov/2026
+   modulos/origem.js — "A confirmar" / "A identificar" e confirmar por ORIGEM (3.65)        1.1.1 · 28/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ
      · Selo na coluna Categoria (no lugar do "palpite do robô"): amarelo "A confirmar" (o robô tem sugestão,
@@ -17,6 +17,7 @@
    API (window.Origem)
      chaveDesc(t) · mesma(a, b) · status(g) → 'confirmar' | 'identificar' | ''
      replicar(g, antes) → n · desfazer() → n · grupos() → [{chave, rotulo, itens, grupo, sub}] · confirmarGrupo(chave) → n
+     1.1.1 (3.144): o pagamento da fatura ("Pagamento de fatura" ou "PAGAMENTO DEBITO AUTOMATICO" sozinho) não entra nos grupos a confirmar
      1.1.0 (3.116): resumo(x) {n, total, de, ate, ultimo, itens} · sugestao(x) "Bancários > Tarifa" · motivo(x) {k: mcc|banco|parecido|robo, txt}
        · viagem(x) {v, n} | {cidade, nome, de, ate} | null · detalhe(x) → o html do grupo (📥 e tela b-confirmar)
    PONTOS QUE USA
@@ -109,6 +110,7 @@
       var por = {};
       Gasto.todos().forEach(function (g) {
         if (API.status(g) !== 'confirmar' && API.status(g) !== 'identificar') return;
+        if (g.sub === 'Pagamento de fatura' || (typeof ehPagtoFatura === 'function' && ehPagtoFatura(g.descRobo || g.desc))) return;   /* 1.1.1 (3.144): pagar a fatura não é loja a confirmar */
         var k = API.origemDe(g); if (!k) return;
         var x = por[k] || (por[k] = { chave: k, rotulo: (g.contraparte && g.contraparte.nome) || API.chaveDesc(g.descRobo || g.desc), itens: [], cont: {} });
         x.itens.push(g);
@@ -226,7 +228,7 @@
 
   MoneyModulos.registrar({
     id: 'origem',
-    versao: '1.1.0',
+    versao: '1.1.1',
     pontos: {
       'lancamento.categoria': function (ctx) { return selo(ctx.g); },
       'lancamentos.topo': function () {
