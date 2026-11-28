@@ -64,7 +64,9 @@
   function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function n2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
   function iso(d) { var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(d || '')); return m ? m[3] + '-' + m[2] + '-' + m[1] : ''; }
-  function dias(a, b) { return Math.round((Date.parse(a + 'T12:00:00Z') - Date.parse(b + 'T12:00:00Z')) / 86400000); }
+  /* 3.143 (desempenho): a data vira número uma vez só (antes era lida de novo a cada comparação: milhões de vezes com muitos lançamentos) */
+  var _dn = {}; function dn(s) { var v = _dn[s]; if (v === undefined) { v = Date.parse(s + 'T12:00:00Z') / 86400000; _dn[s] = v; } return v; }
+  function dias(a, b) { return Math.round(dn(a) - dn(b)); }
   function pend() { return window.PreAut ? PreAut.lista() : []; }
   function so(t) { return String(t || '').replace(/\D/g, ''); }
   function norm(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim(); }

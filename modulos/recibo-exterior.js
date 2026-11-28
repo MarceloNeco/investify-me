@@ -30,7 +30,9 @@
   function casa() { return !!(window.Escopo && Escopo.soCasa && Escopo.soCasa()); }
   function lista() { return (ST[COL] = Array.isArray(ST[COL]) ? ST[COL] : []); }
   function N(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
-  function dias(a, b) { return Math.round((Date.parse(a + 'T12:00:00Z') - Date.parse(b + 'T12:00:00Z')) / 86400000); }
+  /* 3.143 (desempenho): a data vira número uma vez só (antes era lida de novo a cada comparação: milhões de vezes com muitos lançamentos) */
+  var _dn = {}; function dn(s) { var v = _dn[s]; if (v === undefined) { v = Date.parse(s + 'T12:00:00Z') / 86400000; _dn[s] = v; } return v; }
+  function dias(a, b) { return Math.round(dn(a) - dn(b)); }
   var MESES = { jan: 1, feb: 2, fev: 2, mar: 3, apr: 4, abr: 4, may: 5, mai: 5, jun: 6, jul: 7, aug: 8, ago: 8, sep: 9, set: 9, oct: 10, out: 10, nov: 11, dec: 12, dez: 12 };
   var SIMB = { '$': 'USD', 'US$': 'USD', 'USD': 'USD', '€': 'EUR', 'EUR': 'EUR', '£': 'GBP', 'GBP': 'GBP' };
   function dataDe(t) {
