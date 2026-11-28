@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.6.0 · 27/Nov/2026
+   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.6.1 · 28/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, "adiante tudo do e-mail"; sem IA)
      · A caixa do robô (nuvem.js, money_entrada) traz um tipo novo de item, tipo "comprovante", tirado dos e-mails lidos
@@ -40,6 +40,8 @@
        na ficha; limites maiores (listas até 400 — os lançamentos da fatura —, até 120 chaves, itens da compra até 100);
        cartao_final vale como final; pago_no_cartao (conta paga no cartão: Vivo no cartão, por exemplo) nunca pede "pague": liga à
        cobrança no cartão (mesmo valor e final, ±10 dias) e não entra no 📥. Os serviços da conta: modulos/conta-servicos.js.
+     · 1.6.1 (3.143): desempenho — ligarTudo(forcar) só cruza de novo quando os dados mudam (Store.salvos, lançamentos, comprovantes,
+       pagamentos, pendentes, pré-autorizações); os "já usados" uma vez por passada; um lote do robô (gasto.novo) cruza uma vez, no fim.
      · 1.6.0 (3.137): subtipo extrato_investimentos (o extrato mensal da corretora): só informação, "extrato de dd/mm/aaaa · total US$ X"
        (ficha.total_carteira); as posições chegam à parte, uma por papel (tipo investimento → modulos/invest-banco.js).
    API (window.Comprovantes)
@@ -304,6 +306,7 @@
       return true;
     },
     /* 3.143 (desempenho): só cruza de novo quando os dados mudaram (antes rodava a cada desenho de tela, pelo contador do 📥) */
+    _dias: dias,   /* para o teste (3.143) */
     ligarTudo: function (forcar) {
       var k = [Gasto.todos().length, Store.salvos || 0, lista().length, (ST.pagamentos || []).length, (ST.cartao_pendentes || []).length, window.PreAut ? PreAut.lista().length : 0].join('|');
       if (!forcar && k === API._chave && lista() === API._lista) return;

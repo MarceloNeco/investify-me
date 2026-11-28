@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/recibo-exterior.js — RECIBO DE SERVIÇO DO EXTERIOR × CARTÃO (3.91)        1.0.1 · 24/Nov/2026
+   modulos/recibo-exterior.js — RECIBO DE SERVIÇO DO EXTERIOR × CARTÃO (3.91)        1.0.2 · 28/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 18/Nov/2026; sem IA)
      · "📋 Colar print" e "Escolher arquivo" (modulos/print-colar.js) também leem o recibo de um serviço do exterior (imagem
@@ -10,6 +10,7 @@
      · Marca do negócio ou da casa: vale para a ORIGEM do lançamento em "Custos do negócio pagos no CPF" (ST.pj_cpf, 3.82).
      · Recibo sem o lançamento do cartão fica no 📥 até o cartão mostrar.
      · Visão da casa: nada (é do chefe; a coleção é reservada).
+     · 1.0.2 (3.143): desempenho — dias() com a data em cache; o 📥 só religa os recibos quando os dados mudam.
      · 1.0.1 (3.104): recibo em REAIS (moeda 'BRL': desde out/2026 a Anthropic cobra o Claude Pro em R$): casa direto pelo valor em reais
        (o mesmo valor, ±1 centavo, ±5 dias; o nome do serviço desempata), sem câmbio nem IOF: "Recibo R$ 110,00 = cartão R$ 110,00".
        Com USD (ou outra moeda), como antes.

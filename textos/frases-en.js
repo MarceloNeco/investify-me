@@ -1,10 +1,14 @@
 /* =====================================================================
-   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.142 · 28/Nov/2026
+   textos/frases-en.js — a lista de frases inteiras em inglês (o Verter do index.html usa)   3.143 · 28/Nov/2026
    ---------------------------------------------------------------------
    Saiu do index.html na 3.48 (arrumação interna). Cada versão nova acrescenta aqui, no topo, o título e os itens
    das MUDANCAS em inglês e as frases novas da tela. Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_EN = {
+  /* 3.143 */
+  'Mais rápido com muitos lançamentos':'Faster with lots of entries',
+  '⚡ Trocar de tela, abrir o menu e trocar de aba ficou muito mais rápido quando há muitos lançamentos: o número do 📥 no topo só é recontado quando algo muda, e não a cada toque. Abrir o 📥 continua mostrando tudo na hora.':'⚡ Switching screens, opening the menu and changing tabs is much faster when there are lots of entries: the 📥 number at the top is only recounted when something changes, not on every tap. Opening 📥 still shows everything right away.',
+  '🤖 Quando o robô traz muitos lançamentos de uma vez, o app confere os comprovantes, notas e recibos uma vez só, no fim, em vez de a cada lançamento.':'🤖 When the robot brings lots of entries at once, the app checks receipts, invoices and bills once, at the end, instead of after each entry.',
   /* 3.142 */
   'Família arrumada: você no topo, o inquilino fora e a ficha mais clara':'Family fixed: you at the top, the tenant left out and a clearer card',
   '👪 Configurações → Família no MoneyTRIO → "Quem é da casa": você aparece sempre no topo, como "(você · chefe)", com a caixa marcada e o "editar" para trocar o seu nome. Cada pessoa fica numa linha, e o aviso "Esta pessoa é da família?" vem embaixo do nome, sem quebrar no celular.':'👪 Settings → Family in MoneyTRIO → "Who belongs to the household": you always appear at the top, as "(you · head)", ticked, with "edit" to change your name. Each person has their own line, and the "Is this person family?" notice sits under the name, without breaking on the phone.',

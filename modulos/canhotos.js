@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/canhotos.js — "📷 Foto de nota ou recibo" com o banco (3.92; antes "🧾 Conferir canhotos")        1.4.0 · 26/Nov/2026
+   modulos/canhotos.js — "📷 Foto de nota ou recibo" com o banco (3.92; antes "🧾 Conferir canhotos")        1.4.1 · 28/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 18/Nov/2026; sem IA)
      · Em Lançamentos, "🧾 Conferir canhotos": uma foto (ou várias) com os canhotos da maquininha, cupons e recibos. O motor do
@@ -42,6 +42,7 @@
        "Esperar o banco" explica que ele não cria gasto: a compra vem pela fatura e a foto completa a descrição.
      · A linha mostra "Veículo › <categoria> · <carro>" antes de esperar o banco; o carro pelo apelido mesmo com letra grudada no texto lido
        ("LRENEGADE" acha o "Renegade"); com o carro achado, a linha mostra o apelido, não o texto do OCR.
+   1.4.1 (3.143): desempenho — dias() com a data convertida uma vez (cache); antes, milhões de Date.parse com muitos lançamentos.
    1.4.0 (3.117), pedidos do dono sobre a janela: sai a frase "Lido no aparelho…"; uma frase por seção ("A foto completou o lançamento
      que veio do banco… Nada foi duplicado." / "Quando o banco mandar, a foto se junta sozinha."); o item em linhas (`linhas`): loja + valor
      ("… em 5× de …"), data e hora · tipo (OS da oficina / canhoto / nota), categoria · 🚗 apelido (sem o carro no cadastro: o texto lido e

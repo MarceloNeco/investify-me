@@ -1,11 +1,15 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.142 · 28/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.143 · 28/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.143', d:'2026-11-28', t:'Mais rápido com muitos lançamentos', itens:[
+    '⚡ Trocar de tela, abrir o menu e trocar de aba ficou muito mais rápido quando há muitos lançamentos: o número do 📥 no topo só é recontado quando algo muda, e não a cada toque. Abrir o 📥 continua mostrando tudo na hora.',
+    '🤖 Quando o robô traz muitos lançamentos de uma vez, o app confere os comprovantes, notas e recibos uma vez só, no fim, em vez de a cada lançamento.'
+  ]},
   {v:'3.142', d:'2026-11-28', t:'Família arrumada: você no topo, o inquilino fora e a ficha mais clara', itens:[
     '👪 Configurações → Família no MoneyTRIO → "Quem é da casa": você aparece sempre no topo, como "(você · chefe)", com a caixa marcada e o "editar" para trocar o seu nome. Cada pessoa fica numa linha, e o aviso "Esta pessoa é da família?" vem embaixo do nome, sem quebrar no celular.',
     '🏠 Quem parece ser de fora (inquilino, prestador…) não vem mais marcado e não entra na parte da casa até você marcar. "Não, é de fora" leva a pessoa para Outras pessoas, com "Desfazer". Em Pessoas da família, você também aparece primeiro.',
