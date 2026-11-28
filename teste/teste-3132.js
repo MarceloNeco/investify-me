@@ -66,7 +66,7 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2, pessoasRevisar: 
     ok(/BELTRANO EXEMPLO ···901/.test(sol.txt) && !/12345678901/.test(sol.txt), 'a sequência de 11 dígitos aparece só com o final: "BELTRANO EXEMPLO ···901"');
     await p.evaluate(() => { document.querySelector('.ps-soltos').open = true; [...document.querySelectorAll('.ps-soltos [data-acao="ps-cadastrar-texto"]')].find((x) => /BELTRANO/.test(x.dataset.texto)).click(); });
     await p.waitForTimeout(150);
-    ok(await p.evaluate(() => { const x = ST.pessoas.find((q) => /Beltrano/i.test(q.nome)); return !!x && !/\d{5}/.test(JSON.stringify(x)); }), 'cadastrar o nome solto não guarda o número na ficha');
+    ok(await p.evaluate(() => { const x = ST.pessoas.find((q) => /Beltrano/i.test(q.nome)); const sem = Object.assign({}, x); delete sem.id; delete sem.criadoEm; return !!x && !/\d{5}/.test(JSON.stringify(sem)); }), 'cadastrar o nome solto não guarda o número na ficha');   /* o id e a data não contam (o id é aleatório e às vezes tem 5 dígitos seguidos) */
     await p.evaluate(() => { const b = document.getElementById('folhaCancelar'); if (b) b.click(); });   /* 3.144: a ficha abre na folha de edição */
     const jt = await p.evaluate(() => (document.querySelector('.ps-juntar') || {}).textContent || '');
     ok(/Apelido.* e Fulano.* são a mesma pessoa\?/.test(jt), 'no topo: "Apelido e Fulano… são a mesma pessoa?" (o dono que o banco manda nos itens da conta): ' + jt.slice(0, 90));
