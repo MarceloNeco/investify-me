@@ -461,7 +461,8 @@
   }
   /* 1.7.0 (3.132): depois de editar/salvar/cancelar, a tela fica onde a pessoa estava (o render mantém a rolagem) e vai até a ficha */
   /* 1.8.0 (3.142): o formulário abre no TOPO, com o Tipo à vista (antes o foco ia para o Apelido e a tela ficava rolada no meio) */
-  function abrirForm(ms) { setTimeout(function () { var f = document.querySelector('.ps-form'); if (f && f.scrollIntoView) f.scrollIntoView({ block: 'start' }); var t = document.getElementById('psTipo'); if (t && t.focus) t.focus({ preventScroll: true }); }, ms || 30); }
+  /* foco: o Tipo ao editar; o Apelido quando se abre a pessoa para renomear (tocar no nome no saldo do banco, "editar" do chefe) — sem rolar */
+  function abrirForm(ms, foco) { setTimeout(function () { var f = document.querySelector('.ps-form'); if (f && f.scrollIntoView) f.scrollIntoView({ block: 'start' }); var t = document.getElementById(foco || 'psTipo'); if (t && t.focus) t.focus({ preventScroll: true }); }, ms || 30); }
   function irAte(sel) { setTimeout(function () { var e = document.querySelector(sel); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'nearest' }); }, 30); }
   /* apagar e arquivar sem confirm(): faz na hora e mostra "Apagado: X · Desfazer" por 8 s */
   function comDesfazer(msg, desfaz) {
@@ -596,7 +597,7 @@
       'ps-familia': function () { API.trazerDaFamilia().then(function (n) { salvarERender(n ? n + tr(' pessoa(s) trazida(s) da família.', ' person(s) brought from the family.', ' persona(s) traída(s) de la familia.') : tr('Ninguém novo na família.', 'Nobody new in the family.', 'Nadie nuevo en la familia.')); }); },
       'ps-editar': function (el) { editando = el.dataset.id; render(); abrirForm(); },
       /* 3.116: de um aviso (ex.: o saldo previsto), tocar no nome da pessoa abre a ficha dela aqui */
-      'ps-abrir': function (el) { editando = el.dataset.id; if (el.closest('#genModal') && typeof fechar === 'function') fechar('genModal'); if (typeof irPara === 'function') irPara('cfg-pessoas'); else render(); abrirForm(80); },
+      'ps-abrir': function (el) { editando = el.dataset.id; if (el.closest('#genModal') && typeof fechar === 'function') fechar('genModal'); if (typeof irPara === 'function') irPara('cfg-pessoas'); else render(); abrirForm(80, 'psApelido'); },
       'ps-lista': function (el) { if (el.closest('#genModal') && typeof fechar === 'function') fechar('genModal'); if (typeof irPara === 'function') irPara('cfg-pessoas'); else render(); },   /* 1.5.0 (3.125): os atalhos abrem Pessoas da família */
       'ps-cancelar': function () { var id = editando; editando = null; render(); if (id && id !== 'novo') irAte('[data-ps="' + id + '"]'); },
       'ps-salvar': function () {
