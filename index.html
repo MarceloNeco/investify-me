@@ -28298,11 +28298,23 @@ function inboxGrupos(){
   return INBOX_GRUPOS.filter(g => por[g[0]]).map(g => ({id: g[0], ico: g[1], titulo: pt ? g[2] : g[3], explica: pt ? g[4] : g[5], n: por[g[0]].n, html: por[g[0]].html}));
 }
 function inboxContagem(){ return inboxGrupos().reduce((s, g) => s + g.n, 0); }
+/* 3.143 (desempenho): o número do 📥 no topo só é recontado quando os dados mudam (salvar, lançamento novo, outro dia, outro
+   idioma) ou depois de 1 minuto. Antes ele montava a lista inteira do 📥 a cada troca de tela: com muitos lançamentos, segundos
+   por clique. Abrir o 📥 continua montando a lista na hora. */
+const InboxN = {chave: '', q: 0, em: 0,
+  contar(){
+    const e = (typeof Store !== 'undefined' && Store.estado) || {};
+    const k = [e.atualizadoEm || '', (e.gastos || []).length, hojeISO(), I18n.atual].join('|');
+    if(k !== this.chave || Date.now() - this.em > 60000){ this.q = inboxContagem(); this.chave = k; this.em = Date.now(); }
+    return this.q;
+  },
+  esquecer(){ this.chave = ''; }
+};
 
 function renderInboxN(){
   const n = $('#inboxN'), bt = $('#btnInbox');
   if(!n || !bt) return;
-  const q = inboxContagem();   /* 3.76: o mesmo número da lista */
+  const q = InboxN.contar();   /* 3.76: o mesmo número da lista (3.143: guardado até os dados mudarem) */
   n.textContent = q > 99 ? '99+' : String(q);
   n.classList.toggle('hidden', !q);
   const pt = I18n.atual === 'pt';
@@ -28314,7 +28326,7 @@ function renderInboxN(){
 
 function abrirInbox(){
   const pt = I18n.atual === 'pt';
-  const gs = inboxGrupos();
+  const gs = inboxGrupos(); InboxN.chave = ''; InboxN.q = gs.reduce((s, g) => s + g.n, 0); InboxN.em = 0;
   let h = window.MoneyModulos ? MoneyModulos.html('inbox.topo', {}) : '';   /* 3.87: "📋 Colar print" (modulos/print-colar.js) */
   if(!gs.length){
     h += '<p class="small muted">' + esc(pt ? 'Nada pendente. O que precisar de você (confirmar uma categoria, uma conta atrasada, um documento) aparece aqui.'
