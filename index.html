@@ -9202,7 +9202,13 @@ const Recorrente = {
 const Pagamento = {
   todos(){ return (ST.pagamentos || []); },
 
-  achar(rid, data){ return this.todos().find(p => p.rid === rid && p.data === data) || null; },
+  /* 3.144 (desempenho): um índice rid|data, refeito quando a lista muda (outra lista ou outro tamanho). Antes, cada ocorrência
+     percorria a lista inteira (duas vezes): com muitas contas e meses, segundos para abrir o 📥. O primeiro de cada par vale, como no find. */
+  achar(rid, data){
+    const t = this.todos();
+    if(this._t !== t || this._n !== t.length){ this._m = new Map(); t.forEach(p => { const k = p.rid + '|' + p.data; if(!this._m.has(k)) this._m.set(k, p); }); this._t = t; this._n = t.length; }
+    return this._m.get(rid + '|' + data) || null;
+  },
 
   marcar(rid, data, estado, extra){
     ST.pagamentos = ST.pagamentos || [];
@@ -28330,6 +28336,37 @@ function renderInboxN(){
   if(live && live.textContent !== rotulo) live.textContent = rotulo;
 }
 
+/* 3.144 (desempenho): cada grupo do 📥 mostra os 50 primeiros itens e "Mostrar mais"; desenhar mais de mil de uma vez travava.
+   inboxPartes separa os <li> de fora (os de dentro de um item ficam com ele); InboxMais guarda quantos cada grupo já mostra. */
+const INBOX_PASSO = 50, InboxMais = {}, InboxResto = {};
+function inboxPartes(html){
+  const out = [], rx = /<li[\s>]|<\/li>/gi; let fundo = 0, ini = 0, m;
+  while((m = rx.exec(html))){
+    if(m[0][1] === '/'){ fundo--; if(fundo === 0){ out.push(html.slice(ini, rx.lastIndex)); ini = rx.lastIndex; } }
+    else { if(fundo === 0) ini = m.index; fundo++; }
+  }
+  return out.length ? out : [html];
+}
+function inboxMaisBotao(id, falta){
+  const pt = I18n.atual === 'pt', es = I18n.atual === 'es';
+  return '<li class="inb-mais-li"><button type="button" class="btn sm" data-inbmais="' + esc(id) + '">' +
+    esc((pt ? 'Mostrar mais ' : es ? 'Mostrar ' : 'Show ') + Math.min(INBOX_PASSO, falta) + (pt ? ' (faltam ' + falta + ')' : es ? ' más (faltan ' + falta + ')' : ' more (' + falta + ' left)')) + '</button></li>';
+}
+function inboxListaHtml(g){
+  const partes = inboxPartes(g.html), n = Math.max(INBOX_PASSO, InboxMais[g.id] || 0);
+  if(partes.length <= n){ delete InboxResto[g.id]; return g.html; }
+  InboxResto[g.id] = partes.slice(n);
+  return partes.slice(0, n).join('') + inboxMaisBotao(g.id, partes.length - n);
+}
+document.addEventListener('click', ev => {
+  const b = ev.target.closest && ev.target.closest('[data-inbmais]'); if(!b) return;
+  const id = b.dataset.inbmais, resto = InboxResto[id] || [], li = b.closest('li');
+  const agora = resto.splice(0, INBOX_PASSO);
+  InboxMais[id] = Math.max(INBOX_PASSO, InboxMais[id] || 0) + agora.length;
+  li.insertAdjacentHTML('beforebegin', Verter.html(agora.join('')));
+  if(resto.length) li.outerHTML = Verter.html(inboxMaisBotao(id, resto.length)); else li.remove();
+});
+
 function abrirInbox(){
   const pt = I18n.atual === 'pt';
   const gs = inboxGrupos();
@@ -28339,7 +28376,7 @@ function abrirInbox(){
                                            : 'Nothing pending. Whatever needs you (confirm a category, an overdue bill, a document) shows up here.') + '</p>';
   }else{
     h += gs.map(g => '<details class="inb-grupo" data-inbgrupo="' + g.id + '" open><summary><span>' + g.ico + ' <b>' + esc(g.titulo) + '</b></span>' +
-      '<span class="inb-n">' + g.n + '</span></summary><p class="tiny muted inb-explica">' + esc(g.explica) + '</p><ul class="inb-lista">' + g.html + '</ul></details>').join('');
+      '<span class="inb-n">' + g.n + '</span></summary><p class="tiny muted inb-explica">' + esc(g.explica) + '</p><ul class="inb-lista">' + inboxListaHtml(g) + '</ul></details>').join('');
   }
   h += '<div class="f-actions" style="margin-top:12px">' +
     '<button class="btn sm" data-irpara="config" data-close="genModal">🔔 ' + esc(pt ? 'Avisos' : 'Alerts') + '</button>' +
@@ -28383,7 +28420,7 @@ function ligarTopoPadrao(){
     document.addEventListener('keydown', ev => { if(ev.key === 'Escape') fecharPerfilMenu(); });
   }
   const bi = $('#btnInbox');
-  if(bi && !bi.dataset.ligado){ bi.dataset.ligado = '1'; bi.addEventListener('click', () => { fecharPerfilMenu(); abrirInbox(); }); }
+  if(bi && !bi.dataset.ligado){ bi.dataset.ligado = '1'; bi.addEventListener('click', () => { fecharPerfilMenu(); Object.keys(InboxMais).forEach(k => delete InboxMais[k]); abrirInbox(); });   /* 3.144: abre de novo com 50 por grupo */ }
   document.addEventListener('mt:entrou', () => { renderPerfilTopo(); renderPerfilMenu(); });
   document.addEventListener('mt:saiu', () => { renderPerfilTopo(); renderPerfilMenu(); });
   renderPerfilTopo();
