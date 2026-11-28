@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.143 · 28/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.144 · 28/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,16 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.144 — rascunho, revisar */
+  'Estornos no lugar certo e o 📥 mais leve':'Reembolsos en su sitio y un 📥 más ligero',
+  '↩️ Estorno pedido: o aviso de estorno que chega por e-mail liga à compra certa (mesmo com duas compras iguais) e a compra mostra "⏳ estorno a receber R$ X". Quando o crédito cai, mesmo um pouco menor por câmbio ou IOF, vira "✓ estorno recebido" e a compra e o crédito se anulam.':'↩️ Reembolso pedido: el aviso de reembolso que llega por correo se vincula a la compra correcta (incluso con dos compras iguales) y la compra muestra "⏳ reembolso por recibir R$ X". Cuando llega el crédito, aunque sea un poco menor por el cambio o el IOF, pasa a "✓ reembolso recibido" y la compra y el crédito se anulan.',
+  '💸 O total a receber de estornos e reembolsos aparece no Painel e no 📥. Sem data prometida, o app espera 45 dias (cerca de 2 faturas); se atrasar, pergunta com [Já recebi] [Adiar 15 dias] [Desistir].':'💸 El total de reembolsos por recibir aparece en el Panel y en el 📥. Sin fecha prometida, la app espera 45 días (unas 2 facturas); si se retrasa, pregunta con [Ya lo recibí] [Aplazar 15 días] [Desistir].',
+  '📊 A faixa do topo não mostra mais porcentagens absurdas quando o mês passado foi quase zero: diz "bem acima do mês passado (R$ X)".':'📊 La banda de arriba ya no muestra porcentajes absurdos cuando el mes pasado fue casi cero: dice "muy por encima del mes pasado (R$ X)".',
+  '💳 "PAGAMENTO DEBITO AUTOMATICO" (a fatura do cartão paga no débito) é transferência: não aparece mais como custo que se repete nem no "A confirmar".':'💳 "PAGAMENTO DEBITO AUTOMATICO" (la factura de la tarjeta pagada por domiciliación) es una transferencia: ya no aparece como gasto que se repite ni en "Por confirmar".',
+  '👥 Pessoas em três partes: Família (mora com você — toda ela entra na parte da casa), Pessoas próximas (pais, sogros, diarista, inquilino: não entram nos gastos da casa) e Empresas. A relação em um toque, e o Pix sem categoria para a diarista já vira Habitação › Diarista.':'👥 Personas en tres partes: Familia (vive contigo — toda entra en la parte de la casa), Personas cercanas (padres, suegros, asistenta, inquilino: no entran en los gastos de la casa) y Empresas. La relación en un toque, y el Pix sin categoría a la asistenta pasa a Vivienda › Asistenta.',
+  '✏️ Editar uma pessoa abre numa tela própria, com [Cancelar] e [Salvar] fixos embaixo; o Voltar do celular cancela e a lista volta ao mesmo ponto. Os nomes ficaram simples: Nome e "Como aparece no extrato/Pix".':'✏️ Editar una persona se abre en su propia pantalla, con [Cancelar] y [Guardar] fijos abajo; el botón Atrás del móvil cancela y la lista vuelve al mismo punto. Los nombres quedaron simples: Nombre y "Cómo aparece en el extracto/Pix".',
+  '🏦 As contas do banco mostram o nome atual da pessoa (não mais o apelido antigo que vem do robô); se o nome não for conhecido, o app pergunta "É Fulana?".':'🏦 Las cuentas del banco muestran el nombre actual de la persona (ya no el apodo antiguo que viene del robot); si el nombre no se conoce, la app pregunta "¿Es Fulana?".',
+  '⚡ O 📥 cheio abre bem mais rápido: cada grupo mostra os 50 primeiros e "Mostrar mais".':'⚡ El 📥 lleno se abre mucho más rápido: cada grupo muestra los 50 primeros y "Mostrar más".',
   /* 3.143 — rascunho, revisar */
   'Mais rápido com muitos lançamentos':'Más rápido con muchos movimientos',
   '⚡ Trocar de tela, abrir o menu e trocar de aba ficou muito mais rápido quando há muitos lançamentos: o número do 📥 no topo só é recontado quando algo muda, e não a cada toque. Abrir o 📥 continua mostrando tudo na hora.':'⚡ Cambiar de pantalla, abrir el menú y cambiar de pestaña es mucho más rápido cuando hay muchos movimientos: el número del 📥 de arriba solo se recuenta cuando algo cambia, no en cada toque. Abrir el 📥 sigue mostrando todo al momento.',

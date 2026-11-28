@@ -1,11 +1,21 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.143 · 28/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.144 · 28/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.144', d:'2026-11-28', t:'Estornos no lugar certo e o 📥 mais leve', itens:[
+    '↩️ Estorno pedido: o aviso de estorno que chega por e-mail liga à compra certa (mesmo com duas compras iguais) e a compra mostra "⏳ estorno a receber R$ X". Quando o crédito cai, mesmo um pouco menor por câmbio ou IOF, vira "✓ estorno recebido" e a compra e o crédito se anulam.',
+    '💸 O total a receber de estornos e reembolsos aparece no Painel e no 📥. Sem data prometida, o app espera 45 dias (cerca de 2 faturas); se atrasar, pergunta com [Já recebi] [Adiar 15 dias] [Desistir].',
+    '📊 A faixa do topo não mostra mais porcentagens absurdas quando o mês passado foi quase zero: diz "bem acima do mês passado (R$ X)".',
+    '💳 "PAGAMENTO DEBITO AUTOMATICO" (a fatura do cartão paga no débito) é transferência: não aparece mais como custo que se repete nem no "A confirmar".',
+    '👥 Pessoas em três partes: Família (mora com você — toda ela entra na parte da casa), Pessoas próximas (pais, sogros, diarista, inquilino: não entram nos gastos da casa) e Empresas. A relação em um toque, e o Pix sem categoria para a diarista já vira Habitação › Diarista.',
+    '✏️ Editar uma pessoa abre numa tela própria, com [Cancelar] e [Salvar] fixos embaixo; o Voltar do celular cancela e a lista volta ao mesmo ponto. Os nomes ficaram simples: Nome e "Como aparece no extrato/Pix".',
+    '🏦 As contas do banco mostram o nome atual da pessoa (não mais o apelido antigo que vem do robô); se o nome não for conhecido, o app pergunta "É Fulana?".',
+    '⚡ O 📥 cheio abre bem mais rápido: cada grupo mostra os 50 primeiros e "Mostrar mais".'
+  ]},
   {v:'3.143', d:'2026-11-28', t:'Mais rápido com muitos lançamentos', itens:[
     '⚡ Trocar de tela, abrir o menu e trocar de aba ficou muito mais rápido quando há muitos lançamentos: o número do 📥 no topo só é recontado quando algo muda, e não a cada toque. Abrir o 📥 continua mostrando tudo na hora.',
     '🤖 Quando o robô traz muitos lançamentos de uma vez, o app confere os comprovantes, notas e recibos uma vez só, no fim, em vez de a cada lançamento.'

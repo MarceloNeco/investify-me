@@ -74,7 +74,7 @@
       if (chefe && chefe !== 'nenhuma') (est.pessoas || []).forEach(function (p) { if (p && p.tipo === 'casa' && !p.arquivada && p.id !== chefe && !(eu && p.uid === eu) && !suspeita(p)) dela[p.id] = 1; });
       ((est.visaoCasa && est.visaoCasa.pessoas) || []).forEach(function (id) {
         var p = (est.pessoas || []).filter(function (x) { return x && x.id === id; })[0];
-        if (p && p.tipo === 'casa' && p.id !== chefe && !suspeita(p)) dela[id] = 1;
+        if ((!p || p.tipo === 'casa') && id !== chefe && !suspeita(p)) dela[id] = 1;   /* como antes: o id marcado conta (mesmo sem a ficha aqui) */
       });
       (est.cartoes || []).forEach(function (c) {
         var quem = c.usaId || c.titularId;

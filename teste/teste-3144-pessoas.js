@@ -91,7 +91,8 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
     dialogo = 'dismiss'; perguntou = 0; await p.click('#folhaCancelar'); await p.waitForTimeout(100);
     ok(perguntou === 1 && await p.evaluate(() => !!document.getElementById('folhaEditar')), 'com mudança não salva, Cancelar pergunta "Sair sem salvar?"; "não" fica na folha');
     dialogo = 'accept'; await p.click('#folhaSalvar'); await p.waitForTimeout(150);
-    ok(await p.evaluate((y) => !document.getElementById('folhaEditar') && Pessoas.rotulo(Pessoas.porId('po20')) === 'Vizinho Mudado' && Math.abs(scrollY - y) < 40, y0), 'Salvar grava "Vizinho Mudado", fecha e volta para perto do mesmo ponto');
+    await p.waitForTimeout(150);
+    ok(await p.evaluate(() => { const r = document.querySelector('[data-ps="po20"]').getBoundingClientRect(); return !document.getElementById('folhaEditar') && Pessoas.rotulo(Pessoas.porId('po20')) === 'Vizinho Mudado' && r.top >= 0 && r.bottom <= innerHeight; }), 'Salvar grava "Vizinho Mudado", fecha e mostra a ficha salva (mudou de lugar na lista: a tela vai até ela)');
 
     console.log('3) campos novos');
     await p.click('[data-ps="p1"] [data-acao="ps-editar"]'); await p.waitForTimeout(100);
