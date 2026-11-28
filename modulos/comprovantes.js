@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.6.0 · 27/Nov/2026
+   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.6.1 · 28/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, "adiante tudo do e-mail"; sem IA)
      · A caixa do robô (nuvem.js, money_entrada) traz um tipo novo de item, tipo "comprovante", tirado dos e-mails lidos
@@ -40,6 +40,8 @@
        na ficha; limites maiores (listas até 400 — os lançamentos da fatura —, até 120 chaves, itens da compra até 100);
        cartao_final vale como final; pago_no_cartao (conta paga no cartão: Vivo no cartão, por exemplo) nunca pede "pague": liga à
        cobrança no cartão (mesmo valor e final, ±10 dias) e não entra no 📥. Os serviços da conta: modulos/conta-servicos.js.
+     · 1.6.1 (3.143): desempenho — ligarTudo(forcar) só cruza de novo quando os dados mudam (Store.salvos, lançamentos, comprovantes,
+       pagamentos, pendentes, pré-autorizações); os "já usados" uma vez por passada; um lote do robô (gasto.novo) cruza uma vez, no fim.
      · 1.6.0 (3.137): subtipo extrato_investimentos (o extrato mensal da corretora): só informação, "extrato de dd/mm/aaaa · total US$ X"
        (ficha.total_carteira); as posições chegam à parte, uma por papel (tipo investimento → modulos/invest-banco.js).
    API (window.Comprovantes)
@@ -74,7 +76,9 @@
     var r = {}; Object.keys(o).slice(0, 120).forEach(function (k) { if (!/^[a-z0-9_]{1,40}$/i.test(k)) return; var v = fichaLimpa(o[k], nivel + 1); if (v != null) r[k] = v; });
     return r;
   }
-  function dias(a, b) { return Math.round((Date.parse(a + 'T12:00:00Z') - Date.parse(b + 'T12:00:00Z')) / 86400000); }
+  /* 3.143 (desempenho): a data vira número uma vez só (antes era lida de novo a cada comparação: milhões de vezes com muitos lançamentos) */
+  var _dn = {}; function dn(s) { var v = _dn[s]; if (v === undefined) { v = Date.parse(s + 'T12:00:00Z') / 86400000; _dn[s] = v; } return v; }
+  function dias(a, b) { return Math.round(dn(a) - dn(b)); }
   function hoje() { return API._hoje || hojeISO(); }
   function br(d) { return d ? d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4) : ''; }
   function lista() { if (!ST) return []; return (ST[COL] = Array.isArray(ST[COL]) ? ST[COL] : []); }
@@ -159,7 +163,7 @@
       var gs = Gasto.todos().filter(function (g) {
         /* 1.3.0 (3.123): a nota de EDUCAÇÃO (irpf_candidata 'educacao' ou a escola) liga ao gasto da escola; a de saúde, à despesa médica */
         var tipoOk = nf.educacao ? educacao(g) : NfIr.medica(g);
-        if (!g.data || g.fluxo === 'entrada' || !tipoOk || Math.abs(dias(g.data, nf.data || x.data)) > 30 || lista().some(function (y) { return y !== x && y.nfGastoId === g.id; })) return false;
+        if (!g.data || g.fluxo === 'entrada' || !tipoOk || Math.abs(dias(g.data, nf.data || x.data)) > 30 || (nfUsados()[g.id] && nfUsados()[g.id] !== x)) return false;   /* 3.143: o conjunto, uma vez por passada */
         var gc2 = String((g.contraparte && g.contraparte.cnpj) || '').replace(/\D/g, '');
         return (cn && gc2 === cn) || parecida(x.loja, (g.contraparte && g.contraparte.nome) || g.descRobo || g.desc) || (x.valor > 0 && Math.abs(Number(g.valor) - x.valor) < 0.005);
       }).sort(function (a, b) {   /* 1.3.0 (3.123): o mesmo valor primeiro (a mensalidade e o ampliado da mesma escola), depois a data mais perto */
@@ -215,7 +219,7 @@
   /* ---------- boleto: conta a pagar ---------- */
   function pagoDe(x) {
     if (!(x.valor > 0)) return null;
-    var ate = x.vencimento || x.data, usados = {}; lista().forEach(function (y) { if (y !== x && y.pagoId) usados[y.pagoId] = 1; });
+    var ate = x.vencimento || x.data, pu = pagoUsados(), usados = {}; Object.keys(pu).forEach(function (k) { if (pu[k] !== x) usados[k] = 1; });
     return Gasto.todos().find(function (g) {
       return g.fluxo !== 'entrada' && !usados[g.id] && g.data && Math.abs(Number(g.valor) - x.valor) < 0.005 &&
         (!x.data || g.data >= x.data) && (!ate || dias(g.data, ate) <= 5);
@@ -237,6 +241,10 @@
   function semDebito(x) { return !!(x.semDebito || (x.ficha && (x.ficha.sem_debito_automatico === true || x.ficha.debito_automatico === false))); }
   function debito(x) { if (semDebito(x) || x.noCartao) return null; return window.DebitoAuto ? DebitoAuto.conflito({ nome: quem(x), cnpj: x.cnpj || '', texto: [x.descricao, x.assunto].join(' ') }) : null; }
 
+  /* 3.143 (desempenho): os "já usados" de cada passada (antes, refeitos para cada comprovante e para cada lançamento) */
+  var passada = null;
+  function nfUsados() { if (passada && passada.nf) return passada.nf; var o = {}; lista().forEach(function (y) { if (y.nfGastoId) o[y.nfGastoId] = y; }); if (passada) passada.nf = o; return o; }
+  function pagoUsados() { if (passada && passada.pg) return passada.pg; var o = {}; lista().forEach(function (y) { if (y.pagoId) o[y.pagoId] = y; }); if (passada) passada.pg = o; return o; }
   function processar(x) {
     if (x.estado === 'dispensado') return;
     if (x.avisoEnvio || x.subtipo === 'extrato_investimentos') { x.estado = 'ok'; return; }   /* 1.6.0 (3.137): o extrato da corretora é informação; as posições vêm à parte (modulos/invest-banco.js) */   /* 1.4.0 (3.135): "Enviado/Entregue" é a mesma compra: não concilia, não pede nada */
@@ -297,7 +305,15 @@
       processar(x);
       return true;
     },
-    ligarTudo: function () { lista().forEach(processar); },
+    /* 3.143 (desempenho): só cruza de novo quando os dados mudaram (antes rodava a cada desenho de tela, pelo contador do 📥) */
+    _dias: dias,   /* para o teste (3.143) */
+    ligarTudo: function (forcar) {
+      var k = [Gasto.todos().length, Store.salvos || 0, lista().length, (ST.pagamentos || []).length, (ST.cartao_pendentes || []).length, window.PreAut ? PreAut.lista().length : 0].join('|');
+      if (!forcar && k === API._chave && lista() === API._lista) return;
+      passada = {};
+      try { lista().forEach(processar); } finally { passada = null; }
+      API._chave = k; API._lista = lista();
+    },
     abertos: function () { return lista().filter(function (x) { return x.estado !== 'dispensado' && visivel(x); }); },
     /* o que pede a pessoa (📥) */
     pendencias: function () {
@@ -395,7 +411,7 @@
   function achar(el) { return lista().find(function (y) { return y.id === el.dataset.id; }); }
 
   MoneyModulos.registrar({
-    id: 'comprovantes', versao: '1.6.0', colecoes: [COL],
+    id: 'comprovantes', versao: '1.6.1', colecoes: [COL],
     pontos: {
       'lancamentos.topo': function () {
         var n = API.abertos().length; if (!n) return '';
@@ -435,7 +451,8 @@
       'cp-foto-ok': function (el) { var x = achar(el); if (!x) return; x.fotosLidas = true; depois(); },
       'cp-tirar': function (el) { var x = achar(el); if (!x) return; x.estado = 'dispensado'; var g = gasto(x.gastoId); if (g && g.ficha && g.ficha.cid === x.id) delete g.ficha; depois(); }
     },
-    ouvir: { 'gasto.novo': function () { if (lista().length) API.ligarTudo(); } }
+    /* 3.143 (desempenho): um lote do robô (centenas de lançamentos de uma vez) cruza uma vez só, no fim do lote, e não a cada um */
+    ouvir: { 'gasto.novo': function () { if (!lista().length || API._lote) return; API._lote = 1; Promise.resolve().then(function () { API._lote = 0; API.ligarTudo(); }); } }
   });
   window.Comprovantes = API;
 })();

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/canhotos.js — "📷 Foto de nota ou recibo" com o banco (3.92; antes "🧾 Conferir canhotos")        1.4.0 · 26/Nov/2026
+   modulos/canhotos.js — "📷 Foto de nota ou recibo" com o banco (3.92; antes "🧾 Conferir canhotos")        1.4.1 · 28/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 18/Nov/2026; sem IA)
      · Em Lançamentos, "🧾 Conferir canhotos": uma foto (ou várias) com os canhotos da maquininha, cupons e recibos. O motor do
@@ -42,6 +42,7 @@
        "Esperar o banco" explica que ele não cria gasto: a compra vem pela fatura e a foto completa a descrição.
      · A linha mostra "Veículo › <categoria> · <carro>" antes de esperar o banco; o carro pelo apelido mesmo com letra grudada no texto lido
        ("LRENEGADE" acha o "Renegade"); com o carro achado, a linha mostra o apelido, não o texto do OCR.
+   1.4.1 (3.143): desempenho — dias() com a data convertida uma vez (cache); antes, milhões de Date.parse com muitos lançamentos.
    1.4.0 (3.117), pedidos do dono sobre a janela: sai a frase "Lido no aparelho…"; uma frase por seção ("A foto completou o lançamento
      que veio do banco… Nada foi duplicado." / "Quando o banco mandar, a foto se junta sozinha."); o item em linhas (`linhas`): loja + valor
      ("… em 5× de …"), data e hora · tipo (OS da oficina / canhoto / nota), categoria · 🚗 apelido (sem o carro no cadastro: o texto lido e
@@ -64,7 +65,9 @@
   function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function n2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
   function iso(d) { var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(d || '')); return m ? m[3] + '-' + m[2] + '-' + m[1] : ''; }
-  function dias(a, b) { return Math.round((Date.parse(a + 'T12:00:00Z') - Date.parse(b + 'T12:00:00Z')) / 86400000); }
+  /* 3.143 (desempenho): a data vira número uma vez só (antes era lida de novo a cada comparação: milhões de vezes com muitos lançamentos) */
+  var _dn = {}; function dn(s) { var v = _dn[s]; if (v === undefined) { v = Date.parse(s + 'T12:00:00Z') / 86400000; _dn[s] = v; } return v; }
+  function dias(a, b) { return Math.round(dn(a) - dn(b)); }
   function pend() { return window.PreAut ? PreAut.lista() : []; }
   function so(t) { return String(t || '').replace(/\D/g, ''); }
   function norm(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
@@ -494,7 +497,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'canhotos', versao: '1.4.0',
+    id: 'canhotos', versao: '1.4.1',
     pontos: {
       'lancamentos.topo': function () { return '<div class="row" style="margin:0 0 8px;gap:6px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sm" data-acao="cn-abrir">📷 ' + esc(tr('Foto de nota ou recibo', 'Receipt or invoice photo', 'Foto de factura o recibo')) + '</button><span class="small muted">' + esc(tr('OS da oficina, nota, recibo ou canhoto: o app lê e liga ao banco', 'Repair shop work order, invoice, receipt or card slip: the app reads it and links it to the bank', 'Orden del taller, factura, recibo o ticket: la app lo lee y lo vincula al banco')) + '</span></div>'; }
     },

@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/recibo-exterior.js — RECIBO DE SERVIÇO DO EXTERIOR × CARTÃO (3.91)        1.0.1 · 24/Nov/2026
+   modulos/recibo-exterior.js — RECIBO DE SERVIÇO DO EXTERIOR × CARTÃO (3.91)        1.0.2 · 28/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 18/Nov/2026; sem IA)
      · "📋 Colar print" e "Escolher arquivo" (modulos/print-colar.js) também leem o recibo de um serviço do exterior (imagem
@@ -10,6 +10,7 @@
      · Marca do negócio ou da casa: vale para a ORIGEM do lançamento em "Custos do negócio pagos no CPF" (ST.pj_cpf, 3.82).
      · Recibo sem o lançamento do cartão fica no 📥 até o cartão mostrar.
      · Visão da casa: nada (é do chefe; a coleção é reservada).
+     · 1.0.2 (3.143): desempenho — dias() com a data em cache; o 📥 só religa os recibos quando os dados mudam.
      · 1.0.1 (3.104): recibo em REAIS (moeda 'BRL': desde out/2026 a Anthropic cobra o Claude Pro em R$): casa direto pelo valor em reais
        (o mesmo valor, ±1 centavo, ±5 dias; o nome do serviço desempata), sem câmbio nem IOF: "Recibo R$ 110,00 = cartão R$ 110,00".
        Com USD (ou outra moeda), como antes.
@@ -30,7 +31,9 @@
   function casa() { return !!(window.Escopo && Escopo.soCasa && Escopo.soCasa()); }
   function lista() { return (ST[COL] = Array.isArray(ST[COL]) ? ST[COL] : []); }
   function N(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
-  function dias(a, b) { return Math.round((Date.parse(a + 'T12:00:00Z') - Date.parse(b + 'T12:00:00Z')) / 86400000); }
+  /* 3.143 (desempenho): a data vira número uma vez só (antes era lida de novo a cada comparação: milhões de vezes com muitos lançamentos) */
+  var _dn = {}; function dn(s) { var v = _dn[s]; if (v === undefined) { v = Date.parse(s + 'T12:00:00Z') / 86400000; _dn[s] = v; } return v; }
+  function dias(a, b) { return Math.round(dn(a) - dn(b)); }
   var MESES = { jan: 1, feb: 2, fev: 2, mar: 3, apr: 4, abr: 4, may: 5, mai: 5, jun: 6, jul: 7, aug: 8, ago: 8, sep: 9, set: 9, oct: 10, out: 10, nov: 11, dec: 12, dez: 12 };
   var SIMB = { '$': 'USD', 'US$': 'USD', 'USD': 'USD', '€': 'EUR', 'EUR': 'EUR', '£': 'GBP', 'GBP': 'GBP' };
   function dataDe(t) {
@@ -100,6 +103,7 @@
     },
     lista: lista
   };
+  var chaveLigar = '', listaLigar = null;
   function ligar(x) { if (x.gastoId || x.semCasar) return; var c = API.casar(x); if (c) { x.gastoId = c.g.id; x.iofId = c.iof ? c.iof.id : ''; } }
   function gasto(id) { return id ? Gasto.todos().find(function (g) { return g.id === id; }) : null; }
   function frase(x) {
@@ -136,11 +140,13 @@
   function depois() { Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); }
 
   MoneyModulos.registrar({
-    id: 'recibo-exterior', versao: '1.0.1', colecoes: [COL],
+    id: 'recibo-exterior', versao: '1.0.2', colecoes: [COL],
     pontos: {
       'inbox.grupos': function () {
         if (casa()) return [];
-        lista().forEach(ligar);
+        /* 3.143 (desempenho): só procura de novo o lançamento do cartão quando os dados mudaram (antes, a cada desenho do 📥) */
+        var k = [Gasto.todos().length, Store.salvos || 0, lista().length].join('|');
+        if (k !== chaveLigar || lista() !== listaLigar) { lista().forEach(ligar); chaveLigar = k; listaLigar = lista(); }
         var l = lista().filter(function (x) { return !x.gastoId || !x.marca; }); if (!l.length) return [];
         return [{ id: 'docs', n: l.length, html: l.map(function (x) {
           return '<li class="inb-item"><div><b>🧾 ' + esc((x.servico || '') + ' · ' + I18n.data(x.data)) + '</b><span class="t-sub">' + esc(frase(x) + (x.gastoId ? tr(' · do negócio ou da casa?', ' · business or household?', ' · ¿del negocio o de casa?') : '')) + '</span></div><span class="inb-acoes">' +

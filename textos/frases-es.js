@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.142 · 28/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.143 · 28/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,10 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.143 — rascunho, revisar */
+  'Mais rápido com muitos lançamentos':'Más rápido con muchos movimientos',
+  '⚡ Trocar de tela, abrir o menu e trocar de aba ficou muito mais rápido quando há muitos lançamentos: o número do 📥 no topo só é recontado quando algo muda, e não a cada toque. Abrir o 📥 continua mostrando tudo na hora.':'⚡ Cambiar de pantalla, abrir el menú y cambiar de pestaña es mucho más rápido cuando hay muchos movimientos: el número del 📥 de arriba solo se recuenta cuando algo cambia, no en cada toque. Abrir el 📥 sigue mostrando todo al momento.',
+  '🤖 Quando o robô traz muitos lançamentos de uma vez, o app confere os comprovantes, notas e recibos uma vez só, no fim, em vez de a cada lançamento.':'🤖 Cuando el robot trae muchos movimientos a la vez, la app revisa comprobantes, facturas y recibos una sola vez, al final, en lugar de tras cada movimiento.',
   /* 3.142 — rascunho, revisar */
   'Família arrumada: você no topo, o inquilino fora e a ficha mais clara':'Familia arreglada: tú arriba, el inquilino fuera y una ficha más clara',
   '👪 Configurações → Família no MoneyTRIO → "Quem é da casa": você aparece sempre no topo, como "(você · chefe)", com a caixa marcada e o "editar" para trocar o seu nome. Cada pessoa fica numa linha, e o aviso "Esta pessoa é da família?" vem embaixo do nome, sem quebrar no celular.':'👪 Configuración → Familia en MoneyTRIO → "Quién es de la casa": tú apareces siempre arriba, como "(tú · jefe)", marcado y con "editar" para cambiar tu nombre. Cada persona va en su línea, y el aviso "¿Esta persona es de la familia?" queda debajo del nombre, sin romperse en el móvil.',

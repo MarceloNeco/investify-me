@@ -685,8 +685,8 @@ const I18n = {
 const t = (k, v) => I18n.t(k, v);
 
 </script>
-<script src="textos/frases-en.js?v=3.142"></script>
-<script src="textos/frases-es.js?v=3.142"></script>
+<script src="textos/frases-en.js?v=3.143"></script>
+<script src="textos/frases-es.js?v=3.143"></script>
 <script>
 /* =========================================================
    MoneyTRIO — o resto da tradução
@@ -1766,8 +1766,9 @@ const Store = {
     }
   },
 
-  salvar(){
+  salvar(soTela){
     this.estado.atualizadoEm = new Date().toISOString();
+    if(!soTela) this.salvos = (this.salvos || 0) + 1;   /* 3.143: conta cada salvar de dados (o que foi calculado antes dele é refeito; a hora sozinha pode repetir); soTela = só qual app está aberto */
     if(this.semPersistir){ return false; }   /* sessão temporária: nada fica no aparelho */
 
     /* as chaves vão para o cofre; a carteira salva fica sem elas */
@@ -7721,7 +7722,7 @@ const Importador = {
 };
 
 </script>
-<script src="textos/mudancas.js?v=3.142"></script>
+<script src="textos/mudancas.js?v=3.143"></script>
 <script>
 /* =========================================================
    MoneyTrio — versão e histórico de mudanças
@@ -9234,7 +9235,8 @@ const Pagamento = {
     const de = new Date(hoje + 'T12:00:00'); de.setMonth(de.getMonth() - (op.meses || 3));
     const abertas = Recorrente.ocorrencias(Recorrente.iso(de), hoje)
       .filter(o => (ESTADOS_PG[o.estado] && ESTADOS_PG[o.estado].conta) || (op.porNome && o.estado === 'semconf'));
-    const palavras = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w.length >= 4);
+    const pal = new Map();   /* 3.143: cada texto vira palavras uma vez só nesta conciliação (antes: a cada par ocorrência × lançamento) */
+    const palavras = t => { t = String(t || ''); let v = pal.get(t); if(!v){ v = t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w.length >= 4); pal.set(t, v); } return v; };
     const nomeBate = (g, r) => { const a = palavras(r.nome); if(!a.length) return false; const b = palavras([g.desc, g.sub].join(' ')); return a.some(w => b.indexOf(w) >= 0); };
     let casados = 0;
     abertas.forEach(o => {
@@ -9961,7 +9963,7 @@ function abrirApp(k){
   if(appsVisiveis().indexOf(k) < 0) k = 'budget';
   if(!APPS[k] || !APPS[k].pronto) return;
   ST.appAtual = k;
-  Store.salvar();
+  Store.salvar(true);
   if(typeof renderFita === 'function') setTimeout(renderFita, 0);
   $('#hubTela').classList.add('hidden');
   $('#app').classList.remove('hidden');
@@ -28298,11 +28300,22 @@ function inboxGrupos(){
   return INBOX_GRUPOS.filter(g => por[g[0]]).map(g => ({id: g[0], ico: g[1], titulo: pt ? g[2] : g[3], explica: pt ? g[4] : g[5], n: por[g[0]].n, html: por[g[0]].html}));
 }
 function inboxContagem(){ return inboxGrupos().reduce((s, g) => s + g.n, 0); }
+/* 3.143 (desempenho): o número do 📥 no topo só é recontado quando os dados mudam (salvar, lançamento novo, outro dia, outro
+   idioma) ou depois de 1 minuto. Antes ele montava a lista inteira do 📥 a cada troca de tela: com muitos lançamentos, segundos
+   por clique. Abrir o 📥 continua montando a lista na hora. */
+const InboxN = {chave: '', est: null, q: 0, em: 0,
+  contar(){
+    const e = Store.estado || {};
+    const k = [Store.salvos || 0, (e.gastos || []).length, hojeISO(), I18n.atual].join('|');
+    if(k !== this.chave || e !== this.est || Date.now() - this.em > 60000){ this.q = inboxContagem(); this.chave = k; this.est = e; this.em = Date.now(); }
+    return this.q;
+  }
+};
 
 function renderInboxN(){
   const n = $('#inboxN'), bt = $('#btnInbox');
   if(!n || !bt) return;
-  const q = inboxContagem();   /* 3.76: o mesmo número da lista */
+  const q = InboxN.contar();   /* 3.76: o mesmo número da lista (3.143: guardado até os dados mudarem) */
   n.textContent = q > 99 ? '99+' : String(q);
   n.classList.toggle('hidden', !q);
   const pt = I18n.atual === 'pt';
@@ -30357,11 +30370,11 @@ document.addEventListener('DOMContentLoaded', function () { if (window.MoneyNuve
 <script src="modulos/loja-nova.js?v=1.0.1"></script>
 <script src="modulos/transf-agendada.js?v=1.0.1"></script>
 <script src="modulos/salto-preco.js?v=1.0.0"></script>
-<script src="modulos/recibo-exterior.js?v=1.0.1"></script>
+<script src="modulos/recibo-exterior.js?v=1.0.2"></script>
 <script src="modulos/recebi-dinheiro.js?v=1.0.0"></script>
-<script src="modulos/canhotos.js?v=1.4.0"></script>
+<script src="modulos/canhotos.js?v=1.4.1"></script>
 <script src="modulos/rachai.js?v=1.1.1"></script>
-<script src="modulos/comprovantes.js?v=1.6.0"></script>
+<script src="modulos/comprovantes.js?v=1.6.1"></script>
 <script src="modulos/compra-itens.js?v=1.0.0"></script>
 <script src="modulos/conta-servicos.js?v=1.0.0"></script>
 <script src="modulos/consumo.js?v=1.0.0"></script>
