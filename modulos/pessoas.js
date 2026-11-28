@@ -1,6 +1,7 @@
 /* =====================================================================
-   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.8.0 · 28/Nov/2026 (3.142: o chefe primeiro e travado, "Não é da família" no papel, inquilino para Outras pessoas, formulário com o Tipo no topo; 3.138: data-ajuda; 3.132: família primeiro, Juntar, papéis, Desfazer, editar na ficha, sem CPF no nome)
+   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.9.0 · 28/Nov/2026 (3.142: o chefe primeiro e travado, "Não é da família" no papel, inquilino para Outras pessoas, formulário com o Tipo no topo; 3.138: data-ajuda; 3.132: família primeiro, Juntar, papéis, Desfazer, editar na ficha, sem CPF no nome)
    ---------------------------------------------------------------------
+     · 1.9.0 (3.144): o titular que o robô manda pelo nome atual (titularVer) e "É a X?"; editar e "+ Adicionar" na folha de edição (modulos/folha-editar.js); campos: Nome (o que aparece no app), "Como aparece no extrato/Pix" em chips com sugestões dos lançamentos, "Mais detalhes" com o nome completo, o e-mail atrás de "Convidar para o MoneyTRIO", nomes antigos guardados sozinhos; migração uma vez sem perder nada (antes3144).
    O QUE FAZ
      Um cadastro só de "quem": Da casa (responsáveis e dependentes), Outras pessoas (pai, amigo, sócio) e
      Empresas/instituições (CNPJ opcional, dado público). NUNCA CPF (LGPD: o ganho é pequeno, o risco é alto).
@@ -70,6 +71,7 @@
   function chaves(p) {
     var k = {}, add = function (x) { x = N(x); if (x) k[x] = 1; };
     add(API.rotulo(p)); add(p.nome); add([p.nome, p.sobrenome].join(' ')); add(API.nomeCompleto(p)); add(p.apelido);
+    var nc = API.nomeCompleto(p).split(/\s+/).filter(Boolean); if (nc.length > 1) { add(nc[0]); add(nc[0] + ' ' + nc[nc.length - 1]); }   /* 1.9.0 (3.144): o primeiro nome e o primeiro + último do nome completo */
     (p.banco || []).forEach(add); (p.aliases || []).forEach(add);
     if (p.tipo === 'casa') API.nomesDoBanco(p).forEach(add);
     return Object.keys(k);
@@ -97,12 +99,12 @@
     rotulo: function (p) {
       if (!p) return '';
       if (String(p.apelido || '').trim()) return String(p.apelido).trim();
-      if (p.tipo === 'empresa') return String(p.nome || '').trim();
+      if (p.tipo === 'empresa' || p.completo != null) return String(p.nome || '').trim();   /* 1.9.0 (3.144): "Nome" é o que aparece no app, inteiro */
       return String(p.nome || '').trim().split(/\s+/)[0] || '';
     },
     /* como o banco costuma escrever o nome de quem é da casa (sem o apelido) */
     nomesDoBanco: function (p) {
-      var ws = [p.nome, p.meio, p.sobrenome].join(' ').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).filter(Boolean);
+      var ws = API.nomeCompleto(p).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).filter(Boolean);
       if (ws.length < 2) return [];
       var ult = ws[ws.length - 1], meio = ws.slice(1, -1), ini = ws.slice(0, -1).filter(function (w) { return !PARTICULAS[w.toLowerCase()]; }).map(function (w) { return w[0]; });
       var out = [];
@@ -118,7 +120,51 @@
       var p = API.achar(t), nome = p && p.tipo === 'casa' ? String(p.nome || '').trim() : '';
       return nome || t;
     },
-    nomeCompleto: function (p) { return p ? [p.nome, p.meio, p.sobrenome].map(function (x) { return String(x || '').trim(); }).filter(Boolean).join(' ') : ''; },
+    /* 1.9.0 (3.144): o titular que o robô manda (o rótulo da conta no robô, que pode ser antigo: "Zeca", "Gama"…) vira o nome ATUAL da pessoa,
+       pela ficha (nome, apelidos, nomes no banco e os antigos guardados). Sem ficha: nunca o texto cru; se parece alguém, sug = essa pessoa
+       (a tela pergunta "É a X?"); senão, nome vazio. */
+    titularVer: function (texto) {
+      var t = String(texto || '').trim(); if (!t) return { nome: '', p: null, sug: null };
+      var p = API.achar(t);
+      if (p) return { nome: p.tipo === 'casa' ? API.nomeVer(t) : API.rotulo(p), p: p, sug: null };
+      var s = API.parecida(t);
+      return { nome: '', p: null, sug: s && s.p.tipo === 'casa' ? s.p : null };
+    },
+    /* a pergunta "É a X?" para um titular sem ficha (botão; ação ps-titular-sim) */
+    titularPergunta: function (texto, sug) {
+      if (!sug) return '';
+      var f = sug.genero ? sug.genero === 'f' : /a$/i.test(N(API.rotulo(sug)).split(' ')[0] || '');
+      return '<button type="button" class="linkinho ps-titular-sim" data-acao="ps-titular-sim" data-texto="' + esc(texto) + '" data-id="' + esc(sug.id) + '">' +
+        esc(tr(f ? 'É a ' : 'É o ', 'Is it ', '¿Es ') + API.rotulo(sug) + tr('?', '?', '?')) + '</button>';
+    },
+    nomeCompleto: function (p) { return !p ? '' : String(p.completo || '').trim() || [p.nome, p.meio, p.sobrenome].map(function (x) { return String(x || '').trim(); }).filter(Boolean).join(' '); },   /* 1.9.0 (3.144): o "Nome completo (opcional)" */
+    /* 1.9.0 (3.144), uma vez, sem perder nada: "Nome" = o nome que já aparece no app (o apelido, ou o primeiro nome); o nome completo
+       (nome + do meio + sobrenome) vai para "Mais detalhes" (completo); o que havia antes fica guardado na ficha (antes3144). */
+    migrar3144: function () {
+      if (!temST() || cfg().pessoasV3144) return 0;
+      var n = 0;
+      lista().forEach(function (p) {
+        if (p.completo != null) return;
+        var mostra = API.rotulo(p), cheio = [p.nome, p.meio, p.sobrenome].map(function (x) { return String(x || '').trim(); }).filter(Boolean).join(' ');
+        p.antes3144 = { nome: p.nome || '', meio: p.meio || '', sobrenome: p.sobrenome || '', apelido: p.apelido || '' };
+        p.nome = mostra || p.nome || ''; p.completo = N(cheio) !== N(p.nome) ? cheio : ''; p.meio = ''; p.sobrenome = ''; p.apelido = '';
+        n++;
+      });
+      cfg().pessoasV3144 = 1;
+      return n;
+    },
+    /* 1.9.0 (3.144): sugestões para "Como aparece no extrato/Pix": os nomes de quem mandou/recebeu Pix nos lançamentos com o primeiro nome
+       dela (2 palavras ou mais), menos os que já estão na ficha e os que o nome completo já reconhece sozinho (nomesDoBanco) */
+    sugestoesBanco: function (p) {
+      if (!p || p.tipo !== 'casa') return [];
+      var ja = (p.banco || []).map(N), out = [], add = function (t) { t = String(t || '').trim().toUpperCase(); if (t && /\s/.test(t) && ja.indexOf(N(t)) < 0 && out.map(N).indexOf(N(t)) < 0) out.push(t); };
+      API.nomesDoBanco(p).forEach(function (t) { ja.push(N(t)); });
+      var pri = N(API.nomeCompleto(p)).split(' ')[0];
+      if (pri && pri.length >= 3 && typeof Gasto !== 'undefined') Gasto.todos().forEach(function (g) {
+        var c = g.contraparte && g.contraparte.nome; if (c && N(c).split(' ')[0] === pri && !API.pareceEmpresa(c)) add(semDoc(c));
+      });
+      return out.slice(0, 6);
+    },
     achar: function (texto) {
       var k = N(texto); if (!k) return null;
       var achou = null;
@@ -174,6 +220,7 @@
         tipo: TIPOS[d.tipo] ? d.tipo : 'casa',
         papel: d.tipo === 'casa' || !d.tipo ? (d.papel === 'dependente' ? 'dependente' : (d.papel === 'responsavel' ? 'responsavel' : '')) : '',
         nome: semDoc(d.nome).slice(0, 80), meio: semDoc(d.meio).slice(0, 80),
+        completo: d.completo != null ? semDoc(d.completo).slice(0, 160) : (p && p.completo != null ? p.completo : undefined),
         sobrenome: semDoc(d.sobrenome).slice(0, 120), apelido: semDoc(d.apelido).slice(0, 40),
         banco: (Array.isArray(d.banco) ? d.banco : String(d.banco || '').split(/[,;\n]/)).map(function (x) { return semDoc(x).slice(0, 60); }).filter(Boolean)
           .filter(function (x, i, a) { return a.map(N).indexOf(N(x)) === i; }),
@@ -181,6 +228,7 @@
       };
       if (d.aliases != null) limpo.aliases = (Array.isArray(d.aliases) ? d.aliases : String(d.aliases).split(/[,;\n]/)).map(function (x) { return semDoc(x).slice(0, 40); }).filter(Boolean);
       if (!limpo.nome) throw new Error(tr('Escreva o nome.', 'Type the name.', 'Escribe el nombre.'));
+      if (limpo.completo === undefined) delete limpo.completo;
       if (d.uid) limpo.uid = String(d.uid); if (d.perfil) limpo.perfil = String(d.perfil);
       /* 1.5.0 (3.125): o e-mail (opcional) de quem entra no app; só da família (tipo casa) */
       var em = String(d.email || '').trim().toLowerCase().slice(0, 120);
@@ -407,33 +455,58 @@
   function euUid() { try { return (window.MoneyNuvem && MoneyNuvem.escopos && MoneyNuvem.escopos.eu && MoneyNuvem.escopos.eu()) || ''; } catch (e) { return ''; } }
   function contaEmail() { try { return (window.MoneyNuvem && MoneyNuvem.email && MoneyNuvem.email()) || ''; } catch (e) { return ''; } }
   function contaNome() { try { return (window.MoneyNuvem && MoneyNuvem.nomePessoa && MoneyNuvem.nomePessoa()) || ''; } catch (e) { return ''; } }
-  var editando = null;   /* id ou 'novo' */
   function formPessoa(p) {
-    p = p || { tipo: 'casa', papel: 'responsavel' };
+    p = p || { tipo: 'casa', papel: 'responsavel' };   /* 1.9.0 (3.144): abre na folha de edição (modulos/folha-editar.js): o título e os botões são dela */
     var chefe = !!p.id && p === API.minhaFicha();   /* 1.8.0 (3.142): o chefe é sempre da casa e responsável (travado) */
     var sel = function (id, op, v, trava) { return '<select id="' + id + '"' + (trava ? ' disabled' : '') + '>' + Object.keys(op).map(function (k) { return '<option value="' + k + '"' + (k === (v || '') ? ' selected' : '') + '>' + esc(tr.apply(null, op[k])) + '</option>'; }).join('') + '</select>'; };
     var cp = function (rot, html, dica) { return '<label class="f"><span class="lb">' + esc(rot) + '</span>' + html + (dica ? '<span class="hint">' + esc(dica) + '</span>' : '') + '</label>'; };
     var inp = function (id, v, ph) { return '<input id="' + id + '" value="' + esc(v || '') + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : '') + ' autocomplete="off">'; };
-    return '<div class="card ps-form" data-id="' + esc(p.id || '') + '"><div class="card-head"><h3>' + esc(p.id ? tr('Editar', 'Edit', 'Editar') + ' · ' + API.rotulo(p) : tr('Nova pessoa', 'New person', 'Nueva persona')) + '</h3></div>' +
+    return '<div class="card ps-form" data-id="' + esc(p.id || '') + '">' +
       '<div class="grid g2">' +
         '<div class="ps-tipo-destaque">' + cp(tr('Tipo', 'Type', 'Tipo'), sel('psTipo', TIPOS_FORM, p.tipo, chefe)) +
           (p.tipo === 'casa' && API.pareceDeFora(p) && !p.familiaConfirmada ? '<p class="small ps-fora-aviso">⚠ ' + esc(tr('Parece alguém de fora da família. É isso?', 'Looks like someone outside the family. Is that right?', 'Parece alguien de fuera de la familia. ¿Es así?')) + '</p>' : '') + '</div>' +
         '<div class="ps-so-casa">' + cp(tr('Papel na casa', 'Role at home', 'Papel en la casa'), sel('psPapel', { responsavel: PAPEIS.responsavel, dependente: PAPEIS.dependente }, chefe ? 'responsavel' : (p.papel || 'responsavel'), chefe)) + '</div>' +
-        cp(tr('Nome', 'First name', 'Nombre'), inp('psNome', p.nome)) +
-        '<div class="ps-nao-empresa">' + cp(tr('Nome do meio (opcional)', 'Middle name (optional)', 'Segundo nombre (opcional)'), inp('psMeio', p.meio)) + '</div>' +
-        '<div class="ps-nao-empresa">' + cp(tr('Sobrenome', 'Last name', 'Apellidos'), inp('psSobrenome', p.sobrenome), tr('O nome completo ajuda o leitor de documentos a saber de quem é um contrato ou exame.', 'The full name helps the document reader know whose contract or exam it is.', 'El nombre completo ayuda al lector de documentos a saber de quién es un contrato o un examen.')) + '</div>' +
-        cp(tr('Apelido (como aparece no app)', 'Nickname (how it shows in the app)', 'Apodo (como aparece en la app)'), inp('psApelido', p.apelido, tr('vazio = o primeiro nome', 'blank = first name', 'vacío = el nombre')),
-          tr('O apelido aparece no lugar do nome em todo o app (deixe vazio para usar o nome).', 'The nickname shows instead of the name everywhere in the app (leave it blank to use the name).', 'El apodo aparece en lugar del nombre en toda la app (déjalo vacío para usar el nombre).')) +
-        cp(tr('Nomes no banco (como aparece no extrato)', 'Names at the bank (as on the statement)', 'Nombres en el banco (como aparece en el extracto)'), inp('psBanco', (p.banco || []).join(', '), tr('ex.: MARIA S LIMA — separe por vírgula', 'e.g. MARIA S LIMA — comma separated', 'ej.: MARIA S LIMA — separa con comas')),
-          p.tipo === 'casa' && API.nomesDoBanco(p).length ? tr('Já reconhecidos pelo nome completo: ', 'Already recognised from the full name: ', 'Ya reconocidos por el nombre completo: ') + API.nomesDoBanco(p).join(' · ') : '') +
-        cp(tr('Também chamado no app', 'Also called in the app', 'También llamado en la app'), inp('psAliases', (p.aliases || []).join(', '), tr('nomes antigos, apelidos do robô', 'old names, robot nicknames', 'nombres antiguos, apodos del robot'))) +
-        '<div class="ps-so-casa">' + cp(tr('E-mail (opcional)', 'E-mail (optional)', 'Correo (opcional)'), '<input id="psEmail" type="email" inputmode="email" value="' + esc(p.email || '') + '" placeholder="' + esc(tr('só de quem entra no app', 'only for who signs in', 'solo de quien entra en la app')) + '" autocomplete="off">',
-          tr('Só para quem vai entrar no MoneyTRIO: liga esta ficha ao convite da família (e à conta da pessoa). Fica no cofre da família.', 'Only for who will sign in to MoneyTRIO: links this card to the family invite (and to the person\'s account). Kept in the family vault.', 'Solo para quien va a entrar en MoneyTRIO: vincula esta ficha a la invitación de la familia (y a su cuenta). Queda en la caja fuerte de la familia.')) + '</div>' +   /* 1.5.0 (3.125) */
+        /* 1.9.0 (3.144, dono: "muitos campos de nome"): Nome (o que aparece no app) e "Como aparece no extrato/Pix"; o nome completo em
+           "Mais detalhes"; os nomes antigos ficam guardados sozinhos (aliases); o e-mail virou "Convidar para o MoneyTRIO" */
+        cp(tr('Nome', 'Name', 'Nombre'), inp('psNome', p.id ? API.rotulo(p) : ''), tr('É como aparece no app.', 'It is how it shows in the app.', 'Es como aparece en la app.')) +
+        '<div class="ps-nao-empresa"><div class="f ps-banco-f"><span class="lb">' + esc(tr('Como aparece no extrato/Pix', 'How it shows on the statement/Pix', 'Cómo aparece en el extracto/Pix')) + '</span>' + chipsBanco(p) +   /* div, não label: o toque no rótulo não pode cair no ✕ de um chip */
+          '<span class="hint">' + esc(tr('O app usa para reconhecer a pessoa nos lançamentos do banco.', 'The app uses it to recognise the person in bank entries.', 'La app lo usa para reconocer a la persona en los movimientos del banco.')) + '</span></div></div>' +
+        '<div class="ps-so-casa ps-convite">' + (p.email ? '' : '<button type="button" class="btn sm" data-ps-convidar="1">✉️ ' + esc(tr('Convidar para o MoneyTRIO', 'Invite to MoneyTRIO', 'Invitar a MoneyTRIO')) + '</button>') +
+          '<div class="ps-email"' + (p.email ? '' : ' hidden') + '>' + cp(tr('E-mail de quem vai entrar', 'E-mail of who will sign in', 'Correo de quien va a entrar'), '<input id="psEmail" type="email" inputmode="email" value="' + esc(p.email || '') + '" autocomplete="off">',
+            tr('Liga esta ficha ao convite da família (e à conta da pessoa). Fica no cofre da família.', 'Links this card to the family invite (and to the person\'s account). Kept in the family vault.', 'Vincula esta ficha a la invitación de la familia (y a la cuenta de la persona). Queda en la caja fuerte de la familia.')) + '</div></div>' +
+        '<details class="ps-mais ps-nao-empresa"><summary>' + esc(tr('Mais detalhes', 'More details', 'Más detalles')) + '</summary>' +
+          cp(tr('Nome completo (opcional)', 'Full name (optional)', 'Nombre completo (opcional)'), inp('psCompleto', p.id ? API.nomeCompleto(p) : ''),
+            tr('Ajuda o leitor de documentos a saber de quem é um contrato ou exame.', 'Helps the document reader know whose contract or exam it is.', 'Ayuda al lector de documentos a saber de quién es un contrato o examen.')) + '</details>' +
         '<div class="ps-so-empresa">' + cp(tr('CNPJ (opcional)', 'Company tax ID (optional)', 'CNPJ (opcional)'), inp('psCnpj', p.cnpj, '00.000.000/0000-00'), tr('Dado público. CPF o app não pede.', 'Public data. The app never asks for personal tax IDs.', 'Dato público. La app nunca pide el CPF.')) + '</div>' +
-      '</div>' +
-      '<div class="f-actions"><button class="btn" data-acao="ps-cancelar">' + esc(tr('Cancelar', 'Cancel', 'Cancelar')) + '</button>' +
-      '<button class="btn primary" data-acao="ps-salvar">' + esc(tr('Salvar', 'Save', 'Guardar')) + '</button></div></div>';
+      '</div></div>';
   }
+  /* 1.9.0 (3.144): os nomes do extrato/Pix como chips (✕ tira; "+ NOME" das sugestões põe; escrever e Enter põe); o valor vai no psBanco */
+  function chipsBanco(p) {
+    var l = (p.banco || []).slice(), sg = p.id ? API.sugestoesBanco(p) : [];
+    return '<div class="ps-chips" id="psChips">' + l.map(chip).join('') + '</div><input type="hidden" id="psBanco" value="' + esc(l.join(', ')) + '">' +
+      '<input id="psBancoNovo" placeholder="' + esc(tr('ex.: MARIA S LIMA — escreva e toque Enter', 'e.g. MARIA S LIMA — type and press Enter', 'ej.: MARIA S LIMA — escribe y pulsa Intro')) + '" autocomplete="off">' +
+      (sg.length ? '<div class="ps-sug"><span class="hint">' + esc(tr('Achei nos lançamentos:', 'Found in your entries:', 'Encontrado en los movimientos:')) + '</span> ' +
+        sg.map(function (t) { return '<button type="button" class="chip ps-chip-sug" data-pschip-por="' + esc(t) + '">+ ' + esc(t) + '</button>'; }).join(' ') + '</div>' : '');
+  }
+  function chip(t) { return '<span class="chip ps-chip">' + esc(t) + ' <button type="button" class="ps-chip-x" data-pschip-tirar="' + esc(t) + '" aria-label="' + esc(tr('Tirar ', 'Remove ', 'Quitar ') + t) + '">✕</button></span>'; }
+  function chipsLer() { var e = document.getElementById('psBanco'); return e && e.value ? e.value.split(',').map(function (x) { return x.trim(); }).filter(Boolean) : []; }
+  function chipsPor(l) {
+    var e = document.getElementById('psBanco'), c = document.getElementById('psChips'); if (!e || !c) return;
+    e.value = l.join(', '); c.innerHTML = l.map(chip).join('');
+    e.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  document.addEventListener('click', function (ev) {
+    var t = ev.target.closest && ev.target.closest('[data-pschip-tirar], [data-pschip-por], [data-ps-convidar]'); if (!t) return;
+    if (t.dataset.psConvidar) { var b = t.closest('.ps-convite'), em = b && b.querySelector('.ps-email'); if (em) { em.hidden = false; t.remove(); var i = em.querySelector('input'); if (i) i.focus(); } return; }
+    var l = chipsLer();
+    if (t.dataset.pschipTirar != null) chipsPor(l.filter(function (x) { return N(x) !== N(t.dataset.pschipTirar); }));
+    else { if (l.map(N).indexOf(N(t.dataset.pschipPor)) < 0) l.push(t.dataset.pschipPor); chipsPor(l); t.remove(); }
+  });
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Enter' || !ev.target || ev.target.id !== 'psBancoNovo') return;
+    ev.preventDefault(); var v = semDoc(ev.target.value).slice(0, 60).trim(); if (!v) return;
+    var l = chipsLer(); if (l.map(N).indexOf(N(v)) < 0) l.push(v); chipsPor(l); ev.target.value = '';
+  });
   function linhaPessoa(p) {
     var usos = API.usos(p.id);
     var eu = p === API.minhaFicha(), fora = p.tipo === 'casa' && API.pareceDeFora(p) && !p.familiaConfirmada;
@@ -456,14 +529,16 @@
       (p.arquivada ? '<button class="btn sm" data-acao="ps-desarquivar" data-id="' + esc(p.id) + '">' + esc(tr('voltar', 'restore', 'restaurar')) + '</button>'
         : (usos ? '<button class="btn sm" data-acao="ps-arquivar" data-id="' + esc(p.id) + '">' + esc(tr('arquivar', 'archive', 'archivar')) + '</button>'
           : '<button class="btn sm" data-acao="ps-apagar" data-id="' + esc(p.id) + '">' + esc(tr('apagar', 'delete', 'borrar')) + '</button>')) +
-      '</div></td></tr>' +
-      (editando === p.id ? '<tr class="ps-form-linha"><td colspan="3">' + formPessoa(p) + '</td></tr>' : '');
+      '</div></td></tr>';
   }
-  /* 1.7.0 (3.132): depois de editar/salvar/cancelar, a tela fica onde a pessoa estava (o render mantém a rolagem) e vai até a ficha */
-  /* 1.8.0 (3.142): o formulário abre no TOPO, com o Tipo à vista (antes o foco ia para o Apelido e a tela ficava rolada no meio) */
-  /* foco: o Tipo ao editar; o Apelido quando se abre a pessoa para renomear (tocar no nome no saldo do banco, "editar" do chefe) — sem rolar */
-  function abrirForm(ms, foco) { setTimeout(function () { var f = document.querySelector('.ps-form'); if (f && f.scrollIntoView) f.scrollIntoView({ block: 'start' }); var t = document.getElementById(foco || 'psTipo'); if (t && t.focus) t.focus({ preventScroll: true }); }, ms || 30); }
-  function irAte(sel) { setTimeout(function () { var e = document.querySelector(sel); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'nearest' }); }, 30); }
+  /* 1.9.0 (3.144): editar e "+ Adicionar" abrem numa folha própria (modulos/folha-editar.js): tela inteira no celular, painel no computador,
+     a lista atrás bloqueada, [Cancelar] [Salvar] fixos embaixo, o Voltar do celular = Cancelar. Ao fechar, a lista volta para o mesmo ponto.
+     foco: o Tipo ao editar; o Apelido quando se abre a pessoa para renomear (tocar no nome no saldo do banco). */
+  function abrirFolha(p, foco) {
+    Folha.abrir({ titulo: p ? tr('Editar', 'Edit', 'Editar') + ' · ' + API.rotulo(p) : tr('Nova pessoa', 'New person', 'Nueva persona'), html: formPessoa(p), foco: '#' + (foco || 'psTipo'),
+      salvar: function () { var q = API.salvar(lerForm()); Store.salvar(); render(); toast(tr('Salvo: ', 'Saved: ', 'Guardado: ') + API.rotulo(q)); return true; } });
+    mostrarCampos();
+  }
   /* apagar e arquivar sem confirm(): faz na hora e mostra "Apagado: X · Desfazer" por 8 s */
   function comDesfazer(msg, desfaz) {
     toast(msg, { tempo: 8000, acao: { rotulo: tr('Desfazer', 'Undo', 'Deshacer'), fn: function () { desfaz(); Store.salvar(); render(); } } });
@@ -489,7 +564,6 @@
       '<button class="btn sm primary" data-acao="ps-novo">' + esc(tr('+ Adicionar', '+ Add', '+ Añadir')) + '</button></div></div>' +
       '<p class="small muted aba-explica">' + esc(tr('Quem aparece nos lançamentos, compromissos e rendas. Mudou o nome aqui, muda em tudo na hora. CPF o app não pede.',
         'Who shows up in entries, commitments and income. Rename here and it changes everywhere at once. The app never asks for personal tax IDs.')) + '</p>';
-    if (editando === 'novo') h += formPessoa(null);   /* 1.7.0 (3.132): editar abre na própria ficha (linhaPessoa); só o "+ Adicionar" abre aqui */
     /* 1.7.0 (3.132): a ordem — "a mesma pessoa?" no topo, a família, as outras pessoas, as empresas; os nomes soltos no fim, recolhidos */
     var mp = API.mesmaPessoa();
     if (mp) h += '<div class="callout ps-juntar"><b>' + esc(tr(API.rotulo(mp.sai) + ' e ' + API.rotulo(mp.fica) + ' são a mesma pessoa?', 'Are ' + API.rotulo(mp.sai) + ' and ' + API.rotulo(mp.fica) + ' the same person?', '¿' + API.rotulo(mp.sai) + ' y ' + API.rotulo(mp.fica) + ' son la misma persona?')) + '</b> ' +
@@ -534,8 +608,8 @@
   function lerForm() {
     var v = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
     var f = document.querySelector('.ps-form');
-    return { id: f ? f.dataset.id : '', tipo: v('psTipo'), papel: v('psPapel'), nome: v('psNome'), meio: v('psMeio'), sobrenome: v('psSobrenome'),
-      apelido: v('psApelido'), banco: v('psBanco'), aliases: v('psAliases'), cnpj: v('psCnpj'), email: v('psEmail') };
+    var novo = semDoc(v('psBancoNovo')).trim(), banco = v('psBanco') + (novo ? ', ' + novo : '');   /* o que ficou escrito sem Enter também entra */
+    return { id: f ? f.dataset.id : '', tipo: v('psTipo'), papel: v('psPapel'), nome: v('psNome'), completo: v('psCompleto'), banco: banco, cnpj: v('psCnpj'), email: v('psEmail') };   /* 1.9.0 (3.144) */
   }
   function salvarERender(msg) { Store.salvar(); render(); if (msg) toast(msg); }
 
@@ -567,10 +641,11 @@
 
   MoneyModulos.registrar({
     id: 'pessoas',
-    versao: '1.8.0',
+    versao: '1.9.0',
     colecoes: [COL],
     iniciar: function () {
       try { if (ST && !cfg().pessoasV && (ST.gastos || []).length + (ST.recorrentes || []).length) { API.migrar(); Store.salvar(); } } catch (e) { console.warn('pessoas', e); }
+      try { if (API.migrar3144()) Store.salvar(); } catch (e) { console.warn('pessoas 3144', e); }   /* 1.9.0 (3.144): Nome + nome completo */
       try {   /* 1.1.0: apelido da casa que tinha ido para "nome no banco" (migração da 3.64) passa para aliases */
         if (temST() && cfg().pessoasV === 1) {
           lista().forEach(function (p) { var fica = [], vai = p.aliases || []; (p.banco || []).forEach(function (b) { (/\s/.test(String(b).trim()) ? fica : vai).push(b); }); p.banco = fica; if (vai.length) p.aliases = vai; });
@@ -593,17 +668,13 @@
     telas: { 'cfg-pessoas': { app: 'budget', render: function () { var h = tela(); setTimeout(mostrarCampos, 0); return h; },
       ajuda: { pt: { t: 'Pessoas da família', o: 'Quem aparece nos lançamentos; renomear muda em tudo.' }, en: { t: 'Family people', o: 'Who shows up in entries; renaming changes everywhere.' } } } },
     acoes: {
-      'ps-novo': function () { editando = 'novo'; render(); },
+      'ps-novo': function () { abrirFolha(null); },
+      'ps-titular-sim': function (el) { API.confirmarParecida(el.dataset.texto, el.dataset.id); salvarERender(tr('Guardado: esse nome do banco é dessa pessoa.', 'Saved: that bank name belongs to this person.', 'Guardado: ese nombre del banco es de esta persona.')); },
       'ps-familia': function () { API.trazerDaFamilia().then(function (n) { salvarERender(n ? n + tr(' pessoa(s) trazida(s) da família.', ' person(s) brought from the family.', ' persona(s) traída(s) de la familia.') : tr('Ninguém novo na família.', 'Nobody new in the family.', 'Nadie nuevo en la familia.')); }); },
-      'ps-editar': function (el) { editando = el.dataset.id; render(); abrirForm(); },
+      'ps-editar': function (el) { abrirFolha(API.porId(el.dataset.id)); },
       /* 3.116: de um aviso (ex.: o saldo previsto), tocar no nome da pessoa abre a ficha dela aqui */
-      'ps-abrir': function (el) { editando = el.dataset.id; if (el.closest('#genModal') && typeof fechar === 'function') fechar('genModal'); if (typeof irPara === 'function') irPara('cfg-pessoas'); else render(); abrirForm(80, 'psApelido'); },
+      'ps-abrir': function (el) { var p = API.porId(el.dataset.id); if (el.closest('#genModal') && typeof fechar === 'function') fechar('genModal'); if (typeof irPara === 'function') irPara('cfg-pessoas'); else render(); if (p) abrirFolha(p, 'psApelido'); },
       'ps-lista': function (el) { if (el.closest('#genModal') && typeof fechar === 'function') fechar('genModal'); if (typeof irPara === 'function') irPara('cfg-pessoas'); else render(); },   /* 1.5.0 (3.125): os atalhos abrem Pessoas da família */
-      'ps-cancelar': function () { var id = editando; editando = null; render(); if (id && id !== 'novo') irAte('[data-ps="' + id + '"]'); },
-      'ps-salvar': function () {
-        try { var p = API.salvar(lerForm()); editando = null; salvarERender(tr('Salvo: ', 'Saved: ', 'Guardado: ') + API.rotulo(p)); irAte('[data-ps="' + p.id + '"]'); }
-        catch (e) { toast(e.message, 'warn'); }
-      },
       'ps-arquivar': function (el) {
         var id = el.dataset.id, p = API.arquivar(id); salvarERender();
         if (p) comDesfazer(tr('Arquivado: ', 'Archived: ', 'Archivado: ') + API.rotulo(p), function () { API.desarquivar(id); });
@@ -628,7 +699,7 @@
         var p = API.salvar({ tipo: /\b(LTDA|S\.?A|ME|EIRELI|EPP)\b/i.test(texto) ? 'empresa' : 'outra', nome: titulo(texto), apelido: doBanco ? titulo(texto) : String(texto).trim(), banco: doBanco ? [texto] : [], aliases: doBanco ? [] : [texto] });
         Store.salvar();
         if (inp) { inp.value = API.rotulo(p); atualizarDica(inp); toast(tr('Cadastrado: ', 'Added: ', 'Registrado: ') + API.rotulo(p)); }
-        else { editando = p.id; render(); }
+        else { render(); abrirFolha(p); }
       }
     }
   });

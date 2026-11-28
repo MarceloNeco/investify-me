@@ -1,9 +1,10 @@
 /* =====================================================================
-   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.3.1 · 27/Nov/2026
+   modulos/saldo-previsto.js — o saldo previsto da conta, dia a dia, e a sugestão de resgate (3.77)        1.3.2 · 28/Nov/2026
    1.3.0 (3.116, dono: "que conta é essa?"): o aviso diz o primeiro dia negativo E o pior dia ("fica negativa em 30/11 (−R$ 968,83) e chega a
    −R$ 1.9xx em 05/12. Resgate R$ 2.100 até 29/11 (cobre o pior dia + 5% de folga)") e "ver por quê" lista as maiores saídas até o pior dia;
    a conta aparece inteira como o banco manda (agência e conta, dígito com hífen nos bancos conhecidos); o nome da pessoa abre a ficha dela.
    ---------------------------------------------------------------------
+     · 1.3.2 (3.144): o dono da conta pelo nome atual da pessoa (Pessoas.titularVer), nunca o rótulo cru do robô.
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · Para cada conta corrente com saldo vindo do robô (SaldoBanco): parte do saldo de hoje e soma, dia a dia, nos
        próximos 45 dias: as contas fixas a vencer (pela forma de pagamento e pela conta: débito automático e boletos
@@ -123,7 +124,7 @@
     },
     /* de quem é a conta (a pessoa do app, pelo dono que o robô manda) e de quando são os dados */
     dono: function (c) {
-      var p = c.dono && window.Pessoas && Pessoas.achar ? Pessoas.achar(c.dono) : null, n = p ? Pessoas.rotulo(p) : String(c.dono || '').trim();
+      var tv = window.Pessoas && Pessoas.titularVer ? Pessoas.titularVer(c.dono) : { nome: String(c.dono || '').trim(), p: null }, p = tv.p, n = tv.nome;   /* 1.3.2 (3.144): nunca o rótulo cru do robô */
       if (!p && /^[a-z]/.test(n)) n = n.charAt(0).toUpperCase() + n.slice(1);
       return { nome: n, id: p ? p.id : '', fem: p && p.genero ? p.genero === 'f' : /a$/i.test(N(n).split(' ')[0] || '') };
     },
@@ -226,7 +227,7 @@
   function alertas() { return API.contas().map(function (c) { var a = API.alerta(c); return a ? { c: c, a: a } : null; }).filter(Boolean); }
 
   MoneyModulos.registrar({
-    id: 'saldo-previsto', versao: '1.3.1', colecoes: [COL],
+    id: 'saldo-previsto', versao: '1.3.2', colecoes: [COL],
     pontos: {
       'budget.painel': cartao, 'custos.contas': cartao,
       'budget.atencao': function () {

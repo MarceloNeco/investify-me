@@ -1,6 +1,7 @@
 /* =====================================================================
-   modulos/cartoes.js — cartões por conta, com vários finais (3.65)        1.4.0 · 27/Nov/2026
+   modulos/cartoes.js — cartões por conta, com vários finais (3.65)        1.4.1 · 28/Nov/2026
    ---------------------------------------------------------------------
+     · 1.4.1 (3.144): "quem usa" sugerido pelo nome atual da pessoa; sem ficha, nada (nunca o rótulo cru do robô).
    O QUE FAZ
      CARTÃO = a conta do cartão (a fatura): apelido, titular, "Quem usa", bandeira, banco, fechamento, vencimento.
      Cada cartão tem uma lista de FINAIS, cada um com um tipo: físico | virtual | adicional (com o titular dele) | não sei.
@@ -152,8 +153,7 @@
     /* "quem usa" sugerido: o dono que o banco manda para essa conta de cartão (Conferência com o banco) */
     quemUsaSugerido: function (x) {
       var r = x.contaId && window.SaldoBanco ? SaldoBanco.contas().find(function (s) { return s.tipo === 'cartao' && s.contaId === x.contaId; }) : null;
-      var p = r && r.dono && window.Pessoas ? Pessoas.achar(r.dono) : null;
-      return p ? Pessoas.rotulo(p) : (r && r.dono) || '';
+      return r && r.dono && window.Pessoas && Pessoas.titularVer ? Pessoas.titularVer(r.dono).nome : '';   /* 1.4.1 (3.144): o nome atual; sem ficha, nada (nunca o rótulo cru) */
     },
     /* um toque: cadastra a conta do cartão com todos os finais (os tipos já marcados) e liga as compras deles */
     cadastrarEncontrado: function (chave, apelido, usa) {
@@ -313,7 +313,7 @@
 
   MoneyModulos.registrar({
     id: 'cartoes',
-    versao: '1.4.0',
+    versao: '1.4.1',
     pontos: {
       'cartao.form': function (ctx) {
         var c = ctx.c || ctx.semente || {};

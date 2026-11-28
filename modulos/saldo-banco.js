@@ -1,6 +1,7 @@
 /* =====================================================================
-   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.6.0 · 27/Nov/2026 (3.131: fatura a pagar × limite usado; 3.137: ticker e quantidade; 3.139: extrato × Open Finance)
+   modulos/saldo-banco.js — conferência com o banco (3.64; refeita na 3.65)        2.6.1 · 28/Nov/2026 (3.131: fatura a pagar × limite usado; 3.137: ticker e quantidade; 3.139: extrato × Open Finance)
    ---------------------------------------------------------------------
+     · 2.6.1 (3.144): o titular aparece pelo nome atual da pessoa (Pessoas.titularVer), nunca o rótulo cru do robô; sem ficha, "É a X?".
    O QUE FAZ
      O robô manda, na mesma caixa (money_entrada), itens que NUNCA viram lançamento (nuvem.js desvia para cá):
        {tipo:'saldo', id, banco, conta, conta_id, categoria_conta: 'conta'|'poupanca'|'cartao', final_conta, dono, saldo, data,
@@ -195,7 +196,8 @@
   };
 
   function linhaConta(r) {
-    var c = API.conferir(r), h = '<tr><td><span class="t-main">' + esc(API.rotulo(r)) + '</span><div class="t-sub">' + esc((r.dono ? r.dono + ' · ' : '') + tr('lido em ', 'read on ') + fmtData(r.data)) + '</div>';
+    var c = API.conferir(r), h = '<tr><td><span class="t-main">' + esc(API.rotulo(r)) + '</span><div class="t-sub">' + (function () { var tv = window.Pessoas && Pessoas.titularVer ? Pessoas.titularVer(r.dono) : { nome: r.dono || '' };   /* 2.6.1 (3.144): o nome atual da pessoa, nunca o rótulo cru do robô */
+      return esc((tv.nome ? tv.nome + ' · ' : '') + tr('lido em ', 'read on ') + fmtData(r.data)) + (tv.sug ? ' · ' + Pessoas.titularPergunta(r.dono, tv.sug) : ''); })() + '</div>';
     if (c.app !== null) {
       if (Math.abs(c.dif) > 1) h += '<div class="t-sub sb-dif down">⚠ ' + esc(tr('diferença de ', 'difference of ') + fmt(c.dif) + tr(' desde ', ' since ') + dm(c.desde)) +
         ' · <button class="linkinho" data-acao="sb-ver" data-id="' + esc(r.id) + '" data-de="' + esc(c.desde) + '" data-ate="' + esc(r.data) + '">' + esc(tr('ver os lançamentos', 'see the entries')) + '</button></div>';
@@ -246,7 +248,7 @@
 
   MoneyModulos.registrar({
     id: 'saldo-banco',
-    versao: '2.6.0',
+    versao: '2.6.1',
     colecoes: [COL],
     pontos: { 'budget.painel': cartao,
       /* 2.3.0 (3.116): no detalhe do lançamento, a conta (inteira para o dono; o final para os outros) */

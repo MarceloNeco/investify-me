@@ -2839,3 +2839,10 @@ svg .gl, .viz .gl{stroke:var(--viz-grade)}
 .ps-form, .ps-form *{white-space:normal}
 .ps-form .lb, .ps-form .hint{overflow-wrap:anywhere}
 .ps-form{scroll-margin-top:120px}
+/* 3.144: Pessoas — "Como aparece no extrato/Pix" em chips (modulos/pessoas.js 1.9.0) */
+.ps-chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}
+.ps-chip{display:inline-flex;align-items:center;gap:2px}
+.ps-chip-x{background:none;border:0;color:inherit;cursor:pointer;min-width:32px;min-height:32px;font-size:14px}
+.ps-sug{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.ps-chip-sug{cursor:pointer;border-style:dashed}
+.ps-mais{margin-top:8px}.ps-mais summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
