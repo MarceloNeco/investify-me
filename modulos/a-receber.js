@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/a-receber.js — VALORES A RECEBER: estornos, reembolsos, contestações (3.79)        1.0.1 · 26/Nov/2026
+   modulos/a-receber.js — VALORES A RECEBER: estornos, reembolsos, contestações (3.79)        1.1.0 · 28/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · Cadastro "A receber": de quem (nome/CNPJ), o quê (estorno, reembolso do plano de saúde, contestação no cartão,
@@ -17,6 +17,11 @@
      · Tela "A receber" (BudgetONE; pelo "+ Adicionar" e pelo cartão no topo de Contas fixas): total pendente, por
        pessoa/empresa e data; e, junto, a restituição do IR prevista (o compromisso que DeclEscolhas cria) e o reembolso de
        saúde estimado do ano (Saude.doAno), quando existem.
+     · 1.1.0 (3.144), estornos: o prazo sem data prometida passa a 45 dias (cerca de 2 faturas); atrasou: [Já recebi] [Adiar 15 dias]
+       [Desistir]; a compra mostra "⏳ estorno a receber R$ X" e, quando o crédito cai, "✓ estorno recebido em dd/mm"; o crédito que
+       fecha um pedido ligado à compra ganha estornoDe e, se estava sem categoria, a da compra (os dois se anulam no "Para onde foi");
+       um crédito único de 95 % a 102 % do que falta fecha o pedido (câmbio e IOF que não volta); total a receber no Painel e no 📥.
+       O robô manda o estorno como comprovante (subtipo "estorno", com compra_id): modulos/comprovantes.js 1.7.0 liga à compra certa.
      · Visão da casa: cada item segue o lançamento de origem (Escopo.de('a_receber') no visao-casa); sem lançamento, o que
        a pessoa marcar; na dúvida, reservado.
    API (window.AReceber)
@@ -32,7 +37,7 @@
    ===================================================================== */
 (function () {
   'use strict';
-  var COL = 'a_receber', DIAS = 30;
+  var COL = 'a_receber', DIAS = 45, ADIA = 15;   /* 1.1.0 (3.144): 45 dias (cerca de 2 faturas); adiar = 15 dias */
   var TIPOS = [['estorno', 'Estorno', 'Refund'], ['reembolso-saude', 'Reembolso do plano de saúde', 'Health plan reimbursement'], ['contestacao', 'Contestação no cartão', 'Card dispute'],
     ['restituicao-ir', 'Restituição do IR', 'Tax refund'], ['devolucao', 'Devolução', 'Return'], ['outro', 'Outro', 'Other']];
   function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
@@ -60,6 +65,15 @@
     return a.every(function (w) { return b.indexOf(w) >= 0; });
   }
 
+  /* 1.1.0 (3.144): o crédito que devolve a compra: estornoDe e, se veio sem categoria, a da compra (os dois se anulam) */
+  function anular(x, g) {
+    if (!x.gastoId || g.fluxo === 'entrada' || g.estornoDe) return;
+    var o = typeof Gasto !== 'undefined' && Gasto.todos().find(function (s) { return s.id === x.gastoId; }); if (!o) return;
+    g.estornoDe = o.id;
+    if (g.grupo === 'OUTROS' || !g.sub || g.sub === 'Sem categoria') { g.grupo = o.grupo; g.sub = o.sub; }
+  }
+  function totalAberto() { return n2(API.abertos().reduce(function (s, x) { return s + API.restante(x); }, 0)); }
+
   var API = {
     _hoje: null, TIPOS: TIPOS, lista: lista,
     achar: function (id) { return lista().find(function (x) { return x.id === id; }) || null; },
@@ -77,8 +91,11 @@
           if (x.pedidoEm && g.data && g.data < x.pedidoEm) return;
           var v = Math.abs(Number(g.valor) || 0), falta = API.restante(x);
           if (v > falta * 1.02 + 0.01 || !mesmoRecebedor(x, g)) return;
-          x.recebidos = x.recebidos || []; x.recebidos.push({ gid: g.id, valor: n2(Math.min(v, falta)), data: g.data || hoje() }); u[g.id] = x.id;
+          /* 1.1.0 (3.144): um crédito único de 95 % a 102 % do que falta fecha o pedido (câmbio, IOF que não volta) */
+          var tudo = !(x.recebidos || []).length && !(x.parcelas > 1) && v >= falta * 0.95;
+          x.recebidos = x.recebidos || []; x.recebidos.push({ gid: g.id, valor: n2(tudo ? falta : Math.min(v, falta)), data: g.data || hoje() }); u[g.id] = x.id;
           x.estado = API.restante(x) <= 0.01 ? 'recebido' : 'parcial';
+          anular(x, g);
           novos.push({ x: x, g: g, valor: n2(v) });
         });
       });
@@ -115,19 +132,19 @@
     var b = x.ondeBancoId && typeof Banco !== 'undefined' && Banco.achar(x.ondeBancoId); return b ? (b.apelido || b.nome) : '';
   }
   function situacao(x) {
-    if (x.estado === 'recebido') return '✓ ' + tr('recebido', 'received');
-    if (x.estado === 'desistiu') return tr('desistiu', 'gave up');
-    if (x.estado === 'parcial') return tr('recebido em parte: ', 'partly received: ') + fmt(API.recebido(x)) + tr(' de ', ' of ') + fmt(x.total);
-    return (API.prazo(x) < hoje() ? '⚠ ' : '') + tr('aguardando até ', 'waiting until ') + I18n.data(API.prazo(x));
+    if (x.estado === 'recebido') return '✓ ' + tr('recebido', 'received', 'recibido');
+    if (x.estado === 'desistiu') return tr('desistiu', 'gave up', 'desistió');
+    if (x.estado === 'parcial') return tr('recebido em parte: ', 'partly received: ', 'recibido en parte: ') + fmt(API.recebido(x)) + tr(' de ', ' of ', ' de ') + fmt(x.total);
+    return (API.prazo(x) < hoje() ? '⚠ ' : '') + tr('aguardando até ', 'waiting until ', 'esperando hasta ') + I18n.data(API.prazo(x));
   }
   function fraseCobrar(x) {
-    return x.quem + tr(' ainda não estornou ', ' has not refunded ') + fmt(API.restante(x)) + tr(' (pedido em ', ' (asked on ') + I18n.data(x.pedidoEm) + '). ' + tr('Cobrar de novo?', 'Chase it again?');
+    return x.quem + tr(' ainda não estornou ', ' has not refunded ', ' aún no ha devuelto ') + fmt(API.restante(x)) + tr(' (pedido em ', ' (asked on ', ' (pedido el ') + I18n.data(x.pedidoEm) + '). ' + tr('Cobrar de novo?', 'Chase it again?', '¿Reclamar de nuevo?');
   }
   function fraseCaiu(n) { return tr('Caiu o estorno de ', 'Refund from ') + n.x.quem + tr(': ', ' arrived: ') + fmt(n.valor) + (n.data ? tr(' em ', ' on ') + I18n.data(n.data) : ''); }   /* 3.116: com a data */
   function botoesCobrar(x) {
-    return '<button class="btn sm primary" data-acao="ar-recebi" data-id="' + esc(x.id) + '">✓ ' + esc(tr('Já recebi', 'Received')) + '</button>' +
-      '<button class="btn sm" data-acao="ar-cobrei" data-id="' + esc(x.id) + '">' + esc(tr('Cobrei de novo (+30 dias)', 'Chased again (+30 days)')) + '</button>' +
-      '<button class="btn sm" data-acao="ar-desisti" data-id="' + esc(x.id) + '">' + esc(tr('Desisti', 'Gave up')) + '</button>';
+    return '<button class="btn sm primary" data-acao="ar-recebi" data-id="' + esc(x.id) + '">✓ ' + esc(tr('Já recebi', 'Received', 'Ya lo recibí')) + '</button>' +
+      '<button class="btn sm" data-acao="ar-cobrei" data-id="' + esc(x.id) + '">' + esc(tr('Adiar 15 dias', 'Wait 15 more days', 'Aplazar 15 días')) + '</button>' +
+      '<button class="btn sm" data-acao="ar-desisti" data-id="' + esc(x.id) + '">' + esc(tr('Desistir', 'Give up', 'Desistir')) + '</button>';
   }
   /* os avisos "caiu": guardados até "ok, entendi" */
   function caidos() {
@@ -197,7 +214,7 @@
       campo(tr('Pedi em', 'Asked on'), Cal.campo('arPedido', x.pedidoEm || hoje(), {})) +
       campo(tr('Prometeram para (opcional)', 'Promised by (optional)'), Cal.campo('arProm', x.prometido || '', {})) + '</div>' +
       campo(tr('Protocolo ou observação', 'Reference or note'), '<input id="arProt" maxlength="120" value="' + esc(x.protocolo || '') + '">') +
-      '<p class="tiny muted">' + esc(tr('Sem data prometida, o app cobra você em 30 dias se nada cair.', 'With no promised date, the app reminds you in 30 days if nothing lands.')) + '</p>' +
+      '<p class="tiny muted">' + esc(tr('Sem data prometida, o app cobra você em 45 dias (cerca de 2 faturas) se nada cair.', 'With no promised date, the app reminds you in 45 days (about 2 card bills) if nothing lands.', 'Sin fecha prometida, la app te avisa en 45 días (unas 2 facturas) si no llega nada.')) + '</p>' +
       '<div class="f-actions">' + (x.id ? '<button class="btn" data-acao="ar-apagar" data-id="' + esc(x.id) + '">' + esc(tr('Apagar', 'Delete')) + '</button>' : '') +
       '<button class="btn" data-close="genModal">' + esc(t('ac.cancelar')) + '</button><button class="btn primary" data-acao="ar-salvar" data-id="' + esc(x.id || '') + '"' +
       (x.gastoId ? ' data-gasto="' + esc(x.gastoId) + '" data-origem="' + esc(x.origem || '') + '"' : '') + '>' + esc(t('ac.salvar')) + '</button></div>');
@@ -208,17 +225,32 @@
   function aviso(novos) { if (novos.length && typeof toast === 'function') toast(novos.map(fraseCaiu).join(' · ')); }
 
   MoneyModulos.registrar({
-    id: 'a-receber', versao: '1.0.1', colecoes: [COL],
+    id: 'a-receber', versao: '1.1.0', colecoes: [COL],
     pontos: {
       'lancamento.form': function (ctx) {
         var g = ctx.g; if (!g || !g.id || credito(g)) return '';
         var ja = lista().find(function (x) { return x.gastoId === g.id; });
         return '<div class="row" style="margin:4px 0 10px"><button type="button" class="btn sm" data-acao="ar-pedir" data-id="' + esc(g.id) + '">↩ ' +
-          esc(ja ? tr('Estorno pedido: ', 'Refund asked: ') + situacao(ja) : tr('Pedi estorno disto', 'I asked for a refund of this')) + '</button></div>';
+          esc(ja ? tr('Estorno pedido: ', 'Refund asked: ', 'Reembolso pedido: ') + situacao(ja) : tr('Pedi estorno disto', 'I asked for a refund of this', 'Pedí el reembolso de esto')) + '</button></div>';
+      },
+      /* 1.1.0 (3.144): a marca na compra */
+      'lancamento.linha': function (ctx) {
+        var g = ctx.g; if (!g || !g.id || credito(g)) return '';
+        var x = lista().find(function (a) { return a.gastoId === g.id && a.estado !== 'desistiu'; }); if (!x) return '';
+        if (x.estado === 'recebido') { var r = (x.recebidos || []).slice(-1)[0]; return ' <span class="tag ar-tag ar-ok">✓ ' + esc(tr('estorno recebido em ', 'refund received on ', 'reembolso recibido el ') + I18n.data((r && r.data) || hoje())) + '</span>'; }
+        return ' <span class="tag ar-tag">⏳ ' + esc(tr('estorno a receber ', 'refund to receive ', 'reembolso por recibir ') + fmt(API.restante(x))) + '</span>';
+      },
+      'budget.painel': function () {
+        var ab = API.abertos(); if (!ab.length) return '';
+        return '<button class="card card-link ar-painel" data-irpara="b-receber"><span>💸 ' + esc(tr('Estornos e reembolsos a receber: ', 'Refunds to receive: ', 'Reembolsos por recibir: ') + fmt(totalAberto()) + ' · ' + ab.length + tr(' pedido(s)', ' request(s)', ' pedido(s)')) + '</span><span class="small muted">›</span></button>';
+      },
+      'inbox.topo': function () {
+        var ab = API.abertos(); if (!ab.length) return '';
+        return '<p class="small ar-inbox-total" style="margin:0 0 8px">💸 ' + esc(tr('A receber (estornos e reembolsos): ', 'To receive (refunds): ', 'Por recibir (reembolsos): ') + fmt(totalAberto()) + ' · ' + ab.length + tr(' pedido(s)', ' request(s)', ' pedido(s)')) + ' <button class="linkinho" data-irpara="b-receber">›</button></p>';
       },
       'custos.topo': function () {
         var ab = API.abertos(); if (!ab.length) return '';
-        var tot = n2(ab.reduce(function (s, x) { return s + API.restante(x); }, 0)), at = API.atrasados().length;
+        var tot = totalAberto(), at = API.atrasados().length;
         return '<button class="card card-link ar-topo" data-irpara="b-receber"><span>💸 ' + esc(tr('A receber: ', 'To receive: ') + fmt(tot) + ' · ' + ab.length + tr(' pedido(s)', ' request(s)') + (at ? tr(' · ' + at + ' passou do prazo', ' · ' + at + ' overdue') : '')) + '</span><span class="small muted">›</span></button>';
       },
       'custos.adicionar': function () {
@@ -240,8 +272,8 @@
     },
     telas: {
       'b-receber': { app: 'budget', render: tela,
-        ajuda: { pt: { t: 'A receber', o: 'Estornos, reembolsos e contestações que você pediu: o app vigia e avisa quando cai ou quando atrasa.', f: ['"↩ Pedi estorno disto" no lançamento já preenche.', 'Atrasou: "Cobrei de novo" dá mais 30 dias.'] },
-                 en: { t: 'To receive', o: 'Refunds, reimbursements and disputes you asked for: the app watches and tells you when it lands or is late.', f: ['"↩ I asked for a refund" on the entry fills it in.', 'Late: "Chased again" gives 30 more days.'] } } }
+        ajuda: { pt: { t: 'A receber', o: 'Estornos, reembolsos e contestações que você pediu: o app vigia e avisa quando cai ou quando atrasa.', f: ['"↩ Pedi estorno disto" no lançamento já preenche.', 'Atrasou: "Adiar 15 dias" dá mais 15 dias.'] },
+                 en: { t: 'To receive', o: 'Refunds, reimbursements and disputes you asked for: the app watches and tells you when it lands or is late.', f: ['"↩ I asked for a refund" on the entry fills it in.', 'Late: "Wait 15 more days" gives 15 more days.'] } } }
     },
     ouvir: { 'gasto.novo': function (g) { if (credito(g)) setTimeout(function () { aviso(API.vigiar()); }, 0); } },
     acoes: {
@@ -270,7 +302,7 @@
         x.recebidos = x.recebidos || []; x.recebidos.push({ gid: '', valor: API.restante(x), data: hoje(), manual: true }); x.estado = 'recebido';
         Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN();
       },
-      'ar-cobrei': function (el) { var x = API.achar(el.dataset.id); if (!x) return; x.adiadoAte = mais(hoje(), DIAS); Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); toast(tr('Ok: o app pergunta de novo em 30 dias.', 'Ok: the app asks again in 30 days.')); },
+      'ar-cobrei': function (el) { var x = API.achar(el.dataset.id); if (!x) return; x.adiadoAte = mais(hoje(), ADIA); Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); toast(tr('Ok: o app pergunta de novo em 15 dias.', 'Ok: the app asks again in 15 days.', 'Ok: la app vuelve a preguntar en 15 días.')); },
       'ar-desisti': function (el) { var x = API.achar(el.dataset.id); if (!x) return; x.estado = 'desistiu'; Store.salvar(); render(); if (typeof renderInboxN === 'function') renderInboxN(); },
       'ar-marcar': function (el) {
         var g = Gasto.todos().find(function (x) { return x.id === el.dataset.gid; }), o = Gasto.todos().find(function (x) { return x.id === el.dataset.oid; }); if (!g || !o) return;

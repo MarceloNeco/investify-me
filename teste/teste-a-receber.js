@@ -2,8 +2,8 @@
    teste/teste-a-receber.js — 3.79: VALORES A RECEBER (modulos/a-receber.js). Dados FICTÍCIOS.
    Confere: "↩ Pedi estorno disto" numa compra 10× de R$ 600 preenche R$ 6.000 em 10× no cartão; o estorno de R$ 6.000 de
    uma vez marca "recebido" e avisa "Caiu o estorno"; o estorno parcela a parcela fica "recebido em parte: X de Y";
-   sem crédito em 30 dias → "Precisa da sua atenção" e 📥 "ainda não estornou … Cobrar de novo?"; "Cobrei de novo"
-   empurra 30 dias e volta depois; crédito sem cadastro → "Parece um estorno de …. Marcar?"; visão da casa segue o
+   sem crédito em 45 dias (3.144; antes 30) → "Precisa da sua atenção" e 📥 "ainda não estornou … Cobrar de novo?"; "Adiar 15 dias"
+   empurra 15 dias e volta depois; crédito sem cadastro → "Parece um estorno de …. Marcar?"; visão da casa segue o
    lançamento de origem; tela "A receber" com o total pendente e a restituição do IR.
    Uso: node teste/teste-a-receber.js
    ===================================================================== */
@@ -66,16 +66,16 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recor
     await credito('e3', '2026-10-25', 600, '↩ POUSADA GAMA 2/2');
     ok(await p.evaluate(() => { AReceber.vigiar(); return AReceber.lista().find((y) => y.quem === 'POUSADA GAMA').estado === 'recebido'; }), 'a 2ª parcela fecha: recebido');
 
-    console.log('4) sem crédito em 30 dias: aviso mensal até resolver');
+    console.log('4) sem crédito em 45 dias (3.144): aviso até resolver');
     await p.evaluate(() => AReceber.salvar({ quem: 'COMPANHIA AEREA DELTA', tipo: 'contestacao', total: 900, parcelas: 1, ondeCartaoId: 'ct1', pedidoEm: '2026-10-10' }));
-    ok(await p.evaluate(() => { AReceber._hoje = '2026-11-05'; return AReceber.atrasados().length === 0; }), 'no dia 05/11 (26 dias): ainda não');
-    await p.evaluate(() => { AReceber._hoje = '2026-11-12'; irPara('b-painel'); render(); });
+    ok(await p.evaluate(() => { AReceber._hoje = '2026-11-23'; return AReceber.atrasados().length === 0; }), 'no dia 23/11 (44 dias): ainda não');
+    await p.evaluate(() => { AReceber._hoje = '2026-11-25'; irPara('b-painel'); render(); });
     const a4 = await p.evaluate(() => ({ at: (document.querySelector('.ar-atencao') || {}).innerText || '', ib: (inboxGrupos().find((g) => g.id === 'receber') || {}).html || '' }));
     ok(/COMPANHIA AEREA DELTA ainda não estornou R\$\s?900,00 \(pedido em 10\/Out\/2026\)\. Cobrar de novo\?/.test(a4.at), '"Precisa da sua atenção": ' + JSON.stringify(a4.at));
-    ok(/ainda não estornou/.test(a4.ib) && /ar-cobrei/.test(a4.ib) && /ar-recebi/.test(a4.ib) && /ar-desisti/.test(a4.ib), '📥: o mesmo aviso, com "Já recebi", "Cobrei de novo (+30 dias)" e "Desisti"');
+    ok(/ainda não estornou/.test(a4.ib) && /ar-cobrei/.test(a4.ib) && /ar-recebi/.test(a4.ib) && /ar-desisti/.test(a4.ib), '📥: o mesmo aviso, com "Já recebi", "Adiar 15 dias" e "Desistir"');
     await p.click('.ar-atencao [data-acao="ar-cobrei"]');
-    ok(await p.evaluate(() => AReceber.atrasados().length === 0 && AReceber.lista().find((x) => x.quem === 'COMPANHIA AEREA DELTA').adiadoAte === '2026-12-12'), '"Cobrei de novo": some e volta em 12/12');
-    ok(await p.evaluate(() => { AReceber._hoje = '2026-12-13'; return AReceber.atrasados().length === 1; }), 'em 13/12 volta (todo mês até resolver)');
+    ok(await p.evaluate(() => AReceber.atrasados().length === 0 && AReceber.lista().find((x) => x.quem === 'COMPANHIA AEREA DELTA').adiadoAte === '2026-12-10'), '"Adiar 15 dias": some e volta em 10/12');
+    ok(await p.evaluate(() => { AReceber._hoje = '2026-12-11'; return AReceber.atrasados().length === 1; }), 'em 11/12 volta (até resolver)');
     await p.evaluate(() => { irPara('b-painel'); render(); });
     await p.click('.ar-atencao [data-acao="ar-recebi"]');
     ok(await p.evaluate(() => { const x = AReceber.lista().find((y) => y.quem === 'COMPANHIA AEREA DELTA'); return x.estado === 'recebido' && AReceber.atrasados().length === 0; }), '"Já recebi" resolve');

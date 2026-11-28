@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.6.1 · 28/Nov/2026
+   modulos/comprovantes.js — COMPROVANTES DO E-MAIL que o robô manda (3.95)        1.7.0 · 28/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, "adiante tudo do e-mail"; sem IA)
      · A caixa do robô (nuvem.js, money_entrada) traz um tipo novo de item, tipo "comprovante", tirado dos e-mails lidos
@@ -42,6 +42,10 @@
        cobrança no cartão (mesmo valor e final, ±10 dias) e não entra no 📥. Os serviços da conta: modulos/conta-servicos.js.
      · 1.6.1 (3.143): desempenho — ligarTudo(forcar) só cruza de novo quando os dados mudam (Store.salvos, lançamentos, comprovantes,
        pagamentos, pendentes, pré-autorizações); os "já usados" uma vez por passada; um lote do robô (gasto.novo) cruza uma vez, no fim.
+     · 1.7.0 (3.144): subtipo estorno (o robô: EBANX e outros; loja, valor, cartao_final, pedido, compra_id, id_unico) segue como o
+       reembolso para "A receber" (modulos/a-receber.js 1.1.0), agora ligado à COMPRA: pelo compra_id (o comprovante da compra e o
+       lançamento dele); sem compra_id, a única compra da mesma loja/descritor, valor (±1 %) e final, antes do estorno e sem outro estorno do robô.
+       Se a pessoa já tinha pedido o estorno da compra ("↩ Pedi estorno"), usa o mesmo pedido. O reembolso da Amazon ganha a mesma ligação.
      · 1.6.0 (3.137): subtipo extrato_investimentos (o extrato mensal da corretora): só informação, "extrato de dd/mm/aaaa · total US$ X"
        (ficha.total_carteira); as posições chegam à parte, uma por papel (tipo investimento → modulos/invest-banco.js).
    API (window.Comprovantes)
@@ -57,7 +61,7 @@
    ===================================================================== */
 (function () {
   'use strict';
-  var COL = 'comprovantes', SUBS = ['compra', 'reembolso', 'nota_fiscal', 'recibo_exterior', 'boleto', 'fatura', 'extrato_investimentos', 'outro'];   /* 1.6.0 (3.137): o extrato da corretora */
+  var COL = 'comprovantes', SUBS = ['compra', 'reembolso', 'estorno', 'nota_fiscal', 'recibo_exterior', 'boleto', 'fatura', 'extrato_investimentos', 'outro'];   /* 1.6.0 (3.137): o extrato da corretora */
   function pt() { return typeof I18n === 'undefined' || I18n.atual === 'pt'; }
   function tr(a, b, c) { return pt() ? a : (c != null && I18n.atual === 'es' ? c : b); }
   function n2(v) { return Math.round((Number(v) || 0) * 100) / 100; }
@@ -88,7 +92,7 @@
   function N(t) { return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
   function nomeG(g) { return ((g.contraparte && g.contraparte.nome) || g.descRobo || g.desc || '') + ' · ' + I18n.data(g.data); }
   function rotSub(s) {
-    return ({ compra: tr('Compra', 'Purchase', 'Compra'), reembolso: tr('Reembolso', 'Refund', 'Reembolso'), nota_fiscal: tr('Nota fiscal', 'Invoice', 'Factura'),
+    return ({ compra: tr('Compra', 'Purchase', 'Compra'), reembolso: tr('Reembolso', 'Refund', 'Reembolso'), estorno: tr('Estorno', 'Card refund', 'Reembolso en la tarjeta'), nota_fiscal: tr('Nota fiscal', 'Invoice', 'Factura'),
       recibo_exterior: tr('Recibo do exterior', 'Foreign receipt', 'Recibo del exterior'), boleto: tr('Boleto', 'Bank slip', 'Boleto'), fatura: tr('Fatura ou conta', 'Bill', 'Factura o recibo'), extrato_investimentos: tr('Extrato de investimentos', 'Investment statement', 'Extracto de inversiones'), outro: tr('Outro', 'Other', 'Otro') })[s] || s;
   }
   function quem(x) { return x.loja || x.remetente || x.descritor_fatura || ''; }
@@ -140,11 +144,37 @@
 
   /* ---------- reembolso → Valores a receber (3.79) ---------- */
   function ligarReembolso(x) {
-    if (x.arId || !window.AReceber || !(x.valor > 0)) return;
+    if (!window.AReceber || !(x.valor > 0)) return;
+    var ar = x.arId ? AReceber.achar(x.arId) : null;
+    if (x.arId && (!ar || ar.gastoId)) return;
+    var gc = compraDoEstorno(x);
+    /* 1.7.0 (3.144): a pessoa já tinha pedido o estorno desta compra ("↩ Pedi estorno"): o mesmo pedido, sem repetir */
+    var ja = gc && AReceber.lista().find(function (a) { return a.gastoId === gc.id && a !== ar; });
+    if (ja) { if (ar) AReceber.lista().splice(AReceber.lista().indexOf(ar), 1); x.arId = ja.id; x.estado = 'ok'; return; }
+    if (ar) { if (gc) { ar.gastoId = gc.id; ar.origem = window.Origem ? Origem.origemDe(gc) : ''; } return; }
     var c = x.final && typeof Banco !== 'undefined' ? (Banco.cartoes() || []).find(function (k) { return String(k.fim) === String(x.final); }) : null;
-    var ar = AReceber.salvar({ quem: quem(x), cnpj: String(x.cnpj || '').replace(/\D/g, ''), tipo: 'estorno', total: n2(x.valor), ondeCartaoId: c ? c.id : '',
-      protocolo: x.referencia || x.pedido || '', pedidoEm: x.data || hoje(), escopo: x.escopo, comprovanteId: x.id });
+    ar = AReceber.salvar({ quem: quem(x), cnpj: String(x.cnpj || '').replace(/\D/g, ''), tipo: 'estorno', total: n2(x.valor), ondeCartaoId: c ? c.id : (gc && gc.cartaoId) || '',
+      protocolo: x.referencia || x.pedido || '', pedidoEm: x.data || hoje(), escopo: x.escopo, comprovanteId: x.id,
+      gastoId: gc ? gc.id : '', origem: gc && window.Origem ? Origem.origemDe(gc) : '' });
     x.arId = ar.id; x.estado = 'ok';
+  }
+  /* 1.7.0 (3.144): a compra que o estorno devolve — pelo compra_id do robô (o comprovante da compra e o lançamento ligado a ele);
+     senão a única compra com a mesma loja/descritor, o mesmo valor (±1 %) e o mesmo final, antes do estorno e ainda sem outro estorno do robô */
+  function compraDoEstorno(x) {
+    var cid = x.ficha && x.ficha.compra_id ? String(x.ficha.compra_id) : '';
+    if (cid) {
+      var y = lista().find(function (z) { return z.subtipo === 'compra' && (z.id === cid || (z.ficha && (z.ficha.id_unico === cid || z.ficha.compra_id === cid))); });
+      var g = y && (gasto(y.gastoId) || Gasto.todos().find(function (h) { return h.ficha && h.ficha.cid === y.id; }));
+      if (g) return g;
+    }
+    var pedidos = {}; AReceber.lista().forEach(function (a) { if (a.gastoId && a.comprovanteId && a.comprovanteId !== x.id) pedidos[a.gastoId] = 1; });   /* já é de outro estorno do robô */
+    var fim = function (g) { var k = g.cartaoId && typeof Banco !== 'undefined' ? (Banco.cartoes() || []).find(function (c) { return c.id === g.cartaoId; }) : null; return k ? String(k.fim) : ''; };
+    var cs = Gasto.todos().filter(function (g) {
+      var v = Number(g.valor) || 0;
+      return v > 0 && g.fluxo !== 'entrada' && !pedidos[g.id] && (!x.data || !g.data || g.data <= x.data) && Math.abs(v - x.valor) <= x.valor * 0.01 + 0.01 &&
+        (!x.final || fim(g) === String(x.final)) && (parecida(quem(x), g.descRobo || g.desc) || parecida(x.descritor_fatura, g.descRobo || g.desc));
+    });
+    return cs.length === 1 ? cs[0] : null;
   }
 
   /* ---------- nota fiscal → a compra e a despesa médica (nf-ir 1.1.0) ---------- */
@@ -254,7 +284,7 @@
     if (x.subtipo === 'nota_fiscal' && window.PJNotas && PJNotas.daEmpresa(x)) { x.estado = 'ok'; return; }   /* 1.3.1 (3.130): nota EMITIDA pela PJ: vai para FiscalONE › PJ (modulos/pj-notas.js), não é compra */
     if (window.Terceiros && Terceiros.aplicar(x)) return;   /* 1.2.1 (3.105): conta de outra pessoa a ignorar */
     if (x.subtipo === 'compra') casarCompra(x);
-    else if (x.subtipo === 'reembolso') ligarReembolso(x);
+    else if (x.subtipo === 'reembolso' || x.subtipo === 'estorno') ligarReembolso(x);   /* 1.7.0 (3.144): o estorno (EBANX e outros) como o reembolso */
     else if (x.subtipo === 'nota_fiscal') ligarNota(x);
     else if (x.subtipo === 'recibo_exterior') ligarRecibo(x);
     else if (x.subtipo === 'boleto' || x.subtipo === 'fatura') ligarBoleto(x);
@@ -411,7 +441,7 @@
   function achar(el) { return lista().find(function (y) { return y.id === el.dataset.id; }); }
 
   MoneyModulos.registrar({
-    id: 'comprovantes', versao: '1.6.1', colecoes: [COL],
+    id: 'comprovantes', versao: '1.7.0', colecoes: [COL],
     pontos: {
       'lancamentos.topo': function () {
         var n = API.abertos().length; if (!n) return '';
