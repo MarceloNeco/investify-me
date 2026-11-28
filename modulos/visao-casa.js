@@ -1,6 +1,7 @@
 /* =====================================================================
-   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.5.0 · 28/Nov/2026
+   modulos/visao-casa.js — "dois cofres": o que é da casa e o que é reservado (3.66)        1.6.0 · 28/Nov/2026
    ---------------------------------------------------------------------
+     · 1.6.0 (3.144): toda a Família (tipo casa) entra na parte da casa, sem opção de tirar; as Pessoas próximas nunca entram (dono, 28/Nov/2026).
    O QUE FAZ (pedido do dono, 11/Nov/2026; desenho em DESENHO-visao-da-casa.md)
      Um membro da família com a visão "Só a casa" vê a parte da casa; o resto fica RESERVADO e nem chega ao aparelho dele
      (outra chave e outra regra no banco). Este módulo diz, no aparelho de quem vê tudo, o escopo de cada registro.
@@ -64,10 +65,9 @@
     /* as listas que a regra consulta (pessoas da visão casa, cartões dela, compromissos da casa) */
     preparar: function (est) {
       var dela = {}, cartoes = {}, rec = {};
-      ((est.visaoCasa && est.visaoCasa.pessoas) || []).forEach(function (id) {
-        var p = (est.pessoas || []).filter(function (x) { return x && x.id === id; })[0];
-        if (!suspeita(p)) dela[id] = 1;   /* 1.5.0 (3.142): quem parece de fora não conta até a pessoa confirmar que é da família */
-      });
+      /* 1.6.0 (3.144, dono: "Família = quem mora junto"): TODA a Família (tipo casa) conta na parte da casa, sem opção de tirar;
+         as Pessoas próximas (tipo outra) nunca entram. Quem parece de fora continua fora até a pessoa confirmar (1.5.0) */
+      (est.pessoas || []).forEach(function (p) { if (p && p.tipo === 'casa' && !p.arquivada && !suspeita(p)) dela[p.id] = 1; });
       (est.cartoes || []).forEach(function (c) {
         var quem = c.usaId || c.titularId;
         if (manual(c) === 'casa' || (quem && dela[quem]) || (c.finais || []).some(function (f) { return f.titularId && dela[f.titularId]; })) cartoes[c.id] = 1;
@@ -205,16 +205,16 @@
     var cj = API.chefeEJuntar(daCasa, eu);
     var pessoas = daCasa.filter(function (p) { return p !== cj.conta && p !== cj.eu && !(eu && p.uid === eu); });
     var deFora = (ST.pessoas || []).filter(function (p) { return p.tipo === 'outra' && !p.arquivada; });
-    var marcadas = (ST.visaoCasa && ST.visaoCasa.pessoas) || [];
+    var marcadas = daCasa.map(function (p) { return p.id; });   /* 1.6.0 (3.144): toda a Família */
     var membros = (Tela.lista || []).filter(function (m) { return m.papel !== 'chefe'; });
     if (!e.feito) {
       /* 1.5.0 (3.142): frase curta (sem "ler mais"); o chefe no topo, travado; cada pessoa numa linha, o aviso embaixo do nome */
       var chefe = cj.eu || (window.Pessoas && Pessoas.minhaFicha ? Pessoas.minhaFicha() : null);
       var nomeChefe = chefe ? API.nomeVer(chefe) : (contaNome() || tr('Você', 'You', 'Tú'));
       h += '<div class="vc-intro"><p class="small" style="margin:0 0 4px"><b>' + esc(tr('Quem é da casa', 'Who belongs to the household', 'Quién es de la casa')) + '</b></p>' +
-        '<p class="small" style="margin:0 0 8px">' + esc(tr('Marque quem mora com você. Os gastos dessas pessoas e dos cartões delas entram na parte da casa. Você (chefe) sempre vê tudo.',
-          'Tick who lives with you. The spending of these people and of their cards goes into the household part. You (the head) always see everything.',
-          'Marca quién vive contigo. Los gastos de estas personas y de sus tarjetas entran en la parte de la casa. Tú (jefe) siempre lo ves todo.')) + '</p></div>' +
+        '<p class="small" style="margin:0 0 8px">' + esc(tr('Toda a sua Família (quem mora com você) entra na parte da casa, com os cartões. As Pessoas próximas não entram. Você (chefe) sempre vê tudo.',
+          'All your Family (who lives with you) goes into the household part, with their cards. Close people do not. You (the head) always see everything.',
+          'Toda tu Familia (quien vive contigo) entra en la parte de la casa, con sus tarjetas. Las personas cercanas no. Tú (jefe) siempre lo ves todo.')) + '</p></div>' +
         (cj.perguntar ? '<div class="aviso-box vc-quem-sou"><p class="small" style="margin:0 0 6px"><b>' + esc(tr('Qual destas fichas é você?', 'Which of these cards is you?', '¿Cuál de estas fichas eres tú?')) + '</b> ' +
           esc(tr('Você (o chefe) vê tudo e não entra na lista da casa. Pergunto uma vez só.', 'You (the head) see everything and are not on the household list. I ask only once.', 'Tú (el jefe) lo ves todo y no entras en la lista de la casa. Lo pregunto una sola vez.')) + '</p>' +
           daCasa.map(function (p) { return '<button class="btn sm" data-acao="vc-sou" data-id="' + esc(p.id) + '">' + esc(API.nomeVer(p)) + '</button> '; }).join('') +
@@ -228,8 +228,8 @@
           ' <span class="small muted">(' + esc(tr('você · chefe', 'you · head', 'tú · jefe')) + ')</span></label>' +
           (chefe ? ' <button type="button" class="linkinho" data-acao="ps-abrir" data-id="' + esc(chefe.id) + '">' + esc(tr('editar', 'edit', 'editar')) + '</button>' : '') + '</div></div>' +
         pessoas.filter(function (p) { return p !== chefe; }).map(function (p) {
-          var fora = suspeita(p), marcada = marcadas.indexOf(p.id) >= 0 && !fora;
-          return '<div class="vc-pessoa" data-id="' + esc(p.id) + '"><div class="vc-pessoa-l"><label class="linha-check"><input type="checkbox" data-acao="vc-pessoa" data-id="' + esc(p.id) + '"' + (marcada ? ' checked' : '') + '> ' + esc(API.nomeVer(p)) + '</label>' +
+          var fora = suspeita(p), marcada = !fora;   /* 1.6.0 (3.144): sem opção de tirar quem é da Família */
+          return '<div class="vc-pessoa" data-id="' + esc(p.id) + '"><div class="vc-pessoa-l"><label class="linha-check"><input type="checkbox" disabled aria-disabled="true"' + (marcada ? ' checked' : '') + '> ' + esc(API.nomeVer(p)) + '</label>' +
             ' <button type="button" class="linkinho" data-acao="ps-abrir" data-id="' + esc(p.id) + '">' + esc(tr('editar', 'edit', 'editar')) + '</button></div>' +
             (fora ? '<div class="aviso-box vc-de-fora small"><span>' + esc(tr('Esta pessoa é da família?', 'Is this person family?', '¿Esta persona es de la familia?')) + '</span>' +
               '<button type="button" class="btn sm" data-acao="vc-de-fora" data-id="' + esc(p.id) + '">' + esc(tr('Não, é de fora', 'No, not family', 'No, es de fuera')) + '</button></div>' : '') + '</div>';
@@ -270,7 +270,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'visao-casa', versao: '1.5.0', colecoes: [COL],
+    id: 'visao-casa', versao: '1.6.0', colecoes: [COL],
     pontos: {
       'budget.painel': function () { return API.soCasa() ? gastosDaFamilia() : ''; },
       /* 1.1.0 (3.75): no 📥, o que se pede e por quê, numa linha; o botão abre o cartão sem trocar de app */

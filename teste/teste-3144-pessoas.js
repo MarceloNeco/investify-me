@@ -8,7 +8,10 @@
       no celular a folha ocupa a tela; no computador é um painel;
    3) campos: Nome, "Como aparece no extrato/Pix" em chips (Enter põe, ✕ tira, sugestão dos lançamentos), "Mais detalhes" fechado com
       o nome completo, e o e-mail atrás de "Convidar para o MoneyTRIO"; sem Apelido, Nome do meio, Sobrenome nem "Também chamado";
-   4) migração sem perder nada: apelido → Nome; nome + meio + sobrenome → nome completo; o antigo fica guardado; os nomes velhos ainda acham.
+   5) o desenho: três partes (Família, Pessoas próximas, Empresas) com "+ Adicionar" cada; papel como texto; a relação em 1 toque e a regra
+      só no app (Pix para a diarista vira Habitação › Diarista); toda a Família na parte da casa, nenhuma pessoa próxima; "é X (sogra)?".
+   4) migração sem perder nada: da família, o nome do cadastro → Nome (o apelido, código do robô, vai para os nomes antigos); nome + meio +
+      sobrenome → nome completo; o antigo fica guardado; os nomes velhos ainda acham.
    Uso: node teste/teste-3144-pessoas.js
    ===================================================================== */
 'use strict';
@@ -44,10 +47,10 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
 
     console.log('4) migração sem perder nada');
     const m = await p.evaluate(() => { const a = Pessoas.porId('p1'), b = Pessoas.porId('p2'), c = Pessoas.porId('p3');
-      return { a: [a.nome, a.completo, Pessoas.rotulo(a), a.antes3144 && a.antes3144.sobrenome], b: [b.nome, b.completo, Pessoas.rotulo(b), b.antes3144 && b.antes3144.apelido], c: [c.nome, c.completo, Pessoas.rotulo(c)],
+      return { a: [a.nome, a.completo, Pessoas.rotulo(a), a.antes3144 && a.antes3144.sobrenome], b: [b.nome, b.completo, Pessoas.rotulo(b), b.antes3144 && b.antes3144.apelido, (b.aliases || []).join()], c: [c.nome, c.completo, Pessoas.rotulo(c)],
         acha: ['Zeca', 'Carlos', 'Carlos Exemplo', 'Carlos Pereira Exemplo', 'Beatriz', 'Bia'].map((t) => (Pessoas.achar(t) || {}).id).join(',') }; });
     ok(m.a.join('|') === 'Carlos|Carlos Pereira Exemplo|Carlos|Exemplo', 'sem apelido: Nome "Carlos", nome completo "Carlos Pereira Exemplo", o sobrenome antigo guardado: ' + JSON.stringify(m.a));
-    ok(m.b.join('|') === 'Bia|Beatriz Teste|Bia|Bia', 'com apelido: Nome "Bia", nome completo "Beatriz Teste", o apelido antigo guardado: ' + JSON.stringify(m.b));
+    ok(m.b.join('|') === 'Beatriz|Beatriz Teste|Beatriz|Bia|Bia', 'com apelido (código do robô): Nome "Beatriz", nome completo "Beatriz Teste", "Bia" nos nomes antigos e guardado: ' + JSON.stringify(m.b));
     ok(m.c.join('|') === 'Dudu||Dudu', 'só o nome: fica "Dudu", sem nome completo');
     ok(m.acha === 'p1,p1,p1,p1,p2,p2', 'os nomes velhos e o nome completo ainda acham a pessoa: ' + m.acha);
 
@@ -59,10 +62,10 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
     const sb = await p.evaluate(() => [...document.querySelectorAll('.sb-card tr')].map((r) => r.innerText.replace(/\s+/g, ' ')).filter((t) => /1111|2222/.test(t)));
     const l1 = sb.find((t) => /1111/.test(t)) || '', l2 = sb.find((t) => /2222/.test(t)) || '';
     ok(/Carlos · lido em/.test(l1) && !/Zeca/.test(l1), 'conta ···1111: "Carlos", não "Zeca": ' + JSON.stringify(l1));
-    ok(/É a Bia\?/.test(l2) && !/BIA T/.test(l2), 'conta ···2222 (rótulo "BIA T", sem ficha): pergunta "É a Bia?", e o rótulo cru não aparece: ' + JSON.stringify(l2));
+    ok(/É Beatriz\?/.test(l2) && !/BIA T/.test(l2), 'conta ···2222 (rótulo "BIA T", sem ficha): pergunta "É Beatriz?" (sem artigo: o gênero não está na ficha), e o rótulo cru não aparece: ' + JSON.stringify(l2));
     await p.click('[data-acao="ps-titular-sim"]'); await p.waitForTimeout(150);
     const l2b = await p.evaluate(() => [...document.querySelectorAll('.sb-card tr')].map((r) => r.innerText.replace(/\s+/g, ' ')).find((t) => /2222/.test(t)) || '');
-    ok(/Bia · lido em/.test(l2b) && !/É a/.test(l2b), 'confirmado: a conta mostra "Bia": ' + JSON.stringify(l2b));
+    ok(/Beatriz · lido em/.test(l2b) && !/É Beatriz/.test(l2b), 'confirmado: a conta mostra "Beatriz": ' + JSON.stringify(l2b));
     ok(await p.evaluate(() => SaldoPrevisto.dono({ dono: 'Zeca' }).nome === 'Carlos' && SaldoPrevisto.dono({ dono: 'Nome Que Ninguem Tem' }).nome === ''), 'saldo previsto: "Zeca" vira "Carlos"; rótulo desconhecido não aparece cru');
 
     console.log('2) editar numa folha própria');
@@ -109,6 +112,36 @@ const LOCAL = { v: 1, config: { fitaLigada: false, pessoasV: 2 }, posicoes: [], 
     const s3 = await p.evaluate(() => { const x = Pessoas.porId('p1'); return { banco: x.banco, aliases: x.aliases, achou: (Pessoas.achar('C PEREIRA EXEMPLO') || {}).id }; });
     ok(JSON.stringify(s3.banco) === '["CARLOS P EXEMPLO","C PEREIRA EXEMPLO"]' && s3.achou === 'p1', 'salvo: os 2 nomes do extrato (o tirado não), e o extrato acha a pessoa: ' + JSON.stringify(s3.banco));
     ok(s3.aliases.indexOf('Zeca') >= 0, 'os nomes antigos continuam guardados (sem campo): ' + JSON.stringify(s3.aliases));
+
+    console.log('5) o desenho: Família, Pessoas próximas e Empresas');
+    await p.setViewportSize({ width: 390, height: 800 });
+    await p.evaluate(() => { irPara('cfg-pessoas'); render(); });
+    const t5 = await p.evaluate(() => ({ grupos: [...document.querySelectorAll('.ps-grupo')].map((g) => g.dataset.grupo + ':' + g.querySelector('h3').textContent + ':' + (g.querySelector('[data-acao="ps-novo"]') || {}).dataset.tipo),
+      seletores: document.querySelectorAll('.ps-papel-sel, .ps-revise').length, papel: (document.querySelector('[data-ps="p1"] .t-sub') || {}).textContent || '' }));
+    ok(t5.grupos.join('|') === 'casa:Família:casa|outra:Pessoas próximas:outra|empresa:Empresas e instituições:empresa', 'três partes, cada uma com o seu "+ Adicionar": ' + JSON.stringify(t5.grupos));
+    ok(t5.seletores === 0 && /^Responsável/.test(t5.papel), 'sem seletor Responsável/Dependente aberto nem "Confirme"; o papel aparece como texto: ' + JSON.stringify(t5.papel));
+    await p.click('.ps-grupo[data-grupo="outra"] [data-acao="ps-novo"]'); await p.waitForTimeout(100);
+    ok(await p.evaluate(() => document.getElementById('psTipo').value === 'outra' && !document.querySelector('.ps-so-outra').hidden && document.querySelector('.ps-regra').hidden), '"+ Adicionar" de Pessoas próximas já vem com o tipo e mostra "Quem é para você"');
+    await p.fill('#psNome', 'Diarista Exemplo'); await p.click('input[name="psRelacao"][value="diarista"]');
+    const rg = await p.evaluate(() => ({ vis: !document.querySelector('.ps-regra').hidden, txt: document.getElementById('psRegraTxt').textContent }));
+    ok(rg.vis && /Pix para esta pessoa vira Habitação › Diarista/.test(rg.txt), 'diarista em 1 toque: "Pix para esta pessoa vira Habitação › Diarista": ' + JSON.stringify(rg.txt));
+    await p.fill('#psBancoNovo', 'DIARISTA EXEMPLO SILVA'); await p.press('#psBancoNovo', 'Enter');
+    await p.click('#folhaSalvar'); await p.waitForTimeout(150);
+    await p.evaluate(() => { Pessoas.salvar({ tipo: 'outra', nome: 'Inquilina Exemplo', banco: ['INQUILINA EXEMPLO COSTA'], relacao: 'inquilino' }); Pessoas.salvar({ tipo: 'outra', nome: 'Sogra Exemplo', banco: ['SOGRA EXEMPLO LIMA'], relacao: 'sogra' }); });
+    const r5 = await p.evaluate(() => {
+      const a = Gasto.add({ id: 'gx1', data: '2026-11-20', valor: 180, grupo: 'OUTROS', sub: 'Sem categoria', desc: 'PIX ENVIADO DIARISTA EXEMPLO SILVA', contato: 'DIARISTA EXEMPLO SILVA', origem: 'robo' });
+      const b = Gasto.add({ id: 'gx2', data: '2026-11-20', valor: 1500, grupo: 'RENDA', sub: 'Extrato bancário', desc: 'PIX RECEBIDO INQUILINA EXEMPLO COSTA', contato: 'INQUILINA EXEMPLO COSTA', origem: 'robo' });
+      const c = Gasto.add({ id: 'gx3', data: '2026-11-20', valor: 300, grupo: 'RENDA', sub: 'Extrato bancário', desc: 'PIX RECEBIDO SOGRA EXEMPLO LIMA', contato: 'SOGRA EXEMPLO LIMA', origem: 'robo' });
+      const d = Gasto.add({ id: 'gx4', data: '2026-11-21', valor: 90, grupo: 'LAZER', sub: 'Cinema', desc: 'PIX ENVIADO DIARISTA EXEMPLO SILVA', contato: 'DIARISTA EXEMPLO SILVA', origem: 'robo' });
+      return [a, b, c, d].map((g) => g.grupo + '/' + g.sub); });
+    ok(r5[0] === 'HABITACAO/Diarista' && r5[1] === 'RENDA/Aluguel recebido', 'Pix sem categoria: para a diarista vira Habitação › Diarista; da inquilina vira Renda › Aluguel recebido: ' + JSON.stringify(r5));
+    ok(r5[2] === 'RENDA/Extrato bancário' && r5[3] === 'LAZER/Cinema', 'o que não tem regra (Pix que vem da sogra) e o que já tem categoria ficam como estão');
+    ok(await p.evaluate(() => /Pix → Habitação › Diarista/.test(document.querySelector('[data-ps]') && [...document.querySelectorAll('.ps-grupo[data-grupo="outra"] .t-sub')].map((x) => x.textContent).join('|'))), 'a linha da diarista mostra "Diarista · … · Pix → Habitação › Diarista"');
+    const vc = await p.evaluate(() => { Escopo.preparar(Store.estado); return Escopo.pessoasDela().sort().join(','); });
+    ok(vc === 'p1,p2,p3', 'parte da casa: toda a Família (p1, p2, p3), sem marcar nada; nenhuma pessoa próxima: ' + vc);
+    const q5 = await p.evaluate(() => { const s = Pessoas.porId(Pessoas.achar('Sogra Exemplo').id); Gasto.add({ id: 'gx5', data: '2026-11-22', valor: 10, grupo: 'PESSOAL', sub: 'Presente', desc: 'X', quem: 'Sogra Exempl', origem: 'manual' });
+      irPara('cfg-pessoas'); render(); return [...document.querySelectorAll('.ps-q')].map((x) => x.innerText.replace(/\s+/g, ' ')).join('|'); });
+    ok(/Sogra Exemplo \(sogra\)\?.*Sim, é Sogra Exemplo/.test(q5), 'nome solto parecido vira "é Sogra Exemplo (sogra)? [Sim, é Sogra Exemplo]": ' + JSON.stringify(q5));
 
     console.log('2b) no computador, um painel');
     await p.setViewportSize({ width: 1366, height: 900 }); await p.click('[data-ps="p2"] [data-acao="ps-editar"]'); await p.waitForTimeout(100);
