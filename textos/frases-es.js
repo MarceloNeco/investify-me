@@ -1,5 +1,5 @@
 /* =====================================================================
-   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.141 · 27/Nov/2026
+   textos/frases-es.js — as frases inteiras em espanhol (da Espanha) para o Verter (3.89)   3.142 · 28/Nov/2026
    ---------------------------------------------------------------------
    Mesmo esquema do textos/frases-en.js: a chave é a frase em português, o valor é a frase em espanhol. O que não estiver
    aqui aparece em INGLÊS (FRASES_EN). O espanhol ainda é ESCONDIDO: só o interruptor de teste ?lang=es liga, e ele
@@ -8,6 +8,16 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.142 — rascunho, revisar */
+  'Família arrumada: você no topo, o inquilino fora e a ficha mais clara':'Familia arreglada: tú arriba, el inquilino fuera y una ficha más clara',
+  '👪 Configurações → Família no MoneyTRIO → "Quem é da casa": você aparece sempre no topo, como "(você · chefe)", com a caixa marcada e o "editar" para trocar o seu nome. Cada pessoa fica numa linha, e o aviso "Esta pessoa é da família?" vem embaixo do nome, sem quebrar no celular.':'👪 Configuración → Familia en MoneyTRIO → "Quién es de la casa": tú apareces siempre arriba, como "(tú · jefe)", marcado y con "editar" para cambiar tu nombre. Cada persona va en su línea, y el aviso "¿Esta persona es de la familia?" queda debajo del nombre, sin romperse en el móvil.',
+  '🏠 Quem parece ser de fora (inquilino, prestador…) não vem mais marcado e não entra na parte da casa até você marcar. "Não, é de fora" leva a pessoa para Outras pessoas, com "Desfazer". Em Pessoas da família, você também aparece primeiro.':'🏠 Quien parece ser de fuera (inquilino, proveedor…) ya no viene marcado y no entra en la parte de la casa hasta que lo marques. "No, es de fuera" lo lleva a Otras personas, con "Deshacer". En Personas de la familia, tú también apareces primero.',
+  '👥 Pessoas da família: o papel de cada um tem 3 opções — Responsável, Dependente e "Não é da família (de fora)" (vai na hora para Outras pessoas, com Desfazer). Quem parece de fora já vem com essa opção e "é isso?". Você aparece primeiro, como responsável. Quem tinha virado "da casa" sem ser (ex.: um inquilino) passou para Outras pessoas, com um aviso e Desfazer.':'👥 Personas de la familia: el papel de cada uno tiene 3 opciones — Responsable, Dependiente y "No es de la familia (de fuera)" (pasa al momento a Otras personas, con Deshacer). Quien parece de fuera ya viene con esa opción y "¿es así?". Tú apareces primero, como responsable. Quien había quedado "de la casa" sin serlo (ej.: un inquilino) pasó a Otras personas, con un aviso y Deshacer.',
+  '✏️ Editar uma pessoa abre a ficha no topo, com o Tipo em destaque: "Da casa (família)", "Outras pessoas (não é da família)" ou "Empresas e instituições". Se a pessoa parece de fora, a ficha avisa "Parece alguém de fora da família. É isso?".':'✏️ Editar a una persona abre la ficha arriba, con el Tipo destacado: "De la casa (familia)", "Otras personas (no son de la familia)" o "Empresas e instituciones". Si la persona parece de fuera, la ficha avisa "Parece alguien de fuera de la familia. ¿Es así?".',
+  /* 3.142 — rascunho, revisar */
+  'editar':'editar',
+  'Editar':'Editar',
+  'Cancelar':'Cancelar',
   /* 3.141 — rascunho, revisar */
   'Tag e pedágio':'Telepeaje y peajes',
   '🚗 A categoria do Veículo "Sem Parar / Pedagio" agora se chama "Tag e pedágio". O que você já tinha (lançamentos, compromissos, limite do orçamento e o que o app aprendeu) mudou junto, sem perder o histórico; o que chegar com o nome antigo entra no novo.':'🚗 La categoría de Vehículo "Sem Parar / Pedagio" ahora se llama "Telepeaje y peajes". Lo que ya tenías (movimientos, compromisos, límite del presupuesto y lo que la app aprendió) cambió con ella, sin perder el historial; lo que llegue con el nombre antiguo entra en el nuevo.',

@@ -2,7 +2,10 @@
    teste/teste-fumaca-telas.js — teste de fumaça para ARRUMAÇÃO INTERNA (3.48)
    ---------------------------------------------------------------------
    Compara as telas principais de duas cópias do app — a de ANTES (outra pasta, ex.: uma cópia do main) e a
-   de agora (esta pasta) — em 390 e 1366 px: foto da tela, em português e em inglês, e o HTML desenhado.
+   de agora (esta pasta) — foto da tela e o HTML desenhado em PT, EN e ES.
+   3.142 (REGRA FIXA do dono, 28/Nov/2026: toda tela mexida é conferida em celular, tablet, notebook e monitor grande): as larguras
+   são 360 e 390 (celular), 768 (tablet), 1366 (notebook), 1920 e 2560 (monitor grande). As duas cópias são fotografadas ao mesmo
+   tempo, uma tela por vez (3 telas de uma vez deixou o Painel do Budget instável sob carga).
    Também abre cada verbete do glossário e cada aula do Coach nas duas cópias e compara o texto.
    Tem de dar igual (o número da versão vira 0.00 e a data dela 00/Xxx/0000, "N versões" e a lista "O que há de novo" sai, nas duas), e sem nenhum erro de página. Serve para mudanças que "não mudam nada para você".
    Uso (na pasta raiz):
@@ -47,9 +50,13 @@ const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify',
     const p = await ctx.newPage(); const erros = []; p.on('pageerror', (e) => erros.push(String(e)));
     await p.clock.setFixedTime(new Date('2026-11-06T10:00:00-03:00'));
     await p.goto(BASE + '/'); await p.waitForFunction(() => typeof Store !== 'undefined' && Store.estado && (Store.estado.posicoes || []).length === 2);
+    /* 3.142: as categorias do Veículo entram num laço de 500 ms nas versões até a 3.141 (corrida com o primeiro desenho); espera as duas cópias */
+    await p.waitForFunction(() => !!(Store.estado.config && Store.estado.config.veic399), null, { timeout: 5000 }).catch(() => {});
     await p.evaluate((a) => { I18n.atual = a.lang; abrirApp(a.tela[0]); if (a.tela[1] === 'hub') mostrarHub(); else irPara(a.tela[1]); }, { lang, tela });
-    await p.evaluate(() => {
-      document.querySelectorAll('#toasts .toast').forEach((e) => e.parentNode.removeChild(e)); window.scrollTo(0, 0);
+    /* 3.142: a normalização vira uma função da página e roda de novo na hora da foto e na hora de ler o HTML: sob carga a tela às
+       vezes se redesenha sozinha depois (ex.: aviso de cotação) e a versão e "O que há de novo" voltavam numa das cópias */
+    await p.evaluate(() => { window.__norm = () => {
+      document.querySelectorAll('#toasts .toast').forEach((e) => e.parentNode.removeChild(e));
       /* a lista "O que há de novo" ganha a versão nova de propósito: sai das duas cópias */
       document.querySelectorAll('ol.mudancas').forEach((e) => e.parentNode.removeChild(e));
       /* 3.69: o ✨ IA saiu da faixa e foi para a barra de cima (#btnIA); a faixa sem anúncio nem modo de teste sumiu.
@@ -62,10 +69,10 @@ const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify',
       const rv = new RegExp('(^|[^\\d.,])' + VERSAO.replace('.', '\\.') + '(?![\\d,])', 'g');   /* só o número inteiro: "3.56" não mexe em "R$ 3.561,50" */
       /* a data da versão também muda de propósito ("atualizado em 11/Nov/2026"): vira o mesmo texto nas duas cópias */
       /* só perto do número da versão (o rodapé e "Versão e o que mudou"): outra data igual na tela é dado, fica */
-      const dvs = []; if (typeof MUDANCAS !== 'undefined' && MUDANCAS[0] && MUDANCAS[0].d) { const L0 = I18n.atual; ['pt', 'en'].forEach((L) => { I18n.atual = L; dvs.push(I18n.data(MUDANCAS[0].d)); }); I18n.atual = L0; }
+      const dvs = []; if (typeof MUDANCAS !== 'undefined' && MUDANCAS[0] && MUDANCAS[0].d) { const L0 = I18n.atual; ['pt', 'en', 'es'].forEach((L) => { I18n.atual = L; dvs.push(I18n.data(MUDANCAS[0].d)); });   /* 3.142: ES também */ I18n.atual = L0; }
       const pertoDaVersao = (n) => { const e = n.parentElement, q = e && (e.parentElement || e); return !!q && (q.textContent.indexOf(VERSAO) >= 0 || /atualizado em|updated on/i.test(q.textContent)); };
       while ((n = w.nextNode())) { let t = n.nodeValue; if (pertoDaVersao(n)) dvs.forEach((dv) => { t = t.split(dv).join('00/Xxx/0000'); }); n.nodeValue = t.replace(rv, '$10.00').replace(/\b\d+ (versões|versions)\b/g, 'N $1'); }
-    });
+    }; window.scrollTo(0, 0); window.__norm(); });
     /* foto só depois de imagens e fontes prontas (senão a mesma tela sai diferente por carregar a tempo ou não) */
     await p.waitForFunction(() => Array.from(document.images).every((i) => i.complete) && document.fonts.status === 'loaded');
     await p.waitForTimeout(150);
@@ -74,8 +81,10 @@ const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify',
        8 fotos deram 2 resultados diferentes com ele (1 unidade de cor na borda do "‹" do mini-calendário) e 1 só sem ele. Sai nas
        duas cópias; o HTML e o estilo continuam comparados */
     await p.addStyleTag({ content: '*{backdrop-filter:none !important; -webkit-backdrop-filter:none !important}' });
+    await p.evaluate(() => window.__norm());
     const png = await p.screenshot({ fullPage: true, animations: 'disabled', caret: 'hide' });
-    const html = await p.evaluate(() => { const h = document.getElementById('hubTela'), v = (h && !h.classList.contains('hidden') ? h : null) || document.querySelector('.view:not(.hidden)') || document.body; return v.innerHTML.replace(/\?v=[\w.]+/g, '').replace(/ style=""/g, ''); });   /* 3.115: style vazio que a foto com animações desligadas deixa (às vezes) num campo que estava em transição: não é mudança de tela */
+    /* o atributo style na forma canônica do navegador ("flex:1" e "flex: 1 1 0%" são o mesmo estilo; o 2º aparece quando algo mexeu no elemento) */
+    const html = await p.evaluate(() => { window.__norm(); document.querySelectorAll('[style]').forEach((e) => e.setAttribute('style', e.style.cssText)); const h = document.getElementById('hubTela'), v = (h && !h.classList.contains('hidden') ? h : null) || document.querySelector('.view:not(.hidden)') || document.body; return v.innerHTML.replace(/\?v=[\w.]+/g, '').replace(/ style=""/g, ''); });   /* 3.115: style vazio que a foto com animações desligadas deixa (às vezes) num campo que estava em transição: não é mudança de tela */
     const css = await p.evaluate(() => { const v = document.querySelector('.view:not(.hidden) .card') || document.body; const c = getComputedStyle(v); return [c.backgroundColor, c.color, c.borderRadius, c.padding, c.fontFamily].join('|'); });
     await ctx.close();
     return { png, html, css, erros };
@@ -103,19 +112,24 @@ const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify',
     const cA = await conteudo(sA), cB = await conteudo(sB);
     ok(cA.n === cB.n && cA.txt === cB.txt, 'glossário e Coach iguais (' + cB.n + ' verbetes/aulas, 3 níveis, PT e EN; ' + Math.round(cB.txt.length / 1024) + ' KB de texto)');
     ok(cB.erros.length === 0, 'glossário e Coach: sem erro de página' + (cB.erros.length ? ': ' + cB.erros.join(' | ') : ''));
-    for (const vp of [{ width: 390, height: 800 }, { width: 1366, height: 768 }]) {
-      for (const lang of ['pt', 'en']) {
+    const LARGURAS = [{ width: 360, height: 800 }, { width: 390, height: 800 }, { width: 768, height: 1024 }, { width: 1366, height: 768 }, { width: 1920, height: 1080 }, { width: 2560, height: 1440 }];
+    for (const vp of LARGURAS) {
+      for (const lang of ['pt', 'en', 'es']) {
         console.log('tela ' + vp.width + 'x' + vp.height + ' · ' + lang);
-        for (const tela of TELAS) {
-          let A = await foto(sA, vp, lang, tela), B = await foto(sB, vp, lang, tela);
-          const nome = tela[1] + ' ' + vp.width + ' ' + lang;
-          /* HTML e estilo iguais e só a foto diferente: tira as duas de novo uma vez (ex.: a borda do aviso laranja de Deduções em 390 px
-             às vezes sai 2 px diferente, com HTML e estilo iguais) */
-          if (Buffer.compare(A.png, B.png) !== 0 && A.html === B.html && A.css === B.css) { A = await foto(sA, vp, lang, tela); B = await foto(sB, vp, lang, tela); }
-          const igual = Buffer.compare(A.png, B.png) === 0;
-          if (!igual) { fs.writeFileSync(path.join(tmp, 'fumaca-antes-' + nome.replace(/ /g, '-') + '.png'), A.png); fs.writeFileSync(path.join(tmp, 'fumaca-agora-' + nome.replace(/ /g, '-') + '.png'), B.png); }
-          ok(igual && A.html === B.html && A.css === B.css, nome + ': mesma foto, mesmo HTML e mesmo estilo' + (igual ? '' : ' (fotos em ' + tmp + ')'));
-          ok(B.erros.length === 0, nome + ': sem erro de página' + (B.erros.length ? ': ' + B.erros.join(' | ') : ''));
+        const par = async (tela) => { const r = await Promise.all([foto(sA, vp, lang, tela), foto(sB, vp, lang, tela)]); return { A: r[0], B: r[1] }; };
+        for (let i = 0; i < TELAS.length; i += 1) {
+          const lote = TELAS.slice(i, i + 1), res = await Promise.all(lote.map(par));
+          for (let k = 0; k < lote.length; k++) {
+            const tela = lote[k]; let A = res[k].A, B = res[k].B;
+            const nome = tela[1] + ' ' + vp.width + ' ' + lang;
+            /* HTML e estilo iguais e só a foto diferente: tira as duas de novo uma vez (ex.: a borda do aviso laranja de Deduções em 390 px
+               às vezes sai 2 px diferente, com HTML e estilo iguais) */
+            if (Buffer.compare(A.png, B.png) !== 0 && A.html === B.html && A.css === B.css) { A = await foto(sA, vp, lang, tela); B = await foto(sB, vp, lang, tela); }
+            const igual = Buffer.compare(A.png, B.png) === 0;
+            if (!igual) { fs.writeFileSync(path.join(tmp, 'fumaca-antes-' + nome.replace(/ /g, '-') + '.png'), A.png); fs.writeFileSync(path.join(tmp, 'fumaca-agora-' + nome.replace(/ /g, '-') + '.png'), B.png); }
+            ok(igual && A.html === B.html && A.css === B.css, nome + ': mesma foto, mesmo HTML e mesmo estilo' + (igual ? '' : ' (fotos em ' + tmp + ')'));
+            ok(B.erros.length === 0, nome + ': sem erro de página' + (B.erros.length ? ': ' + B.erros.join(' | ') : ''));
+          }
         }
       }
     }

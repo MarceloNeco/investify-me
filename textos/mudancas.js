@@ -1,11 +1,17 @@
 /* =====================================================================
-   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.141 · 27/Nov/2026
+   textos/mudancas.js — a versão do app e o histórico de mudanças ("O que há de novo")   3.142 · 28/Nov/2026
    ---------------------------------------------------------------------
    A versão é escrita à mão a cada entrega, no topo da lista (VERSAO = MUDANCAS[0].v no index.html).
    Saiu do index.html na 3.48 (arrumação interna). Textos em PT; o inglês vai em textos/frases-en.js.
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
+  {v:'3.142', d:'2026-11-28', t:'Família arrumada: você no topo, o inquilino fora e a ficha mais clara', itens:[
+    '👪 Configurações → Família no MoneyTRIO → "Quem é da casa": você aparece sempre no topo, como "(você · chefe)", com a caixa marcada e o "editar" para trocar o seu nome. Cada pessoa fica numa linha, e o aviso "Esta pessoa é da família?" vem embaixo do nome, sem quebrar no celular.',
+    '🏠 Quem parece ser de fora (inquilino, prestador…) não vem mais marcado e não entra na parte da casa até você marcar. "Não, é de fora" leva a pessoa para Outras pessoas, com "Desfazer". Em Pessoas da família, você também aparece primeiro.',
+    '👥 Pessoas da família: o papel de cada um tem 3 opções — Responsável, Dependente e "Não é da família (de fora)" (vai na hora para Outras pessoas, com Desfazer). Quem parece de fora já vem com essa opção e "é isso?". Você aparece primeiro, como responsável. Quem tinha virado "da casa" sem ser (ex.: um inquilino) passou para Outras pessoas, com um aviso e Desfazer.',
+    '✏️ Editar uma pessoa abre a ficha no topo, com o Tipo em destaque: "Da casa (família)", "Outras pessoas (não é da família)" ou "Empresas e instituições". Se a pessoa parece de fora, a ficha avisa "Parece alguém de fora da família. É isso?".'
+  ]},
   {v:'3.141', d:'2026-11-27', t:'PDFs com senha abertos pelo robô e o carro pela Tabela FIPE', itens:[
     '🔑 Configurações → "Dados para abrir PDFs com senha": muitas contas chegam em PDF com senha feita de pedaços do CPF, CNPJ, CEP ou nascimento. Quem vê tudo na família cadastra uma vez e vale para a família inteira, em qualquer aparelho; o robô usa para abrir. O número vai cifrado só para o robô; o app mostra apenas os 2 últimos dígitos.',
     '🚗 Carro ou moto pela Tabela FIPE: no cadastro, escolha a marca, o modelo e o ano e o app mostra "Valor FIPE de <mês>: R$ X". O valor do bem passa a ser o da FIPE e se atualiza sozinho uma vez por mês; se a FIPE não responder, fica o último valor, com a data. Prefere o seu valor? Marque "Usar o valor que eu acho". Só a marca, o modelo e o ano vão à FIPE.',

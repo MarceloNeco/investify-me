@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/veiculos.js — MEUS VEÍCULOS e "QUANTO O CARRO CUSTA" (3.99)        1.0.3 · 27/Nov/2026
+   modulos/veiculos.js — MEUS VEÍCULOS e "QUANTO O CARRO CUSTA" (3.99)        1.0.4 · 28/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (pedido do dono, 23/Nov/2026: "quanto o carro me custa e para onde vai o dinheiro"; sem IA)
      · Meus veículos: cada carro com um APELIDO ("Renegade 2019"), nunca a placa. Cada lançamento do grupo Veículo ganha o carro
@@ -193,7 +193,10 @@
   });
 
   MoneyModulos.registrar({
-    id: 'veiculos', versao: '1.0.3', colecoes: [COL],
+    id: 'veiculos', versao: '1.0.4', colecoes: [COL],
+    /* 1.0.4 (3.142): as categorias do Veículo entram também ao abrir o app (antes só pelo laço de 500 ms abaixo, que às vezes chegava
+       depois do primeiro desenho: o seletor de categorias do Painel saía com ou sem elas, conforme o tempo) */
+    iniciar: function () { try { if (typeof ST !== 'undefined' && ST && ST.config && garantirCategorias() && typeof Store !== 'undefined') Store.salvar(); } catch (e) { /* o laço abaixo tenta de novo */ } },
     pontos: {
       'inbox.grupos': function () {
         if (window.Escopo && Escopo.soCasa && Escopo.soCasa()) return [];
