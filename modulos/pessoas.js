@@ -1,6 +1,7 @@
 /* =====================================================================
-   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.9.0 · 28/Nov/2026 (3.142: o chefe primeiro e travado, "Não é da família" no papel, inquilino para Outras pessoas, formulário com o Tipo no topo; 3.138: data-ajuda; 3.132: família primeiro, Juntar, papéis, Desfazer, editar na ficha, sem CPF no nome)
+   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.9.1 · 28/Nov/2026 (3.142: o chefe primeiro e travado, "Não é da família" no papel, inquilino para Outras pessoas, formulário com o Tipo no topo; 3.138: data-ajuda; 3.132: família primeiro, Juntar, papéis, Desfazer, editar na ficha, sem CPF no nome)
    ---------------------------------------------------------------------
+     · 1.9.1 (3.144): 3.144: papel e tipo em espanhol na lista (Responsable, Dependiente, Familia)
      · 1.9.0 (3.144): o titular que o robô manda pelo nome atual (titularVer) e "É a X?"; editar e "+ Adicionar" na folha de edição (modulos/folha-editar.js); campos: Nome (o que aparece no app), "Como aparece no extrato/Pix" em chips com sugestões dos lançamentos, "Mais detalhes" com o nome completo, o e-mail atrás de "Convidar para o MoneyTRIO", nomes antigos guardados sozinhos; migração uma vez sem perder nada (antes3144).
        Desenho novo: um cartão "👥 Pessoas" com Família (mora com você; toda ela na parte da casa), Pessoas próximas (não moram com você;
        nunca na parte da casa) e Empresas, cada uma com "+ Adicionar"; o papel como texto, deduzido (papelDe), sem "Confirme"; a relação
@@ -53,7 +54,7 @@
   var COL = 'pessoas';
   var PARES = [['quem', 'quemId'], ['paraQuem', 'paraQuemId'], ['pagador', 'pagadorId'], ['contato', 'contatoId'], ['titular', 'titularId'], ['usa', 'usaId']];
   var PARTICULAS = { de: 1, da: 1, do: 1, das: 1, dos: 1, e: 1 };
-  var TIPOS = { casa: ['Família', 'Family'], outra: ['Pessoa próxima', 'Close person'], empresa: ['Empresas e instituições', 'Companies and institutions'] };   /* 1.9.0 (3.144) */
+  var TIPOS = { casa: ['Família', 'Family', 'Familia'], outra: ['Pessoa próxima', 'Close person', 'Persona cercana'], empresa: ['Empresas e instituições', 'Companies and institutions', 'Empresas e instituciones'] };   /* 1.9.0 (3.144) */
   /* 1.8.0 (3.142): os rótulos do Tipo no formulário (o dono não achava o Tipo) */
   var TIPOS_FORM = { casa: ['Família (mora com você)', 'Family (lives with you)', 'Familia (vive contigo)'], outra: ['Pessoa próxima (não mora com você)', 'Close person (does not live with you)', 'Persona cercana (no vive contigo)'],
     empresa: ['Empresas e instituições', 'Companies and institutions', 'Empresas e instituciones'] };
@@ -586,7 +587,7 @@
     var eu = p === API.minhaFicha(), fora = p.tipo === 'casa' && API.pareceDeFora(p) && !p.familiaConfirmada;
     /* 1.9.0 (3.144): o papel (Família) ou a relação (próxima) como texto, sem seletor; o nome completo e os nomes do extrato embaixo */
     var papel = API.papelDe(p), rg = API.regraDe(p);
-    var sub = [p.tipo === 'casa' ? (papel ? PAPEIS[papel][pt() ? 0 : 1] + (eu ? ' 🔒' : '') : '') : p.tipo === 'outra' ? API.relacaoTxt(p) : TIPOS[p.tipo][pt() ? 0 : 1],
+    var sub = [p.tipo === 'casa' ? (papel ? tr(PAPEIS[papel][0], PAPEIS[papel][1], PAPEIS[papel][2]) + (eu ? ' 🔒' : '') : '') : p.tipo === 'outra' ? API.relacaoTxt(p) : tr(TIPOS[p.tipo][0], TIPOS[p.tipo][1], TIPOS[p.tipo][2]),
       API.nomeCompleto(p) !== API.rotulo(p) ? API.nomeCompleto(p) : '', (p.banco || []).length ? tr('extrato: ', 'statement: ', 'extracto: ') + p.banco.join(', ') : '',
       rg ? tr('Pix → ', 'Pix → ', 'Pix → ') + API.regraTxt(rg) : '',
       p.cnpj ? 'CNPJ ' + p.cnpj : ((p.cnpjs || [])[0] ? 'CNPJ ' + p.cnpjs[0].replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') : '')].filter(Boolean).join(' · ');   /* o idp nunca aparece */
@@ -714,7 +715,7 @@
 
   MoneyModulos.registrar({
     id: 'pessoas',
-    versao: '1.9.0',
+    versao: '1.9.1',
     colecoes: [COL],
     ouvir: { 'gasto.novo': function (g) { API.aplicarRegra(g); } },   /* 1.9.0 (3.144): o que costuma acontecer com quem é próximo (só no app) */
     iniciar: function () {

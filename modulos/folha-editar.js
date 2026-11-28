@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/folha-editar.js — FOLHA DE EDIÇÃO: todo "editar" em tela própria (3.144)        1.0.0 · 28/Nov/2026
+   modulos/folha-editar.js — FOLHA DE EDIÇÃO: todo "editar" em tela própria (3.144)        1.0.1 · 28/Nov/2026
    ---------------------------------------------------------------------
    O QUE FAZ (dono, 28/Nov/2026, pelo celular: "o editar abre no meio da lista e eu me perco na tela")
      · Abre o formulário numa folha por cima de tudo: no celular ocupa a tela inteira; no tablet e no computador é um painel no meio.
@@ -9,6 +9,7 @@
      · Foco dentro da folha (Tab não sai dela); ao fechar, o foco volta ao botão que abriu.
      · É o padrão para todo "editar" do app. Na 3.144 entra em Pessoas (modulos/pessoas.js); os outros (contas, cartões, contas fixas…)
        ficam listados no PENDENCIAS.md para as próximas versões.
+     · 1.0.1 (3.144): a folha fica acima do selo "Entrar na nuvem" (9990) e abaixo do passeio (9995).
    API (window.Folha)
      abrir({titulo, html, salvar(), cancelar?(), depois?()}) → abre; salvar() devolve false (ou lança erro) para continuar aberta
      fechar() · aberta() → true | false · mudou() → true se algum campo foi mudado desde que abriu
@@ -21,7 +22,7 @@
     var s = document.createElement('style'); s.id = 'folhaCss';
     s.textContent =
       'body.folha-travada{overflow:hidden}' +
-      '.folha-fundo{position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center}' +
+      '.folha-fundo{position:fixed;inset:0;z-index:9992;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center}' +
       '.folha{display:flex;flex-direction:column;background:var(--bg2,var(--card,#1b2330));color:inherit;width:min(680px,94vw);max-height:90vh;' +
         'border-radius:16px;border:2px solid var(--accent,#3fb68b);box-shadow:0 18px 50px rgba(0,0,0,.45);overflow:hidden}' +
       '.folha-topo{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--accent,#3fb68b);color:#06140e}' +
