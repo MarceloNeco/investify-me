@@ -53,8 +53,10 @@ const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify',
     /* 3.142: as categorias do Veículo entram num laço de 500 ms nas versões até a 3.141 (corrida com o primeiro desenho); espera as duas cópias */
     await p.waitForFunction(() => !!(Store.estado.config && Store.estado.config.veic399), null, { timeout: 5000 }).catch(() => {});
     await p.evaluate((a) => { I18n.atual = a.lang; abrirApp(a.tela[0]); if (a.tela[1] === 'hub') mostrarHub(); else irPara(a.tela[1]); }, { lang, tela });
-    await p.evaluate(() => {
-      document.querySelectorAll('#toasts .toast').forEach((e) => e.parentNode.removeChild(e)); window.scrollTo(0, 0);
+    /* 3.142: a normalização vira uma função da página e roda de novo na hora da foto e na hora de ler o HTML: sob carga a tela às
+       vezes se redesenha sozinha depois (ex.: aviso de cotação) e a versão e "O que há de novo" voltavam numa das cópias */
+    await p.evaluate(() => { window.__norm = () => {
+      document.querySelectorAll('#toasts .toast').forEach((e) => e.parentNode.removeChild(e));
       /* a lista "O que há de novo" ganha a versão nova de propósito: sai das duas cópias */
       document.querySelectorAll('ol.mudancas').forEach((e) => e.parentNode.removeChild(e));
       /* 3.69: o ✨ IA saiu da faixa e foi para a barra de cima (#btnIA); a faixa sem anúncio nem modo de teste sumiu.
@@ -70,7 +72,7 @@ const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify',
       const dvs = []; if (typeof MUDANCAS !== 'undefined' && MUDANCAS[0] && MUDANCAS[0].d) { const L0 = I18n.atual; ['pt', 'en', 'es'].forEach((L) => { I18n.atual = L; dvs.push(I18n.data(MUDANCAS[0].d)); });   /* 3.142: ES também */ I18n.atual = L0; }
       const pertoDaVersao = (n) => { const e = n.parentElement, q = e && (e.parentElement || e); return !!q && (q.textContent.indexOf(VERSAO) >= 0 || /atualizado em|updated on/i.test(q.textContent)); };
       while ((n = w.nextNode())) { let t = n.nodeValue; if (pertoDaVersao(n)) dvs.forEach((dv) => { t = t.split(dv).join('00/Xxx/0000'); }); n.nodeValue = t.replace(rv, '$10.00').replace(/\b\d+ (versões|versions)\b/g, 'N $1'); }
-    });
+    }; window.scrollTo(0, 0); window.__norm(); });
     /* foto só depois de imagens e fontes prontas (senão a mesma tela sai diferente por carregar a tempo ou não) */
     await p.waitForFunction(() => Array.from(document.images).every((i) => i.complete) && document.fonts.status === 'loaded');
     await p.waitForTimeout(150);
@@ -79,8 +81,10 @@ const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify',
        8 fotos deram 2 resultados diferentes com ele (1 unidade de cor na borda do "‹" do mini-calendário) e 1 só sem ele. Sai nas
        duas cópias; o HTML e o estilo continuam comparados */
     await p.addStyleTag({ content: '*{backdrop-filter:none !important; -webkit-backdrop-filter:none !important}' });
+    await p.evaluate(() => window.__norm());
     const png = await p.screenshot({ fullPage: true, animations: 'disabled', caret: 'hide' });
-    const html = await p.evaluate(() => { const h = document.getElementById('hubTela'), v = (h && !h.classList.contains('hidden') ? h : null) || document.querySelector('.view:not(.hidden)') || document.body; return v.innerHTML.replace(/\?v=[\w.]+/g, '').replace(/ style=""/g, ''); });   /* 3.115: style vazio que a foto com animações desligadas deixa (às vezes) num campo que estava em transição: não é mudança de tela */
+    /* o atributo style na forma canônica do navegador ("flex:1" e "flex: 1 1 0%" são o mesmo estilo; o 2º aparece quando algo mexeu no elemento) */
+    const html = await p.evaluate(() => { window.__norm(); document.querySelectorAll('[style]').forEach((e) => e.setAttribute('style', e.style.cssText)); const h = document.getElementById('hubTela'), v = (h && !h.classList.contains('hidden') ? h : null) || document.querySelector('.view:not(.hidden)') || document.body; return v.innerHTML.replace(/\?v=[\w.]+/g, '').replace(/ style=""/g, ''); });   /* 3.115: style vazio que a foto com animações desligadas deixa (às vezes) num campo que estava em transição: não é mudança de tela */
     const css = await p.evaluate(() => { const v = document.querySelector('.view:not(.hidden) .card') || document.body; const c = getComputedStyle(v); return [c.backgroundColor, c.color, c.borderRadius, c.padding, c.fontFamily].join('|'); });
     await ctx.close();
     return { png, html, css, erros };
