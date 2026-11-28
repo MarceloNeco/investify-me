@@ -1,6 +1,7 @@
 /* =====================================================================
-   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.4.0 · 28/Nov/2026
+   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.4.1 · 28/Nov/2026
    ---------------------------------------------------------------------
+     · 1.4.1 (3.144): 3.144: o pagamento da fatura no débito não vira conta fixa automática
      · 1.4.0 (3.144): o detector agrupa primeiro pelo dia (±5): uma conta por mês com valores até ±40 % da mediana é a mesma conta — fixa com reajuste (vale o valor novo que se repete) ou variável (condomínio, luz: varia, ultimo, "≈ R$ X (varia) · último R$ Y"); conta de outra pessoa (terceiro, ou para quem não é da Família) não entra; a conta detectada do mesmo recebedor não esconde a sugestão (contas-auto atualiza).
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · No topo da tela (id b-custos), dois seletores guardados: período "Este mês | Próximos 45 dias" e arrumação
@@ -129,6 +130,8 @@
         if (Gasto.parcela && Gasto.parcela(g.desc, g)) return;
         /* 1.4.0 (3.144, dono): conta de outra pessoa (o terceiro "processar para ela", ou para quem não é da Família) não é conta fixa sua */
         if (g.terceiro) return;
+        /* 1.4.1 (3.144): pagar a fatura do cartão (PAGAMENTO DEBITO AUTOMATICO etc.) é transferência, não conta fixa */
+        if (g.sub === 'Pagamento de fatura' || (typeof ehPagtoFatura === 'function' && ehPagtoFatura(g.descRobo || g.desc))) return;
         if (g.paraQuemId && window.Pessoas) { var pq = Pessoas.porId(g.paraQuemId); if (pq && pq.tipo !== 'casa') return; }
         if (frequente(g)) return;
         /* visão da casa: nada da PJ */
@@ -371,7 +374,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'contas-mes', versao: '1.4.0',
+    id: 'contas-mes', versao: '1.4.1',
     pontos: {
       'custos.contas': cartao,
       'budget.atencao': cartaoSugestoes,

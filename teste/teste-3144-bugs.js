@@ -21,7 +21,7 @@ const gastos = [
 /* (b) 4 meses de pagamento da fatura no débito e de uma conta de verdade no débito */
 ['2026-08-05', '2026-09-05', '2026-10-05', '2026-11-05'].forEach((d, i) => {
   gastos.push(G('pd' + i, d, 1000 + i * 37, 'OUTROS', 'Sem categoria', 'PAGAMENTO DEBITO AUTOMATICO', { confianca: 'palpite' }));
-  gastos.push(G('da' + i, d, 150, 'CASA', 'Seguro residencial', 'DEBITO AUTOMATICO SEGURADORA EXEMPLO'));
+  gastos.push(G('da' + i, d, 150, 'HABITACAO', 'Seguro residencial', 'DEBITO AUTOMATICO SEGURADORA EXEMPLO'));
 });
 const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recorrentes: [] };
 
@@ -52,6 +52,8 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recor
     const det = await p.evaluate(() => Recorrente.detectar('2026-11-20').map((x) => x.r.sub + '|' + x.r.grupo + '|' + x.r.nome));
     ok(det.some((s) => /Seguro residencial/.test(s)), 'a conta no débito (seguro) entra nos custos que se repetem: ' + JSON.stringify(det));
     ok(!det.some((s) => /Sem categoria|OUTROS/.test(s)), 'o pagamento da fatura no débito não entra');
+    const auto = await p.evaluate(() => (ST.recorrentes || []).map((r) => r.nome));
+    ok(!auto.some((n) => /PAGAMENTO DEBITO/.test(n)) && auto.some((n) => /SEGURADORA/.test(n)), 'a conta fixa automática nasce da seguradora, nunca do pagamento da fatura: ' + JSON.stringify(auto));
     const gr = await p.evaluate(() => Origem.grupos().map((x) => x.rotulo + '|' + x.itens.length));
     ok(!gr.some((s) => /PAGAMENTO DEBITO/i.test(s)), '"A confirmar" agrupado por origem: sem o pagamento da fatura: ' + JSON.stringify(gr));
     ok(await p.evaluate(() => ehPagtoFatura('PAGAMENTO DEBITO AUTOMATICO') && ehPagtoFatura('PAGTO DEB AUTOMATICO 4321') && !ehPagtoFatura('DEBITO AUTOMATICO SEGURADORA EXEMPLO') && !ehPagtoFatura('PAGAMENTO DEBITO AUTOMATICO SEGURADORA EXEMPLO')),

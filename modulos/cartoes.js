@@ -1,6 +1,7 @@
 /* =====================================================================
-   modulos/cartoes.js — cartões por conta, com vários finais (3.65)        1.4.1 · 28/Nov/2026
+   modulos/cartoes.js — cartões por conta, com vários finais (3.65)        1.4.2 · 28/Nov/2026
    ---------------------------------------------------------------------
+     · 1.4.2 (3.144): 3.144: Quem pagou grava o código da pessoa (não o Nome da tela)
      · 1.4.1 (3.144): "quem usa" sugerido pelo nome atual da pessoa; sem ficha, nada (nunca o rótulo cru do robô).
    O QUE FAZ
      CARTÃO = a conta do cartão (a fatura): apelido, titular, "Quem usa", bandeira, banco, fechamento, vencimento.
@@ -65,6 +66,8 @@
     return 'outra';
   }
   function rotuloPessoa(txt, id) { var p = id && window.Pessoas && Pessoas.porId(id); return p ? Pessoas.rotulo(p) : (txt || ''); }
+  /* 1.4.2 (3.144): o que vai gravado no registro (g.quem) é o código de sempre, não o Nome da tela */
+  function codigoPessoa(txt, id) { var p = id && window.Pessoas && Pessoas.porId(id); return p ? (Pessoas.codigoDe ? Pessoas.codigoDe(p) : Pessoas.rotulo(p)) : (txt || ''); }
 
   var API = {
     TIPOS: TIPOS, _hoje: null,
@@ -78,9 +81,9 @@
     quemPagou: function (c, fim) {
       if (!c) return '';
       var f = API.finais(c).find(function (x) { return x.fim === so4(fim); });
-      if (f && (f.usa || f.usaId)) return rotuloPessoa(f.usa, f.usaId);   /* 1.1.0: o "quem usa" do final */
-      if (f && f.tipo === 'adicional' && (f.titular || f.titularId)) return rotuloPessoa(f.titular, f.titularId);
-      return rotuloPessoa(c.usa, c.usaId) || rotuloPessoa(c.titular, c.titularId);
+      if (f && (f.usa || f.usaId)) return codigoPessoa(f.usa, f.usaId);   /* 1.1.0: o "quem usa" do final */
+      if (f && f.tipo === 'adicional' && (f.titular || f.titularId)) return codigoPessoa(f.titular, f.titularId);
+      return codigoPessoa(c.usa, c.usaId) || codigoPessoa(c.titular, c.titularId);
     },
     /* no Caixa.converter: liga a compra ao cartão (e aprende o final novo da mesma conta) */
     doRobo: function (l, g) {
@@ -313,7 +316,7 @@
 
   MoneyModulos.registrar({
     id: 'cartoes',
-    versao: '1.4.1',
+    versao: '1.4.2',
     pontos: {
       'cartao.form': function (ctx) {
         var c = ctx.c || ctx.semente || {};
