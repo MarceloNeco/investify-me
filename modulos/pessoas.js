@@ -1,5 +1,5 @@
 /* =====================================================================
-   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.7.1 · 27/Nov/2026 (3.138: data-ajuda; 3.132: família primeiro, Juntar, papéis, Desfazer, editar na ficha, sem CPF no nome)
+   modulos/pessoas.js — pessoas da família, outras pessoas e empresas (3.64)        1.8.0 · 28/Nov/2026 (3.142: o chefe primeiro, com "(você)"; 3.138: data-ajuda; 3.132: família primeiro, Juntar, papéis, Desfazer, editar na ficha, sem CPF no nome)
    ---------------------------------------------------------------------
    O QUE FAZ
      Um cadastro só de "quem": Da casa (responsáveis e dependentes), Outras pessoas (pai, amigo, sócio) e
@@ -418,6 +418,7 @@
       API.nomeCompleto(p) !== API.rotulo(p) ? API.nomeCompleto(p) : '', (p.banco || []).length ? tr('extrato: ', 'statement: ') + p.banco.join(', ') : '',
       p.cnpj ? 'CNPJ ' + p.cnpj : ((p.cnpjs || [])[0] ? 'CNPJ ' + p.cnpjs[0].replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') : '')].filter(Boolean).join(' · ');   /* o idp nunca aparece */
     return '<tr data-ps="' + esc(p.id) + '"' + (p.arquivada ? ' class="muted"' : '') + '><td><span class="t-main">' + esc(docMascara(API.rotulo(p))) +
+      (p === API.minhaFicha() ? ' <span class="small muted ps-voce">(' + esc(tr('você', 'you', 'tú')) + ')</span>' : '') +
       (p.arquivada ? ' <span class="small">(' + esc(tr('arquivada', 'archived')) + ')</span>' : '') + '</span><div class="t-sub">' + esc(docMascara(sub)) + '</div>' +
       (confirmar ? '<select class="ps-papel-sel" data-id="' + esc(p.id) + '" aria-label="' + esc(tr('Papel na casa', 'Role at home', 'Papel en la casa')) + '">' +
         '<option value="">' + esc(tr('escolha…', 'choose…', 'elige…')) + '</option>' +
@@ -455,7 +456,8 @@
       ' <button class="btn sm" data-acao="ps-juntar-nao" data-par="' + esc(mp.sai.id + '|' + mp.fica.id) + '">' + esc(tr('Não são', 'They are not', 'No lo son')) + '</button></div>';
     var titulos = { casa: [tr('Sua família', 'Your family', 'Tu familia')], outra: [TIPOS.outra[pt() ? 0 : 1] + tr(' (inquilino, diarista…)', ' (tenant, cleaner…)', ' (inquilino, asistenta…)')], empresa: [TIPOS.empresa[pt() ? 0 : 1]] };
     ['casa', 'outra', 'empresa'].forEach(function (tp) {
-      var l = lista().filter(function (p) { return p.tipo === tp; }).sort(function (a, b) { return (a.arquivada ? 1 : 0) - (b.arquivada ? 1 : 0) || API.rotulo(a).localeCompare(API.rotulo(b)); });
+      var eu = API.minhaFicha();   /* 1.8.0 (3.142): o chefe (você) sempre primeiro */
+      var l = lista().filter(function (p) { return p.tipo === tp; }).sort(function (a, b) { return (b === eu ? 1 : 0) - (a === eu ? 1 : 0) || (a.arquivada ? 1 : 0) - (b.arquivada ? 1 : 0) || API.rotulo(a).localeCompare(API.rotulo(b)); });
       if (tp === 'empresa' && !l.length) return;
       h += '<div class="card sem-pad ps-grupo" data-grupo="' + tp + '"><div class="card-head" style="padding:12px 16px 0"><h3>' + esc(titulos[tp][0]) + '</h3></div>' +
         (tp === 'casa' && papeisPorConfirmar() ? '<div class="callout ps-revise" style="margin:8px 16px"><b>' + esc(tr('Confirme: quem é responsável e quem é dependente', 'Confirm: who is a guardian and who is a dependant', 'Confirma: quién es responsable y quién es dependiente')) + '</b>' +
@@ -521,7 +523,7 @@
 
   MoneyModulos.registrar({
     id: 'pessoas',
-    versao: '1.7.1',
+    versao: '1.8.0',
     colecoes: [COL],
     iniciar: function () {
       try { if (ST && !cfg().pessoasV && (ST.gastos || []).length + (ST.recorrentes || []).length) { API.migrar(); Store.salvar(); } } catch (e) { console.warn('pessoas', e); }

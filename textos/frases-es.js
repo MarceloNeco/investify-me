@@ -8,6 +8,8 @@
    Carregado ANTES do código do app (é uma const global).
    ===================================================================== */
 const FRASES_ES = {
+  /* 3.142 — rascunho, revisar */
+  'editar':'editar',
   /* 3.141 — rascunho, revisar */
   'Tag e pedágio':'Telepeaje y peajes',
   '🚗 A categoria do Veículo "Sem Parar / Pedagio" agora se chama "Tag e pedágio". O que você já tinha (lançamentos, compromissos, limite do orçamento e o que o app aprendeu) mudou junto, sem perder o histórico; o que chegar com o nome antigo entra no novo.':'🚗 La categoría de Vehículo "Sem Parar / Pedagio" ahora se llama "Telepeaje y peajes". Lo que ya tenías (movimientos, compromisos, límite del presupuesto y lo que la app aprendió) cambió con ella, sin perder el historial; lo que llegue con el nombre antiguo entra en el nuevo.',

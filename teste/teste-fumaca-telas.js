@@ -2,7 +2,10 @@
    teste/teste-fumaca-telas.js — teste de fumaça para ARRUMAÇÃO INTERNA (3.48)
    ---------------------------------------------------------------------
    Compara as telas principais de duas cópias do app — a de ANTES (outra pasta, ex.: uma cópia do main) e a
-   de agora (esta pasta) — em 390 e 1366 px: foto da tela, em português e em inglês, e o HTML desenhado.
+   de agora (esta pasta) — foto da tela e o HTML desenhado em PT, EN e ES.
+   3.142 (REGRA FIXA do dono, 28/Nov/2026: toda tela mexida é conferida em celular, tablet, notebook e monitor grande): as larguras
+   são 360 e 390 (celular), 768 (tablet), 1366 (notebook), 1920 e 2560 (monitor grande). As duas cópias são fotografadas ao mesmo
+   tempo, uma tela por vez (3 telas de uma vez deixou o Painel do Budget instável sob carga).
    Também abre cada verbete do glossário e cada aula do Coach nas duas cópias e compara o texto.
    Tem de dar igual (o número da versão vira 0.00 e a data dela 00/Xxx/0000, "N versões" e a lista "O que há de novo" sai, nas duas), e sem nenhum erro de página. Serve para mudanças que "não mudam nada para você".
    Uso (na pasta raiz):
@@ -103,19 +106,24 @@ const TELAS = [['investify', 'painel'], ['investify', 'carteira'], ['investify',
     const cA = await conteudo(sA), cB = await conteudo(sB);
     ok(cA.n === cB.n && cA.txt === cB.txt, 'glossário e Coach iguais (' + cB.n + ' verbetes/aulas, 3 níveis, PT e EN; ' + Math.round(cB.txt.length / 1024) + ' KB de texto)');
     ok(cB.erros.length === 0, 'glossário e Coach: sem erro de página' + (cB.erros.length ? ': ' + cB.erros.join(' | ') : ''));
-    for (const vp of [{ width: 390, height: 800 }, { width: 1366, height: 768 }]) {
-      for (const lang of ['pt', 'en']) {
+    const LARGURAS = [{ width: 360, height: 800 }, { width: 390, height: 800 }, { width: 768, height: 1024 }, { width: 1366, height: 768 }, { width: 1920, height: 1080 }, { width: 2560, height: 1440 }];
+    for (const vp of LARGURAS) {
+      for (const lang of ['pt', 'en', 'es']) {
         console.log('tela ' + vp.width + 'x' + vp.height + ' · ' + lang);
-        for (const tela of TELAS) {
-          let A = await foto(sA, vp, lang, tela), B = await foto(sB, vp, lang, tela);
-          const nome = tela[1] + ' ' + vp.width + ' ' + lang;
-          /* HTML e estilo iguais e só a foto diferente: tira as duas de novo uma vez (ex.: a borda do aviso laranja de Deduções em 390 px
-             às vezes sai 2 px diferente, com HTML e estilo iguais) */
-          if (Buffer.compare(A.png, B.png) !== 0 && A.html === B.html && A.css === B.css) { A = await foto(sA, vp, lang, tela); B = await foto(sB, vp, lang, tela); }
-          const igual = Buffer.compare(A.png, B.png) === 0;
-          if (!igual) { fs.writeFileSync(path.join(tmp, 'fumaca-antes-' + nome.replace(/ /g, '-') + '.png'), A.png); fs.writeFileSync(path.join(tmp, 'fumaca-agora-' + nome.replace(/ /g, '-') + '.png'), B.png); }
-          ok(igual && A.html === B.html && A.css === B.css, nome + ': mesma foto, mesmo HTML e mesmo estilo' + (igual ? '' : ' (fotos em ' + tmp + ')'));
-          ok(B.erros.length === 0, nome + ': sem erro de página' + (B.erros.length ? ': ' + B.erros.join(' | ') : ''));
+        const par = async (tela) => { const r = await Promise.all([foto(sA, vp, lang, tela), foto(sB, vp, lang, tela)]); return { A: r[0], B: r[1] }; };
+        for (let i = 0; i < TELAS.length; i += 1) {
+          const lote = TELAS.slice(i, i + 1), res = await Promise.all(lote.map(par));
+          for (let k = 0; k < lote.length; k++) {
+            const tela = lote[k]; let A = res[k].A, B = res[k].B;
+            const nome = tela[1] + ' ' + vp.width + ' ' + lang;
+            /* HTML e estilo iguais e só a foto diferente: tira as duas de novo uma vez (ex.: a borda do aviso laranja de Deduções em 390 px
+               às vezes sai 2 px diferente, com HTML e estilo iguais) */
+            if (Buffer.compare(A.png, B.png) !== 0 && A.html === B.html && A.css === B.css) { A = await foto(sA, vp, lang, tela); B = await foto(sB, vp, lang, tela); }
+            const igual = Buffer.compare(A.png, B.png) === 0;
+            if (!igual) { fs.writeFileSync(path.join(tmp, 'fumaca-antes-' + nome.replace(/ /g, '-') + '.png'), A.png); fs.writeFileSync(path.join(tmp, 'fumaca-agora-' + nome.replace(/ /g, '-') + '.png'), B.png); }
+            ok(igual && A.html === B.html && A.css === B.css, nome + ': mesma foto, mesmo HTML e mesmo estilo' + (igual ? '' : ' (fotos em ' + tmp + ')'));
+            ok(B.erros.length === 0, nome + ': sem erro de página' + (B.erros.length ? ': ' + B.erros.join(' | ') : ''));
+          }
         }
       }
     }
