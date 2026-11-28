@@ -35,7 +35,9 @@ const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: 
     /* a sanfona das Configurações dobra os cartões logo depois do render: espera ela e abre o cartão */
     const cfg = async () => { await p.evaluate(() => { irPara('config'); cfgSecao = 'todos'; render(); });
       await p.waitForFunction(() => { const c = document.querySelector('.pp-cfg'); return !!c && c.classList.contains('cfg-acc'); });
-      await p.evaluate(() => document.querySelector('.pp-cfg').classList.add('aberta')); };
+      /* abre tocando no título, como a pessoa: a sanfona lembra e o cartão continua aberto se a tela se redesenhar sozinha (aviso de cotação etc.) */
+      if (!(await p.evaluate(() => document.querySelector('.pp-cfg').classList.contains('aberta')))) await p.click('.pp-cfg > .card-head h3');
+      await p.waitForFunction(() => document.querySelector('.pp-cfg').classList.contains('aberta')); };
     const novo = async (rot, tipo, valor) => { await cfg(); await p.click('.pp-cfg [data-acao="pp-novo"]'); await p.fill('#ppRotulo', rot); await p.selectOption('#ppTipo', tipo); await p.fill('#ppValor', valor);
       const n = await p.evaluate(() => window.__esp.length); await p.click('[data-acao="pp-salvar"]');
       await p.waitForFunction((k) => window.__esp.length > k || document.querySelector('#toasts .toast'), n); await p.waitForTimeout(50); };
