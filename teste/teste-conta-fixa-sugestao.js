@@ -14,7 +14,7 @@ const G = [];
   G.push({ id: 'esc' + i, data: m + '-05', valor: 1900, desc: 'ESCOLA FICTICIA MENS', fluxo: 'saida', grupo: 'DEPENDENTES', sub: 'Escola/Faculdade', origem: 'robo' });
   G.push({ id: 'aca' + i, data: m + '-12', valor: 120, desc: 'ACADEMIA FICTICIA', fluxo: 'saida', grupo: 'PESSOAL', sub: 'Academia', origem: 'robo' });
 });
-const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos: G,
+const LOCAL = { v: 1, config: { fitaLigada: false, contasAuto: false /* 3.142: testa o fluxo de sugestão, sem a conta fixa automática (teste-contas-auto.js) */ }, posicoes: [], gastos: G,
   recorrentes: [{ id: 'r-esc27', nome: 'Escola Ficticia 2027', valor: 1950, dia: 5, regra: 'dia', desde: '2027-01-05', ate: '2027-12-05', grupo: 'DEPENDENTES', sub: 'Escola/Faculdade', fluxo: 'saida', estadoPadrao: 'pendente', criadoEm: '2026-10-01' },
     { id: 'r-aca', nome: 'Academia Ficticia', valor: 120, dia: 12, regra: 'dia', desde: '2026-01-12', grupo: 'PESSOAL', sub: 'Academia', fluxo: 'saida', estadoPadrao: 'pendente', criadoEm: '2026-01-01' }] };
 

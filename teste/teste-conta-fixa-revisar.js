@@ -26,7 +26,7 @@ const gastos = [];
   if (k) gastos.push(G('das' + k, m + (k === 2 ? '-21' : '-20'), 600, 'BANCARIOS', 'IRPF / DARF', 'DAS-SIMPLES', { conta: CPJ, irTexto: 'PJ' }));
   gastos.push(G('ct' + k, m + '-10', k === 3 ? 227 : 405, 'BANCARIOS', 'Contador (PJ)', 'CONTABILIDADE FICTICIA', { conta: CPJ, irTexto: 'PJ' }));
 });
-const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], recorrentes: [], gastos, transferencias: [],
+const LOCAL = { v: 1, config: { fitaLigada: false, contasAuto: false /* 3.142: testa o fluxo de sugestão, sem a conta fixa automática (teste-contas-auto.js) */ }, posicoes: [], recorrentes: [], gastos, transferencias: [],
   empresas: [{ id: 'e1', razao: 'EMPRESA FICTICIA LTDA', fantasia: 'Ficticia', cnpj: '11222333000181', regime: 'simples', contasRobo: [CPJ], situacao: 'ativa' }] };
 
 (async () => {

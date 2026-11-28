@@ -21,7 +21,7 @@ const gastos = [
   { id: 'pix', data: '2026-11-06', valor: 80, grupo: 'OUTROS', sub: 'Outros', desc: 'PIX EXEMPLO 03/10', fluxo: 'saida', forma: 'Pix' }
 ];
 for (let m = 5; m <= 10; m++) gastos.push({ id: 'u' + m, data: '2026-' + String(m).padStart(2, '0') + '-15', valor: 50, grupo: 'HABITACAO', sub: 'Utilidades', desc: 'MERCADO EXEMPLO', fluxo: 'saida' });
-const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recorrentes: [], cartoes: [{ id: 'ct1', apelido: 'Cartão Exemplo', bandeira: 'visa', fim: '1234', fecha: 25, vence: 5 }] };
+const LOCAL = { v: 1, config: { fitaLigada: false, contasAuto: false /* 3.142: testa o fluxo de sugestão, sem a conta fixa automática (teste-contas-auto.js) */ }, posicoes: [], gastos, recorrentes: [], cartoes: [{ id: 'ct1', apelido: 'Cartão Exemplo', bandeira: 'visa', fim: '1234', fecha: 25, vence: 5 }] };
 
 (async () => {
   const srv = http.createServer((q, r) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html');
