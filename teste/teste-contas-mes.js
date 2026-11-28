@@ -32,7 +32,7 @@ const CP = { cnpj: '00000000000191', nome: 'ESCOLA MODELO' };
 });
 gastos.push({ id: 'ip25', data: '2025-02-10', valor: 1800, grupo: 'HABITACAO', sub: 'IPTU', desc: 'PREFEITURA EXEMPLO IPTU', fluxo: 'saida' });
 gastos.push({ id: 'ip26', data: '2026-02-12', valor: 1850, grupo: 'HABITACAO', sub: 'IPTU', desc: 'PREFEITURA EXEMPLO IPTU', fluxo: 'saida' });
-const LOCAL = { v: 1, config: { fitaLigada: false }, posicoes: [], gastos, recorrentes };
+const LOCAL = { v: 1, config: { fitaLigada: false, contasAuto: false /* 3.142: testa o fluxo de sugestão, sem a conta fixa automática (teste-contas-auto.js) */ }, posicoes: [], gastos, recorrentes };
 
 (async () => {
   const srv = http.createServer((q, r) => { const p = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html');

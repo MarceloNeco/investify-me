@@ -1,6 +1,7 @@
 /* =====================================================================
-   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.2.1 · 26/Nov/2026
+   modulos/contas-mes.js — a tela "Contas fixas": o mês com o status de cada conta (3.75)        1.4.0 · 28/Nov/2026
    ---------------------------------------------------------------------
+     · 1.4.0 (3.144): o detector agrupa primeiro pelo dia (±5): uma conta por mês com valores até ±40 % da mediana é a mesma conta — fixa com reajuste (vale o valor novo que se repete) ou variável (condomínio, luz: varia, ultimo, "≈ R$ X (varia) · último R$ Y"); conta de outra pessoa (terceiro, ou para quem não é da Família) não entra; a conta detectada do mesmo recebedor não esconde a sugestão (contas-auto atualiza).
    O QUE FAZ (pedido do dono, 13/Nov/2026)
      · No topo da tela (id b-custos), dois seletores guardados: período "Este mês | Próximos 45 dias" e arrumação
        "Por dia | Por grupo".
@@ -25,6 +26,9 @@
        último valor"), "só nos meses em que houver receita" (imposto), até quando, a prévia e "Salvar"; depois, "Desfazer"
        por 10 s. Imposto da PJ (DAS, DARF, "PGTO CONCES.PUB … RECEITA FED") já abre como imposto da empresa certa.
        Visão da casa: nada da PJ.
+     · 1.3.0 (3.142): sugestoes({min: 2}) para a conta fixa AUTOMÁTICA (modulos/contas-auto.js: 2 meses seguidos bastam; devolve os ids
+       dos pagamentos); a linha da conta detectada sozinha (r.auto) leva o selinho "detectada automaticamente" e, ao tocar, abre
+       [Não é conta fixa] e [editar] (ContasAuto.abrir).
      · Retrocompatível: nada muda nos dados guardados; as abas de antes continuam embaixo. Visão da casa: só o que ela vê.
    API (window.ContasMes)
      itens(modo) → [{r, data, valor, status, pagoEm, grupo}] · atrasadasAntigas() · resumo(itens) · sugestoes() · STATUS
@@ -116,12 +120,16 @@
     },
 
     /* ---------- "Parece conta fixa" ---------- */
-    sugestoes: function () {
+    sugestoes: function (op) {
+      op = op || {}; var minimo = op.min || 3;   /* 1.3.0 (3.142): 2 meses seguidos para a conta fixa automática */
       if (!window.Origem || typeof Gasto === 'undefined') return [];
       var h = hoje(), desde = somaMes(h.slice(0, 7), -24) + '-01', por = {}, recus = cfg().cfRecusadas || {}, freqs = cfg().cfFrequentes || {};
       Gasto.todos().forEach(function (g) {
         if (g.fluxo !== 'saida' || !g.data || g.data < desde || g.recorrenteId) return;
         if (Gasto.parcela && Gasto.parcela(g.desc, g)) return;
+        /* 1.4.0 (3.144, dono): conta de outra pessoa (o terceiro "processar para ela", ou para quem não é da Família) não é conta fixa sua */
+        if (g.terceiro) return;
+        if (g.paraQuemId && window.Pessoas) { var pq = Pessoas.porId(g.paraQuemId); if (pq && pq.tipo !== 'casa') return; }
         if (frequente(g)) return;
         /* visão da casa: nada da PJ */
         if (casa() && (IMPOSTO.test(textoG(g)) || empresaDe(g) || /^pj\b/i.test(String(g.irTexto || '')))) return;
@@ -135,19 +143,39 @@
         if (por[k].length / Object.keys(nMeses).length > 2) return;
         /* separa as contas do mesmo recebedor pela faixa de valor e de dia */
         var grupos = [];
-        por[k].slice().sort(function (a, b) { return a.valor - b.valor; }).forEach(function (g) {
-          var d = +g.data.slice(8, 10), v = Number(g.valor) || 0;
-          var c = grupos.filter(function (x) { return Math.abs(v - x.media) <= x.media * 0.15 && Math.abs(d - x.dia) <= 5; })[0];
-          if (!c) { c = { itens: [], media: v, dia: d }; grupos.push(c); }
-          c.itens.push(g); c.media = c.itens.reduce(function (s, x) { return s + (Number(x.valor) || 0); }, 0) / c.itens.length;
-          c.dia = Math.round(c.itens.reduce(function (s, x) { return s + +x.data.slice(8, 10); }, 0) / c.itens.length);
+        var porValor = function (l) {
+          l.slice().sort(function (a, b) { return a.valor - b.valor; }).forEach(function (g) {
+            var d = +g.data.slice(8, 10), v = Number(g.valor) || 0;
+            var c = grupos.filter(function (x) { return !x.dia0 && Math.abs(v - x.media) <= x.media * 0.15 && Math.abs(d - x.dia) <= 5; })[0];
+            if (!c) { c = { itens: [], media: v, dia: d }; grupos.push(c); }
+            c.itens.push(g); c.media = c.itens.reduce(function (s, x) { return s + (Number(x.valor) || 0); }, 0) / c.itens.length;
+            c.dia = Math.round(c.itens.reduce(function (s, x) { return s + +x.data.slice(8, 10); }, 0) / c.itens.length);
+          });
+        };
+        /* 1.4.0 (3.144, dono): primeiro pelo DIA (±5). Uma conta por mês nesse dia, com valores até ±40 % da mediana, é a MESMA conta:
+           de valor fixo (com um reajuste que se repete, o valor novo vale) ou de valor variável (condomínio, luz: "≈ R$ X (varia)").
+           Mais de uma por mês no mesmo dia: separa pela faixa de valor (±15 %), como antes. */
+        var porDia = [];
+        por[k].slice().sort(function (a, b) { return +a.data.slice(8, 10) - +b.data.slice(8, 10); }).forEach(function (g) {
+          var d = +g.data.slice(8, 10), c = porDia.filter(function (x) { return Math.abs(d - x.dia) <= 5; })[0];
+          if (!c) { c = { itens: [], dia: d }; porDia.push(c); }
+          c.itens.push(g); c.dia = Math.round(c.itens.reduce(function (s, x) { return s + +x.data.slice(8, 10); }, 0) / c.itens.length);
+        });
+        porDia.forEach(function (c) {
+          var mes = {}, um = c.itens.every(function (g) { var m = g.data.slice(0, 7); if (mes[m]) return false; mes[m] = 1; return true; });
+          var vs = c.itens.map(function (g) { return Number(g.valor) || 0; }).sort(function (a, b) { return a - b; }), med = vs[Math.floor(vs.length / 2)];
+          if (!um || !(med > 0) || vs.some(function (v) { return Math.abs(v - med) > med * 0.4; })) { porValor(c.itens); return; }
+          var crono = c.itens.slice().sort(function (a, b) { return a.data < b.data ? -1 : 1; }), n = crono.length, v1 = Number(crono[n - 1].valor) || 0, v2 = n > 1 ? Number(crono[n - 2].valor) || 0 : v1;
+          var media = vs.reduce(function (s, v) { return s + v; }, 0) / vs.length, reaj = n >= 3 && Math.abs(v1 - v2) <= v1 * 0.02 && Math.abs(v1 - media) > media * 0.02;
+          var varia = !reaj && (vs[vs.length - 1] - vs[0]) > media * 0.15;
+          grupos.push({ itens: c.itens, media: reaj ? v1 : media, dia: c.dia, dia0: true, varia: varia, reajuste: reaj });
         });
         grupos.forEach(function (c) {
           var meses = {}; c.itens.forEach(function (g) { meses[g.data.slice(0, 7)] = 1; });
           var ms = Object.keys(meses).sort(), seguidos = 1, melhor = 1;
           for (var i = 1; i < ms.length; i++) { seguidos = somaMes(ms[i - 1], 1) === ms[i] ? seguidos + 1 : 1; if (seguidos > melhor) melhor = seguidos; }
           var tipo = '';
-          if (melhor >= 3) tipo = 'mensal';
+          if (melhor >= minimo) tipo = 'mensal';
           else {
             var porMesAno = {}; ms.forEach(function (m) { (porMesAno[m.slice(5, 7)] = porMesAno[m.slice(5, 7)] || []).push(+m.slice(0, 4)); });
             Object.keys(porMesAno).forEach(function (mm) { var a = porMesAno[mm].sort(); for (var j = 1; j < a.length; j++) if (a[j] === a[j - 1] + 1) { tipo = 'anual'; c.mes = +mm; } });
@@ -162,7 +190,8 @@
              a de outro período não esconde a sugestão (e a sugestão diz que existe a outra) */
           var mesUlt = String(ult.data || '').slice(0, 7), outro = null;
           var ja = (typeof Recorrente !== 'undefined' ? Recorrente.ativos() : []).some(function (r) {
-            var v = Number(r.valor) || 0; if (!(v > 0) || Math.abs(v - media) > media * 0.15) return false;
+            if (r.auto && r.autoOrigem === k) return false;   /* 1.4.0 (3.144): a conta detectada do mesmo recebedor se atualiza (modulos/contas-auto.js) */
+            var v = Number(r.valor) || 0; if (!(v > 0) || Math.abs(v - media) > media * (r.varia ? 0.4 : 0.15)) return false;   /* 1.4.0 (3.144): a conta que varia aceita ±40 % */
             if (tipo === 'mensal' && r.regra !== 'anual' && Math.abs((Number(r.dia) || 0) - c.dia) > 5) return false;
             var parecida = r.grupo === g0.grupo || Origem.chaveDesc(r.nome).split(' ').some(function (w) { return w.length > 3 && Origem.chaveDesc(g0.desc).indexOf(w) >= 0; });
             if (!parecida) return false;
@@ -171,10 +200,12 @@
             return true;
           });
           if (ja) return;
-          out.push({ chave: chave, tipo: tipo, nome: window.Apelido ? Apelido.texto(g0) : (g0.desc || ''), valor: media, dia: c.dia, mes: c.mes || 0,
+          out.push({ varia: !!c.varia, reajuste: !!c.reajuste,   /* 1.4.0 (3.144) */
+            chave: chave, tipo: tipo, nome: window.Apelido ? Apelido.texto(g0) : (g0.desc || ''), valor: media, dia: c.dia, mes: c.mes || 0,
             grupo: g0.grupo, sub: g0.sub, n: c.itens.length, origem: k, ultimo: n2(ult.valor), quem: ult.quem || '',
             total: n2(c.itens.reduce(function (s, g) { return s + (Number(g.valor) || 0); }, 0)), de: c.itens.map(function (g) { return g.data; }).sort()[0], ate: ult.data,   /* 3.116 */
             outro: outro ? { nome: outro.nome, de: String(outro.desde || '').slice(0, 7), ate: String(outro.ate || '').slice(0, 7) } : null,   /* 3.124 */
+            ids: c.itens.map(function (g) { return g.id; }),   /* 1.3.0 (3.142) */
             diaMin: Math.min.apply(null, c.itens.map(function (g) { return +g.data.slice(8, 10); })), diaMax: Math.max.apply(null, c.itens.map(function (g) { return +g.data.slice(8, 10); })),
             pj: !casa() && (IMPOSTO.test(textoG(ult)) || !!empresaDe(ult)), empresaId: (empresaDe(ult) || {}).id || '',
             pjTipo: /\bdas\b/i.test(ult.desc || ult.descRobo || '') ? 'das' : /\bdarf\b|receita fed/i.test(ult.desc || ult.descRobo || '') ? 'darf' : '' });
@@ -191,9 +222,11 @@
     var sub = [tr('dia ', 'day ') + Number(x.data.slice(8, 10)) + ' · ' + I18n.data(x.data), (GRUPOS[x.grupo] || {}).nome || x.grupo,
       x.status === 'paga' && x.pagoEm ? tr('paga em ', 'paid on ') + I18n.data(x.pagoEm) : '',
       x.atraso ? tr('paga com atraso (', 'paid late (', 'pagada con atraso (') + (x.atraso.como ? x.atraso.como + tr(' em ', ' on ', ' el ') : '') + I18n.data(x.atraso.em, { semAno: true }) + ')' : '',
-      x.aviso ? '⚠️ ' + x.aviso : ''].filter(Boolean).join(' · ');
-    return '<div class="cm-linha cm-' + x.status + '" style="--cm-cor:var(' + s.cor + ')" data-acao="cm-abrir" data-id="' + esc(x.r.id) + '">' +
-      '<div class="cm-txt"><span class="t-main">' + esc(x.r.nome) + '</span><div class="t-sub">' + esc(sub) + '</div></div>' +
+      x.aviso ? '⚠️ ' + x.aviso : '',
+      /* 1.4.0 (3.144): a conta que varia (condomínio, luz): "≈ R$ X (varia) · último R$ Y" */
+      x.r.varia && x.r.auto ? '≈ ' + fmt(x.r.valor) + tr(' (varia) · último ', ' (varies) · last ', ' (varía) · último ') + fmt(x.r.ultimoValor || x.r.valor) : ''].filter(Boolean).join(' · ');
+    return '<div class="cm-linha cm-' + x.status + '" style="--cm-cor:var(' + s.cor + ')" data-acao="' + (x.r.auto ? 'ca-abrir' : 'cm-abrir') + '" data-id="' + esc(x.r.id) + '">' +
+      '<div class="cm-txt"><span class="t-main">' + esc(x.r.nome) + '</span>' + (x.r.auto ? ' <span class="ca-selo tiny muted">✨ ' + esc(tr('detectada automaticamente', 'detected automatically', 'detectada automáticamente')) + '</span>' : '') + '<div class="t-sub">' + esc(sub) + '</div></div>' +
       '<div class="cm-dir"><span class="num">' + fmt(x.valor) + '</span>' + selo(x.status) + '</div></div>';
   }
   function porGrupo(l) {
@@ -338,7 +371,7 @@
   }
 
   MoneyModulos.registrar({
-    id: 'contas-mes', versao: '1.2.1',
+    id: 'contas-mes', versao: '1.4.0',
     pontos: {
       'custos.contas': cartao,
       'budget.atencao': cartaoSugestoes,

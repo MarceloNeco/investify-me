@@ -6,7 +6,8 @@
    Carregado ANTES do código do app (é uma const global). Troque o ?v= no index.html e no sw.js a cada versão.
    ===================================================================== */
 const MUDANCAS = [
-  {v:'3.144', d:'2026-11-28', t:'Estornos no lugar certo e o 📥 mais leve', itens:[
+  {v:'3.144', d:'2026-11-28', t:'Contas fixas sozinhas, Pessoas em três partes e estornos no lugar certo', itens:[
+    '🔁 Conta que se repete entra sozinha em Contas fixas, sem pedir confirmação: assinaturas (streaming, tecnologia) e a escola em 2 meses seguidos, já com os meses pagos ligados; um reajuste atualiza o valor da mesma conta. Condomínio e luz, que mudam todo mês, viram uma conta "≈ R$ X (varia)". Parcelas, seguro anual, pagamento único e conta de outra pessoa não entram. Tocando, dá para dizer "Não é conta fixa" ou editar.',
     '↩️ Estorno pedido: o aviso de estorno que chega por e-mail liga à compra certa (mesmo com duas compras iguais) e a compra mostra "⏳ estorno a receber R$ X". Quando o crédito cai, mesmo um pouco menor por câmbio ou IOF, vira "✓ estorno recebido" e a compra e o crédito se anulam.',
     '💸 O total a receber de estornos e reembolsos aparece no Painel e no 📥. Sem data prometida, o app espera 45 dias (cerca de 2 faturas); se atrasar, pergunta com [Já recebi] [Adiar 15 dias] [Desistir].',
     '📊 A faixa do topo não mostra mais porcentagens absurdas quando o mês passado foi quase zero: diz "bem acima do mês passado (R$ X)".',
